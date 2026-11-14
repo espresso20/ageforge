@@ -15,9 +15,12 @@ type Scroll struct {
 	// Follow keeps the end in view while the child grows, as long as the
 	// player has not scrolled away from it: a log.
 	Follow bool
+	// NoBar leaves the scroll bar out, so the child keeps the whole width.
+	NoBar bool
 
 	top   int  // the child's first row in view
 	total int  // the child's height
+	stuck bool // the end is in view and the player has not left it (see Follow)
 	bar   bool // the child was too tall last time, so a column went to the bar
 	held  bool // the thumb is being dragged
 	grab  int  // and where in it the pointer took hold, in eighths of a cell
@@ -36,23 +39,33 @@ func (s *Scroll) Top() int { return s.top }
 // AtEnd reports whether the child's last row is in view.
 func (s *Scroll) AtEnd() bool { return s.top >= s.total-s.rect.Dy() }
 
-// ScrollTo puts the child's row n at the top, as far as there is to scroll.
-func (s *Scroll) ScrollTo(n int) { s.top = max(0, min(n, s.total-s.rect.Dy())) }
+// ScrollTo asks for the child's row n at the top. The next layout holds it to
+// what there is to scroll, so it may be called before the child has a size.
+func (s *Scroll) ScrollTo(n int) { s.top, s.stuck = max(n, 0), false }
 
-// ScrollBy moves the view down d rows (up when negative).
+// ScrollBy asks for the view d rows down (up when negative).
 func (s *Scroll) ScrollBy(d int) { s.ScrollTo(s.top + d) }
 
-// ToEnd shows the child's last rows.
-func (s *Scroll) ToEnd() { s.ScrollTo(s.total) }
+// ToEnd asks for the child's last rows.
+func (s *Scroll) ToEnd() { s.top, s.stuck = 1<<30, true }
+
+// move scrolls now, within what the last layout found there is: for the
+// keys and the mouse, which come after one.
+func (s *Scroll) move(n int) {
+	s.top = max(0, min(n, s.total-s.rect.Dy()))
+	s.stuck = s.AtEnd()
+}
 
 func (s *Scroll) Layout(r image.Rectangle) {
-	atEnd := s.Follow && (s.total == 0 || s.AtEnd())
+	atEnd := s.Follow && (s.total == 0 || s.stuck)
 	s.Place(r)
 	// The child's height decides whether there is a bar, and the bar's
 	// column changes the child's width. Try the width that held last time
 	// first, so a settled view measures its child once.
 	w := r.Dx()
-	if s.bar && w > 1 {
+	if s.NoBar {
+		s.total, s.bar = s.height(w), false
+	} else if s.bar && w > 1 {
 		if s.total = s.height(w - 1); s.total > r.Dy() {
 			w--
 		} else {
@@ -65,7 +78,7 @@ func (s *Scroll) Layout(r image.Rectangle) {
 	if atEnd {
 		s.top = s.total
 	}
-	s.ScrollTo(s.top)
+	s.move(s.top)
 	y := r.Min.Y - s.top
 	s.Child.Layout(image.Rect(r.Min.X, y, r.Min.X+w, y+max(s.total, r.Dy())))
 }
@@ -81,7 +94,9 @@ func (s *Scroll) Paint(p *Painter) {
 	r := s.rect
 	p = p.Clip(r)
 	s.Child.Paint(p)
-	p.Bar(r.Max.X-1, r.Min.Y, r.Dy(), s.top, r.Dy(), s.total)
+	if s.bar {
+		p.Bar(r.Max.X-1, r.Min.Y, r.Dy(), s.top, r.Dy(), s.total)
+	}
 }
 
 func (s *Scroll) Key(k Key) bool {
@@ -89,17 +104,17 @@ func (s *Scroll) Key(k Key) bool {
 	was := s.top
 	switch k.Code {
 	case KeyUp:
-		s.ScrollBy(-1)
+		s.move(s.top - 1)
 	case KeyDown:
-		s.ScrollBy(1)
+		s.move(s.top + 1)
 	case KeyPgUp:
-		s.ScrollBy(-page)
+		s.move(s.top - page)
 	case KeyPgDn:
-		s.ScrollBy(page)
+		s.move(s.top + page)
 	case KeyHome:
-		s.ScrollTo(0)
+		s.move(0)
 	case KeyEnd:
-		s.ToEnd()
+		s.move(s.total)
 	default:
 		return false
 	}
@@ -110,11 +125,11 @@ func (s *Scroll) Key(k Key) bool {
 
 func (s *Scroll) Mouse(m Mouse) bool {
 	r := s.rect
-	onBar := s.total > r.Dy() && m.X == r.Max.X-1
+	onBar := s.bar && m.X == r.Max.X-1
 	switch m.Kind {
 	case MouseWheel:
 		was := s.top
-		s.ScrollBy(m.Wheel * wheelRows)
+		s.move(s.top + m.Wheel*wheelRows)
 		return s.top != was
 	case MousePress:
 		if m.Button != ButtonLeft || !onBar {
@@ -153,5 +168,5 @@ func (s *Scroll) drag(y int) {
 		return
 	}
 	want := (y-s.rect.Min.Y)*8 + 4 - s.grab // where the thumb's top should be, in eighths
-	s.ScrollTo((want*(s.total-h) + free/2) / free)
+	s.move((want*(s.total-h) + free/2) / free)
 }

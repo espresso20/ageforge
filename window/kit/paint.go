@@ -158,7 +158,7 @@ func (p *Painter) Print(x, y, maxW int, s string, st Style) int {
 func (p *Painter) PrintAligned(x, y, w int, s string, st Style, a Align) {
 	if n := Width(s); a != AlignLeft && n < w {
 		if a == AlignCenter {
-			x += (w - n) / 2
+			x += w/2 - n/2 // each half rounded down, as titles always were
 		} else {
 			x += w - n
 		}

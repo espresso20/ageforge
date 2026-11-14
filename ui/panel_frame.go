@@ -31,7 +31,7 @@ const (
 type panelFrame struct {
 	*tview.Box
 	title vibe.Entry
-	tv    *tview.TextView
+	tv    *nativeText
 	// keys is the foot's keys, read on every draw (the Wonders panel's change
 	// with its view); hint is what the foot says may be typed, "" when the
 	// panel keeps the keyboard for itself.
@@ -46,7 +46,7 @@ type panelFrame struct {
 	iw, ih int
 }
 
-func newPanelFrame(title vibe.Entry, tv *tview.TextView) *panelFrame {
+func newPanelFrame(title vibe.Entry, tv *nativeText) *panelFrame {
 	return &panelFrame{Box: tview.NewBox(), title: title, tv: tv}
 }
 

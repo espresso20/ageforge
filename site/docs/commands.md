@@ -38,7 +38,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 
 Commands that can't be undone are never run from a completion. `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
 
-Most panels leave the prompt working while they are open, and take only the keys that print nothing. The Wonders, Harbinger and Plan panels use letter keys, so press `Esc` to close one before you type a command. In a panel that is longer than the screen, `↑`, `↓`, `PgUp`, `PgDn`, `Home` and `End` scroll it while the prompt is empty.
+Most panels leave the prompt working while they are open, and take only the keys that print nothing. The Wonders, Harbinger and Plan panels use letter keys, so press `Esc` to close one before you type a command. In a panel that is longer than the screen, `↑`, `↓`, `PgUp`, `PgDn`, `Home` and `End` scroll it while the prompt is empty. In the window the mouse wheel scrolls it as well.
 
 With no panel open, `PgUp` and `PgDn` turn the Buildings list a page of whole entries (the box says how many are above and below). `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. `Esc` saves your game to its own save and returns to the main menu. The Help panel lists every key.
 

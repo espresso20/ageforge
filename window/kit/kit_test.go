@@ -128,7 +128,7 @@ func TestPanelDrawsItsBoxTitleAndFoot(t *testing.T) {
 	pn.Foot, pn.PadX = "foot", 1
 	_, b := screen(pn, 12, 4)
 	want := []string{
-		"┌───Top────┐",
+		"┌────Top───┐",
 		"│ in       │",
 		"│          │",
 		"└───foot───┘",
@@ -313,6 +313,24 @@ func TestScrollFollowsAGrowingLog(t *testing.T) {
 	r.Paint(b)
 	if got := b.Line(0)[:6]; got != "line a" {
 		t.Errorf("scrolled away, it should stay put: %q", got)
+	}
+	// A scroll asked for before the text is laid out holds at the next
+	// paint, and one past the end stops at the end.
+	tx.SetText(lines(26))
+	sc.ScrollTo(20)
+	r.Paint(b)
+	if got := b.Line(0)[:6]; got != "line u" {
+		t.Errorf("ScrollTo before the layout: %q", got)
+	}
+	sc.ScrollTo(500)
+	r.Paint(b)
+	if got := b.Line(3)[:6]; got != "line z" || sc.Top() != 22 {
+		t.Errorf("past the end: bottom row %q, top %d", got, sc.Top())
+	}
+	sc.NoBar = true
+	r.Paint(b)
+	if b.At(9, 0).R != ' ' {
+		t.Error("NoBar should leave the bar's column to the child")
 	}
 }
 

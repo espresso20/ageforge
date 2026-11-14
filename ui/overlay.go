@@ -14,12 +14,12 @@ import (
 // floating panel from the current game state. Called every 500 ms by Refresh.
 type OverlayProvider func(state game.GameState, w int) string
 
-// overlayEntry holds the tview widgets and content provider for a text-based overlay.
+// overlayEntry holds the text view (drawn by the kit) and content provider for a text-based overlay.
 // The root Flex is the whole screen: the panel's frame (panel_frame.go) over the
 // command bar's rows.
 type overlayEntry struct {
 	title   vibe.Entry
-	tv      *tview.TextView
+	tv      *nativeText
 	frame   *panelFrame     // the box, name and keys the TextView is drawn in
 	root    tview.Primitive // the frame over the command bar — added/removed from pages.Pages
 	provide OverlayProvider
@@ -107,7 +107,7 @@ func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func(
 // The overlay is the whole screen but the command bar: a framed panel (panel_frame.go)
 // with the TextView inside it, over the rows the bar keeps.
 func (om *OverlayManager) Register(name string, title vibe.Entry, provide OverlayProvider) {
-	tv := tview.NewTextView().
+	tv := newNativeText().
 		SetDynamicColors(true).
 		SetScrollable(true).
 		SetWrap(true)
