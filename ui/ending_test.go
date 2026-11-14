@@ -15,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // endTimer is a timer the film set, held by the test.
@@ -982,5 +983,35 @@ func TestEndingAmbientIsThePrestiges(t *testing.T) {
 	}
 	if with == 0 {
 		t.Fatal("no theme has an ambient effect")
+	}
+}
+
+// TestEndingClickSkipsOn: a left press does what a key does, beat by beat;
+// other buttons and a bare move do nothing.
+func TestEndingClickSkipsOn(t *testing.T) {
+	end := sampleEnding(game.RunEndPrestige, 2)
+	byKey := stagedEnding(t, end, mapmodel.TierUnicode, true, false)
+	byClick := stagedEnding(t, end, mapmodel.TierUnicode, true, false)
+	byKey.at(100, 30, 3)
+	byClick.at(100, 30, 3)
+	click := func(kind kit.MouseKind, b kit.MouseButton) bool {
+		return byClick.e.Mouse(kit.Mouse{Kind: kind, Button: b, X: 5, Y: 3})
+	}
+	if click(kit.MouseMove, kit.ButtonLeft) || click(kit.MousePress, kit.ButtonRight) || byClick.e.keys != 0 {
+		t.Fatal("a move or a right press moved the film on")
+	}
+	for i := 0; i < 8 && !byKey.e.closed; i++ {
+		byKey.e.key()
+		if !click(kit.MousePress, kit.ButtonLeft) {
+			t.Fatal("a left press was not taken")
+		}
+		if byKey.e.beat().beat != byClick.e.beat().beat || byKey.e.closed != byClick.e.closed || byKey.e.keys != byClick.e.keys {
+			t.Fatalf("step %d: key gave beat %d, click gave beat %d", i, byKey.e.beat().beat, byClick.e.beat().beat)
+		}
+		byKey.clock = byKey.clock.Add(arrivalKeyGap)
+		byClick.clock = byClick.clock.Add(arrivalKeyGap)
+	}
+	if !byClick.e.closed {
+		t.Fatal("clicks never closed the film")
 	}
 }

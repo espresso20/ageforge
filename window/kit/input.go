@@ -16,10 +16,15 @@ import (
 // history on Up and its completion on Tab.
 type Input struct {
 	Base
-	// Prompt is tagged text before the line.
-	Prompt string
-	// Style is what the typed text is painted in.
+	// Prompt is tagged text before the line, painted in PromptStyle (unset:
+	// the theme's highlight color).
+	Prompt      string
+	PromptStyle Style
+	// Style is what the typed text is painted in; its ground fills the
+	// field, the cells after the prompt.
 	Style Style
+	// Width is the field's width in cells; 0 takes the rest of the row.
+	Width int
 	// Ghost, when set, is asked for the text to show dim after the line
 	// while the cursor is at its end: a completion on offer.
 	Ghost func(text string) string
@@ -69,7 +74,11 @@ func runesWidth(rs []rune) (w int) {
 // field is where the text starts and how many cells it has.
 func (in *Input) field() (x, w int) {
 	pw := Width(in.Prompt)
-	return in.rect.Min.X + pw, in.rect.Dx() - pw
+	x, w = in.rect.Min.X+pw, in.rect.Dx()-pw
+	if in.Width > 0 {
+		w = min(w, in.Width)
+	}
+	return x, w
 }
 
 func (in *Input) Paint(p *Painter) {
@@ -78,12 +87,16 @@ func (in *Input) Paint(p *Painter) {
 		return
 	}
 	p = p.Clip(r)
-	p.Fill(r, in.Style.Bg)
-	p.Print(r.Min.X, r.Min.Y, r.Dx(), in.Prompt, Style{Fg: Role(theme.RoleHighlight), Bg: in.Style.Bg})
+	ps := in.PromptStyle
+	if !ps.Fg.IsSet() {
+		ps.Fg = Role(theme.RoleHighlight)
+	}
+	p.Print(r.Min.X, r.Min.Y, r.Dx(), in.Prompt, ps)
 	x, w := in.field()
 	if w <= 0 {
 		return
 	}
+	p.Fill(image.Rect(x, r.Min.Y, x+w, r.Min.Y+1), in.Style.Bg)
 	// Scroll so the cursor has a cell in view.
 	in.off = min(in.off, in.cur)
 	for in.off < in.cur && runesWidth(in.text[in.off:in.cur]) >= w {

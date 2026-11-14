@@ -29,6 +29,8 @@ An account with no game yet sees the forge and a title page, with **New game** f
 
 `↑` and `↓` (or `Tab` and `Shift+Tab`) move the selection, `Enter` or `Space` opens it, and each entry's letter opens it directly. With motion on, choosing an entry strikes the title: a flare and a burst of sparks, then the entry opens. The version is on the page, and so is **update available (u)** when a newer release is out.
 
+In the window the mouse works on the menu too. The entry under the pointer is the selected one, and a click opens it as `Enter` does, on the Settings page as well. The pages the menu opens (Load game, Badges, Themes, Accounts) still take keys only.
+
 **Which game Continue opens.** Your account remembers the game you played last, and that is your current game. If you keep several games and want one of them on the menu whatever you played last, mark it as your **main game** with `m` in the Load Game browser. See [Continue and your main game](saving-and-loading.md#continue-and-your-main-game).
 
 **Motion and size.** `motion off` holds the menu to one still picture, like the maps (see [Motion](themes.md#motion)). The menu fits any terminal from 80 columns by 24 rows up. With `map glyphs ascii` it is drawn without block characters. On a light theme the fire and the hot iron are ink on paper: hotter is darker.
@@ -94,6 +96,8 @@ The **Ledger** is under it:
 The Ledger comes in three sizes. Under 100 columns by 30 rows it is one row: the long bar with what it waits on. From 100 columns by 30 rows it adds a second row with the four pillars. From 120 columns by 39 rows it is four rows: the bar, the waiting line with the Short of list, and the pillars in two rows. A big-layout terminal under 39 rows keeps the 100-column Ledger. On the plain glyph tier (`map glyphs ascii`) the bars are drawn in plain characters. The [Advance](advance.md) page also covers the experimental gate (the environment variable `AGEFORGE_GATES=v2`), which asks for population, income and a key tech in place of building counts.
 
 Every panel you open (`research`, `trade`, `map`, `help` and so on) takes the whole screen but the command bar. Its name is on the top edge, the keys it takes are on the line along its foot, and `Esc` closes it back to the dashboard. The prompt keeps working in most panels. On the panels that are text (Milestones, Army, Trade routes, Factions, Statistics, Logs, Epoch, Civilization History, Buildings and Help), `↑` `↓` `PgUp` `PgDn` `Home` and `End` scroll the panel while the prompt is empty, and anything else you type goes to the prompt. The Wonders, Harbinger and Build Plan panels have keys that are letters (`G`, `A` `B` `I`, `U` `D` `X` `C`), so they keep the keyboard: press `Esc` before you type a command.
+
+In the window, the mouse wheel scrolls a text panel too, whatever is in the prompt, and a click in the command bar puts the cursor at the character you clicked.
 
 <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: the status ribbon and the Ledger across the top; resources at the top left with construction and the People box side by side under them, and the log below; the mini map and the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
 

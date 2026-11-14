@@ -54,8 +54,8 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.inputField.SetText("adv")
 	d.inputField.Focus(func(tview.Primitive) {})
 	out["dashboard_ghost"] = draw()
-	if !d.inputField.atEnd || d.inputField.Ghost() != "ance" {
-		t.Fatalf("no ghost text drawn for %q (at end %v, ghost %q)", "adv", d.inputField.atEnd, d.inputField.Ghost())
+	if !d.inputField.in.AtEnd() || d.inputField.Ghost() != "ance" {
+		t.Fatalf("no ghost text drawn for %q (at end %v, ghost %q)", "adv", d.inputField.in.AtEnd(), d.inputField.Ghost())
 	}
 	d.inputField.Blur()
 	d.inputField.SetText("")

@@ -1,14 +1,15 @@
 package ui
 
 import (
+	"image"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // ending.go runs the film of a run's ending: the overlay that plays when a
@@ -32,7 +33,8 @@ const endingPageName = "run_ending"
 
 // ending is the film.
 type ending struct {
-	*tview.Box
+	*nativeHost
+	kit.Base
 	om *OverlayManager
 
 	view endView
@@ -64,7 +66,8 @@ type ending struct {
 // goroutine by the dashboard's refresh, before the overlay manager is given
 // the new run's state: what the manager last saw is the run that ended.
 func ShowRunEnding(om *OverlayManager, end game.RunEnding) {
-	e := &ending{Box: tview.NewBox(), om: om, now: time.Now}
+	e := &ending{om: om, now: time.Now}
+	e.nativeHost = newNativeHost(e)
 	e.set = defaultMapSettings()
 	e.pal = newMenuPalette(theme.Active())
 	e.view = endViewFor(end, e.pal)
@@ -201,10 +204,22 @@ func (e *ending) close() {
 	}
 }
 
-// InputHandler: any key skips to the next beat, and on the last beat
-// closes the film.
-func (e *ending) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return e.WrapInputHandler(func(_ *tcell.EventKey, _ func(tview.Primitive)) { e.key() })
+// CanFocus: the film takes the keys.
+func (e *ending) CanFocus() bool { return true }
+
+// Key: any key skips to the next beat, and on the last beat closes the film.
+func (e *ending) Key(kit.Key) bool {
+	e.key()
+	return true
+}
+
+// Mouse: a left press skips on, as any key does.
+func (e *ending) Mouse(m kit.Mouse) bool {
+	if m.Kind != kit.MousePress || m.Button != kit.ButtonLeft {
+		return false
+	}
+	e.key()
+	return true
 }
 
 // key is a key press, whichever key it was.
@@ -228,17 +243,17 @@ func (e *ending) key() {
 	e.arm()
 }
 
-// Draw draws the film at the clock's frame.
+// Draw draws the film at the clock's frame, then the theme's weather over
+// the cells it leaves empty, and keeps the redraw clock running while it moves.
 func (e *ending) Draw(scr tcell.Screen) {
 	if e.closed {
 		return
 	}
+	e.nativeHost.Draw(scr)
 	x, y, w, h := e.GetRect()
 	if w <= 0 || h <= 0 {
 		return
 	}
-	grid := e.frameGrid(w, h)
-	grid.flush(scr, x, y, e.pal, e.view.plain)
 	// The theme's own weather, at full, from the heavy blow to the film's
 	// end: twice over, in the cells the film leaves empty.
 	if s, f := e.sc.span(e.sc.frame); e.view.motion && e.view.prestige &&
@@ -258,6 +273,18 @@ func (e *ending) Draw(scr tcell.Screen) {
 	} else {
 		e.stopClock()
 	}
+}
+
+// Layout takes the film's rectangle.
+func (e *ending) Layout(r image.Rectangle) { e.Place(r) }
+
+// Paint draws the film at the clock's frame.
+func (e *ending) Paint(p *kit.Painter) {
+	r := e.Bounds()
+	if r.Empty() {
+		return
+	}
+	e.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, e.pal, e.view.plain)
 }
 
 // frameGrid brings the scene to the clock's frame and draws the film at w

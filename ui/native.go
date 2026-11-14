@@ -138,9 +138,9 @@ var keyCodes = map[tcell.Key]kit.KeyCode{
 	tcell.KeyF7: kit.KeyF7, tcell.KeyF8: kit.KeyF8, tcell.KeyF9: kit.KeyF9, tcell.KeyF10: kit.KeyF10, tcell.KeyF11: kit.KeyF11, tcell.KeyF12: kit.KeyF12,
 }
 
-// kitKey is a tcell key event as the kit's; ok is false for a key the kit
-// has no name for. Ctrl with a letter comes out as the letter with ModCtrl,
-// whichever of tcell's two ways it arrived.
+// kitKey is a tcell key event as the kit's. Ctrl with a letter comes out as
+// the letter with ModCtrl, whichever of tcell's two ways it arrived, and a
+// key the kit has no name for as kit.KeyOther.
 func kitKey(ev *tcell.EventKey) (kit.Key, bool) {
 	var mod kit.Mod
 	if m := ev.Modifiers(); m != 0 {
@@ -164,7 +164,7 @@ func kitKey(ev *tcell.EventKey) (kit.Key, bool) {
 	if k >= tcell.KeyCtrlA && k <= tcell.KeyCtrlZ {
 		return kit.Key{Code: kit.KeyRune, Rune: 'a' + rune(k-tcell.KeyCtrlA), Mod: mod | kit.ModCtrl}, true
 	}
-	return kit.Key{}, false
+	return kit.Key{Code: kit.KeyOther, Mod: mod}, true
 }
 
 // A nativeScreen is the app's screen in a window. It notes which host wrote

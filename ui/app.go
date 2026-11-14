@@ -22,6 +22,7 @@ type App struct {
 	// native is the window's screen, which knows the kit screens drawn on
 	// it (native.go); nil in the terminal.
 	native *nativeScreen
+	mouseQ chan kit.Mouse // the window's mouse events on their way to the UI goroutine; nil in the terminal
 }
 
 // NewApp creates the UI application
@@ -124,20 +125,31 @@ func (a *App) SetScreen(s tcell.Screen) {
 	a.native = newNativeScreen(theme.WrapScreen(s))
 	a.tviewApp.SetScreen(a.native)
 	a.screenSet = true
+	a.mouseQ = make(chan kit.Mouse, 256)
+	go a.pumpMouse()
 }
 
 // Mouse gives the game a mouse event from the window, at a screen cell. It
 // goes to the kit screen under the pointer; a screen still drawn by tview
-// takes no mouse. It is safe to call from the window's thread.
+// takes no mouse. It is safe to call from the window's thread and never
+// waits: if the UI is not keeping up, the event is dropped.
 func (a *App) Mouse(m kit.Mouse) {
-	if a.native == nil {
-		return
+	select {
+	case a.mouseQ <- m:
+	default:
 	}
-	a.tviewApp.QueueUpdate(func() {
-		if a.native.mouse(m) {
-			a.tviewApp.ForceDraw()
-		}
-	})
+}
+
+// pumpMouse hands the window's mouse events to the UI goroutine, in order.
+// It is its own goroutine so that a busy UI holds it up and not the window.
+func (a *App) pumpMouse() {
+	for m := range a.mouseQ {
+		a.tviewApp.QueueUpdate(func() {
+			if a.native.mouse(m) {
+				a.tviewApp.ForceDraw()
+			}
+		})
+	}
 }
 
 // SetWindowHost tells the app it runs in a window (see WindowHost).
