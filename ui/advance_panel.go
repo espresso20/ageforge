@@ -141,10 +141,9 @@ func (p *advancePanel) Mouse(m kit.Mouse) bool {
 	if !ok {
 		return false
 	}
+	// A click only picks. Advancing the age stays on Enter and the advance
+	// command: it is too large a thing to hang on a double click.
 	p.ui.flash, p.ui.sel = "", n
-	if m.Clicks == 2 {
-		p.handleKey(tcell.KeyEnter)
-	}
 	return true
 }
 

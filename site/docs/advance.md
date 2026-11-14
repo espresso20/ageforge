@@ -53,7 +53,7 @@ Without any of these the box reads `Nothing else stands in the way.`
 
 ## Advancing
 
-When all four pillars stand and nothing else is in the way, the foot of the panel reads `Enter  Advance to the Iron Age`. `Enter` does what `advance` does, with the same refusals, and then the arrival screen opens. While you have text at the prompt, the keys belong to the prompt. `Enter` before all four stand names the pillars still to do and changes nothing. In the window a click on a pillar picks it, a double click does what `Enter` does, and the wheel moves the pick.
+When all four pillars stand and nothing else is in the way, the foot of the panel reads `Enter  Advance to the Iron Age`. `Enter` does what `advance` does, with the same refusals, and then the arrival screen opens. While you have text at the prompt, the keys belong to the prompt. `Enter` before all four stand names the pillars still to do and changes nothing. In the window a click on a pillar picks it and the wheel moves the pick. Advancing stays on `Enter`.
 
 | Key | What it does |
 |---|---|

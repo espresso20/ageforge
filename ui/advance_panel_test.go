@@ -582,18 +582,17 @@ func TestAdvancePanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0), 1) {
 		t.Error("a click on the frame changed something")
 	}
-	before := eng.GetState().Age
-	if !press(pillar(0), 2) || p.ui.sel != 0 || !strings.HasPrefix(p.ui.flash, "Not yet: ") {
-		t.Errorf("a double click on a short gate: pick %d, says %q", p.ui.sel, p.ui.flash)
-	}
-	if eng.GetState().Age != before {
-		t.Error("a double click advanced a short gate")
-	}
+	// A double click picks and nothing more, even on a gate that is met:
+	// advancing stays on Enter.
 	meetTheGate(t, eng)
 	p.update(eng.GetState())
 	p.Layout(image.Rect(0, 0, 100, 27))
-	if !press(pillar(0), 2) || eng.GetState().Age != "iron_age" {
-		t.Errorf("a double click on a met gate left the game in %s", eng.GetState().Age)
+	before := eng.GetState().Age
+	if !press(pillar(0), 2) || p.ui.sel != 0 {
+		t.Errorf("a double click picked %d", p.ui.sel)
+	}
+	if eng.GetState().Age != before {
+		t.Errorf("a double click advanced the age to %s", eng.GetState().Age)
 	}
 	p.ui.sel = 0
 	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || p.ui.sel != 1 {
