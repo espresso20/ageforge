@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -22,7 +21,7 @@ func untag(s string) string { return tagRe.ReplaceAllString(s, "") }
 
 // harbDashboard builds a dashboard over a fresh engine whose harbinger for age
 // has been summoned.
-func harbDashboard(t *testing.T, age string) (*Dashboard, *game.GameEngine, *tview.Pages) {
+func harbDashboard(t *testing.T, age string) (*Dashboard, *game.GameEngine, *nativePages) {
 	t.Helper()
 	engine := game.NewGameEngine()
 	d, pages := newTestDashboard(engine)

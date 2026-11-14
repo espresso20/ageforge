@@ -36,6 +36,13 @@ type KeyFilter interface {
 	FilterKey(k Key) (Key, bool)
 }
 
+// A Coverer is a widget with holes: Covers reports whether a point inside
+// its Bounds is its own. Where it is not, and nothing inside it is there
+// either, the pointer goes to what lies under it.
+type Coverer interface {
+	Covers(pt image.Point) bool
+}
+
 // A MouseHandler takes the mouse while the pointer is over it. It returns
 // true when it used the event.
 type MouseHandler interface {
@@ -224,6 +231,9 @@ func pathAt(root Widget, pt image.Point) []Widget {
 		if p := pathAt(cs[i], pt); p != nil {
 			return append([]Widget{root}, p...)
 		}
+	}
+	if c, ok := root.(Coverer); ok && !c.Covers(pt) {
+		return nil // a hole in it: the pointer is on what is underneath
 	}
 	return []Widget{root}
 }

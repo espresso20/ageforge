@@ -26,21 +26,25 @@ type menuBadges struct {
 
 // InputHandler: the case's own keys, and Esc (or q) to close.
 func (b *menuBadges) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(b.Box, func(ev *kit.Key) {
-		switch {
-		case ev.Code == kit.KeyEsc, ev.Code == kit.KeyRune && (ev.Rune == 'q' || ev.Rune == 'Q'):
-			if !b.closeCard() {
-				b.close()
-			}
-		default:
-			b.routeKey(ev, "")
+	return keysIn(b.Box, func(ev *kit.Key) { b.Key(*ev) })
+}
+
+// Key is the same, where the page stands in a kit tree.
+func (b *menuBadges) Key(k kit.Key) bool {
+	switch {
+	case k.Code == kit.KeyEsc, k.Code == kit.KeyRune && (k.Rune == 'q' || k.Rune == 'Q'):
+		if !b.closeCard() {
+			b.close()
 		}
-	})
+	default:
+		b.routeKey(&k, "")
+	}
+	return true
 }
 
 // openMenuBadges shows the badge case over the menu and returns to
 // returnPage when it is closed.
-func openMenuBadges(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, returnPage string) {
+func openMenuBadges(app *tview.Application, pages *nativePages, engine *game.GameEngine, returnPage string) {
 	p := newBadgePanel()
 	p.settings = func() mapSettings { return resolveMapSettings(engine.Account()) }
 	// The case reads a snapshot's account part and nothing else of it.

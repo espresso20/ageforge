@@ -33,7 +33,7 @@ type menuRig struct {
 	eng   *game.GameEngine
 	acct  *game.Account
 	app   *tview.Application
-	pages *tview.Pages
+	pages *nativePages
 	m     *mainMenu
 	// held is the choices waiting out their strike, clock the menu's time,
 	// checks how often the update check was opened.
@@ -56,7 +56,7 @@ func newMenuRig(t *testing.T, games ...string) *menuRig {
 	}
 	r.eng = game.NewGameEngine()
 	r.eng.SetAccount(acct)
-	r.app, r.pages = tview.NewApplication(), tview.NewPages()
+	r.app, r.pages = tview.NewApplication(), newNativePages()
 	r.m = CreateSplashPage(r.app, r.pages, r.eng, "dev").(*mainMenu)
 	r.m.later = func(fn func()) { r.held = append(r.held, fn) }
 	r.m.checkUpdates = func() { r.checks++ }
@@ -525,7 +525,7 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	_, sumBefore := eng.Badges()
 	before := dataTree(t, root)
 
-	app, pages := tview.NewApplication(), tview.NewPages()
+	app, pages := tview.NewApplication(), newNativePages()
 	m := CreateSplashPage(app, pages, eng, "dev").(*mainMenu)
 	clock := time.Unix(2_000_000, 0)
 	m.now, m.start = func() time.Time { return clock }, clock

@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -53,7 +51,7 @@ func partsNotWhole(rows []string, parts []string) []string {
 
 // priceTown is a dashboard over a town of age with none of key built, every
 // stock of the age's scale, so the first copy of key can be bought.
-func priceTown(t *testing.T, age, key string) (*Dashboard, *tview.Pages, *game.GameEngine, game.BuildingState) {
+func priceTown(t *testing.T, age, key string) (*Dashboard, *nativePages, *game.GameEngine, game.BuildingState) {
 	t.Helper()
 	d, pages, eng := stagedDashboard(t, age)
 	all := map[string]int{}
@@ -141,7 +139,7 @@ func TestLongPricesFitTheBuildingsPanel(t *testing.T) {
 
 // screenWith scrolls an overlay's text view until a row shows marker, with
 // the rows that follow it, and returns the screen drawn there.
-func screenWith(t *testing.T, d *Dashboard, pages *tview.Pages, name, marker string, w, h int) string {
+func screenWith(t *testing.T, d *Dashboard, pages *nativePages, name, marker string, w, h int) string {
 	t.Helper()
 	tv := d.overlayMgr.entries[name].tv
 	text := strings.Split(tv.GetText(true), "\n")

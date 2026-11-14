@@ -7,7 +7,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -41,7 +40,7 @@ func plainTier(d *Dashboard) {
 
 // ledgerRowsOn draws the dashboard and returns what the Ledger wrote, row by
 // row, held to its box.
-func ledgerRowsOn(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []string {
+func ledgerRowsOn(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []string {
 	t.Helper()
 	cells := drawnDashboard(t, d, pages, w, h)
 	return checkFittedBox(t, fmt.Sprintf("Ledger at %dx%d", w, h), d.ledgerTV, cells, w)

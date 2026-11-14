@@ -14,7 +14,7 @@ import (
 // assert neither callback fires merely on open.
 func TestShowAccountNameConfirmModalAddsPage(t *testing.T) {
 	app := tview.NewApplication()
-	pages := tview.NewPages()
+	pages := newNativePages()
 
 	if pages.HasPage(accountNameConfirmPage) {
 		t.Fatalf("page %q present before the confirm modal was shown", accountNameConfirmPage)

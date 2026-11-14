@@ -86,7 +86,7 @@ type siteStage struct {
 	eng    *game.GameEngine
 	d      *Dashboard
 	app    *tview.Application
-	pages  *tview.Pages
+	pages  *nativePages
 }
 
 func newSiteStage(t *testing.T) *siteStage {
@@ -647,7 +647,7 @@ func (s *siteStage) saveBytes(name string) []byte {
 func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 	w.t.Helper()
 	must(w.t, theme.SetActive(theme.DefaultKey))
-	app, pages := tview.NewApplication(), tview.NewPages()
+	app, pages := tview.NewApplication(), newNativePages()
 	m := newMainMenu(app, pages, eng, siteMenuVersion)
 	still := time.Unix(0, 0)
 	m.start, m.now = still, func() time.Time { return still }

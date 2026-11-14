@@ -14,7 +14,7 @@ import (
 // lastPassageDashboard builds a dashboard over an engine standing in age (a
 // Cosmic Era age) with its Last Passage thread, optionally carrying the Cosmic
 // Legacy, and the Last Passage pending.
-func lastPassageDashboard(t *testing.T, age string, legacy bool) (*Dashboard, *game.GameEngine, *tview.Pages) {
+func lastPassageDashboard(t *testing.T, age string, legacy bool) (*Dashboard, *game.GameEngine, *nativePages) {
 	t.Helper()
 	d, engine, pages := harbDashboard(t, age)
 	engine.SetCosmicLegacyForTest(legacy)
@@ -146,7 +146,7 @@ func costItems(state game.GameState, cost map[string]float64) []string {
 // the nth "Next level costs" block: it begins on a row of its own, holds
 // every material whole on a row (none wrapped or cut), in order, and runs
 // on over consecutive rows.
-func checkCostBlock(t *testing.T, d *Dashboard, pages *tview.Pages, state game.GameState, nth int, cost map[string]float64) {
+func checkCostBlock(t *testing.T, d *Dashboard, pages *nativePages, state game.GameState, nth int, cost map[string]float64) {
 	t.Helper()
 	const w, h = 80, 24
 	items := costItems(state, cost)

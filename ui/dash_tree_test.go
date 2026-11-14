@@ -3,15 +3,14 @@ package ui
 import (
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
+	"github.com/rivo/tview"
 )
 
 // drawOnWindow draws the pages on a screen that knows which kit host drew
 // each cell, as the window's does.
-func drawOnWindow(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) *nativeScreen {
+func drawOnWindow(t *testing.T, d *Dashboard, pages *nativePages, w, h int) *nativeScreen {
 	t.Helper()
 	scr := newNativeScreen(theme.WrapScreen(newSimScreen(t, w, h)))
 	for i := 0; i < 2; i++ {
@@ -24,8 +23,8 @@ func drawOnWindow(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) *nat
 	return scr
 }
 
-// The dashboard is one kit tree: its boxes, the mini map among them, are all
-// painted by the page's own host.
+// The whole screen is one kit tree: the dashboard's boxes, the mini map
+// among them, are all painted by the one host, the page stack's.
 func TestTheDashboardIsOneKitTree(t *testing.T) {
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "bronze_age")
@@ -43,16 +42,16 @@ func TestTheDashboardIsOneKitTree(t *testing.T) {
 			t.Errorf("%s has no room on a 150x48 screen", name)
 			continue
 		}
-		if got := scr.hostAt(x+w/2, y+h/2); got != d.root.nativeHost {
-			t.Errorf("%s is not painted by the dashboard's own host (%p, want %p)", name, got, d.root.nativeHost)
+		if got := scr.hostAt(x+w/2, y+h/2); got != pages.nativeHost {
+			t.Errorf("%s is not painted by the page stack's host (%p, want %p)", name, got, pages.nativeHost)
 		}
 	}
 	if !d.mapDock.shown {
 		t.Fatal("staging: the mini map is not showing at 150x48")
 	}
 	x, y, w, h := d.miniMap.GetRect()
-	if scr.hostAt(x+w/2, y+h/2) != d.root.nativeHost {
-		t.Error("the mini map is not painted by the dashboard's own host")
+	if scr.hostAt(x+w/2, y+h/2) != pages.nativeHost {
+		t.Error("the mini map is not painted by the page stack's host")
 	}
 }
 
@@ -71,12 +70,34 @@ func TestTheMapPanelIsPaintedByTheKit(t *testing.T) {
 	if w < 100 || h < 30 {
 		t.Fatalf("the Map panel is %dx%d on a 150x48 screen", w, h)
 	}
-	host := scr.hostAt(x+w/2, y+h/2)
-	if host == nil || host == d.root.nativeHost {
-		t.Errorf("the middle of the map belongs to %p: want the Map panel's page, not tview and not the dashboard", host)
+	if host := scr.hostAt(x+w/2, y+h/2); host != pages.nativeHost {
+		t.Errorf("the middle of the map belongs to %p, not the page stack's host", host)
 	}
-	if scr.hostAt(x+1, y+h-1) != host {
+	if scr.hostAt(x+1, y+h-1) != pages.nativeHost {
 		t.Error("the map's key bar is not painted with the map")
+	}
+}
+
+// A panel leaves the command bar's rows to the dashboard under it, for the
+// mouse as for the eye: with the Advance panel open, a click in the command
+// bar still puts the cursor where it lands.
+func TestTheCommandBarTakesAClickUnderAPanel(t *testing.T) {
+	restoreForge(t)
+	d, pages, _ := stagedDashboard(t, "bronze_age")
+	pages.SwitchToPage("dashboard")
+	d.runForTest("charter")
+	d.inputField.SetText("build hut")
+	scr := drawOnWindow(t, d, pages, 150, 48)
+	x, y, _, _ := d.inputField.GetInnerRect()
+	at := x + kit.Width(d.inputField.GetLabel()) + 1 // on the "u" of "build"
+	scr.mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: at, Y: y})
+	scr.mouse(kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonLeft, X: at, Y: y})
+	d.inputField.InputHandler()(tev(kit.KeyRune, 'X', 0), func(tview.Primitive) {})
+	if got := d.inputField.GetText(); got != "bXuild hut" {
+		t.Errorf("after a click on the second letter and an X the bar reads %q", got)
+	}
+	if d.overlayMgr.ActiveName() != "charter" {
+		t.Errorf("the click closed the panel (%q is open)", d.overlayMgr.ActiveName())
 	}
 }
 

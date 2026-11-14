@@ -51,6 +51,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Inside: the stack of pages itself (menu, dashboard, panels, popups) is the UI kit's now, so the whole screen is one picture painted in one pass. A panel or popup still leaves the command bar and the page around it usable, by eye and by mouse.
 - Inside: the Map panel, the mini map, the theme picker's sample and every theme's weather are painted through the UI kit now, so nothing the game shows is drawn straight onto the terminal library's screen any more. They look as they did.
 - Inside: the whole dashboard is one picture painted by the UI kit (its body, the left column, the map dock, the panels and the Ledger), and the game's dialogs are the kit's too. Only the map and the mini map still draw themselves the old way.
 - Inside: every layout box in the game (the dashboard's frame, each popup, each menu page) is now laid out and painted by the UI kit as one picture a screen, where each box used to paint itself through the terminal library. Nothing looks or plays differently.
@@ -124,6 +125,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 
 ### Fixed
+- A popup's border is drawn on the popup's own colour again (the red of a danger dialog, the surface of the others). For a day it was drawn on the page's background.
 - **Retire ended-resource buildings.** Buildings producing ended resources (such as Wood Camps in the Space Age) are now retired on age advancement, save loading, and devmode age jumps: their counts and ruins are zeroed, active build queue and plan items cleared, unlock status removed, and assigned workers returned to the idle pool.
 - **The epoch card reaches your clipboard.** Press `c` on the Epoch screen (or type `epoch card`) to copy the card for Discord. Before, the screen told you to type a command that never got the key. A line on the screen confirms it, and the file is still saved.
 - The Factions panel no longer cuts each civilization's backstory off with "…" about halfway across a wide terminal. It wraps at the panel's real width.

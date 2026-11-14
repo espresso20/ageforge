@@ -5,14 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 )
 
 // bronzeTown is a dashboard in the Bronze Age with the given techs
 // researched on top of what the age has.
-func bronzeTown(t *testing.T, techs ...string) (*Dashboard, *tview.Pages) {
+func bronzeTown(t *testing.T, techs ...string) (*Dashboard, *nativePages) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	restoreForge(t)

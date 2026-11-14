@@ -833,7 +833,7 @@ func TestAnEpochIsBiggerThanAnAge(t *testing.T) {
 // one, with a clock and timers the test holds.
 type arrivalShow struct {
 	om     *OverlayManager
-	pages  *tview.Pages
+	pages  *nativePages
 	clock  time.Time
 	timers map[time.Duration]func()
 	closed int // times the keyboard went back to the prompt
@@ -843,7 +843,7 @@ type arrivalShow struct {
 }
 
 func newArrivalShow() *arrivalShow {
-	s := &arrivalShow{pages: tview.NewPages(), clock: time.Unix(3_000_000, 0), timers: map[time.Duration]func(){}}
+	s := &arrivalShow{pages: newNativePages(), clock: time.Unix(3_000_000, 0), timers: map[time.Duration]func(){}}
 	s.om = NewOverlayManager(s.pages, tview.NewApplication(), func() { s.closed++ })
 	s.om.after = func(d time.Duration, fn func()) func() {
 		s.timers[d] = fn

@@ -94,13 +94,15 @@ func newTreePage(native bool) *treePage {
 	title := surfaceText("A page", tview.AlignCenter)
 	if native {
 		body := newNativeFlex().AddItem(p.list, 0, 1, true).AddItem(p.text, 0, 2, false)
-		body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder))
+		body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder)).
+			SetBackgroundColor(theme.Color(theme.RoleNegative))
 		p.page = newNativeFlex().SetDirection(tview.FlexRow).
 			AddItem(title, 1, 0, false).AddItem(body, 0, 1, true).AddItem(newNativeBox(), 1, 0, false).AddItem(p.input, 1, 0, false)
 		return p
 	}
 	body := tview.NewFlex().AddItem(p.list, 0, 1, true).AddItem(p.text, 0, 2, false)
-	body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder))
+	body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder)).
+		SetBackgroundColor(theme.Color(theme.RoleNegative))
 	p.page = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(title, 1, 0, false).AddItem(body, 0, 1, true).AddItem(tview.NewBox(), 1, 0, false).AddItem(p.input, 1, 0, false)
 	return p

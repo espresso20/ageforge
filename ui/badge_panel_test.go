@@ -20,7 +20,7 @@ import (
 
 // badgeDashboard is a dashboard over a fresh game on a fresh account in a
 // temp data root, with its pages, for drawing the whole screen.
-func badgeDashboard(t *testing.T) (*Dashboard, *tview.Pages, *game.GameEngine) {
+func badgeDashboard(t *testing.T) (*Dashboard, *nativePages, *game.GameEngine) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()

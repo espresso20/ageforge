@@ -13,7 +13,7 @@ import (
 // galleryTown is a dashboard over a fresh engine and a state in which the
 // wonders of the first n ages are built (n = 0: none), the one after them
 // banked but not built.
-func galleryTown(t *testing.T, built int) (*Dashboard, *tview.Pages, game.GameState) {
+func galleryTown(t *testing.T, built int) (*Dashboard, *nativePages, game.GameState) {
 	t.Helper()
 	eng := game.NewGameEngine()
 	d, pages := newTestDashboard(eng)
