@@ -58,16 +58,16 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 			d.closeAncientMemoryModal()
 		})
 
-	btnRow := tview.NewFlex().SetDirection(tview.FlexColumn).
+	btnRow := newNativeFlex().SetDirection(tview.FlexColumn).
 		AddItem(btnAccept, 12, 0, true).
-		AddItem(tview.NewBox(), 2, 0, false).
+		AddItem(newNativeBox(), 2, 0, false).
 		AddItem(btnDecline, 12, 0, false)
 
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(header, 3, 0, false).
-		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(body, 7, 0, false).
-		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, true)
 	framed(inner, vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.09", " ✦ Ancient Memory "), theme.RoleAccent)
 
@@ -77,7 +77,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	ring := newButtonRing(d.app, func(p tview.Primitive) { d.memFocus = p })
 	ring.add(btnAccept, 'a')
 	ring.add(btnDecline, 'd')
-	captureKeys(modal, func(event *kit.Key) *kit.Key {
+	modal.SetInputCapture(func(event *kit.Key) *kit.Key {
 		if ring.key(event) {
 			return nil
 		}

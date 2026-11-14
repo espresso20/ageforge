@@ -60,11 +60,11 @@ func (h *nativeHost) showWidget(w kit.Widget) {
 // it covers. What is still a tview primitive inside the tree is drawn after.
 func (h *nativeHost) Draw(scr tcell.Screen) {
 	x, y, w, ht := h.GetRect()
+	h.root.Resize(max(w, 0), max(ht, 0))
+	h.root.Paint(&h.buf) // with no room too: what is inside is still placed
 	if w <= 0 || ht <= 0 {
 		return
 	}
-	h.root.Resize(w, ht)
-	h.root.Paint(&h.buf)
 	full := image.Rect(0, 0, h.buf.W, h.buf.H)
 	rects := []image.Rectangle{full}
 	if c, ok := h.self.(interface{ covered() []image.Rectangle }); ok {
@@ -96,7 +96,13 @@ func (h *nativeHost) Draw(scr tcell.Screen) {
 	if ns != nil {
 		ns.end()
 	}
-	if h.buf.CursorOn && h.HasFocus() {
+	// The widget answers for the focus, not the host's own box: a container
+	// has it when something inside it does.
+	focused := h.Box.HasFocus()
+	if f, ok := h.self.(interface{ HasFocus() bool }); ok {
+		focused = f.HasFocus()
+	}
+	if h.buf.CursorOn && focused {
 		scr.ShowCursor(x+h.buf.Cursor.X, y+h.buf.Cursor.Y)
 	}
 	walkWidgets(h.self, func(w kit.Widget) {

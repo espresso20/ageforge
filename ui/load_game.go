@@ -28,7 +28,7 @@ type loadGameBrowser struct {
 	pages  *tview.Pages
 	engine *game.GameEngine
 
-	root     *tview.Flex
+	root     *nativeFlex
 	list     *nativeList
 	detail   *nativeText
 	subtitle *nativeText
@@ -127,7 +127,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 	footer.changed()
 
 	// ── Layout ───────────────────────────────────────────────────────────────
-	b.root = tview.NewFlex().SetDirection(tview.FlexRow).
+	b.root = newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(b.subtitle, 1, 0, false).
 		AddItem(b.list, 0, 1, true).     // weighted — takes remaining space
@@ -475,18 +475,18 @@ func (b *loadGameBrowser) doRename() {
 		}
 	})
 
-	btnRow := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(tview.NewBox(), 0, 1, false).
+	btnRow := newNativeFlex().SetDirection(tview.FlexColumn).
+		AddItem(newNativeBox(), 0, 1, false).
 		AddItem(okBtn, 8, 0, false).
-		AddItem(tview.NewBox(), 2, 0, false).
+		AddItem(newNativeBox(), 2, 0, false).
 		AddItem(cancelBtn, 12, 0, false).
-		AddItem(tview.NewBox(), 0, 1, false)
+		AddItem(newNativeBox(), 0, 1, false)
 
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
-		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
-		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, false)
 	framed(inner, vibe.Line("ui.load_game.doRename.04", " Rename save "), theme.RoleAccent)
 

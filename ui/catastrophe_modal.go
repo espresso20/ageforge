@@ -226,14 +226,14 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		styleFilledButton(btnSuccumb, theme.RoleChip)
 	}
 
-	btnRow := tview.NewFlex().SetDirection(tview.FlexColumn).
+	btnRow := newNativeFlex().SetDirection(tview.FlexColumn).
 		AddItem(surfaceBox(), 0, 1, false).
 		AddItem(btnEndure, 14, 0, true).
 		AddItem(surfaceBox(), 4, 0, false).
 		AddItem(btnSuccumb, 14, 0, false).
 		AddItem(surfaceBox(), 0, 1, false)
 
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(surfaceText(l.header, tview.AlignCenter), lineCount(l.header), 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(surfaceText(l.endure, tview.AlignLeft), lineCount(l.endure), 0, false).
@@ -251,7 +251,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 	if succumbOpen {
 		ring.add(btnSuccumb, 's')
 	}
-	captureKeys(modal, func(event *kit.Key) *kit.Key {
+	modal.SetInputCapture(func(event *kit.Key) *kit.Key {
 		switch {
 		case event.Code == kit.KeyEsc:
 			d.closeCatastropheModal()

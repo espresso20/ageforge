@@ -418,9 +418,9 @@ const (
 // iconsWindow shows the flow in a box floating over the dashboard. Built on
 // first open; its text and buttons are replaced each time the flow moves.
 type iconsWindow struct {
-	root   *tview.Flex // the page: the box, centered
+	root   *nativeFlex // the page: the box, centered
 	body   *nativeText
-	btnRow *tview.Flex
+	btnRow *nativeFlex
 	ring   *buttonRing
 }
 
@@ -430,23 +430,23 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 	w := &iconsWindow{ring: newButtonRing(d.app, nil)}
 	w.body = newNativeText().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 	w.body.SetTextColor(theme.Color(theme.RoleText)).SetBackgroundColor(theme.Color(theme.RoleSurface))
-	w.btnRow = tview.NewFlex().SetDirection(tview.FlexColumn)
+	w.btnRow = newNativeFlex().SetDirection(tview.FlexColumn)
 	hint := surfaceText(theme.Paint(theme.RoleDim, vibe.Line("ui.icons.newIconsWindow.01", "Tab moves between buttons · Enter presses · Esc closes")), tview.AlignCenter)
 	// A Flex paints nothing of its own, so the margins beside the text are
 	// surface boxes: every cell inside the border belongs to something that
 	// clears it, or the dashboard shows through.
-	bodyRow := tview.NewFlex().
+	bodyRow := newNativeFlex().
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(w.body, 0, 1, false).
 		AddItem(surfaceBox(), 1, 0, false)
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(bodyRow, 0, 1, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(w.btnRow, 1, 0, true).
 		AddItem(hint, 1, 0, false)
 	framed(inner, vibe.Line("ui.icons.newIconsWindow.02", " Icons check "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 	w.root = floatingModal(inner, iconsWindowWidth, iconsWindowHeight)
-	captureKeys(w.root, d.iconsKey)
+	w.root.SetInputCapture(d.iconsKey)
 	return w
 }
 

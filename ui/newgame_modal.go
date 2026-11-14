@@ -174,7 +174,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 
 	// Opaque spacers between the fields: transparent ones would let the page
 	// beneath (the dashboard, for a Branch save) bleed through.
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).

@@ -63,10 +63,16 @@ func (f *foreign) Key(k kit.Key) bool {
 // buffer, and tview's, on the screen, which is off further on. Code that
 // asks a primitive for its rectangle still gets the right answer.
 func place(w kit.Widget, r image.Rectangle, off image.Point) {
+	placeAt(w, r.Min.X, r.Min.Y, r.Dx(), r.Dy(), off)
+}
+
+// placeAt is place for a size that may be below nothing, which tview hands
+// on as it is when the room has run out.
+func placeAt(w kit.Widget, x, y, wd, ht int, off image.Point) {
 	if p, ok := w.(interface{ SetRect(x, y, w, h int) }); ok {
-		p.SetRect(r.Min.X+off.X, r.Min.Y+off.Y, r.Dx(), r.Dy())
+		p.SetRect(x+off.X, y+off.Y, wd, ht)
 	}
-	w.Layout(r)
+	w.Layout(image.Rect(x, y, x+max(wd, 0), y+max(ht, 0)))
 }
 
 // screenOffset is how far a primitive's rectangle on the screen is from the
@@ -223,7 +229,7 @@ func (f *nativeFlex) framed() bool { return f.frame.Border != kit.BorderNone }
 // inner is the rectangle the items share: r, less the border.
 func (f *nativeFlex) inner(r image.Rectangle) image.Rectangle {
 	if f.framed() {
-		return r.Inset(1)
+		return image.Rect(r.Min.X+1, r.Min.Y+1, r.Min.X+1+max(r.Dx()-2, 0), r.Min.Y+1+max(r.Dy()-2, 0))
 	}
 	return r
 }
@@ -269,7 +275,7 @@ func (f *nativeFlex) Layout(r image.Rectangle) {
 			props += it.prop
 		}
 	}
-	at := in.Min
+	x, y := in.Min.X, in.Min.Y
 	for _, it := range f.items {
 		size := it.fixed
 		if size <= 0 {
@@ -280,15 +286,17 @@ func (f *nativeFlex) Layout(r image.Rectangle) {
 				props -= it.prop
 			}
 		}
-		box := image.Rect(at.X, at.Y, at.X+size, in.Max.Y)
-		if f.down {
-			box = image.Rect(at.X, at.Y, in.Max.X, at.Y+size)
-			at.Y += size
-		} else {
-			at.X += size
+		switch {
+		case it.w == nil:
+		case f.down:
+			placeAt(it.w, x, y, in.Dx(), size, off)
+		default:
+			placeAt(it.w, x, y, size, in.Dy(), off)
 		}
-		if it.w != nil {
-			place(it.w, box.Canon(), off)
+		if f.down {
+			y += size
+		} else {
+			x += size
 		}
 	}
 }

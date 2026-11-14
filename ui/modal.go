@@ -18,12 +18,12 @@ import (
 // solidBox is an opaque filler in a role's colour. tview only paints cells a
 // primitive draws, so every row and column inside a window must belong to a
 // primitive that clears it, or the page beneath shows through.
-func solidBox(role theme.Role) *tview.Box {
-	return tview.NewBox().SetBackgroundColor(theme.Color(role))
+func solidBox(role theme.Role) *nativeBox {
+	return newNativeBox().SetBackgroundColor(theme.Color(role))
 }
 
 // surfaceBox is solidBox in the modal surface colour.
-func surfaceBox() *tview.Box { return solidBox(theme.RoleSurface) }
+func surfaceBox() *nativeBox { return solidBox(theme.RoleSurface) }
 
 // surfaceText is a line (or lines) of text on the modal surface.
 func surfaceText(text string, align int) *nativeText {
@@ -33,7 +33,7 @@ func surfaceText(text string, align int) *nativeText {
 }
 
 // framed gives a window's rows a border and a title, both in the role's colour.
-func framed(inner *tview.Flex, title string, role theme.Role) *tview.Flex {
+func framed(inner *nativeFlex, title string, role theme.Role) *nativeFlex {
 	inner.SetBorder(true).
 		SetTitle(title).
 		SetTitleColor(theme.Color(role)).
@@ -44,16 +44,16 @@ func framed(inner *tview.Flex, title string, role theme.Role) *tview.Flex {
 // centerModal centers inner at width by height cells. A margin that is nil
 // draws nothing, so the page beneath stays visible around the window; a Box
 // margin clears it.
-func centerModal(inner tview.Primitive, width, height int, clearMargins bool) *tview.Flex {
+func centerModal(inner tview.Primitive, width, height int, clearMargins bool) *nativeFlex {
 	margin := func() tview.Primitive {
 		if clearMargins {
-			return tview.NewBox()
+			return newNativeBox()
 		}
 		return nil
 	}
-	return tview.NewFlex().
+	return newNativeFlex().
 		AddItem(margin(), 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(newNativeFlex().SetDirection(tview.FlexRow).
 			AddItem(margin(), 0, 1, false).
 			AddItem(inner, height, 0, true).
 			AddItem(margin(), 0, 1, false),
@@ -62,29 +62,24 @@ func centerModal(inner tview.Primitive, width, height int, clearMargins bool) *t
 }
 
 // centeredModal is a window with the page beneath cleared around it.
-func centeredModal(inner tview.Primitive, width, height int) *tview.Flex {
+func centeredModal(inner tview.Primitive, width, height int) *nativeFlex {
 	return centerModal(inner, width, height, true)
 }
 
 // floatingModal is a window with the page beneath still showing around it.
-func floatingModal(inner tview.Primitive, width, height int) *tview.Flex {
+func floatingModal(inner tview.Primitive, width, height int) *nativeFlex {
 	return centerModal(inner, width, height, false)
 }
 
-// keyCapturer is a box tview owns, whose keys can be taken before it sees
-// them.
+// keyCapturer is a primitive whose keys can be taken before it sees them.
 type keyCapturer interface {
-	SetInputCapture(capture func(event *tcell.EventKey) *tcell.EventKey) *tview.Box
+	SetInputCapture(capture func(*kit.Key) *kit.Key) *nativeHost
 }
-
-// captureKeys sets what sees box's keys first, for a capture that reads the
-// kit's keys.
-func captureKeys(box keyCapturer, fn func(*kit.Key) *kit.Key) { box.SetInputCapture(tcellCapture(fn)) }
 
 // takeKeys makes each key in keys run its function on the window and be
 // taken; any other key goes on to whatever has the focus.
 func takeKeys(window keyCapturer, keys map[kit.KeyCode]func()) {
-	captureKeys(window, func(ev *kit.Key) *kit.Key {
+	window.SetInputCapture(func(ev *kit.Key) *kit.Key {
 		run, ok := keys[ev.Code]
 		if !ok {
 			return ev
