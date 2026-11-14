@@ -1383,7 +1383,7 @@ func (d *Dashboard) showDevUnlockModal() {
 	const devUnlockPage = "__dev_unlock__"
 	// Transient dev-unlock modal: rebuilt each open and removed on close, so it
 	// construction-reads theme.Color without enrolling in Track (the theming design §3.3).
-	field := tview.NewInputField().
+	field := newNativeInput().
 		SetLabel("").
 		SetFieldWidth(40).
 		SetMaskCharacter('·').

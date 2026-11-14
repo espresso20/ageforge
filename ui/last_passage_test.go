@@ -101,7 +101,7 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 		t.Fatal("S acted on a closed Succumb")
 	}
 	front.InputHandler()(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), func(tview.Primitive) {})
-	if b, ok := d.catFocus.(*tview.Button); !ok || b.GetLabel() != tview.Escape("[E] ENDURE") {
+	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != tview.Escape("[E] ENDURE") {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}
 }

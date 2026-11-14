@@ -42,7 +42,7 @@ type accountsPanel struct {
 	root     *tview.Flex
 	title    *nativeText
 	subtitle *nativeText
-	list     *tview.List
+	list     *nativeList
 	detail   *nativeText
 	status   *nativeText // transient confirmation line ("Now playing as …")
 
@@ -86,7 +86,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	subtitle := p.subtitle
 
 	// ── Account list ───────────────────────────────────────────────────────────
-	p.list = tview.NewList()
+	p.list = newNativeList()
 	p.list.SetBorder(false)
 	// Selection backs light text → Selection role (dark slate under Forge), not the gold
 	// Accent — white-on-gold is unreadable (theme/themes_forge.go), same as load_game.
@@ -377,7 +377,7 @@ func (p *accountsPanel) doImport() {
 		SetTextAlign(tview.AlignCenter)
 	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	input := tview.NewInputField().
+	input := newNativeInput().
 		SetLabel(vibe.Line("ui.accounts_panel.doImport.01", "File path: ")).
 		SetText(defaultPath).
 		SetFieldWidth(48).
@@ -554,7 +554,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	input := tview.NewInputField().
+	input := newNativeInput().
 		SetLabel(vibe.Line("ui.accounts_panel.showWipeTypeGate.01", "Account name: ")).
 		SetLabelColor(theme.Color(theme.RoleOnNegative)).
 		SetFieldWidth(40).

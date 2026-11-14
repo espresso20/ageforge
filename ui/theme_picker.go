@@ -55,7 +55,7 @@ type themePicker struct {
 	engine *game.GameEngine
 
 	root    *tview.Flex
-	list    *tview.List
+	list    *nativeList
 	detail  *nativeText
 	preview *tview.Box
 
@@ -139,7 +139,7 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 		SetText(vibe.Line("ui.theme_picker.CreateThemePickerPage.02", "[gray]The preview is live. Pick a theme that reads well in your terminal; light or dark, every theme paints its own background.[-]"))
 
 	// ── Theme list ───────────────────────────────────────────────────────────
-	p.list = tview.NewList()
+	p.list = newNativeList()
 	p.list.SetBorder(true).SetTitle(vibe.Line("ui.theme_picker.CreateThemePickerPage.03", " Themes "))
 	// Selection colors are late-bound Refs, so they follow the live preview with
 	// no Track closure (theme/screen.go).

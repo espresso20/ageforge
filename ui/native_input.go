@@ -76,6 +76,12 @@ func (f *nativeInput) SetFieldBackgroundColor(c tcell.Color) *nativeInput {
 	return f
 }
 
+// SetMaskCharacter shows r in place of every typed character.
+func (f *nativeInput) SetMaskCharacter(r rune) *nativeInput {
+	f.in.Mask = r
+	return f
+}
+
 func (f *nativeInput) SetBackgroundColor(c tcell.Color) *nativeInput {
 	f.box.Ground = kitColor(c)
 	return f

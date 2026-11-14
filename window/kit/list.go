@@ -24,11 +24,19 @@ type List struct {
 	ClickChooses bool
 	// Bar shows a scroll bar down the right edge when rows are out of view.
 	Bar bool
+	// Style is how a row is painted; SelectedStyle replaces the theme's
+	// selection colors when its Fg is set.
+	Style, SelectedStyle Style
+	// TextOnly colors the selected row's text, not the whole row.
+	TextOnly bool
 
 	items []string
 	sel   int
 	top   int
 	hover int // one more than the row under the pointer; 0 for none
+	// lost is set when a Select could not scroll (no height yet): the next
+	// Layout brings the selection into view.
+	lost bool
 }
 
 // NewList is a list of rows.
@@ -72,8 +80,10 @@ func (l *List) Select(i int) {
 func (l *List) show() {
 	h := l.rect.Dy()
 	if h <= 0 {
+		l.lost = true
 		return
 	}
+	l.lost = false
 	if l.sel < l.top {
 		l.top = l.sel
 	}
@@ -91,6 +101,9 @@ func (l *List) CanFocus() bool { return len(l.items) > 0 }
 
 func (l *List) Layout(r image.Rectangle) {
 	l.Place(r)
+	if l.lost {
+		l.show()
+	}
 	l.clamp()
 }
 
@@ -116,15 +129,19 @@ func (l *List) Paint(p *Painter) {
 	w := l.textWidth()
 	for y := 0; y < r.Dy() && l.top+y < len(l.items); y++ {
 		i := l.top + y
-		var st Style
+		st := l.Style
 		switch {
+		case i == l.sel && l.SelectedStyle.Fg.IsSet():
+			st = l.SelectedStyle
 		case i == l.sel:
 			st = Style{Fg: Role(theme.RoleSelectionText), Bg: Role(theme.RoleSelection)}
 		case i == l.hover-1:
-			st = Style{Bg: Role(theme.RoleChip)}
+			st.Bg = Role(theme.RoleChip)
 		}
 		row := image.Rect(r.Min.X, r.Min.Y+y, r.Min.X+w, r.Min.Y+y+1)
-		p.Fill(row, st.Bg)
+		if !l.TextOnly || i != l.sel {
+			p.Fill(row, st.Bg)
+		}
 		p.Print(row.Min.X, row.Min.Y, w, l.items[i], st)
 	}
 	if w < r.Dx() {

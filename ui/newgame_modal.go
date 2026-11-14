@@ -111,7 +111,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 	if initial == "" {
 		initial = game.GenerateSaveName()
 	}
-	input := tview.NewInputField().
+	input := newNativeInput().
 		SetLabel(vibe.Line("ui.newgame_modal.showSaveNameModalOpts.01", "Name: ")).
 		SetText(initial).
 		SetFieldWidth(40).

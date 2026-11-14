@@ -29,7 +29,7 @@ type loadGameBrowser struct {
 	engine *game.GameEngine
 
 	root     *tview.Flex
-	list     *tview.List
+	list     *nativeList
 	detail   *nativeText
 	subtitle *nativeText
 
@@ -83,7 +83,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 		SetTextAlign(tview.AlignCenter)
 
 	// ── Save list ────────────────────────────────────────────────────────────
-	b.list = tview.NewList()
+	b.list = newNativeList()
 	b.list.SetBorder(false)
 	// Selection backs light text, so it uses the Selection role (dark slate under
 	// Forge), not Accent — white-on-gold is unreadable (theme/themes_forge.go).
@@ -427,7 +427,7 @@ func (b *loadGameBrowser) doRename() {
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	input := tview.NewInputField().
+	input := newNativeInput().
 		SetLabel(vibe.Line("ui.load_game.doRename.01", "Name: ")).
 		SetText(s.Name).
 		SetFieldWidth(40)
@@ -464,9 +464,9 @@ func (b *loadGameBrowser) doRename() {
 		b.selectByName(newName)
 	}
 
-	okBtn := tview.NewButton(vibe.Line("ui.load_game.doRename.02", "[ OK ]")).SetSelectedFunc(submit)
+	okBtn := newNativeButton(vibe.Line("ui.load_game.doRename.02", "[ OK ]")).SetSelectedFunc(submit)
 	styleFilledButton(okBtn, theme.RoleAccent)
-	cancelBtn := tview.NewButton(vibe.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
+	cancelBtn := newNativeButton(vibe.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
 
 	// Enter in the input field submits.
 	input.SetDoneFunc(func(key tcell.Key) {

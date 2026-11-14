@@ -15,6 +15,10 @@ type Button struct {
 	OnPress func()
 	// Disabled greys it out; it takes no focus and no press.
 	Disabled bool
+	// Style and FocusStyle, when their Fg is set, replace the theme's colors
+	// at rest and with the focus (or while pressed). A hover then shows no
+	// change of its own.
+	Style, FocusStyle Style
 
 	hover, down bool
 }
@@ -35,6 +39,10 @@ func (b *Button) style() Style {
 	switch {
 	case b.Disabled:
 		return Style{Fg: Role(theme.RoleDim), Bg: Role(theme.RoleChip)}
+	case (b.focused || b.down) && b.FocusStyle.Fg.IsSet():
+		return b.FocusStyle
+	case b.Style.Fg.IsSet() && !b.focused && !b.down:
+		return b.Style
 	case b.focused || b.down:
 		return Style{Fg: Role(theme.RoleOnAccent), Bg: Role(theme.RoleAccent), Attr: Bold}
 	case b.hover:

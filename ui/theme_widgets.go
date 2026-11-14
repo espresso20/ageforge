@@ -18,7 +18,7 @@ import (
 // with OnAccent, Negative with OnNegative; any other fill gets black or white,
 // whichever reads better (theme.BestOn). Buttons styled here are transient
 // (rebuilt with their modal), so construction-time colors are fine.
-func styleFilledButton(b *tview.Button, fill theme.Role) *tview.Button {
+func styleFilledButton(b *nativeButton, fill theme.Role) *nativeButton {
 	b.SetBackgroundColor(theme.Color(fill))
 	b.SetLabelColor(onFill(fill))
 	return b
