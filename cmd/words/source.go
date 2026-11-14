@@ -47,6 +47,7 @@ var notScanned = map[string]string{
 	"smoke":                 "the smoke suite",
 	"window":                "the window host: fonts, keys and drawing, no player text (the font row is in ui)",
 	"window/mapview":        "the window map renderer: pixels from the world model, no player text",
+	"window/kit":            "the UI kit: widgets that paint cells, no player text (screens in ui give it their words)",
 	"world":                 "the space model for the map: catalogues and internal keys, no player text (the ui reads the game's own words)",
 	"vibe":                  "the VibeMode switch, no text (its script is data, in words/vibe)",
 	"detmath":               "arithmetic, no text",
