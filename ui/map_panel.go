@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -123,7 +122,7 @@ func newMapPanel(mv *mapViews) *mapPanel {
 // open is the overlay's build: it runs on every Show. It picks up the
 // settings, points the map at the settlement or the world, and decides
 // whether this is the open that shows the icons hint.
-func (p *mapPanel) open(state game.GameState) tview.Primitive {
+func (p *mapPanel) open(state game.GameState) Primitive {
 	if p.settings != nil {
 		p.set = p.settings()
 	}
@@ -200,9 +199,6 @@ func (p *mapPanel) hide() {
 		p.space.Hide()
 	}
 }
-
-// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
-func (p *mapPanel) kitDrawn() {}
 
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *mapPanel) Draw(scr tcell.Screen) {

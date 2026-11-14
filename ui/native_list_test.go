@@ -53,7 +53,7 @@ func TestNativeListDrawsAsAListDid(t *testing.T) {
 		nl.SetHighlightFullLine(c.full)
 		if c.focus {
 			old.Focus(func(tview.Primitive) {})
-			nl.Focus(func(tview.Primitive) {})
+			nl.Focus(func(Primitive) {})
 		}
 		want, got := cellsOf(t, old, c.w, c.h), cellsOf(t, nl, c.w, c.h)
 		for i := range want {
@@ -80,7 +80,7 @@ func TestNativeListKeys(t *testing.T) {
 	}
 	cellsOf(t, l, 20, 3)
 	press := func(k kit.KeyCode, r rune) {
-		l.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
+		l.InputHandler()(tev(k, r, 0), func(Primitive) {})
 	}
 	at := func(want int, what string) {
 		t.Helper()

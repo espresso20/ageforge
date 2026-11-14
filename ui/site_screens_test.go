@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
@@ -85,7 +84,7 @@ type siteStage struct {
 	t      *testing.T
 	eng    *game.GameEngine
 	d      *Dashboard
-	app    *tview.Application
+	app    *appLoop
 	pages  *nativePages
 }
 
@@ -647,7 +646,7 @@ func (s *siteStage) saveBytes(name string) []byte {
 func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 	w.t.Helper()
 	must(w.t, theme.SetActive(theme.DefaultKey))
-	app, pages := tview.NewApplication(), newNativePages()
+	app, pages := newAppLoop(), newNativePages()
 	m := newMainMenu(app, pages, eng, siteMenuVersion)
 	still := time.Unix(0, 0)
 	m.start, m.now = still, func() time.Time { return still }
@@ -756,7 +755,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.close()
 	// The Wonders panel's gallery: G on the list opens it.
 	s.open("wonders", "")
-	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tev(kit.KeyRune, 'g', 0), func(tview.Primitive) {})
+	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tev(kit.KeyRune, 'g', 0), func(Primitive) {})
 	if !s.d.wonders.gallery {
 		t.Fatal("G did not open the gallery")
 	}

@@ -31,7 +31,7 @@ const guardPanelWidth = 120
 func guardPanels(t *testing.T, engine *game.GameEngine) map[string]OverlayProvider {
 	t.Helper()
 	pages := newNativePages()
-	d := NewDashboard(tview.NewApplication(), engine, pages)
+	d := NewDashboard(newAppLoop(), engine, pages)
 	// Panels that move (the epoch screen's shimmer) change with the clock by
 	// design, so these guards read them still.
 	still := resolveMapSettings(nil)

@@ -40,8 +40,6 @@ func newNativeInput() *nativeInput {
 	return f
 }
 
-func (f *nativeInput) kitDrawn() {}
-
 func (f *nativeInput) Children() []kit.Widget { return []kit.Widget{f.box} }
 
 func (f *nativeInput) Layout(r image.Rectangle) {

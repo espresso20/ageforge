@@ -47,8 +47,6 @@ func newNativeList() *nativeList {
 	return l
 }
 
-func (l *nativeList) kitDrawn() {}
-
 func (l *nativeList) Children() []kit.Widget { return []kit.Widget{l.box} }
 
 func (l *nativeList) Layout(r image.Rectangle) {

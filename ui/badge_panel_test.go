@@ -70,7 +70,7 @@ func TestBadgesCommandOpensTheCase(t *testing.T) {
 		if got := d.overlayMgr.ActiveName(); got != "badges" {
 			t.Fatalf("%s opened %q", cmd, got)
 		}
-		if !d.inputField.HasFocus() && d.app.GetFocus() != nil && d.app.GetFocus() != tview.Primitive(d.inputField) {
+		if !d.inputField.HasFocus() && d.app.GetFocus() != nil && d.app.GetFocus() != Primitive(d.inputField) {
 			t.Errorf("%s took the keyboard from the command bar", cmd)
 		}
 		if !strings.Contains(sidebarText(d.sidebarActive, 20, 30), theme.Selected(" badges     ")) {

@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -27,7 +26,7 @@ import (
 // own focus flag is the truth, and the tree's focus is read from the flags
 // before a key goes in (syncFocus).
 type nativeHost struct {
-	*tview.Box
+	*primBase
 	root *kit.Root
 	self kit.Widget // the widget the host shows
 	buf  kit.Buffer
@@ -42,7 +41,7 @@ type nativeHost struct {
 // newNativeHost hosts w. A screen that embeds the host calls it last, once
 // its own fields are set: the tree is laid out here.
 func newNativeHost(w kit.Widget) *nativeHost {
-	h := &nativeHost{Box: tview.NewBox()}
+	h := &nativeHost{primBase: newPrimBase()}
 	h.showWidget(w)
 	return h
 }
@@ -55,10 +54,9 @@ func (h *nativeHost) showWidget(w kit.Widget) {
 	h.root.Focus(w)
 }
 
-// Draw lays the tree out in the host's rectangle, paints it and puts it on
-// the screen, back to front: the cells of what the kit draws (all of them,
-// or only the rectangles a widget says it covers), and in its place among
-// them anything in the tree that still draws itself.
+// Draw lays the tree out in the host's rectangle, paints it and copies the
+// cells to the screen: all of them, or only the rectangles the widget says
+// it covers.
 func (h *nativeHost) Draw(scr tcell.Screen) {
 	x, y, w, ht := h.GetRect()
 	h.root.Resize(max(w, 0), max(ht, 0))
@@ -70,55 +68,8 @@ func (h *nativeHost) Draw(scr tcell.Screen) {
 	if ns != nil {
 		ns.begin(h, image.Pt(x, y))
 	}
-	h.emit(scr, ns, h.self)
-	if ns != nil {
-		ns.end()
-	}
-	// The widget answers for the focus, not the host's own box: a container
-	// has it when something inside it does.
-	focused := h.Box.HasFocus()
-	if f, ok := h.self.(interface{ HasFocus() bool }); ok {
-		focused = f.HasFocus()
-	}
-	if h.buf.CursorOn && focused {
-		scr.ShowCursor(x+h.buf.Cursor.X, y+h.buf.Cursor.Y)
-	}
-}
-
-// emit puts w on the screen. A widget with nothing in it that draws itself
-// is its covered cells, copied at once. Otherwise it is its own cells, then
-// what is inside it in order, so a primitive that draws itself lies over
-// what is under it and under what is over it.
-func (h *nativeHost) emit(scr tcell.Screen, ns *nativeScreen, w kit.Widget) {
-	if f, ok := w.(*foreign); ok {
-		if ns != nil {
-			ns.end() // its cells are tview's, not this host's
-		}
-		f.prim.Draw(scr)
-		if ns != nil {
-			ns.begin(h, h.at)
-		}
-		return
-	}
-	if !hasForeign(w) {
-		h.copy(scr, ns, coveredBy(w)...)
-		return
-	}
-	if o, ok := w.(interface{ own() []image.Rectangle }); ok {
-		h.copy(scr, ns, o.own()...)
-	}
-	if p, ok := w.(kit.Parent); ok {
-		for _, c := range p.Children() {
-			h.emit(scr, ns, c)
-		}
-	}
-}
-
-// copy writes the buffer's cells in rects to the screen.
-func (h *nativeHost) copy(scr tcell.Screen, ns *nativeScreen, rects ...image.Rectangle) {
-	x, y, _, _ := h.GetRect()
 	full := image.Rect(0, 0, h.buf.W, h.buf.H)
-	for _, r := range rects {
+	for _, r := range coveredBy(h.self) {
 		r = r.Intersect(full)
 		if ns != nil {
 			ns.claim(r.Add(image.Pt(x, y)))
@@ -137,30 +88,27 @@ func (h *nativeHost) copy(scr tcell.Screen, ns *nativeScreen, rects ...image.Rec
 			}
 		}
 	}
+	if ns != nil {
+		ns.end()
+	}
+	// The widget answers for the focus, not the host's own base: a
+	// container has it when something inside it does.
+	focused := h.primBase.HasFocus()
+	if f, ok := h.self.(interface{ HasFocus() bool }); ok {
+		focused = f.HasFocus()
+	}
+	if h.buf.CursorOn && focused {
+		scr.ShowCursor(x+h.buf.Cursor.X, y+h.buf.Cursor.Y)
+	}
 }
 
-// hasForeign reports whether w is, or has in it, a primitive that draws
-// itself.
-func hasForeign(w kit.Widget) (found bool) {
-	walkWidgets(w, func(c kit.Widget) {
-		if _, ok := c.(*foreign); ok {
-			found = true
-		}
-	})
-	return found
-}
-
-// InputHandler gives the tree the keys tview gives the host.
-func (h *nativeHost) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return func(ev *tcell.EventKey, _ func(tview.Primitive)) {
+// InputHandler gives the tree a key handed to the host.
+func (h *nativeHost) InputHandler() func(*tcell.EventKey, func(Primitive)) {
+	return func(ev *tcell.EventKey, _ func(Primitive)) {
 		h.syncFocus()
 		h.root.Key(kitKey(ev))
 	}
 }
-
-// boxFocused reports whether tview has given this very primitive the focus
-// (HasFocus also answers for what is inside a container).
-func (h *nativeHost) boxFocused() bool { return h.Box.HasFocus() }
 
 // syncFocus points the tree's keys at the primitive in it that tview has
 // given the focus, or at the host's own widget when none has it.
@@ -198,15 +146,6 @@ func (h *nativeHost) FilterKey(k kit.Key) (kit.Key, bool) {
 		return k, false
 	}
 	return *out, true
-}
-
-// keysIn is the key handler tview asks of box, for a handler that reads the
-// kit's keys: every screen does, and tview's keys stop here.
-func keysIn(box *tview.Box, fn func(k *kit.Key)) func(*tcell.EventKey, func(tview.Primitive)) {
-	return box.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		k := kitKey(ev)
-		fn(&k)
-	})
 }
 
 // tcellCapture is a capture that reads the kit's keys, as tview wants one:

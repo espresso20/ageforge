@@ -52,8 +52,6 @@ func (b *nativeButton) SetLabelColor(c tcell.Color) *nativeButton {
 // asks for has never shown at rest. The screens look as they did.
 func (b *nativeButton) SetBackgroundColor(tcell.Color) *nativeButton { return b }
 
-func (b *nativeButton) kitDrawn() {}
-
 func (b *nativeButton) Children() []kit.Widget { return []kit.Widget{b.btn} }
 
 func (b *nativeButton) Layout(r image.Rectangle) {

@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -14,7 +12,7 @@ import (
 
 const updateModalPage = "update_modal"
 
-func showUpdateCheck(app *tview.Application, pages *nativePages, currentVersion string) {
+func showUpdateCheck(app *appLoop, pages *nativePages, currentVersion string) {
 	modal := newNativeDialog(app).SetText(vibe.Line("ui.menu_update.showUpdateCheck.01", "Checking for updates..."))
 	pages.AddPage(updateModalPage, modal, true, true)
 
@@ -35,11 +33,11 @@ func showUpdateCheck(app *tview.Application, pages *nativePages, currentVersion 
 	}()
 }
 
-func showUpdateMsg(app *tview.Application, pages *nativePages, msg string) {
+func showUpdateMsg(app *appLoop, pages *nativePages, msg string) {
 	showButtonModal(app, pages, updateModalPage, msg, []string{txtOK.String()}, func(int, string) {})
 }
 
-func showUpdateConfirm(app *tview.Application, pages *nativePages, result game.UpdateResult) {
+func showUpdateConfirm(app *appLoop, pages *nativePages, result game.UpdateResult) {
 	msg := vibe.Sprintf(
 		"ui.menu_update.showUpdateConfirm.01", "  ✦  Update available  ✦\n\n  Latest:   %s\n  Current:  %s\n\nDownload and install now?",
 		result.LatestVersion, result.CurrentVersion,
@@ -52,7 +50,7 @@ func showUpdateConfirm(app *tview.Application, pages *nativePages, result game.U
 	})
 }
 
-func showUpdateInstall(app *tview.Application, pages *nativePages, result game.UpdateResult) {
+func showUpdateInstall(app *appLoop, pages *nativePages, result game.UpdateResult) {
 	modal := newNativeDialog(app).
 		SetText(vibe.Sprintf("ui.menu_update.showUpdateInstall.01", "Downloading %s...\n\n%s", result.LatestVersion, result.BinaryName))
 	pages.AddPage(updateModalPage, modal, true, true)

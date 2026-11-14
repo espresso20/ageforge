@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -18,7 +17,7 @@ import (
 type nativeDialog struct {
 	*nativeHost
 	kit.Base
-	app     *tview.Application
+	app     *appLoop
 	text    string
 	labels  []string
 	buttons []*nativeButton
@@ -33,13 +32,11 @@ type nativeDialog struct {
 
 // newNativeDialog is an empty dialog as tview makes one: on the contrast
 // ground, in the theme's text color.
-func newNativeDialog(app *tview.Application) *nativeDialog {
+func newNativeDialog(app *appLoop) *nativeDialog {
 	d := &nativeDialog{app: app, ground: kit.Role(theme.RoleSelection), ink: kit.Role(theme.RoleText)}
 	d.nativeHost = newNativeHost(d)
 	return d
 }
-
-func (d *nativeDialog) kitDrawn() {}
 
 func (d *nativeDialog) SetText(s string) *nativeDialog {
 	d.text = s
@@ -172,9 +169,9 @@ func (d *nativeDialog) move(by int) {
 }
 
 // Focus gives the keyboard to the button it was last on.
-func (d *nativeDialog) Focus(delegate func(p tview.Primitive)) {
+func (d *nativeDialog) Focus(delegate func(p Primitive)) {
 	if len(d.buttons) == 0 {
-		d.Box.Focus(delegate)
+		d.primBase.Focus(delegate)
 		return
 	}
 	delegate(d.buttons[d.at])
@@ -187,5 +184,5 @@ func (d *nativeDialog) HasFocus() bool {
 			return true
 		}
 	}
-	return d.Box.HasFocus()
+	return d.primBase.HasFocus()
 }

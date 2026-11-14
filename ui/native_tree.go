@@ -4,60 +4,25 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// native_tree.go is how a screen becomes one kit tree while tview still runs
-// the pages and the focus. A layout box (nativeFlex) takes each child that
-// the kit draws into its own tree: it lays the child out, paints it into the
-// one buffer and sends it the mouse, and the child's own host goes unused.
-// A child that still draws itself on the screen (the map, a screen with
-// weather) stands in the tree as a foreign and is drawn after the cells.
+// native_tree.go is the layout boxes the screens are built from, as kit
+// containers: a flex, a group that places its children by its own rule, a
+// filler, and a canvas for the few things still drawn cell by cell. A
+// container lays each child out, paints it into the page's one buffer and
+// sends it the mouse.
 
-// A kitDrawn primitive draws everything it shows in Paint and takes its keys
-// in Key, so a kit container can take it into its tree.
-type kitDrawn interface {
-	kit.Widget
-	kitDrawn()
-}
-
-// asWidget is p as it stands in a kit tree: itself when the kit draws it, a
-// foreign otherwise, and nil for nil (a gap).
-func asWidget(p tview.Primitive) kit.Widget {
+// widgetOf is p as a kit container holds it: itself, or nothing for nil (a
+// gap). A nil of some pointer type is no primitive either.
+func widgetOf(p Primitive) kit.Widget {
 	if p == nil {
 		return nil
 	}
-	if w, ok := p.(kitDrawn); ok {
-		return w
-	}
-	return &foreign{prim: p}
-}
-
-// A foreign is a primitive that still draws itself on the screen, standing
-// in a kit tree: it is given its rectangle there, drawn after the tree's
-// cells (nativeHost.Draw), and handed the keys when tview says it has them.
-type foreign struct {
-	kit.Base
-	prim tview.Primitive
-}
-
-func (f *foreign) Layout(r image.Rectangle) { f.Place(r) }
-func (f *foreign) Paint(*kit.Painter)       {}
-func (f *foreign) SetRect(x, y, w, h int)   { f.prim.SetRect(x, y, w, h) }
-func (f *foreign) boxFocused() bool         { return f.prim.HasFocus() }
-
-// covered: none of its cells are the tree's to copy.
-func (f *foreign) covered() []image.Rectangle { return nil }
-
-func (f *foreign) Key(k kit.Key) bool {
-	if h := f.prim.InputHandler(); h != nil {
-		h(tcellKey(k), func(tview.Primitive) {})
-	}
-	return true
+	return p
 }
 
 // place gives a child of a kit container its rectangle: the kit's, in the
@@ -124,7 +89,6 @@ func (b *nativeBox) SetBackgroundColor(c tcell.Color) *nativeBox {
 	return b
 }
 
-func (b *nativeBox) kitDrawn()                {}
 func (b *nativeBox) Layout(r image.Rectangle) { b.Place(r) }
 func (b *nativeBox) Paint(p *kit.Painter)     { p.Fill(b.Bounds(), b.ground) }
 
@@ -139,17 +103,15 @@ type nativeGroup struct {
 	// put for each one that shows.
 	arrange func(x, y, w, h int)
 	kids    []kit.Widget
-	seen    map[tview.Primitive]kit.Widget
+	seen    map[Primitive]kit.Widget
 	off     image.Point
 }
 
 func newNativeGroup(arrange func(x, y, w, h int)) *nativeGroup {
-	g := &nativeGroup{arrange: arrange, seen: map[tview.Primitive]kit.Widget{}}
+	g := &nativeGroup{arrange: arrange, seen: map[Primitive]kit.Widget{}}
 	g.nativeHost = newNativeHost(g)
 	return g
 }
-
-func (g *nativeGroup) kitDrawn() {}
 
 func (g *nativeGroup) Children() []kit.Widget { return g.kids }
 
@@ -163,10 +125,10 @@ func (g *nativeGroup) Layout(r image.Rectangle) {
 }
 
 // put shows p at x, y, w by h cells, in the coordinates arrange was given.
-func (g *nativeGroup) put(p tview.Primitive, x, y, w, h int) {
+func (g *nativeGroup) put(p Primitive, x, y, w, h int) {
 	child, ok := g.seen[p]
 	if !ok {
-		child = asWidget(p)
+		child = widgetOf(p)
 		g.seen[p] = child
 	}
 	g.kids = append(g.kids, child)
@@ -200,14 +162,16 @@ type nativeFlex struct {
 	kit.Base
 	down  bool // items one under the other (flexRow)
 	items []flexItem
-	// frame is the border and title, when SetBorder asked for one.
+	// frame is the border and title, when SetBorder asked for one, and
+	// ground what they are drawn on (unset: the page's).
 	frame    kit.Panel
+	ground   kit.Color
 	drawFunc func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)
 }
 
 type flexItem struct {
-	prim        tview.Primitive // as it was added; nil for a gap
-	w           kit.Widget      // prim in the tree
+	prim        Primitive  // as it was added; nil for a gap
+	w           kit.Widget // prim in the tree
 	fixed, prop int
 	focus       bool
 }
@@ -219,8 +183,6 @@ func newNativeFlex() *nativeFlex {
 	f.nativeHost = newNativeHost(f)
 	return f
 }
-
-func (f *nativeFlex) kitDrawn() {}
 
 // flexDir is which way a flex lays its items: side by side, or one under
 // the other (rows).
@@ -239,12 +201,12 @@ func (f *nativeFlex) SetDirection(direction flexDir) *nativeFlex {
 // AddItem adds p at the end: fixed cells along the flex, or with fixed 0 a
 // share of what is left in proportion to prop. The first item added with
 // focus takes the keyboard when the flex is given it. A nil p is a gap.
-func (f *nativeFlex) AddItem(p tview.Primitive, fixed, prop int, focus bool) *nativeFlex {
-	f.items = append(f.items, flexItem{prim: p, w: asWidget(p), fixed: fixed, prop: prop, focus: focus})
+func (f *nativeFlex) AddItem(p Primitive, fixed, prop int, focus bool) *nativeFlex {
+	f.items = append(f.items, flexItem{prim: p, w: widgetOf(p), fixed: fixed, prop: prop, focus: focus})
 	return f
 }
 
-func (f *nativeFlex) RemoveItem(p tview.Primitive) *nativeFlex {
+func (f *nativeFlex) RemoveItem(p Primitive) *nativeFlex {
 	for i := len(f.items) - 1; i >= 0; i-- {
 		if f.items[i].prim == p {
 			f.items = append(f.items[:i], f.items[i+1:]...)
@@ -258,7 +220,7 @@ func (f *nativeFlex) Clear() *nativeFlex {
 	return f
 }
 
-func (f *nativeFlex) ResizeItem(p tview.Primitive, fixed, prop int) *nativeFlex {
+func (f *nativeFlex) ResizeItem(p Primitive, fixed, prop int) *nativeFlex {
 	for i := range f.items {
 		if f.items[i].prim == p {
 			f.items[i].fixed, f.items[i].prop = fixed, prop
@@ -287,6 +249,13 @@ func (f *nativeFlex) SetTitleColor(c tcell.Color) *nativeFlex {
 
 func (f *nativeFlex) SetBorderColor(c tcell.Color) *nativeFlex {
 	f.frame.BorderStyle.Fg = kitColor(c)
+	return f
+}
+
+// SetBackgroundColor sets the ground the border and the title are drawn on.
+// Inside the border the flex still paints nothing: its items do.
+func (f *nativeFlex) SetBackgroundColor(c tcell.Color) *nativeFlex {
+	f.ground = kitColor(c)
 	return f
 }
 
@@ -379,6 +348,9 @@ func (f *nativeFlex) Layout(r image.Rectangle) {
 // draws it, and the items the kit draws.
 func (f *nativeFlex) Paint(p *kit.Painter) {
 	if f.framed() {
+		for _, r := range f.own() {
+			p.Fill(r, f.ground)
+		}
 		fr := f.frame
 		if f.HasFocus() {
 			fr.Border = kit.BorderDouble
@@ -425,14 +397,14 @@ func (f *nativeFlex) Covers(pt image.Point) bool {
 
 // Focus gives the keyboard to the first item added with focus, or keeps it
 // when there is none: as tview's Flex does.
-func (f *nativeFlex) Focus(delegate func(p tview.Primitive)) {
+func (f *nativeFlex) Focus(delegate func(p Primitive)) {
 	for _, it := range f.items {
 		if it.prim != nil && it.focus {
 			delegate(it.prim)
 			return
 		}
 	}
-	f.Box.Focus(delegate)
+	f.primBase.Focus(delegate)
 }
 
 // HasFocus reports whether the flex or anything in it holds the keyboard.
@@ -442,7 +414,7 @@ func (f *nativeFlex) HasFocus() bool {
 			return true
 		}
 	}
-	return f.Box.HasFocus()
+	return f.primBase.HasFocus()
 }
 
 // A nativeCanvas is a box filled by a func that still writes tcell's cells,
@@ -459,7 +431,6 @@ func newNativeCanvas(draw func(scr mapstyle.Cells, x, y, w, h int)) *nativeCanva
 	return c
 }
 
-func (c *nativeCanvas) kitDrawn()                {}
 func (c *nativeCanvas) Layout(r image.Rectangle) { c.Place(r) }
 
 // Paint clears the box to the page's ground, as a tview.Box did, then draws.

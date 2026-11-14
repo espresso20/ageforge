@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
@@ -35,7 +33,7 @@ const (
 // and a sensible selection restored after switch/new/import/wipe — the same shape as
 // loadGameBrowser (load_game.go).
 type accountsPanel struct {
-	app    *tview.Application
+	app    *appLoop
 	pages  *nativePages
 	engine *game.GameEngine
 
@@ -61,12 +59,12 @@ type accountsPanel struct {
 // live detail refresh wired through SetChangedFunc. Per the tview deadlock rule (Trello
 // TCGiSWYX) NO handler here calls QueueUpdateDraw — tview redraws automatically after each
 // input event, so SetText / re-filling the list / applyAccountTheme all paint on the next frame.
-func CreateAccountsPage(app *tview.Application, pages *nativePages, engine *game.GameEngine, returnPage string) tview.Primitive {
+func CreateAccountsPage(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) Primitive {
 	return newAccountsPanel(app, pages, engine, returnPage).root
 }
 
 // newAccountsPanel builds the panel; its root is the page.
-func newAccountsPanel(app *tview.Application, pages *nativePages, engine *game.GameEngine, returnPage string) *accountsPanel {
+func newAccountsPanel(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) *accountsPanel {
 	p := &accountsPanel{
 		app:        app,
 		pages:      pages,
@@ -480,7 +478,7 @@ var wipeSavesLabel = vibe.E("ui.accounts_panel.wipeSavesLabel.01", "Delete all s
 // dialog the main menu's "Delete all saves" always showed; the entry now lives here, away
 // from Quit, and names the account it acts on. confirmed runs on the destructive button;
 // done runs after either answer, once the dialog is gone.
-func showWipeSavesConfirmation(app *tview.Application, pages *nativePages, account string, confirmed, done func()) {
+func showWipeSavesConfirmation(app *appLoop, pages *nativePages, account string, confirmed, done func()) {
 	text := vibe.Sprintf("ui.accounts_panel.showWipeSavesConfirmation.01", "⚠  Delete all saves?\n\nEvery save of the account \"%s\" is deleted.\nThose runs and their prestige are lost.\nThe account (themes, lifetime stats, badges) is kept.\n\nThis cannot be undone.", account)
 	buttons := []string{vibe.Line("ui.accounts_panel.showWipeSavesConfirmation.02", "Cancel"), wipeSavesLabel.String()}
 	styleDangerModal(showButtonModal(app, pages, accountsSavesConfirm, text, buttons, func(_ int, buttonLabel string) {

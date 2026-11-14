@@ -4,7 +4,6 @@ import (
 	"unicode"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -44,8 +43,8 @@ func framed(inner *nativeFlex, title string, role theme.Role) *nativeFlex {
 // centerModal centers inner at width by height cells. A margin that is nil
 // draws nothing, so the page beneath stays visible around the window; a Box
 // margin clears it.
-func centerModal(inner tview.Primitive, width, height int, clearMargins bool) *nativeFlex {
-	margin := func() tview.Primitive {
+func centerModal(inner Primitive, width, height int, clearMargins bool) *nativeFlex {
+	margin := func() Primitive {
 		if clearMargins {
 			return newNativeBox()
 		}
@@ -62,12 +61,12 @@ func centerModal(inner tview.Primitive, width, height int, clearMargins bool) *n
 }
 
 // centeredModal is a window with the page beneath cleared around it.
-func centeredModal(inner tview.Primitive, width, height int) *nativeFlex {
+func centeredModal(inner Primitive, width, height int) *nativeFlex {
 	return centerModal(inner, width, height, true)
 }
 
 // floatingModal is a window with the page beneath still showing around it.
-func floatingModal(inner tview.Primitive, width, height int) *nativeFlex {
+func floatingModal(inner Primitive, width, height int) *nativeFlex {
 	return centerModal(inner, width, height, false)
 }
 
@@ -92,7 +91,7 @@ func takeKeys(window keyCapturer, keys map[kit.KeyCode]func()) {
 // showButtonModal shows text with buttons over the page. A button, or Esc
 // (button -1), removes the window and then calls done with the button's index
 // and label.
-func showButtonModal(app *tview.Application, pages *nativePages, page, text string, buttons []string, done func(button int, label string)) *nativeDialog {
+func showButtonModal(app *appLoop, pages *nativePages, page, text string, buttons []string, done func(button int, label string)) *nativeDialog {
 	modal := newNativeDialog(app).
 		SetText(text).
 		AddButtons(buttons).
@@ -107,21 +106,21 @@ func showButtonModal(app *tview.Application, pages *nativePages, page, text stri
 // buttonRing is the buttons of a window and the one the keyboard is on.
 // Tab and the arrows move it; a button's letter presses that button.
 type buttonRing struct {
-	app     *tview.Application
-	buttons []tview.Primitive
+	app     *appLoop
+	buttons []Primitive
 	letters []rune // lower case, one to a button; 0 for none
 	at      int
 	// moved is told which button has the keyboard, so the window can hand it
 	// back there after another window closes.
-	moved func(tview.Primitive)
+	moved func(Primitive)
 }
 
-func newButtonRing(app *tview.Application, moved func(tview.Primitive)) *buttonRing {
+func newButtonRing(app *appLoop, moved func(Primitive)) *buttonRing {
 	return &buttonRing{app: app, moved: moved}
 }
 
 // add puts a button on the ring; letter presses it (0: no letter).
-func (r *buttonRing) add(b tview.Primitive, letter rune) {
+func (r *buttonRing) add(b Primitive, letter rune) {
 	r.buttons = append(r.buttons, b)
 	r.letters = append(r.letters, unicode.ToLower(letter))
 }

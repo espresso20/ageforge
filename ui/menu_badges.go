@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
@@ -25,8 +24,8 @@ type menuBadges struct {
 }
 
 // InputHandler: the case's own keys, and Esc (or q) to close.
-func (b *menuBadges) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(b.Box, func(ev *kit.Key) { b.Key(*ev) })
+func (b *menuBadges) InputHandler() func(*tcell.EventKey, func(Primitive)) {
+	return keysIn(func(ev *kit.Key) { b.Key(*ev) })
 }
 
 // Key is the same, where the page stands in a kit tree.
@@ -44,7 +43,7 @@ func (b *menuBadges) Key(k kit.Key) bool {
 
 // openMenuBadges shows the badge case over the menu and returns to
 // returnPage when it is closed.
-func openMenuBadges(app *tview.Application, pages *nativePages, engine *game.GameEngine, returnPage string) {
+func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) {
 	p := newBadgePanel()
 	p.settings = func() mapSettings { return resolveMapSettings(engine.Account()) }
 	// The case reads a snapshot's account part and nothing else of it.

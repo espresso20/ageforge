@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -182,26 +180,26 @@ func NewEconomyTab() *EconomyTab {
 }
 
 // AddToLeftColumn puts the Dashboard's log panel at the foot of the left column.
-func (t *EconomyTab) AddToLeftColumn(item tview.Primitive) {
+func (t *EconomyTab) AddToLeftColumn(item Primitive) {
 	t.leftCol.log = item
 }
 
 // AddPeopleBox hands the left column the People box, which it draws in the
 // right half of the Under construction row when rich says the terminal gets
 // the rich layout (dash_layout.go); height is the box's height in that layout.
-func (t *EconomyTab) AddPeopleBox(people tview.Primitive, rich func() bool, height func() int) {
+func (t *EconomyTab) AddPeopleBox(people Primitive, rich func() bool, height func() int) {
 	t.leftCol.people, t.leftCol.rich, t.leftCol.peopleHeight = people, rich, height
 }
 
 // WrapBuildings replaces the Buildings list in the layout with wrap(list),
 // so the Dashboard can dock the mini map above it (mapDock).
-func (t *EconomyTab) WrapBuildings(wrap func(list tview.Primitive) tview.Primitive) {
+func (t *EconomyTab) WrapBuildings(wrap func(list Primitive) Primitive) {
 	t.root.RemoveItem(t.buildingTV)
 	t.root.AddItem(wrap(t.buildingTV), 0, 1, false)
 }
 
 // Root returns the root primitive
-func (t *EconomyTab) Root() tview.Primitive {
+func (t *EconomyTab) Root() Primitive {
 	return t.root
 }
 
@@ -245,11 +243,11 @@ func (t *EconomyTab) NextResourcePage() bool {
 // right, and is as tall as the People box.
 type econColumn struct {
 	*nativeGroup
-	resources, construction tview.Primitive
-	log                     tview.Primitive
+	resources, construction Primitive
+	log                     Primitive
 	// people is the People box, drawn in the right half of the Under
 	// construction row when rich says the terminal gets the rich layout.
-	people tview.Primitive
+	people Primitive
 	// rich reports the layout; peopleHeight is the People box's height,
 	// border included, in it (for a terminal that tall).
 	rich         func() bool

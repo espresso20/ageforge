@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 // A MacBook has no Page Up, Page Down, Home or End, and Fn+arrows are often
@@ -22,7 +21,7 @@ import (
 
 // macKeys returns the key the program should see for ev, given the widget
 // that has the focus.
-func macKeys(ev *tcell.EventKey, focus tview.Primitive) *tcell.EventKey {
+func macKeys(ev *tcell.EventKey, focus Primitive) *tcell.EventKey {
 	if ev == nil {
 		return ev
 	}
@@ -60,7 +59,7 @@ func macKeys(ev *tcell.EventKey, focus tview.Primitive) *tcell.EventKey {
 
 // hasText reports whether the focused widget is a text field with something
 // typed in it.
-func hasText(focus tview.Primitive) bool {
+func hasText(focus Primitive) bool {
 	f, ok := focus.(interface{ GetText() string })
 	return ok && f.GetText() != ""
 }

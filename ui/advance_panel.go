@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -69,7 +68,7 @@ func (d *Dashboard) registerAdvancePanel() {
 }
 
 // open is the overlay's build: it runs on every Show, on the first pillar.
-func (p *advancePanel) open(state game.GameState) tview.Primitive {
+func (p *advancePanel) open(state game.GameState) Primitive {
 	p.ui = advanceUI{}
 	p.update(state)
 	return overBar(p)
@@ -90,9 +89,6 @@ func (p *advancePanel) update(state game.GameState) {
 	p.view = v
 	p.ui.sel = clamp(p.ui.sel, 0, max(0, len(v.Pillars)-1))
 }
-
-// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
-func (p *advancePanel) kitDrawn() {}
 
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *advancePanel) Draw(scr tcell.Screen) {

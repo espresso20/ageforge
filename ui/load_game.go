@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -24,7 +22,7 @@ const loadGamePage = "load_game"
 // Everything the input handlers and refresh logic touch hangs off this struct so
 // the page can be rebuilt cheaply and selection restored after delete/rename/dup.
 type loadGameBrowser struct {
-	app    *tview.Application
+	app    *appLoop
 	pages  *nativePages
 	engine *game.GameEngine
 
@@ -58,12 +56,12 @@ type loadGameBrowser struct {
 // backPage names the page to return to on Back/Esc; startOnLoad decides whether
 // a successful load should start the engine (true from the splash for the first
 // start, false mid-game where the engine is already running).
-func CreateLoadGamePage(app *tview.Application, pages *nativePages, engine *game.GameEngine, backPage string, startOnLoad bool) tview.Primitive {
+func CreateLoadGamePage(app *appLoop, pages *nativePages, engine *game.GameEngine, backPage string, startOnLoad bool) Primitive {
 	return newLoadGameBrowser(app, pages, engine, backPage, startOnLoad).root
 }
 
 // newLoadGameBrowser builds the browser; its root is the page.
-func newLoadGameBrowser(app *tview.Application, pages *nativePages, engine *game.GameEngine, backPage string, startOnLoad bool) *loadGameBrowser {
+func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngine, backPage string, startOnLoad bool) *loadGameBrowser {
 	b := &loadGameBrowser{
 		app:         app,
 		pages:       pages,
@@ -491,7 +489,7 @@ func (b *loadGameBrowser) doRename() {
 	framed(inner, vibe.Line("ui.load_game.doRename.04", " Rename save "), theme.RoleAccent)
 
 	// Tab cycles input → OK → Cancel; Esc cancels from anywhere on the modal.
-	focusOrder := []tview.Primitive{input, okBtn, cancelBtn}
+	focusOrder := []Primitive{input, okBtn, cancelBtn}
 	focusIdx := 0
 	cycle := func(step int) {
 		focusIdx = (focusIdx + step + len(focusOrder)) % len(focusOrder)

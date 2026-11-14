@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
@@ -12,7 +11,7 @@ import (
 
 // App manages the tview application and page routing
 type App struct {
-	tviewApp  *tview.Application
+	tviewApp  *appLoop
 	pages     *nativePages
 	engine    *game.GameEngine
 	dashboard *Dashboard
@@ -37,7 +36,7 @@ func NewApp(engine *game.GameEngine, version string) *App {
 	_ = theme.SetActive(theme.DefaultKey)
 
 	a := &App{
-		tviewApp: tview.NewApplication(),
+		tviewApp: newAppLoop(),
 		pages:    newNativePages(),
 		engine:   engine,
 		version:  version,

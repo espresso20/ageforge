@@ -1,9 +1,5 @@
 package ui
 
-import (
-	"github.com/rivo/tview"
-)
-
 // dash_layout.go is the dashboard's body: the economy tab on the left and
 // the Panels column on the right, laid out for the terminal they are drawn
 // on. A big terminal gets the rich layout; a small one keeps the classic
@@ -54,7 +50,7 @@ func richPeopleHeight(termH int) int {
 // terminal (screen), so a resize shows the right one at once.
 type dashBody struct {
 	*nativeGroup
-	econ, panels, people tview.Primitive
+	econ, panels, people Primitive
 	// screen is the terminal's size.
 	screen func() (w, h int)
 	// classicPeople is the People box's height, border included, in the
@@ -68,7 +64,7 @@ type dashBody struct {
 	rich     bool
 }
 
-func newDashBody(econ, panels, people tview.Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
+func newDashBody(econ, panels, people Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
 	b := &dashBody{econ: econ, panels: panels, people: people, screen: screen, classicPeople: classicPeople}
 	b.nativeGroup = newNativeGroup(b.arrange)
 	return b

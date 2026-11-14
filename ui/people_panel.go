@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -41,7 +40,7 @@ func newPeoplePanel() *peoplePanel {
 }
 
 // open is the overlay's build: it runs on every Show, on the Overview.
-func (p *peoplePanel) open(state game.GameState) tview.Primitive {
+func (p *peoplePanel) open(state game.GameState) Primitive {
 	p.state = state
 	p.view = peopleView{}
 	return overBar(p)
@@ -52,9 +51,6 @@ func (p *peoplePanel) update(state game.GameState) {
 	p.state = state
 	p.view.row = clamp(p.view.row, 0, peopleRows(state, p.view.tab)-1)
 }
-
-// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
-func (p *peoplePanel) kitDrawn() {}
 
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *peoplePanel) Draw(scr tcell.Screen) {

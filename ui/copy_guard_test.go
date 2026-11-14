@@ -53,11 +53,11 @@ type copyLit struct {
 	pos  string
 	text string
 	// usageForm: a registry help form in ui/commands.go ("sell <building>
-	// [count]"). Forms reach the screen only through helpForm (tview.Escape)
+	// [count]"). Forms reach the screen only through helpForm (kit.Escape)
 	// or a usage line in the log (safeTags); TestUsageFormsSurviveTview
 	// proves both, so the bracket guard skips them.
 	usageForm bool
-	// escaped: the literal is an argument to tview.Escape or lit(), so its
+	// escaped: the literal is an argument to kit.Escape or lit(), so its
 	// brackets print as written.
 	escaped bool
 }
@@ -69,7 +69,7 @@ func isEscapeCall(c *ast.CallExpr) bool {
 		return f.Name == "lit"
 	case *ast.SelectorExpr:
 		if pkg, ok := f.X.(*ast.Ident); ok {
-			return pkg.Name == "tview" && f.Sel.Name == "Escape"
+			return pkg.Name == "kit" && f.Sel.Name == "Escape"
 		}
 	}
 	return false
@@ -109,7 +109,7 @@ func collectCopyLiterals(t *testing.T) []copyLit {
 				case *ast.ImportSpec:
 					return false
 				case *ast.CallExpr:
-					// Text passed through tview.Escape or lit() prints its
+					// Text passed through kit.Escape or lit() prints its
 					// brackets literally, so it is not checked for them. The
 					// other guards still see it via the literal itself.
 					if isEscapeCall(x) {

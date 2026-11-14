@@ -125,6 +125,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 
 ### Fixed
+- A popup's border is drawn on the popup's own colour again (the red of a danger dialog, the surface of the others). For a day it was drawn on the page's background.
 - **Retire ended-resource buildings.** Buildings producing ended resources (such as Wood Camps in the Space Age) are now retired on age advancement, save loading, and devmode age jumps: their counts and ruins are zeroed, active build queue and plan items cleared, unlock status removed, and assigned workers returned to the idle pool.
 - **The epoch card reaches your clipboard.** Press `c` on the Epoch screen (or type `epoch card`) to copy the card for Discord. Before, the screen told you to type a command that never got the key. A line on the screen confirms it, and the file is still saved.
 - The Factions panel no longer cuts each civilization's backstory off with "…" about halfway across a wide terminal. It wraps at the panel's real width.

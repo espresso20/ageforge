@@ -8,7 +8,6 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 // OverlayProvider is a function that generates the full text content for a
@@ -21,8 +20,8 @@ type OverlayProvider func(state game.GameState, w int) string
 type overlayEntry struct {
 	title   vibe.Entry
 	tv      *nativeText
-	frame   *panelFrame     // the box, name and keys the TextView is drawn in
-	root    tview.Primitive // the frame over the command bar — added/removed from pages.Pages
+	frame   *panelFrame // the box, name and keys the TextView is drawn in
+	root    Primitive   // the frame over the command bar — added/removed from pages.Pages
 	provide OverlayProvider
 	// keys, when set, sees every key but Esc while the overlay has focus and
 	// returns nil to consume it (SetKeyHandler). Runs on the tview goroutine,
@@ -42,12 +41,12 @@ type overlayEntry struct {
 	notice func() string
 }
 
-// widgetEntry backs an overlay whose content is any tview.Primitive (e.g. a custom
+// widgetEntry backs an overlay whose content is any Primitive (e.g. a custom
 // map canvas). When refreshFn is set, Refresh calls it in-place instead of
 // rebuilding and replacing the page (used for panels that manage their own state).
 type widgetEntry struct {
 	title     vibe.Entry
-	build     func(state game.GameState) tview.Primitive
+	build     func(state game.GameState) Primitive
 	refreshFn func(state game.GameState) // optional; nil means full rebuild on each Refresh
 }
 
@@ -60,9 +59,9 @@ type OverlayManager struct {
 	active        string // name of currently visible overlay; "" if none
 	// focus is what holds the keyboard while the active overlay shows (its
 	// TextView, or a widget overlay's root); nil with none.
-	focus   tview.Primitive
+	focus   Primitive
 	pages   *nativePages
-	app     *tview.Application
+	app     *appLoop
 	onClose func() // called after hide to restore focus to the command input field
 	screenW int    // updated every frame via SetBeforeDrawFunc
 	screenH int
@@ -87,7 +86,7 @@ type OverlayManager struct {
 
 // NewOverlayManager creates an OverlayManager. onClose is called whenever an
 // overlay is closed so the caller can return focus to the command input field.
-func NewOverlayManager(pages *nativePages, app *tview.Application, onClose func()) *OverlayManager {
+func NewOverlayManager(pages *nativePages, app *appLoop, onClose func()) *OverlayManager {
 	om := &OverlayManager{
 		entries:       make(map[string]*overlayEntry),
 		widgetEntries: make(map[string]*widgetEntry),
@@ -190,7 +189,7 @@ func (om *OverlayManager) scrollKey(ev *kit.Key, prompt string) bool {
 	switch ev.Code {
 	case kit.KeyUp, kit.KeyDown, kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome, kit.KeyEnd:
 		if h := e.tv.InputHandler(); h != nil {
-			h(tcellKey(*ev), func(tview.Primitive) {})
+			h(tcellKey(*ev), func(Primitive) {})
 		}
 		return true
 	}
@@ -247,10 +246,10 @@ func (om *OverlayManager) seenState() *game.GameState {
 	return om.seen
 }
 
-// RegisterWidget registers an overlay backed by any tview.Primitive instead of a TextView.
+// RegisterWidget registers an overlay backed by any Primitive instead of a TextView.
 // The build function receives the current GameState and returns a ready-to-display primitive,
 // which fills the entire screen (the panel leaves the command bar's rows to the dashboard).
-func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) tview.Primitive, refresh func(state game.GameState)) {
+func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) Primitive, refresh func(state game.GameState)) {
 	om.widgetEntries[name] = &widgetEntry{
 		title:     title,
 		build:     build,
@@ -259,7 +258,7 @@ func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build fu
 }
 
 // buildWidgetRoot creates the display tree for a widget overlay given a freshly-built primitive.
-func (om *OverlayManager) buildWidgetRoot(_ *widgetEntry, prim tview.Primitive) tview.Primitive {
+func (om *OverlayManager) buildWidgetRoot(_ *widgetEntry, prim Primitive) Primitive {
 	// Wrap in a Flex so we can set ESC capture without touching the inner primitive's handler.
 	wrapper := newNativeFlex().SetDirection(flexRow).
 		AddItem(prim, 0, 1, true)
@@ -368,7 +367,7 @@ func (om *OverlayManager) arrivalKey() bool {
 // FocusOn makes p hold the keyboard while the active overlay shows, in place
 // of the overlay itself: the Map panel leaves it with the command bar, so a
 // window closing over the map gives the prompt its keys back (Focus).
-func (om *OverlayManager) FocusOn(p tview.Primitive) {
+func (om *OverlayManager) FocusOn(p Primitive) {
 	if om.active == "" {
 		return
 	}

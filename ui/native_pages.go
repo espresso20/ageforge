@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -19,12 +17,12 @@ type nativePages struct {
 	pages []*nativePage
 	// setFocus is how the stack hands the keyboard on, once it has been
 	// given it (tview passes it to Focus).
-	setFocus func(p tview.Primitive)
+	setFocus func(p Primitive)
 }
 
 type nativePage struct {
 	name    string
-	item    tview.Primitive
+	item    Primitive
 	w       kit.Widget // item in the tree
 	resize  bool
 	visible bool
@@ -56,12 +54,12 @@ func (p *nativePages) index(name string) int {
 
 // AddPage puts item on top under name, in place of a page of that name.
 // With resize it fills the stack's rectangle.
-func (p *nativePages) AddPage(name string, item tview.Primitive, resize, visible bool) *nativePages {
+func (p *nativePages) AddPage(name string, item Primitive, resize, visible bool) *nativePages {
 	had := p.HasFocus()
 	if i := p.index(name); i >= 0 {
 		p.pages = append(p.pages[:i], p.pages[i+1:]...)
 	}
-	p.pages = append(p.pages, &nativePage{name: name, item: item, w: asWidget(item), resize: resize, visible: visible})
+	p.pages = append(p.pages, &nativePage{name: name, item: item, w: widgetOf(item), resize: resize, visible: visible})
 	return p.refocus(had)
 }
 
@@ -87,7 +85,7 @@ func (p *nativePages) RemovePage(name string) *nativePages {
 func (p *nativePages) HasPage(name string) bool { return p.index(name) >= 0 }
 
 // GetPage is the page of that name, nil when there is none.
-func (p *nativePages) GetPage(name string) tview.Primitive {
+func (p *nativePages) GetPage(name string) Primitive {
 	if i := p.index(name); i >= 0 {
 		return p.pages[i].item
 	}
@@ -135,7 +133,7 @@ func (p *nativePages) SendToFront(name string) *nativePages {
 }
 
 // GetFrontPage is the top page that shows.
-func (p *nativePages) GetFrontPage() (name string, item tview.Primitive) {
+func (p *nativePages) GetFrontPage() (name string, item Primitive) {
 	for i := len(p.pages) - 1; i >= 0; i-- {
 		if p.pages[i].visible {
 			return p.pages[i].name, p.pages[i].item
@@ -145,7 +143,7 @@ func (p *nativePages) GetFrontPage() (name string, item tview.Primitive) {
 }
 
 // Focus hands the keyboard to the top page that shows.
-func (p *nativePages) Focus(delegate func(p tview.Primitive)) {
+func (p *nativePages) Focus(delegate func(p Primitive)) {
 	if delegate == nil {
 		return // nowhere to hand it on to
 	}
@@ -154,7 +152,7 @@ func (p *nativePages) Focus(delegate func(p tview.Primitive)) {
 		delegate(top)
 		return
 	}
-	p.Box.Focus(delegate)
+	p.primBase.Focus(delegate)
 }
 
 // HasFocus reports whether any page holds the keyboard, shown or not.
@@ -164,7 +162,7 @@ func (p *nativePages) HasFocus() bool {
 			return true
 		}
 	}
-	return p.Box.HasFocus()
+	return p.primBase.HasFocus()
 }
 
 // Children are the pages that show, back to front.

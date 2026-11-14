@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -178,11 +177,11 @@ func TestThemeRowLabelMarksActive(t *testing.T) {
 func TestThemePicker_NoDeadlockOnNavigate(t *testing.T) {
 	restoreForge(t)
 
-	app := tview.NewApplication()
+	app := newAppLoop()
 	app.SetScreen(tcell.NewSimulationScreen("")) // app.Run() Inits it.
 
 	pages := newNativePages()
-	pages.AddPage("home", tview.NewBox(), true, false)
+	pages.AddPage("home", newNativeBox(), true, false)
 	picker := CreateThemePickerPage(app, pages, nil, "home") // nil engine: accountless is fine
 	pages.AddPage(themePickerPage, picker, true, true)
 	app.SetRoot(pages, true)

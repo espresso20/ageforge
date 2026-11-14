@@ -46,8 +46,6 @@ func newNativeText() *nativeText {
 	return t
 }
 
-func (t *nativeText) kitDrawn() {}
-
 func (t *nativeText) Children() []kit.Widget { return []kit.Widget{t.box} }
 
 // Layout places the box, after telling the draw func (if any) the size.

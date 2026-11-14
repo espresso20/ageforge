@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
@@ -17,7 +16,7 @@ import (
 // barPanel is embedded in each of those panels in place of *tview.Box, so its
 // InputHandler is the one the panel has.
 type barPanel struct {
-	*tview.Box
+	*primBase
 	// prompt reads the command bar ("" when it is empty).
 	prompt func() string
 	// toPrompt hands a key the panel does not take to the command bar, and
@@ -30,14 +29,14 @@ type barPanel struct {
 
 // newBarPanel is a barPanel whose keys are decided by route.
 func newBarPanel(route func(ev *kit.Key, prompt string) bool) barPanel {
-	return barPanel{Box: tview.NewBox(), route: route}
+	return barPanel{primBase: newPrimBase(), route: route}
 }
 
 // InputHandler is for when the panel itself has the focus (the command bar
 // normally keeps it): the panel's own keys work, and anything else goes to
 // the command bar, which takes the keyboard back.
-func (b *barPanel) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(b.Box, func(ev *kit.Key) { b.Key(*ev) })
+func (b *barPanel) InputHandler() func(*tcell.EventKey, func(Primitive)) {
+	return keysIn(func(ev *kit.Key) { b.Key(*ev) })
 }
 
 // Key is the same, where the panel stands in a kit tree.
@@ -52,14 +51,11 @@ func (b *barPanel) Key(k kit.Key) bool {
 	return true
 }
 
-// boxFocused reports whether tview has given the panel itself the focus.
-func (b *barPanel) boxFocused() bool { return b.Box.HasFocus() }
-
 // overBar is an overlay's build result: the panel over the whole screen but
 // the command bar's rows, which it leaves to the dashboard underneath (a Flex
 // does not clear the cells it leaves empty), so the prompt stays in sight,
 // and in use, while the panel is open.
-func overBar(p tview.Primitive) tview.Primitive {
+func overBar(p Primitive) Primitive {
 	return newNativeFlex().SetDirection(flexRow).
 		AddItem(p, 0, 1, true).
 		AddItem(nil, promptRows, 0, false)
@@ -124,6 +120,6 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 func (d *Dashboard) handToPrompt(ev *kit.Key) {
 	d.overlayMgr.FocusOn(d.inputField)
 	if h := d.inputField.InputHandler(); h != nil {
-		h(tcellKey(*ev), func(p tview.Primitive) { d.app.SetFocus(p) })
+		h(tcellKey(*ev), func(p Primitive) { d.app.SetFocus(p) })
 	}
 }

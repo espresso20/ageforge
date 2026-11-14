@@ -447,10 +447,6 @@ func (a *arrival) key() {
 	}
 }
 
-// kitDrawn: the screen draws itself in Paint, the theme's weather and the
-// redraw clock with it, so a kit container takes it in.
-func (a *arrival) kitDrawn() {}
-
 // Covers: once closed the screen is not there for the pointer.
 func (a *arrival) Covers(image.Point) bool { return a.stage != arrClosed }
 

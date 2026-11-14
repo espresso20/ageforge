@@ -34,7 +34,7 @@ func TestNativeButtonDrawsAsAButtonDid(t *testing.T) {
 		}
 		if c.focus {
 			old.Focus(func(tview.Primitive) {})
-			nb.Focus(func(tview.Primitive) {})
+			nb.Focus(func(Primitive) {})
 		}
 		want, got := cellsOf(t, old, c.w, 1), cellsOf(t, nb, c.w, 1)
 		for i := range want {
@@ -51,7 +51,7 @@ func TestNativeButtonPressedByEnterAndAClick(t *testing.T) {
 	n := 0
 	b := newNativeButton("Go").SetSelectedFunc(func() { n++ })
 	key := func(k kit.KeyCode, r rune) {
-		b.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
+		b.InputHandler()(tev(k, r, 0), func(Primitive) {})
 	}
 	key(kit.KeyRune, ' ')
 	key(kit.KeyEsc, 0)

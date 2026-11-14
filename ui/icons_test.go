@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/nerdfont"
 	"github.com/espresso20/ageforge/platform/steam"
@@ -292,7 +290,7 @@ func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string
 
 // pressKey sends a key to whatever holds the keyboard, as the event loop does.
 func pressKey(d *Dashboard, pages *nativePages, k kit.KeyCode, r rune) {
-	pages.InputHandler()(tev(k, r, 0), func(p tview.Primitive) { d.app.SetFocus(p) })
+	pages.InputHandler()(tev(k, r, 0), func(p Primitive) { d.app.SetFocus(p) })
 }
 
 // TestIconsWindowOnScreen: icons at the prompt opens the window over the

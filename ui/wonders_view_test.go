@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -111,7 +109,7 @@ func TestGalleryKeysAndEsc(t *testing.T) {
 	open()
 	tv := om.entries["wonders"].tv
 	handler := tv.InputHandler()
-	press := func(ev *kit.Key) { handler(tcellKey(*ev), func(tview.Primitive) {}) }
+	press := func(ev *kit.Key) { handler(tcellKey(*ev), func(Primitive) {}) }
 	list := untag(tv.GetText(false))
 	if !strings.Contains(list, "Press G for a gallery") {
 		t.Errorf("the list does not say how to open the gallery:\n%s", list)

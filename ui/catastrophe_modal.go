@@ -11,7 +11,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/rivo/tview"
 )
 
 // catastrophePage is the tview page name for the catastrophe choice overlay.
@@ -246,7 +245,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 
 	modal := floatingModal(inner, catastropheModalWidth, l.height)
 
-	ring := newButtonRing(d.app, func(p tview.Primitive) { d.catFocus = p })
+	ring := newButtonRing(d.app, func(p Primitive) { d.catFocus = p })
 	ring.add(btnEndure, 'e')
 	if succumbOpen {
 		ring.add(btnSuccumb, 's')

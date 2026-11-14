@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
@@ -47,7 +46,7 @@ type pickerRow struct {
 // modeled on the load-game browser (load_game.go): a list on the left, detail and
 // a live preview on the right, and live apply wired through SetChangedFunc.
 type themePicker struct {
-	app   *tview.Application
+	app   *appLoop
 	pages *nativePages
 
 	// engine is the bridge to the account layer (the theming design §6). It may be nil
@@ -117,7 +116,7 @@ func pickerRows(all []theme.Theme) []pickerRow {
 // engine bridges to the account layer for persistence + unlock gating (the theming design
 // §6); it may be nil for accountless play/tests, in which case confirm simply
 // doesn't persist and only the always-available themes are selectable.
-func CreateThemePickerPage(app *tview.Application, pages *nativePages, engine *game.GameEngine, returnPage string) tview.Primitive {
+func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) Primitive {
 	all := theme.All()
 	p := &themePicker{
 		app:         app,

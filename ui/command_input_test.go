@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -20,7 +18,7 @@ func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) frame {
 		SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
 		SetLabelColor(theme.Color(theme.RoleHighlight))
 	in.SetText(text)
-	in.Focus(func(tview.Primitive) {})
+	in.Focus(func(Primitive) {})
 	sim := newSimScreen(t, w, 1)
 	screen := theme.WrapScreen(sim)
 	in.SetRect(0, 0, w, 1)

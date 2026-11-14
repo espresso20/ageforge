@@ -2,8 +2,6 @@ package ui
 
 import (
 	"testing"
-
-	"github.com/rivo/tview"
 )
 
 // TestShowAccountNameConfirmModalAddsPage is the add-page contract for the first-run
@@ -13,7 +11,7 @@ import (
 // presentation-only step, so we keep the check to the page-registration contract and
 // assert neither callback fires merely on open.
 func TestShowAccountNameConfirmModalAddsPage(t *testing.T) {
-	app := tview.NewApplication()
+	app := newAppLoop()
 	pages := newNativePages()
 
 	if pages.HasPage(accountNameConfirmPage) {

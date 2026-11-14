@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
@@ -40,9 +38,9 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
 	const w, h = 160, 50
 	pages := newNativePages()
-	filler := tview.NewTextView().SetText(strings.Repeat(strings.Repeat("X", w)+"\n", h))
+	filler := newNativeText().SetText(strings.Repeat(strings.Repeat("X", w)+"\n", h))
 	pages.AddPage("dashboard", filler, true, true)
-	d := NewDashboard(tview.NewApplication(), game.NewGameEngine(), pages)
+	d := NewDashboard(newAppLoop(), game.NewGameEngine(), pages)
 	d.showCatastropheModal("steel_era")
 
 	f := drawPrimitive(t, pages, w, h)

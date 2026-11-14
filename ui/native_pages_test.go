@@ -18,7 +18,7 @@ func TestNativePagesBehaveAsTviewPagesDo(t *testing.T) {
 	for seed := int64(1); seed <= 40; seed++ {
 		rng := rand.New(rand.NewSource(seed))
 		old, now := tview.NewPages(), newNativePages()
-		oldApp, nowApp := tview.NewApplication(), tview.NewApplication()
+		oldApp, nowApp := tview.NewApplication(), newAppLoop()
 		// One item a name, the same on every add, so "which has the focus"
 		// can be told by name on both sides.
 		oldItems, nowItems := map[string]*tview.Box{}, map[string]*nativeBox{}

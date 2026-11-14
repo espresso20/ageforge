@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 // TestMacKeysTranslation: Option+arrows are PgUp, PgDn, Home and End for
@@ -37,22 +36,22 @@ func TestMacKeysTranslation(t *testing.T) {
 
 	// Apple Terminal's Option+Left and Option+Right are ESC b and ESC f, which
 	// are the prompt's word jumps: Home and End only when there is no word.
-	empty, typed := tview.NewInputField(), tview.NewInputField().SetText("build hut")
+	empty, typed := newNativeInput(), newNativeInput().SetText("build hut")
 	for _, f := range []struct {
 		r        rune
 		to       tcell.Key
-		focus    tview.Primitive
+		focus    Primitive
 		wantMove bool
 	}{
 		{'b', tcell.KeyHome, nil, true}, {'f', tcell.KeyEnd, nil, true},
 		{'b', tcell.KeyHome, empty, true}, {'f', tcell.KeyEnd, empty, true},
-		{'b', tcell.KeyHome, tview.NewBox(), true},
+		{'b', tcell.KeyHome, newNativeBox(), true},
 		{'b', tcell.KeyHome, typed, false}, {'f', tcell.KeyEnd, typed, false},
 	} {
 		in := ev(tcell.KeyRune, f.r, tcell.ModAlt)
 		got := macKeys(in, f.focus)
 		if f.wantMove && got.Key() != f.to || !f.wantMove && got != in {
-			t.Errorf("Alt+%c with focus %T (text %v): got %s", f.r, f.focus, f.focus == typed, tcell.KeyNames[got.Key()])
+			t.Errorf("Alt+%c with focus %T (text %v): got %s", f.r, f.focus, f.focus == Primitive(typed), tcell.KeyNames[got.Key()])
 		}
 	}
 }

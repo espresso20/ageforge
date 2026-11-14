@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -32,7 +31,7 @@ type menuRig struct {
 	t     *testing.T
 	eng   *game.GameEngine
 	acct  *game.Account
-	app   *tview.Application
+	app   *appLoop
 	pages *nativePages
 	m     *mainMenu
 	// held is the choices waiting out their strike, clock the menu's time,
@@ -56,14 +55,14 @@ func newMenuRig(t *testing.T, games ...string) *menuRig {
 	}
 	r.eng = game.NewGameEngine()
 	r.eng.SetAccount(acct)
-	r.app, r.pages = tview.NewApplication(), newNativePages()
+	r.app, r.pages = newAppLoop(), newNativePages()
 	r.m = CreateSplashPage(r.app, r.pages, r.eng, "dev").(*mainMenu)
 	r.m.later = func(fn func()) { r.held = append(r.held, fn) }
 	r.m.checkUpdates = func() { r.checks++ }
 	r.m.now = func() time.Time { return r.clock }
 	r.m.start = r.clock
 	r.pages.AddPage("splash", r.m, true, true)
-	r.pages.AddPage("dashboard", tview.NewBox(), true, false)
+	r.pages.AddPage("dashboard", newNativeBox(), true, false)
 	r.app.SetRoot(r.pages, true)
 	t.Cleanup(func() {
 		r.m.leave()
@@ -91,7 +90,7 @@ func (r *menuRig) key(k kit.KeyCode, ch rune) {
 	r.t.Helper()
 	// From the root down, as the app sends it, so a page's own key capture
 	// has its say.
-	r.pages.InputHandler()(tev(k, ch, 0), func(p tview.Primitive) { r.app.SetFocus(p) })
+	r.pages.InputHandler()(tev(k, ch, 0), func(p Primitive) { r.app.SetFocus(p) })
 }
 
 // release lets the choices that were waiting out their strike act.
@@ -185,7 +184,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 
 	// A game is started and saved (as play would); the menu is returned to.
 	r.newGame("ashford")
-	m.Focus(func(tview.Primitive) {})
+	m.Focus(func(Primitive) {})
 	if m.view.forge || !m.hasCur || m.town == nil {
 		t.Fatalf("an account with a game: forge page %v, a current game %v, a town %v", m.view.forge, m.hasCur, m.town != nil)
 	}
@@ -213,7 +212,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 	// A selection made by hand stays put when the menu reads again.
 	r.key(kit.KeyDown, 0)
 	r.key(kit.KeyDown, 0)
-	m.Focus(func(tview.Primitive) {})
+	m.Focus(func(Primitive) {})
 	if got := m.view.items[m.view.sel].id; got != miLoad {
 		t.Errorf("after two downs and a return the selection is on %q, want load", got)
 	}
@@ -359,7 +358,7 @@ func TestMenuStrikeAndMotion(t *testing.T) {
 
 	// Motion off: the setting is the account's.
 	must(t, r.acct.SetMotion(false))
-	m.Focus(func(tview.Primitive) {})
+	m.Focus(func(Primitive) {})
 	r.draw(120, 40)
 	before := *m.scene
 	nSparks := len(m.scene.sparks.a)
@@ -425,7 +424,7 @@ func TestMenuClockRunsOnlyWhileInUse(t *testing.T) {
 		}
 	}
 	// Returned to: it goes on from where it stopped.
-	m.Focus(func(tview.Primitive) {})
+	m.Focus(func(Primitive) {})
 	r.draw(120, 40)
 	if m.scene.frame != 1003 || m.stop == nil {
 		t.Errorf("on return the scene is at frame %d (want 1003) and the clock runs: %v", m.scene.frame, m.stop != nil)
@@ -438,7 +437,7 @@ func TestMenuClockRunsOnlyWhileInUse(t *testing.T) {
 
 	// Motion off: one still frame, whatever the time, and no clock.
 	must(t, r.acct.SetMotion(false))
-	m.Focus(func(tview.Primitive) {})
+	m.Focus(func(Primitive) {})
 	m.scene = nil // a menu opened with motion off starts from the rest frame
 	still := r.draw(120, 40)
 	if m.stop != nil {
@@ -525,7 +524,7 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	_, sumBefore := eng.Badges()
 	before := dataTree(t, root)
 
-	app, pages := tview.NewApplication(), newNativePages()
+	app, pages := newAppLoop(), newNativePages()
 	m := CreateSplashPage(app, pages, eng, "dev").(*mainMenu)
 	clock := time.Unix(2_000_000, 0)
 	m.now, m.start = func() time.Time { return clock }, clock
@@ -542,7 +541,7 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	sim := newSimScreen(t, 120, 40)
 	scr := theme.WrapScreen(sim)
 	key := func(k kit.KeyCode, ch rune) {
-		pages.InputHandler()(tev(k, ch, 0), func(p tview.Primitive) { app.SetFocus(p) })
+		pages.InputHandler()(tev(k, ch, 0), func(p Primitive) { app.SetFocus(p) })
 	}
 	for _, size := range [][2]int{{120, 40}, {80, 24}, {144, 46}} {
 		sim.SetSize(size[0], size[1])
@@ -621,7 +620,7 @@ func TestMenuFallsBackWithoutAnError(t *testing.T) {
 	r := newMenuRig(t)
 	must(t, os.MkdirAll(filepath.Join(game.DataDir(), "saves"), 0755))
 	must(t, os.WriteFile(filepath.Join(game.DataDir(), "saves", "torn.json"), []byte("{not a save"), 0644))
-	r.m.Focus(func(tview.Primitive) {})
+	r.m.Focus(func(Primitive) {})
 	if r.m.hasCur || !r.m.view.forge || r.m.view.items[0].id != miNew {
 		t.Errorf("a damaged save alone: a current game %v, forge page %v, first entry %q", r.m.hasCur, r.m.view.forge, r.m.view.items[0].id)
 	}
@@ -629,7 +628,7 @@ func TestMenuFallsBackWithoutAnError(t *testing.T) {
 
 	// A damaged save beside a good one: the good one is the current game.
 	r.newGame("ashford")
-	r.m.Focus(func(tview.Primitive) {})
+	r.m.Focus(func(Primitive) {})
 	if !r.m.hasCur || r.m.cur.Save.Name != "ashford" || r.m.view.forge {
 		t.Errorf("a damaged save beside a good one: current %q, forge page %v", r.m.cur.Save.Name, r.m.view.forge)
 	}
@@ -720,7 +719,7 @@ func TestMenuTownFollowsTheSettings(t *testing.T) {
 	r := newMenuRig(t, "ashford")
 	m := r.m
 	must(t, r.acct.SetMapGlyphs("ascii"))
-	m.Focus(func(tview.Primitive) {})
+	m.Focus(func(Primitive) {})
 	if m.set.Tier != mapmodel.TierASCII || !m.view.plain {
 		t.Errorf("after map glyphs ascii: tier %v, plain %v", m.set.Tier, m.view.plain)
 	}

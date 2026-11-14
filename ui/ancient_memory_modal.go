@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/rivo/tview"
 )
 
 // ancientMemoryPage is the tview page name for the Ancient Memory offer overlay.
@@ -74,7 +73,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	modal := centeredModal(inner, 64, 17)
 
 	// Tab/arrows cycle the buttons; a/d are shortcuts for Accept/Decline.
-	ring := newButtonRing(d.app, func(p tview.Primitive) { d.memFocus = p })
+	ring := newButtonRing(d.app, func(p Primitive) { d.memFocus = p })
 	ring.add(btnAccept, 'a')
 	ring.add(btnDecline, 'd')
 	modal.SetInputCapture(func(event *kit.Key) *kit.Key {
