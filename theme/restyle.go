@@ -44,7 +44,7 @@ func Track(apply func()) {
 	restyleMu.Unlock()
 }
 
-// Restyle re-runs every tracked apply closure. SetActive calls it after applyRemap
+// Restyle re-runs every tracked apply closure. SetActive calls it
 // and before the caller's redraw, so existing chrome re-pulls the new palette.
 // The closures run outside the lock so a closure may itself call Track without
 // deadlocking (it just enrolls into the next pass).
