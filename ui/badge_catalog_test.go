@@ -20,6 +20,7 @@ import (
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The full catalog on the case: the hand-drawn legendary badges, the
@@ -349,7 +350,7 @@ func TestLookingAtAVisitorEarnsItsBadge(t *testing.T) {
 	stub.on = false
 	p.update(eng.GetState())
 	stub.on = true
-	p.handleKey(tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone))
+	p.handleKey(newKey(kit.KeyUp, 0, 0))
 	if told != 2 {
 		t.Errorf("a second look was told %d times in all, want 2", told)
 	}

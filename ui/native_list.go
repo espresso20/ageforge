@@ -190,33 +190,33 @@ func (l *nativeList) Draw(scr tcell.Screen) {
 // chooses, and a row's shortcut selects and chooses it. Space chooses the
 // selected row.
 func (l *nativeList) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return l.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
+	return keysIn(l.Box, func(ev *kit.Key) {
 		n := len(l.items)
 		if n == 0 {
 			return
 		}
 		cur := l.GetCurrentItem()
 		to := cur
-		switch ev.Key() {
-		case tcell.KeyTab, tcell.KeyDown:
+		switch ev.Code {
+		case kit.KeyTab, kit.KeyDown:
 			to++
-		case tcell.KeyBacktab, tcell.KeyUp:
+		case kit.KeyBacktab, kit.KeyUp:
 			to--
-		case tcell.KeyHome:
+		case kit.KeyHome:
 			to = 0
-		case tcell.KeyEnd:
+		case kit.KeyEnd:
 			to = n - 1
-		case tcell.KeyPgDn:
+		case kit.KeyPgDn:
 			_, _, _, h := l.GetInnerRect()
 			to = min(cur+h, n-1)
-		case tcell.KeyPgUp:
+		case kit.KeyPgUp:
 			_, _, _, h := l.GetInnerRect()
 			to = max(cur-h, 0)
-		case tcell.KeyEnter:
+		case kit.KeyEnter:
 			l.choose(cur)
 			return
-		case tcell.KeyRune:
-			if r := ev.Rune(); r != ' ' {
+		case kit.KeyRune:
+			if r := ev.Rune; r != ' ' {
 				found := false
 				for i, it := range l.items {
 					if it.shortcut == r {

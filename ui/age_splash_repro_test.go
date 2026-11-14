@@ -23,6 +23,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 type reproHarness struct {
@@ -92,9 +93,9 @@ func newReproHarness(t *testing.T) *reproHarness {
 	// Real "New Game" path: the splash List has shortcut 'n', which opens the
 	// civilization-name prompt pre-filled with a generated name; Enter accepts.
 	h.waitFor("splash menu in front", 5*time.Second, func() bool { return h.frontPage() == "splash" })
-	h.key(tcell.KeyRune, 'n')
+	h.key(kit.KeyRune, 'n')
 	h.waitFor("new-game name prompt", 5*time.Second, func() bool { return h.frontPage() == newGameNamePage })
-	h.key(tcell.KeyEnter, 0)
+	h.key(kit.KeyEnter, 0)
 	h.waitFor("dashboard visible with input focus", 5*time.Second, func() bool {
 		return h.frontPage() == "dashboard" && h.inputHasFocus()
 	})
@@ -162,11 +163,12 @@ func (h *reproHarness) refresh() {
 	h.onUI(func() { h.a.dashboard.refresh() })
 }
 
-func (h *reproHarness) key(k tcell.Key, r rune) {
+func (h *reproHarness) key(k kit.KeyCode, r rune) {
 	h.t.Helper()
 	done := make(chan struct{})
 	go func() {
-		h.sim.InjectKey(k, r, tcell.ModNone)
+		ev := tev(k, r, 0)
+		h.sim.InjectKey(ev.Key(), ev.Rune(), ev.Modifiers())
 		close(done)
 	}()
 	select {
@@ -181,7 +183,7 @@ func (h *reproHarness) key(k tcell.Key, r rune) {
 func (h *reproHarness) typeText(s string) {
 	h.t.Helper()
 	for _, r := range s {
-		h.key(tcell.KeyRune, r)
+		h.key(kit.KeyRune, r)
 	}
 }
 
@@ -260,14 +262,14 @@ func (h *reproHarness) submit(cmd string) {
 	h.onUI(func() {})
 	h.waitFor("input focus before typing "+cmd, 3*time.Second, func() bool {
 		if h.hasPage(prestigeCuePage) {
-			h.key(tcell.KeyRune, 'x')
+			h.key(kit.KeyRune, 'x')
 			return false
 		}
 		return h.inputHasFocus()
 	})
 	h.typeText(cmd)
 	h.waitFor("typed text to land", 3*time.Second, func() bool { return h.inputText() == cmd })
-	h.key(tcell.KeyEnter, 0)
+	h.key(kit.KeyEnter, 0)
 	h.waitFor("command submitted on the first Enter", 3*time.Second, func() bool { return h.inputText() == "" })
 }
 
@@ -316,13 +318,13 @@ func (h *reproHarness) recordBuilt() {
 }
 
 var dismissKeys = []struct {
-	k tcell.Key
+	k kit.KeyCode
 	r rune
 }{
-	{tcell.KeyRune, 'x'},
-	{tcell.KeyEnter, 0},
-	{tcell.KeyEsc, 0},
-	{tcell.KeyRune, ' '},
+	{kit.KeyRune, 'x'},
+	{kit.KeyEnter, 0},
+	{kit.KeyEsc, 0},
+	{kit.KeyRune, ' '},
 }
 
 // advanceAndCheck performs one real `advance` and checks the splash lifecycle.
@@ -377,7 +379,7 @@ func (h *reproHarness) arrivalStage() int {
 // the game. On a machine that draws slowly the celebration may end by
 // itself before the first key gets there; the screen then lets keys go by
 // for a moment (arrivalSettle), so closing it can take more than one press.
-func (h *reproHarness) dismissArrival(label string, k tcell.Key, r rune) {
+func (h *reproHarness) dismissArrival(label string, k kit.KeyCode, r rune) {
 	h.t.Helper()
 	var a *arrival
 	h.onUI(func() { a = h.a.dashboard.overlayMgr.arrival })
@@ -463,7 +465,7 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 		case prestigeCuePage:
 			// A valid prestige cue can surface after the arrival closes; dismiss
 			// this independent notice before asserting the arrival flow is settled.
-			h.key(tcell.KeyRune, 'x')
+			h.key(kit.KeyRune, 'x')
 			deadline := time.Now().Add(2 * time.Second)
 			for h.hasPage(prestigeCuePage) {
 				if time.Now().After(deadline) {
@@ -474,7 +476,7 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 		case "catastrophe":
 			h.catsSeen++
 			h.t.Logf("%s catastrophe modal in front; pressing %q", label, catChoice)
-			h.key(tcell.KeyRune, catChoice)
+			h.key(kit.KeyRune, catChoice)
 			deadline := time.Now().Add(2 * time.Second)
 			for h.hasPage("catastrophe") {
 				if time.Now().After(deadline) {
@@ -668,7 +670,7 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	}
 	// Player presses Esc on the visible modal: it must close and hand the
 	// keyboard back, leaving the catastrophe pending.
-	h.key(tcell.KeyEsc, 0)
+	h.key(kit.KeyEsc, 0)
 	deadline := time.Now().Add(2 * time.Second)
 	for !(!h.hasPage("catastrophe") && h.inputHasFocus()) {
 		if time.Now().After(deadline) {
@@ -681,7 +683,7 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	}
 	h.submit("catastrophe")
 	h.waitFor("catastrophe modal reopened", 3*time.Second, func() bool { return h.frontPage() == "catastrophe" })
-	h.key(tcell.KeyRune, 'e')
+	h.key(kit.KeyRune, 'e')
 	h.waitFor("modal closed after Endure", 3*time.Second, func() bool { return !h.hasPage("catastrophe") && h.inputHasFocus() })
 	if st := h.eng.GetState(); st.PendingCatastrophe != "" {
 		t.Fatalf("still pending after Endure: %q", st.PendingCatastrophe)
@@ -726,10 +728,10 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })
 	h.refresh()
-	h.dismissArrival("into the Iron Age", tcell.KeyEnter, 0)
+	h.dismissArrival("into the Iron Age", kit.KeyEnter, 0)
 	h.waitFor("catastrophe modal", 3*time.Second, func() bool { return h.frontPage() == "catastrophe" })
 
-	h.key(tcell.KeyEsc, 0)
+	h.key(kit.KeyEsc, 0)
 	h.waitFor("Esc closes the modal", 2*time.Second, func() bool { return !h.hasPage("catastrophe") && h.inputHasFocus() })
 	// Two refresh cycles: the modal must stay closed until asked for.
 	h.refresh()
@@ -751,7 +753,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 
 	h.submit("catastrophe")
 	h.waitFor("catastrophe reopens the modal", 3*time.Second, func() bool { return h.frontPage() == "catastrophe" })
-	h.key(tcell.KeyRune, 'e')
+	h.key(kit.KeyRune, 'e')
 	h.waitFor("Endure closes the modal", 3*time.Second, func() bool { return !h.hasPage("catastrophe") && h.inputHasFocus() })
 	if st := h.eng.GetState(); st.PendingCatastrophe != "" {
 		t.Fatalf("still pending after Endure: %q", st.PendingCatastrophe)

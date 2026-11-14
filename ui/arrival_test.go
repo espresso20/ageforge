@@ -877,8 +877,8 @@ func (s *arrivalShow) advance(prev *game.GameState, cur game.GameState, epoch bo
 	return a
 }
 
-func (s *arrivalShow) press(a *arrival, k tcell.Key, r rune) {
-	a.InputHandler()(tcell.NewEventKey(k, r, tcell.ModNone), func(tview.Primitive) {})
+func (s *arrivalShow) press(a *arrival, k kit.KeyCode, r rune) {
+	a.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
 }
 
 // stoneToBronze is the game before and after an advance into the Bronze
@@ -895,14 +895,14 @@ func stoneToBronze() (*game.GameState, game.GameState, bool) {
 func TestArrivalKeys(t *testing.T) {
 	for _, key := range []struct {
 		name string
-		k    tcell.Key
+		k    kit.KeyCode
 		r    rune
-	}{{"a letter", tcell.KeyRune, 'x'}, {"Enter", tcell.KeyEnter, 0}, {"space", tcell.KeyRune, ' '}, {"an arrow", tcell.KeyDown, 0}, {"Esc", tcell.KeyEsc, 0}} {
+	}{{"a letter", kit.KeyRune, 'x'}, {"Enter", kit.KeyEnter, 0}, {"space", kit.KeyRune, ' '}, {"an arrow", kit.KeyDown, 0}, {"Esc", kit.KeyEsc, 0}} {
 		s := newArrivalShow()
 		s.towns = key.r == 'x'
 		a := s.advance(stoneToBronze())
 		press := func() {
-			if key.k == tcell.KeyEsc {
+			if key.k == kit.KeyEsc {
 				// Esc comes by way of the app, ahead of the dashboard.
 				if !s.om.arrivalKey() {
 					t.Errorf("%s: the screen did not take the key", key.name)
@@ -951,7 +951,7 @@ func TestArrivalPages(t *testing.T) {
 		prev := fixture.State(fixture.Options{Age: previousAge(age), Seed: 7})
 		s := newArrivalShow()
 		a := s.advance(&prev, fixture.State(fixture.Options{Age: age, Seed: 7}), set.EraOf(prev.Age) != set.EraOf(age))
-		s.press(a, tcell.KeyEnter, 0)
+		s.press(a, kit.KeyEnter, 0)
 		a.frameGrid(80, 24)
 		pages := len(a.info.pages)
 		if pages < 2 {
@@ -960,7 +960,7 @@ func TestArrivalPages(t *testing.T) {
 		}
 		for p := 1; p < pages; p++ {
 			s.clock = s.clock.Add(arrivalKeyGap)
-			s.press(a, tcell.KeyEnter, 0)
+			s.press(a, kit.KeyEnter, 0)
 			if a.stage != arrInforming || a.page != p {
 				t.Fatalf("%s: a key on page %d of %d went to page %d, stage %d", age, p, pages, a.page+1, a.stage)
 			}
@@ -969,7 +969,7 @@ func TestArrivalPages(t *testing.T) {
 			}
 		}
 		s.clock = s.clock.Add(arrivalKeyGap)
-		s.press(a, tcell.KeyEnter, 0)
+		s.press(a, kit.KeyEnter, 0)
 		if a.stage != arrClosed {
 			t.Fatalf("%s: a key on the last page did not close the screen", age)
 		}
@@ -998,9 +998,9 @@ func TestArrivalTimers(t *testing.T) {
 	if a.stage != arrInforming || a.page != 0 {
 		t.Error("the timer moved the information on")
 	}
-	s.press(a, tcell.KeyEnter, 0)
+	s.press(a, kit.KeyEnter, 0)
 	s.clock = s.clock.Add(arrivalSettle - time.Millisecond)
-	s.press(a, tcell.KeyEnter, 0)
+	s.press(a, kit.KeyEnter, 0)
 	if a.stage != arrInforming || a.keys != 2 {
 		t.Fatalf("a key as the celebration ended by itself closed the information (stage %d, %d keys)", a.stage, a.keys)
 	}
@@ -1019,7 +1019,7 @@ func TestArrivalTimers(t *testing.T) {
 	a = s.advance(stoneToBronze())
 	s.timers[time.Duration(arrivalFrames(false))*mapAnimStep]()
 	s.clock = s.clock.Add(arrivalSettle)
-	s.press(a, tcell.KeyEnter, 0)
+	s.press(a, kit.KeyEnter, 0)
 	if a.stage != arrClosed {
 		t.Error("a key after the celebration ended by itself did not close the information")
 	}
@@ -1028,13 +1028,13 @@ func TestArrivalTimers(t *testing.T) {
 	// itself, and the timer that follows changes nothing.
 	s = newArrivalShow()
 	a = s.advance(stoneToBronze())
-	s.press(a, tcell.KeyEnter, 0)
+	s.press(a, kit.KeyEnter, 0)
 	s.timers[time.Duration(arrivalFrames(false))*mapAnimStep]()
 	if a.stage != arrInforming || a.auto || a.keys != 1 {
 		t.Errorf("after a key: stage %d, by itself %v, %d keys", a.stage, a.auto, a.keys)
 	}
 	s.clock = s.clock.Add(arrivalKeyGap)
-	s.press(a, tcell.KeyEnter, 0)
+	s.press(a, kit.KeyEnter, 0)
 	if a.stage != arrClosed {
 		t.Error("the second key did not close the screen")
 	}

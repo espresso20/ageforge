@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"github.com/espresso20/ageforge/presence"
 	"image"
 	"math/rand"
 	"os"
@@ -10,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/espresso20/ageforge/presence"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"

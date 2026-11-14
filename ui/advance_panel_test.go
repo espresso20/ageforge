@@ -10,13 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
+	"github.com/gdamore/tcell/v2"
 )
 
 // advanceSizes are the terminals the panel is drawn at (80x24, 100x30 and
@@ -62,8 +61,8 @@ func advanceFixture(t *testing.T, age string) (*Dashboard, *game.GameEngine, *ad
 }
 
 // sendKey gives the dashboard a key as the app's input capture sees it.
-func sendKey(d *Dashboard, k tcell.Key) *tcell.EventKey {
-	return d.root.GetInputCapture()(tcell.NewEventKey(k, 0, tcell.ModNone))
+func sendKey(d *Dashboard, k kit.KeyCode) *tcell.EventKey {
+	return d.root.GetInputCapture()(tev(k, 0, 0))
 }
 
 // charter opens the Advance panel the way a player does: by typing the command.
@@ -81,7 +80,7 @@ func TestCharterOpensTheAdvancePanelAndEscCloses(t *testing.T) {
 	if !d.inputField.HasFocus() {
 		t.Error("the command bar lost the keyboard to the panel")
 	}
-	if ev := sendKey(d, tcell.KeyEsc); ev != nil || d.overlayMgr.ActiveName() != "" {
+	if ev := sendKey(d, kit.KeyEsc); ev != nil || d.overlayMgr.ActiveName() != "" {
 		t.Errorf("Esc did not close the panel (open: %q)", d.overlayMgr.ActiveName())
 	}
 }
@@ -97,35 +96,35 @@ func TestAdvancePanelKeys(t *testing.T) {
 		t.Fatalf("opened on pillar %d", p.ui.sel)
 	}
 	for want := 1; want <= 3; want++ {
-		if sendKey(d, tcell.KeyDown) != nil || p.ui.sel != want {
+		if sendKey(d, kit.KeyDown) != nil || p.ui.sel != want {
 			t.Errorf("Down went to pillar %d, want %d", p.ui.sel, want)
 		}
 	}
-	if sendKey(d, tcell.KeyDown); p.ui.sel != 3 {
+	if sendKey(d, kit.KeyDown); p.ui.sel != 3 {
 		t.Errorf("Down past the last pillar went to %d", p.ui.sel)
 	}
 	for want := 2; want >= 0; want-- {
-		if sendKey(d, tcell.KeyUp) != nil || p.ui.sel != want {
+		if sendKey(d, kit.KeyUp) != nil || p.ui.sel != want {
 			t.Errorf("Up went to pillar %d, want %d", p.ui.sel, want)
 		}
 	}
-	if sendKey(d, tcell.KeyUp); p.ui.sel != 0 {
+	if sendKey(d, kit.KeyUp); p.ui.sel != 0 {
 		t.Errorf("Up past the first pillar went to %d", p.ui.sel)
 	}
 	// With something typed, the keys are the prompt's.
 	d.inputField.SetText("bui")
-	for _, k := range []tcell.Key{tcell.KeyUp, tcell.KeyDown, tcell.KeyEnter} {
+	for _, k := range []kit.KeyCode{kit.KeyUp, kit.KeyDown, kit.KeyEnter} {
 		if sendKey(d, k) == nil {
 			t.Errorf("key %v was taken from a prompt with text", k)
 		}
 	}
 	d.inputField.SetText("")
-	for _, k := range []tcell.Key{tcell.KeyLeft, tcell.KeyRight, tcell.KeyTab} {
+	for _, k := range []kit.KeyCode{kit.KeyLeft, kit.KeyRight, kit.KeyTab} {
 		if sendKey(d, k) == nil {
 			t.Errorf("key %v was taken by the panel", k)
 		}
 	}
-	if ev := d.root.GetInputCapture()(tcell.NewEventKey(tcell.KeyRune, 'a', tcell.ModNone)); ev == nil {
+	if ev := d.root.GetInputCapture()(tev(kit.KeyRune, 'a', 0)); ev == nil {
 		t.Error("a letter was taken from the prompt")
 	}
 }
@@ -138,7 +137,7 @@ func TestAdvanceEnterAdvancesOnlyWhenReady(t *testing.T) {
 	if p.view.AllStand {
 		t.Fatal("staging: the staged town already meets the gate")
 	}
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	if got := eng.GetState().Age; got != before {
 		t.Fatalf("Enter advanced from %s to %s with the pillars short", before, got)
 	}
@@ -154,7 +153,7 @@ func TestAdvanceEnterAdvancesOnlyWhenReady(t *testing.T) {
 	if foot := renderAdvance(p.view, p.ui, 100, 27).Lines(); !strings.Contains(foot[24], "Enter") || !strings.Contains(foot[24], "Advance to the Iron Age") {
 		t.Errorf("a met gate has no Enter prompt: %q", foot[24])
 	}
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	if got := eng.GetState().Age; got != "iron_age" {
 		t.Fatalf("Enter on a met gate left the game in %s", got)
 	}
@@ -183,7 +182,7 @@ func TestAdvanceBlockedByACatastrophe(t *testing.T) {
 		t.Errorf("the panel does not show the blocker in place of the prompt:\n%s", text)
 	}
 	age := eng.GetState().Age
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	if eng.GetState().Age != age || !strings.Contains(p.ui.flash, "'catastrophe'") {
 		t.Errorf("Enter with a catastrophe pending: age %s, says %q", eng.GetState().Age, p.ui.flash)
 	}
@@ -213,12 +212,12 @@ func TestAdvancePanelNeverChangesTheGame(t *testing.T) {
 	before := eng.GetState()
 	d.inputField.SetText("charter")
 	d.submitInput()
-	for _, k := range []tcell.Key{tcell.KeyDown, tcell.KeyDown, tcell.KeyUp} {
+	for _, k := range []kit.KeyCode{kit.KeyDown, kit.KeyDown, kit.KeyUp} {
 		sendKey(d, k)
 	}
 	d.advancePanel.update(eng.GetState())
 	_ = renderAdvance(d.advancePanel.view, d.advancePanel.ui, 100, 27)
-	sendKey(d, tcell.KeyEsc)
+	sendKey(d, kit.KeyEsc)
 	if d.overlayMgr.ActiveName() != "" {
 		t.Fatal("the panel is still open")
 	}
@@ -512,7 +511,7 @@ func TestAdvanceFlashGivesWay(t *testing.T) {
 	_, _, p := advanceFixture(t, "bronze_age")
 	clock := time.Now()
 	p.now = func() time.Time { return clock }
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	if !strings.Contains(strings.Join(strings.Fields(drawPanel(t, p, 100, 27).Text()), " "), "Not yet: ") {
 		t.Fatal("the flash is not on screen")
 	}

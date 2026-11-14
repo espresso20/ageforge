@@ -3,14 +3,13 @@ package ui
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // TestMapCommandsAreRegistryCommands: every command a map can put on its
@@ -59,7 +58,7 @@ func TestMapCommandsAreRegistryCommands(t *testing.T) {
 					seen++
 				}
 			}
-			s.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), f)
+			s.HandleKey(tev(kit.KeyTab, 0, 0), f)
 			s.Draw(scr, mapstyle.Rect{W: 160, H: 48}, f)
 		}
 		if seen == 0 {

@@ -18,7 +18,7 @@ type nativeInput struct {
 	box *kit.Panel
 
 	border  bool
-	done    func(tcell.Key)
+	done    func(kit.KeyCode)
 	changed func(text string)
 }
 
@@ -94,7 +94,7 @@ func (f *nativeInput) SetChangedFunc(fn func(text string)) *nativeInput {
 }
 
 // SetDoneFunc sets what Enter, Esc, Tab and Shift+Tab call.
-func (f *nativeInput) SetDoneFunc(fn func(key tcell.Key)) *nativeInput {
+func (f *nativeInput) SetDoneFunc(fn func(key kit.KeyCode)) *nativeInput {
 	f.done = fn
 	return f
 }
@@ -151,16 +151,14 @@ func (f *nativeInput) Draw(scr tcell.Screen) {
 // InputHandler takes an input field's keys: Enter, Esc, Tab and Shift+Tab
 // are done, the rest edit the line.
 func (f *nativeInput) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return f.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		switch ev.Key() {
-		case tcell.KeyEnter, tcell.KeyEsc, tcell.KeyTab, tcell.KeyBacktab:
+	return keysIn(f.Box, func(ev *kit.Key) {
+		switch ev.Code {
+		case kit.KeyEnter, kit.KeyEsc, kit.KeyTab, kit.KeyBacktab:
 			if f.done != nil {
-				f.done(ev.Key())
+				f.done(ev.Code)
 			}
 			return
 		}
-		if k, ok := kitKey(ev); ok {
-			f.root.Key(k)
-		}
+		f.root.Key(*ev)
 	})
 }

@@ -11,12 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // lateHallState is a run well on its way: it has been through every age up
@@ -97,22 +96,22 @@ func TestEpochHallTabSwitchesPages(t *testing.T) {
 	h := &epochHall{}
 	st := game.NewGameEngine().GetState()
 	front := h.provider(st, 120)
-	if !h.handleKey(wkey(tcell.KeyTab, 0)) || !h.details {
+	if !h.handleKey(wkey(kit.KeyTab, 0)) || !h.details {
 		t.Fatal("Tab did not open the details page")
 	}
 	if details := h.provider(st, 120); details == front || details != epochProvider(st, 120) {
 		t.Error("the details page is not the old panel")
 	}
-	h.handleKey(wkey(tcell.KeyTab, 0))
+	h.handleKey(wkey(kit.KeyTab, 0))
 	if h.details || h.provider(st, 120) != front {
 		t.Error("Tab did not return to the front page")
 	}
-	h.handleKey(wkey(tcell.KeyTab, 0))
+	h.handleKey(wkey(kit.KeyTab, 0))
 	h.open()
 	if h.details {
 		t.Error("open should start on the front page")
 	}
-	if h.handleKey(wkey(tcell.KeyDown, 0)) {
+	if h.handleKey(wkey(kit.KeyDown, 0)) {
 		t.Error("scroll keys belong to the text view")
 	}
 }
@@ -325,7 +324,7 @@ func TestEpochHallCardKey(t *testing.T) {
 			return res, cerr
 		},
 	}
-	press := func(r rune) bool { return h.handleKey(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone)) }
+	press := func(r rune) bool { return h.handleKey(newKey(kit.KeyRune, r, 0)) }
 
 	res = epochCardResult{Path: "/x/epoch-card.png", Copied: true}
 	if !press('c') || made != 1 {
@@ -421,7 +420,7 @@ func TestEpochHallCardKeyHandsTheCopierAPNGPath(t *testing.T) {
 			return makeEpochCard(st, func(p string) error { path = p; return copyErr })
 		},
 	}
-	press := func() { h.handleKey(tcell.NewEventKey(tcell.KeyRune, 'c', tcell.ModNone)) }
+	press := func() { h.handleKey(newKey(kit.KeyRune, 'c', 0)) }
 	press()
 	if filepath.Ext(path) != ".png" || h.notice() != "Picture copied. Paste it into Discord." {
 		t.Errorf("path %q, notice %q", path, h.notice())

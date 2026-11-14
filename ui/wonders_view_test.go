@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // galleryTown is a dashboard over a fresh engine and a state in which the
@@ -36,7 +36,7 @@ func galleryTown(t *testing.T, built int) (*Dashboard, *tview.Pages, game.GameSt
 	return d, pages, st
 }
 
-func wkey(k tcell.Key, r rune) *tcell.EventKey { return tcell.NewEventKey(k, r, 0) }
+func wkey(k kit.KeyCode, r rune) *kit.Key { return newKey(k, r, 0) }
 
 // TestGalleryListsBuiltWonders: the gallery is the wonders the town has
 // built, oldest first, and no other, each with its age and its description;
@@ -56,13 +56,13 @@ func TestGalleryListsBuiltWonders(t *testing.T) {
 			}
 		}
 		wv := d.wonders
-		if wv.handleKey(wkey(tcell.KeyLeft, 0)) {
+		if wv.handleKey(wkey(kit.KeyLeft, 0)) {
 			t.Errorf("%d built: Left was taken by the panel", built)
 		}
-		if !wv.handleKey(wkey(tcell.KeyRune, 'g')) || !wv.gallery {
+		if !wv.handleKey(wkey(kit.KeyRune, 'g')) || !wv.gallery {
 			t.Fatalf("%d built: G did not open the gallery", built)
 		}
-		if wv.handleKey(wkey(tcell.KeyRight, 0)) || wv.handleKey(wkey(tcell.KeyHome, 0)) {
+		if wv.handleKey(wkey(kit.KeyRight, 0)) || wv.handleKey(wkey(kit.KeyHome, 0)) {
 			t.Errorf("%d built: the gallery took an arrow or Home; they scroll it", built)
 		}
 		text := untag(wv.provider(st, 100))
@@ -111,42 +111,42 @@ func TestGalleryKeysAndEsc(t *testing.T) {
 	open()
 	tv := om.entries["wonders"].tv
 	handler := tv.InputHandler()
-	press := func(ev *tcell.EventKey) { handler(ev, func(tview.Primitive) {}) }
+	press := func(ev *kit.Key) { handler(tcellKey(*ev), func(tview.Primitive) {}) }
 	list := untag(tv.GetText(false))
 	if !strings.Contains(list, "Press G for a gallery") {
 		t.Errorf("the list does not say how to open the gallery:\n%s", list)
 	}
 	// G opens it (the panel's key handler is the dashboard's, so the keys
 	// are applied here)
-	if !d.wonders.handleKey(wkey(tcell.KeyTab, 0)) || !d.wonders.gallery {
+	if !d.wonders.handleKey(wkey(kit.KeyTab, 0)) || !d.wonders.gallery {
 		t.Fatal("Tab did not open the gallery")
 	}
 	om.Refresh(st)
 	if text := untag(tv.GetText(false)); !strings.Contains(text, "Wonder gallery") {
 		t.Fatalf("the panel is not on the gallery:\n%s", text)
 	}
-	press(wkey(tcell.KeyEscape, 0))
+	press(wkey(kit.KeyEsc, 0))
 	if om.ActiveName() != "wonders" || d.wonders.gallery {
 		t.Fatalf("Esc in the gallery left active=%q gallery=%v: it goes back to the list", om.ActiveName(), d.wonders.gallery)
 	}
 	if text := untag(tv.GetText(false)); !strings.Contains(text, "Wonders: 3 /") || strings.Contains(text, "Wonder gallery") {
 		t.Errorf("after Esc the panel is not the list:\n%s", text)
 	}
-	d.wonders.handleKey(wkey(tcell.KeyRune, 'G'))
+	d.wonders.handleKey(wkey(kit.KeyRune, 'G'))
 	if !d.wonders.gallery {
 		t.Errorf("G did not open the gallery again")
 	}
-	d.wonders.handleKey(wkey(tcell.KeyRune, 'g'))
+	d.wonders.handleKey(wkey(kit.KeyRune, 'g'))
 	if d.wonders.gallery {
 		t.Errorf("g did not close it")
 	}
-	d.wonders.handleKey(wkey(tcell.KeyRune, 'g'))
-	press(wkey(tcell.KeyEscape, 0))
-	press(wkey(tcell.KeyEscape, 0))
+	d.wonders.handleKey(wkey(kit.KeyRune, 'g'))
+	press(wkey(kit.KeyEsc, 0))
+	press(wkey(kit.KeyEsc, 0))
 	if om.ActiveName() != "" {
 		t.Errorf("the second Esc did not close the panel: %q", om.ActiveName())
 	}
-	d.wonders.handleKey(wkey(tcell.KeyRune, 'g'))
+	d.wonders.handleKey(wkey(kit.KeyRune, 'g'))
 	open()
 	if d.wonders.gallery {
 		t.Errorf("the panel opened on the gallery")

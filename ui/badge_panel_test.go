@@ -15,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // badgeDashboard is a dashboard over a fresh game on a fresh account in a
@@ -190,21 +191,21 @@ func TestBadgeCaseOnTheLiveScreen(t *testing.T) {
 		}
 
 		// Esc: the detail first, then the panel. The dashboard routes it.
-		esc := tcell.NewEventKey(tcell.KeyEsc, 0, tcell.ModNone)
+		esc := newKey(kit.KeyEsc, 0, 0)
 		d.app.SetFocus(d.inputField)
 		if !d.badgePanel.view.card {
 			t.Fatalf("%s: the detail is not open", where)
 		}
-		if ev := d.root.GetInputCapture()(esc); ev != nil || d.badgePanel.view.card || d.overlayMgr.ActiveName() != "badges" {
+		if ev := d.root.GetInputCapture()(tcellKey(*esc)); ev != nil || d.badgePanel.view.card || d.overlayMgr.ActiveName() != "badges" {
 			t.Errorf("%s: the first Esc did not close just the detail", where)
 		}
-		if d.root.GetInputCapture()(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone)) != nil {
+		if d.root.GetInputCapture()(tev(kit.KeyRight, 0, 0)) != nil {
 			t.Errorf("%s: the case did not take an arrow", where)
 		}
-		if ev := d.root.GetInputCapture()(tcell.NewEventKey(tcell.KeyRune, 'b', tcell.ModNone)); ev == nil {
+		if ev := d.root.GetInputCapture()(tev(kit.KeyRune, 'b', 0)); ev == nil {
 			t.Errorf("%s: the case took a letter from the prompt", where)
 		}
-		if ev := d.root.GetInputCapture()(esc); ev != nil || d.overlayMgr.ActiveName() != "" {
+		if ev := d.root.GetInputCapture()(tcellKey(*esc)); ev != nil || d.overlayMgr.ActiveName() != "" {
 			t.Errorf("%s: the second Esc did not close the panel", where)
 		}
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
-	"github.com/gdamore/tcell/v2"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/rivo/tview"
 )
 
@@ -64,7 +64,7 @@ func (d *Dashboard) maybeShowPrestigeCue(state game.GameState) {
 		AddItem(nil, 0, 1, false).
 		AddItem(inner, 0, 17, true).
 		AddItem(nil, 0, 1, false)
-	root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	captureKeys(root, func(event *kit.Key) *kit.Key {
 		d.pages.RemovePage(prestigeCuePage)
 		d.app.SetFocus(d.inputField)
 		return nil

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -685,7 +684,7 @@ func TestEndingKeys(t *testing.T) {
 				}
 				return
 			}
-			e.InputHandler()(tcell.NewEventKey(tcell.KeyRune, 'x', tcell.ModNone), func(tview.Primitive) {})
+			e.InputHandler()(tev(kit.KeyRune, 'x', 0), func(tview.Primitive) {})
 		}
 		if r.om.ActiveName() != endingPageName || !r.pages.HasPage(endingPageName) || !r.om.FullScreenUp() {
 			t.Fatal("the film is not up")

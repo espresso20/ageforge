@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/nerdfont"
 	"github.com/espresso20/ageforge/platform/steam"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // skipInSteamBuild skips a test of the font download, which a Steam build
@@ -291,8 +291,8 @@ func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string
 }
 
 // pressKey sends a key to whatever holds the keyboard, as the event loop does.
-func pressKey(d *Dashboard, pages *tview.Pages, k tcell.Key, r rune) {
-	pages.InputHandler()(tcell.NewEventKey(k, r, tcell.ModNone), func(p tview.Primitive) { d.app.SetFocus(p) })
+func pressKey(d *Dashboard, pages *tview.Pages, k kit.KeyCode, r rune) {
+	pages.InputHandler()(tev(k, r, 0), func(p tview.Primitive) { d.app.SetFocus(p) })
 }
 
 // TestIconsWindowOnScreen: icons at the prompt opens the window over the
@@ -315,24 +315,24 @@ func TestIconsWindowOnScreen(t *testing.T) {
 		t.Errorf("a color tag leaked onto the screen:\n%s", scr)
 	}
 
-	pressKey(d, pages, tcell.KeyRune, 'B')
+	pressKey(d, pages, kit.KeyRune, 'B')
 	if scr := drawPrimitive(t, pages, 100, 30).Text(); !strings.Contains(scr, "[Y] Install") || !strings.Contains(scr, "No, show me how") {
 		t.Fatalf("no install offer after B:\n%s", scr)
 	}
-	pressKey(d, pages, tcell.KeyRune, 'x') // not a button: nothing happens
+	pressKey(d, pages, kit.KeyRune, 'x') // not a button: nothing happens
 	if d.icons.stage != iconsAskInstall {
 		t.Fatalf("a stray key moved the check to stage %d", d.icons.stage)
 	}
-	pressKey(d, pages, tcell.KeyTab, 0)     // focus No, show me how
-	pressKey(d, pages, tcell.KeyBacktab, 0) // back to Install
-	pressKey(d, pages, tcell.KeyEnter, 0)   // press it
+	pressKey(d, pages, kit.KeyTab, 0)     // focus No, show me how
+	pressKey(d, pages, kit.KeyBacktab, 0) // back to Install
+	pressKey(d, pages, kit.KeyEnter, 0)   // press it
 	if installs != 1 {
 		t.Fatalf("Enter on Install ran the installer %d times", installs)
 	}
 	scr = drawPrimitive(t, pages, 100, 30).Text()
 	wantAll(t, "screen", scr, "is installed", "In iTerm2:", "Restart your terminal, then type icons again to check.")
 
-	pressKey(d, pages, tcell.KeyEsc, 0)
+	pressKey(d, pages, kit.KeyEsc, 0)
 	if pages.HasPage(iconsPage) || !d.inputField.HasFocus() {
 		t.Errorf("after Esc: window still there %v, prompt focused %v", pages.HasPage(iconsPage), d.inputField.HasFocus())
 	}
@@ -342,7 +342,7 @@ func TestIconsWindowOnScreen(t *testing.T) {
 
 	// The answer in the window sets the account's glyphs.
 	d.startIcons()
-	pressKey(d, pages, tcell.KeyRune, 'i')
+	pressKey(d, pages, kit.KeyRune, 'i')
 	if g, _ := eng.Account().MapPrefs(); g != "nerd" {
 		t.Errorf("account glyphs %q after I see icons", g)
 	}
@@ -361,7 +361,7 @@ func TestIconsWindowGetsTheKeyboardBack(t *testing.T) {
 	if front, _ := pages.GetFrontPage(); front != iconsPage || !d.iconsWin.ring.buttons[d.iconsWin.ring.at].HasFocus() {
 		t.Fatalf("after a panel closed over it: front %q, window focused %v", front, d.iconsWin.ring.buttons[0].HasFocus())
 	}
-	pressKey(d, pages, tcell.KeyEsc, 0)
+	pressKey(d, pages, kit.KeyEsc, 0)
 	if pages.HasPage(iconsPage) || !d.inputField.HasFocus() {
 		t.Error("Esc did not close the window back to the prompt")
 	}
@@ -373,7 +373,7 @@ func TestIconsWindowGetsTheKeyboardBack(t *testing.T) {
 func TestAncientMemoryModalGivesTheKeyboardBack(t *testing.T) {
 	d, _, pages := iconsTestDashboard(t, nil, nil)
 	d.showAncientMemoryModal("tool_making", "Tool Making")
-	pressKey(d, pages, tcell.KeyRune, 'd') // Decline
+	pressKey(d, pages, kit.KeyRune, 'd') // Decline
 	if pages.HasPage(ancientMemoryPage) || !d.inputField.HasFocus() {
 		t.Errorf("after Decline: modal still there %v, prompt focused %v", pages.HasPage(ancientMemoryPage), d.inputField.HasFocus())
 	}

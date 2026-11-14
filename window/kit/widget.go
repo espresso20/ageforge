@@ -45,6 +45,10 @@ type KeyCode uint8
 
 const (
 	KeyRune KeyCode = iota
+	// KeyChord is a character key pressed with Ctrl or Alt held: the
+	// character is in Key.Rune and the modifiers in Key.Mod. It is never
+	// text, so a widget that reads KeyRune need not look at the modifiers.
+	KeyChord
 	KeyEnter
 	KeyEsc
 	KeyTab
@@ -86,8 +90,7 @@ const (
 	ModAlt
 )
 
-// A Key is one key press. A chord with a letter is KeyRune with the letter
-// in lower case and the modifier set.
+// A Key is one key press.
 type Key struct {
 	Code KeyCode
 	Rune rune
@@ -96,6 +99,11 @@ type Key struct {
 
 // Is reports whether k is the plain character r.
 func (k Key) Is(r rune) bool { return k.Code == KeyRune && k.Rune == r && k.Mod&^ModShift == 0 }
+
+// Ctrl reports whether k is Ctrl with the letter r, given in lower case.
+func (k Key) Ctrl(r rune) bool {
+	return k.Code == KeyChord && k.Mod&ModCtrl != 0 && (k.Rune == r || k.Rune == r-'a'+'A')
+}
 
 // MouseKind is what the mouse did.
 type MouseKind uint8

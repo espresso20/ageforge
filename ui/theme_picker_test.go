@@ -9,6 +9,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // restoreForge resets the process-global active theme back to the default after a
@@ -239,7 +240,7 @@ func TestThemePicker_NoDeadlockOnNavigate(t *testing.T) {
 	// BEFORE the buggy QueueUpdateDraw, so the theme change lands even on the broken
 	// code; we wait for it (proving we reached SetChangedFunc), THEN probe liveness —
 	// which is where the bug strands the loop.
-	app.QueueEvent(tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone))
+	app.QueueEvent(tev(kit.KeyDown, 0, 0))
 	if k := waitTheme(func(s string) bool { return s != "forge" }, 3*time.Second); k == "forge" {
 		t.Fatal("preview never applied after Down — test did not reach SetChangedFunc")
 	}

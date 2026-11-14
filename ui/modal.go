@@ -7,6 +7,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // modal.go is what the windows that float over a page have in common: the
@@ -70,16 +71,21 @@ func floatingModal(inner tview.Primitive, width, height int) *tview.Flex {
 	return centerModal(inner, width, height, false)
 }
 
-// keyCapturer is a primitive whose keys can be taken before it sees them.
+// keyCapturer is a box tview owns, whose keys can be taken before it sees
+// them.
 type keyCapturer interface {
 	SetInputCapture(capture func(event *tcell.EventKey) *tcell.EventKey) *tview.Box
 }
 
+// captureKeys sets what sees box's keys first, for a capture that reads the
+// kit's keys.
+func captureKeys(box keyCapturer, fn func(*kit.Key) *kit.Key) { box.SetInputCapture(tcellCapture(fn)) }
+
 // takeKeys makes each key in keys run its function on the window and be
 // taken; any other key goes on to whatever has the focus.
-func takeKeys(window keyCapturer, keys map[tcell.Key]func()) {
-	window.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		run, ok := keys[ev.Key()]
+func takeKeys(window keyCapturer, keys map[kit.KeyCode]func()) {
+	captureKeys(window, func(ev *kit.Key) *kit.Key {
+		run, ok := keys[ev.Code]
 		if !ok {
 			return ev
 		}
@@ -157,14 +163,14 @@ func (r *buttonRing) press(letter rune) bool {
 
 // key takes Tab and Shift-Tab, Right and Left, and the buttons' letters, and
 // reports whether the key was one of them.
-func (r *buttonRing) key(ev *tcell.EventKey) bool {
-	switch ev.Key() {
-	case tcell.KeyTab, tcell.KeyRight:
+func (r *buttonRing) key(ev *kit.Key) bool {
+	switch ev.Code {
+	case kit.KeyTab, kit.KeyRight:
 		r.focus(r.at + 1)
-	case tcell.KeyBacktab, tcell.KeyLeft:
+	case kit.KeyBacktab, kit.KeyLeft:
 		r.focus(r.at - 1)
-	case tcell.KeyRune:
-		return r.press(ev.Rune())
+	case kit.KeyRune:
+		return r.press(ev.Rune)
 	default:
 		return false
 	}

@@ -4,10 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 func TestMenuShowsSettingsNotThemes(t *testing.T) {
@@ -51,12 +50,12 @@ func TestMenuSettingsRowsSave(t *testing.T) {
 	if g, _ := r.acct.MapPrefs(); g != "nerd" {
 		t.Errorf("glyphs after one step: %q", g)
 	}
-	r.key(tcell.KeyLeft, 0)
+	r.key(kit.KeyLeft, 0)
 	if g, _ := r.acct.MapPrefs(); g != "unicode" {
 		t.Errorf("glyphs after left: %q", g)
 	}
-	r.key(tcell.KeyRight, 0)
-	r.key(tcell.KeyRight, 0)
+	r.key(kit.KeyRight, 0)
+	r.key(kit.KeyRight, 0)
 	if g, _ := r.acct.MapPrefs(); g != "ascii" || r.m.set.Tier != mapmodel.TierASCII {
 		t.Errorf("glyphs after wrapping: %q", g)
 	}
@@ -74,9 +73,9 @@ func TestMenuSettingsRowsSave(t *testing.T) {
 func TestMenuSettingsEscAndThemeReturn(t *testing.T) {
 	r := newMenuRig(t)
 	r.press('s')
-	r.key(tcell.KeyDown, 0)
-	r.key(tcell.KeyUp, 0)
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyDown, 0)
+	r.key(kit.KeyUp, 0)
+	r.key(kit.KeyEsc, 0)
 	if r.m.settings || !strings.Contains(ids(r.m.view.items), miSettings) {
 		t.Fatalf("Esc did not return to the main menu: %q", ids(r.m.view.items))
 	}
@@ -89,7 +88,7 @@ func TestMenuSettingsEscAndThemeReturn(t *testing.T) {
 	if got := r.front(); got != themePickerPage {
 		t.Fatalf("theme row opened %q", got)
 	}
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if r.front() != "splash" || !r.m.settings {
 		t.Errorf("back from the picker: front %q, settings %v", r.front(), r.m.settings)
 	}

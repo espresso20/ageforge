@@ -111,35 +111,35 @@ func TestNativeTextKeysAndCalls(t *testing.T) {
 	}
 	kt := newNativeText().SetDynamicColors(true)
 	changed := 0
-	var done []tcell.Key
-	kt.SetChangedFunc(func() { changed++ }).SetDoneFunc(func(k tcell.Key) { done = append(done, k) })
+	var done []kit.KeyCode
+	kt.SetChangedFunc(func() { changed++ }).SetDoneFunc(func(k kit.KeyCode) { done = append(done, k) })
 	kt.SetText(strings.Join(lines, "\n"))
 	if changed != 1 || kt.GetText(false) != strings.Join(lines, "\n") {
 		t.Fatalf("SetText: %d changes", changed)
 	}
 	top := func() string { return strings.TrimSpace(rowsOf(cellsOf(t, kt, 12, 5), 12)[:12]) }
-	press := func(k tcell.Key, r rune) {
-		kt.InputHandler()(tcell.NewEventKey(k, r, tcell.ModNone), func(tview.Primitive) {})
+	press := func(k kit.KeyCode, r rune) {
+		kt.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
 	}
 	if top() != "line 00" {
 		t.Fatalf("starts at %q", top())
 	}
 	for _, c := range []struct {
-		key  tcell.Key
+		key  kit.KeyCode
 		r    rune
 		want string
 	}{
-		{tcell.KeyDown, 0, "line 01"}, {tcell.KeyRune, 'j', "line 02"}, {tcell.KeyRune, 'k', "line 01"},
-		{tcell.KeyPgDn, 0, "line 05"}, {tcell.KeyRune, 'G', "line 35"}, {tcell.KeyRune, 'g', "line 00"}, {tcell.KeyEnd, 0, "line 35"},
+		{kit.KeyDown, 0, "line 01"}, {kit.KeyRune, 'j', "line 02"}, {kit.KeyRune, 'k', "line 01"},
+		{kit.KeyPgDn, 0, "line 05"}, {kit.KeyRune, 'G', "line 35"}, {kit.KeyRune, 'g', "line 00"}, {kit.KeyEnd, 0, "line 35"},
 	} {
 		press(c.key, c.r)
 		if got := top(); got != c.want {
 			t.Errorf("after %v %q the top line is %q, want %q", c.key, c.r, got, c.want)
 		}
 	}
-	press(tcell.KeyEsc, 0)
-	press(tcell.KeyEnter, 0)
-	if len(done) != 2 || done[0] != tcell.KeyEsc {
+	press(kit.KeyEsc, 0)
+	press(kit.KeyEnter, 0)
+	if len(done) != 2 || done[0] != kit.KeyEsc {
 		t.Errorf("Esc and Enter are done keys, got %v", done)
 	}
 	if row, _ := kt.GetScrollOffset(); row != 35 {
@@ -235,7 +235,7 @@ func TestPanelFrameIsOneTree(t *testing.T) {
 		t.Errorf("the text view reports row %d", row)
 	}
 	// The keys still go to the text view, as the frame hands them over.
-	f.InputHandler()(tcell.NewEventKey(tcell.KeyHome, 0, tcell.ModNone), func(tview.Primitive) {})
+	f.InputHandler()(tev(kit.KeyHome, 0, 0), func(tview.Primitive) {})
 	if got := draw(); got != "row 00" {
 		t.Errorf("Home through the frame shows %q", got)
 	}

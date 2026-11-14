@@ -6,13 +6,13 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The Plan panel (the Workbench): the build plan as a queue on the left and
@@ -102,7 +102,7 @@ func clampSel(sel, n int) int {
 //	x or Delete  remove the selected item
 //	o            preview plan optimize (Enter keeps it)
 //	C, C         clear the plan (press twice)
-func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bool {
+func (p *planPanel) handleKey(event *kit.Key, engine *game.GameEngine) bool {
 	p.engine = engine
 	switch p.mode {
 	case planModeAdd, planModePick:
@@ -111,17 +111,17 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 		return p.handleOptimizeKey(event, engine)
 	}
 	n := len(engine.GetState().Plan)
-	r := unicode.ToLower(event.Rune())
-	isRune := event.Key() == tcell.KeyRune
+	r := unicode.ToLower(event.Rune)
+	isRune := event.Code == kit.KeyRune
 	arm := false
 	switch {
-	case event.Key() == tcell.KeyUp || (isRune && r == 'k'):
+	case event.Code == kit.KeyUp || (isRune && r == 'k'):
 		p.sel = clampSel(p.sel-1, n)
-	case event.Key() == tcell.KeyDown || (isRune && r == 'j'):
+	case event.Code == kit.KeyDown || (isRune && r == 'j'):
 		p.sel = clampSel(p.sel+1, n)
-	case event.Key() == tcell.KeyPgUp:
+	case event.Code == kit.KeyPgUp:
 		p.sel = clampSel(p.sel-planPageRows(p.bodyRows()), n)
-	case event.Key() == tcell.KeyPgDn:
+	case event.Code == kit.KeyPgDn:
 		p.sel = clampSel(p.sel+planPageRows(p.bodyRows()), n)
 	case isRune && r == 'a':
 		p.mode, p.input, p.picks, p.pickSel = planModeAdd, "", nil, 0
@@ -129,13 +129,13 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 	case isRune && r == 'o':
 		p.mode = planModeOptimize
 		p.note = ""
-	case isRune && (event.Rune() == '+' || event.Rune() == '=' || event.Rune() == '-' || event.Rune() == '_' || event.Rune() == '−'):
+	case isRune && (event.Rune == '+' || event.Rune == '=' || event.Rune == '-' || event.Rune == '_' || event.Rune == '−'):
 		if n == 0 {
 			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.07", "The plan is empty."), false
 			break
 		}
 		delta := 1
-		if event.Rune() == '-' || event.Rune() == '_' || event.Rune() == '−' {
+		if event.Rune == '-' || event.Rune == '_' || event.Rune == '−' {
 			delta = -1
 		}
 		count, err := engine.PlanAdjust(p.sel+1, delta)
@@ -160,7 +160,7 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 		}
 		p.sel = to - 1
 		p.note = ""
-	case event.Key() == tcell.KeyDelete || (isRune && r == 'x'):
+	case event.Code == kit.KeyDelete || (isRune && r == 'x'):
 		if n == 0 {
 			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.02", "The plan is empty."), false
 			break
@@ -172,7 +172,7 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 		}
 		p.note, p.noteGood = txtRemoved.String()+what+".", true
 		p.sel = clampSel(p.sel, n-1)
-	case isRune && event.Rune() == 'C':
+	case isRune && event.Rune == 'C':
 		if n == 0 {
 			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.04", "The plan is empty."), false
 			break

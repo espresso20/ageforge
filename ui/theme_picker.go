@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // themePickerPage is the page name under which the theme picker is registered on
@@ -290,16 +291,16 @@ func (p *themePicker) applyAndDetail(index int) {
 
 // handleKey routes the picker's action keys. tview.List handles ↑/↓ natively; we
 // intercept Enter (confirm) and Esc/q (cancel/revert). No lock acquisition here.
-func (p *themePicker) handleKey(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Key() {
-	case tcell.KeyEnter:
+func (p *themePicker) handleKey(event *kit.Key) *kit.Key {
+	switch event.Code {
+	case kit.KeyEnter:
 		p.confirm()
 		return nil
-	case tcell.KeyEsc:
+	case kit.KeyEsc:
 		p.cancel()
 		return nil
-	case tcell.KeyRune:
-		if r := event.Rune(); r == 'q' || r == 'Q' {
+	case kit.KeyRune:
+		if r := event.Rune; r == 'q' || r == 'Q' {
 			p.cancel()
 			return nil
 		}

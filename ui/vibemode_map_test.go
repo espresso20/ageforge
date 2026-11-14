@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // TestTheMapSwitchesAtOnce: every text of the map is read when the map is drawn,
@@ -46,8 +45,8 @@ func TestTheMapSwitchesAtOnce(t *testing.T) {
 		out["as opened"] = drawMapPanel(t, d, 160, 48)
 		// the cursor home, then on the third thing Tab reaches: the inspector
 		// lines of whatever stands there
-		for _, k := range []tcell.Key{tcell.KeyHome, tcell.KeyTab, tcell.KeyTab, tcell.KeyTab} {
-			d.mapPanel.routeKey(tcell.NewEventKey(k, 0, tcell.ModNone), "")
+		for _, k := range []kit.KeyCode{kit.KeyHome, kit.KeyTab, kit.KeyTab, kit.KeyTab} {
+			d.mapPanel.routeKey(newKey(k, 0, 0), "")
 		}
 		out["inspecting"] = drawMapPanel(t, d, 160, 48)
 		d.runForTest("map flows on")

@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // wonders_view.go is the Wonders panel's second view, the gallery: a plain
@@ -58,8 +57,8 @@ func (wv *wondersView) back() bool {
 // handleKey applies a key to the panel's own views and reports whether it
 // took it: G or Tab swaps the list and the gallery, and the rest (scrolling)
 // is the text view's.
-func (wv *wondersView) handleKey(ev *tcell.EventKey) bool {
-	toggle := ev.Key() == tcell.KeyTab || ev.Key() == tcell.KeyRune && (ev.Rune() == 'g' || ev.Rune() == 'G')
+func (wv *wondersView) handleKey(ev *kit.Key) bool {
+	toggle := ev.Code == kit.KeyTab || ev.Code == kit.KeyRune && (ev.Rune == 'g' || ev.Rune == 'G')
 	if toggle {
 		wv.gallery = !wv.gallery
 	}

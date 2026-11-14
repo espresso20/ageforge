@@ -16,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // shameMessages are randomly chosen at session start when the cheater badge is active.
@@ -237,7 +238,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
 	d.overlayMgr.SetBackHandler("wonders", d.wonders.back)
 	d.overlayMgr.SetFooter("wonders", d.wonders.footer)
-	d.overlayMgr.SetKeyHandler("wonders", func(event *tcell.EventKey) *tcell.EventKey {
+	d.overlayMgr.SetKeyHandler("wonders", func(event *kit.Key) *kit.Key {
 		// tview goroutine, no engine lock held (see the harbinger handler).
 		if !d.wonders.handleKey(event) {
 			return event
@@ -264,7 +265,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
 	d.overlayMgr.SetBackHandler("epoch", d.epochHall.back)
 	d.overlayMgr.SetFooter("epoch", d.epochHall.footer)
-	d.overlayMgr.SetKeyHandler("epoch", func(event *tcell.EventKey) *tcell.EventKey {
+	d.overlayMgr.SetKeyHandler("epoch", func(event *kit.Key) *kit.Key {
 		// tview goroutine, no engine lock held (see the harbinger handler).
 		if !d.epochHall.handleKey(event) {
 			return event
@@ -274,7 +275,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	})
 	d.overlayMgr.Register("harbinger", vibe.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
 	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
-	d.overlayMgr.SetKeyHandler("harbinger", func(event *tcell.EventKey) *tcell.EventKey {
+	d.overlayMgr.SetKeyHandler("harbinger", func(event *kit.Key) *kit.Key {
 		// tview goroutine, no engine lock held: the engine's action methods and
 		// GetState take their own locks.
 		if !d.harbPanel.handleKey(event, d.engine) {
@@ -287,7 +288,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.planPanel.height = func() int { return d.overlayMgr.screenH }
 	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
 	d.overlayMgr.SetFooter("plan", planFooter)
-	d.overlayMgr.SetKeyHandler("plan", func(event *tcell.EventKey) *tcell.EventKey {
+	d.overlayMgr.SetKeyHandler("plan", func(event *kit.Key) *kit.Key {
 		// tview goroutine, no engine lock held (see the harbinger handler).
 		if !d.planPanel.handleKey(event, d.engine) {
 			return event
@@ -488,16 +489,16 @@ func (d *Dashboard) build() {
 			SetTitleColor(theme.Color(theme.RoleAccent))
 	})
 
-	d.inputField.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+	d.inputField.SetDoneFunc(func(key kit.KeyCode) {
+		if key == kit.KeyEnter {
 			d.submitInput()
 		}
 	})
 
 	// Phase 16: history navigation via Up/Down arrow keys
-	d.inputField.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyUp:
+	d.inputField.SetInputCapture(func(event *kit.Key) *kit.Key {
+		switch event.Code {
+		case kit.KeyUp:
 			if len(d.cmdHistory) == 0 {
 				return nil // nothing to navigate
 			}
@@ -511,7 +512,7 @@ func (d *Dashboard) build() {
 			// histIdx == 0: already at oldest, stay
 			d.inputField.SetText(d.cmdHistory[d.histIdx])
 			return nil // swallow key
-		case tcell.KeyDown:
+		case kit.KeyDown:
 			if d.histIdx == -1 {
 				return nil // not in history mode, no-op
 			}
@@ -595,9 +596,9 @@ func (d *Dashboard) build() {
 	})
 
 	// Global key handling
-	d.root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	captureKeys(d.root, func(event *kit.Key) *kit.Key {
 		// Ctrl+K — open passphrase modal (dev unlock)
-		if event.Key() == tcell.KeyCtrlK {
+		if event.Ctrl('k') {
 			d.showDevUnlockModal()
 			return nil
 		}
@@ -606,7 +607,7 @@ func (d *Dashboard) build() {
 		// the focus. Esc closes the panel's card first, where it has one.
 		if d.overlayMgr != nil {
 			if o, ok := d.barOverlays[d.overlayMgr.ActiveName()]; ok && d.inputField.HasFocus() &&
-				(o.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && o.closeFirst != nil && o.closeFirst()) {
+				(o.routeKey(event, d.inputField.GetText()) || event.Code == kit.KeyEsc && o.closeFirst != nil && o.closeFirst()) {
 				return nil
 			}
 		}
@@ -615,15 +616,15 @@ func (d *Dashboard) build() {
 		if d.overlayMgr != nil && d.inputField.HasFocus() && d.overlayMgr.scrollKey(event, d.inputField.GetText()) {
 			return nil
 		}
-		switch event.Key() {
-		case resourcePageKey:
+		switch event.Code {
+		case kit.KeyChord:
 			// The Resources box's next page, when it has more rows than it
 			// can show. With a panel open the box is behind it.
-			if d.overlayMgr == nil || !d.overlayMgr.HasActive() {
+			if event.Ctrl(resourcePageKey) && (d.overlayMgr == nil || !d.overlayMgr.HasActive()) {
 				d.economyTab.NextResourcePage()
 				return nil
 			}
-		case tcell.KeyEsc:
+		case kit.KeyEsc:
 			if d.overlayMgr != nil && d.overlayMgr.HasActive() {
 				d.overlayMgr.Hide()
 				return nil
@@ -633,12 +634,12 @@ func (d *Dashboard) build() {
 			d.pages.SwitchToPage("splash")
 			return nil
 		// Economy tab scroll keys (always available since economy is permanent background)
-		case tcell.KeyPgUp:
+		case kit.KeyPgUp:
 			if !d.overlayMgr.HasActive() {
 				d.economyTab.ScrollUp()
 				return nil
 			}
-		case tcell.KeyPgDn:
+		case kit.KeyPgDn:
 			if !d.overlayMgr.HasActive() {
 				d.economyTab.ScrollDown()
 				return nil
@@ -1390,13 +1391,13 @@ func (d *Dashboard) showDevUnlockModal() {
 		SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
 		SetFieldTextColor(theme.Color(theme.RoleText))
 
-	field.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEscape {
+	field.SetDoneFunc(func(key kit.KeyCode) {
+		if key == kit.KeyEsc {
 			d.pages.RemovePage(devUnlockPage)
 			d.app.SetFocus(d.inputField)
 			return
 		}
-		if key == tcell.KeyEnter {
+		if key == kit.KeyEnter {
 			input := field.GetText()
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
@@ -1455,8 +1456,8 @@ func (d *Dashboard) showWindow(text string) {
 		d.pages.RemovePage(codeWindowPage)
 		d.app.SetFocus(d.inputField)
 	}
-	tv.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyEnter {
+	tv.SetInputCapture(func(ev *kit.Key) *kit.Key {
+		if ev.Code == kit.KeyEsc || ev.Code == kit.KeyEnter {
 			done()
 			return nil
 		}

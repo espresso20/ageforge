@@ -4,9 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // TestMapZoomKeys: + - = _ are the map's while the prompt is empty and the
@@ -46,10 +45,10 @@ func TestMapZoomKeys(t *testing.T) {
 			t.Errorf("%q went to the map", r)
 		}
 	}
-	if p.routeKey(tcell.NewEventKey(tcell.KeyRune, '+', tcell.ModCtrl), "") || p.routeKey(tcell.NewEventKey(tcell.KeyRune, '[', tcell.ModAlt), "") {
+	if p.routeKey(newKey(kit.KeyRune, '+', kit.ModCtrl), "") || p.routeKey(newKey(kit.KeyRune, '[', kit.ModAlt), "") {
 		t.Error("a Ctrl or Alt chord went to the map")
 	}
-	if !p.routeKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), "") || !strings.Contains(drawMapPanel(t, d, 160, 48), "SETTLEMENT") {
+	if !p.routeKey(newKey(kit.KeyPgDn, 0, 0), "") || !strings.Contains(drawMapPanel(t, d, 160, 48), "SETTLEMENT") {
 		t.Error("PgDn did not zoom in")
 	}
 }

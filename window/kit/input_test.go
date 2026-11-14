@@ -12,7 +12,7 @@ func typeText(r *Root, s string) {
 	}
 }
 
-func ctrl(c rune) Key { return Key{Code: KeyRune, Rune: c, Mod: ModCtrl} }
+func ctrl(c rune) Key { return Key{Code: KeyChord, Rune: c, Mod: ModCtrl} }
 
 func TestInputEditsALine(t *testing.T) {
 	var changes int

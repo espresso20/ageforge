@@ -150,26 +150,27 @@ func (in *Input) wordStart() int {
 
 func (in *Input) Key(k Key) bool {
 	n := len(in.text)
-	if k.Code == KeyRune && k.Mod&(ModCtrl|ModAlt) == 0 {
+	switch {
+	case k.Code == KeyRune:
 		in.edit(in.cur, in.cur, k.Rune)
 		return true
-	}
-	if k.Code == KeyRune && k.Mod&ModCtrl != 0 {
-		switch k.Rune {
-		case 'a':
-			in.cur = 0
-		case 'e':
-			in.cur = n
-		case 'u':
-			in.edit(0, in.cur)
-		case 'k':
-			in.edit(in.cur, n)
-		case 'w':
-			in.edit(in.wordStart(), in.cur)
-		default:
-			return false
-		}
+	case k.Ctrl('a'):
+		in.cur = 0
 		return true
+	case k.Ctrl('e'):
+		in.cur = n
+		return true
+	case k.Ctrl('u'):
+		in.edit(0, in.cur)
+		return true
+	case k.Ctrl('k'):
+		in.edit(in.cur, n)
+		return true
+	case k.Ctrl('w'):
+		in.edit(in.wordStart(), in.cur)
+		return true
+	case k.Code == KeyChord:
+		return false
 	}
 	switch k.Code {
 	case KeyLeft:

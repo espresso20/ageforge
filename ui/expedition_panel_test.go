@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -97,7 +95,7 @@ func TestExpeditionPanelTabSwitchesAndClearsTheNewCount(t *testing.T) {
 		t.Errorf("the Ready Room does not say a mission came home:\n%s", text)
 	}
 
-	p.handleKey(tcell.KeyTab)
+	p.handleKey(kit.KeyTab)
 	if !p.view.report {
 		t.Fatal("Tab did not open the Report")
 	}
@@ -114,7 +112,7 @@ func TestExpeditionPanelTabSwitchesAndClearsTheNewCount(t *testing.T) {
 		t.Error("viewing the Report did not clear the new count in the game")
 	}
 
-	p.handleKey(tcell.KeyTab)
+	p.handleKey(kit.KeyTab)
 	if p.view.report {
 		t.Fatal("Tab did not go back to the Ready Room")
 	}
@@ -155,9 +153,9 @@ func TestExpeditionPanelArrowsHopBetweenPins(t *testing.T) {
 	}
 	cells := sc.pinCells()
 	for _, c := range []struct {
-		key    tcell.Key
+		key    kit.KeyCode
 		dx, dy int
-	}{{tcell.KeyRight, 1, 0}, {tcell.KeyLeft, -1, 0}, {tcell.KeyDown, 0, 1}, {tcell.KeyUp, 0, -1}} {
+	}{{kit.KeyRight, 1, 0}, {kit.KeyLeft, -1, 0}, {kit.KeyDown, 0, 1}, {kit.KeyUp, 0, -1}} {
 		for from := range cells {
 			p.selIdx, p.view.sel = from, sc.offers[from].key
 			p.handleKey(c.key)
@@ -197,7 +195,7 @@ func TestExpeditionPanelEnterEnterSends(t *testing.T) {
 		t.Fatalf("the first offer cannot be sent: %s", want.LaunchBlockReason)
 	}
 
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	if !p.view.confirm {
 		t.Fatal("Enter did not ask before sending")
 	}
@@ -211,8 +209,8 @@ func TestExpeditionPanelEnterEnterSends(t *testing.T) {
 		t.Error("Esc does not take back the question, once")
 	}
 
-	p.handleKey(tcell.KeyEnter)
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	if p.view.confirm {
 		t.Error("the question is still up after the party was sent")
 	}
@@ -265,7 +263,7 @@ func TestExpeditionPanelShowsAnOfferThatCannotBeSentItsRefusal(t *testing.T) {
 	if strings.Contains(text, "send the party") {
 		t.Errorf("the card offers to send an offer that cannot be sent:\n%s", text)
 	}
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	if p.view.confirm {
 		t.Error("Enter asked to send an offer that cannot be sent")
 	}
@@ -468,15 +466,15 @@ func TestExpeditionPanelFoldsToASCII(t *testing.T) {
 
 func TestExpeditionPanelKeysBelongToThePromptWhenItHasText(t *testing.T) {
 	_, p := expFixture(t)
-	for _, key := range []tcell.Key{tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight, tcell.KeyTab, tcell.KeyEnter} {
-		if p.routeKey(tcell.NewEventKey(key, 0, tcell.ModNone), "cop") {
+	for _, key := range []kit.KeyCode{kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyTab, kit.KeyEnter} {
+		if p.routeKey(newKey(key, 0, 0), "cop") {
 			t.Errorf("key %v was taken with something typed", key)
 		}
-		if !p.routeKey(tcell.NewEventKey(key, 0, tcell.ModNone), "") {
+		if !p.routeKey(newKey(key, 0, 0), "") {
 			t.Errorf("key %v was left to the empty prompt", key)
 		}
 	}
-	if p.routeKey(tcell.NewEventKey(tcell.KeyRune, 'c', tcell.ModNone), "") {
+	if p.routeKey(newKey(kit.KeyRune, 'c', 0), "") {
 		t.Error("a letter was taken from the prompt")
 	}
 }

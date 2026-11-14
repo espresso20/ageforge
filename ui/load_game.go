@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // loadGamePage is the page name under which the Load Game browser is registered
@@ -284,16 +284,16 @@ func (b *loadGameBrowser) selected() (game.SaveInfo, bool) {
 
 // handleKey routes the action keys for the browser. tview.List handles ↑/↓
 // natively; we intercept Enter/d/r/c/Esc/q.
-func (b *loadGameBrowser) handleKey(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Key() {
-	case tcell.KeyEnter:
+func (b *loadGameBrowser) handleKey(event *kit.Key) *kit.Key {
+	switch event.Code {
+	case kit.KeyEnter:
 		b.doLoad()
 		return nil
-	case tcell.KeyEsc:
+	case kit.KeyEsc:
 		b.back()
 		return nil
-	case tcell.KeyRune:
-		switch event.Rune() {
+	case kit.KeyRune:
+		switch event.Rune {
 		case 'd', 'D':
 			b.doDelete()
 			return nil
@@ -469,8 +469,8 @@ func (b *loadGameBrowser) doRename() {
 	cancelBtn := newNativeButton(vibe.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
 
 	// Enter in the input field submits.
-	input.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+	input.SetDoneFunc(func(key kit.KeyCode) {
+		if key == kit.KeyEnter {
 			submit()
 		}
 	})
@@ -498,10 +498,10 @@ func (b *loadGameBrowser) doRename() {
 		b.app.SetFocus(focusOrder[focusIdx])
 	}
 	modal := centeredModal(inner, 50, 9)
-	takeKeys(modal, map[tcell.Key]func(){
-		tcell.KeyEsc:     close,
-		tcell.KeyTab:     func() { cycle(1) },
-		tcell.KeyBacktab: func() { cycle(-1) },
+	takeKeys(modal, map[kit.KeyCode]func(){
+		kit.KeyEsc:     close,
+		kit.KeyTab:     func() { cycle(1) },
+		kit.KeyBacktab: func() { cycle(-1) },
 	})
 
 	b.pages.AddPage(page, modal, true, true)

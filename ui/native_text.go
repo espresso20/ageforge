@@ -30,7 +30,7 @@ type nativeText struct {
 	scrollable bool
 	maxLines   int
 	changed    func()
-	done       func(tcell.Key)
+	done       func(kit.KeyCode)
 	drawFunc   func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)
 }
 
@@ -151,7 +151,7 @@ func (t *nativeText) SetChangedFunc(fn func()) *nativeText {
 }
 
 // SetDoneFunc sets what Esc, Enter, Tab and Shift+Tab call.
-func (t *nativeText) SetDoneFunc(fn func(key tcell.Key)) *nativeText {
+func (t *nativeText) SetDoneFunc(fn func(key kit.KeyCode)) *nativeText {
 	t.done = fn
 	return t
 }
@@ -245,27 +245,25 @@ var viKeys = map[rune]kit.KeyCode{'j': kit.KeyDown, 'k': kit.KeyUp, 'g': kit.Key
 // InputHandler takes a text view's keys: Esc, Enter and Tab are done, and
 // the arrows, the page keys, Home, End and j, k, g, G scroll.
 func (t *nativeText) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return t.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		switch ev.Key() {
-		case tcell.KeyEsc, tcell.KeyEnter, tcell.KeyTab, tcell.KeyBacktab:
+	return keysIn(t.Box, func(ev *kit.Key) {
+		switch ev.Code {
+		case kit.KeyEsc, kit.KeyEnter, kit.KeyTab, kit.KeyBacktab:
 			if t.done != nil {
-				t.done(ev.Key())
+				t.done(ev.Code)
 			}
 			return
 		}
-		k, ok := kitKey(ev)
-		if !ok || !t.scrollable {
+		k := *ev
+		if !t.scrollable {
 			return
 		}
-		if k.Code == kit.KeyRune {
-			switch code, vi := viKeys[k.Rune]; {
-			case k.Mod&kit.ModCtrl != 0 && k.Rune == 'f':
-				k = kit.Key{Code: kit.KeyPgDn}
-			case k.Mod&kit.ModCtrl != 0 && k.Rune == 'b':
-				k = kit.Key{Code: kit.KeyPgUp}
-			case vi && k.Mod == 0:
-				k = kit.Key{Code: code}
-			}
+		switch code, vi := viKeys[k.Rune]; {
+		case k.Ctrl('f'):
+			k = kit.Key{Code: kit.KeyPgDn}
+		case k.Ctrl('b'):
+			k = kit.Key{Code: kit.KeyPgUp}
+		case vi && k.Code == kit.KeyRune && k.Mod == 0:
+			k = kit.Key{Code: code}
 		}
 		t.root.Key(k)
 	})

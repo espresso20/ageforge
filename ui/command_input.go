@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/gdamore/tcell/v2"
+import "github.com/espresso20/ageforge/window/kit"
 
 // commandInput is the dashboard's command prompt: an input line that shows
 // the best completion of what was typed as dim ghost text after the cursor,
@@ -34,16 +34,16 @@ func (c *commandInput) Ghost() string { return c.comp.ghost(c.GetText()) }
 // acceptKey handles the completion keys: Tab and Backtab take and cycle the
 // candidates, → takes the ghost when the cursor is at the end. It reports
 // whether the key was used.
-func (c *commandInput) acceptKey(ev *tcell.EventKey) bool {
-	switch ev.Key() {
-	case tcell.KeyTab, tcell.KeyBacktab:
+func (c *commandInput) acceptKey(ev *kit.Key) bool {
+	switch ev.Code {
+	case kit.KeyTab, kit.KeyBacktab:
 		step := 1
-		if ev.Key() == tcell.KeyBacktab {
+		if ev.Code == kit.KeyBacktab {
 			step = -1
 		}
 		c.tab(step)
 		return true // Tab never leaves the prompt
-	case tcell.KeyRight:
+	case kit.KeyRight:
 		if !c.in.AtEnd() || !c.HasFocus() {
 			return false
 		}

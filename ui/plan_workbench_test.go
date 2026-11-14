@@ -5,9 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // workbenchEngine is a town with a plan that has something to optimize.
@@ -22,9 +21,9 @@ func workbenchEngine(t *testing.T) *game.GameEngine {
 	return engine
 }
 
-func wbKey(t *testing.T, p *planPanel, engine *game.GameEngine, k tcell.Key, r rune) {
+func wbKey(t *testing.T, p *planPanel, engine *game.GameEngine, k kit.KeyCode, r rune) {
 	t.Helper()
-	if !p.handleKey(tcell.NewEventKey(k, r, tcell.ModNone), engine) {
+	if !p.handleKey(newKey(k, r, 0), engine) {
 		t.Fatalf("key %v %q not consumed", k, r)
 	}
 }
@@ -32,7 +31,7 @@ func wbKey(t *testing.T, p *planPanel, engine *game.GameEngine, k tcell.Key, r r
 func wbType(t *testing.T, p *planPanel, engine *game.GameEngine, s string) {
 	t.Helper()
 	for _, r := range s {
-		wbKey(t, p, engine, tcell.KeyRune, r)
+		wbKey(t, p, engine, kit.KeyRune, r)
 	}
 }
 
@@ -68,14 +67,14 @@ func TestWorkbench_QueueScrollsWithTheSelection(t *testing.T) {
 	}
 	p := planPanel{engine: engine, height: func() int { return 24 }}
 	for range 30 {
-		wbKey(t, &p, engine, tcell.KeyDown, 0)
+		wbKey(t, &p, engine, kit.KeyDown, 0)
 	}
 	text := plainText(p.provider(engine.GetState(), 124))
 	if !strings.Contains(text, "▸") || !strings.Contains(text, fmt.Sprintf("%2d.", p.sel+1)) {
 		t.Errorf("selection %d is not on screen:\n%s", p.sel+1, text)
 	}
 	before := p.sel
-	wbKey(t, &p, engine, tcell.KeyPgUp, 0)
+	wbKey(t, &p, engine, kit.KeyPgUp, 0)
 	if p.sel >= before {
 		t.Errorf("PgUp left the selection at %d (was %d)", p.sel, before)
 	}
@@ -89,22 +88,22 @@ func TestWorkbench_OptimizePreviewKeepsOrNot(t *testing.T) {
 		t.Fatal(err)
 	}
 	order := engine.GetState().Plan
-	wbKey(t, &p, engine, tcell.KeyRune, 'o')
+	wbKey(t, &p, engine, kit.KeyRune, 'o')
 	text := plainText(p.provider(engine.GetState(), 124))
 	if prev.Changed {
 		wantAll(t, "popup", text, "Optimize preview", "Now", "After", "Finishes in", "saves", "keep it")
 	} else {
 		wantAll(t, "popup", text, "Nothing")
 	}
-	wbKey(t, &p, engine, tcell.KeyEscape, 0)
+	wbKey(t, &p, engine, kit.KeyEsc, 0)
 	if p.mode != planModeQueue || fmt.Sprint(engine.GetState().Plan[0]) != fmt.Sprint(order[0]) {
 		t.Error("Esc applied or kept the popup")
 	}
 	if !prev.Changed {
 		return
 	}
-	wbKey(t, &p, engine, tcell.KeyRune, 'o')
-	wbKey(t, &p, engine, tcell.KeyEnter, 0)
+	wbKey(t, &p, engine, kit.KeyRune, 'o')
+	wbKey(t, &p, engine, kit.KeyEnter, 0)
 	got := engine.GetState().Plan
 	changed := false
 	for i := range got {
@@ -120,25 +119,25 @@ func TestWorkbench_AddFromThePanel(t *testing.T) {
 	HandleCommand("plan build hut 2", engine)
 	HandleCommand("plan build stash", engine)
 	p := planPanel{engine: engine}
-	wbKey(t, &p, engine, tcell.KeyRune, 'a')
+	wbKey(t, &p, engine, kit.KeyRune, 'a')
 	wbType(t, &p, engine, "tool mak")
 	wantAll(t, "box", plainText(p.provider(engine.GetState(), 124)), "Add: tool mak", "Tool Making")
-	wbKey(t, &p, engine, tcell.KeyEnter, 0)
+	wbKey(t, &p, engine, kit.KeyEnter, 0)
 	plan := engine.GetState().Plan
 	if len(plan) != 3 || plan[1].Key != "tool_making" || p.sel != 1 {
 		t.Fatalf("research went to the wrong place (sel %d): %+v", p.sel, plan)
 	}
 	// Esc cancels.
-	wbKey(t, &p, engine, tcell.KeyRune, 'a')
+	wbKey(t, &p, engine, kit.KeyRune, 'a')
 	wbType(t, &p, engine, "wood")
-	wbKey(t, &p, engine, tcell.KeyEscape, 0)
+	wbKey(t, &p, engine, kit.KeyEsc, 0)
 	if p.mode != planModeQueue || len(engine.GetState().Plan) != 3 {
 		t.Error("Esc did not cancel the add")
 	}
 	// A name that fits nothing says so.
-	wbKey(t, &p, engine, tcell.KeyRune, 'a')
+	wbKey(t, &p, engine, kit.KeyRune, 'a')
 	wbType(t, &p, engine, "zzzz")
-	wbKey(t, &p, engine, tcell.KeyEnter, 0)
+	wbKey(t, &p, engine, kit.KeyEnter, 0)
 	if !strings.Contains(p.note, "Nothing called") {
 		t.Errorf("note = %q", p.note)
 	}
@@ -164,15 +163,15 @@ func TestWorkbench_AddAsksWhichKindWhenAmbiguous(t *testing.T) {
 		t.Skip("no name in the fixture fits two things")
 	}
 	p := planPanel{engine: engine}
-	wbKey(t, &p, engine, tcell.KeyRune, 'a')
+	wbKey(t, &p, engine, kit.KeyRune, 'a')
 	wbType(t, &p, engine, input)
-	wbKey(t, &p, engine, tcell.KeyEnter, 0)
+	wbKey(t, &p, engine, kit.KeyEnter, 0)
 	if p.mode != planModePick {
 		t.Fatalf("mode = %d, want the choice", p.mode)
 	}
 	wantAll(t, "choice", plainText(p.provider(engine.GetState(), 124)), "Which one?")
-	wbKey(t, &p, engine, tcell.KeyDown, 0)
-	wbKey(t, &p, engine, tcell.KeyEnter, 0)
+	wbKey(t, &p, engine, kit.KeyDown, 0)
+	wbKey(t, &p, engine, kit.KeyEnter, 0)
 	if plan := engine.GetState().Plan; len(plan) == 0 || plan[0].Key != picks[1].key {
 		t.Errorf("plan = %+v, want the second choice %+v", plan, picks[1])
 	}
@@ -183,20 +182,20 @@ func TestWorkbench_PlusMinusChangeTheCount(t *testing.T) {
 	HandleCommand("plan build hut 3", engine)
 	HandleCommand("plan research tool_making", engine)
 	p := planPanel{engine: engine}
-	wbKey(t, &p, engine, tcell.KeyRune, '+')
-	wbKey(t, &p, engine, tcell.KeyRune, '+')
-	wbKey(t, &p, engine, tcell.KeyRune, '-')
+	wbKey(t, &p, engine, kit.KeyRune, '+')
+	wbKey(t, &p, engine, kit.KeyRune, '+')
+	wbKey(t, &p, engine, kit.KeyRune, '-')
 	if got := engine.GetState().Plan[0].Count; got != 4 {
 		t.Errorf("count = %d, want 4", got)
 	}
 	for range 5 {
-		wbKey(t, &p, engine, tcell.KeyRune, '-')
+		wbKey(t, &p, engine, kit.KeyRune, '-')
 	}
 	if got := engine.GetState().Plan[0].Count; got != 1 || p.noteGood {
 		t.Errorf("count = %d (note %q), want it to stop at 1", got, p.note)
 	}
-	wbKey(t, &p, engine, tcell.KeyDown, 0)
-	wbKey(t, &p, engine, tcell.KeyRune, '+')
+	wbKey(t, &p, engine, kit.KeyDown, 0)
+	wbKey(t, &p, engine, kit.KeyRune, '+')
 	if p.noteGood {
 		t.Errorf("+ on a research item: %q", p.note)
 	}

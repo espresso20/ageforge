@@ -4,12 +4,12 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // Adding an item from the panel: A opens a name box at the foot. The name is
@@ -80,29 +80,29 @@ func planPicks(state game.GameState, engine *game.GameEngine, input string) []pl
 }
 
 // handleAddKey is the key handler while the name box (or the choice) is open.
-func (p *planPanel) handleAddKey(event *tcell.EventKey, engine *game.GameEngine) bool {
-	switch event.Key() {
-	case tcell.KeyEscape:
+func (p *planPanel) handleAddKey(event *kit.Key, engine *game.GameEngine) bool {
+	switch event.Code {
+	case kit.KeyEsc:
 		p.mode, p.input, p.picks = planModeQueue, "", nil
 		p.note = ""
-	case tcell.KeyUp:
+	case kit.KeyUp:
 		if p.mode == planModePick {
 			p.pickSel = clampSel(p.pickSel-1, len(p.picks))
 		}
-	case tcell.KeyDown:
+	case kit.KeyDown:
 		if p.mode == planModePick {
 			p.pickSel = clampSel(p.pickSel+1, len(p.picks))
 		}
-	case tcell.KeyBackspace, tcell.KeyBackspace2:
+	case kit.KeyBackspace:
 		if r := []rune(p.input); len(r) > 0 {
 			p.input = string(r[:len(r)-1])
 		}
 		p.mode, p.picks = planModeAdd, nil
-	case tcell.KeyEnter:
+	case kit.KeyEnter:
 		p.enterAdd(engine)
-	case tcell.KeyRune:
-		if unicode.IsPrint(event.Rune()) {
-			p.input += string(event.Rune())
+	case kit.KeyRune:
+		if unicode.IsPrint(event.Rune) {
+			p.input += string(event.Rune)
 			p.mode, p.picks = planModeAdd, nil
 		}
 	}

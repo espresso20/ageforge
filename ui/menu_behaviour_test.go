@@ -20,6 +20,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // menu_behaviour_test.go drives the real main menu: a named account and
@@ -86,11 +87,11 @@ func (r *menuRig) front() string {
 }
 
 // key sends a key to whatever has the keyboard.
-func (r *menuRig) key(k tcell.Key, ch rune) {
+func (r *menuRig) key(k kit.KeyCode, ch rune) {
 	r.t.Helper()
 	// From the root down, as the app sends it, so a page's own key capture
 	// has its say.
-	r.pages.InputHandler()(tcell.NewEventKey(k, ch, tcell.ModNone), func(p tview.Primitive) { r.app.SetFocus(p) })
+	r.pages.InputHandler()(tev(k, ch, 0), func(p tview.Primitive) { r.app.SetFocus(p) })
 }
 
 // release lets the choices that were waiting out their strike act.
@@ -105,7 +106,7 @@ func (r *menuRig) release() {
 // press presses a letter on the menu and lets the choice act.
 func (r *menuRig) press(ch rune) {
 	r.t.Helper()
-	r.key(tcell.KeyRune, ch)
+	r.key(kit.KeyRune, ch)
 	r.release()
 }
 
@@ -210,19 +211,19 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 	}
 
 	// A selection made by hand stays put when the menu reads again.
-	r.key(tcell.KeyDown, 0)
-	r.key(tcell.KeyDown, 0)
+	r.key(kit.KeyDown, 0)
+	r.key(kit.KeyDown, 0)
 	m.Focus(func(tview.Primitive) {})
 	if got := m.view.items[m.view.sel].id; got != miLoad {
 		t.Errorf("after two downs and a return the selection is on %q, want load", got)
 	}
-	r.key(tcell.KeyUp, 0)
-	r.key(tcell.KeyUp, 0)
-	r.key(tcell.KeyUp, 0)
+	r.key(kit.KeyUp, 0)
+	r.key(kit.KeyUp, 0)
+	r.key(kit.KeyUp, 0)
 	if got := m.view.items[m.view.sel].id; got != miQuit {
 		t.Errorf("up from the first entry lands on %q, want quit", got)
 	}
-	r.key(tcell.KeyHome, 0)
+	r.key(kit.KeyHome, 0)
 	if m.view.sel != 0 {
 		t.Errorf("Home selects entry %d", m.view.sel)
 	}
@@ -250,7 +251,7 @@ func TestMenuKeysOpenEveryEntry(t *testing.T) {
 		if m.active || m.stop != nil {
 			t.Errorf("%q: the menu is still running under the page it opened", c.key)
 		}
-		r.key(tcell.KeyEsc, 0)
+		r.key(kit.KeyEsc, 0)
 		if got := r.front(); got != "splash" {
 			t.Fatalf("Esc on %q leaves %q in front", c.page, got)
 		}
@@ -279,7 +280,7 @@ func TestMenuKeysOpenEveryEntry(t *testing.T) {
 	if !m.active {
 		t.Error("the name prompt is a dialog over the menu, which should keep running")
 	}
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if r.front() != "splash" || saves() != 1 {
 		t.Errorf("Esc on the name prompt: front %q, %d saves", r.front(), saves())
 	}
@@ -300,7 +301,7 @@ func TestMenuKeysOpenEveryEntry(t *testing.T) {
 		t.Errorf("back from the game: menu in use %v, selection %q", m.active, m.view.items[m.view.sel].id)
 	}
 	// Enter on the selection is Continue too.
-	r.key(tcell.KeyEnter, 0)
+	r.key(kit.KeyEnter, 0)
 	r.release()
 	if r.front() != "dashboard" {
 		t.Fatalf("Enter on Continue: front %q", r.front())
@@ -324,7 +325,7 @@ func TestMenuStrikeAndMotion(t *testing.T) {
 	r.draw(120, 40)
 	sparks := len(m.scene.sparks.a)
 
-	r.key(tcell.KeyRune, 'l')
+	r.key(kit.KeyRune, 'l')
 	if m.scene.strike != 1 || len(m.scene.sparks.a) <= sparks+40 {
 		t.Errorf("a choice with motion on: strike %.2f, %d sparks (from %d)", m.scene.strike, len(m.scene.sparks.a), sparks)
 	}
@@ -332,8 +333,8 @@ func TestMenuStrikeAndMotion(t *testing.T) {
 		t.Fatalf("the choice should wait out its strike: pending %v, %d waiting, front %q", m.pending, len(r.held), r.front())
 	}
 	// A key while it waits is not a second choice.
-	r.key(tcell.KeyRune, 't')
-	r.key(tcell.KeyDown, 0)
+	r.key(kit.KeyRune, 't')
+	r.key(kit.KeyDown, 0)
 	if len(r.held) != 1 || m.view.items[m.view.sel].id != miLoad {
 		t.Errorf("a key during the strike was taken: %d waiting, selection %q", len(r.held), m.view.items[m.view.sel].id)
 	}
@@ -351,7 +352,7 @@ func TestMenuStrikeAndMotion(t *testing.T) {
 	if r.front() != loadGamePage {
 		t.Fatalf("after the strike the entry did not open: front %q", r.front())
 	}
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if menuStrikeHold >= mapAnimStep {
 		t.Errorf("a choice waits %v, a whole animation frame (%v) or more", menuStrikeHold, mapAnimStep)
 	}
@@ -362,7 +363,7 @@ func TestMenuStrikeAndMotion(t *testing.T) {
 	r.draw(120, 40)
 	before := *m.scene
 	nSparks := len(m.scene.sparks.a)
-	r.key(tcell.KeyRune, 'l')
+	r.key(kit.KeyRune, 'l')
 	if r.front() != loadGamePage || len(r.held) != 0 {
 		t.Fatalf("with motion off the entry should open at once: front %q, %d waiting", r.front(), len(r.held))
 	}
@@ -540,8 +541,8 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	}
 	sim := newSimScreen(t, 120, 40)
 	scr := theme.WrapScreen(sim)
-	key := func(k tcell.Key, ch rune) {
-		pages.InputHandler()(tcell.NewEventKey(k, ch, tcell.ModNone), func(p tview.Primitive) { app.SetFocus(p) })
+	key := func(k kit.KeyCode, ch rune) {
+		pages.InputHandler()(tev(k, ch, 0), func(p tview.Primitive) { app.SetFocus(p) })
 	}
 	for _, size := range [][2]int{{120, 40}, {80, 24}, {144, 46}} {
 		sim.SetSize(size[0], size[1])
@@ -551,9 +552,9 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 			m.Draw(scr)
 		}
 	}
-	key(tcell.KeyDown, 0)
-	key(tcell.KeyUp, 0)
-	key(tcell.KeyRune, 'b') // the badge case, and back
+	key(kit.KeyDown, 0)
+	key(kit.KeyUp, 0)
+	key(kit.KeyRune, 'b') // the badge case, and back
 	for _, fn := range held {
 		fn()
 	}
@@ -563,8 +564,8 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	_, front := pages.GetFrontPage()
 	front.SetRect(0, 0, 120, 40)
 	front.Draw(scr)
-	key(tcell.KeyEsc, 0)
-	key(tcell.KeyRune, 'u')
+	key(kit.KeyEsc, 0)
+	key(kit.KeyRune, 'u')
 	m.refresh(true)
 	m.Draw(scr)
 	m.leave()
@@ -698,16 +699,16 @@ func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 		t.Errorf("the case does not show its count:\n%s", text.String())
 	}
 	// The case's own keys work, and Esc closes the open badge first.
-	r.key(tcell.KeyRight, 0)
-	r.key(tcell.KeyEnter, 0)
+	r.key(kit.KeyRight, 0)
+	r.key(kit.KeyEnter, 0)
 	if !b.view.card {
 		t.Fatal("Enter did not open the selected badge")
 	}
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if b.view.card || r.front() != menuBadgesPage {
 		t.Fatalf("the first Esc should close the badge and leave the case open: card %v, front %q", b.view.card, r.front())
 	}
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if r.front() != "splash" || !r.m.active {
 		t.Errorf("the second Esc: front %q, menu in use %v", r.front(), r.m.active)
 	}

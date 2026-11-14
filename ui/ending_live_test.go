@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // film is the film of a run's ending on the harness's app, nil when none
@@ -28,7 +28,7 @@ func (h *reproHarness) promptAfterFilm() {
 		if h.inputHasFocus() {
 			h.t.Fatalf("an Ancient Memory is in front and the keyboard is with the prompt under it\n%s", h.describeUI())
 		}
-		h.key(tcell.KeyRune, 'd')
+		h.key(kit.KeyRune, 'd')
 	}
 	h.waitFor("the prompt to have the keyboard", 5*time.Second, func() bool {
 		return h.frontPage() == "dashboard" && h.inputHasFocus()
@@ -174,9 +174,9 @@ func (h *reproHarness) fallFilm() {
 	if h.hasPage("catastrophe") {
 		t.Fatalf("the catastrophe's window opened over the arrival\n%s", h.describeUI())
 	}
-	h.dismissArrival("into the Iron Age", tcell.KeyEnter, 0)
+	h.dismissArrival("into the Iron Age", kit.KeyEnter, 0)
 	h.waitFor("the catastrophe's window", 3*time.Second, func() bool { return h.frontPage() == "catastrophe" })
-	h.key(tcell.KeyRune, 's')
+	h.key(kit.KeyRune, 's')
 	h.waitFor("the film of the fall", 3*time.Second, func() bool { return h.film() != nil })
 	e := h.film()
 	var kind string
@@ -196,7 +196,7 @@ func (h *reproHarness) fallFilm() {
 	for _, want := range []int{beatReckoning, beatBeginning, -1} {
 		time.Sleep(arrivalKeyGap + 20*time.Millisecond)
 		_, before, _ := look()
-		h.key(tcell.KeyEnter, 0)
+		h.key(kit.KeyEnter, 0)
 		deadline := time.Now().Add(2 * time.Second)
 		for {
 			beat, keys, closed := look()

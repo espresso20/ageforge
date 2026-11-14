@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // TestTheGameRunsUnderTheCelebration is the arrival screen on the running
@@ -139,7 +139,7 @@ func TestTheGameRunsUnderTheCelebration(t *testing.T) {
 		return seen > seen0 && h.hasPage(arrivalPageName)
 	})
 
-	h.dismissArrival("the information", tcell.KeyEnter, 0)
+	h.dismissArrival("the information", kit.KeyEnter, 0)
 	h.waitFor("the prompt to have the keyboard", 3*time.Second, func() bool {
 		return h.frontPage() == "dashboard" && h.inputHasFocus()
 	})

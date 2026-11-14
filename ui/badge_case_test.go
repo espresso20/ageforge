@@ -867,54 +867,54 @@ func TestBadgePanelKeysAndMotion(t *testing.T) {
 		}
 		return sb.String()
 	}
-	press := func(k tcell.Key) bool { return p.routeKey(tcell.NewEventKey(k, 0, tcell.ModNone), "") }
+	press := func(k kit.KeyCode) bool { return p.routeKey(newKey(k, 0, 0), "") }
 	p.open(st)
 	draw()
 	if p.view.sel != "age.stone_age" || p.view.tab != caseTabAll {
 		t.Fatalf("the case opens on %q in tab %q", p.view.sel, p.view.tab)
 	}
-	press(tcell.KeyRight)
+	press(kit.KeyRight)
 	if p.view.sel != "age.iron_age" {
 		t.Errorf("Right selects %q", p.view.sel)
 	}
-	press(tcell.KeyDown)
+	press(kit.KeyDown)
 	if p.view.sel != "lineage.housing.2" {
 		t.Errorf("Down selects %q, want the badge under it", p.view.sel)
 	}
-	press(tcell.KeyUp)
-	press(tcell.KeyLeft)
+	press(kit.KeyUp)
+	press(kit.KeyLeft)
 	if p.view.sel != "age.stone_age" {
 		t.Errorf("Up and Left come back to %q", p.view.sel)
 	}
-	press(tcell.KeyEnd)
+	press(kit.KeyEnd)
 	if p.view.sel != "special.creative_accounting" {
 		t.Errorf("End selects %q", p.view.sel)
 	}
-	press(tcell.KeyHome)
+	press(kit.KeyHome)
 	var tabs []string
 	for range caseTabs(views, false) {
-		press(tcell.KeyTab)
+		press(kit.KeyTab)
 		tabs = append(tabs, p.view.tab)
 	}
 	if got := strings.Join(tabs, ","); got != "age,lineage,ladder,special,next," {
 		t.Errorf("Tab steps through %q", got)
 	}
-	press(tcell.KeyBacktab)
+	press(kit.KeyBacktab)
 	if p.view.tab != caseTabNext {
 		t.Errorf("Shift-Tab from All opens %q", p.view.tab)
 	}
-	press(tcell.KeyTab)
-	if !press(tcell.KeyEnter) || !p.view.card {
+	press(kit.KeyTab)
+	if !press(kit.KeyEnter) || !p.view.card {
 		t.Error("Enter does not open the detail")
 	}
 	if !p.closeCard() || p.view.card || p.closeCard() {
 		t.Error("Esc closes the detail once")
 	}
 	// The prompt's keys stay the prompt's.
-	if p.routeKey(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), "build hut") || p.routeKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), "bu") {
+	if p.routeKey(newKey(kit.KeyEnter, 0, 0), "build hut") || p.routeKey(newKey(kit.KeyTab, 0, 0), "bu") {
 		t.Error("with something typed, the panel took Enter or Tab from the prompt")
 	}
-	if p.routeKey(tcell.NewEventKey(tcell.KeyRune, 'b', tcell.ModNone), "") {
+	if p.routeKey(newKey(kit.KeyRune, 'b', 0), "") {
 		t.Error("the panel took a letter")
 	}
 

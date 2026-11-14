@@ -5,14 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // epoch_hall.go is the Epoch screen: a page to open and show off a run. Its
@@ -91,14 +90,14 @@ func (h *epochHall) back() bool { return false }
 
 // handleKey turns the page on Tab and reports whether it took the key; the
 // rest (scrolling) is the text view's.
-func (h *epochHall) handleKey(ev *tcell.EventKey) bool {
+func (h *epochHall) handleKey(ev *kit.Key) bool {
 	had := h.note != ""
 	h.note = ""
-	if ev.Key() == tcell.KeyRune && (ev.Rune() == 'c' || ev.Rune() == 'C') {
+	if ev.Code == kit.KeyRune && (ev.Rune == 'c' || ev.Rune == 'C') {
 		h.makeCard()
 		return true
 	}
-	if ev.Key() != tcell.KeyTab && ev.Key() != tcell.KeyBacktab {
+	if ev.Code != kit.KeyTab && ev.Code != kit.KeyBacktab {
 		return had
 	}
 	h.details = !h.details

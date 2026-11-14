@@ -29,6 +29,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // sweepTimeout bounds how long the event loop may take to answer after an action.
@@ -118,10 +119,15 @@ func (s *sweeper) ui(f func()) {
 	}
 }
 
-func (s *sweeper) press(k tcell.Key, r rune) {
+func (s *sweeper) press(k kit.KeyCode, r rune) {
 	s.t.Helper()
 	done := make(chan struct{})
-	go func() { s.sim.InjectKey(k, r, tcell.ModNone); close(done) }()
+	var mod kit.Mod
+	if k == kit.KeyChord {
+		mod = kit.ModCtrl // the sweep's only chords are Ctrl with a letter
+	}
+	ev := tev(k, r, mod)
+	go func() { s.sim.InjectKey(ev.Key(), ev.Rune(), ev.Modifiers()); close(done) }()
 	select {
 	case <-done:
 	case <-time.After(sweepTimeout):
@@ -172,10 +178,10 @@ func (s *sweeper) submit(cmd string) {
 	s.t.Helper()
 	s.wait("input focus", s.inputFocused)
 	for _, r := range cmd {
-		s.press(tcell.KeyRune, r)
+		s.press(kit.KeyRune, r)
 	}
 	s.wait("typed text", func() bool { return s.inputText() == cmd })
-	s.press(tcell.KeyEnter, 0)
+	s.press(kit.KeyEnter, 0)
 	s.wait("command submitted on the first Enter", func() bool { return s.inputText() == "" })
 	s.ping()
 }
@@ -187,7 +193,7 @@ func (s *sweeper) ghost(themeKey string) {
 	s.step = "[" + themeKey + "] ghost text"
 	s.wait("input focus", s.inputFocused)
 	for _, r := range "adv" {
-		s.press(tcell.KeyRune, r)
+		s.press(kit.KeyRune, r)
 	}
 	s.wait("typed adv", func() bool { return s.inputText() == "adv" })
 	var row string
@@ -218,7 +224,7 @@ func (s *sweeper) ghost(themeKey string) {
 		s.fail("%d invisible cell(s) on the prompt row %q", invisible, strings.TrimSpace(row))
 	}
 	for range "adv" {
-		s.press(tcell.KeyBackspace2, 0)
+		s.press(kit.KeyBackspace, 0)
 	}
 	s.wait("prompt cleared", func() bool { return s.inputText() == "" })
 }
@@ -243,14 +249,14 @@ func (s *sweeper) mapTour(where string) {
 		}
 	}
 	s.step = where + " map keys"
-	for _, k := range []tcell.Key{tcell.KeyTab, tcell.KeyPgUp, tcell.KeyDown, tcell.KeyPgDn, tcell.KeyBacktab, tcell.KeyEnter} {
+	for _, k := range []kit.KeyCode{kit.KeyTab, kit.KeyPgUp, kit.KeyDown, kit.KeyPgDn, kit.KeyBacktab, kit.KeyEnter} {
 		s.press(k, 0)
 		s.ping()
 	}
 	if s.activeOverlay() != "map" {
 		s.fail("the map's keys closed the panel")
 	}
-	s.press(tcell.KeyCtrlU, 0) // clear what Enter may have staged
+	s.press(kit.KeyChord, 'u') // clear what Enter may have staged
 	s.wait("an empty prompt", func() bool { return s.inputText() == "" })
 	s.submit("map glyphs unicode")
 }
@@ -261,7 +267,7 @@ func (s *sweeper) mapTour(where string) {
 func (s *sweeper) expeditionTour(where string) {
 	s.t.Helper()
 	s.step = where + " expedition keys"
-	for _, k := range []tcell.Key{tcell.KeyRight, tcell.KeyDown, tcell.KeyLeft, tcell.KeyUp, tcell.KeyTab, tcell.KeyDown, tcell.KeyUp, tcell.KeyBacktab, tcell.KeyRight, tcell.KeyEnter} {
+	for _, k := range []kit.KeyCode{kit.KeyRight, kit.KeyDown, kit.KeyLeft, kit.KeyUp, kit.KeyTab, kit.KeyDown, kit.KeyUp, kit.KeyBacktab, kit.KeyRight, kit.KeyEnter} {
 		s.press(k, 0)
 		s.ping()
 	}
@@ -284,7 +290,7 @@ func (s *sweeper) expeditionTour(where string) {
 		// The question is on the screen, and Esc takes it back and leaves the
 		// panel open.
 		s.wait("the question to be drawn", func() bool { return strings.Contains(s.liveScreen(), "Send this") })
-		s.press(tcell.KeyEsc, 0)
+		s.press(kit.KeyEsc, 0)
 		s.wait("the question taken back", func() bool { return !asking() })
 		if s.activeOverlay() != "expedition" {
 			s.fail("Esc closed the panel instead of taking back the question")
@@ -293,7 +299,7 @@ func (s *sweeper) expeditionTour(where string) {
 	if txt := s.liveScreen(); !strings.Contains(txt, "READY ROOM") || !strings.Contains(txt, "EXPEDITION REPORT") {
 		s.fail("the Expeditions panel has lost its tabs\n%s", txt)
 	}
-	s.press(tcell.KeyCtrlU, 0)
+	s.press(kit.KeyChord, 'u')
 	s.wait("an empty prompt", func() bool { return s.inputText() == "" })
 }
 
@@ -309,13 +315,13 @@ func (s *sweeper) splashPage(key rune, page string, exercise func()) {
 	s.t.Helper()
 	s.step = fmt.Sprintf("splash '%c' -> %s", key, page)
 	s.wait("splash in front", func() bool { return s.front() == "splash" })
-	s.press(tcell.KeyRune, key)
+	s.press(kit.KeyRune, key)
 	s.wait(page+" in front", func() bool { return s.front() == page })
 	s.ping()
 	if exercise != nil {
 		exercise()
 	}
-	s.press(tcell.KeyEsc, 0)
+	s.press(kit.KeyEsc, 0)
 	s.wait("back to splash", func() bool { return s.front() == "splash" })
 	s.ping()
 }
@@ -420,9 +426,9 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 					}
 				})
 				s.step = fmt.Sprintf("new game at %dx%d", sz[0], sz[1])
-				s.press(tcell.KeyRune, 'n')
+				s.press(kit.KeyRune, 'n')
 				s.wait("new game name prompt", func() bool { return s.front() == newGameNamePage })
-				s.press(tcell.KeyEnter, 0)
+				s.press(kit.KeyEnter, 0)
 				s.wait("dashboard with input focus", func() bool { return s.front() == "dashboard" && s.inputFocused() })
 				s.ping()
 				if strings.TrimSpace(s.liveScreen()) == "" {
@@ -445,7 +451,7 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 					if o.cmd == "expedition" {
 						s.expeditionTour(fmt.Sprintf("[%dx%d %s]", sz[0], sz[1], key))
 					}
-					s.press(tcell.KeyEsc, 0)
+					s.press(kit.KeyEsc, 0)
 					s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })
 					steps++
 				}
@@ -494,7 +500,7 @@ func TestSmokeUISweep(t *testing.T) {
 		s.splashPage('t', themePickerPage, func() {
 			// Arrowing previews each highlighted theme live; Esc must revert.
 			for j := 0; j < 3; j++ {
-				s.press(tcell.KeyDown, 0)
+				s.press(kit.KeyDown, 0)
 				s.ping()
 			}
 		})
@@ -505,9 +511,9 @@ func TestSmokeUISweep(t *testing.T) {
 		s.splashPage('a', accountsPage, nil)
 
 		s.step = "new game (" + key + ")"
-		s.press(tcell.KeyRune, 'n')
+		s.press(kit.KeyRune, 'n')
 		s.wait("new game name prompt", func() bool { return s.front() == newGameNamePage })
-		s.press(tcell.KeyEnter, 0)
+		s.press(kit.KeyEnter, 0)
 		s.wait("dashboard with input focus", func() bool { return s.front() == "dashboard" && s.inputFocused() })
 		s.ping()
 
@@ -540,7 +546,7 @@ func TestSmokeUISweep(t *testing.T) {
 			if o.cmd == "expedition" {
 				s.expeditionTour("[" + key + "]")
 			}
-			s.press(tcell.KeyEsc, 0)
+			s.press(kit.KeyEsc, 0)
 			s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })
 			steps++
 		}
@@ -551,11 +557,11 @@ func TestSmokeUISweep(t *testing.T) {
 				if front := s.front(); front != "dashboard" {
 					// Some bare commands open a page (bare `theme` opens the
 					// picker); it must close with Esc like any other.
-					s.press(tcell.KeyEsc, 0)
+					s.press(kit.KeyEsc, 0)
 					s.wait("back to dashboard from "+front, func() bool { return s.front() == "dashboard" && s.inputFocused() })
 				}
 				if ov := s.activeOverlay(); ov != "" {
-					s.press(tcell.KeyEsc, 0)
+					s.press(kit.KeyEsc, 0)
 					s.wait("overlay closed", func() bool { return s.activeOverlay() == "" })
 				}
 				steps++
@@ -564,7 +570,7 @@ func TestSmokeUISweep(t *testing.T) {
 
 		// Esc on the dashboard saves, stops the engine and returns to the splash.
 		s.step = "dashboard -> splash (" + key + ")"
-		s.press(tcell.KeyEsc, 0)
+		s.press(kit.KeyEsc, 0)
 		s.wait("splash after Esc", func() bool { return s.front() == "splash" })
 		s.ping()
 	}
