@@ -30,8 +30,8 @@ type loadGameBrowser struct {
 
 	root     *tview.Flex
 	list     *tview.List
-	detail   *tview.TextView
-	subtitle *tview.TextView
+	detail   *nativeText
+	subtitle *nativeText
 
 	saves []game.SaveInfo // current rows, sorted most-recent first
 
@@ -73,12 +73,12 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 	}
 
 	// ── Title ────────────────────────────────────────────────────────────────
-	title := tview.NewTextView().
+	title := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(vibe.Line("ui.load_game.newLoadGameBrowser.01", "[gold]═══ Load game ═══[-]"))
 
-	b.subtitle = tview.NewTextView().
+	b.subtitle = newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
@@ -99,7 +99,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 	// ── Key / legend ─────────────────────────────────────────────────────────
 	// Static box explaining the row symbols. Colours match the row tags exactly
 	// (gold for ★, red for ⚠). Never changes, so no refresh wiring.
-	legend := tview.NewTextView().
+	legend := newNativeText().
 		SetDynamicColors(true).
 		SetText(legendText())
 	legend.SetBorder(true).
@@ -110,7 +110,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 	})
 
 	// ── Detail pane ──────────────────────────────────────────────────────────
-	b.detail = tview.NewTextView().
+	b.detail = newNativeText().
 		SetDynamicColors(true).
 		SetWrap(true)
 	b.detail.SetBorder(true).
@@ -423,7 +423,7 @@ func (b *loadGameBrowser) doRename() {
 	}
 	const page = "load_game_rename"
 
-	errTV := tview.NewTextView().
+	errTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
