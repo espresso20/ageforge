@@ -19,7 +19,7 @@ type OverlayProvider func(state game.GameState, w int) string
 type overlayEntry struct {
 	title   vibe.Entry
 	tv      *nativeText
-	frame   *panelFrame // the box, name and keys the TextView is drawn in
+	frame   *panelFrame // the box, name and keys the text is drawn in
 	root    Primitive   // the frame over the command bar — added/removed from pages.Pages
 	provide OverlayProvider
 	// keys, when set, sees every key but Esc while the overlay has focus and

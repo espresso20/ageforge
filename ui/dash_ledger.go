@@ -638,8 +638,8 @@ func (lv ledgerView) full() []string {
 // as a fitView holds, and are written for the size it is drawn at in the same
 // way (the render function is handed the width and the rows); but it draws them
 // a rune at a time. The Ledger is a thousand cells of single-width marks that
-// change twice a second, and a TextView takes a good part of a frame to parse
-// and lay out that much.
+// change twice a second, and a text view takes a good part of a frame to
+// parse and lay out that much.
 type ledgerBox struct {
 	*nativeHost
 	kit.Base

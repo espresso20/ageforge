@@ -238,9 +238,10 @@ func (a *appLoop) ForceDraw() *appLoop {
 	return a
 }
 
-// Resize, Key and Mouse are the window's events. They never wait for the
-// loop: Resize and Key are queued, and a mouse event the loop has no room
-// for is dropped.
+// Resize, Key and Mouse are the window's events, queued for the loop. A key
+// or a mouse event never waits: if the loop is so far behind that its queue
+// is full, the event is dropped. A resize is rare and must not be lost, so
+// it waits for room.
 func (a *appLoop) Resize(cols, rows int) {
 	a.post(func() {
 		a.cols, a.rows = cols, rows
@@ -249,19 +250,24 @@ func (a *appLoop) Resize(cols, rows int) {
 }
 
 func (a *appLoop) Key(k kit.Key) {
-	a.post(func() {
+	a.offer(func() {
 		a.key(k)
 		a.draw()
 	})
 }
 
 func (a *appLoop) Mouse(m kit.Mouse) {
-	select {
-	case a.events <- func() {
+	a.offer(func() {
 		if tree := a.rootTree(); tree != nil && tree.Mouse(m) {
 			a.draw()
 		}
-	}:
+	})
+}
+
+// offer hands the loop something to do if it has room for it now.
+func (a *appLoop) offer(f func()) {
+	select {
+	case a.events <- f:
 	default:
 	}
 }
