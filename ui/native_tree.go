@@ -259,13 +259,6 @@ func (f *nativeFlex) SetBackgroundColor(c kit.Color) *nativeFlex {
 	return f
 }
 
-// SetBackgroundColor sets the ground the border and the title are drawn on.
-// Inside the border the flex still paints nothing: its items do.
-func (f *nativeFlex) SetBackgroundColor(c tcell.Color) *nativeFlex {
-	f.ground = kitColor(c)
-	return f
-}
-
 // SetDrawFunc sets what is called with the flex's rectangle before its items
 // are placed, so a screen can size them for the room. The screen it is
 // handed is nil and what it returns is ignored.
