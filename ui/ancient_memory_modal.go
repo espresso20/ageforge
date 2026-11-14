@@ -43,7 +43,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 			vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.04", "  [red]• It takes twice as long to research[-]\n") +
 			vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.05", "  [gray]Only one such memory surfaces per civilization.[-]"))
 
-	btnAccept := tview.NewButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept")).
+	btnAccept := newNativeButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept")).
 		SetSelectedFunc(func() {
 			if err := d.engine.AcceptAncientMemory(); err != nil {
 				d.engine.AddLog("error", vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.07", "Could not recover the memory: ")+err.Error())
@@ -52,7 +52,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		})
 	styleFilledButton(btnAccept, theme.RolePositive)
 
-	btnDecline := tview.NewButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline")).
+	btnDecline := newNativeButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline")).
 		SetSelectedFunc(func() {
 			d.engine.DeclineAncientMemory()
 			d.closeAncientMemoryModal()

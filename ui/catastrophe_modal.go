@@ -203,7 +203,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchFactor, outcome, st)
 	}
 
-	btnEndure := tview.NewButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))).
+	btnEndure := newNativeButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))).
 		SetSelectedFunc(func() {
 			if err := endure(); err != nil {
 				d.engine.AddLog("error", vibe.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
@@ -212,7 +212,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		})
 	styleFilledButton(btnEndure, theme.RoleNegative)
 
-	btnSuccumb := tview.NewButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
+	btnSuccumb := newNativeButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
 	if succumbOpen {
 		btnSuccumb.SetSelectedFunc(func() {
 			if err := succumb(); err != nil {

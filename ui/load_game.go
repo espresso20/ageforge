@@ -464,9 +464,9 @@ func (b *loadGameBrowser) doRename() {
 		b.selectByName(newName)
 	}
 
-	okBtn := tview.NewButton(vibe.Line("ui.load_game.doRename.02", "[ OK ]")).SetSelectedFunc(submit)
+	okBtn := newNativeButton(vibe.Line("ui.load_game.doRename.02", "[ OK ]")).SetSelectedFunc(submit)
 	styleFilledButton(okBtn, theme.RoleAccent)
-	cancelBtn := tview.NewButton(vibe.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
+	cancelBtn := newNativeButton(vibe.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
 
 	// Enter in the input field submits.
 	input.SetDoneFunc(func(key tcell.Key) {

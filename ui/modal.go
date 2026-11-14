@@ -107,7 +107,7 @@ func showButtonModal(pages *tview.Pages, page, text string, buttons []string, do
 // Tab and the arrows move it; a button's letter presses that button.
 type buttonRing struct {
 	app     *tview.Application
-	buttons []*tview.Button
+	buttons []tview.Primitive
 	letters []rune // lower case, one to a button; 0 for none
 	at      int
 	// moved is told which button has the keyboard, so the window can hand it
@@ -120,7 +120,7 @@ func newButtonRing(app *tview.Application, moved func(tview.Primitive)) *buttonR
 }
 
 // add puts a button on the ring; letter presses it (0: no letter).
-func (r *buttonRing) add(b *tview.Button, letter rune) {
+func (r *buttonRing) add(b tview.Primitive, letter rune) {
 	r.buttons = append(r.buttons, b)
 	r.letters = append(r.letters, unicode.ToLower(letter))
 }

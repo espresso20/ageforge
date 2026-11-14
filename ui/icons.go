@@ -473,7 +473,7 @@ func (d *Dashboard) refreshIconsWindow() {
 	w.btnRow.Clear()
 	w.btnRow.AddItem(surfaceBox(), 0, 1, false)
 	for i, k := range keys {
-		b := tview.NewButton(k.caption()).SetSelectedFunc(k.press)
+		b := newNativeButton(k.caption()).SetSelectedFunc(k.press)
 		styleFilledButton(b, k.fill)
 		if i > 0 {
 			w.btnRow.AddItem(surfaceBox(), 2, 0, false)
