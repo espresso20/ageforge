@@ -29,13 +29,13 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		techName = def.Name
 	}
 
-	header := tview.NewTextView().
+	header := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.01", "[gray]You have discovered an old cache. It appears to contain\n"+
 			"memories of a now-extinct civilization.[-]"))
 
-	body := tview.NewTextView().
+	body := newNativeText().
 		SetDynamicColors(true).
 		SetText(vibe.Sprintf("ui.ancient_memory_modal.showAncientMemoryModal.02", "[white]── Recovered memory: [-][cyan]%s[-]\n", techName) +
 			fmt.Sprintf("  [gray]%s[-]\n\n", def.Description) +
