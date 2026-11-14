@@ -141,7 +141,7 @@ func LegibleOnActive(c Color) Color {
 	return Legible(c, Of(RoleBackground), 4.5)
 }
 
-// HexTag renders a literal color as a tview "[#rrggbb]" tag. Use it only for
+// HexTag renders a literal color as a "[#rrggbb]" tag. Use it only for
 // colors that are NOT the active theme's roles (e.g. the picker drawing another
 // theme's swatches) — hex tags are early-bound and do not retint on a switch.
 func HexTag(c Color) string {
@@ -157,7 +157,7 @@ func HexTag(c Color) string {
 	return fmt.Sprintf("[#%06x]", h)
 }
 
-// HexTagFgBg renders a literal fg/bg pair as a tview "[#rrggbb:#rrggbb]" tag.
+// HexTagFgBg renders a literal fg/bg pair as a "[#rrggbb:#rrggbb]" tag.
 func HexTagFgBg(fg, bg Color) string {
 	f := HexTag(fg)
 	b := HexTag(bg)

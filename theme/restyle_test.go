@@ -2,8 +2,6 @@ package theme
 
 import (
 	"testing"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // TestTrack_AppliesNowAndEnrolls verifies the §3.3 registration discipline: Track
@@ -72,19 +70,27 @@ func TestSetActive(t *testing.T) {
 }
 
 // TestTag emits a late-bound NAMED tag for a role (never a frozen hex literal),
-// and that name resolves to the active theme's role color through the remap.
+// and that name resolves to the active theme's role color when it is painted.
 func TestTag(t *testing.T) {
 	t.Cleanup(func() { _ = SetActive(DefaultKey) })
 	_ = SetActive(DefaultKey)
 	if got, want := Tag(RoleAccent), "[accent]"; got != want {
 		t.Errorf("Tag(RoleAccent) = %q, want %q", got, want)
 	}
+	role, ok := TagRole("accent")
+	if !ok || role != RoleAccent {
+		t.Fatalf("the name accent is role %v (known %v), want Accent", role, ok)
+	}
+	hex := func() int32 {
+		c, _ := Ref(role).RGBA()
+		return int32(c.R)<<16 | int32(c.G)<<8 | int32(c.B)
+	}
 	// Forge accent is gold #ffd700.
-	if got := tcell.GetColor("accent").Hex(); got != 0xffd700 {
-		t.Errorf("GetColor(accent) = %06x under Forge, want ffd700", got)
+	if got := hex(); got != 0xffd700 {
+		t.Errorf("accent paints %06x under Forge, want ffd700", got)
 	}
 	_ = SetActive("parchment")
-	if got, want := tcell.GetColor("accent").Hex(), Parchment.Color(RoleAccent).Hex(); got != want {
-		t.Errorf("GetColor(accent) = %06x under Parchment, want %06x (tag must retint)", got, want)
+	if got, want := hex(), Parchment.Color(RoleAccent).Hex(); got != want {
+		t.Errorf("accent paints %06x under Parchment, want %06x (the tag must retint)", got, want)
 	}
 }
