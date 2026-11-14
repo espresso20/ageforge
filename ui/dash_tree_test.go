@@ -5,7 +5,6 @@ import (
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/rivo/tview"
 )
 
 // drawOnWindow draws the pages on a screen that knows which kit host drew
