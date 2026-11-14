@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image"
+	"image/color"
 	"strings"
 	"testing"
 
@@ -190,5 +191,23 @@ func TestMenuMouseSelectsAndOpens(t *testing.T) {
 	r.m.Mouse(kit.Mouse{Kind: kit.MouseMove, X: at.X, Y: at.Y})
 	if got := r.m.view.items[r.m.view.sel].id; got != miNew {
 		t.Errorf("on the small page the pointer selects too, got %q", got)
+	}
+}
+
+func TestKitStyleReversesCellStyle(t *testing.T) {
+	for _, attr := range []kit.Attr{0, kit.Bold, kit.Italic | kit.Dim, kit.Reverse | kit.Underline, kit.Strike | kit.Bold | kit.Underline} {
+		c := &kit.Cell{R: 'x', Fg: color.RGBA{10, 20, 30, 255}, Bg: color.RGBA{40, 50, 60, 255}, Attr: attr}
+		got := kitStyle(cellStyle(c))
+		if got.Attr != attr {
+			t.Errorf("attr %b came back as %b", attr, got.Attr)
+		}
+		if got.Fg != kit.RGB(10, 20, 30) || got.Bg != kit.RGB(40, 50, 60) {
+			t.Errorf("colors came back as %+v", got)
+		}
+	}
+	st := tcell.StyleDefault.Foreground(theme.Ref(theme.RoleAccent)).Background(theme.Transparent).Bold(true)
+	got := kitStyle(st)
+	if got.Fg != kit.Role(theme.RoleAccent) || got.Bg != kit.Clear || got.Attr != kit.Bold {
+		t.Errorf("a role style came back as %+v", got)
 	}
 }
