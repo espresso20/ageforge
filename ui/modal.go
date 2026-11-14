@@ -25,8 +25,8 @@ func solidBox(role theme.Role) *tview.Box {
 func surfaceBox() *tview.Box { return solidBox(theme.RoleSurface) }
 
 // surfaceText is a line (or lines) of text on the modal surface.
-func surfaceText(text string, align int) *tview.TextView {
-	tv := tview.NewTextView().SetDynamicColors(true).SetTextAlign(align).SetWrap(false).SetText(text)
+func surfaceText(text string, align int) *nativeText {
+	tv := newNativeText().SetDynamicColors(true).SetTextAlign(align).SetWrap(false).SetText(text)
 	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
 	return tv
 }
