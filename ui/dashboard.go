@@ -170,6 +170,8 @@ type Dashboard struct {
 	fxOn    atomic.Bool
 	rootFx  *fxRoot
 	fxStart time.Time
+	// fxNow is the effect's clock; nil means time.Now (a test pins it).
+	fxNow func() time.Time
 
 	stopCh chan struct{}
 }
@@ -783,12 +785,16 @@ func (d *Dashboard) drawEffect(scr mapstyle.Cells, x, y, w, h int) {
 	if !set.Motion {
 		return
 	}
+	now := time.Now
+	if d.fxNow != nil {
+		now = d.fxNow
+	}
 	if d.fxStart.IsZero() {
-		d.fxStart = time.Now()
+		d.fxStart = now()
 	}
 	// Not in the command bar: nothing moves where the player types.
 	h -= promptRows
-	drawThemeEffect(scr, x, y, w, h, effect, int(time.Since(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
+	drawThemeEffect(scr, x, y, w, h, effect, int(now().Sub(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
 }
 
 // StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).

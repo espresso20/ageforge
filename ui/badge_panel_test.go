@@ -400,6 +400,13 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 			w, h := size[0], size[1]
 			d, pages, eng := badgeDashboard(t)
 			drawnDashboard(t, d, pages, w, h) // every box gets its size
+			// One moment for the whole comparison: the effect's frame and
+			// the mini map's are read off these clocks, and a slow machine
+			// must not move either between two draws that are held to be
+			// the same picture.
+			clock := time.Now()
+			d.fxNow = func() time.Time { return clock }
+			d.miniMap.now = d.fxNow
 			sim := newSim()
 			must(t, sim.Init())
 			sim.SetSize(w, h)
@@ -439,7 +446,7 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 				scr.Clear()
 				layoutOnly()
 				still = snap() // the mini map moves on its own clock
-				d.fxStart = time.Now().Add(-time.Duration(n) * mapAnimStep)
+				d.fxStart = clock.Add(-time.Duration(n) * mapAnimStep)
 				d.drawEffect(scr, 0, 0, w, h)
 				direct := snap()
 				if n < 3 {

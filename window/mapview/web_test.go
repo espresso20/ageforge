@@ -208,6 +208,9 @@ func TestWebFrameIsQuick(t *testing.T) {
 	}
 	per := time.Since(start) / n
 	t.Logf("web frame: %v", per)
+	if raceOn {
+		t.Skip("the race detector is on: the frame budget is not held to under it")
+	}
 	if per > 4*time.Millisecond {
 		t.Errorf("a web frame takes %v at 1200 px wide", per)
 	}
