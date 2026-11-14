@@ -129,7 +129,7 @@ func (m *miniMap) Draw(scr tcell.Screen) {
 // terminal (80x24) it hides and the body gets the whole column, with no
 // flicker between refreshes.
 type mapDock struct {
-	*tview.Box
+	*nativeGroup
 	mini *miniMap
 	body tview.Primitive
 	// off is the minimap setting turned off: the body gets the column. The
@@ -141,7 +141,9 @@ type mapDock struct {
 }
 
 func newMapDock(mini *miniMap, body tview.Primitive) *mapDock {
-	return &mapDock{Box: tview.NewBox(), mini: mini, body: body}
+	d := &mapDock{mini: mini, body: body}
+	d.nativeGroup = newNativeGroup(d.arrange)
+	return d
 }
 
 // wantsModel reports whether the mini map needs a model: it is on and
@@ -151,26 +153,19 @@ func (d *mapDock) wantsModel() bool {
 	return !d.off && (!d.drawn || miniHeight(w, h) > 0)
 }
 
-func (d *mapDock) Draw(scr tcell.Screen) {
-	x, y, w, h := d.GetRect()
+func (d *mapDock) arrange(x, y, w, h int) {
 	mh := miniHeight(w, h)
 	if d.off || d.mini.model == nil {
 		mh = 0 // off, or no refresh has built the map yet
 	}
 	d.shown, d.drawn = mh > 0, true
 	if d.shown {
-		d.mini.SetRect(x, y, w, mh)
-		d.mini.Draw(scr)
+		d.put(d.mini, x, y, w, mh)
 	}
-	d.body.SetRect(x, y+mh, w, h-mh)
-	d.body.Draw(scr)
+	d.put(d.body, x, y+mh, w, h-mh)
 }
 
 // Focus and input go to the body; the mini map takes no keys.
 func (d *mapDock) Focus(delegate func(p tview.Primitive)) { delegate(d.body) }
 
 func (d *mapDock) HasFocus() bool { return d.body.HasFocus() }
-
-func (d *mapDock) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
-	return d.body.MouseHandler()
-}

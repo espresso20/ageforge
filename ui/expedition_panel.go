@@ -163,6 +163,9 @@ func (p *expeditionPanel) frame(motion bool) int {
 	return int(p.now().Sub(p.start) / (4 * mapAnimStep))
 }
 
+// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
+func (p *expeditionPanel) kitDrawn() {}
+
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *expeditionPanel) Draw(scr tcell.Screen) {
 	p.host.SetRect(p.GetRect())

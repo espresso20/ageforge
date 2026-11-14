@@ -162,6 +162,9 @@ func (p *badgePanel) moves() bool {
 	return false
 }
 
+// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
+func (p *badgePanel) kitDrawn() {}
+
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *badgePanel) Draw(scr tcell.Screen) {
 	p.host.SetRect(p.GetRect())
@@ -214,7 +217,7 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft:
 		return false
 	case p.view.card:
-		return !m.Pt().In(p.model.cardAt) && p.closeCard()
+		return !m.Pt().Sub(p.Bounds().Min).In(p.model.cardAt) && p.closeCard()
 	}
 	id := p.model.badgeAt(m.Pt().Sub(p.Bounds().Min), p.view.vy)
 	if id == "" {

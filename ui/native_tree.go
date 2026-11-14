@@ -127,6 +127,67 @@ func (b *nativeBox) kitDrawn()                {}
 func (b *nativeBox) Layout(r image.Rectangle) { b.Place(r) }
 func (b *nativeBox) Paint(p *kit.Painter)     { p.Fill(b.Bounds(), b.ground) }
 
+// A nativeGroup is a layout box that places its children by a rule of its
+// own (the dashboard's body, its left column, the map dock): a kit container
+// whose arrange func says where each child goes in the room it is given.
+// Like a flex it paints nothing itself.
+type nativeGroup struct {
+	*nativeHost
+	kit.Base
+	// arrange places the children for the rectangle x, y, w, h by calling
+	// put for each one that shows.
+	arrange func(x, y, w, h int)
+	kids    []kit.Widget
+	seen    map[tview.Primitive]kit.Widget
+	off     image.Point
+}
+
+func newNativeGroup(arrange func(x, y, w, h int)) *nativeGroup {
+	g := &nativeGroup{arrange: arrange, seen: map[tview.Primitive]kit.Widget{}}
+	g.nativeHost = newNativeHost(g)
+	return g
+}
+
+func (g *nativeGroup) kitDrawn() {}
+
+func (g *nativeGroup) Children() []kit.Widget { return g.kids }
+
+func (g *nativeGroup) Layout(r image.Rectangle) {
+	g.Place(r)
+	if g.nativeHost == nil {
+		return // newNativeHost lays the tree out before the host is set
+	}
+	g.kids, g.off = g.kids[:0], screenOffset(g, r)
+	g.arrange(r.Min.X, r.Min.Y, r.Dx(), r.Dy())
+}
+
+// put shows p at x, y, w by h cells, in the coordinates arrange was given.
+func (g *nativeGroup) put(p tview.Primitive, x, y, w, h int) {
+	child, ok := g.seen[p]
+	if !ok {
+		child = asWidget(p)
+		g.seen[p] = child
+	}
+	g.kids = append(g.kids, child)
+	placeAt(child, x, y, w, h, g.off)
+}
+
+func (g *nativeGroup) Paint(p *kit.Painter) {
+	for _, w := range g.kids {
+		if !w.Bounds().Empty() {
+			w.Paint(p)
+		}
+	}
+}
+
+func (g *nativeGroup) covered() []image.Rectangle {
+	var out []image.Rectangle
+	for _, w := range g.kids {
+		out = append(out, coveredBy(w)...)
+	}
+	return out
+}
+
 // A nativeFlex stands where a tview.Flex stood: the same calls, and the same
 // sharing out of the room. Like tview's it paints nothing of its own but a
 // border, so where it has a gap the page beneath shows.

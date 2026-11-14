@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -54,7 +53,7 @@ func richPeopleHeight(termH int) int {
 // the Panels column. It chooses the layout on every draw from the size of the
 // terminal (screen), so a resize shows the right one at once.
 type dashBody struct {
-	*tview.Box
+	*nativeGroup
 	econ, panels, people tview.Primitive
 	// screen is the terminal's size.
 	screen func() (w, h int)
@@ -70,11 +69,12 @@ type dashBody struct {
 }
 
 func newDashBody(econ, panels, people tview.Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
-	return &dashBody{Box: tview.NewBox(), econ: econ, panels: panels, people: people, screen: screen, classicPeople: classicPeople}
+	b := &dashBody{econ: econ, panels: panels, people: people, screen: screen, classicPeople: classicPeople}
+	b.nativeGroup = newNativeGroup(b.arrange)
+	return b
 }
 
-func (b *dashBody) Draw(scr tcell.Screen) {
-	x, y, w, h := b.GetRect()
+func (b *dashBody) arrange(x, y, w, h int) {
 	if w <= 0 || h <= 0 {
 		return
 	}
@@ -91,17 +91,13 @@ func (b *dashBody) Draw(scr tcell.Screen) {
 		side = richSidebarW
 	}
 	side = min(side, w)
-	b.econ.SetRect(x, y, w-side, h)
-	b.econ.Draw(scr)
+	b.put(b.econ, x, y, w-side, h)
 	if rich {
 		// The People box is in the economy tab's Under construction row.
-		b.panels.SetRect(x+w-side, y, side, h)
-		b.panels.Draw(scr)
+		b.put(b.panels, x+w-side, y, side, h)
 		return
 	}
 	ph := min(b.classicPeople(), h)
-	b.panels.SetRect(x+w-side, y, side, h-ph)
-	b.panels.Draw(scr)
-	b.people.SetRect(x+w-side, y+h-ph, side, ph)
-	b.people.Draw(scr)
+	b.put(b.panels, x+w-side, y, side, h-ph)
+	b.put(b.people, x+w-side, y+h-ph, side, ph)
 }

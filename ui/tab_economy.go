@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
@@ -171,8 +170,9 @@ func NewEconomyTab() *EconomyTab {
 		t.constructionTV.SetTitleColor(theme.Color(theme.RoleHighlight))
 	})
 
-	t.leftCol = &econColumn{Box: tview.NewBox(), resources: t.resourceTV, construction: t.constructionTV,
+	t.leftCol = &econColumn{resources: t.resourceTV, construction: t.constructionTV,
 		resourceRows: func() int { return resourceRowsNeed(t.rows()) }}
+	t.leftCol.nativeGroup = newNativeGroup(t.leftCol.arrange)
 
 	t.root = newNativeFlex().SetDirection(tview.FlexColumn).
 		AddItem(t.leftCol, 0, 1, false).
@@ -244,7 +244,7 @@ func (t *EconomyTab) NextResourcePage() bool {
 // by two boxes, Under construction on the left and the People box on the
 // right, and is as tall as the People box.
 type econColumn struct {
-	*tview.Box
+	*nativeGroup
 	resources, construction tview.Primitive
 	log                     tview.Primitive
 	// people is the People box, drawn in the right half of the Under
@@ -314,26 +314,20 @@ func (c *econColumn) richLayout() bool {
 	return c.people != nil && c.rich != nil && c.rich()
 }
 
-func (c *econColumn) Draw(screen tcell.Screen) {
-	x, y, w, h := c.GetRect()
+func (c *econColumn) arrange(x, y, w, h int) {
 	rh, ch, lh := c.heights(h)
-	c.resources.SetRect(x, y, w, rh)
-	c.resources.Draw(screen)
+	c.put(c.resources, x, y, w, rh)
 	if c.log != nil && c.richLayout() {
 		// Under construction has the wider half when the width is odd: its
 		// title is 22 cells with the border.
 		half := w - w/2
-		c.construction.SetRect(x, y+rh, half, ch)
-		c.construction.Draw(screen)
-		c.people.SetRect(x+half, y+rh, w-half, ch)
-		c.people.Draw(screen)
+		c.put(c.construction, x, y+rh, half, ch)
+		c.put(c.people, x+half, y+rh, w-half, ch)
 	} else {
-		c.construction.SetRect(x, y+rh, w, ch)
-		c.construction.Draw(screen)
+		c.put(c.construction, x, y+rh, w, ch)
 	}
 	if c.log != nil {
-		c.log.SetRect(x, y+rh+ch, w, lh)
-		c.log.Draw(screen)
+		c.put(c.log, x, y+rh+ch, w, lh)
 	}
 }
 
