@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"math"
 	"sort"
 	"strings"
@@ -164,6 +165,7 @@ type caseModel struct {
 	rows    int
 	lay     caseLayout
 	// rarity is the earned badges by rarity, common first.
+	cardAt image.Rectangle // where the detail was drawn last, for the mouse
 	rarity [5]int
 	// closest is the badge nearest its count, of those not earned.
 	closest *game.BadgeView
@@ -430,6 +432,29 @@ func (m *caseModel) follow(v *caseView) {
 
 // visible reports whether a line is drawn at a scroll: whole, or not at
 // all. A badge is never cut.
+// badgeAt is the badge drawn at a cell of the panel ("" for none): a mini,
+// or a row of the list.
+func (m *caseModel) badgeAt(pt image.Point, vy int) string {
+	lay := m.lay
+	for i, ln := range m.lines {
+		if !m.shows(i, vy) || ln.kind == lineHeading {
+			continue
+		}
+		y := lay.gy + ln.y - vy
+		for _, j := range ln.items {
+			it := &m.items[j]
+			r := image.Rect(lay.gx, y, lay.gx+lay.gw, y+1)
+			if ln.kind == lineBadges {
+				r = image.Rect(lay.gx+it.col*casePitchX, y, lay.gx+it.col*casePitchX+miniW, y+miniH)
+			}
+			if pt.In(r) {
+				return it.id
+			}
+		}
+	}
+	return ""
+}
+
 func (m *caseModel) visible(l caseLine, vy int) bool {
 	return l.y >= vy && l.y+l.need() <= vy+m.lay.gh
 }
@@ -674,6 +699,7 @@ func drawItemMini(g *tGrid, x, y int, it *caseItem, v caseView, n int) {
 func renderCase(m *caseModel, v caseView, n int) *tGrid {
 	w, h := m.lay.w, m.lay.h
 	out := newTGrid(w, h)
+	m.cardAt = image.Rectangle{}
 	if w < caseMinW || h < caseMinH {
 		out.text(0, 0, clipRunes(vibe.Line("ui.badge_case.renderCase.01", "Badges: make the window larger."), w), tsText, -1)
 		return out
@@ -1123,6 +1149,7 @@ func (m *caseModel) drawCard(out *tGrid, it *caseItem, v caseView, n int) {
 	}
 	ch = min(ch, bh)
 	x0, y0 := 1+(bw-cw)/2, caseTop+(bh-ch)/2
+	m.cardAt = image.Rect(x0, y0, x0+cw, y0+ch)
 	out.card(x0, y0, cw, ch, it.v.Name, txtEscCloses.String())
 	if art {
 		drawMedal(out, x0+3, y0+2+(ch-4-ah)/2, md, caseFrame(n, md.animated()), v.plain())

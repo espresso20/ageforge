@@ -222,6 +222,8 @@ The panel takes only keys that print nothing. Letters always go to the command b
 
 With something typed in the command bar, `Tab` and `Enter` belong to the command, as on the Map.
 
+In the window the mouse works too: a click selects the tech under the pointer, a double click opens its card, a click outside the open card closes it, and the wheel moves the selection up and down.
+
 The glyphs follow your `map glyphs` setting: with `map glyphs ascii` the tree is drawn in plain ASCII, with letters for emblems. What research adds up to (every bonus your techs give together, and what research speed does to the times) is on the Stats panel, under Research bonuses.
 
 ---

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // badge_panel.go is the badge case's panel: the case over the whole screen
@@ -49,6 +51,10 @@ type badgeRequest struct {
 // badgePanel is the badge case's overlay primitive.
 type badgePanel struct {
 	barPanel
+	kit.Base
+	// host paints the case's kit cells and takes the mouse; the keys stay
+	// with barPanel.
+	host    *nativeHost
 	views   []game.BadgeView
 	sum     game.BadgeSummary
 	account bool
@@ -72,6 +78,7 @@ type badgePanel struct {
 func newBadgePanel() *badgePanel {
 	p := &badgePanel{w: 120, h: 37, now: time.Now, start: time.Now(), motion: true}
 	p.barPanel = newBarPanel(p.routeKey)
+	p.host = newNativeHost(p)
 	return p
 }
 
@@ -155,23 +162,70 @@ func (p *badgePanel) moves() bool {
 	return false
 }
 
-// Draw paints the panel.
+// Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *badgePanel) Draw(scr tcell.Screen) {
-	x, y, w, h := p.GetRect()
-	if w <= 0 || h <= 0 {
-		return
-	}
-	if w != p.w || h != p.h || p.model == nil {
+	p.host.SetRect(p.GetRect())
+	p.host.Draw(scr)
+}
+
+// Layout takes the panel's rectangle and lays the case out again when its
+// size has changed.
+func (p *badgePanel) Layout(r image.Rectangle) {
+	p.Place(r)
+	if w, h := r.Dx(), r.Dy(); w > 0 && h > 0 && (w != p.w || h != p.h || p.model == nil) {
 		p.w, p.h = w, h
 		p.layout()
+	}
+}
+
+// Paint puts the case on the kit's painter in theme colors.
+func (p *badgePanel) Paint(p2 *kit.Painter) {
+	r := p.Bounds()
+	if r.Empty() || p.model == nil {
+		return
 	}
 	p.view.prompt = p.prompt != nil && p.prompt() != ""
 	grid := renderCase(p.model, p.view, p.frame())
 	if p.view.plain() {
 		foldBadges(grid)
 	}
-	paintGrid(scr, grid, x, y, newGridPalette(0, nil))
+	paintGridKit(p2, grid, r.Min, newGridPalette(0, nil))
 	p.moving.Store(p.moves())
+}
+
+// Mouse: a click selects the badge under the pointer and a double click
+// opens its detail, as Enter does; a click outside an open detail closes it,
+// as Esc does; the wheel moves the selection a line a notch, as the up and
+// down arrows do.
+func (p *badgePanel) Mouse(m kit.Mouse) bool {
+	if p.model == nil {
+		return false
+	}
+	switch {
+	case m.Kind == kit.MouseWheel && !p.view.card:
+		key := tcell.KeyDown
+		if m.Wheel < 0 {
+			key = tcell.KeyUp
+		}
+		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
+			p.handleKey(key)
+		}
+		return m.Wheel != 0
+	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft:
+		return false
+	case p.view.card:
+		return !m.Pt().In(p.model.cardAt) && p.closeCard()
+	}
+	id := p.model.badgeAt(m.Pt().Sub(p.Bounds().Min), p.view.vy)
+	if id == "" {
+		return false
+	}
+	p.view.sel, p.view.note = id, ""
+	p.layout()
+	if m.Clicks == 2 {
+		p.handleKey(tcell.KeyEnter)
+	}
+	return true
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

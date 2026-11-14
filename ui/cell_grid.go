@@ -1,9 +1,12 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // cell_grid.go is the cell grid the drawn panels share: the Research panel
@@ -205,7 +208,13 @@ func (p *gridPalette) style(c tCell) tcell.Style {
 	return st
 }
 
-// paintGrid puts a rendered grid on the screen in theme colours.
-func paintGrid(scr tcell.Screen, g *tGrid, x0, y0 int, p *gridPalette) {
-	g.draw(scr, x0, y0, func(c tCell) (rune, tcell.Style) { return c.r, p.style(c) })
+// paintGridKit puts a rendered grid on a kit painter, its top left corner at
+// the given point.
+func paintGridKit(p *kit.Painter, g *tGrid, at image.Point, pal *gridPalette) {
+	for y := 0; y < g.h; y++ {
+		for x := 0; x < g.w; x++ {
+			c := g.c[y*g.w+x]
+			p.Put(at.X+x, at.Y+y, c.r, kitStyle(pal.style(c)))
+		}
+	}
 }

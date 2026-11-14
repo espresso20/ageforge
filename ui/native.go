@@ -112,6 +112,21 @@ func cellStyle(c *kit.Cell) tcell.Style {
 	return st
 }
 
+// kitStyle is a tcell style as the kit's: the reverse of cellStyle.
+func kitStyle(st tcell.Style) kit.Style {
+	fg, bg, mask := st.Decompose()
+	out := kit.Style{Fg: kitColor(fg), Bg: kitColor(bg)}
+	for _, a := range cellAttrs {
+		if mask&a.tcell != 0 {
+			out.Attr |= a.kit
+		}
+	}
+	if st.GetUnderlineStyle() != tcell.UnderlineStyleNone {
+		out.Attr |= kit.Underline
+	}
+	return out
+}
+
 // kitColor is a tcell color as the kit's: a theme sentinel is its role (so it
 // still follows the theme), the default is nothing, and the rest are literal.
 func kitColor(c tcell.Color) kit.Color {

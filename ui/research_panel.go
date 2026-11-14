@@ -1,13 +1,15 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // research_panel.go is the Research panel: the tech tree as a map over the
@@ -33,6 +35,10 @@ var researchKeys = []keyHelp{
 // researchPanel is the Research overlay primitive.
 type researchPanel struct {
 	barPanel
+	kit.Base
+	// host paints the panel's kit cells and takes the mouse; the keys stay
+	// with barPanel.
+	host  *nativeHost
 	state game.GameState
 	view  treeView
 	model *treeModel
@@ -47,6 +53,7 @@ type researchPanel struct {
 func newResearchPanel() *researchPanel {
 	p := &researchPanel{w: 120, h: 37}
 	p.barPanel = newBarPanel(p.routeKey)
+	p.host = newNativeHost(p)
 	return p
 }
 
@@ -117,29 +124,73 @@ func (m *treeModel) home() string {
 	return ""
 }
 
-// Draw paints the panel.
+// Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *researchPanel) Draw(scr tcell.Screen) {
-	x, y, w, h := p.GetRect()
-	if w <= 0 || h <= 0 {
+	p.host.SetRect(p.GetRect())
+	p.host.Draw(scr)
+}
+
+// Layout takes the panel's rectangle and lays the tree out again when its
+// size has changed.
+func (p *researchPanel) Layout(r image.Rectangle) {
+	p.Place(r)
+	if w, h := r.Dx(), r.Dy(); w > 0 && h > 0 && (w != p.w || h != p.h) {
+		p.w, p.h = w, h
+		if p.model != nil {
+			p.layout()
+		}
+	}
+}
+
+// Paint puts the tree on the kit's painter in theme colors (the shared grid
+// painter, cell_grid.go). Lane hues go through the contrast rule for art;
+// text roles are the theme's own.
+func (p *researchPanel) Paint(p2 *kit.Painter) {
+	r := p.Bounds()
+	if r.Empty() || p.model == nil {
 		return
 	}
-	if w != p.w || h != p.h {
-		p.w, p.h = w, h
-		p.layout()
-	}
 	p.view.prompt = p.prompt != nil && p.prompt() != ""
-	grid := renderTree(p.state, p.model, p.view, w, h)
+	grid := renderTree(p.state, p.model, p.view, r.Dx(), r.Dy())
 	if p.view.ascii {
 		foldPlain(grid)
 	}
-	paintTree(scr, grid, x, y, p.model.lanes)
+	lanes := p.model.lanes
+	paintGridKit(p2, grid, r.Min, newGridPalette(len(lanes), func(i int) string { return lanes[i].Hue }))
 }
 
-// paintTree puts a rendered grid on the screen in theme colours (the
-// shared painter, cell_grid.go). Lane hues go through the contrast rule
-// for art; text roles are the theme's own.
-func paintTree(scr tcell.Screen, g *tGrid, x0, y0 int, lanes []config.TechLaneDef) {
-	paintGrid(scr, g, x0, y0, newGridPalette(len(lanes), func(i int) string { return lanes[i].Hue }))
+// Mouse: a click selects the tech under the pointer and a double click
+// opens its card, as Enter does; a click outside an open card closes it, as
+// Esc does; the wheel moves the selection a tech a notch, as the arrows do.
+func (p *researchPanel) Mouse(m kit.Mouse) bool {
+	if p.model == nil {
+		return false
+	}
+	switch {
+	case m.Kind == kit.MouseWheel && !p.view.card:
+		key := tcell.KeyDown
+		if m.Wheel < 0 {
+			key = tcell.KeyUp
+		}
+		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
+			p.handleKey(key)
+		}
+		return m.Wheel != 0
+	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft:
+		return false
+	case p.view.card:
+		return !m.Pt().In(p.model.cardAt) && p.closeCard()
+	}
+	key := p.model.techAt(m.Pt().Sub(p.Bounds().Min), p.view, p.w, p.h)
+	if key == "" {
+		return false
+	}
+	p.view.sel = key
+	p.layout()
+	if m.Clicks == 2 {
+		p.handleKey(tcell.KeyEnter)
+	}
+	return true
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it
