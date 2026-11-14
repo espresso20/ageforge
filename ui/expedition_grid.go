@@ -306,14 +306,3 @@ func paintExpeditionKit(p *kit.Painter, g *xgrid, at image.Point, pal *expPalett
 		}
 	}
 }
-
-// paintExpeditionKit puts a grid on a kit painter, its top left corner at the
-// given point.
-func paintExpeditionKit(p *kit.Painter, g *xgrid, at image.Point, pal *expPalette) {
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			c := g.c[y*g.w+x]
-			p.Put(at.X+x, at.Y+y, c.r, kitStyle(pal.style(c)))
-		}
-	}
-}
