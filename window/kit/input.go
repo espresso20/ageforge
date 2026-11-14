@@ -25,6 +25,9 @@ type Input struct {
 	Style Style
 	// Width is the field's width in cells; 0 takes the rest of the row.
 	Width int
+	// Mask, when set, is painted in place of every typed character (a
+	// password box).
+	Mask rune
 	// Ghost, when set, is asked for the text to show dim after the line
 	// while the cursor is at its end: a completion on offer.
 	Ghost func(text string) string
@@ -104,11 +107,15 @@ func (in *Input) Paint(p *Painter) {
 	}
 	at := x
 	for i := in.off; i < len(in.text) && at+runeWidth(in.text[i]) <= x+w; i++ {
-		p.Put(at, r.Min.Y, in.text[i], in.Style)
-		if rw := runeWidth(in.text[i]); rw == 2 {
-			p.put(at, r.Min.Y, &glyph{s: string(in.text[i]), w: 2}, in.Style)
+		ch := in.text[i]
+		if in.Mask != 0 {
+			ch = in.Mask
 		}
-		at += runeWidth(in.text[i])
+		p.Put(at, r.Min.Y, ch, in.Style)
+		if rw := runeWidth(ch); rw == 2 {
+			p.put(at, r.Min.Y, &glyph{s: string(ch), w: 2}, in.Style)
+		}
+		at += runeWidth(ch)
 	}
 	curX := x + runesWidth(in.text[in.off:in.cur])
 	if in.AtEnd() && in.Ghost != nil {

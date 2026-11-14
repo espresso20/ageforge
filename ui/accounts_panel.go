@@ -377,7 +377,7 @@ func (p *accountsPanel) doImport() {
 		SetTextAlign(tview.AlignCenter)
 	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	input := tview.NewInputField().
+	input := newNativeInput().
 		SetLabel(vibe.Line("ui.accounts_panel.doImport.01", "File path: ")).
 		SetText(defaultPath).
 		SetFieldWidth(48).
@@ -554,7 +554,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	input := tview.NewInputField().
+	input := newNativeInput().
 		SetLabel(vibe.Line("ui.accounts_panel.showWipeTypeGate.01", "Account name: ")).
 		SetLabelColor(theme.Color(theme.RoleOnNegative)).
 		SetFieldWidth(40).

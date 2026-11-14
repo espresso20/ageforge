@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
@@ -77,5 +78,17 @@ func TestNativeInputKeysAndCalls(t *testing.T) {
 	in.SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).SetLabelColor(theme.Color(theme.RoleHighlight)).SetFieldTextColor(theme.Color(theme.RoleText))
 	if in.GetLabel() != "> " || in.SetTitle("T").GetTitle() != "T" {
 		t.Error("the label and the title read back")
+	}
+}
+
+func TestNativeInputMask(t *testing.T) {
+	keepTheme(t)
+	in := newNativeInput().SetFieldWidth(10).SetMaskCharacter('·').SetText("abc")
+	cells := cellsOf(t, in, 10, 1)
+	if got := rowsOf(cells, 10); !strings.HasPrefix(got, "···") || strings.Contains(got, "a") {
+		t.Errorf("a masked field draws the mask: %q", got)
+	}
+	if in.GetText() != "abc" {
+		t.Errorf("the text is kept: %q", in.GetText())
 	}
 }

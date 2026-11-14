@@ -427,7 +427,7 @@ func (b *loadGameBrowser) doRename() {
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	input := tview.NewInputField().
+	input := newNativeInput().
 		SetLabel(vibe.Line("ui.load_game.doRename.01", "Name: ")).
 		SetText(s.Name).
 		SetFieldWidth(40)
