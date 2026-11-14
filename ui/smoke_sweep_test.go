@@ -24,8 +24,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -126,8 +124,7 @@ func (s *sweeper) press(k kit.KeyCode, r rune) {
 	if k == kit.KeyChord {
 		mod = kit.ModCtrl // the sweep's only chords are Ctrl with a letter
 	}
-	ev := tk(k, r, mod)
-	go func() { s.sim.InjectKey(ev.Key(), ev.Rune(), ev.Modifiers()); close(done) }()
+	go func() { s.sim.InjectKey(k, r, mod); close(done) }()
 	select {
 	case <-done:
 	case <-time.After(sweepTimeout):
@@ -458,13 +455,8 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 				for _, other := range append(sizes, [2]int{sz[0], sz[1]}) {
 					other := other
 					s.step = fmt.Sprintf("resize to %dx%d", other[0], other[1])
-					// The simulation screen resizes silently; post the event a
-					// real terminal would send.
 					s.sim.SetSize(other[0], other[1])
-					if err := s.sim.PostEvent(tcell.NewEventResize(other[0], other[1])); err != nil {
-						s.fail("posting the resize event: %v", err)
-					}
-					time.Sleep(120 * time.Millisecond) // tview throttles resize redraws
+					time.Sleep(120 * time.Millisecond)
 					s.ping()
 					if strings.TrimSpace(s.liveScreen()) == "" {
 						s.fail("blank dashboard after resizing to %dx%d", other[0], other[1])

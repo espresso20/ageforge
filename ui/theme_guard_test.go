@@ -11,8 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -20,20 +18,20 @@ import (
 // (the theming design §3.8). It parses every non-test Go file under ui/, game/ and
 // config/ and fails on:
 //
-//   - a tview inline color tag in a string literal whose fg or bg is a hex
-//     literal or a tcell color name the theme does not own ([aqua], [black:gold],
+//   - an inline color tag in a string literal whose fg or bg is a hex literal
+//     or a CSS color name the theme does not own ([aqua], [black:gold],
 //     [white:#30363d]) — theme-owned names are the role vocabulary ([accent],
 //     [onaccent:accent]) plus the legacy aliases ([gold], [green], …);
-//   - a named tcell color constant (tcell.ColorGold …) — use theme.Of(role);
-//   - tcell.NewRGBColor / tcell.NewHexColor / tcell.GetColor — derive the
-//     color from theme roles.
+//   - a color written out in numbers (kit.RGB(255, 0, 0), theme.NewHexColor
+//     (0xff0000) …) — derive the color from theme roles. A color built from
+//     what was painted (the parts of a cell read back) is not one of these.
 func TestNoRawColorsOutsideTheme(t *testing.T) {
 	owned := theme.TagNames()
 
 	// A tag is [fg], [fg:bg] or [fg:bg:attrs]; fg/bg may be empty or "-".
 	tagRe := regexp.MustCompile(`\[([a-zA-Z#][a-zA-Z0-9#]*|-)?(?::([a-zA-Z#][a-zA-Z0-9#]*|-)?)?(?::[a-zA-Z-]*)?\]`)
 	isCSS := func(name string) bool {
-		_, ok := tcell.ColorNames[strings.ToLower(name)]
+		_, ok := theme.CSSRGBA(strings.ToLower(name))
 		return ok
 	}
 	badName := func(n string) bool {
@@ -79,18 +77,23 @@ func TestNoRawColorsOutsideTheme(t *testing.T) {
 								fset.Position(x.Pos()), m[0])
 						}
 					}
-				case *ast.SelectorExpr:
-					pkg, ok := x.X.(*ast.Ident)
-					if !ok || pkg.Name != "tcell" {
+				case *ast.CallExpr:
+					sel, ok := x.Fun.(*ast.SelectorExpr)
+					if !ok {
 						return true
 					}
-					name := x.Sel.Name
-					switch {
-					case name == "ColorDefault" || name == "ColorReset" || name == "ColorNames":
-					case strings.HasPrefix(name, "Color") && len(name) > 5 && name[5] >= 'A' && name[5] <= 'Z':
-						t.Errorf("%s: tcell.%s — use theme.Of(role)", fset.Position(x.Pos()), name)
-					case name == "NewRGBColor" || name == "NewHexColor" || name == "GetColor":
-						t.Errorf("%s: tcell.%s — derive from theme roles", fset.Position(x.Pos()), name)
+					pkg, ok := sel.X.(*ast.Ident)
+					if !ok || (pkg.Name != "kit" && pkg.Name != "theme") {
+						return true
+					}
+					switch sel.Sel.Name {
+					case "RGB", "NewRGBColor", "NewHexColor":
+						for _, arg := range x.Args {
+							if lit, ok := arg.(*ast.BasicLit); ok && lit.Kind == token.INT {
+								t.Errorf("%s: %s.%s with a number in it — derive the color from theme roles", fset.Position(x.Pos()), pkg.Name, sel.Sel.Name)
+								break
+							}
+						}
 					}
 				}
 				return true

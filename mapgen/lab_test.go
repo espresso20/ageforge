@@ -9,8 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 
@@ -52,13 +50,13 @@ func write(t *testing.T, dir, name, body string) {
 
 // writeShot saves one capture three ways: plain text, the coloured spans (one
 // span per colour run) and a page that opens by itself.
-func writeShot(t *testing.T, dir, base string, scr tcell.SimulationScreen) {
+func writeShot(t *testing.T, dir, base string, scr *capture.Screen) {
 	t.Helper()
 	spans := capture.Frame(scr)
 	write(t, dir, base+".txt", capture.Text(scr))
 	write(t, dir, base+".spans.html", spans)
-	bg := theme.Color(theme.RoleBackground)
-	fg := theme.Color(theme.RoleText)
+	bg := theme.Of(theme.RoleBackground)
+	fg := theme.Of(theme.RoleText)
 	write(t, dir, base+".html", capture.HTML(base, capture.Hex(bg), capture.Hex(fg), capture.Fonts, []string{spans}, 1))
 }
 
@@ -75,7 +73,7 @@ func labModel(age string, tick int) *mapmodel.Model {
 	return mapmodel.NewBuilder(nil).Build(&st, nil)
 }
 
-func panel(v mapstyle.Style, m *mapmodel.Model, w, h int) tcell.SimulationScreen {
+func panel(v mapstyle.Style, m *mapmodel.Model, w, h int) *capture.Screen {
 	scr := capture.NewScreen(w, h)
 	v.Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: m})
 	return scr

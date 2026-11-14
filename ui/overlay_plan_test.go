@@ -4,18 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// plainText strips tview color tags, for asserting on what the player reads.
-func plainText(s string) string {
-	tv := tview.NewTextView().SetDynamicColors(true)
-	tv.SetText(s)
-	return tv.GetText(true)
-}
+// plainText strips color tags, for asserting on what the player reads.
+func plainText(s string) string { return kit.Strip(s) }
 
 func TestPlanCommands(t *testing.T) {
 	engine := game.NewGameEngine()

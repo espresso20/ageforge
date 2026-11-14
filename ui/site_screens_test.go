@@ -754,7 +754,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.close()
 	// The Wonders panel's gallery: G on the list opens it.
 	s.open("wonders", "")
-	s.d.overlayMgr.entries["wonders"].keyTo(tv, tk(kit.KeyRune, 'g', 0))
+	keyTo(s.d.overlayMgr.entries["wonders"].tv, tk(kit.KeyRune, 'g', 0))
 	if !s.d.wonders.gallery {
 		t.Fatal("G did not open the gallery")
 	}

@@ -119,7 +119,7 @@ func TestPanelFrameIsOneTree(t *testing.T) {
 	st := newStage(f, 40, 12)
 	first := func() string {
 		st.paint()
-		return st.buf.Line(1)[panelPadX : panelPadX+6]
+		return string([]rune(st.buf.Line(1))[panelPadX : panelPadX+6])
 	}
 	if got := first(); got != "row 00" {
 		t.Fatalf("the text starts at %q", got)

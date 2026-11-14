@@ -3,16 +3,12 @@ package ui
 import (
 	"testing"
 
-	"github.com/rivo/tview"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
-// visible renders s the way the game does (a dynamic-color TextView) and
-// returns what the player sees.
-func visible(s string) string {
-	tv := tview.NewTextView().SetDynamicColors(true)
-	tv.SetText(s)
-	return tv.GetText(true)
-}
+// visible is s as the player sees it: the tags the game means read, and
+// gone.
+func visible(s string) string { return kit.Strip(s) }
 
 func TestSafeTagsKeepsBracketedWords(t *testing.T) {
 	cases := []struct{ in, want string }{
