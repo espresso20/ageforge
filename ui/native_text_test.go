@@ -190,3 +190,56 @@ func TestNativeTextWriteTitleColorAndDrawFunc(t *testing.T) {
 		t.Errorf("the title is %q, want red T", cells[10])
 	}
 }
+
+// TestPanelFrameIsOneTree: the frame and its text are one kit tree on one
+// host, so the wheel reaches the text through the frame from the window.
+func TestPanelFrameIsOneTree(t *testing.T) {
+	keepTheme(t)
+	var lines []string
+	for i := 0; i < 60; i++ {
+		lines = append(lines, fmt.Sprintf("row %02d", i))
+	}
+	tv := newNativeText().SetDynamicColors(true)
+	tv.SetText(strings.Join(lines, "\n"))
+	f := newPanelFrame(txtExpeditions, tv)
+
+	sim := tcell.NewSimulationScreen("UTF-8")
+	must(t, sim.Init())
+	defer sim.Fini()
+	sim.SetSize(40, 12)
+	scr := newNativeScreen(theme.WrapScreen(sim))
+	f.SetRect(0, 0, 40, 12)
+	draw := func() string {
+		f.Draw(scr)
+		scr.Show()
+		cells, w, _ := sim.GetContents()
+		var sb strings.Builder
+		for x := panelPadX; x < panelPadX+6; x++ {
+			sb.WriteRune(cells[1*w+x].Runes[0])
+		}
+		return sb.String()
+	}
+	if got := draw(); got != "row 00" {
+		t.Fatalf("the text starts at %q", got)
+	}
+	if scr.hostAt(5, 5) != f.nativeHost || scr.hostAt(0, 0) != f.nativeHost {
+		t.Error("the frame's host should own both the edge and the text")
+	}
+	if !scr.mouse(kit.Mouse{Kind: kit.MouseWheel, X: 5, Y: 5, Wheel: 2}) {
+		t.Error("the wheel over the text should change the screen")
+	}
+	if got := draw(); got != "row 06" {
+		t.Errorf("two notches down show %q", got)
+	}
+	if row, _ := tv.GetScrollOffset(); row != 6 {
+		t.Errorf("the text view reports row %d", row)
+	}
+	// The keys still go to the text view, as the frame hands them over.
+	f.InputHandler()(tcell.NewEventKey(tcell.KeyHome, 0, tcell.ModNone), func(tview.Primitive) {})
+	if got := draw(); got != "row 00" {
+		t.Errorf("Home through the frame shows %q", got)
+	}
+	if _, y, _, h := tv.GetInnerRect(); y != 1 || h != 12-panelChromeRows {
+		t.Errorf("the text view knows where it is: row %d, %d rows", y, h)
+	}
+}
