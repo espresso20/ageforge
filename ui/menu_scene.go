@@ -145,16 +145,12 @@ func (g *mGrid) flush(scr tcell.Screen, x0, y0 int, pal *menuPalette, plain bool
 // paint puts the grid on a kit painter with its top left corner at at, the
 // way flush puts it on a screen.
 func (g *mGrid) paint(p *kit.Painter, at image.Point, pal *menuPalette, plain bool) {
-	rgb := func(c tcell.Color) kit.Color {
-		r, gr, b := c.RGB()
-		return kit.RGB(uint8(max(r, 0)), uint8(max(gr, 0)), uint8(max(b, 0)))
-	}
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			c := g.c[y*g.w+x]
-			st := kit.Style{Fg: rgb(c.fg), Bg: rgb(pal.bg)}
+			st := kit.Style{Fg: kitColor(c.fg), Bg: kitColor(pal.bg)}
 			if c.hasBg {
-				st.Bg = rgb(c.bg)
+				st.Bg = kitColor(c.bg)
 			}
 			if c.bold {
 				st.Attr = kit.Bold

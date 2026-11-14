@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -52,7 +51,7 @@ func epochPicture(state game.GameState) *image.RGBA {
 	sim.SetSize(epochPicCols, picRows)
 	screen := theme.WrapScreen(sim)
 
-	tv := tview.NewTextView().SetDynamicColors(true).SetWrap(true)
+	tv := newNativeText().SetDynamicColors(true).SetWrap(true)
 	tv.SetBackgroundColor(theme.Color(theme.RoleBackground))
 	// The page has no key hint here: the picture is of the screen, and the
 	// hint is for the player who is looking at it.

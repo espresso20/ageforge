@@ -112,6 +112,22 @@ func cellStyle(c *kit.Cell) tcell.Style {
 	return st
 }
 
+// kitColor is a tcell color as the kit's: a theme sentinel is its role (so it
+// still follows the theme), the default is nothing, and the rest are literal.
+func kitColor(c tcell.Color) kit.Color {
+	if role, ok := theme.RefRole(c); ok {
+		return kit.Role(role)
+	}
+	if c == theme.Transparent {
+		return kit.Clear
+	}
+	r, g, b := c.RGB()
+	if r < 0 {
+		return kit.Color{}
+	}
+	return kit.RGB(uint8(r), uint8(g), uint8(b))
+}
+
 // keyCodes are tcell's keys that are not text, as the kit's.
 var keyCodes = map[tcell.Key]kit.KeyCode{
 	tcell.KeyEnter: kit.KeyEnter, tcell.KeyEsc: kit.KeyEsc, tcell.KeyTab: kit.KeyTab, tcell.KeyBacktab: kit.KeyBacktab,
