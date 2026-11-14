@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"strings"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // newSimScreen is an initialised w×h UTF-8 SimulationScreen, finished when
@@ -168,8 +170,18 @@ func foldASCII(s string, plain bool) string {
 func flushRows(t testing.TB, where string, sim tcell.SimulationScreen, g *mGrid, pal *menuPalette, plain bool) []string {
 	t.Helper()
 	sim.Clear()
-	g.flush(theme.WrapScreen(sim), 0, 0, pal, plain)
 	w, h := sim.Size()
+	var buf kit.Buffer
+	buf.Resize(w, h)
+	g.paint(kit.NewPainter(&buf), image.Point{}, pal, plain)
+	scr := theme.WrapScreen(sim)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if c := buf.At(x, y); !c.Cont {
+				scr.SetContent(x, y, c.R, nil, cellStyle(&c))
+			}
+		}
+	}
 	rows := make([]string, h)
 	for y := range rows {
 		row := make([]rune, w)

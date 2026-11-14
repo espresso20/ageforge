@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, a click moves the arrival screen and the ending film on, as Enter does.
 - In the window, the mouse wheel scrolls every text panel (Milestones, Army, Trade routes, Factions, Statistics, Logs, Epoch, History, Buildings, Help and the rest), and a click in the command bar puts the cursor at the character clicked. The panels and the command bar are drawn by the game's own UI kit; the terminal shows them as before.
 - In the window, the main menu takes the mouse: the entry under the pointer is selected and a click opens it, on the Settings page too. The menu is the first screen drawn by the game's own UI kit; the terminal shows it as before.
 - A Steam build keeps its saves and settings in the OS user config folder (AgeForge under AppData, Application Support or ~/.config) instead of beside the executable, so Steam Auto-Cloud can sync them and uninstalling keeps them. Other builds are unchanged.

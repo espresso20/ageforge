@@ -6,7 +6,7 @@ From the Information Age on, first-copy prices step up by a factor of 1.4 with e
 
 <figure class="screen" data-screen="age-arrival"><figcaption>The arrival screen for the Bronze Age: the age's name in large letters, its description and a one-line quip, and the town below.</figcaption></figure>
 
-An advance opens the arrival screen. It takes the whole screen, in your theme and glyph set. The first part is a short celebration. It moves on by itself, or at any key (`Esc` counts as a key). The second part says what the age opens. A key closes it, or turns the page when the text needs more than one. The screen closes by itself 20 seconds after it opens. The game keeps running underneath the whole time. With `motion off` the celebration is a single still frame.
+An advance opens the arrival screen. It takes the whole screen, in your theme and glyph set. The first part is a short celebration. It moves on by itself, or at any key (`Esc` counts as a key). The second part says what the age opens. A key closes it, or turns the page when the text needs more than one. In the window a left click does the same as a key, on both parts. The screen closes by itself 20 seconds after it opens. The game keeps running underneath the whole time. With `motion off` the celebration is a single still frame.
 
 <figure class="screen" data-screen="age-advance"><figcaption>What the Bronze Age opens, shown after the arrival: its buildings (some wait for research), its resources, its wonder and the upgrades on offer.</figcaption></figure>
 

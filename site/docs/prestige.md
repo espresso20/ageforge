@@ -40,7 +40,7 @@ A prestige plays out on the whole screen, in your theme and glyph set. The town 
 
 <figure class="screen" data-screen="prestige-strike"><figcaption>The strike, here at a first prestige: one star, and the game's own line for what the run paid.</figcaption></figure>
 
-Any key skips to the next part, and on the last part closes it. `Esc` counts as a key. Left alone it plays through and closes by itself, and the new run is already running underneath. With `motion off` each part is a single still frame. If the [Last Passage](#the-last-passage) came to this prestige, what it did is the first thing said, and it stands alone a moment before anything is counted. A [Succumb](catastrophe.md#succumb) to a catastrophe ends a run too, and gets the same telling in a lower voice: the town goes cold instead of burning, and there is no strike.
+Any key skips to the next part, and on the last part closes it. `Esc` counts as a key. In the window a left click does the same as a key. Left alone it plays through and closes by itself, and the new run is already running underneath. With `motion off` each part is a single still frame. If the [Last Passage](#the-last-passage) came to this prestige, what it did is the first thing said, and it stands alone a moment before anything is counted. A [Succumb](catastrophe.md#succumb) to a catastrophe ends a run too, and gets the same telling in a lower voice: the town goes cold instead of burning, and there is no strike.
 
 <figure class="screen" data-screen="prestige"><figcaption>Prestige has no panel of its own: the command answers in the log, read here in the Logs panel in the Medieval Age, where an early taste would pay 9 points.</figcaption></figure>
 
