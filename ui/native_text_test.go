@@ -154,9 +154,10 @@ func TestNativeTextKeysAndCalls(t *testing.T) {
 	if got := top(); got != "d" {
 		t.Errorf("not scrollable shows the end, top line %q", got)
 	}
+	// The older lines go after a draw, as in tview: the text is whole once.
 	kt.SetMaxLines(2)
-	if got := top(); got != "g" {
-		t.Errorf("SetMaxLines(2) keeps the last two lines, top line %q", got)
+	if got := top(); got != "d" || kt.GetText(false) != "g\nh" {
+		t.Errorf("SetMaxLines(2): drawn top line %q, text afterward %q", got, kt.GetText(false))
 	}
 	if got := kt.Clear().GetText(true); got != "" || changed != 3 {
 		t.Errorf("Clear: %q, %d changes", got, changed)

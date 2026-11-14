@@ -65,7 +65,7 @@ type Dashboard struct {
 	workerDetail  bool // the terminal has the rows for the People box's food detail line
 
 	// Shared UI
-	logTV    *tview.TextView
+	logTV    *nativeText
 	statusTV *fitView
 	// ledgerTV is the Ledger under the status ribbon (dash_ledger.go) and
 	// ledger what it draws.
@@ -342,7 +342,7 @@ func (d *Dashboard) build() {
 	theme.Track(func() { d.sidebar.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
 	// Log panel
-	d.logTV = tview.NewTextView().
+	d.logTV = newNativeText().
 		SetDynamicColors(true).
 		SetScrollable(true).
 		SetWordWrap(true).

@@ -89,10 +89,12 @@ func (t *nativeText) SetScrollable(on bool) *nativeText {
 	return t
 }
 
-// SetMaxLines keeps only the last n lines of what is set (0: all of it).
+// SetMaxLines keeps the text to its last n lines (0: all of it). As in
+// tview the older lines go after a draw, so text that was just set is shown
+// whole once.
 func (t *nativeText) SetMaxLines(n int) *nativeText {
 	t.maxLines = n
-	return t.show()
+	return t
 }
 
 func (t *nativeText) SetText(s string) *nativeText {
@@ -107,11 +109,6 @@ func (t *nativeText) SetText(s string) *nativeText {
 // show gives the kit the text as it should print.
 func (t *nativeText) show() *nativeText {
 	s := t.raw
-	if t.maxLines > 0 {
-		if ls := strings.Split(s, "\n"); len(ls) > t.maxLines {
-			s = strings.Join(ls[len(ls)-t.maxLines:], "\n")
-		}
-	}
 	if !t.dynamic {
 		s = kit.Escape(s)
 	}
@@ -234,6 +231,12 @@ func (t *nativeText) Draw(scr tcell.Screen) {
 		}
 	}
 	t.nativeHost.Draw(scr)
+	if t.maxLines > 0 {
+		if ls := strings.Split(t.raw, "\n"); len(ls) > t.maxLines {
+			t.raw = strings.Join(ls[len(ls)-t.maxLines:], "\n")
+			t.show()
+		}
+	}
 }
 
 // viKeys are the letters a text view scrolls by, as the keys they stand for.

@@ -289,7 +289,7 @@ func TestLongPricesFitTheWonderPanel(t *testing.T) {
 
 // tallRows is every row tv writes its text on when it is drawn lw cells wide
 // and tall enough to show all of it: the box's own wrapping, read whole.
-func tallRows(t *testing.T, tv *tview.TextView, lw int) []string {
+func tallRows(t *testing.T, tv *nativeText, lw int) []string {
 	t.Helper()
 	const tall = 2000
 	tv.ScrollToBeginning()

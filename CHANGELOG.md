@@ -7,7 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
-- In the window, the mouse wheel scrolls the text panels, the load and account pages and the theme picker's text. They are drawn by the game's own UI kit now; the terminal shows them as before.
+- In the window, the mouse wheel scrolls the dashboard's log, the load and account pages and the theme picker's text. Every text box in the game is drawn by its own UI kit now; the terminal shows them as before.
 - A Steam build keeps its saves and settings in the OS user config folder (AgeForge under AppData, Application Support or ~/.config) instead of beside the executable, so Steam Auto-Cloud can sync them and uninstalling keeps them. Other builds are unchanged.
 - A build made with the `steam` tag talks to Steam: it starts Steamworks before the window opens, runs its callbacks every frame, can unlock Steam achievements for badges (none are mapped yet), and turns off the self-updater and the Nerd Font download. Other builds are unchanged.
 - In the window, the Transcendent Age opens the cosmic web above the Local Group: galaxy clusters joined by filaments, drawn as your civilization, where each building line owns strands that glow with how much of it you have built. It shows grayed and locked in the Quantum Age.
