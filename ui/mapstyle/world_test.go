@@ -11,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // worldAges are an age of each scale.
@@ -125,7 +126,7 @@ func TestTheCursorCanVisitACiv(t *testing.T) {
 		draw(v, m, 120, 36, false, mapmodel.TierUnicode).Fini()
 		seen := map[string]bool{}
 		for i := 0; i < 400 && len(seen) < m.DiscoveredCount(); i++ {
-			v.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), f)
+			v.HandleKey(kit.Key{Code: kit.KeyTab, Rune: 0, Mod: 0}, f)
 			if in, _ := v.Inspect(f); in.Command != "" {
 				for _, fc := range m.Factions {
 					if fc.Discovered && in.Title == fc.Name {

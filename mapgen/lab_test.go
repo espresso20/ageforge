@@ -12,6 +12,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -254,16 +255,16 @@ func TestLabWorld(t *testing.T) {
 // steerTo presses the arrow keys until the cursor of a view is on a cell.
 func steerTo(v mapstyle.Style, f mapstyle.Frame, at mapgen.Pt) {
 	for p, _ := v.Pointer(); p.X != at.X || p.Y != at.Y; p, _ = v.Pointer() {
-		key := tcell.KeyRight
+		key := kit.KeyRight
 		switch {
 		case at.X < p.X:
-			key = tcell.KeyLeft
+			key = kit.KeyLeft
 		case at.X == p.X && at.Y < p.Y:
-			key = tcell.KeyUp
+			key = kit.KeyUp
 		case at.X == p.X:
-			key = tcell.KeyDown
+			key = kit.KeyDown
 		}
-		v.HandleKey(tcell.NewEventKey(key, 0, tcell.ModNone), f)
+		v.HandleKey(kit.Key{Code: key, Rune: 0, Mod: 0}, f)
 	}
 }
 

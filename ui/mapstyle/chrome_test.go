@@ -14,6 +14,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // cursorCells returns the cells of a screen drawn in the cursor's fill
@@ -186,7 +187,7 @@ func mapText(t *testing.T, st game.GameState) string {
 		}
 		scr := capture.NewScreen(160, 48)
 		for i := 0; i < 80; i++ {
-			v.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), f)
+			v.HandleKey(kit.Key{Code: kit.KeyTab, Rune: 0, Mod: 0}, f)
 			v.Draw(scr, Rect{W: 160, H: 48}, f)
 			if in, ok := v.Inspect(f); ok {
 				out.WriteString(in.Title + "\n" + strings.Join(in.Lines, "\n") + "\n" + in.Command + "\n")
@@ -309,11 +310,11 @@ func TestVibeTextNeverMovesWhatIsAroundIt(t *testing.T) {
 	t.Cleanup(func() { vibe.Set(was) })
 	vibe.Set(false)
 	fixture.WithTheme(t, "forge")
-	keys := []*tcell.EventKey{
-		tcell.NewEventKey(tcell.KeyRight, 0, 0), tcell.NewEventKey(tcell.KeyDown, 0, 0),
-		tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModShift), tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModShift),
-		tcell.NewEventKey(tcell.KeyTab, 0, 0), tcell.NewEventKey(tcell.KeyPgDn, 0, 0), tcell.NewEventKey(tcell.KeyTab, 0, 0),
-		tcell.NewEventKey(tcell.KeyPgUp, 0, 0), tcell.NewEventKey(tcell.KeyLeft, 0, 0),
+	keys := []kit.Key{
+		kit.Key{Code: kit.KeyRight, Rune: 0, Mod: 0}, kit.Key{Code: kit.KeyDown, Rune: 0, Mod: 0},
+		kit.Key{Code: kit.KeyRight, Rune: 0, Mod: kit.ModShift}, kit.Key{Code: kit.KeyDown, Rune: 0, Mod: kit.ModShift},
+		kit.Key{Code: kit.KeyTab, Rune: 0, Mod: 0}, kit.Key{Code: kit.KeyPgDn, Rune: 0, Mod: 0}, kit.Key{Code: kit.KeyTab, Rune: 0, Mod: 0},
+		kit.Key{Code: kit.KeyPgUp, Rune: 0, Mod: 0}, kit.Key{Code: kit.KeyLeft, Rune: 0, Mod: 0},
 	}
 	ages := []string{"stone_age", "medieval_age", "modern_age", "cyberpunk_age", "fusion_age", "space_age", "galactic_age", "quantum_age"}
 

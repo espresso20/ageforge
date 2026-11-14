@@ -250,23 +250,8 @@ func (e *ending) Draw(scr tcell.Screen) {
 		return
 	}
 	e.nativeHost.Draw(scr)
-	x, y, w, h := e.GetRect()
-	if w <= 0 || h <= 0 {
+	if _, _, w, h := e.GetRect(); w <= 0 || h <= 0 {
 		return
-	}
-	// The theme's own weather, at full, from the heavy blow to the film's
-	// end: twice over, in the cells the film leaves empty.
-	if s, f := e.sc.span(e.sc.frame); e.view.motion && e.view.prestige &&
-		(s.beat == beatStrike && f >= endBlow || s.beat == beatBeginning) {
-		if effect := theme.Active().Effect; effect != "" {
-			// The effect that comes in bursts (the glitch, every 64
-			// frames from its 57th) bursts as the new land comes out of
-			// the light.
-			dawn := e.sc.spans[len(e.sc.spans)-1].from + 9
-			n := e.sc.frame + 57 - dawn + 64
-			drawThemeEffect(scr, x, y, w, h, effect, n, e.view.plain)
-			drawThemeEffect(scr, x, y, w, h, effect, n+29, e.view.plain)
-		}
 	}
 	if e.view.motion {
 		e.startClock(e.om)
@@ -285,6 +270,22 @@ func (e *ending) Paint(p *kit.Painter) {
 		return
 	}
 	e.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, e.pal, e.view.plain)
+	// The theme's own weather, at full, from the heavy blow to the film's
+	// end: twice over, in the cells the film leaves empty.
+	if s, f := e.sc.span(e.sc.frame); e.view.motion && e.view.prestige &&
+		(s.beat == beatStrike && f >= endBlow || s.beat == beatBeginning) {
+		if effect := theme.Active().Effect; effect != "" {
+			// The effect that comes in bursts (the glitch, every 64
+			// frames from its 57th) bursts as the new land comes out of
+			// the light.
+			dawn := e.sc.spans[len(e.sc.spans)-1].from + 9
+			n := e.sc.frame + 57 - dawn + 64
+			x, y, w, h := e.GetRect()
+			scr := cellsFor(p, e, r)
+			drawThemeEffect(scr, x, y, w, h, effect, n, e.view.plain)
+			drawThemeEffect(scr, x, y, w, h, effect, n+29, e.view.plain)
+		}
+	}
 }
 
 // frameGrid brings the scene to the clock's frame and draws the film at w

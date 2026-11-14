@@ -412,9 +412,18 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 				return append([]tcell.SimCell(nil), cells...)
 			}
 			// The layout alone, then the effect's pass over it: what
-			// differs is what the effect drew.
+			// differs is what the effect drew. The dashboard's root paints
+			// the effect itself, so the layout alone is the root with the
+			// effect taken off for that draw.
+			fx := d.Root().(*fxRoot)
+			layoutOnly := func() {
+				after := fx.after
+				fx.after = nil
+				d.root.Draw(scr)
+				fx.after = after
+			}
 			scr.Clear()
-			d.root.Draw(scr)
+			layoutOnly()
 			still := snap()
 			must(t, eng.Account().SetMotion(false))
 			d.drawEffect(scr, 0, 0, w, h)
@@ -430,11 +439,24 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 			}
 			for n := 0; n < frames; n++ {
 				scr.Clear()
-				d.root.Draw(scr)
+				layoutOnly()
 				still = snap() // the mini map moves on its own clock
 				d.fxStart = time.Now().Add(-time.Duration(n) * mapAnimStep)
 				d.drawEffect(scr, 0, 0, w, h)
-				for i, c := range snap() {
+				direct := snap()
+				if n < 3 {
+					// The root's own paint of the effect, through the kit,
+					// is the same picture cell for cell.
+					scr.Clear()
+					fx.Draw(scr)
+					for i, c := range snap() {
+						if c.Runes[0] != direct[i].Runes[0] || c.Style != direct[i].Style {
+							t.Fatalf("theme %s at %dx%d, frame %d: the root painted %q at %d,%d where the effect alone draws %q",
+								th.Key, w, h, n, c.Runes[0], i%w, i/w, direct[i].Runes[0])
+						}
+					}
+				}
+				for i, c := range direct {
 					was := still[i]
 					if c.Runes[0] == was.Runes[0] && c.Style == was.Style {
 						continue

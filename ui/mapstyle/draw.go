@@ -13,7 +13,7 @@ import (
 // Draw renders the full view: header, picture, side panel, news, inspector and
 // status line. Below 60 by 16 it draws
 // the compact view instead.
-func (v *view) Draw(scr tcell.Screen, r Rect, f Frame) {
+func (v *view) Draw(scr Cells, r Rect, f Frame) {
 	if r.W < 60 || r.H < 16 {
 		v.unhost(f)
 		v.DrawCompact(scr, r, f)
@@ -258,7 +258,7 @@ func clamp(v, lo, hi int) int { return min(max(v, lo), hi) }
 
 // DrawCompact renders the glanceable mini view: a header line, the whole town
 // squeezed into the space, and one news line.
-func (v *view) DrawCompact(scr tcell.Screen, r Rect, f Frame) {
+func (v *view) DrawCompact(scr Cells, r Rect, f Frame) {
 	if r.W <= 0 || r.H <= 0 {
 		return
 	}

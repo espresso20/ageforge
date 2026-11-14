@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // visitAges are one age of each scale a visit comes to: the land, the city,
@@ -55,20 +56,20 @@ func steer(v Style, f Frame, p mapgen.Pt, unit int) bool {
 		if dx == 0 && dy == 0 {
 			return true
 		}
-		key, along := tcell.KeyRight, dx
+		key, along := kit.KeyRight, dx
 		switch {
 		case dx < 0:
-			key = tcell.KeyLeft
+			key = kit.KeyLeft
 		case dx == 0 && dy < 0:
-			key, along = tcell.KeyUp, dy
+			key, along = kit.KeyUp, dy
 		case dx == 0:
-			key, along = tcell.KeyDown, dy
+			key, along = kit.KeyDown, dy
 		}
-		mod := tcell.ModNone
+		var mod kit.Mod
 		if abs(along) >= 8*unit {
-			mod = tcell.ModShift
+			mod = kit.ModShift
 		}
-		v.HandleKey(tcell.NewEventKey(key, 0, mod), f)
+		v.HandleKey(kit.Key{Code: key, Rune: 0, Mod: mod}, f)
 	}
 	return false
 }
@@ -153,16 +154,16 @@ func TestVisitorIsReachableByTheKeys(t *testing.T) {
 							break
 						}
 						at, _ := v.Pointer()
-						key := tcell.KeyRight
+						key := kit.KeyRight
 						switch dx, dy := target.X-at.X, target.Y-at.Y; {
 						case abs(dx) >= abs(dy) && dx < 0:
-							key = tcell.KeyLeft
+							key = kit.KeyLeft
 						case abs(dx) < abs(dy) && dy < 0:
-							key = tcell.KeyUp
+							key = kit.KeyUp
 						case abs(dx) < abs(dy):
-							key = tcell.KeyDown
+							key = kit.KeyDown
 						}
-						v.HandleKey(tcell.NewEventKey(key, 0, tcell.ModNone), f)
+						v.HandleKey(kit.Key{Code: key, Rune: 0, Mod: 0}, f)
 						scr := drawFrame(v, f, size.w, size.h, false)
 						scr.Fini()
 					}

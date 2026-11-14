@@ -58,7 +58,7 @@ func TestMapCommandsAreRegistryCommands(t *testing.T) {
 					seen++
 				}
 			}
-			s.HandleKey(tev(kit.KeyTab, 0, 0), f)
+			s.HandleKey(kit.Key{Code: kit.KeyTab}, f)
 			s.Draw(scr, mapstyle.Rect{W: 160, H: 48}, f)
 		}
 		if seen == 0 {

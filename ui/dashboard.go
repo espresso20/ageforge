@@ -15,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -773,14 +774,14 @@ func sidebarText(active string, w, h int) string {
 // over it the active theme's ambient effect.
 func (d *Dashboard) Root() tview.Primitive {
 	if d.rootFx == nil {
-		d.rootFx = &fxRoot{nativeFlex: d.root, after: d.drawEffect}
+		d.rootFx = newFxRoot(d.root, d.drawEffect)
 	}
 	return d.rootFx
 }
 
 // drawEffect draws the active theme's ambient effect over the dashboard,
 // when the theme has one and the motion setting is on.
-func (d *Dashboard) drawEffect(scr tcell.Screen, x, y, w, h int) {
+func (d *Dashboard) drawEffect(scr mapstyle.Cells, x, y, w, h int) {
 	effect := theme.Active().Effect
 	if effect == "" {
 		d.fxOn.Store(false)

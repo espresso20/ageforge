@@ -24,8 +24,8 @@ func drawOnWindow(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) *nat
 	return scr
 }
 
-// The dashboard is one kit tree: its boxes are all painted by the page's own
-// host, and only the mini map, which still draws itself, is not.
+// The dashboard is one kit tree: its boxes, the mini map among them, are all
+// painted by the page's own host.
 func TestTheDashboardIsOneKitTree(t *testing.T) {
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "bronze_age")
@@ -51,8 +51,32 @@ func TestTheDashboardIsOneKitTree(t *testing.T) {
 		t.Fatal("staging: the mini map is not showing at 150x48")
 	}
 	x, y, w, h := d.miniMap.GetRect()
-	if scr.hostAt(x+w/2, y+h/2) == d.root.nativeHost {
-		t.Error("the mini map still draws itself: its cells are not the kit's")
+	if scr.hostAt(x+w/2, y+h/2) != d.root.nativeHost {
+		t.Error("the mini map is not painted by the dashboard's own host")
+	}
+}
+
+// The Map panel, open over the dashboard, is painted by its page's host: the
+// map's cells reach the screen through the kit.
+func TestTheMapPanelIsPaintedByTheKit(t *testing.T) {
+	restoreForge(t)
+	d, pages, _ := stagedDashboard(t, "bronze_age")
+	pages.SwitchToPage("dashboard")
+	d.runForTest("map")
+	if d.overlayMgr.ActiveName() != "map" {
+		t.Fatalf("the Map panel did not open (%q is open)", d.overlayMgr.ActiveName())
+	}
+	scr := drawOnWindow(t, d, pages, 150, 48)
+	x, y, w, h := d.mapPanel.GetRect()
+	if w < 100 || h < 30 {
+		t.Fatalf("the Map panel is %dx%d on a 150x48 screen", w, h)
+	}
+	host := scr.hostAt(x+w/2, y+h/2)
+	if host == nil || host == d.root.nativeHost {
+		t.Errorf("the middle of the map belongs to %p: want the Map panel's page, not tview and not the dashboard", host)
+	}
+	if scr.hostAt(x+1, y+h-1) != host {
+		t.Error("the map's key bar is not painted with the map")
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/espresso20/ageforge/world"
 )
 
@@ -59,15 +60,15 @@ type MapCmd struct {
 }
 
 // keyOps are the camera ops the map's keys stand for.
-var keyOps = map[tcell.Key]MapOp{
-	tcell.KeyLeft: MapPanLeft, tcell.KeyRight: MapPanRight, tcell.KeyUp: MapPanUp, tcell.KeyDown: MapPanDown,
-	tcell.KeyPgUp: MapZoomOut, tcell.KeyPgDn: MapZoomIn, tcell.KeyTab: MapNext, tcell.KeyBacktab: MapPrev, tcell.KeyHome: MapHome,
+var keyOps = map[kit.KeyCode]MapOp{
+	kit.KeyLeft: MapPanLeft, kit.KeyRight: MapPanRight, kit.KeyUp: MapPanUp, kit.KeyDown: MapPanDown,
+	kit.KeyPgUp: MapZoomOut, kit.KeyPgDn: MapZoomIn, kit.KeyTab: MapNext, kit.KeyBacktab: MapPrev, kit.KeyHome: MapHome,
 }
 
 // cmdOf is the camera command a map key stands for.
-func cmdOf(ev *tcell.EventKey) (MapCmd, bool) {
-	op, ok := keyOps[ev.Key()]
-	return MapCmd{Op: op, Fast: ev.Modifiers()&tcell.ModShift != 0}, ok
+func cmdOf(k kit.Key) (MapCmd, bool) {
+	op, ok := keyOps[k.Code]
+	return MapCmd{Op: op, Fast: k.Mod&kit.ModShift != 0}, ok
 }
 
 // toneHues says which of the cell painters' sky hues a tone is coloured by,

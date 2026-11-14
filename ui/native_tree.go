@@ -7,6 +7,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -417,4 +418,54 @@ func (f *nativeFlex) HasFocus() bool {
 		}
 	}
 	return f.Box.HasFocus()
+}
+
+// A nativeCanvas is a box filled by a func that still writes tcell's cells,
+// at the box's place on the screen (the theme picker's sample).
+type nativeCanvas struct {
+	*nativeHost
+	kit.Base
+	draw func(scr mapstyle.Cells, x, y, w, h int)
+}
+
+func newNativeCanvas(draw func(scr mapstyle.Cells, x, y, w, h int)) *nativeCanvas {
+	c := &nativeCanvas{draw: draw}
+	c.nativeHost = newNativeHost(c)
+	return c
+}
+
+func (c *nativeCanvas) kitDrawn()                {}
+func (c *nativeCanvas) Layout(r image.Rectangle) { c.Place(r) }
+
+// Paint clears the box to the page's ground, as a tview.Box did, then draws.
+func (c *nativeCanvas) Paint(p *kit.Painter) {
+	if c.nativeHost == nil || c.Bounds().Empty() {
+		return
+	}
+	p.Fill(c.Bounds(), kit.Role(theme.RoleBackground))
+	x, y, w, h := c.GetRect()
+	c.draw(cellsFor(p, c, c.Bounds()), x, y, w, h)
+}
+
+// kitCells lets the map, which still writes tcell's cells (mapstyle.Cells),
+// draw on a kit painter. The map keeps working in the screen's coordinates;
+// off is how far those are from the painter's.
+type kitCells struct {
+	p   *kit.Painter
+	off image.Point
+}
+
+// cellsFor is the painter as the map draws on it, for a primitive laid out
+// at r: the map is handed the primitive's rectangle on the screen.
+func cellsFor(p *kit.Painter, prim interface{ GetRect() (int, int, int, int) }, r image.Rectangle) kitCells {
+	return kitCells{p: p, off: screenOffset(prim, r)}
+}
+
+func (c kitCells) SetContent(x, y int, r rune, _ []rune, st tcell.Style) {
+	c.p.Put(x-c.off.X, y-c.off.Y, r, kitStyle(st))
+}
+
+func (c kitCells) GetContent(x, y int) (rune, []rune, tcell.Style, int) {
+	cell := c.p.At(x-c.off.X, y-c.off.Y)
+	return cell.R, nil, cellStyle(&cell), 1
 }

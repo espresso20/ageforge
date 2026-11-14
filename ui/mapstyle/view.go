@@ -237,7 +237,7 @@ func (v *view) blit(cv *Canvas, x0, y0 int, g *mapgen.Grid) {
 // Blit draws a grid, as the screen layer would, onto a screen inside r. The
 // lab pages use it to show the engine's pictures in a theme without a map
 // panel round them.
-func Blit(scr tcell.Screen, r Rect, g *mapgen.Grid, tier mapmodel.GlyphTier) {
+func Blit(scr Cells, r Rect, g *mapgen.Grid, tier mapmodel.GlyphTier) {
 	v := &view{}
 	v.blit(NewCanvas(scr, r, tier, tcell.StyleDefault), 0, 0, g)
 }
