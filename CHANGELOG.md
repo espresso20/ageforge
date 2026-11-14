@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the game's dialogs take the mouse: a click presses a button on a confirmation (deleting a save, wiping an account's saves, the save choice), a notice, or the update check. Keys work as before: Tab and the arrows move between buttons, Enter presses, Esc cancels.
 - In the window, the People, Advance and Expeditions panels take the mouse: on People a click switches tabs or picks a card, a work area or a building; on Advance a click picks a pillar (advancing stays on `Enter`); on Expeditions a click on a pin or a party picks it, a double click asks to send an offer, and a click outside the question takes it back. The wheel moves the pick on all three.
 - In the window, the Research and Badges panels take the mouse: a click selects a tech or a badge, a double click opens it, and the wheel scrolls.
 - In the window, buttons and lists take the mouse: a click presses a button or selects a row, and a click in a text field puts the cursor there. This covers the Load Game browser, the Accounts panel, the theme picker, the name, rename, import and wipe prompts, the dev unlock box, and the catastrophe, ancient memory and icons windows.
@@ -50,6 +51,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Inside: the whole dashboard is one picture painted by the UI kit (its body, the left column, the map dock, the panels and the Ledger), and the game's dialogs are the kit's too. Only the map and the mini map still draw themselves the old way.
 - Inside: every layout box in the game (the dashboard's frame, each popup, each menu page) is now laid out and painted by the UI kit as one picture a screen, where each box used to paint itself through the terminal library. Nothing looks or plays differently.
 - Alt held with a letter is no longer read as that letter by the panels and pages that take letter keys (Alt+Q does not close a panel). Inside, every screen now reads keys in the UI kit's own form, one more step off the terminal library.
 - Internal: the Ledger is drawn by the UI kit.

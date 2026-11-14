@@ -388,7 +388,7 @@ func (b *loadGameBrowser) doDelete() {
 	buttons := []string{vibe.Line("ui.load_game.doDelete.02", "Cancel"), "Delete"}
 	// Transient confirm modal (rebuilt per delete): construction-read the danger
 	// background from the Negative role so it tints with the theme.
-	styleDangerModal(showButtonModal(b.pages, "load_game_delete", text, buttons, func(button int, _ string) {
+	styleDangerModal(showButtonModal(b.app, b.pages, "load_game_delete", text, buttons, func(button int, _ string) {
 		b.app.SetFocus(b.list)
 		if button != 1 { // "Delete" is the second button; Cancel and Esc (-1) keep the save
 			return

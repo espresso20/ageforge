@@ -15,7 +15,7 @@ import (
 const updateModalPage = "update_modal"
 
 func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion string) {
-	modal := tview.NewModal().SetText(vibe.Line("ui.menu_update.showUpdateCheck.01", "Checking for updates..."))
+	modal := newNativeDialog(app).SetText(vibe.Line("ui.menu_update.showUpdateCheck.01", "Checking for updates..."))
 	pages.AddPage(updateModalPage, modal, true, true)
 
 	go func() {
@@ -36,7 +36,7 @@ func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion 
 }
 
 func showUpdateMsg(app *tview.Application, pages *tview.Pages, msg string) {
-	showButtonModal(pages, updateModalPage, msg, []string{txtOK.String()}, func(int, string) {})
+	showButtonModal(app, pages, updateModalPage, msg, []string{txtOK.String()}, func(int, string) {})
 }
 
 func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {
@@ -45,7 +45,7 @@ func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.U
 		result.LatestVersion, result.CurrentVersion,
 	)
 	buttons := []string{vibe.Line("ui.menu_update.showUpdateConfirm.02", "Update now"), vibe.Line("ui.menu_update.showUpdateConfirm.03", "Later")}
-	showButtonModal(pages, updateModalPage, msg, buttons, func(button int, _ string) {
+	showButtonModal(app, pages, updateModalPage, msg, buttons, func(button int, _ string) {
 		if button == 0 { // "Update now"; Later and Esc (-1) do not
 			showUpdateInstall(app, pages, result)
 		}
@@ -53,7 +53,7 @@ func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.U
 }
 
 func showUpdateInstall(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {
-	modal := tview.NewModal().
+	modal := newNativeDialog(app).
 		SetText(vibe.Sprintf("ui.menu_update.showUpdateInstall.01", "Downloading %s...\n\n%s", result.LatestVersion, result.BinaryName))
 	pages.AddPage(updateModalPage, modal, true, true)
 

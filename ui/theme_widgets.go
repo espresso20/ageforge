@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 )
@@ -43,7 +42,7 @@ func onFill(fill theme.Role) tcell.Color {
 // styleDangerModal turns a tview.Modal into a solid danger panel: Negative fill,
 // OnNegative text. Buttons keep tview's defaults (Selection fill / Text), which
 // the contrast test guarantees read on every theme.
-func styleDangerModal(m *tview.Modal) *tview.Modal {
+func styleDangerModal(m *nativeDialog) *nativeDialog {
 	m.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	m.SetTextColor(theme.Color(theme.RoleOnNegative))
 	return m

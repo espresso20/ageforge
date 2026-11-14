@@ -108,7 +108,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	out["theme_picker"] = draw()
 	pages.RemovePage(themePickerPage)
 
-	showWipeSavesConfirmation(pages, "Test Account", func() {}, func() {})
+	showWipeSavesConfirmation(d.app, pages, "Test Account", func() {}, func() {})
 	out["danger_modal"] = draw()
 	pages.RemovePage(accountsSavesConfirm)
 
