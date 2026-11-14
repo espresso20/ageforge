@@ -118,6 +118,13 @@ func reportLayoutFor(w, h int) expLayout {
 // expKey is the identity of an offer or of the mission sent from it.
 func expKey(title string, expiry int) string { return fmt.Sprintf("%s|%d", title, expiry) }
 
+// What a click on the panel can pick.
+const (
+	hitOffer   = iota // an offer's pin on the Ready Room's map
+	hitParty          // a party out, on the map or in the list
+	hitConfirm        // the question before a party is sent
+)
+
 // expPinItem is one pin on the map: an offer on the board, or a mission
 // out (which stands at the place its offer did).
 type expPinItem struct {
@@ -454,6 +461,9 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 			g.set(p.x, p.y, '@', kind)
 		}
 		drawChip(g, abs(a.at), '◆', chipKind(toneGoal, lit && bright))
+		if v.report {
+			g.hit(hitParty, i, ox+a.at.x-1, oy+a.at.y, 3, 1)
+		}
 	}
 	if !v.report && hi >= 0 && hi < len(sc.offers) && sc.offers[hi].placed {
 		route := routeCells(t, sc.town, sc.offers[hi].at, pinHash(sc.offers[hi].offer.Name, sc.offers[hi].offer.ExpiresTick), terrainSeed(state.Seed, state.Age))
@@ -470,6 +480,7 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 				continue
 			}
 			drawChip(g, abs(o.at), o.glyph(), chipKind(o.tone(), i == hi && bright))
+			g.hit(hitOffer, i, ox+o.at.x-1, oy+o.at.y, 3, 1)
 		}
 	}
 	drawPinNames(g, sc, v, hi, ox, oy)
@@ -873,6 +884,7 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 	h := 10
 	x, y := (g.w-w)/2, max(1, (g.h-h)/2)
 	g.fill(x, y, w, h)
+	g.hit(hitConfirm, 0, x, y, w, h)
 	label := o.Label
 	if label == "" {
 		label = "party"
@@ -996,6 +1008,7 @@ func drawOutCard(g *xgrid, state game.GameState, l expLayout, sc *expScene, hi i
 				head, kind = "▸ ", xSel
 			}
 			g.put(x+1, row, fmt.Sprintf("%-*s", cw, fitText(head+goingTo(a.Label, a.Place), cw)), kind)
+			g.hit(hitParty, i, x+1, row, cw, 3)
 			progress := 0.0
 			if a.TotalTicks > 0 {
 				progress = 1 - float64(a.TicksLeft)/float64(a.TotalTicks)

@@ -107,6 +107,7 @@ func drawOutList(g *xgrid, state game.GameState, x, y, w, h int, sc *expScene, h
 		room := max(1, cw-1-runeLen(bar)-1-runeLen(left))
 		g.put(x+1, row, fmt.Sprintf("%-*s", room, fitText(head+goingTo(a.Label, a.Place), room)), kind)
 		g.segsFit(x+1+room+1, row, cw-room-1, xseg{" " + bar, xGood}, xseg{left, xText})
+		g.hit(hitParty, i, x+1, row, cw, 1)
 	}
 }
 
