@@ -43,6 +43,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Internal: a UI kit for the window (`window/kit`). Its widgets lay out on the grid of text cells and paint in theme roles, with the game's color tags, keyboard focus and the mouse. No screen uses it yet, so nothing in play changes.
 - AgeForge opens in its own window, with fullscreen, adjustable text size and a choice of a pixel or a clean font. Closing the window saves the game. `F11`, `Alt`+`Enter` or `Cmd`+`Ctrl`+`F` toggle fullscreen, `Ctrl`/`Cmd` with `=`, `-` and `0` change the text size, and `Cmd`/`Ctrl`+`V` pastes. Every symbol the game prints now draws (Japanese, emoji and the rest come from small embedded fonts). `--terminal` still runs it in the terminal for now.
 - Zoom out on the Galactic map to the Orion Arm's nebulae and star clusters, then to the void between galaxies with the Milky Way, Andromeda, Triangulum and the Magellanic Clouds.
 - The Galactic map opens on Sol's neighborhood: real nearby stars at their true distances, your colonies lit and joined by warp lanes; zoom in for Sol.
