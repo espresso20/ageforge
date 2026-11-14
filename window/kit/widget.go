@@ -72,6 +72,9 @@ const (
 	KeyF10
 	KeyF11
 	KeyF12
+	// KeyOther is a key the kit has no name for. A screen that moves on at
+	// any key still hears it.
+	KeyOther
 )
 
 // Mod is the modifier keys held.

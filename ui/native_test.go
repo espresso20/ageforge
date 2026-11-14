@@ -28,6 +28,9 @@ func TestKitKeyNamesTcellsKeys(t *testing.T) {
 		// Ctrl with a letter, both ways tcell may hand it over.
 		{tcell.NewEventKey(tcell.KeyCtrlR, 0, tcell.ModCtrl), kit.Key{Code: kit.KeyRune, Rune: 'r', Mod: kit.ModCtrl}},
 		{tcell.NewEventKey(tcell.KeyRune, 'r', tcell.ModAlt), kit.Key{Code: kit.KeyRune, Rune: 'r', Mod: kit.ModAlt}},
+		// A key with no name of its own still arrives, for the screens that
+		// move on at any key.
+		{tcell.NewEventKey(tcell.KeyF20, 0, tcell.ModNone), kit.Key{Code: kit.KeyOther}},
 	} {
 		got, ok := kitKey(c.ev)
 		if !ok || got != c.want {
