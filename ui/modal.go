@@ -71,10 +71,15 @@ func floatingModal(inner tview.Primitive, width, height int) *nativeFlex {
 	return centerModal(inner, width, height, false)
 }
 
-// keyCapturer is a primitive whose keys can be taken before it sees them.
+// keyCapturer is a box tview owns, whose keys can be taken before it sees
+// them.
 type keyCapturer interface {
 	SetInputCapture(capture func(*kit.Key) *kit.Key) *nativeHost
 }
+
+// captureKeys sets what sees box's keys first, for a capture that reads the
+// kit's keys.
+func captureKeys(box keyCapturer, fn func(*kit.Key) *kit.Key) { box.SetInputCapture(tcellCapture(fn)) }
 
 // takeKeys makes each key in keys run its function on the window and be
 // taken; any other key goes on to whatever has the focus.

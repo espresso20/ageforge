@@ -196,6 +196,31 @@ func newKey(code kit.KeyCode, r rune, mod kit.Mod) *kit.Key {
 	return &kit.Key{Code: code, Rune: r, Mod: mod}
 }
 
+// tcellCapture is a capture that reads the kit's keys, as tview wants one:
+// for the boxes tview still owns.
+func tcellCapture(fn func(*kit.Key) *kit.Key) func(*tcell.EventKey) *tcell.EventKey {
+	if fn == nil {
+		return nil
+	}
+	return func(ev *tcell.EventKey) *tcell.EventKey {
+		k := kitKey(ev)
+		in := k
+		switch out := fn(&k); {
+		case out == nil:
+			return nil
+		case *out == in:
+			return ev
+		default:
+			return tcellKey(*out)
+		}
+	}
+}
+
+// newKey is a key press, for the code that makes one up.
+func newKey(code kit.KeyCode, r rune, mod kit.Mod) *kit.Key {
+	return &kit.Key{Code: code, Rune: r, Mod: mod}
+}
+
 // cellAttrs pairs the kit's attributes with tcell's. Underline is not here:
 // tcell keeps it apart from the others.
 var cellAttrs = [...]struct {

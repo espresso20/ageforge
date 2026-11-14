@@ -446,7 +446,7 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 		AddItem(hint, 1, 0, false)
 	framed(inner, vibe.Line("ui.icons.newIconsWindow.02", " Icons check "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 	w.root = floatingModal(inner, iconsWindowWidth, iconsWindowHeight)
-	w.root.SetInputCapture(d.iconsKey)
+	captureKeys(w.root, d.iconsKey)
 	return w
 }
 
