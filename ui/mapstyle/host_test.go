@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/espresso20/ageforge/world"
 )
 
@@ -63,13 +64,13 @@ func TestMapKeysBecomeCommands(t *testing.T) {
 	h := &fakeHost{}
 	v, f := hostFrame(t, "galactic_age", h)
 	drawFrame(v, f, 120, 40, false).Fini()
-	for _, ev := range []*tcell.EventKey{
-		tcell.NewEventKey(tcell.KeyLeft, 0, tcell.ModShift),
-		tcell.NewEventKey(tcell.KeyPgDn, 0, 0),
-		tcell.NewEventKey(tcell.KeyHome, 0, 0),
+	for _, ev := range []kit.Key{
+		kit.Key{Code: kit.KeyLeft, Rune: 0, Mod: kit.ModShift},
+		kit.Key{Code: kit.KeyPgDn, Rune: 0, Mod: 0},
+		kit.Key{Code: kit.KeyHome, Rune: 0, Mod: 0},
 	} {
 		if !v.HandleKey(ev, f) {
-			t.Errorf("key %v not handled", ev.Key())
+			t.Errorf("key %v not handled", ev.Code)
 		}
 	}
 	want := []MapCmd{{Op: MapPanLeft, Fast: true}, {Op: MapZoomIn}, {Op: MapHome}}

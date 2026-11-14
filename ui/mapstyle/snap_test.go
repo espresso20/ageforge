@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 var (
@@ -22,7 +23,7 @@ func spaceView(t *testing.T, age string) (*view, Frame) {
 	return New().(*view), Frame{Model: m}
 }
 
-func press(v *view, f Frame, k tcell.Key) { v.HandleKey(tcell.NewEventKey(k, 0, tcell.ModNone), f) }
+func press(v *view, f Frame, k kit.KeyCode) { v.HandleKey(kit.Key{Code: k, Rune: 0, Mod: 0}, f) }
 
 func shot(v *view, f Frame) tcell.SimulationScreen { return drawFrame(v, f, 140, 45, false) }
 
@@ -56,7 +57,7 @@ func TestSpaceArrowsJumpBetweenBodies(t *testing.T) {
 	}
 	g, x, _, _ := v.shownCell(v.scene(f))
 	_ = g
-	press(v, f, tcell.KeyRight)
+	press(v, f, kit.KeyRight)
 	shot(v, f).Fini()
 	g2, x2, _, _ := v.shownCell(v.scene(f))
 	_ = g2
@@ -73,11 +74,11 @@ func TestSpaceArrowIntoNothingStays(t *testing.T) {
 	onBody(t, v, f, zInner, sunThing)
 	shot(v, f).Fini()
 	for i := 0; i < 20; i++ { // run off the last body to the right
-		press(v, f, tcell.KeyRight)
+		press(v, f, kit.KeyRight)
 		shot(v, f).Fini()
 	}
 	end, th := v.cur, bodyUnder(v, f)
-	press(v, f, tcell.KeyRight)
+	press(v, f, kit.KeyRight)
 	shot(v, f).Fini()
 	if v.cur != end || bodyUnder(v, f) != th {
 		t.Errorf("right with nothing that way moved the cursor from %v to %v", end, v.cur)
@@ -147,7 +148,7 @@ func hasThing(g *mapgen.Grid, key string) bool {
 func TestZoomOnMarsDrawsMarsWithNoStation(t *testing.T) {
 	v, f := spaceView(t, "interstellar_age")
 	onBody(t, v, f, zInner, marsThing)
-	press(v, f, tcell.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
 	mars := shot(v, f)
 	defer mars.Fini()
 	if v.shownZoom() != zCloseUp {
@@ -157,7 +158,7 @@ func TestZoomOnMarsDrawsMarsWithNoStation(t *testing.T) {
 		t.Error("Mars has a station")
 	}
 	onBody(t, v, f, zInner, earthThing)
-	press(v, f, tcell.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
 	earth := shot(v, f)
 	defer earth.Fini()
 	if !hasThing(v.scene(f).Grid, "home") {
@@ -168,8 +169,8 @@ func TestZoomOnMarsDrawsMarsWithNoStation(t *testing.T) {
 	}
 	// a second zoom in on another planet goes nowhere
 	onBody(t, v, f, zInner, marsThing)
-	press(v, f, tcell.KeyPgDn)
-	press(v, f, tcell.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
 	if v.shownZoom() != zCloseUp {
 		t.Errorf("zoom %d after diving past Mars, want the close-up", v.shownZoom())
 	}
@@ -178,9 +179,9 @@ func TestZoomOnMarsDrawsMarsWithNoStation(t *testing.T) {
 func TestZoomOutKeepsTheCursorOnThePlanet(t *testing.T) {
 	v, f := spaceView(t, "interstellar_age")
 	onBody(t, v, f, zInner, marsThing)
-	press(v, f, tcell.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
 	shot(v, f).Fini()
-	press(v, f, tcell.KeyPgUp)
+	press(v, f, kit.KeyPgUp)
 	shot(v, f).Fini()
 	if got := bodyUnder(v, f); got != marsThing {
 		t.Errorf("back at inner the cursor is on %v, want Mars", got)
@@ -190,7 +191,7 @@ func TestZoomOutKeepsTheCursorOnThePlanet(t *testing.T) {
 func TestSunRefusesTheDive(t *testing.T) {
 	v, f := spaceView(t, "interstellar_age")
 	onBody(t, v, f, zInner, sunThing)
-	press(v, f, tcell.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
 	shot(v, f).Fini()
 	if v.shownZoom() != zInner {
 		t.Errorf("zoom %d on the sun, want it to stay at inner", v.shownZoom())
@@ -201,7 +202,7 @@ func TestSpaceFrameIsTheSameForTheSameSeed(t *testing.T) {
 	text := func() string {
 		v, f := spaceView(t, "interstellar_age")
 		onBody(t, v, f, zInner, marsThing)
-		press(v, f, tcell.KeyPgDn)
+		press(v, f, kit.KeyPgDn)
 		scr := shot(v, f)
 		defer scr.Fini()
 		return capture.Text(scr)
@@ -218,7 +219,7 @@ func TestLandArrowsStillStepOneCell(t *testing.T) {
 	v.zoomTo(v.scene(f), zCloseUp)
 	shot(v, f).Fini()
 	from := v.cur
-	press(v, f, tcell.KeyRight)
+	press(v, f, kit.KeyRight)
 	if v.cur.X != from.X+1 || v.cur.Y != from.Y {
 		t.Errorf("right moved %v to %v, want one cell", from, v.cur)
 	}
@@ -267,7 +268,7 @@ func TestInterstellarOpensOnThePort(t *testing.T) {
 	if in, _ := v.Inspect(f); in.Title == "" || in.Title == f.Model.TownName {
 		t.Errorf("a port module inspects as %+v", in)
 	}
-	press(v, f, tcell.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
 	if v.shownZoom() != zCloseUp {
 		t.Errorf("PgDn at the port gave zoom %d", v.shownZoom())
 	}
@@ -277,14 +278,14 @@ func TestInterstellarOpensOnThePort(t *testing.T) {
 func TestInterstellarLadder(t *testing.T) {
 	v, f := spaceView(t, "interstellar_age")
 	for _, want := range []int{zInner, zOverview, zCosmos, zCosmos} {
-		press(v, f, tcell.KeyPgUp)
+		press(v, f, kit.KeyPgUp)
 		shot(v, f).Fini()
 		if v.shownZoom() != want {
 			t.Fatalf("PgUp gave zoom %d, want %d", v.shownZoom(), want)
 		}
 	}
 	for _, want := range []int{zOverview, zInner, zCloseUp, zCloseUp} {
-		press(v, f, tcell.KeyPgDn)
+		press(v, f, kit.KeyPgDn)
 		shot(v, f).Fini()
 		if v.shownZoom() != want {
 			t.Fatalf("PgDn gave zoom %d, want %d", v.shownZoom(), want)
@@ -338,7 +339,7 @@ func TestCosmosStarsAreNotPlaces(t *testing.T) {
 			break
 		}
 	}
-	press(v, f, tcell.KeyPgDn)
+	press(v, f, kit.KeyPgDn)
 	drawFrame(v, f, 140, 45, false).Fini()
 	if v.shownZoom() != zOverview || v.planet != 0 {
 		t.Errorf("zoom %d planet %d after zooming in on the sky", v.shownZoom(), v.planet)

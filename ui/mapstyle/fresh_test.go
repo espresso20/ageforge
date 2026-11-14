@@ -4,12 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // lit counts the cells of a view's scene that wear the tint of the news.
@@ -83,11 +82,11 @@ func TestDistrictZoom(t *testing.T) {
 		defer scr.Fini()
 		return capture.Text(scr)
 	}
-	press := func(k tcell.Key) { v.HandleKey(tcell.NewEventKey(k, 0, tcell.ModNone), f) }
+	press := func(k kit.KeyCode) { v.HandleKey(kit.Key{Code: k, Rune: 0, Mod: 0}, f) }
 	if !strings.Contains(text(), "SETTLEMENT") {
 		t.Fatal("a big panel does not open on the close-up")
 	}
-	press(tcell.KeyPgDn)
+	press(kit.KeyPgDn)
 	first := text()
 	label := func(s string) string {
 		return strings.TrimSpace(s[strings.Index(s, "DISTRICT") : strings.Index(s, "DISTRICT")+40])
@@ -102,7 +101,7 @@ func TestDistrictZoom(t *testing.T) {
 	}
 	seen := map[string]bool{v.district: true}
 	for i := 0; i < len(sc.Districts); i++ {
-		press(tcell.KeyTab)
+		press(kit.KeyTab)
 		seen[v.district] = true
 		if in, _ := v.Inspect(f); !strings.Contains(in.Title, "×") {
 			t.Errorf("Tab left the cursor on %+v", in)
@@ -112,16 +111,16 @@ func TestDistrictZoom(t *testing.T) {
 		t.Errorf("Tab went to %d of %d districts", len(seen), len(sc.Districts))
 	}
 	was := v.district
-	press(tcell.KeyBacktab)
+	press(kit.KeyBacktab)
 	if v.district == was || label(text()) == "" {
 		t.Error("Shift-Tab stayed in the same district")
 	}
-	press(tcell.KeyPgUp)
+	press(kit.KeyPgUp)
 	if v.shownZoom() != zCloseUp || !strings.Contains(text(), "SETTLEMENT") {
 		t.Error("PgUp did not step back to the close-up")
 	}
-	press(tcell.KeyPgDn)
-	press(tcell.KeyPgDn)
+	press(kit.KeyPgDn)
+	press(kit.KeyPgDn)
 	if v.shownZoom() != zDistrict {
 		t.Error("PgDn at the district zoom left it")
 	}
@@ -142,7 +141,7 @@ func TestDistrictZoomNeedsATown(t *testing.T) {
 	v := New().(*view)
 	f := Frame{Model: m}
 	drawFrame(v, f, 120, 36, false).Fini()
-	v.HandleKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), f)
+	v.HandleKey(kit.Key{Code: kit.KeyPgDn, Rune: 0, Mod: 0}, f)
 	if v.shownZoom() != zCloseUp {
 		t.Errorf("PgDn with no town framed a district: zoom %d", v.shownZoom())
 	}

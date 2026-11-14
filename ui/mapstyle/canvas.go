@@ -9,12 +9,20 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 )
 
+// Cells is what the map is drawn on: a grid of cells that can be written and
+// read back. A tcell.Screen is one; so is the UI kit's buffer, through the
+// ui package's adapter.
+type Cells interface {
+	SetContent(x, y int, primary rune, combining []rune, style tcell.Style)
+	GetContent(x, y int) (primary rune, combining []rune, style tcell.Style, width int)
+}
+
 // Canvas writes into one rectangle of a screen: it clips to the rectangle,
 // folds every rune to the frame's glyph tier and never writes a wide rune
 // (a double-width cell would shift the rest of the row). Coordinates are
 // relative to the rectangle.
 type Canvas struct {
-	Scr  tcell.Screen
+	Scr  Cells
 	R    Rect
 	Tier mapmodel.GlyphTier
 
@@ -22,7 +30,7 @@ type Canvas struct {
 }
 
 // NewCanvas clears r to st and returns a canvas on it.
-func NewCanvas(scr tcell.Screen, r Rect, tier mapmodel.GlyphTier, st tcell.Style) *Canvas {
+func NewCanvas(scr Cells, r Rect, tier mapmodel.GlyphTier, st tcell.Style) *Canvas {
 	c := &Canvas{Scr: scr, R: r, Tier: tier}
 	c.Fill(0, 0, r.W, r.H, ' ', st)
 	return c

@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -58,7 +59,7 @@ type themePicker struct {
 	root    *nativeFlex
 	list    *nativeList
 	detail  *nativeText
-	preview *tview.Box
+	preview *nativeCanvas
 
 	rows      []pickerRow   // 1:1 with list items: group headings + themes
 	themes    []theme.Theme // theme.All() order (kept for tests / lookups)
@@ -164,10 +165,8 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 	p.detail.SetBackgroundColor(theme.Ref(theme.RoleSurface))
 
 	// ── Sample preview (candidate's own colors) ─────────────────────────────
-	p.preview = tview.NewBox()
-	p.preview.SetDrawFunc(func(screen tcell.Screen, x, y, w, h int) (int, int, int, int) {
-		drawThemeSample(screen, x, y, w, h, p.shown)
-		return x, y, w, h
+	p.preview = newNativeCanvas(func(scr mapstyle.Cells, x, y, w, h int) {
+		drawThemeSample(scr, x, y, w, h, p.shown)
 	})
 
 	// ── Footer ───────────────────────────────────────────────────────────────
@@ -476,7 +475,7 @@ func themeFooterBar() string {
 // tiers, ± deltas, a selected row, a keycap and a danger chip. Every color is the
 // candidate's literal RGB (never a Ref), so the sample is correct regardless of
 // which theme is active.
-func drawThemeSample(screen tcell.Screen, x, y, w, h int, th theme.Theme) {
+func drawThemeSample(screen mapstyle.Cells, x, y, w, h int, th theme.Theme) {
 	if w <= 0 || h <= 0 || th.Key == "" {
 		return
 	}

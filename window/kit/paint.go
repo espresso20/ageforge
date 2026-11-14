@@ -28,6 +28,10 @@ func (p *Painter) Clip(r image.Rectangle) *Painter {
 // Bounds is the rectangle the painter may touch.
 func (p *Painter) Bounds() image.Rectangle { return p.clip }
 
+// At is the cell at x, y as it has been painted so far; a blank outside the
+// buffer. It reads past the clip: a widget may look at what is beside it.
+func (p *Painter) At(x, y int) Cell { return p.buf.At(x, y) }
+
 func (p *Painter) cell(x, y int) *Cell {
 	if !image.Pt(x, y).In(p.clip) {
 		return nil

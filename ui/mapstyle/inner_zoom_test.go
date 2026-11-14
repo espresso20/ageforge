@@ -5,10 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // TestZoomLadder: PgUp and PgDn step through COSMOS, OVERVIEW, INNER,
@@ -30,25 +29,25 @@ func TestZoomLadder(t *testing.T) {
 		m := modelFor(t, fixture.Options{Age: c.age, Seed: 7})
 		v := New().(*view)
 		f := Frame{Model: m}
-		press := func(k tcell.Key) { v.HandleKey(tcell.NewEventKey(k, 0, tcell.ModNone), f) }
+		press := func(k kit.KeyCode) { v.HandleKey(kit.Key{Code: k, Rune: 0, Mod: 0}, f) }
 		for i := 0; i < 8; i++ { // all the way out
-			press(tcell.KeyPgUp)
+			press(kit.KeyPgUp)
 		}
 		if v.shownZoom() != c.want[0] {
 			t.Fatalf("%s: far out is zoom %d, want %d", c.age, v.shownZoom(), c.want[0])
 		}
 		for _, w := range c.want[1:] {
-			press(tcell.KeyPgDn)
+			press(kit.KeyPgDn)
 			if v.shownZoom() != w {
 				t.Fatalf("%s: PgDn gave zoom %d, want %d", c.age, v.shownZoom(), w)
 			}
 		}
-		press(tcell.KeyPgDn)
+		press(kit.KeyPgDn)
 		if end := c.want[len(c.want)-1]; v.shownZoom() != end {
 			t.Errorf("%s: PgDn past the deepest zoom left zoom %d", c.age, v.shownZoom())
 		}
 		for i := len(c.want) - 2; i >= 0; i-- {
-			press(tcell.KeyPgUp)
+			press(kit.KeyPgUp)
 			if v.shownZoom() != c.want[i] {
 				t.Fatalf("%s: PgUp gave zoom %d, want %d", c.age, v.shownZoom(), c.want[i])
 			}
@@ -83,8 +82,8 @@ func TestInnerZoomDraws(t *testing.T) {
 			t.Logf("OVERVIEW %v\n%s\nINNER %v\n%s", size, over, size, inner)
 		}
 		at, moved := v.cur, false
-		for _, k := range []tcell.Key{tcell.KeyRight, tcell.KeyLeft, tcell.KeyDown, tcell.KeyUp} {
-			v.HandleKey(tcell.NewEventKey(k, 0, tcell.ModNone), f)
+		for _, k := range []kit.KeyCode{kit.KeyRight, kit.KeyLeft, kit.KeyDown, kit.KeyUp} {
+			v.HandleKey(kit.Key{Code: k, Rune: 0, Mod: 0}, f)
 			moved = moved || v.cur != at // the arrows jump to the next body that way
 		}
 		if !moved {

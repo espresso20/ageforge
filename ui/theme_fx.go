@@ -1,9 +1,13 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // theme_fx.go draws a theme's ambient effect: a little motion in the cells
@@ -23,17 +27,28 @@ import (
 // theme's effect.
 type fxRoot struct {
 	*nativeFlex
-	// after draws over the layout once it is drawn.
-	after func(scr tcell.Screen, x, y, w, h int)
+	// after draws over the layout once it is painted.
+	after func(scr mapstyle.Cells, x, y, w, h int)
 }
 
-func (r *fxRoot) Draw(scr tcell.Screen) {
-	r.nativeFlex.Draw(scr)
+// newFxRoot is layout with after drawn over it. The layout's host shows the
+// root from here on, so the effect is part of what it paints.
+func newFxRoot(layout *nativeFlex, after func(scr mapstyle.Cells, x, y, w, h int)) *fxRoot {
+	r := &fxRoot{nativeFlex: layout, after: after}
+	r.showWidget(r)
+	return r
+}
+
+func (r *fxRoot) Paint(p *kit.Painter) {
+	r.nativeFlex.Paint(p)
 	if r.after != nil {
 		x, y, w, h := r.GetRect()
-		r.after(scr, x, y, w, h)
+		r.after(cellsFor(p, r, r.Bounds()), x, y, w, h)
 	}
 }
+
+// covered: the effect may fall in any cell, so the whole root is copied.
+func (r *fxRoot) covered() []image.Rectangle { return []image.Rectangle{r.Bounds()} }
 
 // fxMargin is how many blank cells an effect keeps between itself and
 // anything drawn, on either side.
@@ -41,7 +56,7 @@ const fxMargin = 3
 
 // fxEmpty reports whether the cells of row y from x-fxMargin to x+fxMargin
 // are all blank on bg: room for an effect at (x, y).
-func fxEmpty(scr tcell.Screen, x, y, x0, x1 int, bg tcell.Color) bool {
+func fxEmpty(scr mapstyle.Cells, x, y, x0, x1 int, bg tcell.Color) bool {
 	for cx := x - fxMargin; cx <= x+fxMargin; cx++ {
 		if cx < x0 || cx >= x1 {
 			continue
@@ -56,7 +71,7 @@ func fxEmpty(scr tcell.Screen, x, y, x0, x1 int, bg tcell.Color) bool {
 
 // drawThemeEffect draws effect into the empty cells of the box at (x, y),
 // w by h, at frame n. plain draws it with the plain tier's glyphs.
-func drawThemeEffect(scr tcell.Screen, x, y, w, h int, effect string, n int, plain bool) {
+func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, plain bool) {
 	if w <= 0 || h <= 0 {
 		return // a window with no room: nothing to draw into
 	}

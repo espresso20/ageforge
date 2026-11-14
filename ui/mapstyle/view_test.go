@@ -19,6 +19,7 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 var testBuilder = mapmodel.NewBuilder(nil)
@@ -318,7 +319,7 @@ func TestTabVisitsEveryTarget(t *testing.T) {
 			}
 			seen := map[mapgen.Pt]bool{}
 			for range targets {
-				v.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), f)
+				v.HandleKey(kit.Key{Code: kit.KeyTab, Rune: 0, Mod: 0}, f)
 				seen[v.cur] = true
 				drawOffset(v, m, 160, 48, 0, mapmodel.TierUnicode, false).Fini()
 				in, ok := v.Inspect(f)
@@ -350,7 +351,7 @@ func TestInspectCommands(t *testing.T) {
 	v := New().(*view)
 	f := Frame{Model: m}
 	drawOffset(v, m, 160, 48, 0, mapmodel.TierUnicode, false).Fini()
-	v.HandleKey(tcell.NewEventKey(tcell.KeyHome, 0, tcell.ModNone), f)
+	v.HandleKey(kit.Key{Code: kit.KeyHome, Rune: 0, Mod: 0}, f)
 	drawOffset(v, m, 160, 48, 0, mapmodel.TierUnicode, false).Fini()
 	if in, ok := v.Inspect(f); !ok || in.Command != m.SquareCommand() {
 		t.Errorf("on the square: command %q, want %q", in.Command, m.SquareCommand())
@@ -376,27 +377,27 @@ func TestKeys(t *testing.T) {
 	m := modelFor(t, fixture.Options{Age: "medieval_age", Seed: 1})
 	v := New().(*view)
 	f := Frame{Model: m}
-	press := func(k tcell.Key, r rune, mod tcell.ModMask) bool {
-		return v.HandleKey(tcell.NewEventKey(k, r, mod), f)
+	press := func(k kit.KeyCode, r rune, mod kit.Mod) bool {
+		return v.HandleKey(kit.Key{Code: k, Rune: r, Mod: mod}, f)
 	}
 	centre := v.scene(f).Centre
-	if !press(tcell.KeyPgUp, 0, 0) || !v.zoomSet || v.zoom != zOverview {
+	if !press(kit.KeyPgUp, 0, 0) || !v.zoomSet || v.zoom != zOverview {
 		t.Errorf("PgUp: zoom %d, chosen %v", v.zoom, v.zoomSet)
 	}
-	if !press(tcell.KeyPgDn, 0, 0) || v.zoom != zCloseUp {
+	if !press(kit.KeyPgDn, 0, 0) || v.zoom != zCloseUp {
 		t.Errorf("PgDn: zoom %d", v.zoom)
 	}
-	press(tcell.KeyRight, 0, tcell.ModShift)
-	press(tcell.KeyDown, 0, 0)
+	press(kit.KeyRight, 0, kit.ModShift)
+	press(kit.KeyDown, 0, 0)
 	if v.cur.X != centre.X+8 || v.cur.Y != centre.Y+1 {
 		t.Errorf("the cursor is at %v, want %d,%d", v.cur, centre.X+8, centre.Y+1)
 	}
-	press(tcell.KeyHome, 0, 0)
+	press(kit.KeyHome, 0, 0)
 	if v.cur != centre {
 		t.Errorf("Home did not centre: %v", v.cur)
 	}
 	for _, r := range "hjklHJKLzxcfn?sgq+-=_" {
-		if press(tcell.KeyRune, r, 0) {
+		if press(kit.KeyRune, r, 0) {
 			t.Errorf("%q was used; letters belong to the prompt", r)
 		}
 	}
@@ -412,22 +413,22 @@ func TestCosmicZoomInSpaceAge(t *testing.T) {
 	m := modelFor(t, fixture.Options{Age: "interstellar_age", Seed: 42})
 	v := New().(*view)
 	f := Frame{Model: m}
-	press := func(k tcell.Key) bool {
-		return v.HandleKey(tcell.NewEventKey(k, 0, 0), f)
+	press := func(k kit.KeyCode) bool {
+		return v.HandleKey(kit.Key{Code: k, Rune: 0, Mod: 0}, f)
 	}
-	if !press(tcell.KeyPgUp) || v.zoom != zInner {
+	if !press(kit.KeyPgUp) || v.zoom != zInner {
 		t.Fatalf("first PgUp: got zoom %d, want %d (zInner)", v.zoom, zInner)
 	}
-	if !press(tcell.KeyPgUp) || v.zoom != zOverview {
+	if !press(kit.KeyPgUp) || v.zoom != zOverview {
 		t.Fatalf("second PgUp: got zoom %d, want %d (zOverview)", v.zoom, zOverview)
 	}
-	if !press(tcell.KeyPgUp) || v.zoom != zCosmos {
+	if !press(kit.KeyPgUp) || v.zoom != zCosmos {
 		t.Fatalf("third PgUp in space: got zoom %d, want %d (zCosmos)", v.zoom, zCosmos)
 	}
 	if got := v.zoomLabel(); got != "COSMOS" {
 		t.Errorf("zoomLabel: got %q, want %q", got, "COSMOS")
 	}
-	if !press(tcell.KeyPgDn) || v.zoom != zOverview {
+	if !press(kit.KeyPgDn) || v.zoom != zOverview {
 		t.Fatalf("PgDn from cosmos: got zoom %d, want %d (zOverview)", v.zoom, zOverview)
 	}
 }

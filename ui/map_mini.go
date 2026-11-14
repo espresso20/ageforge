@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -11,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // map_mini.go is the dashboard's mini map: the map's compact view in a
@@ -58,7 +60,8 @@ func miniHeight(w, h int) int {
 
 // miniMap is the mini map primitive (border included).
 type miniMap struct {
-	*tview.Box
+	*nativeHost
+	kit.Base
 	mv    *mapViews
 	view  mapstyle.Style
 	set   mapSettings
@@ -68,9 +71,10 @@ type miniMap struct {
 }
 
 func newMiniMap(mv *mapViews) *miniMap {
-	m := &miniMap{Box: tview.NewBox(), mv: mv, view: mapstyle.New(), now: time.Now}
+	m := &miniMap{mv: mv, view: mapstyle.New(), now: time.Now}
 	m.start = m.now()
 	m.set = defaultMapSettings()
+	m.nativeHost = newNativeHost(m)
 	return m
 }
 
@@ -110,12 +114,22 @@ func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 	cv.Text(1, 0, w-2, title, accent)
 }
 
-// Draw draws the border and the compact view inside it.
-func (m *miniMap) Draw(scr tcell.Screen) {
+func (m *miniMap) kitDrawn() {}
+
+func (m *miniMap) Layout(r image.Rectangle) { m.Place(r) }
+
+// Paint draws the border and the compact view inside it. The map still
+// writes tcell's cells, at the box's place on the screen: scr puts them on
+// the painter.
+func (m *miniMap) Paint(p *kit.Painter) {
+	if m.nativeHost == nil {
+		return
+	}
 	x, y, w, h := m.GetRect()
 	if w < 3 || h < 3 {
 		return
 	}
+	scr := cellsFor(p, m, m.Bounds())
 	cv := &mapstyle.Canvas{Scr: scr, R: mapstyle.Rect{X: x, Y: y, W: w, H: h}, Tier: m.set.Tier}
 	drawMapFrame(cv, w, h, vibe.Line("ui.map_mini.miniMap.Draw.01", " Map "))
 

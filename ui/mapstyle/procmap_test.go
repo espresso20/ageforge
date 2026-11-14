@@ -11,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 var cat = mapmodel.NewCatalog()
@@ -181,7 +182,7 @@ func TestCursorWalksTheTown(t *testing.T) {
 	f := Frame{Model: m}
 	draw(v, m, 120, 36, false, mapmodel.TierUnicode).Fini()
 	start, _ := v.Pointer()
-	tab := tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone)
+	tab := kit.Key{Code: kit.KeyTab, Rune: 0, Mod: 0}
 	var in Inspection
 	for i := 0; i < 60 && !strings.Contains(in.Title, "×"); i++ {
 		if !v.HandleKey(tab, f) {
@@ -199,11 +200,11 @@ func TestCursorWalksTheTown(t *testing.T) {
 		t.Fatal("Tab did not move the cursor")
 	}
 	before, _ := v.Pointer()
-	v.HandleKey(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModShift), f)
+	v.HandleKey(kit.Key{Code: kit.KeyRight, Rune: 0, Mod: kit.ModShift}, f)
 	if after, _ := v.Pointer(); after.X != before.X+8 {
 		t.Fatalf("Shift-Right moved from %v to %v", before, after)
 	}
-	v.HandleKey(tcell.NewEventKey(tcell.KeyHome, 0, tcell.ModNone), f)
+	v.HandleKey(kit.Key{Code: kit.KeyHome, Rune: 0, Mod: 0}, f)
 	sq, _ := v.Inspect(f)
 	if !strings.Contains(sq.Title, m.TownName) {
 		t.Fatalf("Home is on %q, not the square of %s", sq.Title, m.TownName)

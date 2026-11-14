@@ -456,14 +456,6 @@ func (a *arrival) Draw(scr tcell.Screen) {
 		return
 	}
 	a.nativeHost.Draw(scr)
-	// An epoch's own weather: the theme's ambient effect, in the cells the
-	// screen leaves empty, once the heavy blow has landed.
-	if x, y, w, h := a.GetRect(); w > 0 && h > 0 &&
-		a.view.motion && a.view.epoch && a.stage == arrCelebrating && a.sc.frame >= arrEraStrike {
-		if effect := theme.Active().Effect; effect != "" {
-			drawThemeEffect(scr, x, y, w, h, effect, a.sc.frame+arrivalFxLead, a.view.plain)
-		}
-	}
 	if a.view.motion {
 		a.startClock(a.om)
 	} else {
@@ -481,6 +473,14 @@ func (a *arrival) Paint(p *kit.Painter) {
 		return
 	}
 	a.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, a.pal, a.view.plain)
+	// An epoch's own weather: the theme's ambient effect, in the cells the
+	// screen leaves empty, once the heavy blow has landed.
+	if x, y, w, h := a.GetRect(); w > 0 && h > 0 &&
+		a.view.motion && a.view.epoch && a.stage == arrCelebrating && a.sc.frame >= arrEraStrike {
+		if effect := theme.Active().Effect; effect != "" {
+			drawThemeEffect(cellsFor(p, a, r), x, y, w, h, effect, a.sc.frame+arrivalFxLead, a.view.plain)
+		}
+	}
 }
 
 // frameGrid brings the scene to the clock's frame and draws the screen at

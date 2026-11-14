@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
@@ -310,8 +309,8 @@ func (s *alienStyle) Inspect(mapstyle.Frame) (mapstyle.Inspection, bool) {
 	}
 	return mapstyle.Inspection{Title: "Hut"}, true
 }
-func (s *alienStyle) SetOption(mapstyle.Option, bool)                {}
-func (s *alienStyle) HandleKey(*tcell.EventKey, mapstyle.Frame) bool { return true }
+func (s *alienStyle) SetOption(mapstyle.Option, bool)        {}
+func (s *alienStyle) HandleKey(kit.Key, mapstyle.Frame) bool { return true }
 
 // TestLookingAtAVisitorEarnsItsBadge: when the Map panel's cursor comes to
 // stand on the rare visitor the account is told, once each time, and the

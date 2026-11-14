@@ -1,30 +1,29 @@
 package mapstyle
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
-var keyMoves = map[tcell.Key][2]int{tcell.KeyLeft: {-1, 0}, tcell.KeyRight: {1, 0}, tcell.KeyUp: {0, -1}, tcell.KeyDown: {0, 1}}
+var keyMoves = map[kit.KeyCode][2]int{kit.KeyLeft: {-1, 0}, kit.KeyRight: {1, 0}, kit.KeyUp: {0, -1}, kit.KeyDown: {0, 1}}
 
 // HandleKey takes only keys that print nothing, so typing reaches the prompt:
 // the arrows move the cursor (Shift by 8), PgUp and PgDn zoom out and in
 // (the whole town, the close-up, a district; space scenes add the cosmos and the inner system, and the solar system has no district), Tab and Shift-Tab jump between
 // buildings, wonders and civs (between districts, at the district zoom), Home
 // centres on the town square.
-func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
+func (v *view) HandleKey(k kit.Key, f Frame) bool {
 	sc := v.scene(f)
-	if ev == nil || sc == nil {
+	if sc == nil {
 		return false
 	}
-	if c, ok := cmdOf(ev); ok && v.hosted && f.Space != nil {
+	if c, ok := cmdOf(k); ok && v.hosted && f.Space != nil {
 		f.Space.Command(c) // the window moves the camera
 		return true
 	}
-	switch ev.Key() {
-	case tcell.KeyTab, tcell.KeyBacktab:
-		dir := map[bool]int{true: 1, false: -1}[ev.Key() == tcell.KeyTab]
+	switch k.Code {
+	case kit.KeyTab, kit.KeyBacktab:
+		dir := map[bool]int{true: 1, false: -1}[k.Code == kit.KeyTab]
 		if v.shownZoom() == zDistrict {
 			v.cycleDistrict(sc, dir)
 		} else if v.stars && v.ov != nil && v.overview {
@@ -33,21 +32,21 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 			v.jump(sc, dir)
 		}
 		return true
-	case tcell.KeyPgUp:
+	case kit.KeyPgUp:
 		v.zoomTo(sc, zoomStep(v.shownZoom(), -1, sc))
 		return true
-	case tcell.KeyPgDn:
+	case kit.KeyPgDn:
 		v.zoomTo(sc, zoomStep(v.shownZoom(), 1, sc))
 		return true
-	case tcell.KeyHome:
+	case kit.KeyHome:
 		v.cur, v.recentre = sc.Centre, true
 		return true
 	}
-	d, ok := keyMoves[ev.Key()]
+	d, ok := keyMoves[k.Code]
 	if !ok {
 		return false
 	}
-	if ev.Modifiers()&tcell.ModShift != 0 {
+	if k.Mod&kit.ModShift != 0 {
 		d = [2]int{d[0] * 8, d[1] * 8}
 	}
 	if v.overview && v.ov != nil {

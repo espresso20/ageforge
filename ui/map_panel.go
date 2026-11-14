@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"regexp"
 	"strings"
 	"time"
@@ -79,6 +80,8 @@ func (mv *mapViews) model(state *game.GameState) *mapmodel.Model {
 // mapPanel is the Map overlay primitive.
 type mapPanel struct {
 	barPanel
+	kit.Base
+	host  *nativeHost
 	mv    *mapViews
 	view  mapstyle.Style
 	set   mapSettings
@@ -113,6 +116,7 @@ func newMapPanel(mv *mapViews) *mapPanel {
 	p.barPanel = newBarPanel(p.routeKey)
 	p.start = p.now()
 	p.set = defaultMapSettings()
+	p.host = newNativeHost(p)
 	return p
 }
 
@@ -197,12 +201,26 @@ func (p *mapPanel) hide() {
 	}
 }
 
-// Draw draws the map over all but the last row, and the key bar on it.
+// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
+func (p *mapPanel) kitDrawn() {}
+
+// Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *mapPanel) Draw(scr tcell.Screen) {
+	p.host.SetRect(p.GetRect())
+	p.host.Draw(scr)
+}
+
+func (p *mapPanel) Layout(r image.Rectangle) { p.Place(r) }
+
+// Paint draws the map over all but the last row, and the key bar on it. The
+// map still writes tcell's cells, at the panel's place on the screen: scr
+// puts them on the painter.
+func (p *mapPanel) Paint(kp *kit.Painter) {
 	x, y, w, h := p.GetRect()
-	if w <= 0 || h <= 0 {
+	if w <= 0 || h <= 0 || p.view == nil {
 		return
 	}
+	scr := cellsFor(kp, p, p.Bounds())
 	st, f := p.current(), p.frame()
 	if h < 3 {
 		st.Draw(scr, mapstyle.Rect{X: x, Y: y, W: w, H: h}, f)
@@ -221,7 +239,7 @@ type barPart struct {
 // drawBar is the key bar: the hint or note, what Enter does, then the
 // setting commands and Esc. When it does not fit it drops what Enter does,
 // then shortens the rest, so the hint and Esc always show.
-func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style, f mapstyle.Frame) {
+func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Style, f mapstyle.Frame) {
 	bg := theme.Color(theme.RoleChip)
 	base := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleText), bg, 4.5))
 	styles := [3]tcell.Style{
@@ -325,7 +343,7 @@ func (p *mapPanel) handleKey(ev *kit.Key) bool {
 		p.note = ""
 		return true
 	}
-	used := p.current().HandleKey(tcellKey(*ev), p.frame())
+	used := p.current().HandleKey(*ev, p.frame())
 	if used {
 		p.note = ""
 		p.lookForVisitor()

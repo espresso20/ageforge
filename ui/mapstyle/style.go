@@ -7,9 +7,8 @@
 package mapstyle
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // Rect is a screen rectangle.
@@ -73,13 +72,13 @@ const KindAlien = "alien"
 type Style interface {
 	// Draw renders the full view into r, writing every cell of r and
 	// nothing outside it.
-	Draw(scr tcell.Screen, r Rect, f Frame)
+	Draw(scr Cells, r Rect, f Frame)
 	// DrawCompact renders the glanceable mini view (a 40x15 sidebar panel)
 	// into r, with the same guarantees.
-	DrawCompact(scr tcell.Screen, r Rect, f Frame)
+	DrawCompact(scr Cells, r Rect, f Frame)
 	// HandleKey applies a key to the view (cursor, zoom, toggles) and
 	// reports whether it used it.
-	HandleKey(ev *tcell.EventKey, f Frame) bool
+	HandleKey(k kit.Key, f Frame) bool
 	// Inspect reports what the cursor is on; ok is false when the view has
 	// no cursor out.
 	Inspect(f Frame) (in Inspection, ok bool)
