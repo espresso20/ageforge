@@ -200,8 +200,10 @@ type nativeFlex struct {
 	kit.Base
 	down  bool // items one under the other (tview.FlexRow)
 	items []flexItem
-	// frame is the border and title, when SetBorder asked for one.
+	// frame is the border and title, when SetBorder asked for one, and
+	// ground what they are drawn on (unset: the page's).
 	frame    kit.Panel
+	ground   kit.Color
 	drawFunc func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)
 }
 
@@ -278,6 +280,13 @@ func (f *nativeFlex) SetTitleColor(c tcell.Color) *nativeFlex {
 
 func (f *nativeFlex) SetBorderColor(c tcell.Color) *nativeFlex {
 	f.frame.BorderStyle.Fg = kitColor(c)
+	return f
+}
+
+// SetBackgroundColor sets the ground the border and the title are drawn on.
+// Inside the border the flex still paints nothing: its items do.
+func (f *nativeFlex) SetBackgroundColor(c tcell.Color) *nativeFlex {
+	f.ground = kitColor(c)
 	return f
 }
 
@@ -370,6 +379,9 @@ func (f *nativeFlex) Layout(r image.Rectangle) {
 // draws it, and the items the kit draws.
 func (f *nativeFlex) Paint(p *kit.Painter) {
 	if f.framed() {
+		for _, r := range f.own() {
+			p.Fill(r, f.ground)
+		}
 		fr := f.frame
 		if f.HasFocus() {
 			fr.Border = kit.BorderDouble
