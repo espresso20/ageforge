@@ -29,6 +29,8 @@ An account with no game yet sees the forge and a title page, with **New game** f
 
 `↑` and `↓` (or `Tab` and `Shift+Tab`) move the selection, `Enter` or `Space` opens it, and each entry's letter opens it directly. With motion on, choosing an entry strikes the title: a flare and a burst of sparks, then the entry opens. The version is on the page, and so is **update available (u)** when a newer release is out.
 
+In the window the mouse works on the menu too. The entry under the pointer is the selected one, and a click opens it as `Enter` does, on the Settings page as well. The pages the menu opens (Load game, Badges, Themes, Accounts) still take keys only.
+
 **Which game Continue opens.** Your account remembers the game you played last, and that is your current game. If you keep several games and want one of them on the menu whatever you played last, mark it as your **main game** with `m` in the Load Game browser. See [Continue and your main game](saving-and-loading.md#continue-and-your-main-game).
 
 **Motion and size.** `motion off` holds the menu to one still picture, like the maps (see [Motion](themes.md#motion)). The menu fits any terminal from 80 columns by 24 rows up. With `map glyphs ascii` it is drawn without block characters. On a light theme the fire and the hot iron are ink on paper: hotter is darker.
