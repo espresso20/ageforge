@@ -27,15 +27,15 @@ func TestKitKeyNamesTcellsKeys(t *testing.T) {
 		{tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModShift), kit.Key{Code: kit.KeyPgDn, Mod: kit.ModShift}},
 		{tcell.NewEventKey(tcell.KeyF5, 0, tcell.ModNone), kit.Key{Code: kit.KeyF5}},
 		// Ctrl with a letter, both ways tcell may hand it over.
-		{tcell.NewEventKey(tcell.KeyCtrlR, 0, tcell.ModCtrl), kit.Key{Code: kit.KeyRune, Rune: 'r', Mod: kit.ModCtrl}},
-		{tcell.NewEventKey(tcell.KeyRune, 'r', tcell.ModAlt), kit.Key{Code: kit.KeyRune, Rune: 'r', Mod: kit.ModAlt}},
+		{tcell.NewEventKey(tcell.KeyCtrlR, 0, tcell.ModCtrl), kit.Key{Code: kit.KeyChord, Rune: 'r', Mod: kit.ModCtrl}},
+		{tcell.NewEventKey(tcell.KeyRune, 'r', tcell.ModCtrl), kit.Key{Code: kit.KeyChord, Rune: 'r', Mod: kit.ModCtrl}},
+		{tcell.NewEventKey(tcell.KeyRune, 'r', tcell.ModAlt), kit.Key{Code: kit.KeyChord, Rune: 'r', Mod: kit.ModAlt}},
 		// A key with no name of its own still arrives, for the screens that
 		// move on at any key.
 		{tcell.NewEventKey(tcell.KeyF20, 0, tcell.ModNone), kit.Key{Code: kit.KeyOther}},
 	} {
-		got, ok := kitKey(c.ev)
-		if !ok || got != c.want {
-			t.Errorf("%v came out as %+v (ok %v), want %+v", c.ev.Name(), got, ok, c.want)
+		if got := kitKey(c.ev); got != c.want {
+			t.Errorf("%v came out as %+v, want %+v", c.ev.Name(), got, c.want)
 		}
 	}
 }
@@ -209,5 +209,69 @@ func TestKitStyleReversesCellStyle(t *testing.T) {
 	got := kitStyle(st)
 	if got.Fg != kit.Role(theme.RoleAccent) || got.Bg != kit.Clear || got.Attr != kit.Bold {
 		t.Errorf("a role style came back as %+v", got)
+	}
+}
+
+// tev is a key press as tview takes one, for the tests that hand a key to a
+// primitive the way tview does.
+func tev(code kit.KeyCode, r rune, mod kit.Mod) *tcell.EventKey {
+	return tcellKey(kit.Key{Code: code, Rune: r, Mod: mod})
+}
+
+// A key goes to tcell's form and back unchanged, so the few places that
+// still hand a key to tview lose nothing.
+func TestTcellKeyIsKitKeyReversed(t *testing.T) {
+	for _, k := range []kit.Key{
+		{Code: kit.KeyRune, Rune: 'x'}, {Code: kit.KeyRune, Rune: 'É'},
+		{Code: kit.KeyEnter}, {Code: kit.KeyEsc}, {Code: kit.KeyTab}, {Code: kit.KeyBacktab},
+		{Code: kit.KeyBackspace}, {Code: kit.KeyDelete}, {Code: kit.KeyHome}, {Code: kit.KeyF12},
+		{Code: kit.KeyPgDn, Mod: kit.ModShift}, {Code: kit.KeyUp, Mod: kit.ModAlt},
+		{Code: kit.KeyChord, Rune: 'r', Mod: kit.ModCtrl}, {Code: kit.KeyChord, Rune: 'b', Mod: kit.ModAlt},
+		{Code: kit.KeyOther},
+	} {
+		if got := kitKey(tcellKey(k)); got != k {
+			t.Errorf("%+v came back as %+v", k, got)
+		}
+	}
+}
+
+// A capture that reads the kit's keys, set on a box tview owns, still stops a
+// key, passes one on untouched, or puts another in its place.
+func TestTcellCaptureStopsPassesAndReplaces(t *testing.T) {
+	capture := tcellCapture(func(k *kit.Key) *kit.Key {
+		switch {
+		case k.Code == kit.KeyEsc:
+			return nil
+		case k.Is('a'):
+			return newKey(kit.KeyHome, 0, 0)
+		}
+		return k
+	})
+	if got := capture(tev(kit.KeyEsc, 0, 0)); got != nil {
+		t.Errorf("a key the capture took came out as %v", got.Name())
+	}
+	tab := tev(kit.KeyTab, 0, 0)
+	if got := capture(tab); got != tab {
+		t.Errorf("a key the capture passed on is not the same event")
+	}
+	if got := capture(tev(kit.KeyRune, 'a', 0)); got == nil || got.Key() != tcell.KeyHome {
+		t.Errorf("a key the capture replaced did not come out as the new one")
+	}
+	if tcellCapture(nil) != nil {
+		t.Error("no capture should stay no capture")
+	}
+}
+
+// Ctrl with a letter is a chord, never the letter: a screen that reads
+// characters does not see it, whichever way the terminal or the window sent it.
+func TestACtrlChordIsNotALetter(t *testing.T) {
+	for _, ev := range []*tcell.EventKey{
+		tcell.NewEventKey(tcell.KeyCtrlQ, 0, tcell.ModCtrl),
+		tcell.NewEventKey(tcell.KeyRune, 'q', tcell.ModCtrl),
+	} {
+		k := kitKey(ev)
+		if k.Code == kit.KeyRune || k.Is('q') || !k.Ctrl('q') {
+			t.Errorf("%v reads as %+v: want a chord that is Ctrl+q and not the letter", ev.Name(), k)
+		}
 	}
 }

@@ -110,31 +110,31 @@ func TestPeoplePanelOpensAndSwitchesTabs(t *testing.T) {
 	}
 	order := []int{tabWork, tabArmy, tabScholars, tabOverview}
 	for _, want := range order {
-		p.handleKey(tcell.KeyRight)
+		p.handleKey(kit.KeyRight)
 		if p.view.tab != want {
 			t.Errorf("Right went to tab %d, want %d", p.view.tab, want)
 		}
 	}
-	p.handleKey(tcell.KeyLeft)
+	p.handleKey(kit.KeyLeft)
 	if p.view.tab != tabScholars {
 		t.Errorf("Left from the Overview went to tab %d, want the Scholars", p.view.tab)
 	}
 	p.view.tab, p.view.row = tabOverview, 0
 	for i := 0; i < 9; i++ {
-		p.handleKey(tcell.KeyDown)
+		p.handleKey(kit.KeyDown)
 	}
 	if p.view.row != 3 {
 		t.Errorf("Down nine times on the Overview picked card %d, want the last (3)", p.view.row)
 	}
-	p.handleKey(tcell.KeyRight)
+	p.handleKey(kit.KeyRight)
 	if p.view.row != 0 {
 		t.Errorf("a new tab keeps row %d", p.view.row)
 	}
 	// With something typed the arrows belong to the bar.
-	if p.routeKey(tcell.NewEventKey(tcell.KeyRight, 0, 0), "roster") {
+	if p.routeKey(newKey(kit.KeyRight, 0, 0), "roster") {
 		t.Error("the panel took an arrow while the prompt had text")
 	}
-	if !p.routeKey(tcell.NewEventKey(tcell.KeyRight, 0, 0), "") {
+	if !p.routeKey(newKey(kit.KeyRight, 0, 0), "") {
 		t.Error("the panel left an arrow alone with an empty prompt")
 	}
 }

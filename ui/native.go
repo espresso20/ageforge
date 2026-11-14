@@ -71,11 +71,48 @@ func (h *nativeHost) Draw(scr tcell.Screen) {
 
 // InputHandler gives the tree the keys tview gives the host.
 func (h *nativeHost) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return h.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		if k, ok := kitKey(ev); ok {
-			h.root.Key(k)
-		}
+	return keysIn(h.Box, func(k *kit.Key) { h.root.Key(*k) })
+}
+
+// SetInputCapture sets what sees the host's keys before the host does. It
+// returns the key to go on with, or nil to stop it there.
+func (h *nativeHost) SetInputCapture(fn func(*kit.Key) *kit.Key) *nativeHost {
+	h.Box.SetInputCapture(tcellCapture(fn))
+	return h
+}
+
+// keysIn is the key handler tview asks of box, for a handler that reads the
+// kit's keys: every screen does, and tview's keys stop here.
+func keysIn(box *tview.Box, fn func(k *kit.Key)) func(*tcell.EventKey, func(tview.Primitive)) {
+	return box.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
+		k := kitKey(ev)
+		fn(&k)
 	})
+}
+
+// tcellCapture is a capture that reads the kit's keys, as tview wants one:
+// for the boxes tview still owns.
+func tcellCapture(fn func(*kit.Key) *kit.Key) func(*tcell.EventKey) *tcell.EventKey {
+	if fn == nil {
+		return nil
+	}
+	return func(ev *tcell.EventKey) *tcell.EventKey {
+		k := kitKey(ev)
+		in := k
+		switch out := fn(&k); {
+		case out == nil:
+			return nil
+		case *out == in:
+			return ev
+		default:
+			return tcellKey(*out)
+		}
+	}
+}
+
+// newKey is a key press, for the code that makes one up.
+func newKey(code kit.KeyCode, r rune, mod kit.Mod) *kit.Key {
+	return &kit.Key{Code: code, Rune: r, Mod: mod}
 }
 
 // cellAttrs pairs the kit's attributes with tcell's. Underline is not here:
@@ -153,10 +190,10 @@ var keyCodes = map[tcell.Key]kit.KeyCode{
 	tcell.KeyF7: kit.KeyF7, tcell.KeyF8: kit.KeyF8, tcell.KeyF9: kit.KeyF9, tcell.KeyF10: kit.KeyF10, tcell.KeyF11: kit.KeyF11, tcell.KeyF12: kit.KeyF12,
 }
 
-// kitKey is a tcell key event as the kit's. Ctrl with a letter comes out as
-// the letter with ModCtrl, whichever of tcell's two ways it arrived, and a
-// key the kit has no name for as kit.KeyOther.
-func kitKey(ev *tcell.EventKey) (kit.Key, bool) {
+// kitKey is a tcell key event as the kit's. A character with Ctrl or Alt held
+// comes out as a chord, whichever of tcell's two ways it arrived (the terminal
+// and the window differ), and a key the kit has no name for as kit.KeyOther.
+func kitKey(ev *tcell.EventKey) kit.Key {
 	var mod kit.Mod
 	if m := ev.Modifiers(); m != 0 {
 		if m&tcell.ModShift != 0 {
@@ -171,15 +208,47 @@ func kitKey(ev *tcell.EventKey) (kit.Key, bool) {
 	}
 	k := ev.Key()
 	if k == tcell.KeyRune {
-		return kit.Key{Code: kit.KeyRune, Rune: ev.Rune(), Mod: mod}, true
+		if mod&(kit.ModCtrl|kit.ModAlt) != 0 {
+			return kit.Key{Code: kit.KeyChord, Rune: ev.Rune(), Mod: mod}
+		}
+		return kit.Key{Code: kit.KeyRune, Rune: ev.Rune(), Mod: mod}
 	}
 	if code, ok := keyCodes[k]; ok {
-		return kit.Key{Code: code, Mod: mod}, true
+		return kit.Key{Code: code, Mod: mod}
 	}
 	if k >= tcell.KeyCtrlA && k <= tcell.KeyCtrlZ {
-		return kit.Key{Code: kit.KeyRune, Rune: 'a' + rune(k-tcell.KeyCtrlA), Mod: mod | kit.ModCtrl}, true
+		return kit.Key{Code: kit.KeyChord, Rune: 'a' + rune(k-tcell.KeyCtrlA), Mod: mod | kit.ModCtrl}
 	}
-	return kit.Key{Code: kit.KeyOther, Mod: mod}, true
+	return kit.Key{Code: kit.KeyOther, Mod: mod}
+}
+
+// tcellKey is a kit key as tcell's: the reverse of kitKey, for the few
+// places that still hand a key to tview.
+func tcellKey(k kit.Key) *tcell.EventKey {
+	var mod tcell.ModMask
+	if k.Mod&kit.ModShift != 0 {
+		mod |= tcell.ModShift
+	}
+	if k.Mod&kit.ModCtrl != 0 {
+		mod |= tcell.ModCtrl
+	}
+	if k.Mod&kit.ModAlt != 0 {
+		mod |= tcell.ModAlt
+	}
+	switch {
+	case k.Code == kit.KeyChord && mod == tcell.ModCtrl && k.Rune >= 'a' && k.Rune <= 'z':
+		return tcell.NewEventKey(tcell.KeyCtrlA+tcell.Key(k.Rune-'a'), 0, mod)
+	case k.Code == kit.KeyRune, k.Code == kit.KeyChord:
+		return tcell.NewEventKey(tcell.KeyRune, k.Rune, mod)
+	case k.Code == kit.KeyBackspace:
+		return tcell.NewEventKey(tcell.KeyBackspace2, 0, mod)
+	}
+	for tk, code := range keyCodes {
+		if code == k.Code {
+			return tcell.NewEventKey(tk, 0, mod)
+		}
+	}
+	return tcell.NewEventKey(tcell.KeyF64, 0, mod)
 }
 
 // A nativeScreen is the app's screen in a window. It notes which host wrote

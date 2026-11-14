@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The dashboard holds together at the sizes people play at: every box that
@@ -253,7 +254,7 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 		t.Fatalf("the Quantum Age has %d active resources besides the soldiers, want 9", len(names))
 	}
 	press := func() {
-		if ev := d.root.GetInputCapture()(tcell.NewEventKey(resourcePageKey, 0, tcell.ModNone)); ev != nil {
+		if ev := d.root.GetInputCapture()(tev(kit.KeyChord, resourcePageKey, kit.ModCtrl)); ev != nil {
 			t.Fatalf("%s was not taken by the dashboard", resourcePageKeyName)
 		}
 	}
@@ -299,7 +300,7 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 	}
 	// With a panel open the box is behind it, and the key is the panel's.
 	d.overlayMgr.Show("help", eng.GetState())
-	if ev := d.root.GetInputCapture()(tcell.NewEventKey(resourcePageKey, 0, tcell.ModNone)); ev == nil {
+	if ev := d.root.GetInputCapture()(tev(kit.KeyChord, resourcePageKey, kit.ModCtrl)); ev == nil {
 		t.Errorf("%s turned the Resources box's page behind an open panel", resourcePageKeyName)
 	}
 	d.overlayMgr.Hide()

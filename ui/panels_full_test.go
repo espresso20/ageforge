@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // panels_full_test.go holds every panel to one rule: it opens over the whole
@@ -87,7 +88,7 @@ func TestEveryPanelOpensFullScreen(t *testing.T) {
 					}
 				}
 			}
-			pressKey(d, pages, tcell.KeyEsc, 0)
+			pressKey(d, pages, kit.KeyEsc, 0)
 			if d.overlayMgr.HasActive() {
 				t.Errorf("%s: Esc left %q open", where, d.overlayMgr.ActiveName())
 			}
@@ -219,16 +220,16 @@ func TestTextPanelsScrollWithTheBarEmpty(t *testing.T) {
 	if row() != 0 {
 		t.Fatalf("the panel opened scrolled to row %d", row())
 	}
-	for _, k := range []tcell.Key{tcell.KeyDown, tcell.KeyPgDn} {
+	for _, k := range []kit.KeyCode{kit.KeyDown, kit.KeyPgDn} {
 		before := row()
 		if ev := sendKey(d, k); ev != nil || row() <= before {
 			t.Errorf("key %v with the bar empty: taken=%v, row %d -> %d", k, ev == nil, before, row())
 		}
 	}
-	if sendKey(d, tcell.KeyHome) != nil || row() != 0 {
+	if sendKey(d, kit.KeyHome) != nil || row() != 0 {
 		t.Errorf("Home did not scroll to the top (row %d)", row())
 	}
-	taken := sendKey(d, tcell.KeyEnd) == nil
+	taken := sendKey(d, kit.KeyEnd) == nil
 	drawnDashboard(t, d, pages, 100, 30) // the text view follows its end when it is drawn
 	if !taken || row() == 0 {
 		t.Errorf("End did not scroll to the foot (taken %v, row %d)", taken, row())
@@ -236,12 +237,12 @@ func TestTextPanelsScrollWithTheBarEmpty(t *testing.T) {
 	// Text in the bar: the keys are the bar's.
 	d.inputField.SetText("build")
 	before := row()
-	if ev := sendKey(d, tcell.KeyPgUp); ev == nil || row() != before {
+	if ev := sendKey(d, kit.KeyPgUp); ev == nil || row() != before {
 		t.Errorf("PgUp with text in the bar was taken by the panel (row %d -> %d)", before, row())
 	}
 	// A letter is the bar's, with the bar empty or not.
 	d.inputField.SetText("")
-	if ev := d.root.GetInputCapture()(tcell.NewEventKey(tcell.KeyRune, 'g', tcell.ModNone)); ev == nil {
+	if ev := d.root.GetInputCapture()(tev(kit.KeyRune, 'g', 0)); ev == nil {
 		t.Error("a letter was taken by the Help panel")
 	}
 }
@@ -271,7 +272,7 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 		if strings.Contains(foot, "or type") {
 			t.Errorf("%s: the foot offers the command bar, which this panel does not give the keyboard: %q", name, foot)
 		}
-		pressKey(d, pages, tcell.KeyEsc, 0)
+		pressKey(d, pages, kit.KeyEsc, 0)
 		if d.overlayMgr.HasActive() {
 			t.Errorf("%s: Esc did not close the panel", name)
 		}
@@ -291,6 +292,6 @@ func TestPanelFooterOffersTheBar(t *testing.T) {
 				t.Errorf("%s: the foot does not say %q: %q", name, want, foot)
 			}
 		}
-		pressKey(d, pages, tcell.KeyEsc, 0)
+		pressKey(d, pages, kit.KeyEsc, 0)
 	}
 }

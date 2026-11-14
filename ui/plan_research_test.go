@@ -4,9 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The plan as a research queue, as the player meets it: the command says
@@ -124,7 +123,7 @@ func TestCardPlansALockedTechWithItsChain(t *testing.T) {
 	if !strings.Contains(before, "adds it to your plan, after the 2 techs it needs") {
 		t.Fatalf("the card does not say what Enter will add:\n%s", before)
 	}
-	if !p.routeKey(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), "") {
+	if !p.routeKey(newKey(kit.KeyEnter, 0, 0), "") {
 		t.Fatal("Enter on the card was not taken")
 	}
 	if got := strings.Join(planKeys(ge.GetState()), ","); got != "road_building,military_tactics,siege_warfare,imperial_legions" {

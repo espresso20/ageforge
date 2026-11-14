@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"github.com/gdamore/tcell/v2"
 	"strings"
 
 	"github.com/rivo/tview"
@@ -11,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // planOptimizeShown is how many plan items the `plan optimize` reply lists.
@@ -61,11 +61,11 @@ func planOptimizeTimes(res game.PlanOptimizeResult) string {
 
 // handleOptimizeKey is the key handler while the optimize popup is open:
 // Enter keeps the new order, Esc closes it, other keys do nothing.
-func (p *planPanel) handleOptimizeKey(event *tcell.EventKey, engine *game.GameEngine) bool {
-	switch event.Key() {
-	case tcell.KeyEscape:
+func (p *planPanel) handleOptimizeKey(event *kit.Key, engine *game.GameEngine) bool {
+	switch event.Code {
+	case kit.KeyEsc:
 		p.mode = planModeQueue
-	case tcell.KeyEnter:
+	case kit.KeyEnter:
 		p.mode = planModeQueue
 		prev, err := engine.PlanOptimizePreview()
 		if err != nil || !prev.Changed {

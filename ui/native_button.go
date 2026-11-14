@@ -57,8 +57,8 @@ func (b *nativeButton) Draw(scr tcell.Screen) {
 
 // InputHandler: Enter presses; every other key is the caller's.
 func (b *nativeButton) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return b.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		if ev.Key() == tcell.KeyEnter && b.btn.OnPress != nil {
+	return keysIn(b.Box, func(ev *kit.Key) {
+		if ev.Code == kit.KeyEnter && b.btn.OnPress != nil {
 			b.btn.OnPress()
 		}
 	})

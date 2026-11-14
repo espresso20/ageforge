@@ -142,6 +142,6 @@ func (f *panelFrame) Focus(delegate func(p tview.Primitive)) { delegate(f.tv) }
 func (f *panelFrame) HasFocus() bool { return f.tv.HasFocus() }
 
 // InputHandler is the text's.
-func (f *panelFrame) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+func (f *panelFrame) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
 	return f.tv.InputHandler()
 }

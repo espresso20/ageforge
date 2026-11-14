@@ -3,7 +3,6 @@ package ui
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
@@ -51,16 +50,16 @@ func TestNativeButtonPressedByEnterAndAClick(t *testing.T) {
 	keepTheme(t)
 	n := 0
 	b := newNativeButton("Go").SetSelectedFunc(func() { n++ })
-	key := func(k tcell.Key, r rune) {
-		b.InputHandler()(tcell.NewEventKey(k, r, tcell.ModNone), func(tview.Primitive) {})
+	key := func(k kit.KeyCode, r rune) {
+		b.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
 	}
-	key(tcell.KeyRune, ' ')
-	key(tcell.KeyEsc, 0)
-	key(tcell.KeyTab, 0)
+	key(kit.KeyRune, ' ')
+	key(kit.KeyEsc, 0)
+	key(kit.KeyTab, 0)
 	if n != 0 {
 		t.Errorf("only Enter presses a tview button, got %d presses", n)
 	}
-	key(tcell.KeyEnter, 0)
+	key(kit.KeyEnter, 0)
 	if n != 1 {
 		t.Errorf("Enter pressed %d times", n)
 	}

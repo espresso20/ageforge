@@ -6,6 +6,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -26,7 +27,7 @@ type overlayEntry struct {
 	// keys, when set, sees every key but Esc while the overlay has focus and
 	// returns nil to consume it (SetKeyHandler). Runs on the tview goroutine,
 	// never under the engine lock.
-	keys func(event *tcell.EventKey) *tcell.EventKey
+	keys func(event *kit.Key) *kit.Key
 	// back, when set, is offered Esc before it closes the overlay: it returns
 	// true when it used the key (a second view going back to the first), so
 	// the overlay stays up (SetBackHandler). open, when set, runs each time
@@ -127,8 +128,8 @@ func (om *OverlayManager) Register(name string, title vibe.Entry, provide Overla
 		}
 		return entry.notice()
 	}
-	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyEsc {
+	tv.SetInputCapture(func(event *kit.Key) *kit.Key {
+		if event.Code == kit.KeyEsc {
 			if entry.back != nil && entry.back() {
 				tv.SetText(safeTags(entry.provide(*om.seenState(), om.screenW)))
 				tv.ScrollToBeginning()
@@ -181,15 +182,15 @@ func (om *OverlayManager) footerKeys(e *overlayEntry) [][2]string {
 // leaves the keyboard with the command bar and the bar is empty, and reports
 // whether it took it. The caller is the dashboard's input capture, which sees
 // the keys the bar has before the bar does.
-func (om *OverlayManager) scrollKey(ev *tcell.EventKey, prompt string) bool {
+func (om *OverlayManager) scrollKey(ev *kit.Key, prompt string) bool {
 	e, ok := om.entries[om.active]
 	if !ok || e.keys != nil || prompt != "" {
 		return false
 	}
-	switch ev.Key() {
-	case tcell.KeyUp, tcell.KeyDown, tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyHome, tcell.KeyEnd:
+	switch ev.Code {
+	case kit.KeyUp, kit.KeyDown, kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome, kit.KeyEnd:
 		if h := e.tv.InputHandler(); h != nil {
-			h(ev, func(tview.Primitive) {})
+			h(tcellKey(*ev), func(tview.Primitive) {})
 		}
 		return true
 	}
@@ -214,7 +215,7 @@ func (om *OverlayManager) SetNotice(name string, notice func() string) {
 
 // SetKeyHandler gives the named text overlay a key handler (see
 // overlayEntry.keys). Unknown names are ignored.
-func (om *OverlayManager) SetKeyHandler(name string, keys func(event *tcell.EventKey) *tcell.EventKey) {
+func (om *OverlayManager) SetKeyHandler(name string, keys func(event *kit.Key) *kit.Key) {
 	if e, ok := om.entries[name]; ok {
 		e.keys = keys
 	}
@@ -262,8 +263,8 @@ func (om *OverlayManager) buildWidgetRoot(_ *widgetEntry, prim tview.Primitive) 
 	// Wrap in a Flex so we can set ESC capture without touching the inner primitive's handler.
 	wrapper := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(prim, 0, 1, true)
-	wrapper.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyEsc {
+	captureKeys(wrapper, func(event *kit.Key) *kit.Key {
+		if event.Code == kit.KeyEsc {
 			om.Hide()
 			return nil
 		}

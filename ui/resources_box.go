@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -27,7 +25,7 @@ const (
 	// resourcePageKey turns the Resources box's page when it has more rows
 	// than it can show. Ctrl+R: R for resources, a key the prompt does not
 	// use and every terminal passes on.
-	resourcePageKey     = tcell.KeyCtrlR
+	resourcePageKey     = 'r' // with Ctrl
 	resourcePageKeyName = "Ctrl+R"
 
 	resBarMax  = 12 // a bar is never wider than this

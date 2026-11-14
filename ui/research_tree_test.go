@@ -557,8 +557,8 @@ func TestResearchPanelKeys(t *testing.T) {
 	p.engine = ge
 	p.w, p.h = 80, 21
 	p.update(ge.GetState())
-	key := func(k tcell.Key, prompt string) bool {
-		return p.routeKey(tcell.NewEventKey(k, 0, tcell.ModNone), prompt)
+	key := func(k kit.KeyCode, prompt string) bool {
+		return p.routeKey(newKey(k, 0, 0), prompt)
 	}
 	if p.view.sel != "philosophy" {
 		t.Fatalf("the panel opens on %q, want the tech in progress", p.view.sel)
@@ -572,7 +572,7 @@ func TestResearchPanelKeys(t *testing.T) {
 		}
 	}
 	moved := map[string]bool{}
-	for _, k := range []tcell.Key{tcell.KeyUp, tcell.KeyUp, tcell.KeyRight, tcell.KeyRight, tcell.KeyDown, tcell.KeyLeft, tcell.KeyLeft, tcell.KeyUp, tcell.KeyDown} {
+	for _, k := range []kit.KeyCode{kit.KeyUp, kit.KeyUp, kit.KeyRight, kit.KeyRight, kit.KeyDown, kit.KeyLeft, kit.KeyLeft, kit.KeyUp, kit.KeyDown} {
 		if !key(k, "") {
 			t.Errorf("the panel did not take an arrow key")
 		}
@@ -584,7 +584,7 @@ func TestResearchPanelKeys(t *testing.T) {
 	}
 	seen := map[string]bool{}
 	for i := 0; i < 12; i++ {
-		key(tcell.KeyTab, "")
+		key(kit.KeyTab, "")
 		if n := p.model.by[p.view.sel]; n.mark != markReady {
 			t.Fatalf("Tab stopped on %s, which cannot start", n.key)
 		}
@@ -594,19 +594,19 @@ func TestResearchPanelKeys(t *testing.T) {
 	if len(seen) < 3 {
 		t.Errorf("Tab only ever reached %v", seen)
 	}
-	key(tcell.KeyPgUp, "")
+	key(kit.KeyPgUp, "")
 	if !p.view.far || !p.model.geom.pill {
 		t.Error("PgUp did not zoom out")
 	}
-	key(tcell.KeyPgDn, "")
+	key(kit.KeyPgDn, "")
 	if p.view.far {
 		t.Error("PgDn did not zoom back in")
 	}
-	key(tcell.KeyHome, "")
+	key(kit.KeyHome, "")
 	if b := p.model.bandOf(p.model.by[p.view.sel]); !b.here {
 		t.Errorf("Home went to %s, not the current age", p.view.sel)
 	}
-	if key(tcell.KeyTab, "res") || key(tcell.KeyEnter, "res") || key(tcell.KeyRune, "") {
+	if key(kit.KeyTab, "res") || key(kit.KeyEnter, "res") || key(kit.KeyRune, "") {
 		t.Error("the panel took a key that belongs to the prompt")
 	}
 
@@ -614,15 +614,15 @@ func TestResearchPanelKeys(t *testing.T) {
 	p.view.sel = "military_tactics"
 	p.layout()
 	plan := len(ge.GetState().Plan)
-	key(tcell.KeyEnter, "")
+	key(kit.KeyEnter, "")
 	if !p.view.card || len(ge.GetState().Plan) != plan {
 		t.Fatalf("the first Enter: card open %v, plan %d items (was %d)", p.view.card, len(ge.GetState().Plan), plan)
 	}
-	if key(tcell.KeyLeft, ""); p.view.sel != "military_tactics" {
+	if key(kit.KeyLeft, ""); p.view.sel != "military_tactics" {
 		t.Error("an arrow moved the selection under the open card")
 	}
 	// Research is running, so the second Enter plans it.
-	key(tcell.KeyEnter, "")
+	key(kit.KeyEnter, "")
 	if st := ge.GetState(); len(st.Plan) != plan+1 || st.Plan[plan].Key != "military_tactics" {
 		t.Errorf("the second Enter did not add Military Tactics to the plan: %+v", st.Plan)
 	}
@@ -634,8 +634,8 @@ func TestResearchPanelKeys(t *testing.T) {
 	p.update(ge.GetState())
 	p.view.sel = "animal_husbandry"
 	p.layout()
-	key(tcell.KeyEnter, "")
-	key(tcell.KeyEnter, "")
+	key(kit.KeyEnter, "")
+	key(kit.KeyEnter, "")
 	if cur := ge.GetState().Research.CurrentTech; cur != "animal_husbandry" {
 		t.Errorf("Enter on the card of a tech that can start: researching %q, want animal_husbandry", cur)
 	}

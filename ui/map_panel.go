@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // map_panel.go is the Map panel: the map over the whole screen but the
@@ -282,22 +283,22 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 // (completion, run), and every printable key always is, but for the zoom
 // keys + - = _ on an empty prompt (no command begins with one). + and =
 // zoom in and - and _ zoom out, as PgDn and PgUp do.
-func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
-	switch ev.Key() {
-	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight,
-		tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyHome, tcell.KeyEnd:
-	case tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEnter:
+func (p *mapPanel) routeKey(ev *kit.Key, prompt string) bool {
+	switch ev.Code {
+	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight,
+		kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome, kit.KeyEnd:
+	case kit.KeyTab, kit.KeyBacktab, kit.KeyEnter:
 		if prompt != "" {
 			return false
 		}
-	case tcell.KeyRune:
+	case kit.KeyRune:
 		// + and = are PgDn, - and _ are PgUp, so the map zooms with no
 		// modifier and no Page keys (a MacBook has none).
-		k, zoomKey := zoomRuneKeys[ev.Rune()]
-		if !zoomKey || prompt != "" || ev.Modifiers()&(tcell.ModCtrl|tcell.ModAlt) != 0 {
+		k, zoomKey := zoomRuneKeys[ev.Rune]
+		if !zoomKey || prompt != "" || ev.Mod&(kit.ModCtrl|kit.ModAlt) != 0 {
 			return false
 		}
-		return p.handleKey(tcell.NewEventKey(k, 0, tcell.ModNone))
+		return p.handleKey(newKey(k, 0, 0))
 	default:
 		return false
 	}
@@ -306,13 +307,13 @@ func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 }
 
 // zoomRuneKeys are the page keys the zoom characters stand for.
-var zoomRuneKeys = map[rune]tcell.Key{'+': tcell.KeyPgDn, '=': tcell.KeyPgDn, '-': tcell.KeyPgUp, '_': tcell.KeyPgUp}
+var zoomRuneKeys = map[rune]kit.KeyCode{'+': kit.KeyPgDn, '=': kit.KeyPgDn, '-': kit.KeyPgUp, '_': kit.KeyPgUp}
 
 // handleKey applies one map key and reports whether anything used it.
 // Enter types the inspected command into the prompt; the rest are the
 // map's. Esc is the dashboard's (it closes the panel).
-func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
-	if ev.Key() == tcell.KeyEnter {
+func (p *mapPanel) handleKey(ev *kit.Key) bool {
+	if ev.Code == kit.KeyEnter {
 		in, ok := p.current().Inspect(p.frame())
 		if !ok || in.Command == "" {
 			p.note = vibe.Line("ui.map_panel.handleKey.01", "Nothing to type here. Move the cursor onto a building or a civilization.")
@@ -324,7 +325,7 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 		p.note = ""
 		return true
 	}
-	used := p.current().HandleKey(ev, p.frame())
+	used := p.current().HandleKey(tcellKey(*ev), p.frame())
 	if used {
 		p.note = ""
 		p.lookForVisitor()

@@ -10,7 +10,7 @@ import (
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
-	"github.com/gdamore/tcell/v2"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/rivo/tview"
 )
 
@@ -251,14 +251,14 @@ func (d *Dashboard) showCatastropheModal(key string) {
 	if succumbOpen {
 		ring.add(btnSuccumb, 's')
 	}
-	modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	captureKeys(modal, func(event *kit.Key) *kit.Key {
 		switch {
-		case event.Key() == tcell.KeyEsc:
+		case event.Code == kit.KeyEsc:
 			d.closeCatastropheModal()
 			return nil
 		case ring.key(event):
 			return nil
-		case !succumbOpen && event.Key() == tcell.KeyRune && unicode.ToLower(event.Rune()) == 's':
+		case !succumbOpen && event.Code == kit.KeyRune && unicode.ToLower(event.Rune) == 's':
 			return nil // the closed button's key does nothing
 		}
 		return event

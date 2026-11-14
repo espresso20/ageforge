@@ -203,9 +203,9 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	}
 	switch {
 	case m.Kind == kit.MouseWheel && !p.view.card:
-		key := tcell.KeyDown
+		key := kit.KeyDown
 		if m.Wheel < 0 {
-			key = tcell.KeyUp
+			key = kit.KeyUp
 		}
 		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
 			p.handleKey(key)
@@ -223,7 +223,7 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	p.view.sel, p.view.note = id, ""
 	p.layout()
 	if m.Clicks == 2 {
-		p.handleKey(tcell.KeyEnter)
+		p.handleKey(kit.KeyEnter)
 	}
 	return true
 }
@@ -231,17 +231,17 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt, Tab and Enter belong to the
 // prompt.
-func (p *badgePanel) routeKey(ev *tcell.EventKey, prompt string) bool {
-	switch ev.Key() {
-	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight, tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyHome, tcell.KeyEnd:
-	case tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEnter:
+func (p *badgePanel) routeKey(ev *kit.Key, prompt string) bool {
+	switch ev.Code {
+	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome, kit.KeyEnd:
+	case kit.KeyTab, kit.KeyBacktab, kit.KeyEnter:
 		if prompt != "" {
 			return false
 		}
 	default:
 		return false
 	}
-	p.handleKey(ev.Key())
+	p.handleKey(ev.Code)
 	return true
 }
 
@@ -255,37 +255,37 @@ func (p *badgePanel) closeCard() bool {
 	return true
 }
 
-func (p *badgePanel) handleKey(key tcell.Key) {
+func (p *badgePanel) handleKey(key kit.KeyCode) {
 	if p.model == nil {
 		p.layout()
 	}
 	p.view.note = ""
 	switch key {
-	case tcell.KeyUp:
+	case kit.KeyUp:
 		p.jump(-1, 1)
-	case tcell.KeyDown:
+	case kit.KeyDown:
 		p.jump(1, 1)
-	case tcell.KeyLeft:
+	case kit.KeyLeft:
 		p.step(-1)
-	case tcell.KeyRight:
+	case kit.KeyRight:
 		p.step(1)
-	case tcell.KeyPgUp:
+	case kit.KeyPgUp:
 		p.page(-1)
-	case tcell.KeyPgDn:
+	case kit.KeyPgDn:
 		p.page(1)
-	case tcell.KeyHome:
+	case kit.KeyHome:
 		if len(p.model.items) > 0 {
 			p.view.sel = p.model.items[0].id
 		}
-	case tcell.KeyEnd:
+	case kit.KeyEnd:
 		if n := len(p.model.items); n > 0 {
 			p.view.sel = p.model.items[n-1].id
 		}
-	case tcell.KeyTab:
+	case kit.KeyTab:
 		p.tab(1)
-	case tcell.KeyBacktab:
+	case kit.KeyBacktab:
 		p.tab(-1)
-	case tcell.KeyEnter:
+	case kit.KeyEnter:
 		p.view.card = !p.view.card && p.model.selected(p.view) != nil
 	}
 	p.layout()

@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // TestTheVisitorOnTheMapEarnsItsBadge: with the real map in the Map panel, a
@@ -53,20 +52,20 @@ func TestTheVisitorOnTheMapEarnsItsBadge(t *testing.T) {
 		// the arrows, as a player presses them
 		for i := 0; i < 400 && !slices.Contains(eng.Account().EarnedBadges(), badge); i++ {
 			at, _ := p.view.Pointer()
-			key, along := tcell.KeyRight, target.X-at.X
+			key, along := kit.KeyRight, target.X-at.X
 			switch {
 			case target.X < at.X:
-				key = tcell.KeyLeft
+				key = kit.KeyLeft
 			case target.X == at.X && target.Y < at.Y:
-				key, along = tcell.KeyUp, target.Y-at.Y
+				key, along = kit.KeyUp, target.Y-at.Y
 			case target.X == at.X:
-				key, along = tcell.KeyDown, target.Y-at.Y
+				key, along = kit.KeyDown, target.Y-at.Y
 			}
-			mod := tcell.ModNone
+			var mod kit.Mod
 			if along >= 8 || along <= -8 {
-				mod = tcell.ModShift
+				mod = kit.ModShift
 			}
-			p.routeKey(tcell.NewEventKey(key, 0, mod), "")
+			p.routeKey(newKey(key, 0, mod), "")
 		}
 		if !slices.Contains(eng.Account().EarnedBadges(), badge) {
 			at, _ := p.view.Pointer()

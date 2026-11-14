@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
@@ -49,29 +48,29 @@ func TestNativeInputKeysAndCalls(t *testing.T) {
 	keepTheme(t)
 	in := newNativeInput().SetLabel("> ")
 	var changes []string
-	var done []tcell.Key
-	in.SetChangedFunc(func(s string) { changes = append(changes, s) }).SetDoneFunc(func(k tcell.Key) { done = append(done, k) })
+	var done []kit.KeyCode
+	in.SetChangedFunc(func(s string) { changes = append(changes, s) }).SetDoneFunc(func(k kit.KeyCode) { done = append(done, k) })
 	in.Focus(func(tview.Primitive) {})
-	press := func(k tcell.Key, r rune) {
-		in.InputHandler()(tcell.NewEventKey(k, r, tcell.ModNone), func(tview.Primitive) {})
+	press := func(k kit.KeyCode, r rune) {
+		in.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
 	}
 	for _, r := range "hut" {
-		press(tcell.KeyRune, r)
+		press(kit.KeyRune, r)
 	}
-	press(tcell.KeyBackspace2, 0)
+	press(kit.KeyBackspace, 0)
 	if in.GetText() != "hu" || len(changes) != 4 {
 		t.Errorf("typed %q with changes %q", in.GetText(), changes)
 	}
-	press(tcell.KeyEnter, 0)
-	press(tcell.KeyEsc, 0)
-	press(tcell.KeyTab, 0)
-	if len(done) != 3 || done[0] != tcell.KeyEnter {
+	press(kit.KeyEnter, 0)
+	press(kit.KeyEsc, 0)
+	press(kit.KeyTab, 0)
+	if len(done) != 3 || done[0] != kit.KeyEnter {
 		t.Errorf("Enter, Esc and Tab are done keys: %v", done)
 	}
 	// A click puts the cursor at the character.
 	cellsOf(t, in, 20, 1)
 	in.root.Mouse(kit.Mouse{Kind: kit.MousePress, X: 3, Y: 0})
-	press(tcell.KeyRune, 'X')
+	press(kit.KeyRune, 'X')
 	if got := in.GetText(); got != "hXu" {
 		t.Errorf("after a click and a letter: %q", got)
 	}

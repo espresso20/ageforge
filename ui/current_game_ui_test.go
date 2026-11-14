@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // current_game_ui_test.go: the current game as the player sees and sets it,
@@ -69,7 +69,7 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 
 	// M on another save marks it as the main game.
 	b.selectByName("ashford")
-	r.key(tcell.KeyRune, 'm')
+	r.key(kit.KeyRune, 'm')
 	if mainGame, _ := r.acct.GameRecord(); mainGame != "ashford" {
 		t.Fatalf("M did not mark ashford: the main game is %q", mainGame)
 	}
@@ -89,7 +89,7 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 		t.Errorf("a marked save: the detail is %q", d)
 	}
 	// The main menu follows when the browser closes.
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if r.front() != "splash" || r.m.cur.Save.Name != "ashford" || r.m.cur.Why != game.CurrentMain {
 		t.Errorf("back at the menu: front %q, Continue opens %q (%s)", r.front(), r.m.cur.Save.Name, r.m.cur.Why)
 	}
@@ -100,7 +100,7 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 	// Playing another game does not unseat the main game.
 	b = browserFor(r)
 	b.selectByName("brackwater")
-	r.key(tcell.KeyEnter, 0)
+	r.key(kit.KeyEnter, 0)
 	waitRunning(t, r.eng)
 	r.eng.Stop()
 	r.pages.SwitchToPage("splash")
@@ -114,7 +114,7 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 	// M on the main game unmarks it: the game last played is current again.
 	b = browserFor(r)
 	b.selectByName("ashford_ii")
-	r.key(tcell.KeyRune, 'M')
+	r.key(kit.KeyRune, 'M')
 	if mainGame, _ := r.acct.GameRecord(); mainGame != "" {
 		t.Errorf("M on the main game left %q marked", mainGame)
 	}
@@ -123,16 +123,16 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 	}
 
 	// A marked save is deleted from the browser: the mark goes with it.
-	r.key(tcell.KeyRune, 'm') // mark ashford_ii again
+	r.key(kit.KeyRune, 'm') // mark ashford_ii again
 	if mainGame, _ := r.acct.GameRecord(); mainGame != "ashford_ii" {
 		t.Fatalf("the main game is %q", mainGame)
 	}
-	r.key(tcell.KeyRune, 'd')
+	r.key(kit.KeyRune, 'd')
 	if r.front() != "load_game_delete" {
 		t.Fatalf("D opens %q", r.front())
 	}
-	r.key(tcell.KeyTab, 0) // Cancel, then Delete
-	r.key(tcell.KeyEnter, 0)
+	r.key(kit.KeyTab, 0) // Cancel, then Delete
+	r.key(kit.KeyEnter, 0)
 	if game.SaveExists("ashford_ii") {
 		t.Fatal("the save was not deleted")
 	}
@@ -142,7 +142,7 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 	if sub := untag(b.subtitle.GetText(false)); !strings.Contains(sub, "2 saves") || !strings.Contains(sub, "Continue opens brackwater") {
 		t.Errorf("after the delete: the subtitle is %q", sub)
 	}
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if r.m.cur.Save.Name != "brackwater" || r.m.cur.Why != game.CurrentLast {
 		t.Errorf("back at the menu Continue opens %q (%s)", r.m.cur.Save.Name, r.m.cur.Why)
 	}
@@ -155,7 +155,7 @@ func TestLoadBrowserWithNoSaves(t *testing.T) {
 	if sub := untag(b.subtitle.GetText(false)); !strings.Contains(sub, "0 saves") || strings.Contains(sub, "Continue") {
 		t.Errorf("no saves: the subtitle is %q", sub)
 	}
-	r.key(tcell.KeyRune, 'm')
+	r.key(kit.KeyRune, 'm')
 	if mainGame, last := r.acct.GameRecord(); mainGame != "" || last != "" {
 		t.Errorf("no saves: M recorded %q and %q", mainGame, last)
 	}
@@ -169,9 +169,9 @@ func pressModal(t *testing.T, r *menuRig, index int) {
 		t.Fatalf("the page in front (%q) is not a dialog", r.front())
 	}
 	for i := 0; i < index; i++ {
-		r.key(tcell.KeyTab, 0)
+		r.key(kit.KeyTab, 0)
 	}
-	r.key(tcell.KeyEnter, 0)
+	r.key(kit.KeyEnter, 0)
 }
 
 // TestAccountsPanelDeletesTheSelectedAccountsSaves: "Delete all saves" is
@@ -214,7 +214,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 
 	// The current account, and Cancel: nothing is deleted.
 	p.selectByID(first.AccountID)
-	r.key(tcell.KeyRune, 'x')
+	r.key(kit.KeyRune, 'x')
 	if r.front() != accountsSavesConfirm {
 		t.Fatalf("x opens %q, want the confirmation", r.front())
 	}
@@ -225,7 +225,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 
 	// The other account, confirmed: its saves go, the current one's stay.
 	p.selectByID(second.AccountID)
-	r.key(tcell.KeyRune, 'x')
+	r.key(kit.KeyRune, 'x')
 	pressModal(t, r, 1)
 	if savesOf(second.AccountID) != 0 || savesOf(first.AccountID) != 2 {
 		t.Fatalf("deleting the second account's saves left %d and %d", savesOf(second.AccountID), savesOf(first.AccountID))
@@ -239,7 +239,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 
 	// The current account, confirmed.
 	p.selectByID(first.AccountID)
-	r.key(tcell.KeyRune, 'X')
+	r.key(kit.KeyRune, 'X')
 	pressModal(t, r, 1)
 	if savesOf(first.AccountID) != 0 {
 		t.Fatalf("the current account still has %d saves", savesOf(first.AccountID))
@@ -254,14 +254,14 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 		t.Error("deleting the saves let go of the account")
 	}
 	// Once more: nothing left to delete, and it says so.
-	r.key(tcell.KeyRune, 'x')
+	r.key(kit.KeyRune, 'x')
 	pressModal(t, r, 1)
 	if status := untag(p.status.GetText(false)); !strings.Contains(status, "no saves to delete") {
 		t.Errorf("with nothing to delete the status line says %q", status)
 	}
 
 	// Back at the menu: an account with no game sees the first page.
-	r.key(tcell.KeyEsc, 0)
+	r.key(kit.KeyEsc, 0)
 	if r.front() != "splash" || r.m.hasCur || !r.m.view.forge || r.m.view.items[0].id != miNew {
 		t.Errorf("back at the menu: front %q, a current game %v, forge page %v, first entry %q", r.front(), r.m.hasCur, r.m.view.forge, r.m.view.items[0].id)
 	}

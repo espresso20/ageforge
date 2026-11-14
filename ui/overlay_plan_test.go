@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // plainText strips tview color tags, for asserting on what the player reads.
@@ -103,29 +103,29 @@ func TestPlanPanel_KeysAndText(t *testing.T) {
 	p.sel = 1
 	wantAll(t, "blocked item detail", plainText(p.provider(engine.GetState(), 100)), "too little wood coming in")
 	p.sel = 0
-	key := func(k tcell.Key, r rune) {
-		if !p.handleKey(tcell.NewEventKey(k, r, tcell.ModNone), engine) {
+	key := func(k kit.KeyCode, r rune) {
+		if !p.handleKey(newKey(k, r, 0), engine) {
 			t.Fatalf("key %v %q not consumed", k, r)
 		}
 	}
-	key(tcell.KeyDown, 0)
-	key(tcell.KeyRune, 'u') // story_circle to the top
+	key(kit.KeyDown, 0)
+	key(kit.KeyRune, 'u') // story_circle to the top
 	if st := engine.GetState(); st.Plan[0].Key != "story_circle" || p.sel != 0 {
 		t.Errorf("after down, u: plan[0] = %s, sel %d", st.Plan[0].Key, p.sel)
 	}
-	key(tcell.KeyRune, 'x')
+	key(kit.KeyRune, 'x')
 	if st := engine.GetState(); len(st.Plan) != 2 || st.Plan[0].Key != "hut" {
 		t.Errorf("after x: %+v", st.Plan)
 	}
-	key(tcell.KeyRune, 'C')
+	key(kit.KeyRune, 'C')
 	if len(engine.GetState().Plan) != 2 || !p.clearArmed {
 		t.Error("one C cleared the plan or didn't arm")
 	}
-	key(tcell.KeyRune, 'C')
+	key(kit.KeyRune, 'C')
 	if len(engine.GetState().Plan) != 0 {
 		t.Error("two Cs didn't clear the plan")
 	}
-	if p.handleKey(tcell.NewEventKey(tcell.KeyRune, 'z', tcell.ModNone), engine) {
+	if p.handleKey(newKey(kit.KeyRune, 'z', 0), engine) {
 		t.Error("an unbound key was consumed")
 	}
 }

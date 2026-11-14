@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -16,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // icons.go is the guided icons check (the icons command), in a window of its
@@ -446,7 +446,7 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 		AddItem(hint, 1, 0, false)
 	framed(inner, vibe.Line("ui.icons.newIconsWindow.02", " Icons check "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 	w.root = floatingModal(inner, iconsWindowWidth, iconsWindowHeight)
-	w.root.SetInputCapture(d.iconsKey)
+	captureKeys(w.root, d.iconsKey)
 	return w
 }
 
@@ -496,20 +496,20 @@ func (d *Dashboard) refreshIconsWindow() {
 // iconsKey is the window's key handling: Esc closes, Tab and the arrows move
 // between buttons, a button's letter presses it. Other letters do nothing;
 // Enter reaches the focused button.
-func (d *Dashboard) iconsKey(event *tcell.EventKey) *tcell.EventKey {
+func (d *Dashboard) iconsKey(event *kit.Key) *kit.Key {
 	ring := d.iconsWin.ring
-	switch event.Key() {
-	case tcell.KeyEsc:
+	switch event.Code {
+	case kit.KeyEsc:
 		d.icons.close()
 		return nil
-	case tcell.KeyDown:
+	case kit.KeyDown:
 		ring.focus(ring.at + 1)
 		return nil
-	case tcell.KeyUp:
+	case kit.KeyUp:
 		ring.focus(ring.at - 1)
 		return nil
-	case tcell.KeyRune:
-		ring.press(event.Rune())
+	case kit.KeyRune:
+		ring.press(event.Rune)
 		return nil
 	}
 	if ring.key(event) {

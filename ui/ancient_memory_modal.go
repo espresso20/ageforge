@@ -6,7 +6,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
-	"github.com/gdamore/tcell/v2"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/rivo/tview"
 )
 
@@ -77,7 +77,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	ring := newButtonRing(d.app, func(p tview.Primitive) { d.memFocus = p })
 	ring.add(btnAccept, 'a')
 	ring.add(btnDecline, 'd')
-	modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	captureKeys(modal, func(event *kit.Key) *kit.Key {
 		if ring.key(event) {
 			return nil
 		}

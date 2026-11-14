@@ -5,6 +5,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // bar_panel.go is what the overlay panels that leave the keyboard with the
@@ -21,22 +22,22 @@ type barPanel struct {
 	prompt func() string
 	// toPrompt hands a key the panel does not take to the command bar, and
 	// the keyboard with it, when the panel itself has the focus.
-	toPrompt func(ev *tcell.EventKey)
+	toPrompt func(ev *kit.Key)
 	// route is the panel's routeKey: it takes a key if it is one of the
 	// panel's, given the command bar's text, and reports whether it did.
-	route func(ev *tcell.EventKey, prompt string) bool
+	route func(ev *kit.Key, prompt string) bool
 }
 
 // newBarPanel is a barPanel whose keys are decided by route.
-func newBarPanel(route func(ev *tcell.EventKey, prompt string) bool) barPanel {
+func newBarPanel(route func(ev *kit.Key, prompt string) bool) barPanel {
 	return barPanel{Box: tview.NewBox(), route: route}
 }
 
 // InputHandler is for when the panel itself has the focus (the command bar
 // normally keeps it): the panel's own keys work, and anything else goes to
 // the command bar, which takes the keyboard back.
-func (b *barPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return b.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
+func (b *barPanel) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
+	return keysIn(b.Box, func(ev *kit.Key) {
 		prompt := ""
 		if b.prompt != nil {
 			prompt = b.prompt()
@@ -62,7 +63,7 @@ func overBar(p tview.Primitive) tview.Primitive {
 type barOverlay struct {
 	// routeKey is the panel's routeKey: it takes a key that is the panel's
 	// and reports whether it did.
-	routeKey func(ev *tcell.EventKey, prompt string) bool
+	routeKey func(ev *kit.Key, prompt string) bool
 	// closeFirst takes back what Esc closes before it closes the panel (a
 	// card, a question) and reports whether there was one. Nil when there
 	// is nothing.
@@ -113,9 +114,9 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 
 // handToPrompt gives the keyboard back to the command bar, starting with ev:
 // a panel that had it for itself passes on a key it does not take.
-func (d *Dashboard) handToPrompt(ev *tcell.EventKey) {
+func (d *Dashboard) handToPrompt(ev *kit.Key) {
 	d.overlayMgr.FocusOn(d.inputField)
 	if h := d.inputField.InputHandler(); h != nil {
-		h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
+		h(tcellKey(*ev), func(p tview.Primitive) { d.app.SetFocus(p) })
 	}
 }

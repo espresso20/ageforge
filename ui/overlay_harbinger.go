@@ -6,7 +6,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
@@ -14,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The Harbinger panel: who came, what they said, how worried to be, and the
@@ -54,11 +54,11 @@ const (
 )
 
 // harbingerKeyAction maps a key event to an action (A / B / I, any case).
-func harbingerKeyAction(event *tcell.EventKey) harbingerAction {
-	if event.Key() != tcell.KeyRune {
+func harbingerKeyAction(event *kit.Key) harbingerAction {
+	if event.Code != kit.KeyRune {
 		return harbingerNoAction
 	}
-	switch unicode.ToLower(event.Rune()) {
+	switch unicode.ToLower(event.Rune) {
 	case 'a':
 		return harbingerAppease
 	case 'b':
@@ -72,7 +72,7 @@ func harbingerKeyAction(event *tcell.EventKey) harbingerAction {
 // handleKey runs the action for event against engine and updates the note.
 // Reports whether the key was consumed. Takes engine locks through the public
 // action methods only; must not be called under the engine lock.
-func (p *harbingerPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bool {
+func (p *harbingerPanel) handleKey(event *kit.Key, engine *game.GameEngine) bool {
 	act := harbingerKeyAction(event)
 	if act == harbingerNoAction {
 		return false

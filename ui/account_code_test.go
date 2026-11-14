@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/gdamore/tcell/v2"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The recovery code (card G9Bx4UFM): the bare `account` reply is long and the
@@ -90,7 +90,7 @@ func TestAccountShowCodeIsNotKept(t *testing.T) {
 func TestAccountShowCodeWindowCloses(t *testing.T) {
 	d, _ := mapTestDashboard(t, true)
 	d.runForTest("account show code")
-	pressKey(d, d.pages, tcell.KeyEscape, 0)
+	pressKey(d, d.pages, kit.KeyEsc, 0)
 	if front, _ := d.pages.GetFrontPage(); front == codeWindowPage {
 		t.Error("Esc left the code window open")
 	}

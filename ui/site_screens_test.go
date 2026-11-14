@@ -20,6 +20,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The wiki's screens (site/docs/screens/) are real ones: the game's own
@@ -755,7 +756,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.close()
 	// The Wonders panel's gallery: G on the list opens it.
 	s.open("wonders", "")
-	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tcell.NewEventKey(tcell.KeyRune, 'g', 0), func(tview.Primitive) {})
+	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tev(kit.KeyRune, 'g', 0), func(tview.Primitive) {})
 	if !s.d.wonders.gallery {
 		t.Fatal("G did not open the gallery")
 	}
@@ -953,7 +954,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		t.Fatalf("badges ladders opened the tab %q", p.view.tab)
 	}
 	for i := 0; p.view.sel != rung; i++ {
-		if i > 20 || !p.routeKey(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone), "") {
+		if i > 20 || !p.routeKey(newKey(kit.KeyRight, 0, 0), "") {
 			t.Fatalf("the arrows never reached %s (on %s)", rung, p.view.sel)
 		}
 	}

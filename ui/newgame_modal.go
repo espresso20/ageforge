@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // newGameNamePage is the unique page name for the New Game name-entry modal.
@@ -166,8 +166,8 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 	}
 
 	// Enter in the field submits.
-	input.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+	input.SetDoneFunc(func(key kit.KeyCode) {
+		if key == kit.KeyEnter {
 			submit()
 		}
 	})
@@ -195,7 +195,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 		escape = submit
 	}
 	modal := centeredModal(inner, 60, 7)
-	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: escape, tcell.KeyTab: reroll, tcell.KeyBacktab: reroll})
+	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: escape, kit.KeyTab: reroll, kit.KeyBacktab: reroll})
 
 	pages.AddPage(pageName, modal, true, true)
 	app.SetFocus(input)

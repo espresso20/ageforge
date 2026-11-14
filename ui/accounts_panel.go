@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // accountsPage is the page name under which the Accounts panel is registered on the root
@@ -210,16 +210,16 @@ func (p *accountsPanel) selected() (game.AccountSummary, bool) {
 }
 
 // handleKey routes the action keys. tview.List handles ↑/↓ natively; we intercept the rest.
-func (p *accountsPanel) handleKey(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Key() {
-	case tcell.KeyEnter:
+func (p *accountsPanel) handleKey(event *kit.Key) *kit.Key {
+	switch event.Code {
+	case kit.KeyEnter:
 		p.doSwitch()
 		return nil
-	case tcell.KeyEsc:
+	case kit.KeyEsc:
 		p.back()
 		return nil
-	case tcell.KeyRune:
-		switch event.Rune() {
+	case kit.KeyRune:
+		switch event.Rune {
 		case 'n', 'N':
 			p.doNew()
 			return nil
@@ -432,8 +432,8 @@ func (p *accountsPanel) doImport() {
 		p.status.SetText(vibe.Sprintf("ui.accounts_panel.doImport.06", "[green]Imported %s. Press Enter to switch to it.[-]", displayNameOrName(imported.DisplayName)))
 	}
 
-	input.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+	input.SetDoneFunc(func(key kit.KeyCode) {
+		if key == kit.KeyEnter {
 			submit()
 		}
 	})
@@ -447,7 +447,7 @@ func (p *accountsPanel) doImport() {
 	framed(inner, vibe.Line("ui.accounts_panel.doImport.07", " Import account backup "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	modal := centeredModal(inner, 68, 7)
-	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: close})
+	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: close})
 
 	p.pages.AddPage(accountsImportPage, modal, true, true)
 	p.app.SetFocus(input)
@@ -595,8 +595,8 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		p.resolveAfterWipe(wasActive, backupPath)
 	}
 
-	input.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+	input.SetDoneFunc(func(key kit.KeyCode) {
+		if key == kit.KeyEnter {
 			confirm()
 		}
 	})
@@ -617,7 +617,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 	framed(inner, vibe.Line("ui.accounts_panel.showWipeTypeGate.08", " Confirm account wipe "), theme.RoleOnNegative).SetBackgroundColor(theme.Color(theme.RoleNegative))
 
 	modal := centeredModal(inner, 72, 13)
-	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: abort})
+	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: abort})
 
 	p.pages.AddPage(accountsWipeTypeGate, modal, true, true)
 	p.app.SetFocus(input)
@@ -687,7 +687,7 @@ func (p *accountsPanel) showMessage(title, body string) {
 		p.app.SetFocus(p.list)
 	}
 	modal := centeredModal(inner, 72, 13)
-	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: close, tcell.KeyEnter: close})
+	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: close, kit.KeyEnter: close})
 	p.pages.AddPage(accountsMessagePage, modal, true, true)
 	p.app.SetFocus(modal)
 }

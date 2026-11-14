@@ -168,9 +168,9 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 	}
 	switch {
 	case m.Kind == kit.MouseWheel && !p.view.card:
-		key := tcell.KeyDown
+		key := kit.KeyDown
 		if m.Wheel < 0 {
-			key = tcell.KeyUp
+			key = kit.KeyUp
 		}
 		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
 			p.handleKey(key)
@@ -188,7 +188,7 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 	p.view.sel = key
 	p.layout()
 	if m.Clicks == 2 {
-		p.handleKey(tcell.KeyEnter)
+		p.handleKey(kit.KeyEnter)
 	}
 	return true
 }
@@ -196,17 +196,17 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt, Tab and Enter belong to the
 // prompt.
-func (p *researchPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
-	switch ev.Key() {
-	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight, tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyHome:
-	case tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEnter:
+func (p *researchPanel) routeKey(ev *kit.Key, prompt string) bool {
+	switch ev.Code {
+	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome:
+	case kit.KeyTab, kit.KeyBacktab, kit.KeyEnter:
 		if prompt != "" {
 			return false
 		}
 	default:
 		return false
 	}
-	p.handleKey(ev.Key())
+	p.handleKey(ev.Code)
 	return true
 }
 
@@ -220,36 +220,36 @@ func (p *researchPanel) closeCard() bool {
 	return true
 }
 
-func (p *researchPanel) handleKey(key tcell.Key) {
+func (p *researchPanel) handleKey(key kit.KeyCode) {
 	if p.model == nil {
 		p.layout()
 	}
 	if p.view.card {
-		if key == tcell.KeyEnter {
+		if key == kit.KeyEnter {
 			p.act()
 		}
 		return
 	}
 	switch key {
-	case tcell.KeyUp:
+	case kit.KeyUp:
 		p.move(0, -1)
-	case tcell.KeyDown:
+	case kit.KeyDown:
 		p.move(0, 1)
-	case tcell.KeyLeft:
+	case kit.KeyLeft:
 		p.move(-1, 0)
-	case tcell.KeyRight:
+	case kit.KeyRight:
 		p.move(1, 0)
-	case tcell.KeyTab:
+	case kit.KeyTab:
 		p.step(1)
-	case tcell.KeyBacktab:
+	case kit.KeyBacktab:
 		p.step(-1)
-	case tcell.KeyPgUp:
+	case kit.KeyPgUp:
 		p.view.far = true
-	case tcell.KeyPgDn:
+	case kit.KeyPgDn:
 		p.view.far = false
-	case tcell.KeyHome:
+	case kit.KeyHome:
 		p.view.sel = ""
-	case tcell.KeyEnter:
+	case kit.KeyEnter:
 		p.view.card, p.view.note = p.model.by[p.view.sel] != nil, ""
 	}
 	p.layout()

@@ -86,9 +86,9 @@ func (p *peoplePanel) Paint(p2 *kit.Painter) {
 func (p *peoplePanel) Mouse(m kit.Mouse) bool {
 	switch {
 	case m.Kind == kit.MouseWheel:
-		key := tcell.KeyDown
+		key := kit.KeyDown
 		if m.Wheel < 0 {
-			key = tcell.KeyUp
+			key = kit.KeyUp
 		}
 		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
 			p.handleKey(key)
@@ -111,28 +111,28 @@ func (p *peoplePanel) Mouse(m kit.Mouse) bool {
 
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt every key belongs to the prompt.
-func (p *peoplePanel) routeKey(ev *tcell.EventKey, prompt string) bool {
-	switch ev.Key() {
-	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight:
+func (p *peoplePanel) routeKey(ev *kit.Key, prompt string) bool {
+	switch ev.Code {
+	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight:
 		if prompt != "" {
 			return false
 		}
 	default:
 		return false
 	}
-	p.handleKey(ev.Key())
+	p.handleKey(ev.Code)
 	return true
 }
 
-func (p *peoplePanel) handleKey(key tcell.Key) {
+func (p *peoplePanel) handleKey(key kit.KeyCode) {
 	switch key {
-	case tcell.KeyLeft:
+	case kit.KeyLeft:
 		p.setTab((p.view.tab + len(peopleTabs) - 1) % len(peopleTabs))
-	case tcell.KeyRight:
+	case kit.KeyRight:
 		p.setTab((p.view.tab + 1) % len(peopleTabs))
-	case tcell.KeyUp:
+	case kit.KeyUp:
 		p.view.row = max(0, p.view.row-1)
-	case tcell.KeyDown:
+	case kit.KeyDown:
 		p.view.row = min(max(0, peopleRows(p.state, p.view.tab)-1), p.view.row+1)
 	}
 }

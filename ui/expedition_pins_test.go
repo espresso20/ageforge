@@ -5,11 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // pinScene is the Ready Room drawn at w by h, with the highlight on the
@@ -308,8 +307,8 @@ func TestMissionUnderWayShowsItsGoalAsAChip(t *testing.T) {
 	if !want.CanLaunch {
 		t.Fatalf("the first offer cannot be sent: %s", want.LaunchBlockReason)
 	}
-	p.handleKey(tcell.KeyEnter)
-	p.handleKey(tcell.KeyEnter)
+	p.handleKey(kit.KeyEnter)
+	p.handleKey(kit.KeyEnter)
 	p.setReport(true)
 	p.view.frame = 0
 	state := p.state

@@ -79,8 +79,8 @@ func TestNativeListKeys(t *testing.T) {
 		t.Errorf("the first row added announces itself: %v", moved)
 	}
 	cellsOf(t, l, 20, 3)
-	press := func(k tcell.Key, r rune) {
-		l.InputHandler()(tcell.NewEventKey(k, r, tcell.ModNone), func(tview.Primitive) {})
+	press := func(k kit.KeyCode, r rune) {
+		l.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
 	}
 	at := func(want int, what string) {
 		t.Helper()
@@ -88,36 +88,36 @@ func TestNativeListKeys(t *testing.T) {
 			t.Errorf("%s: row %d, want %d", what, got, want)
 		}
 	}
-	press(tcell.KeyDown, 0)
+	press(kit.KeyDown, 0)
 	at(1, "Down")
-	press(tcell.KeyEnd, 0)
+	press(kit.KeyEnd, 0)
 	at(4, "End")
-	press(tcell.KeyDown, 0)
+	press(kit.KeyDown, 0)
 	at(0, "Down at the end comes round")
-	press(tcell.KeyUp, 0)
+	press(kit.KeyUp, 0)
 	at(4, "Up at the top comes round")
-	press(tcell.KeyHome, 0)
+	press(kit.KeyHome, 0)
 	at(0, "Home")
-	press(tcell.KeyPgDn, 0)
+	press(kit.KeyPgDn, 0)
 	at(3, "PgDn is a screenful (3 rows)")
-	press(tcell.KeyPgUp, 0)
+	press(kit.KeyPgUp, 0)
 	at(0, "PgUp")
-	press(tcell.KeyTab, 0)
+	press(kit.KeyTab, 0)
 	at(1, "Tab")
-	press(tcell.KeyEnter, 0)
+	press(kit.KeyEnter, 0)
 	if len(chosen) != 1 || chosen[0] != 1 {
 		t.Errorf("Enter chooses the row: %v", chosen)
 	}
-	press(tcell.KeyRune, 'd')
+	press(kit.KeyRune, 'd')
 	at(3, "a shortcut selects")
 	if len(chosen) != 2 || chosen[1] != 3 {
 		t.Errorf("a shortcut chooses its row: %v", chosen)
 	}
-	press(tcell.KeyRune, 'z')
+	press(kit.KeyRune, 'z')
 	if len(chosen) != 2 {
 		t.Error("a letter that is no shortcut does nothing")
 	}
-	press(tcell.KeyRune, ' ')
+	press(kit.KeyRune, ' ')
 	if len(chosen) != 3 || chosen[2] != 3 {
 		t.Errorf("Space chooses the selected row: %v", chosen)
 	}

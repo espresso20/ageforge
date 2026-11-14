@@ -7,6 +7,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // menu_badges.go opens the badge case from the main menu. The case is the
@@ -24,10 +25,10 @@ type menuBadges struct {
 }
 
 // InputHandler: the case's own keys, and Esc (or q) to close.
-func (b *menuBadges) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return b.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
+func (b *menuBadges) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
+	return keysIn(b.Box, func(ev *kit.Key) {
 		switch {
-		case ev.Key() == tcell.KeyEsc, ev.Key() == tcell.KeyRune && (ev.Rune() == 'q' || ev.Rune() == 'Q'):
+		case ev.Code == kit.KeyEsc, ev.Code == kit.KeyRune && (ev.Rune == 'q' || ev.Rune == 'Q'):
 			if !b.closeCard() {
 				b.close()
 			}

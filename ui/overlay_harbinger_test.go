@@ -12,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // tagRe matches tview colour/attribute tags, for reading panel text plainly.
@@ -167,7 +168,7 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	}
 	capture := d.overlayMgr.entries["harbinger"].tv.GetInputCapture()
 	press := func(r rune) *tcell.EventKey {
-		return capture(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone))
+		return capture(tev(kit.KeyRune, r, 0))
 	}
 
 	// Brace with empty stores: refused, reported, nothing changes.
@@ -217,7 +218,7 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	if ev := press('x'); ev == nil {
 		t.Error("an unrelated key was swallowed")
 	}
-	capture(tcell.NewEventKey(tcell.KeyEsc, 0, tcell.ModNone))
+	capture(tev(kit.KeyEsc, 0, 0))
 	if d.overlayMgr.HasActive() {
 		t.Error("Esc did not close the panel")
 	}

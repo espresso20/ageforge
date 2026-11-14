@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // mapTestDashboard builds a dashboard on a fresh game in a temp data dir,
@@ -40,7 +41,7 @@ func drawMapPanel(t *testing.T, d *Dashboard, w, h int) string {
 	return drawPrimitive(t, d.mapPanel, w, h).Text()
 }
 
-func key(r rune) *tcell.EventKey { return tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone) }
+func key(r rune) *kit.Key { return newKey(kit.KeyRune, r, 0) }
 
 // TestMapAliasesOpenThePanel: map, citymap and worldmap all open the one Map
 // panel; worldmap opens the map on the known world (its region zoom).
@@ -131,7 +132,7 @@ func TestMapInspectStagesCommand(t *testing.T) {
 	drawMapPanel(t, d, 160, 48)
 	var cmd string
 	for i := 0; i < 40 && cmd == ""; i++ {
-		if !p.routeKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), "") {
+		if !p.routeKey(newKey(kit.KeyTab, 0, 0), "") {
 			t.Fatal("Tab on an empty prompt did not go to the map")
 		}
 		drawMapPanel(t, d, 160, 48)
@@ -145,7 +146,7 @@ func TestMapInspectStagesCommand(t *testing.T) {
 	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter types "+cmd) {
 		t.Errorf("key bar does not offer %q:\n%s", cmd, txt)
 	}
-	p.routeKey(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), "")
+	p.routeKey(newKey(kit.KeyEnter, 0, 0), "")
 	if d.overlayMgr.ActiveName() != "map" {
 		t.Errorf("Enter closed the panel")
 	}
@@ -158,8 +159,8 @@ func TestMapInspectStagesCommand(t *testing.T) {
 	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter runs the command below") {
 		t.Errorf("key bar does not say Enter runs the staged command:\n%s", txt)
 	}
-	for _, k := range []tcell.Key{tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEnter} {
-		if p.routeKey(tcell.NewEventKey(k, 0, tcell.ModNone), cmd) {
+	for _, k := range []kit.KeyCode{kit.KeyTab, kit.KeyBacktab, kit.KeyEnter} {
+		if p.routeKey(newKey(k, 0, 0), cmd) {
 			t.Errorf("%v went to the map with %q in the prompt", k, cmd)
 		}
 	}
@@ -305,12 +306,12 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	}
 	typeText := func(s string) {
 		for _, r := range s {
-			sim.InjectKey(tcell.KeyRune, r, tcell.ModNone)
+			sim.InjectKey(tcell.KeyRune, r, 0)
 		}
 	}
 
 	typeText("map")
-	sim.InjectKey(tcell.KeyEnter, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyEnter, 0, 0)
 	waitFor("the Map panel", func() bool { look(); return active == "map" && prompt == "" && focused })
 	var txt string
 	onLoop(func() { txt = simCells(sim).Text() })
@@ -321,44 +322,44 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	typeText("stat")
 	waitFor("letters in the prompt", func() bool { look(); return prompt == "stat" })
 	for range "stat" {
-		sim.InjectKey(tcell.KeyBackspace2, 0, tcell.ModNone)
+		sim.InjectKey(tcell.KeyBackspace2, 0, 0)
 	}
 	waitFor("Backspace in the prompt", func() bool { look(); return prompt == "" })
 
-	sim.InjectKey(tcell.KeyPgUp, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyPgUp, 0, 0)
 	waitFor("PgUp to zoom out to the region", func() bool { return strings.Contains(simCells(sim).Text(), "REGION") })
 	onLoop(look)
 	before := pointer
-	sim.InjectKey(tcell.KeyTab, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyTab, 0, 0)
 	waitFor("Tab to move the map's cursor", func() bool { look(); return pointed && pointer != before })
-	sim.InjectKey(tcell.KeyRight, 0, tcell.ModNone)
-	sim.InjectKey(tcell.KeyLeft, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyRight, 0, 0)
+	sim.InjectKey(tcell.KeyLeft, 0, 0)
 	onLoop(look)
 	if prompt != "" || active != "map" {
 		t.Errorf("the arrows reached the prompt (%q) or closed the map (%q)", prompt, active)
 	}
 
 	typeText("status")
-	sim.InjectKey(tcell.KeyEnter, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyEnter, 0, 0)
 	waitFor("status to run", func() bool { look(); return prompt == "" && d.mapPanel.note != "" })
 	if active != "map" {
 		t.Errorf("running a command closed the map (active %q)", active)
 	}
 
-	sim.InjectKey(tcell.KeyTab, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyTab, 0, 0)
 	waitFor("the cursor on a target with a command", func() bool {
 		look()
 		in, ok := d.mapPanel.current().Inspect(d.mapPanel.frame())
 		if !ok || in.Command == "" {
-			sim.InjectKey(tcell.KeyTab, 0, tcell.ModNone)
+			sim.InjectKey(tcell.KeyTab, 0, 0)
 			return false
 		}
 		return true
 	})
-	sim.InjectKey(tcell.KeyEnter, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyEnter, 0, 0)
 	waitFor("Enter to type the inspected command", func() bool { look(); return prompt != "" })
 	staged := prompt
-	sim.InjectKey(tcell.KeyEsc, 0, tcell.ModNone)
+	sim.InjectKey(tcell.KeyEsc, 0, 0)
 	waitFor("Esc to close the map", func() bool { look(); return active == "" && focused })
 	if prompt != staged {
 		t.Errorf("closing the map changed the prompt from %q to %q", staged, prompt)
@@ -381,11 +382,11 @@ func TestMapKeepsThePromptFocused(t *testing.T) {
 		t.Errorf("the window closing gave the keyboard to %T, not the prompt", d.app.GetFocus())
 	}
 	d.app.SetFocus(d.mapPanel)
-	d.mapPanel.InputHandler()(key('b'), func(tview.Primitive) {})
+	d.mapPanel.InputHandler()(tcellKey(*key('b')), func(tview.Primitive) {})
 	if d.app.GetFocus() != d.inputField || d.inputField.GetText() != "b" {
 		t.Errorf("a letter typed with the map focused: focus %T, prompt %q", d.app.GetFocus(), d.inputField.GetText())
 	}
-	d.mapPanel.InputHandler()(tcell.NewEventKey(tcell.KeyPgUp, 0, tcell.ModNone), func(tview.Primitive) {})
+	d.mapPanel.InputHandler()(tev(kit.KeyPgUp, 0, 0), func(tview.Primitive) {})
 	if d.inputField.GetText() != "b" {
 		t.Errorf("PgUp reached the prompt: %q", d.inputField.GetText())
 	}

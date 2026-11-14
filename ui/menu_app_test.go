@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // menu_app_test.go runs the main menu in the real App, on its own event
@@ -89,7 +90,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 		key  rune
 		page string
 	}{{'l', loadGamePage}, {'a', accountsPage}, {'b', menuBadgesPage}} {
-		h.key(tcell.KeyRune, c.key)
+		h.key(kit.KeyRune, c.key)
 		h.waitFor(c.page+" in front", 5*time.Second, func() bool { return h.frontPage() == c.page })
 		if clockRuns() {
 			t.Errorf("the menu's clock still runs under %s", c.page)
@@ -102,15 +103,15 @@ func TestMenuInTheRunningApp(t *testing.T) {
 		if strings.Contains(screen(), "ages, one terminal") {
 			t.Errorf("the menu shows through %s", c.page)
 		}
-		h.key(tcell.KeyEsc, 0)
+		h.key(kit.KeyEsc, 0)
 		h.waitFor("the menu after "+c.page, 5*time.Second, func() bool { return h.frontPage() == "splash" })
 		moves("back from " + c.page)
 	}
 
 	// Continue: the letter moved the selection to the entry it opened, so
 	// Home puts it back on the first entry and Enter opens the game.
-	h.key(tcell.KeyHome, 0)
-	h.key(tcell.KeyEnter, 0)
+	h.key(kit.KeyHome, 0)
+	h.key(kit.KeyEnter, 0)
 	h.waitFor("the game", 5*time.Second, func() bool { return h.frontPage() == "dashboard" && h.inputHasFocus() })
 	waitRunning(t, h.eng)
 	if got := h.eng.ActiveSaveName(); got != "ashford" {
@@ -120,7 +121,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 		t.Error("the menu's clock runs behind the game")
 	}
 	// Esc in the game saves, stops it and returns to the menu.
-	h.key(tcell.KeyEsc, 0)
+	h.key(kit.KeyEsc, 0)
 	h.waitFor("the menu after the game", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 	moves("back from the game")
 	var sel string
@@ -141,13 +142,13 @@ func TestMenuInTheRunningApp(t *testing.T) {
 	// Motion off (the setting is the account's): the next time the menu is
 	// returned to it holds still, with no clock.
 	must(t, acct.SetMotion(false))
-	h.key(tcell.KeyRune, 's')
+	h.key(kit.KeyRune, 's')
 	h.waitFor("the Settings page", 5*time.Second, func() bool { return strings.Contains(screen(), "Minimap") })
-	h.key(tcell.KeyRune, 't')
+	h.key(kit.KeyRune, 't')
 	h.waitFor("the theme picker", 5*time.Second, func() bool { return h.frontPage() == themePickerPage })
-	h.key(tcell.KeyEsc, 0)
+	h.key(kit.KeyEsc, 0)
 	h.waitFor("Settings after the picker", 5*time.Second, func() bool { return h.frontPage() == "splash" })
-	h.key(tcell.KeyEsc, 0)
+	h.key(kit.KeyEsc, 0)
 	h.waitFor("the menu with motion off", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 	h.waitFor("the clock stopping", 3*time.Second, func() bool { return !clockRuns() })
 	still, at := screen(), frame()
@@ -156,9 +157,9 @@ func TestMenuInTheRunningApp(t *testing.T) {
 		t.Error("with motion off the menu moved")
 	}
 	// And with motion off a choice opens at once, with no strike.
-	h.key(tcell.KeyRune, 'l')
+	h.key(kit.KeyRune, 'l')
 	h.waitFor("the Load Game browser", 5*time.Second, func() bool { return h.frontPage() == loadGamePage })
-	h.key(tcell.KeyEsc, 0)
+	h.key(kit.KeyEsc, 0)
 	h.waitFor("the menu again", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 }
 
@@ -179,12 +180,12 @@ func TestMenuFirstRunInTheRunningApp(t *testing.T) {
 	if !forge() {
 		t.Fatal("a launch with no game is not on the first page")
 	}
-	h.key(tcell.KeyRune, 'n')
+	h.key(kit.KeyRune, 'n')
 	h.waitFor("the name prompt", 5*time.Second, func() bool { return h.frontPage() == newGameNamePage })
-	h.key(tcell.KeyEnter, 0)
+	h.key(kit.KeyEnter, 0)
 	h.waitFor("the game", 5*time.Second, func() bool { return h.frontPage() == "dashboard" && h.inputHasFocus() })
 	waitRunning(t, h.eng)
-	h.key(tcell.KeyEsc, 0)
+	h.key(kit.KeyEsc, 0)
 	h.waitFor("the menu after the game", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 	h.waitFor("the town page", 3*time.Second, func() bool { return !forge() })
 	var first, name string
