@@ -56,7 +56,7 @@ type themePicker struct {
 
 	root    *tview.Flex
 	list    *tview.List
-	detail  *tview.TextView
+	detail  *nativeText
 	preview *tview.Box
 
 	rows      []pickerRow   // 1:1 with list items: group headings + themes
@@ -128,12 +128,12 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 	}
 
 	// ── Title ────────────────────────────────────────────────────────────────
-	title := tview.NewTextView().
+	title := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(vibe.Line("ui.theme_picker.CreateThemePickerPage.01", "[gold]═══ Themes ═══[-]"))
 
-	subtitle := tview.NewTextView().
+	subtitle := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(vibe.Line("ui.theme_picker.CreateThemePickerPage.02", "[gray]The preview is live. Pick a theme that reads well in your terminal; light or dark, every theme paints its own background.[-]"))
@@ -155,7 +155,7 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 	}
 
 	// ── Detail pane ──────────────────────────────────────────────────────────
-	p.detail = tview.NewTextView().
+	p.detail = newNativeText().
 		SetDynamicColors(true).
 		SetWrap(true)
 	p.detail.SetBorder(true).
@@ -170,7 +170,7 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 	})
 
 	// ── Footer ───────────────────────────────────────────────────────────────
-	footer := tview.NewTextView().
+	footer := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(themeFooterBar())
