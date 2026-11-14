@@ -80,12 +80,12 @@ type Dashboard struct {
 	pendingEnding       atomic.Pointer[game.RunEnding]
 	pendingEpochChanged bool // whether the pending age advance also crossed an epoch boundary
 	toastMgr            *ToastManager
-	toastTV             *tview.TextView
+	toastTV             *nativeText
 	toastW              int // the toast bar's width as last drawn; 0 before that
 	contentArea         tview.Primitive
 
 	// Shame badge — set once on first load when CheaterBadge is true
-	cheaterTV *tview.TextView
+	cheaterTV *nativeText
 	shame     *vibe.Entry // the message picked for the session; read as it is now each frame
 
 	// catModalShown tracks the pending catastrophe key we have already shown a modal for,
@@ -351,7 +351,7 @@ func (d *Dashboard) build() {
 	theme.Track(func() { d.logTV.SetTitleColor(theme.Color(theme.RoleDim)) })
 
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
-	d.cheaterTV = tview.NewTextView().
+	d.cheaterTV = newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
@@ -375,7 +375,7 @@ func (d *Dashboard) build() {
 
 	// Toast notification
 	d.toastMgr = NewToastManager()
-	d.toastTV = tview.NewTextView().
+	d.toastTV = newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
@@ -1446,7 +1446,7 @@ const codeWindowPage = "code_window"
 // recovery code's label, and closes it on Esc or Enter. The text lives in the
 // window only: it is never added to the game log.
 func (d *Dashboard) showWindow(text string) {
-	tv := tview.NewTextView().
+	tv := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 	tv.SetBorder(true).SetTitle(vibe.Line("ui.dashboard.showWindow.01", " Recovery code "))
