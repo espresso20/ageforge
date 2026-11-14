@@ -90,7 +90,7 @@ func (r *menuRig) key(k kit.KeyCode, ch rune) {
 	r.t.Helper()
 	// From the root down, as the app sends it, so a page's own key capture
 	// has its say.
-	r.pages.InputHandler()(tev(k, ch, 0), func(p Primitive) { r.app.SetFocus(p) })
+	r.pages.InputHandler()(tk(k, ch, 0), func(p Primitive) { r.app.SetFocus(p) })
 }
 
 // release lets the choices that were waiting out their strike act.
@@ -128,12 +128,12 @@ func (s menuScreen) has(text string) bool {
 // draw draws the menu at w by h, as the app would.
 func (r *menuRig) draw(w, h int) menuScreen {
 	r.t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	must(r.t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	r.m.SetRect(0, 0, w, h)
-	r.m.Draw(theme.WrapScreen(sim))
+	drawOn(sim, r.m)
 	out := menuScreen{w: w, h: h}
 	for y := 0; y < h; y++ {
 		var sb strings.Builder
@@ -539,16 +539,16 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 		t.Fatalf("the menu should show the town of brackwater: current %q, forge page %v", m.cur.Save.Name, m.view.forge)
 	}
 	sim := newSimScreen(t, 120, 40)
-	scr := theme.WrapScreen(sim)
+	scr := sim
 	key := func(k kit.KeyCode, ch rune) {
-		pages.InputHandler()(tev(k, ch, 0), func(p Primitive) { app.SetFocus(p) })
+		pages.InputHandler()(tk(k, ch, 0), func(p Primitive) { app.SetFocus(p) })
 	}
 	for _, size := range [][2]int{{120, 40}, {80, 24}, {144, 46}} {
 		sim.SetSize(size[0], size[1])
 		m.SetRect(0, 0, size[0], size[1])
 		for i := 0; i < 12; i++ {
 			clock = clock.Add(mapAnimStep)
-			m.Draw(scr)
+			drawOn(scr, m)
 		}
 	}
 	key(kit.KeyDown, 0)
@@ -562,11 +562,11 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	}
 	_, front := pages.GetFrontPage()
 	front.SetRect(0, 0, 120, 40)
-	front.Draw(scr)
+	drawOn(scr, front)
 	key(kit.KeyEsc, 0)
 	key(kit.KeyRune, 'u')
 	m.refresh(true)
-	m.Draw(scr)
+	drawOn(scr, m)
 	m.leave()
 
 	if after := dataTree(t, root); !reflect.DeepEqual(before, after) {
@@ -685,7 +685,7 @@ func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 	}
 	sim := newSimScreen(t, 100, 30)
 	b.SetRect(0, 0, 100, 30)
-	b.Draw(theme.WrapScreen(sim))
+	drawOn(sim, b)
 	var text strings.Builder
 	for y := 0; y < 30; y++ {
 		for x := 0; x < 100; x++ {

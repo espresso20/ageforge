@@ -269,7 +269,7 @@ func (s *siteStage) open(cmd, heading string) {
 		s.t.Fatalf("the %s panel does not scroll", name)
 	}
 	_, y, _, _ := e.tv.GetInnerRect()
-	line := func(cells []tcell.SimCell, y int) string {
+	line := func(cells []simCell, y int) string {
 		var b strings.Builder
 		for x := 0; x < sitePanelW; x++ {
 			if c := cells[y*sitePanelW+x]; len(c.Runes) > 0 {
@@ -307,22 +307,22 @@ func (s *siteStage) close() { s.d.overlayMgr.Hide() }
 
 // draw refreshes the dashboard from the engine and draws the whole screen at
 // w x h, the way the app does on its own screen.
-func (s *siteStage) draw(w, h int) ([]tcell.SimCell, theme.Color, theme.Color) {
+func (s *siteStage) draw(w, h int) ([]simCell, theme.Color, theme.Color) {
 	s.t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	must(s.t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 	s.d.overlayMgr.screenW = w
 	// Twice: the first draw lays the panels out, and a refresh after it
 	// fills in what depends on their sizes (the mini map, wrapped text).
-	var cells []tcell.SimCell
+	var cells []simCell
 	for i := 0; i < 2; i++ {
 		s.d.refresh()
 		screen.Clear()
 		s.pages.SetRect(0, 0, w, h)
-		s.pages.Draw(screen)
+		drawOn(screen, s.pages)
 		screen.Show()
 		got, _, _ := sim.GetContents()
 		cells = append(cells[:0], got...)
@@ -755,7 +755,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.close()
 	// The Wonders panel's gallery: G on the list opens it.
 	s.open("wonders", "")
-	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tev(kit.KeyRune, 'g', 0), func(Primitive) {})
+	s.d.overlayMgr.entries["wonders"].keyTo(tv, tk(kit.KeyRune, 'g', 0))
 	if !s.d.wonders.gallery {
 		t.Fatal("G did not open the gallery")
 	}
@@ -1062,7 +1062,7 @@ func siteHex(c theme.Color) string {
 // encodeSiteScreen turns drawn cells into the file's bytes and a plain-text
 // copy. It refuses a cell the wiki's grid could not hold: a wide rune or a
 // combining one.
-func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg theme.Color, ownGround bool) ([]byte, string, error) {
+func encodeSiteScreen(cells []simCell, w, h int, defFg, defBg theme.Color, ownGround bool) ([]byte, string, error) {
 	f := siteScreenFile{W: w, H: h}
 	if ownGround {
 		f.Bg = siteHex(defBg)

@@ -102,7 +102,7 @@ func TestEveryPanelOpensFullScreen(t *testing.T) {
 
 // frameLooks reads a drawn text panel: its top row names it, its sides and
 // its corners are the frame, and its foot says how to close it.
-func frameLooks(t *testing.T, where string, cells []tcell.SimCell, w, h int, title string, plain bool) {
+func frameLooks(t *testing.T, where string, cells []simCell, w, h int, title string, plain bool) {
 	t.Helper()
 	edge := func(r rune) rune {
 		if plain {
@@ -183,23 +183,23 @@ func TestTextPanelsShareOneFrame(t *testing.T) {
 }
 
 // drawnPages draws pages at w by h on a simulated screen.
-func drawnPages(t *testing.T, pages *nativePages, w, h int) []tcell.SimCell {
+func drawnPages(t *testing.T, pages *nativePages, w, h int) []simCell {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	if err := sim.Init(); err != nil {
 		t.Fatal(err)
 	}
 	defer sim.Fini()
 	sim.SetSize(w, h)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 	for i := 0; i < 2; i++ {
 		screen.Clear()
 		pages.SetRect(0, 0, w, h)
-		pages.Draw(screen)
+		drawOn(screen, pages)
 		screen.Show()
 	}
 	cells, _, _ := sim.GetContents()
-	return append([]tcell.SimCell(nil), cells...)
+	return append([]simCell(nil), cells...)
 }
 
 // TestTextPanelsScrollWithTheBarEmpty: a text panel that leaves the keyboard
@@ -240,7 +240,7 @@ func TestTextPanelsScrollWithTheBarEmpty(t *testing.T) {
 	}
 	// A letter is the bar's, with the bar empty or not.
 	d.inputField.SetText("")
-	if ev := d.root.GetInputCapture()(tev(kit.KeyRune, 'g', 0)); ev == nil {
+	if ev := captured(d.root, tk(kit.KeyRune, 'g', 0)); ev == nil {
 		t.Error("a letter was taken by the Help panel")
 	}
 }

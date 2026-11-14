@@ -4,45 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
-
-func TestNativeInputDrawsAsAnInputFieldDid(t *testing.T) {
-	keepTheme(t)
-	for _, c := range []struct {
-		name          string
-		label, text   string
-		width         int
-		border, focus bool
-		title         string
-		w, h          int
-	}{
-		{name: "plain", label: "Name: ", text: "Ashford", w: 30, h: 1},
-		{name: "fixed width", label: "Name: ", text: "Ashford", width: 12, w: 30, h: 1},
-		{name: "bordered", label: "❯ ", text: "build hut", border: true, title: " Command ", w: 40, h: 3},
-		{name: "bordered with the focus", label: "❯ ", text: "build hut", border: true, focus: true, w: 40, h: 3},
-		{name: "empty", label: "> ", w: 20, h: 1},
-	} {
-		old := tview.NewInputField().SetLabel(c.label).SetFieldWidth(c.width).SetText(c.text)
-		old.SetBorder(c.border).SetTitle(c.title)
-		in := newNativeInput().SetLabel(c.label).SetFieldWidth(c.width).SetText(c.text)
-		in.SetBorder(c.border).SetTitle(c.title)
-		if c.focus {
-			old.Focus(func(tview.Primitive) {})
-			in.Focus(func(Primitive) {})
-		}
-		want, got := cellsOf(t, old, c.w, c.h), cellsOf(t, in, c.w, c.h)
-		for i := range want {
-			if got[i] != want[i] {
-				t.Errorf("%s: cell %d,%d is %q, the input field drew %q\nkit:\n%stview:\n%s", c.name, i%c.w, i/c.w, got[i], want[i], rowsOf(got, c.w), rowsOf(want, c.w))
-				break
-			}
-		}
-	}
-}
 
 func TestNativeInputKeysAndCalls(t *testing.T) {
 	keepTheme(t)
@@ -52,7 +16,7 @@ func TestNativeInputKeysAndCalls(t *testing.T) {
 	in.SetChangedFunc(func(s string) { changes = append(changes, s) }).SetDoneFunc(func(k kit.KeyCode) { done = append(done, k) })
 	in.Focus(func(Primitive) {})
 	press := func(k kit.KeyCode, r rune) {
-		in.InputHandler()(tev(k, r, 0), func(Primitive) {})
+		keyTo(in, tk(k, r, 0))
 	}
 	for _, r := range "hut" {
 		press(kit.KeyRune, r)
@@ -68,8 +32,7 @@ func TestNativeInputKeysAndCalls(t *testing.T) {
 		t.Errorf("Enter, Esc and Tab are done keys: %v", done)
 	}
 	// A click puts the cursor at the character.
-	cellsOf(t, in, 20, 1)
-	in.root.Mouse(kit.Mouse{Kind: kit.MousePress, X: 3, Y: 0})
+	newStage(in, 20, 1).mouse(kit.Mouse{Kind: kit.MousePress, X: 3, Y: 0})
 	press(kit.KeyRune, 'X')
 	if got := in.GetText(); got != "hXu" {
 		t.Errorf("after a click and a letter: %q", got)
@@ -83,8 +46,7 @@ func TestNativeInputKeysAndCalls(t *testing.T) {
 func TestNativeInputMask(t *testing.T) {
 	keepTheme(t)
 	in := newNativeInput().SetFieldWidth(10).SetMaskCharacter('·').SetText("abc")
-	cells := cellsOf(t, in, 10, 1)
-	if got := rowsOf(cells, 10); !strings.HasPrefix(got, "···") || strings.Contains(got, "a") {
+	if got := drawPrimitive(t, in, 10, 1).Rows()[0]; !strings.HasPrefix(got, "···") || strings.Contains(got, "a") {
 		t.Errorf("a masked field draws the mask: %q", got)
 	}
 	if in.GetText() != "abc" {

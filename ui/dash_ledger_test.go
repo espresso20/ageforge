@@ -49,7 +49,7 @@ func ledgerRowsOn(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []st
 // checkFittedBox holds the Ledger to what it wrote, as checkFitted holds a
 // text box: no row wider than the box, and the rows on screen are the rows it
 // wrote, one each.
-func checkFittedBox(t *testing.T, where string, b *ledgerBox, cells []tcell.SimCell, screenW int) []string {
+func checkFittedBox(t *testing.T, where string, b *ledgerBox, cells []simCell, screenW int) []string {
 	t.Helper()
 	x, y, w, h := b.GetInnerRect()
 	if w <= 0 || h <= 0 {
@@ -572,11 +572,11 @@ func TestLedgerResizeShowsTheRightLedger(t *testing.T) {
 	d, pages, _ := stagedDashboard(t, "bronze_age")
 	drawnDashboard(t, d, pages, 80, 24)
 	sim := newSimScreen(t, 160, 45)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 	for _, sz := range []struct{ w, h int }{{160, 45}, {80, 24}, {100, 30}, {160, 45}} {
 		sim.SetSize(sz.w, sz.h)
 		pages.SetRect(0, 0, sz.w, sz.h)
-		pages.Draw(screen) // no d.refresh in between
+		drawOn(screen, pages) // no d.refresh in between
 		if _, _, _, lh := d.ledgerTV.GetRect(); lh != ledgerHeight(sz.w, sz.h) {
 			t.Errorf("%dx%d: the Ledger is %d rows after the resize, want %d", sz.w, sz.h, lh, ledgerHeight(sz.w, sz.h))
 		}

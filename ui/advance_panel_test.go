@@ -62,7 +62,7 @@ func advanceFixture(t *testing.T, age string) (*Dashboard, *game.GameEngine, *ad
 
 // sendKey gives the dashboard a key as the app's input capture sees it.
 func sendKey(d *Dashboard, k kit.KeyCode) *tcell.EventKey {
-	return d.root.GetInputCapture()(tev(k, 0, 0))
+	return captured(d.root, tk(k, 0, 0))
 }
 
 // charter opens the Advance panel the way a player does: by typing the command.
@@ -124,7 +124,7 @@ func TestAdvancePanelKeys(t *testing.T) {
 			t.Errorf("key %v was taken by the panel", k)
 		}
 	}
-	if ev := d.root.GetInputCapture()(tev(kit.KeyRune, 'a', 0)); ev == nil {
+	if ev := captured(d.root, tk(kit.KeyRune, 'a', 0)); ev == nil {
 		t.Error("a letter was taken from the prompt")
 	}
 }
@@ -468,9 +468,9 @@ func TestAdvancePanelFoldsToASCII(t *testing.T) {
 func drawPanel(t *testing.T, p *advancePanel, w, h int) frame {
 	t.Helper()
 	sim := newSimScreen(t, w, h)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 	p.SetRect(0, 0, w, h)
-	p.Draw(screen)
+	drawOn(screen, p)
 	screen.Show()
 	return simCells(sim)
 }

@@ -265,7 +265,7 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	// A few buildings: targets for Tab at the region zoom, with a command.
 	eng.SetTownForTest(map[string]int{"hut": 3, "stash": 2, "wood_camp": 2}, 6)
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	sim.SetSize(160, 48)
 	d.app.SetScreen(sim).SetRoot(d.pages, true).SetFocus(d.inputField)
 	done := make(chan error, 1)
@@ -381,11 +381,11 @@ func TestMapKeepsThePromptFocused(t *testing.T) {
 		t.Errorf("the window closing gave the keyboard to %T, not the prompt", d.app.GetFocus())
 	}
 	d.app.SetFocus(d.mapPanel)
-	d.mapPanel.InputHandler()(tcellKey(*key('b')), func(Primitive) {})
+	keyTo(d.mapPanel, *key('b'))
 	if d.app.GetFocus() != d.inputField || d.inputField.GetText() != "b" {
 		t.Errorf("a letter typed with the map focused: focus %T, prompt %q", d.app.GetFocus(), d.inputField.GetText())
 	}
-	d.mapPanel.InputHandler()(tev(kit.KeyPgUp, 0, 0), func(Primitive) {})
+	keyTo(d.mapPanel, tk(kit.KeyPgUp, 0, 0))
 	if d.inputField.GetText() != "b" {
 		t.Errorf("PgUp reached the prompt: %q", d.inputField.GetText())
 	}

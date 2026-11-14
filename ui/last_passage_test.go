@@ -44,7 +44,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 
 	// Esc hides it; the next refresh does not re-pop it; the badge stays.
 	_, front := pages.GetFrontPage()
-	front.InputHandler()(tev(kit.KeyEsc, 0, 0), func(Primitive) {})
+	keyTo(front, tk(kit.KeyEsc, 0, 0))
 	if pages.HasPage(catastrophePage) {
 		t.Fatal("Esc did not close the modal")
 	}
@@ -70,7 +70,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 
 	// E endures: prestige completes and the modal is gone.
 	_, front = pages.GetFrontPage()
-	front.InputHandler()(tev(kit.KeyRune, 'e', 0), func(Primitive) {})
+	keyTo(front, tk(kit.KeyRune, 'e', 0))
 	st := engine.GetState()
 	if st.LastPassage.Pending || st.Prestige.Level != 1 || st.Age != "primitive_age" {
 		t.Fatalf("after E: pending %v level %d age %s", st.LastPassage.Pending, st.Prestige.Level, st.Age)
@@ -94,11 +94,11 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 		t.Error("offers the legacy the player already holds")
 	}
 	_, front := pages.GetFrontPage()
-	front.InputHandler()(tev(kit.KeyRune, 's', 0), func(Primitive) {})
+	keyTo(front, tk(kit.KeyRune, 's', 0))
 	if !engine.GetState().LastPassage.Pending || !pages.HasPage(catastrophePage) {
 		t.Fatal("S acted on a closed Succumb")
 	}
-	front.InputHandler()(tev(kit.KeyTab, 0, 0), func(Primitive) {})
+	keyTo(front, tk(kit.KeyTab, 0, 0))
 	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != kit.Escape("[E] ENDURE") {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}

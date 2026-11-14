@@ -16,9 +16,9 @@ import (
 
 // shotCells is cols by rows blank cells, white on black, with set drawing
 // into them.
-func shotCells(cols, rows int, set func(x, y int) (rune, tcell.Style, bool)) []tcell.SimCell {
+func shotCells(cols, rows int, set func(x, y int) (rune, tcell.Style, bool)) []simCell {
 	base := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
-	cells := make([]tcell.SimCell, cols*rows)
+	cells := make([]simCell, cols*rows)
 	for y := 0; y < rows; y++ {
 		for x := 0; x < cols; x++ {
 			c := &cells[y*cols+x]

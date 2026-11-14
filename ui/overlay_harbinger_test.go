@@ -167,7 +167,7 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	}
 	capture := d.overlayMgr.entries["harbinger"].tv.GetInputCapture()
 	press := func(r rune) *tcell.EventKey {
-		return capture(tev(kit.KeyRune, r, 0))
+		return capture(tk(kit.KeyRune, r, 0))
 	}
 
 	// Brace with empty stores: refused, reported, nothing changes.
@@ -217,7 +217,7 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	if ev := press('x'); ev == nil {
 		t.Error("an unrelated key was swallowed")
 	}
-	capture(tev(kit.KeyEsc, 0, 0))
+	capture(tk(kit.KeyEsc, 0, 0))
 	if d.overlayMgr.HasActive() {
 		t.Error("Esc did not close the panel")
 	}

@@ -877,7 +877,7 @@ func (s *arrivalShow) advance(prev *game.GameState, cur game.GameState, epoch bo
 }
 
 func (s *arrivalShow) press(a *arrival, k kit.KeyCode, r rune) {
-	a.InputHandler()(tev(k, r, 0), func(Primitive) {})
+	keyTo(a, tk(k, r, 0))
 }
 
 // stoneToBronze is the game before and after an advance into the Bronze
@@ -1132,11 +1132,11 @@ func TestArrivalStill(t *testing.T) {
 
 			// No clock runs behind a still frame.
 			r.om.app = newAppLoop()
-			sim := tcell.NewSimulationScreen("UTF-8")
+			sim := newSim()
 			must(t, sim.Init())
 			sim.SetSize(w, h)
 			r.a.SetRect(0, 0, w, h)
-			r.a.Draw(theme.WrapScreen(sim))
+			drawOn(sim, r.a)
 			if r.a.stop != nil {
 				t.Errorf("%s: a clock runs behind the still frame", where)
 			}
@@ -1174,12 +1174,12 @@ func TestArrivalClock(t *testing.T) {
 	if r.a.stop != nil {
 		t.Fatal("the clock runs before the screen is drawn")
 	}
-	r.a.Draw(theme.WrapScreen(sim))
+	drawOn(sim, r.a)
 	stop := r.a.stop
 	if stop == nil {
 		t.Fatal("no clock runs behind the celebration")
 	}
-	r.a.Draw(theme.WrapScreen(sim))
+	drawOn(sim, r.a)
 	if r.a.stop != stop {
 		t.Error("a second draw started a second clock")
 	}
@@ -1192,7 +1192,7 @@ func TestArrivalClock(t *testing.T) {
 	default:
 		t.Error("the clock was not told to stop")
 	}
-	r.a.Draw(theme.WrapScreen(sim)) // a closed screen draws nothing and starts nothing
+	drawOn(sim, r.a) // a closed screen draws nothing and starts nothing
 	if r.a.stop != nil {
 		t.Error("a closed screen started a clock")
 	}
@@ -1428,7 +1428,7 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 		for _, f := range frames {
 			g := r.at(w, h, f)
 			sim.Clear()
-			r.a.Draw(theme.WrapScreen(sim))
+			drawOn(sim, r.a)
 			n += extraCells(sim, g)
 		}
 		return n

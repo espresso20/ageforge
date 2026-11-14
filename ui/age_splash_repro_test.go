@@ -30,7 +30,7 @@ type reproHarness struct {
 	t      *testing.T
 	eng    *game.GameEngine
 	a      *App
-	sim    tcell.SimulationScreen
+	sim    *simScreen
 	runErr chan error
 	// built is the high-water building count per key. An endured catastrophe
 	// destroys a random 20% of buildings (Buildings.DestroyRandom; seeded, but
@@ -80,7 +80,7 @@ func newReproHarness(t *testing.T) *reproHarness {
 	eng := game.NewGameEngine()
 	eng.SetAccount(acct)
 	a := NewApp(eng, "dev") // "dev" skips the network update check
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	a.SetScreen(sim) // theme-wrapped; calls sim.Init()
 	sim.SetSize(200, 60)
 
@@ -167,7 +167,7 @@ func (h *reproHarness) key(k kit.KeyCode, r rune) {
 	h.t.Helper()
 	done := make(chan struct{})
 	go func() {
-		ev := tev(k, r, 0)
+		ev := tk(k, r, 0)
 		h.sim.InjectKey(ev.Key(), ev.Rune(), ev.Modifiers())
 		close(done)
 	}()

@@ -35,9 +35,9 @@ func miniTestGame(t testing.TB) *game.GameEngine {
 func drawDashboard(t testing.TB, d *Dashboard, pages *nativePages, w, h int) string {
 	t.Helper()
 	sim := newSimScreen(t, w, h)
-	scr := theme.WrapScreen(sim)
+	scr := sim
 	pages.SetRect(0, 0, w, h)
-	pages.Draw(scr)
+	drawOn(scr, pages)
 	scr.Show()
 	return simCells(sim).Text()
 }
@@ -189,7 +189,7 @@ func BenchmarkMiniMapDraw(b *testing.B) {
 	d.miniMap.update(d.mapSettings(), &st)
 	d.miniMap.SetRect(0, 0, 69, miniMaxInnerH+2)
 	for i := 0; i < b.N; i++ {
-		d.miniMap.Draw(sim)
+		drawOn(sim, d.miniMap)
 	}
 }
 

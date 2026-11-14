@@ -580,7 +580,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 					sc.sparks.a = nil
 					g := sc.render(pal, v, town, mapstyle.Frame{Anim: 3, Clock: 3, Tier: tier})
 
-					sim := tcell.NewSimulationScreen("UTF-8")
+					sim := newSim()
 					must(t, sim.Init())
 					sim.SetSize(w, h)
 					rows := flushRows(t, where, sim, g, pal, v.plain)

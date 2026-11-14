@@ -682,7 +682,7 @@ func TestEndingKeys(t *testing.T) {
 				}
 				return
 			}
-			e.InputHandler()(tev(kit.KeyRune, 'x', 0), func(Primitive) {})
+			keyTo(e, tk(kit.KeyRune, 'x', 0))
 		}
 		if r.om.ActiveName() != endingPageName || !r.pages.HasPage(endingPageName) || !r.om.FullScreenUp() {
 			t.Fatal("the film is not up")
@@ -787,7 +787,7 @@ func TestEndingStill(t *testing.T) {
 			t.Errorf("still %d: text cut off: %q", i, first.clipped)
 		}
 		stills = append(stills, gridText(first))
-		e.Draw(theme.WrapScreen(sim))
+		drawOn(sim, e)
 		if e.stop != nil {
 			t.Errorf("a clock runs behind still %d", i)
 		}
@@ -928,7 +928,7 @@ func TestEndingAmbientIsThePrestiges(t *testing.T) {
 		for _, f := range frames {
 			g := r.at(w, h, f)
 			sim.Clear()
-			r.e.Draw(theme.WrapScreen(sim))
+			drawOn(sim, r.e)
 			n += extraCells(sim, g)
 		}
 		return n

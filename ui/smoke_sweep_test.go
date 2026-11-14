@@ -126,7 +126,7 @@ func (s *sweeper) press(k kit.KeyCode, r rune) {
 	if k == kit.KeyChord {
 		mod = kit.ModCtrl // the sweep's only chords are Ctrl with a letter
 	}
-	ev := tev(k, r, mod)
+	ev := tk(k, r, mod)
 	go func() { s.sim.InjectKey(ev.Key(), ev.Rune(), ev.Modifiers()); close(done) }()
 	select {
 	case <-done:
@@ -339,7 +339,7 @@ func bootSweeper(t *testing.T, w, h int) (*sweeper, *game.GameEngine) {
 	eng := game.NewGameEngine()
 	eng.SetAccount(acct)
 	a := NewApp(eng, "dev") // "dev" skips the network update check
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	a.SetScreen(sim)
 	sim.SetSize(w, h)
 	hr := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}

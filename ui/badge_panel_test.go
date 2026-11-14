@@ -196,16 +196,16 @@ func TestBadgeCaseOnTheLiveScreen(t *testing.T) {
 		if !d.badgePanel.view.card {
 			t.Fatalf("%s: the detail is not open", where)
 		}
-		if ev := d.root.GetInputCapture()(tcellKey(*esc)); ev != nil || d.badgePanel.view.card || d.overlayMgr.ActiveName() != "badges" {
+		if ev := captured(d.root, *esc); ev != nil || d.badgePanel.view.card || d.overlayMgr.ActiveName() != "badges" {
 			t.Errorf("%s: the first Esc did not close just the detail", where)
 		}
-		if d.root.GetInputCapture()(tev(kit.KeyRight, 0, 0)) != nil {
+		if captured(d.root, tk(kit.KeyRight, 0, 0)) != nil {
 			t.Errorf("%s: the case did not take an arrow", where)
 		}
-		if ev := d.root.GetInputCapture()(tev(kit.KeyRune, 'b', 0)); ev == nil {
+		if ev := captured(d.root, tk(kit.KeyRune, 'b', 0)); ev == nil {
 			t.Errorf("%s: the case took a letter from the prompt", where)
 		}
-		if ev := d.root.GetInputCapture()(tcellKey(*esc)); ev != nil || d.overlayMgr.ActiveName() != "" {
+		if ev := captured(d.root, *esc); ev != nil || d.overlayMgr.ActiveName() != "" {
 			t.Errorf("%s: the second Esc did not close the panel", where)
 		}
 	}
@@ -222,18 +222,18 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 	for _, v := range views {
 		by[v.Key] = v
 	}
-	render := func(markup string) (text string, cells []tcell.SimCell) {
+	render := func(markup string) (text string, cells []simCell) {
 		tv := tview.NewTextView().SetDynamicColors(true)
 		tv.SetText(safeTags(markup))
-		sim := tcell.NewSimulationScreen("UTF-8")
+		sim := newSim()
 		must(t, sim.Init())
 		defer sim.Fini()
 		sim.SetSize(200, 1)
 		tv.SetRect(0, 0, 200, 1)
-		tv.Draw(theme.WrapScreen(sim))
+		drawOn(sim, tv)
 		sim.Show()
 		cells, _, _ = sim.GetContents()
-		return strings.TrimRight(tv.GetText(true), "\n"), append([]tcell.SimCell(nil), cells...)
+		return strings.TrimRight(tv.GetText(true), "\n"), append([]simCell(nil), cells...)
 	}
 	hut := by["special.hut_hoarder"]
 	if text, _ := render(badgeToast(hut, mapmodel.TierUnicode, 0)); text != "◖∩◗ Badge earned: Hut Hoarder (gold). "+hut.Desc {
@@ -402,14 +402,14 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 			w, h := size[0], size[1]
 			d, pages, eng := badgeDashboard(t)
 			drawnDashboard(t, d, pages, w, h) // every box gets its size
-			sim := tcell.NewSimulationScreen("UTF-8")
+			sim := newSim()
 			must(t, sim.Init())
 			sim.SetSize(w, h)
-			scr := theme.WrapScreen(sim)
-			snap := func() []tcell.SimCell {
+			scr := sim
+			snap := func() []simCell {
 				sim.Show()
 				cells, _, _ := sim.GetContents()
-				return append([]tcell.SimCell(nil), cells...)
+				return append([]simCell(nil), cells...)
 			}
 			// The layout alone, then the effect's pass over it: what
 			// differs is what the effect drew. The dashboard's root paints
@@ -419,14 +419,14 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 			layoutOnly := func() {
 				after := fx.after
 				fx.after = nil
-				d.root.Draw(scr)
+				drawOn(scr, d.root)
 				fx.after = after
 			}
 			scr.Clear()
 			layoutOnly()
 			still := snap()
 			must(t, eng.Account().SetMotion(false))
-			d.drawEffect(tcells{scr}, 0, 0, w, h)
+			d.drawEffect(scr, 0, 0, w, h)
 			if off := snap(); d.fxOn.Load() || fmt.Sprint(off) != fmt.Sprint(still) {
 				t.Errorf("theme %s at %dx%d: an effect draws with motion off", th.Key, w, h)
 			}
@@ -442,13 +442,13 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 				layoutOnly()
 				still = snap() // the mini map moves on its own clock
 				d.fxStart = time.Now().Add(-time.Duration(n) * mapAnimStep)
-				d.drawEffect(tcells{scr}, 0, 0, w, h)
+				d.drawEffect(scr, 0, 0, w, h)
 				direct := snap()
 				if n < 3 {
 					// The root's own paint of the effect, through the kit,
 					// is the same picture cell for cell.
 					scr.Clear()
-					fx.Draw(scr)
+					drawOn(scr, fx)
 					for i, c := range snap() {
 						if c.Runes[0] != direct[i].Runes[0] || c.Style != direct[i].Style {
 							t.Fatalf("theme %s at %dx%d, frame %d: the root painted %q at %d,%d where the effect alone draws %q",
@@ -495,13 +495,13 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 	// A frame is a function of its number.
 	must(t, theme.SetActive("source"))
 	frame := func(n int, plain bool) string {
-		sim := tcell.NewSimulationScreen("UTF-8")
+		sim := newSim()
 		must(t, sim.Init())
 		defer sim.Fini()
 		sim.SetSize(40, 12)
-		scr := theme.WrapScreen(sim)
+		scr := sim
 		scr.Clear()
-		drawThemeEffect(tcells{scr}, 0, 0, 40, 12, theme.EffectRain, n, plain)
+		drawThemeEffect(scr, 0, 0, 40, 12, theme.EffectRain, n, plain)
 		sim.Show()
 		cells, _, _ := sim.GetContents()
 		var sb strings.Builder
@@ -522,7 +522,7 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 	// nothing breaks.
 	for _, size := range [][2]int{{0, 0}, {40, 0}, {40, -2}, {-3, 5}} {
 		for _, effect := range []string{theme.EffectRain, theme.EffectGlitch, theme.EffectEmbers, theme.EffectGreenbar, theme.EffectPrism} {
-			drawThemeEffect(tcells{tcell.NewSimulationScreen("UTF-8")}, 0, 0, size[0], size[1], effect, 7, false)
+			drawThemeEffect(newSim(), 0, 0, size[0], size[1], effect, 7, false)
 		}
 	}
 }

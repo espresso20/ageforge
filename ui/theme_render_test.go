@@ -18,7 +18,7 @@ import (
 // renderScreens draws the key screens into a SimulationScreen wrapped by
 // theme.WrapScreen — exactly the path the real app takes — and returns the
 // resulting cells per screen name.
-func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
+func renderScreens(t *testing.T, w, h int) map[string][]simCell {
 	t.Helper()
 	engine := game.NewGameEngine()
 	d, pages := newTestDashboard(engine)
@@ -26,17 +26,17 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.refresh()
 
 	sim := newSimScreen(t, w, h)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 
-	draw := func() []tcell.SimCell {
+	draw := func() []simCell {
 		screen.Clear()
 		pages.SetRect(0, 0, w, h)
-		pages.Draw(screen)
+		drawOn(screen, pages)
 		screen.Show()
 		return simCells(sim).Cells()
 	}
 
-	out := map[string][]tcell.SimCell{}
+	out := map[string][]simCell{}
 	// shot shows the overlay name, draws it into out under key and hides it.
 	shot := func(key, name string) {
 		if !d.overlayMgr.Show(name, engine.GetState()) {
@@ -227,13 +227,13 @@ func TestThemeRender_CanvasIsThemeBackground(t *testing.T) {
 	d.refresh()
 
 	sim := newSimScreen(t, 120, 40)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 
 	for _, key := range []string{"daylight", "forge", "high_contrast_light"} {
 		_ = theme.SetActive(key) // live switch; no widget is rebuilt
 		screen.Clear()
 		pages.SetRect(0, 0, 120, 40)
-		pages.Draw(screen)
+		drawOn(screen, pages)
 		screen.Show()
 		cells := simCells(sim).Cells()
 		want := theme.Of(theme.RoleBackground).Hex()
@@ -297,7 +297,7 @@ func TestThemeRender_DumpANSI(t *testing.T) {
 
 // cellsHTML renders cells as a static HTML page (one span per cell run) so a
 // render can be eyeballed in a browser or screenshotted for a PR.
-func cellsHTML(cells []tcell.SimCell, w, h int, title string) string {
+func cellsHTML(cells []simCell, w, h int, title string) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "<!doctype html><meta charset=utf-8><title>%s</title>"+
 		"<body style=\"margin:0;background:#888\"><pre style=\"margin:0;font:13px/15px Menlo,monospace\">", title)
