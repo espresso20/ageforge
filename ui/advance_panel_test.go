@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"reflect"
 	"regexp"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // advanceSizes are the terminals the panel is drawn at (80x24, 100x30 and
@@ -551,4 +553,49 @@ func TestLedgerPointsAtTheCharter(t *testing.T) {
 func TestHelpListsTheAdvancePanel(t *testing.T) {
 	help := strings.Join(strings.Fields(untag(helpProvider(game.GameState{}, 100))), " ")
 	wantAll(t, "the Help panel", help, "charter", "The Advance panel", "Pick a pillar", "the same as the advance command")
+}
+
+// TestAdvancePanelMouse: a click picks the pillar under the pointer, a double
+// click advances as Enter does (the gate refuses while it is short), and the
+// wheel moves the pick.
+func TestAdvancePanelMouse(t *testing.T) {
+	_, eng, p := advanceFixture(t, "bronze_age")
+	p.Layout(image.Rect(0, 0, 100, 27))
+	press := func(pt image.Point, clicks int) bool {
+		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: clicks})
+	}
+	pillar := func(n int) image.Point {
+		for _, h := range p.grid.hits {
+			if h.id == hitPillar && h.n == n {
+				return h.r.Min.Add(image.Pt(1, 0))
+			}
+		}
+		t.Fatalf("no pillar %d on screen", n)
+		return image.Point{}
+	}
+	if len(p.view.Pillars) < 2 {
+		t.Fatal("staging: fewer than two pillars")
+	}
+	if !press(pillar(1), 1) || p.ui.sel != 1 {
+		t.Errorf("a click on the second pillar picked %d", p.ui.sel)
+	}
+	if press(image.Pt(0, 0), 1) {
+		t.Error("a click on the frame changed something")
+	}
+	// A double click picks and nothing more, even on a gate that is met:
+	// advancing stays on Enter.
+	meetTheGate(t, eng)
+	p.update(eng.GetState())
+	p.Layout(image.Rect(0, 0, 100, 27))
+	before := eng.GetState().Age
+	if !press(pillar(0), 2) || p.ui.sel != 0 {
+		t.Errorf("a double click picked %d", p.ui.sel)
+	}
+	if eng.GetState().Age != before {
+		t.Errorf("a double click advanced the age to %s", eng.GetState().Age)
+	}
+	p.ui.sel = 0
+	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || p.ui.sel != 1 {
+		t.Errorf("the wheel left the pick on %d", p.ui.sel)
+	}
 }

@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the People, Advance and Expeditions panels take the mouse: on People a click switches tabs or picks a card, a work area or a building; on Advance a click picks a pillar (advancing stays on `Enter`); on Expeditions a click on a pin or a party picks it, a double click asks to send an offer, and a click outside the question takes it back. The wheel moves the pick on all three.
 - In the window, the Research and Badges panels take the mouse: a click selects a tech or a badge, a double click opens it, and the wheel scrolls.
 - In the window, buttons and lists take the mouse: a click presses a button or selects a row, and a click in a text field puts the cursor there. This covers the Load Game browser, the Accounts panel, the theme picker, the name, rename, import and wipe prompts, the dev unlock box, and the catastrophe, ancient memory and icons windows.
 - In the window, the mouse wheel scrolls the dashboard's log, the load and account pages and the theme picker's text. Every text box in the game is drawn by its own UI kit now; the terminal shows them as before.

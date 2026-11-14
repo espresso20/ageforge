@@ -251,6 +251,8 @@ The Expeditions panel leaves the prompt working:
 | `Enter` | Ask to send the selected offer, and `Enter` again sends it |
 | `Esc` | Take back the question, then close the panel |
 
+In the window a click on an offer's pin highlights it, a double click asks to send it as `Enter` does, a click on a party picks it on the Report, and a click outside the question takes it back. The wheel hops as Up and Down do.
+
 ---
 
 ## Trade

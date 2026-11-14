@@ -32,6 +32,9 @@ type advanceUI struct {
 	flashGood bool
 }
 
+// hitPillar is what a click on the panel can pick.
+const hitPillar = 0
+
 const (
 	advMinW = 60
 	advMinH = 14
@@ -236,6 +239,7 @@ func advCharter(g *xgrid, v game.AdvanceView, u advanceUI, x, y, bw, bh int) {
 	top := y + 1
 	for i, p := range v.Pillars {
 		advPillar(g, p, i == u.sel, x+2, top+i*pitch, iw, pitch > 1)
+		g.hit(hitPillar, i, x+1, top+i*pitch, bw-2, min(pitch, 2))
 	}
 	dy := top + len(v.Pillars)*pitch
 	if pitch < 3 {

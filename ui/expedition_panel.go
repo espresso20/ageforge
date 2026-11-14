@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"sync/atomic"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // expedition_panel.go is the Expeditions panel's overlay primitive: the
@@ -36,6 +38,11 @@ const expFlashFor = 8 * time.Second
 
 type expeditionPanel struct {
 	barPanel
+	kit.Base
+	// host paints the panel's kit cells and takes the mouse; the keys stay
+	// with barPanel.
+	host   *nativeHost
+	grid   *xgrid // what the panel last laid out, and where its pins are
 	engine *game.GameEngine
 	state  game.GameState
 	view   expView
@@ -63,6 +70,7 @@ type expeditionPanel struct {
 func newExpeditionPanel() *expeditionPanel {
 	p := &expeditionPanel{w: 100, h: 30, now: time.Now, start: time.Now()}
 	p.barPanel = newBarPanel(p.routeKey)
+	p.host = newNativeHost(p)
 	return p
 }
 
@@ -155,13 +163,19 @@ func (p *expeditionPanel) frame(motion bool) int {
 	return int(p.now().Sub(p.start) / (4 * mapAnimStep))
 }
 
-// Draw paints the panel.
+// Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *expeditionPanel) Draw(scr tcell.Screen) {
-	x, y, w, h := p.GetRect()
-	if w <= 0 || h <= 0 {
+	p.host.SetRect(p.GetRect())
+	p.host.Draw(scr)
+}
+
+// Layout takes the panel's rectangle and works the panel out in it.
+func (p *expeditionPanel) Layout(r image.Rectangle) {
+	p.Place(r)
+	if r.Empty() {
 		return
 	}
-	p.w, p.h = w, h
+	p.w, p.h = r.Dx(), r.Dy()
 	motion, plain := true, false
 	if p.settings != nil {
 		set := p.settings()
@@ -172,13 +186,64 @@ func (p *expeditionPanel) Draw(scr tcell.Screen) {
 	if v.flash != "" && p.now().Sub(p.flashAt) > expFlashFor {
 		p.view.flash, v.flash = "", ""
 	}
-	grid := renderExpedition(p.state, v, w, h)
+	p.grid = renderExpedition(p.state, v, p.w, p.h)
 	if plain {
-		grid.fold()
+		p.grid.fold()
 	}
-	paintExpedition(scr, grid, x, y, newExpPalette())
 	sc := p.scene()
 	p.moving.Store(motion && (len(sc.acts) > 0 && v.report || len(sc.offers) > 0 && !v.report))
+}
+
+// Paint puts the panel on the kit's painter in theme colors.
+func (p *expeditionPanel) Paint(p2 *kit.Painter) {
+	if r := p.Bounds(); !r.Empty() && p.grid != nil {
+		paintExpeditionKit(p2, p.grid, r.Min, newExpPalette())
+	}
+}
+
+// Mouse: a click on an offer's pin highlights it, as the arrows do, and a
+// double click asks to send it, as Enter does; on the Report a click on a
+// party picks it. A click outside the question before a party is sent takes
+// it back, as Esc does. The wheel moves the highlight a notch, as Up and Down
+// do.
+func (p *expeditionPanel) Mouse(m kit.Mouse) bool {
+	switch {
+	case m.Kind == kit.MouseWheel:
+		key := tcell.KeyDown
+		if m.Wheel < 0 {
+			key = tcell.KeyUp
+		}
+		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
+			p.handleKey(key)
+		}
+		return m.Wheel != 0
+	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft || p.grid == nil:
+		return false
+	}
+	pt := m.Pt().Sub(p.Bounds().Min)
+	if p.view.confirm {
+		_, in := p.grid.hitAt(hitConfirm, pt)
+		return !in && p.closeConfirm()
+	}
+	if p.view.report {
+		n, ok := p.grid.hitAt(hitParty, pt)
+		if ok {
+			p.view.flash, p.view.party = "", n
+		}
+		return ok
+	}
+	n, ok := p.grid.hitAt(hitOffer, pt)
+	if !ok {
+		return false
+	}
+	p.view.flash = ""
+	if sc := p.scene(); n < len(sc.offers) {
+		p.selIdx, p.view.sel = n, sc.offers[n].key
+	}
+	if m.Clicks == 2 {
+		p.handleKey(tcell.KeyEnter)
+	}
+	return true
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

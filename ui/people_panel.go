@@ -1,11 +1,14 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // people_panel.go is the People panel's overlay primitive: the whole screen
@@ -17,6 +20,11 @@ import (
 
 type peoplePanel struct {
 	barPanel
+	kit.Base
+	// host paints the panel's kit cells and takes the mouse; the keys stay
+	// with barPanel.
+	host  *nativeHost
+	grid  *xgrid // what the panel last laid out, and where its rows are
 	state game.GameState
 	view  peopleView
 	w, h  int // the last size drawn at
@@ -28,6 +36,7 @@ type peoplePanel struct {
 func newPeoplePanel() *peoplePanel {
 	p := &peoplePanel{w: 100, h: 30}
 	p.barPanel = newBarPanel(p.routeKey)
+	p.host = newNativeHost(p)
 	return p
 }
 
@@ -44,22 +53,60 @@ func (p *peoplePanel) update(state game.GameState) {
 	p.view.row = clamp(p.view.row, 0, peopleRows(state, p.view.tab)-1)
 }
 
-// Draw paints the panel.
+// Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *peoplePanel) Draw(scr tcell.Screen) {
-	x, y, w, h := p.GetRect()
-	if w <= 0 || h <= 0 {
+	p.host.SetRect(p.GetRect())
+	p.host.Draw(scr)
+}
+
+// Layout takes the panel's rectangle and works the panel out in it.
+func (p *peoplePanel) Layout(r image.Rectangle) {
+	p.Place(r)
+	if r.Empty() {
 		return
 	}
-	p.w, p.h = w, h
-	plain := false
-	if p.settings != nil {
-		plain = p.settings().Tier == mapmodel.TierASCII
+	p.w, p.h = r.Dx(), r.Dy()
+	p.grid = renderPeople(p.state, p.view, p.w, p.h)
+	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
+		p.grid.fold()
 	}
-	grid := renderPeople(p.state, p.view, w, h)
-	if plain {
-		grid.fold()
+}
+
+// Paint puts the panel on the kit's painter in theme colors.
+func (p *peoplePanel) Paint(p2 *kit.Painter) {
+	if r := p.Bounds(); !r.Empty() && p.grid != nil {
+		paintExpeditionKit(p2, p.grid, r.Min, newExpPalette())
 	}
-	paintExpedition(scr, grid, x, y, newExpPalette())
+}
+
+// Mouse: a click on a tab switches to it, as Left and Right do; a click on a
+// card, a work area or a building picks it, as Up and Down do; the wheel
+// moves the pick a row a notch, as Up and Down do. (Enter does nothing on
+// this panel, so a double click is a click.)
+func (p *peoplePanel) Mouse(m kit.Mouse) bool {
+	switch {
+	case m.Kind == kit.MouseWheel:
+		key := tcell.KeyDown
+		if m.Wheel < 0 {
+			key = tcell.KeyUp
+		}
+		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
+			p.handleKey(key)
+		}
+		return m.Wheel != 0
+	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft || p.grid == nil:
+		return false
+	}
+	pt := m.Pt().Sub(p.Bounds().Min)
+	if t, ok := p.grid.hitAt(hitTab, pt); ok {
+		p.setTab(t)
+		return true
+	}
+	if n, ok := p.grid.hitAt(hitRow, pt); ok {
+		p.view.row = clamp(n, 0, peopleRows(p.state, p.view.tab)-1)
+		return true
+	}
+	return false
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it
@@ -80,14 +127,17 @@ func (p *peoplePanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 func (p *peoplePanel) handleKey(key tcell.Key) {
 	switch key {
 	case tcell.KeyLeft:
-		p.view.tab = (p.view.tab + len(peopleTabs) - 1) % len(peopleTabs)
-		p.view.row = 0
+		p.setTab((p.view.tab + len(peopleTabs) - 1) % len(peopleTabs))
 	case tcell.KeyRight:
-		p.view.tab = (p.view.tab + 1) % len(peopleTabs)
-		p.view.row = 0
+		p.setTab((p.view.tab + 1) % len(peopleTabs))
 	case tcell.KeyUp:
 		p.view.row = max(0, p.view.row-1)
 	case tcell.KeyDown:
 		p.view.row = min(max(0, peopleRows(p.state, p.view.tab)-1), p.view.row+1)
 	}
+}
+
+// setTab switches to a tab, on its first row.
+func (p *peoplePanel) setTab(t int) {
+	p.view.tab, p.view.row = t, 0
 }

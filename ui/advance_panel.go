@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -10,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // advance_panel.go is the Advance panel's overlay primitive: the whole screen
@@ -26,6 +28,11 @@ const advFlashFor = 8 * time.Second
 
 type advancePanel struct {
 	barPanel
+	kit.Base
+	// host paints the panel's kit cells and takes the mouse; the keys stay
+	// with barPanel.
+	host   *nativeHost
+	grid   *xgrid // what the panel last laid out, and where its pillars are
 	engine *game.GameEngine
 	view   game.AdvanceView
 	ui     advanceUI
@@ -41,6 +48,7 @@ type advancePanel struct {
 func newAdvancePanel() *advancePanel {
 	p := &advancePanel{now: time.Now}
 	p.barPanel = newBarPanel(p.routeKey)
+	p.host = newNativeHost(p)
 	return p
 }
 
@@ -83,25 +91,60 @@ func (p *advancePanel) update(state game.GameState) {
 	p.ui.sel = clamp(p.ui.sel, 0, max(0, len(v.Pillars)-1))
 }
 
-// Draw paints the panel.
+// Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *advancePanel) Draw(scr tcell.Screen) {
-	x, y, w, h := p.GetRect()
-	if w <= 0 || h <= 0 {
+	p.host.SetRect(p.GetRect())
+	p.host.Draw(scr)
+}
+
+// Layout takes the panel's rectangle and works the panel out in it.
+func (p *advancePanel) Layout(r image.Rectangle) {
+	p.Place(r)
+	if r.Empty() {
 		return
-	}
-	plain := false
-	if p.settings != nil {
-		plain = p.settings().Tier == mapmodel.TierASCII
 	}
 	u := p.ui
 	if u.flash != "" && p.now().Sub(p.flashAt) > advFlashFor {
 		p.ui.flash, u.flash = "", ""
 	}
-	grid := renderAdvance(p.view, u, w, h)
-	if plain {
-		grid.fold()
+	p.grid = renderAdvance(p.view, u, r.Dx(), r.Dy())
+	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
+		p.grid.fold()
 	}
-	paintExpedition(scr, grid, x, y, newExpPalette())
+}
+
+// Paint puts the panel on the kit's painter in theme colors.
+func (p *advancePanel) Paint(p2 *kit.Painter) {
+	if r := p.Bounds(); !r.Empty() && p.grid != nil {
+		paintExpeditionKit(p2, p.grid, r.Min, newExpPalette())
+	}
+}
+
+// Mouse: a click on a pillar picks it and a double click advances when all
+// four stand, as Enter does; the wheel picks a pillar a notch, as Up and Down
+// do.
+func (p *advancePanel) Mouse(m kit.Mouse) bool {
+	switch {
+	case m.Kind == kit.MouseWheel:
+		key := tcell.KeyDown
+		if m.Wheel < 0 {
+			key = tcell.KeyUp
+		}
+		for i := max(m.Wheel, -m.Wheel); i > 0; i-- {
+			p.handleKey(key)
+		}
+		return m.Wheel != 0
+	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft || p.grid == nil:
+		return false
+	}
+	n, ok := p.grid.hitAt(hitPillar, m.Pt().Sub(p.Bounds().Min))
+	if !ok {
+		return false
+	}
+	// A click only picks. Advancing the age stays on Enter and the advance
+	// command: it is too large a thing to hang on a double click.
+	p.ui.flash, p.ui.sel = "", n
+	return true
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

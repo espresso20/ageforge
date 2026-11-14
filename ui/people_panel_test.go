@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"strings"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // peopleTown is a Bronze Age town with buildings of every kind, soldiers and a
@@ -257,5 +259,45 @@ func TestPeopleArmyTabShowsPosts(t *testing.T) {
 	st.Military.SoldierCount = 7
 	if box := strings.Join(strings.Fields(plainText(peopleBoxText(st, 0, false))), " "); !strings.Contains(box, "Spearmen 59") {
 		t.Errorf("the People box does not read the posts:\n%s", box)
+	}
+}
+
+// TestPeoplePanelMouse: a click on a tab switches to it, a click on a card or
+// a row picks it, and the wheel moves the pick, as the keys do.
+func TestPeoplePanelMouse(t *testing.T) {
+	st := peopleTown(t)
+	p := newPeoplePanel()
+	p.open(st)
+	p.Layout(image.Rect(0, 0, 100, 30))
+	press := func(pt image.Point) bool {
+		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: 1})
+	}
+	centre := func(id, n int) image.Point {
+		for _, h := range p.grid.hits {
+			if h.id == id && h.n == n {
+				return h.r.Min.Add(image.Pt(1, 0))
+			}
+		}
+		t.Fatalf("no hit %d/%d", id, n)
+		return image.Point{}
+	}
+	if !press(centre(hitRow, 2)) || p.view.row != 2 {
+		t.Errorf("a click on the third card picked row %d", p.view.row)
+	}
+	if !press(centre(hitTab, tabArmy)) || p.view.tab != tabArmy || p.view.row != 0 {
+		t.Errorf("a click on the Army tab: tab %d row %d", p.view.tab, p.view.row)
+	}
+	p.Layout(image.Rect(0, 0, 100, 30))
+	if peopleRows(st, tabArmy) > 1 {
+		if !press(centre(hitRow, 1)) || p.view.row != 1 {
+			t.Errorf("a click on the second building picked row %d", p.view.row)
+		}
+	}
+	if press(image.Pt(0, 0)) {
+		t.Error("a click on the frame changed something")
+	}
+	p.view.row = 0
+	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || (peopleRows(st, tabArmy) > 1 && p.view.row != 1) {
+		t.Errorf("the wheel left the pick on row %d", p.view.row)
 	}
 }

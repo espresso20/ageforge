@@ -28,6 +28,12 @@ const (
 	tabScholars
 )
 
+// What a click on the panel can pick.
+const (
+	hitTab = iota // a tab
+	hitRow        // a card, a work area or a building
+)
+
 // peopleView is what the player has picked.
 type peopleView struct {
 	tab int // the tab
@@ -123,7 +129,9 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 		if i == v.tab {
 			k = xSel
 		}
-		x = g.put(x, 1, " "+name+" ", k) + 1
+		end := g.put(x, 1, " "+name+" ", k)
+		g.hit(hitTab, i, x, 1, end-x, 1)
+		x = end + 1
 	}
 	ws := st.Workers
 	pop := textfmt.Number(float64(ws.TotalPop))

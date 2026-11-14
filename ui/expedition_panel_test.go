@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"regexp"
 	"strings"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // offerNumber matches an offer number as a list prints it: "3. Scout".
@@ -645,3 +647,71 @@ func TestNoPartyRowWhenNoPartyGoes(t *testing.T) {
 // setSize tells the panel how big it is drawn, for the tests; a draw does
 // it by itself.
 func (p *expeditionPanel) setSize(w, h int) { p.w, p.h = w, h }
+
+// TestExpeditionPanelMouse: a click on an offer's pin highlights it, a double
+// click asks to send it as Enter does, a click outside the question takes it
+// back, the wheel hops, and on the Report a click picks a party.
+func TestExpeditionPanelMouse(t *testing.T) {
+	engine, p := expFixture(t)
+	p.open(engine.GetState())
+	p.Layout(image.Rect(0, 0, 100, 27))
+	press := func(pt image.Point, clicks int) bool {
+		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: clicks})
+	}
+	pin := func(id, n int) image.Point {
+		for _, h := range p.grid.hits {
+			if h.id == id && h.n == n {
+				return h.r.Min.Add(image.Pt(1, 0))
+			}
+		}
+		t.Fatalf("no pin %d/%d on screen", id, n)
+		return image.Point{}
+	}
+	sc := p.scene()
+	if len(sc.offers) < 2 {
+		t.Fatal("staging: fewer than two offers")
+	}
+	other := 1
+	if sc.selected(p.view.sel) == 1 {
+		other = 0
+	}
+	if !press(pin(hitOffer, other), 1) || p.view.sel != sc.offers[other].key || p.selIdx != other || p.view.confirm {
+		t.Errorf("a click on offer %d: highlighted %q at %d, confirm %v", other, p.view.sel, p.selIdx, p.view.confirm)
+	}
+	if press(image.Pt(0, 0), 1) {
+		t.Error("a click on the frame changed something")
+	}
+	if !press(pin(hitOffer, other), 2) || (sc.offers[other].offer.CanLaunch && !p.view.confirm) {
+		t.Errorf("a double click did not do what Enter does (confirm %v)", p.view.confirm)
+	}
+	if p.view.confirm {
+		p.Layout(image.Rect(0, 0, 100, 27))
+		if press(image.Pt(50, 13), 1) {
+			t.Error("a click inside the question took it back")
+		}
+		if !press(image.Pt(1, 1), 1) || p.view.confirm {
+			t.Error("a click outside the question did not take it back")
+		}
+	}
+	p.Layout(image.Rect(0, 0, 100, 27))
+	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) {
+		t.Error("the wheel reported no change")
+	}
+
+	// The Report: a click on a party picks it.
+	must(t, engine.LaunchExpedition(1))
+	must(t, engine.LaunchExpedition(2))
+	p.open(engine.GetState())
+	if !p.view.report {
+		t.Fatal("staging: the panel did not open on the Report")
+	}
+	p.Layout(image.Rect(0, 0, 100, 27))
+	n := len(p.scene().acts)
+	if n < 2 {
+		t.Skipf("only %d party out", n)
+	}
+	p.view.party = 0
+	if !press(pin(hitParty, 1), 1) || p.view.party != 1 {
+		t.Errorf("a click on the second party picked %d", p.view.party)
+	}
+}

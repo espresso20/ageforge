@@ -112,6 +112,7 @@ func (c peopleBody) overview() {
 			bk, tk = xAccent, xBright
 		}
 		g.box(x, cy, w, ch, bk, k.name, tk, false)
+		g.hit(hitRow, i, x, cy, w, ch)
 		for j, l := range c.card(i, k) {
 			if j >= ch-2 {
 				break
@@ -238,6 +239,7 @@ func (c peopleBody) work() {
 		r := rows[i]
 		y := c.y + 2 + n*2
 		pickName(g, c.x+2, y, 13, r.Name, i == c.v.row)
+		g.hit(hitRow, i, c.x+1, y, lw-2, 2)
 		share := "auto"
 		sk := xDim
 		if r.Set {
@@ -360,6 +362,7 @@ func (c peopleBody) army() {
 		p := posts[b.key]
 		staff := vibe.Sprintf("ui.people_tabs.army.04", "%s/%s posted", num(p.Posted), num(p.Posts))
 		pickName(g, c.x+2, y, lw-6-runeLen(staff), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
+		g.hit(hitRow, i, c.x+1, y, lw-2, 2)
 		sk := xGood
 		if p.Posted < p.Posts {
 			sk = xBad
@@ -427,6 +430,7 @@ func (c peopleBody) scholars() {
 		y := c.y + 1 + n*2
 		each := vibe.Sprintf("ui.people_tabs.scholars.04", "%s each", num(b.Scholars))
 		pickName(g, c.x+2, y, lw-6-runeLen(each), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
+		g.hit(hitRow, i, c.x+1, y, lw-2, 2)
 		g.rput(rightOf(c.x, lw), y, each, xDim)
 		const bw = 10
 		fill := bw

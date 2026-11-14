@@ -1,11 +1,14 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // expedition_grid.go is the cell grid the Expeditions panel draws into: a
@@ -85,10 +88,34 @@ type xcell = gcell[xk]
 // xgrid is a block of cells.
 type xgrid struct {
 	glyphGrid[xk]
+	// hits are the things a click can pick, recorded as they are drawn.
+	hits []xhit
+}
+
+// xhit is a thing a click can pick: what kind (the panel's own numbering),
+// which one of that kind, and the cells it covers.
+type xhit struct {
+	id, n int
+	r     image.Rectangle
+}
+
+// hit records that the cells (x, y, w, h) are the n-th thing of kind id.
+func (g *xgrid) hit(id, n, x, y, w, h int) {
+	g.hits = append(g.hits, xhit{id, n, image.Rect(x, y, x+w, y+h)})
+}
+
+// hitAt is the thing of kind id under the cell pt.
+func (g *xgrid) hitAt(id int, pt image.Point) (n int, ok bool) {
+	for _, h := range g.hits {
+		if h.id == id && pt.In(h.r) {
+			return h.n, true
+		}
+	}
+	return 0, false
 }
 
 func newXGrid(w, h int) *xgrid {
-	return &xgrid{newGlyphGrid[xk](w, h)}
+	return &xgrid{glyphGrid: newGlyphGrid[xk](w, h)}
 }
 
 // put writes s from (x, y), one cell a rune, and returns the next x.
@@ -272,4 +299,15 @@ func (p *expPalette) style(c xcell) tcell.Style {
 // paintExpedition puts a grid on the screen at (x0, y0).
 func paintExpedition(scr tcell.Screen, g *xgrid, x0, y0 int, p *expPalette) {
 	g.draw(scr, x0, y0, func(c xcell) (rune, tcell.Style) { return c.r, p.style(c) })
+}
+
+// paintExpeditionKit puts a grid on a kit painter, its top left corner at the
+// given point.
+func paintExpeditionKit(p *kit.Painter, g *xgrid, at image.Point, pal *expPalette) {
+	for y := 0; y < g.h; y++ {
+		for x := 0; x < g.w; x++ {
+			c := g.c[y*g.w+x]
+			p.Put(at.X+x, at.Y+y, c.r, kitStyle(pal.style(c)))
+		}
+	}
 }
