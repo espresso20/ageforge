@@ -2,12 +2,12 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"strings"
 	"sync"
 	"unicode/utf8"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
@@ -17,6 +17,7 @@ import (
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // dash_ledger.go is the top of the dashboard under the status ribbon: the
@@ -641,7 +642,8 @@ func (lv ledgerView) full() []string {
 // change twice a second, and a TextView takes a good part of a frame to parse
 // and lay out that much.
 type ledgerBox struct {
-	*tview.Box
+	*nativeHost
+	kit.Base
 	render func(w, h int) []string
 	lines  []string
 	w, h   int
@@ -651,7 +653,9 @@ type ledgerBox struct {
 }
 
 func newLedgerBox(render func(w, h int) []string) *ledgerBox {
-	return &ledgerBox{Box: tview.NewBox(), render: render, stale: true}
+	b := &ledgerBox{render: render, stale: true}
+	b.nativeHost = newNativeHost(b)
+	return b
 }
 
 // changed says what the box shows has changed, and writes it again, as
@@ -668,7 +672,8 @@ func (b *ledgerBox) changed() {
 
 // layout writes the rows for the box's current size if they are out of date.
 func (b *ledgerBox) layout() {
-	_, _, w, h := b.GetInnerRect()
+	r := b.Bounds()
+	w, h := r.Dx(), r.Dy()
 	if b.stale || w != b.w || h != b.h {
 		b.lines = b.render(w, h)
 		b.w, b.h, b.stale = w, h, false
@@ -724,44 +729,52 @@ func ledgerRuneWidth(r rune) int {
 	return uniseg.StringWidth(string(r))
 }
 
-// Draw paints the box and, rune by rune, its rows.
-func (b *ledgerBox) Draw(screen tcell.Screen) {
+// Layout takes the box's rectangle and writes the rows for it.
+func (b *ledgerBox) Layout(r image.Rectangle) {
+	b.Place(r)
 	if !b.drawn {
 		b.drawn, b.stale = true, true
 	}
 	b.layout()
-	b.DrawForSubclass(screen, b)
-	x, y, w, h := b.GetInnerRect()
-	baseFg, baseBg := tview.Styles.PrimaryTextColor, b.GetBackgroundColor()
-	base := tcell.StyleDefault.Foreground(baseFg).Background(baseBg)
+}
+
+// CanFocus: the Ledger takes no keys.
+func (b *ledgerBox) CanFocus() bool { return false }
+
+// Paint writes the box's rows, rune by rune.
+func (b *ledgerBox) Paint(p *kit.Painter) {
+	r := b.Bounds()
+	p.Fill(r, kit.Role(theme.RoleBackground))
 	for row, line := range b.lines {
-		if row >= h {
+		if row >= r.Dy() {
 			break
 		}
-		style, col := base, 0
-		for i := 0; i < len(line) && col < w; {
+		var style kit.Style
+		for i, col := 0, 0; i < len(line) && col < r.Dx(); {
 			if line[i] == '[' {
 				if n, fg, bg, setFg, setBg, ok := ledgerTag(line[i:]); ok {
-					if setFg && fg == tcell.ColorDefault {
-						style = style.Foreground(baseFg)
-					} else if setFg {
-						style = style.Foreground(fg)
+					if setFg {
+						style.Fg = kitColor(fg)
+						if fg == tcell.ColorDefault {
+							style.Fg = kit.Color{}
+						}
 					}
-					if setBg && bg == tcell.ColorDefault {
-						style = style.Background(baseBg)
-					} else if setBg {
-						style = style.Background(bg)
+					if setBg {
+						style.Bg = kitColor(bg)
+						if bg == tcell.ColorDefault {
+							style.Bg = kit.Color{}
+						}
 					}
 					i += n
 					continue
 				}
 			}
-			r, size := utf8.DecodeRuneInString(line[i:])
+			c, size := utf8.DecodeRuneInString(line[i:])
 			i += size
-			if r != ' ' || style != base {
-				screen.SetContent(x+col, y+row, r, nil, style)
+			if c != ' ' || style != (kit.Style{}) {
+				p.Put(r.Min.X+col, r.Min.Y+row, c, style)
 			}
-			col += max(1, ledgerRuneWidth(r))
+			col += max(1, ledgerRuneWidth(c))
 		}
 	}
 }

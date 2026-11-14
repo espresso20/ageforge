@@ -154,11 +154,39 @@ func TestNativeTextKeysAndCalls(t *testing.T) {
 	if got := top(); got != "d" {
 		t.Errorf("not scrollable shows the end, top line %q", got)
 	}
+	// The older lines go after a draw, as in tview: the text is whole once.
 	kt.SetMaxLines(2)
-	if got := top(); got != "g" {
-		t.Errorf("SetMaxLines(2) keeps the last two lines, top line %q", got)
+	if got := top(); got != "d" || kt.GetText(false) != "g\nh" {
+		t.Errorf("SetMaxLines(2): drawn top line %q, text afterward %q", got, kt.GetText(false))
 	}
 	if got := kt.Clear().GetText(true); got != "" || changed != 3 {
 		t.Errorf("Clear: %q, %d changes", got, changed)
+	}
+}
+
+func TestNativeTextWriteTitleColorAndDrawFunc(t *testing.T) {
+	keepTheme(t)
+	kt := newNativeText()
+	if _, err := fmt.Fprint(kt, "one "); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Fprintf(kt, "two")
+	if got := kt.GetText(false); got != "one two" {
+		t.Errorf("Write: %q", got)
+	}
+	var w int
+	kt.SetBorder(true).SetTitle("T").SetTitleColor(tcell.ColorRed).SetDrawFunc(func(_ tcell.Screen, _, _, ww, _ int) (int, int, int, int) {
+		w = ww
+		return 0, 0, 0, 0
+	})
+	if kt.GetTitle() != "T" {
+		t.Errorf("GetTitle: %q", kt.GetTitle())
+	}
+	cells := cellsOf(t, kt, 20, 4)
+	if w != 20 {
+		t.Errorf("the draw func saw width %d", w)
+	}
+	if !strings.HasPrefix(cells[10], "T fg ff0000") {
+		t.Errorf("the title is %q, want red T", cells[10])
 	}
 }

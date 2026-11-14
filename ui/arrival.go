@@ -1,16 +1,17 @@
 package ui
 
 import (
+	"image"
 	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // arrival.go runs the arrival screen: the overlay that greets a new age
@@ -64,7 +65,8 @@ const (
 
 // arrival is the arrival screen.
 type arrival struct {
-	*tview.Box
+	*nativeHost
+	kit.Base
 	om *OverlayManager
 
 	// What the dashboard said arrived.
@@ -113,7 +115,7 @@ type arrival struct {
 func newArrival(om *OverlayManager, oldAge, newAge string, summary game.AgeAdvanceSummary,
 	epochChanged bool, epochEvent game.EpochEventRecord) *arrival {
 	a := &arrival{
-		Box: tview.NewBox(), om: om, oldAge: oldAge, newAge: newAge, summary: summary,
+		om: om, oldAge: oldAge, newAge: newAge, summary: summary,
 		epoch: epochChanged, event: epochEvent, now: time.Now,
 	}
 	a.set = defaultMapSettings()
@@ -125,6 +127,7 @@ func newArrival(om *OverlayManager, oldAge, newAge string, summary game.AgeAdvan
 		}
 	}
 	a.say(nil)
+	a.nativeHost = newNativeHost(a)
 	return a
 }
 
@@ -406,11 +409,24 @@ func (c *redrawClock) stopClock() {
 	}
 }
 
-// InputHandler: any key moves on. From the celebration it goes to the
-// information; from the information to its next page, or, on the last,
-// it closes the screen.
-func (a *arrival) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return a.WrapInputHandler(func(_ *tcell.EventKey, _ func(tview.Primitive)) { a.key() })
+// CanFocus: the screen takes the keys.
+func (a *arrival) CanFocus() bool { return true }
+
+// Key: any key moves on. From the celebration it goes to the information;
+// from the information to its next page, or, on the last, it closes the
+// screen.
+func (a *arrival) Key(kit.Key) bool {
+	a.key()
+	return true
+}
+
+// Mouse: a left press moves on, as any key does.
+func (a *arrival) Mouse(m kit.Mouse) bool {
+	if m.Kind != kit.MousePress || m.Button != kit.ButtonLeft {
+		return false
+	}
+	a.key()
+	return true
 }
 
 // key is a key press, whichever key it was.
@@ -433,20 +449,17 @@ func (a *arrival) key() {
 	}
 }
 
-// Draw draws the screen at the clock's frame.
+// Draw draws the screen at the clock's frame, then the theme's weather over
+// the cells it leaves empty, and keeps the redraw clock running while it moves.
 func (a *arrival) Draw(scr tcell.Screen) {
 	if a.stage == arrClosed {
 		return
 	}
-	x, y, w, h := a.GetRect()
-	if w <= 0 || h <= 0 {
-		return
-	}
-	grid := a.frameGrid(w, h)
-	grid.flush(scr, x, y, a.pal, a.view.plain)
+	a.nativeHost.Draw(scr)
 	// An epoch's own weather: the theme's ambient effect, in the cells the
 	// screen leaves empty, once the heavy blow has landed.
-	if a.view.motion && a.view.epoch && a.stage == arrCelebrating && a.sc.frame >= arrEraStrike {
+	if x, y, w, h := a.GetRect(); w > 0 && h > 0 &&
+		a.view.motion && a.view.epoch && a.stage == arrCelebrating && a.sc.frame >= arrEraStrike {
 		if effect := theme.Active().Effect; effect != "" {
 			drawThemeEffect(scr, x, y, w, h, effect, a.sc.frame+arrivalFxLead, a.view.plain)
 		}
@@ -456,6 +469,18 @@ func (a *arrival) Draw(scr tcell.Screen) {
 	} else {
 		a.stopClock()
 	}
+}
+
+// Layout takes the screen's rectangle.
+func (a *arrival) Layout(r image.Rectangle) { a.Place(r) }
+
+// Paint draws the screen at the clock's frame.
+func (a *arrival) Paint(p *kit.Painter) {
+	r := a.Bounds()
+	if r.Empty() {
+		return
+	}
+	a.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, a.pal, a.view.plain)
 }
 
 // frameGrid brings the scene to the clock's frame and draws the screen at

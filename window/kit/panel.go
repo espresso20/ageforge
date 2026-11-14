@@ -15,6 +15,8 @@ type Panel struct {
 	// theme's border color).
 	Border      Border
 	BorderStyle Style
+	// TitleStyle is the title's style (unset: the accent color).
+	TitleStyle Style
 	// Title sits on the top edge and Foot on the bottom one, both tagged
 	// text, placed by their Align (the title starts centered).
 	Title, Foot           string
@@ -81,7 +83,10 @@ func (b *Panel) Paint(p *Painter) {
 	}
 	p.Box(r, b.Border, st)
 	if w := r.Dx() - 2; w > 0 {
-		title := Style{Fg: Role(theme.RoleAccent)}
+		title := b.TitleStyle
+		if !title.Fg.IsSet() {
+			title.Fg = Role(theme.RoleAccent)
+		}
 		if b.Title != "" {
 			p.PrintAligned(r.Min.X+1, r.Min.Y, w, b.Title, title, b.TitleAlign)
 		}

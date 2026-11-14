@@ -419,7 +419,7 @@ const (
 // first open; its text and buttons are replaced each time the flow moves.
 type iconsWindow struct {
 	root   *tview.Flex // the page: the box, centered
-	body   *tview.TextView
+	body   *nativeText
 	btnRow *tview.Flex
 	ring   *buttonRing
 }
@@ -428,7 +428,7 @@ type iconsWindow struct {
 // like the other modals; it is rebuilt with each dashboard.
 func (d *Dashboard) newIconsWindow() *iconsWindow {
 	w := &iconsWindow{ring: newButtonRing(d.app, nil)}
-	w.body = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
+	w.body = newNativeText().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 	w.body.SetTextColor(theme.Color(theme.RoleText)).SetBackgroundColor(theme.Color(theme.RoleSurface))
 	w.btnRow = tview.NewFlex().SetDirection(tview.FlexColumn)
 	hint := surfaceText(theme.Paint(theme.RoleDim, vibe.Line("ui.icons.newIconsWindow.01", "Tab moves between buttons · Enter presses · Esc closes")), tview.AlignCenter)

@@ -49,7 +49,7 @@ func (d *Dashboard) maybeShowPrestigeCue(state game.GameState) {
 	}
 
 	width := d.overlayMgr.screenW
-	tv := tview.NewTextView().SetText(prestigeCueText(state, width)).SetWrap(false)
+	tv := newNativeText().SetText(prestigeCueText(state, width)).SetWrap(false)
 	tv.SetBorder(true)
 	theme.Track(func() {
 		tv.SetBorderColor(theme.Color(theme.RoleAccent)).

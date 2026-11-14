@@ -17,6 +17,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // arrivalSizes are the terminals the arrival screen is checked at.
@@ -1477,3 +1478,34 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 }
 
 func (l infoLine) plain() string { return plainOf(l.segs) }
+
+// TestArrivalClickMovesOn: a left press does what a key does, stage by stage;
+// other buttons and a bare move do nothing.
+func TestArrivalClickMovesOn(t *testing.T) {
+	press := func(a *arrival, kind kit.MouseKind, b kit.MouseButton) bool {
+		return a.Mouse(kit.Mouse{Kind: kind, Button: b, X: 5, Y: 3})
+	}
+	byKey := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	byClick := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	byKey.at(100, 30, 3)
+	byClick.at(100, 30, 3)
+	if press(byClick.a, kit.MouseMove, kit.ButtonLeft) || press(byClick.a, kit.MousePress, kit.ButtonRight) || byClick.a.stage != arrCelebrating || byClick.a.keys != 0 {
+		t.Fatal("a move or a right press moved the screen on")
+	}
+	for i := 0; i < 6 && byKey.a.stage != arrClosed; i++ {
+		byKey.a.key()
+		if !press(byClick.a, kit.MousePress, kit.ButtonLeft) {
+			t.Fatal("a left press was not taken")
+		}
+		if byKey.a.stage != byClick.a.stage || byKey.a.page != byClick.a.page || byKey.a.keys != byClick.a.keys {
+			t.Fatalf("step %d: key gave stage %d page %d, click gave stage %d page %d", i, byKey.a.stage, byKey.a.page, byClick.a.stage, byClick.a.page)
+		}
+		byKey.clock = byKey.clock.Add(arrivalKeyGap)
+		byClick.clock = byClick.clock.Add(arrivalKeyGap)
+		byKey.at(100, 30, byKey.a.sc.frame+1)
+		byClick.at(100, 30, byClick.a.sc.frame+1)
+	}
+	if byClick.a.stage != arrClosed {
+		t.Fatal("clicks never closed the screen")
+	}
+}

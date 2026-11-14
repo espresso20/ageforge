@@ -103,7 +103,7 @@ func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageNa
 // is used — the normal first-open behavior. A non-empty prefill is used verbatim, so the
 // account "Re-type" path can reopen with the name the player just typed for editing.
 func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pageName string, focusReturn tview.Primitive, prefill string, onConfirm func(name string), escAccepts bool) {
-	errTV := tview.NewTextView().
+	errTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
@@ -128,7 +128,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 	if escAccepts {
 		escHint = vibe.Line("ui.newgame_modal.showSaveNameModalOpts.03", "Esc: accept")
 	}
-	hintTV := tview.NewTextView().
+	hintTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(vibe.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")

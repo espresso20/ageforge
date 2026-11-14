@@ -7,6 +7,8 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the mouse wheel scrolls the dashboard's log, the load and account pages and the theme picker's text. Every text box in the game is drawn by its own UI kit now; the terminal shows them as before.
+- In the window, a click moves the arrival screen and the ending film on, as Enter does.
 - In the window, the mouse wheel scrolls every text panel (Milestones, Army, Trade routes, Factions, Statistics, Logs, Epoch, History, Buildings, Help and the rest), and a click in the command bar puts the cursor at the character clicked. The panels and the command bar are drawn by the game's own UI kit; the terminal shows them as before.
 - In the window, the main menu takes the mouse: the entry under the pointer is selected and a click opens it, on the Settings page too. The menu is the first screen drawn by the game's own UI kit; the terminal shows it as before.
 - A Steam build keeps its saves and settings in the OS user config folder (AgeForge under AppData, Application Support or ~/.config) instead of beside the executable, so Steam Auto-Cloud can sync them and uninstalling keeps them. Other builds are unchanged.
@@ -45,6 +47,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Internal: the Ledger is drawn by the UI kit.
 - Internal: a UI kit for the window (`window/kit`). Its widgets lay out on the grid of text cells and paint in theme roles, with the game's color tags, keyboard focus and the mouse. No screen uses it yet, so nothing in play changes.
 - AgeForge opens in its own window, with fullscreen, adjustable text size and a choice of a pixel or a clean font. Closing the window saves the game. `F11`, `Alt`+`Enter` or `Cmd`+`Ctrl`+`F` toggle fullscreen, `Ctrl`/`Cmd` with `=`, `-` and `0` change the text size, and `Cmd`/`Ctrl`+`V` pastes. Every symbol the game prints now draws (Japanese, emoji and the rest come from small embedded fonts). `--terminal` still runs it in the terminal for now.
 - Zoom out on the Galactic map to the Orion Arm's nebulae and star clusters, then to the void between galaxies with the Milky Way, Andromeda, Triangulum and the Magellanic Clouds.

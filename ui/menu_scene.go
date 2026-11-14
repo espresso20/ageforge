@@ -125,25 +125,9 @@ func (g *mGrid) box(x, y, w, h int, heavy bool, fg tcell.Color) {
 	g.put(x+w-1, y+h-1, c[3], fg)
 }
 
-// flush puts the grid on the screen with its top left corner at (x0, y0).
-// In the plain glyph set every glyph that is not ASCII is folded to one
-// that is (the wordmark and the fire were already drawn without blocks).
-func (g *mGrid) flush(scr tcell.Screen, x0, y0 int, pal *menuPalette, plain bool) {
-	g.draw(scr, x0, y0, func(c mCell) (rune, tcell.Style) {
-		bg := pal.bg
-		if c.hasBg {
-			bg = c.bg
-		}
-		r := c.r
-		if plain {
-			r = mapmodel.Fold(r, mapmodel.TierASCII)
-		}
-		return r, tcell.StyleDefault.Foreground(c.fg).Background(bg).Bold(c.bold)
-	})
-}
-
-// paint puts the grid on a kit painter with its top left corner at at, the
-// way flush puts it on a screen.
+// paint puts the grid on a kit painter with its top left corner at at. In
+// the plain glyph set every glyph that is not ASCII is folded to one that is
+// (the wordmark and the fire were already drawn without blocks).
 func (g *mGrid) paint(p *kit.Painter, at image.Point, pal *menuPalette, plain bool) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {

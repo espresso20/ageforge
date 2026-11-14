@@ -31,6 +31,7 @@ type nativeText struct {
 	maxLines   int
 	changed    func()
 	done       func(tcell.Key)
+	drawFunc   func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)
 }
 
 // newNativeText is a text view as tview makes one: scrollable, wrapping at
@@ -88,10 +89,12 @@ func (t *nativeText) SetScrollable(on bool) *nativeText {
 	return t
 }
 
-// SetMaxLines keeps only the last n lines of what is set (0: all of it).
+// SetMaxLines keeps the text to its last n lines (0: all of it). As in
+// tview the older lines go after a draw, so text that was just set is shown
+// whole once.
 func (t *nativeText) SetMaxLines(n int) *nativeText {
 	t.maxLines = n
-	return t.show()
+	return t
 }
 
 func (t *nativeText) SetText(s string) *nativeText {
@@ -106,11 +109,6 @@ func (t *nativeText) SetText(s string) *nativeText {
 // show gives the kit the text as it should print.
 func (t *nativeText) show() *nativeText {
 	s := t.raw
-	if t.maxLines > 0 {
-		if ls := strings.Split(s, "\n"); len(ls) > t.maxLines {
-			s = strings.Join(ls[len(ls)-t.maxLines:], "\n")
-		}
-	}
 	if !t.dynamic {
 		s = kit.Escape(s)
 	}
@@ -178,6 +176,8 @@ func (t *nativeText) SetTitle(s string) *nativeText {
 	return t
 }
 
+func (t *nativeText) GetTitle() string { return t.box.Title }
+
 func (t *nativeText) SetTitleAlign(align int) *nativeText {
 	t.box.TitleAlign = kitAligns[align]
 	return t
@@ -186,6 +186,25 @@ func (t *nativeText) SetTitleAlign(align int) *nativeText {
 func (t *nativeText) SetBorderColor(c tcell.Color) *nativeText {
 	t.box.BorderStyle.Fg = kitColor(c)
 	return t
+}
+
+func (t *nativeText) SetTitleColor(c tcell.Color) *nativeText {
+	t.box.TitleStyle.Fg = kitColor(c)
+	return t
+}
+
+// SetDrawFunc calls fn with the box's rectangle each time it is drawn. Unlike
+// tview's it cannot move the text: the rectangle it returns is ignored, so it
+// serves a view that only wants to know its size.
+func (t *nativeText) SetDrawFunc(fn func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)) *nativeText {
+	t.drawFunc = fn
+	return t
+}
+
+// Write adds p to the text, so a text view can be a Fprint target.
+func (t *nativeText) Write(p []byte) (int, error) {
+	t.SetText(t.raw + string(p))
+	return len(p), nil
 }
 
 // GetInnerRect is the rectangle the text has: the box, less its border.
@@ -200,6 +219,10 @@ func (t *nativeText) GetInnerRect() (x, y, w, h int) {
 // Draw draws the box, with the doubled border tview gives the primitive
 // that has the focus.
 func (t *nativeText) Draw(scr tcell.Screen) {
+	if t.drawFunc != nil {
+		x, y, w, h := t.GetRect()
+		t.drawFunc(scr, x, y, w, h)
+	}
 	t.box.Border = kit.BorderNone
 	if t.border {
 		t.box.Border = kit.BorderLine
@@ -208,6 +231,12 @@ func (t *nativeText) Draw(scr tcell.Screen) {
 		}
 	}
 	t.nativeHost.Draw(scr)
+	if t.maxLines > 0 {
+		if ls := strings.Split(t.raw, "\n"); len(ls) > t.maxLines {
+			t.raw = strings.Join(ls[len(ls)-t.maxLines:], "\n")
+			t.show()
+		}
+	}
 }
 
 // viKeys are the letters a text view scrolls by, as the keys they stand for.
