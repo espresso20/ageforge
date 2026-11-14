@@ -52,6 +52,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - Inside: colours and text styles are the game's own types everywhere, themes included. The terminal library's are left only where the screen is still copied to it.
+- Inside: who has the keyboard, and what a page is made of, are the game's own code now. The terminal library still runs the event loop and nothing else.
 - Inside: the stack of pages itself (menu, dashboard, panels, popups) is the UI kit's now, so the whole screen is one picture painted in one pass. A panel or popup still leaves the command bar and the page around it usable, by eye and by mouse.
 - Inside: the Map panel, the mini map, the theme picker's sample and every theme's weather are painted through the UI kit now, so nothing the game shows is drawn straight onto the terminal library's screen any more. They look as they did.
 - Inside: the whole dashboard is one picture painted by the UI kit (its body, the left column, the map dock, the panels and the Ledger), and the game's dialogs are the kit's too. Only the map and the mini map still draw themselves the old way.
