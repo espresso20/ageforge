@@ -78,10 +78,6 @@ func (h *nativeHost) InputHandler() func(*tcell.EventKey, func(tview.Primitive))
 	})
 }
 
-func tcellRGB(r, g, b uint8) tcell.Color {
-	return tcell.NewRGBColor(int32(r), int32(g), int32(b))
-}
-
 // cellAttrs pairs the kit's attributes with tcell's. Underline is not here:
 // tcell keeps it apart from the others.
 var cellAttrs = [...]struct {
@@ -97,9 +93,9 @@ var cellAttrs = [...]struct {
 func cellStyle(c *kit.Cell) tcell.Style {
 	bg := theme.Transparent
 	if !c.Clear() {
-		bg = tcellRGB(c.Bg.R, c.Bg.G, c.Bg.B)
+		bg = theme.FromRGBA(c.Bg)
 	}
-	st := tcell.StyleDefault.Foreground(tcellRGB(c.Fg.R, c.Fg.G, c.Fg.B)).Background(bg)
+	st := tcell.StyleDefault.Foreground(theme.FromRGBA(c.Fg)).Background(bg)
 	if c.Attr == 0 {
 		return st
 	}
