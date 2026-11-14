@@ -208,11 +208,6 @@ func (p *gridPalette) style(c tCell) tcell.Style {
 	return st
 }
 
-// paintGrid puts a rendered grid on the screen in theme colours.
-func paintGrid(scr tcell.Screen, g *tGrid, x0, y0 int, p *gridPalette) {
-	g.draw(scr, x0, y0, func(c tCell) (rune, tcell.Style) { return c.r, p.style(c) })
-}
-
 // paintGridKit puts a rendered grid on a kit painter, its top left corner at
 // the given point.
 func paintGridKit(p *kit.Painter, g *tGrid, at image.Point, pal *gridPalette) {

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // caseTiers are the glyph tiers the case is checked in.
@@ -953,4 +955,50 @@ func TestBadgePanelKeysAndMotion(t *testing.T) {
 			t.Errorf("with motion off %s still moves", sel)
 		}
 	}
+}
+
+// TestBadgePanelMouse: a click selects the badge under the pointer, a double
+// click opens its detail as Enter does, a click outside the detail closes it,
+// and the wheel moves the selection.
+func TestBadgePanelMouse(t *testing.T) {
+	views, sum := caseFixture()
+	st := game.GameState{AccountStats: &game.AccountStatsView{Badges: views, BadgeSummary: sum}}
+	clock := time.Unix(1_700_000_000, 0)
+	p := newBadgePanel()
+	p.now, p.start = func() time.Time { return clock }, clock
+	p.SetRect(0, 0, 100, 27)
+	p.open(st)
+	drawPrimitive(t, p, 100, 27)
+	lay := p.model.lay
+	at := func(id string) image.Point {
+		it := p.model.items[p.model.by[id]]
+		return image.Pt(lay.gx+it.col*casePitchX+1, lay.gy+p.model.lines[it.line].y-p.view.vy+1)
+	}
+	press := func(pt image.Point, clicks int) bool {
+		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: clicks})
+	}
+	if !press(at("age.iron_age"), 1) || p.view.sel != "age.iron_age" || p.view.card {
+		t.Fatalf("a click: selected %q, detail open %v", p.view.sel, p.view.card)
+	}
+	if press(image.Pt(0, 0), 1) {
+		t.Error("a click on the title bar changed something")
+	}
+	if !press(at("age.iron_age"), 2) || !p.view.card {
+		t.Error("a double click did not open the detail")
+	}
+	drawPrimitive(t, p, 100, 27)
+	if c := p.model.cardAt; press(c.Min.Add(image.Pt(c.Dx()/2, c.Dy()/2)), 1) {
+		t.Error("a click on the detail closed it")
+	}
+	if !press(image.Pt(0, 0), 1) || p.view.card {
+		t.Error("a click outside the detail did not close it")
+	}
+	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || p.view.sel != "lineage.housing.2" {
+		t.Errorf("the wheel down selects %q, want the badge under it", p.view.sel)
+	}
+}
+
+// paintGrid puts a rendered grid on the screen in theme colours.
+func paintGrid(scr tcell.Screen, g *tGrid, x0, y0 int, p *gridPalette) {
+	g.draw(scr, x0, y0, func(c tCell) (rune, tcell.Style) { return c.r, p.style(c) })
 }
