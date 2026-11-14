@@ -5,6 +5,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
+
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // keys.go turns what Ebitengine reports into the key events the game already
@@ -23,6 +25,21 @@ func (m mods) mask() tcell.ModMask {
 	}
 	if m.shift {
 		out |= tcell.ModShift
+	}
+	return out
+}
+
+// kit is the modifiers as the UI kit names them.
+func (m mods) kit() kit.Mod {
+	var out kit.Mod
+	if m.ctrl {
+		out |= kit.ModCtrl
+	}
+	if m.alt {
+		out |= kit.ModAlt
+	}
+	if m.shift {
+		out |= kit.ModShift
 	}
 	return out
 }

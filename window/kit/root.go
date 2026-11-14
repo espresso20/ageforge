@@ -238,7 +238,14 @@ func (r *Root) dropPointer() {
 // MouseLeave says the pointer has left the screen.
 func (r *Root) Mouse(m Mouse) bool {
 	if m.Kind == MouseLeave {
-		return r.setHover(nil, m)
+		// A press that was still held ends here: its widget is told the
+		// button came up, away from it.
+		held := r.capture
+		r.capture = nil
+		if held != nil {
+			held.(MouseHandler).Mouse(Mouse{Kind: MouseRelease, X: -1, Y: -1})
+		}
+		return r.setHover(nil, m) || held != nil
 	}
 	if r.capture != nil && (m.Kind == MouseMove || m.Kind == MouseRelease) {
 		c := r.capture

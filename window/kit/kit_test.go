@@ -241,6 +241,14 @@ func TestButtonPressesByKeyAndMouse(t *testing.T) {
 	if n != 3 {
 		t.Errorf("a press dragged off the button counted: %d", n)
 	}
+	// Nor is one that ends with the pointer leaving the screen.
+	r.Mouse(Mouse{Kind: MousePress, X: 1, Y: 0})
+	r.Mouse(Mouse{Kind: MouseLeave})
+	r.Mouse(Mouse{Kind: MouseMove, X: 1, Y: 0})
+	r.Mouse(Mouse{Kind: MouseRelease, X: 1, Y: 0})
+	if n != 3 {
+		t.Errorf("a press that left the screen counted: %d", n)
+	}
 	bt.Disabled = true
 	r.Mouse(Mouse{Kind: MousePress, X: 1, Y: 0})
 	r.Mouse(Mouse{Kind: MouseRelease, X: 1, Y: 0})

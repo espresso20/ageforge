@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"strconv"
 	"strings"
 
@@ -206,6 +207,8 @@ type menuScene struct {
 	sparks menuSparks
 	forge  *menuForge
 	stars  []menuStar
+	// hits is where each entry was last drawn, for the mouse.
+	hits []image.Rectangle
 }
 
 // newMenuScene makes the scene for a layout, at rest.
@@ -298,6 +301,7 @@ func spaced(s string) string {
 func (sc *menuScene) render(pal *menuPalette, v *menuView, town *menuTown, mf mapstyle.Frame) *mGrid {
 	L := sc.L
 	g := newMGrid(L.w, L.h)
+	sc.hits = sc.hits[:0]
 	switch {
 	case L.compact:
 		sc.renderCompact(g, pal, v)
@@ -307,6 +311,16 @@ func (sc *menuScene) render(pal *menuPalette, v *menuView, town *menuTown, mf ma
 		sc.renderTown(g, pal, v, town, mf)
 	}
 	return g
+}
+
+// entryAt is the entry drawn at a cell of the page; -1 for none.
+func (sc *menuScene) entryAt(pt image.Point) int {
+	for i, r := range sc.hits {
+		if pt.In(r) {
+			return i
+		}
+	}
+	return -1
 }
 
 // menuKeysHint is the line that says how the menu is driven.
@@ -469,6 +483,7 @@ func (sc *menuScene) drawMenu(g *mGrid, pal *menuPalette, v *menuView, leaders b
 	x, w, row := L.mx, L.mw, L.my
 	for i, it := range v.items {
 		on := i == v.sel
+		first := row
 		left := "  " + it.label
 		if on {
 			left = "▸ " + it.label
@@ -511,6 +526,7 @@ func (sc *menuScene) drawMenu(g *mGrid, pal *menuPalette, v *menuView, leaders b
 			}
 			row++
 		}
+		sc.hits = append(sc.hits, image.Rect(x, first, x+w, row))
 		row += L.gap - 1
 	}
 }
@@ -540,6 +556,7 @@ func (sc *menuScene) renderCompact(g *mGrid, pal *menuPalette, v *menuView) {
 			break
 		}
 		on := i == v.sel
+		sc.hits = append(sc.hits, image.Rect(x, y, x+w, y+1))
 		left := truncate("  "+it.label, max(w-2, 0))
 		if on {
 			left = truncate("▸ "+it.label, max(w-2, 0))

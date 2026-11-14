@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"math"
 	"strings"
 
@@ -8,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // menu_scene.go draws what moves on the main menu: the AGEFORGE wordmark as
@@ -138,6 +140,32 @@ func (g *mGrid) flush(scr tcell.Screen, x0, y0 int, pal *menuPalette, plain bool
 		}
 		return r, tcell.StyleDefault.Foreground(c.fg).Background(bg).Bold(c.bold)
 	})
+}
+
+// paint puts the grid on a kit painter with its top left corner at at, the
+// way flush puts it on a screen.
+func (g *mGrid) paint(p *kit.Painter, at image.Point, pal *menuPalette, plain bool) {
+	rgb := func(c tcell.Color) kit.Color {
+		r, gr, b := c.RGB()
+		return kit.RGB(uint8(max(r, 0)), uint8(max(gr, 0)), uint8(max(b, 0)))
+	}
+	for y := 0; y < g.h; y++ {
+		for x := 0; x < g.w; x++ {
+			c := g.c[y*g.w+x]
+			st := kit.Style{Fg: rgb(c.fg), Bg: rgb(pal.bg)}
+			if c.hasBg {
+				st.Bg = rgb(c.bg)
+			}
+			if c.bold {
+				st.Attr = kit.Bold
+			}
+			r := c.r
+			if plain {
+				r = mapmodel.Fold(r, mapmodel.TierASCII)
+			}
+			p.Put(at.X+x, at.Y+y, r, st)
+		}
+	}
 }
 
 // ---- colours, all from the theme's roles ----
