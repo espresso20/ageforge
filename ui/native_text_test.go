@@ -162,3 +162,30 @@ func TestNativeTextKeysAndCalls(t *testing.T) {
 		t.Errorf("Clear: %q, %d changes", got, changed)
 	}
 }
+
+func TestNativeTextWriteTitleColorAndDrawFunc(t *testing.T) {
+	keepTheme(t)
+	kt := newNativeText()
+	if _, err := fmt.Fprint(kt, "one "); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Fprintf(kt, "two")
+	if got := kt.GetText(false); got != "one two" {
+		t.Errorf("Write: %q", got)
+	}
+	var w int
+	kt.SetBorder(true).SetTitle("T").SetTitleColor(tcell.ColorRed).SetDrawFunc(func(_ tcell.Screen, _, _, ww, _ int) (int, int, int, int) {
+		w = ww
+		return 0, 0, 0, 0
+	})
+	if kt.GetTitle() != "T" {
+		t.Errorf("GetTitle: %q", kt.GetTitle())
+	}
+	cells := cellsOf(t, kt, 20, 4)
+	if w != 20 {
+		t.Errorf("the draw func saw width %d", w)
+	}
+	if !strings.HasPrefix(cells[10], "T fg ff0000") {
+		t.Errorf("the title is %q, want red T", cells[10])
+	}
+}
