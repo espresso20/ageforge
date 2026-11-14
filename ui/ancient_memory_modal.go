@@ -31,7 +31,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 
 	header := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.01", "[gray]You have discovered an old cache. It appears to contain\n"+
 			"memories of a now-extinct civilization.[-]"))
 
@@ -58,12 +58,12 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 			d.closeAncientMemoryModal()
 		})
 
-	btnRow := newNativeFlex().SetDirection(tview.FlexColumn).
+	btnRow := newNativeFlex().SetDirection(flexColumn).
 		AddItem(btnAccept, 12, 0, true).
 		AddItem(newNativeBox(), 2, 0, false).
 		AddItem(btnDecline, 12, 0, false)
 
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(header, 3, 0, false).
 		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(body, 7, 0, false).

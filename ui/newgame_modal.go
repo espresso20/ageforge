@@ -105,7 +105,7 @@ func showSaveNameModal(app *tview.Application, pages *nativePages, title, pageNa
 func showSaveNameModalOpts(app *tview.Application, pages *nativePages, title, pageName string, focusReturn tview.Primitive, prefill string, onConfirm func(name string), escAccepts bool) {
 	errTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	initial := prefill
 	if initial == "" {
@@ -130,7 +130,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *nativePages, title, pa
 	}
 	hintTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")
 	hintTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
@@ -174,7 +174,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *nativePages, title, pa
 
 	// Opaque spacers between the fields: transparent ones would let the page
 	// beneath (the dashboard, for a Branch save) bleed through.
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).

@@ -6,8 +6,8 @@ import (
 
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 // tags.go keeps bracketed words visible.
@@ -138,5 +138,5 @@ func pluralize(word string, n int) string {
 // for text that must never carry color tags (usage lines, player-typed
 // names).
 func lit(s string) string {
-	return tview.Escape(s)
+	return kit.Escape(s)
 }

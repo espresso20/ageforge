@@ -75,12 +75,12 @@ func newLoadGameBrowser(app *tview.Application, pages *nativePages, engine *game
 	// ── Title ────────────────────────────────────────────────────────────────
 	title := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.load_game.newLoadGameBrowser.01", "[gold]═══ Load game ═══[-]"))
 
 	b.subtitle = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	// ── Save list ────────────────────────────────────────────────────────────
 	b.list = newNativeList()
@@ -123,11 +123,11 @@ func newLoadGameBrowser(app *tview.Application, pages *nativePages, engine *game
 	// ── Footer ───────────────────────────────────────────────────────────────
 	// Written for the width it is drawn at, so no key is cut off at 80 columns.
 	footer := newFitView(func(w, h int) string { return keyBar(loadGameKeys, w, h) })
-	footer.SetTextAlign(tview.AlignCenter)
+	footer.SetTextAlign(kit.AlignCenter)
 	footer.changed()
 
 	// ── Layout ───────────────────────────────────────────────────────────────
-	b.root = newNativeFlex().SetDirection(tview.FlexRow).
+	b.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(b.subtitle, 1, 0, false).
 		AddItem(b.list, 0, 1, true).     // weighted — takes remaining space
@@ -425,7 +425,7 @@ func (b *loadGameBrowser) doRename() {
 
 	errTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	input := newNativeInput().
 		SetLabel(vibe.Line("ui.load_game.doRename.01", "Name: ")).
@@ -475,14 +475,14 @@ func (b *loadGameBrowser) doRename() {
 		}
 	})
 
-	btnRow := newNativeFlex().SetDirection(tview.FlexColumn).
+	btnRow := newNativeFlex().SetDirection(flexColumn).
 		AddItem(newNativeBox(), 0, 1, false).
 		AddItem(okBtn, 8, 0, false).
 		AddItem(newNativeBox(), 2, 0, false).
 		AddItem(cancelBtn, 12, 0, false).
 		AddItem(newNativeBox(), 0, 1, false)
 
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).

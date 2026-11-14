@@ -126,8 +126,8 @@ func (f *nativeInput) SetTitle(s string) *nativeInput {
 
 func (f *nativeInput) GetTitle() string { return f.box.Title }
 
-func (f *nativeInput) SetTitleAlign(align int) *nativeInput {
-	f.box.TitleAlign = kitAligns[align]
+func (f *nativeInput) SetTitleAlign(align kit.Align) *nativeInput {
+	f.box.TitleAlign = align
 	return f
 }
 

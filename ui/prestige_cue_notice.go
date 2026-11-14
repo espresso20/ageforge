@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/rivo/tview"
 )
 
 const prestigeCuePage = "prestige_cue"
@@ -56,7 +55,7 @@ func (d *Dashboard) maybeShowPrestigeCue(state game.GameState) {
 			SetTitleColor(theme.Color(theme.RoleAccent)).
 			SetBackgroundColor(theme.Color(theme.RoleSurface))
 	})
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(nil, 0, 1, false).
 		AddItem(tv, 8, 0, true).
 		AddItem(nil, 0, 1, false)

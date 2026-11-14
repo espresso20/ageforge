@@ -60,7 +60,7 @@ func (b *barPanel) boxFocused() bool { return b.Box.HasFocus() }
 // does not clear the cells it leaves empty), so the prompt stays in sight,
 // and in use, while the panel is open.
 func overBar(p tview.Primitive) tview.Primitive {
-	return newNativeFlex().SetDirection(tview.FlexRow).
+	return newNativeFlex().SetDirection(flexRow).
 		AddItem(p, 0, 1, true).
 		AddItem(nil, promptRows, 0, false)
 }

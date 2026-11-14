@@ -64,7 +64,7 @@ func TestNativeTextDrawsAsATextViewDid(t *testing.T) {
 	type opts struct {
 		name                string
 		dynamic, wrap, word bool
-		align               int
+		align               kit.Align
 		border, focus       bool
 		title               string
 		scroll              int
@@ -73,15 +73,15 @@ func TestNativeTextDrawsAsATextViewDid(t *testing.T) {
 	for _, o := range []opts{
 		{name: "plain", dynamic: true, wrap: true, w: 40, h: 10},
 		{name: "word wrap", dynamic: true, wrap: true, word: true, w: 31, h: 12},
-		{name: "no wrap centered", dynamic: true, align: tview.AlignCenter, w: 50, h: 8},
-		{name: "right", dynamic: true, wrap: true, align: tview.AlignRight, w: 44, h: 9},
+		{name: "no wrap centered", dynamic: true, align: kit.AlignCenter, w: 50, h: 8},
+		{name: "right", dynamic: true, wrap: true, align: kit.AlignRight, w: 44, h: 9},
 		{name: "border and title", dynamic: true, wrap: true, border: true, title: " [gold]Help[-] ", w: 36, h: 9},
 		{name: "focused border", dynamic: true, wrap: true, border: true, focus: true, title: "Log", w: 36, h: 9},
 		{name: "scrolled", dynamic: true, wrap: true, scroll: 3, w: 30, h: 5},
 		{name: "scrolled past the end", dynamic: true, wrap: true, scroll: 400, w: 30, h: 5},
 		{name: "tags off", wrap: true, w: 40, h: 10},
 	} {
-		old := tview.NewTextView().SetDynamicColors(o.dynamic).SetWrap(o.wrap).SetWordWrap(o.word).SetTextAlign(o.align)
+		old := tview.NewTextView().SetDynamicColors(o.dynamic).SetWrap(o.wrap).SetWordWrap(o.word).SetTextAlign(int(o.align))
 		old.SetBorder(o.border).SetTitle(o.title)
 		old.SetText(text)
 		old.ScrollTo(o.scroll, 0)

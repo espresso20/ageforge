@@ -261,7 +261,7 @@ func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build fu
 // buildWidgetRoot creates the display tree for a widget overlay given a freshly-built primitive.
 func (om *OverlayManager) buildWidgetRoot(_ *widgetEntry, prim tview.Primitive) tview.Primitive {
 	// Wrap in a Flex so we can set ESC capture without touching the inner primitive's handler.
-	wrapper := newNativeFlex().SetDirection(tview.FlexRow).
+	wrapper := newNativeFlex().SetDirection(flexRow).
 		AddItem(prim, 0, 1, true)
 	wrapper.SetInputCapture(func(event *kit.Key) *kit.Key {
 		if event.Code == kit.KeyEsc {

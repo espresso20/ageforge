@@ -62,7 +62,7 @@ type copyLit struct {
 	escaped bool
 }
 
-// isEscapeCall reports whether c is tview.Escape(...) or lit(...).
+// isEscapeCall reports whether c is kit.Escape(...) or lit(...).
 func isEscapeCall(c *ast.CallExpr) bool {
 	switch f := c.Fun.(type) {
 	case *ast.Ident:

@@ -355,7 +355,7 @@ func (d *Dashboard) build() {
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
 	d.cheaterTV = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	// Status ribbon: written for the bar's width (statusLine).
 	d.statusTV = newFitView(func(w, _ int) string {
@@ -379,7 +379,7 @@ func (d *Dashboard) build() {
 	d.toastMgr = NewToastManager()
 	d.toastTV = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	// The bar's width, once it has been drawn: a toast written to fit
 	// (a badge's) asks for it. Until then it is 0, any width.
@@ -582,7 +582,7 @@ func (d *Dashboard) build() {
 	d.contentArea = mainHoriz
 
 	// Root layout (no tab bar)
-	d.root = newNativeFlex().SetDirection(tview.FlexRow).
+	d.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(d.cheaterTV, 1, 0, false).
 		AddItem(d.statusTV, 1, 0, false).
 		AddItem(d.toastTV, 1, 0, false).
@@ -1411,7 +1411,7 @@ func (d *Dashboard) showDevUnlockModal() {
 		}
 	})
 
-	box := newNativeFlex().SetDirection(tview.FlexRow).
+	box := newNativeFlex().SetDirection(flexRow).
 		AddItem(field, 1, 0, true)
 	box.SetBorder(true).
 		SetBorderColor(theme.Color(theme.RoleDim)).
@@ -1450,9 +1450,9 @@ const codeWindowPage = "code_window"
 func (d *Dashboard) showWindow(text string) {
 	tv := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 	tv.SetBorder(true).SetTitle(vibe.Line("ui.dashboard.showWindow.01", " Recovery code "))
-	tv.SetText("\n" + tview.Escape(text) + "\n\n" + theme.KeycapButton("Esc", vibe.Line("ui.dashboard.showWindow.03", "Close")))
+	tv.SetText("\n" + kit.Escape(text) + "\n\n" + theme.KeycapButton("Esc", vibe.Line("ui.dashboard.showWindow.03", "Close")))
 	done := func() {
 		d.pages.RemovePage(codeWindowPage)
 		d.app.SetFocus(d.inputField)

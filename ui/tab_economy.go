@@ -174,7 +174,7 @@ func NewEconomyTab() *EconomyTab {
 		resourceRows: func() int { return resourceRowsNeed(t.rows()) }}
 	t.leftCol.nativeGroup = newNativeGroup(t.leftCol.arrange)
 
-	t.root = newNativeFlex().SetDirection(tview.FlexColumn).
+	t.root = newNativeFlex().SetDirection(flexColumn).
 		AddItem(t.leftCol, 0, 1, false).
 		AddItem(t.buildingTV, 0, 1, false)
 

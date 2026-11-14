@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // Every body line fits inside the box, so the precomputed height is exact
@@ -21,7 +22,7 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 			for _, block := range []string{l.header, l.endure, l.succumb, l.hint} {
 				for _, line := range strings.Split(block, "\n") {
 					rows++
-					if w := tview.TaggedStringWidth(line); w > inner {
+					if w := kit.Width(line); w > inner {
 						t.Errorf("%s (already=%v): line %q is %d cells, box interior is %d", ep.Key, already, line, w, inner)
 					}
 				}

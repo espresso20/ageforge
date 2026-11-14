@@ -6,8 +6,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -144,7 +142,7 @@ func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGo
 		if noteGood {
 			role = theme.RolePositive
 		}
-		sb.WriteString("\n " + theme.Paint(role, tview.Escape(note)) + "\n")
+		sb.WriteString("\n " + theme.Paint(role, kit.Escape(note)) + "\n")
 	}
 	return sb.String()
 }

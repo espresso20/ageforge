@@ -198,7 +198,7 @@ func (g *nativeGroup) covered() []image.Rectangle {
 type nativeFlex struct {
 	*nativeHost
 	kit.Base
-	down  bool // items one under the other (tview.FlexRow)
+	down  bool // items one under the other (flexRow)
 	items []flexItem
 	// frame is the border and title, when SetBorder asked for one.
 	frame    kit.Panel
@@ -222,8 +222,17 @@ func newNativeFlex() *nativeFlex {
 
 func (f *nativeFlex) kitDrawn() {}
 
-func (f *nativeFlex) SetDirection(direction int) *nativeFlex {
-	f.down = direction == tview.FlexRow
+// flexDir is which way a flex lays its items: side by side, or one under
+// the other (rows).
+type flexDir uint8
+
+const (
+	flexColumn flexDir = iota
+	flexRow
+)
+
+func (f *nativeFlex) SetDirection(direction flexDir) *nativeFlex {
+	f.down = direction == flexRow
 	return f
 }
 

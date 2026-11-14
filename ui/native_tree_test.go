@@ -38,7 +38,7 @@ func TestNativeFlexSharesRoomAsTviewDoes(t *testing.T) {
 					old, now := tview.NewFlex(), newNativeFlex()
 					if down {
 						old.SetDirection(tview.FlexRow)
-						now.SetDirection(tview.FlexRow)
+						now.SetDirection(flexRow)
 					}
 					old.SetBorder(border)
 					now.SetBorder(border)
@@ -91,11 +91,11 @@ func newTreePage(native bool) *treePage {
 	p.text.SetDynamicColors(true).SetText(strings.Repeat("[yellow]one[-] two three four five six seven\n", 30))
 	p.text.SetBorder(true)
 	p.input.SetLabel("> ").SetText("build hut")
-	title := surfaceText("A page", tview.AlignCenter)
+	title := surfaceText("A page", kit.AlignCenter)
 	if native {
 		body := newNativeFlex().AddItem(p.list, 0, 1, true).AddItem(p.text, 0, 2, false)
 		body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder))
-		p.page = newNativeFlex().SetDirection(tview.FlexRow).
+		p.page = newNativeFlex().SetDirection(flexRow).
 			AddItem(title, 1, 0, false).AddItem(body, 0, 1, true).AddItem(newNativeBox(), 1, 0, false).AddItem(p.input, 1, 0, false)
 		return p
 	}

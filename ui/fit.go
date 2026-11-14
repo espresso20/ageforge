@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rivo/tview"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // fit.go holds the helpers that lay text out for the width it will be drawn
@@ -17,7 +17,7 @@ import (
 // visibleLen is how many cells s takes once drawn: color tags take none,
 // and a bracketed word tview would not eat counts in full.
 func visibleLen(s string) int {
-	return tview.TaggedStringWidth(safeTags(s))
+	return kit.Width(safeTags(s))
 }
 
 // overlayTextWidth is the width of the text area of a panel opened over a

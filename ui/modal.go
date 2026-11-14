@@ -26,7 +26,7 @@ func solidBox(role theme.Role) *nativeBox {
 func surfaceBox() *nativeBox { return solidBox(theme.RoleSurface) }
 
 // surfaceText is a line (or lines) of text on the modal surface.
-func surfaceText(text string, align int) *nativeText {
+func surfaceText(text string, align kit.Align) *nativeText {
 	tv := newNativeText().SetDynamicColors(true).SetTextAlign(align).SetWrap(false).SetText(text)
 	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
 	return tv
@@ -53,7 +53,7 @@ func centerModal(inner tview.Primitive, width, height int, clearMargins bool) *n
 	}
 	return newNativeFlex().
 		AddItem(margin(), 0, 1, false).
-		AddItem(newNativeFlex().SetDirection(tview.FlexRow).
+		AddItem(newNativeFlex().SetDirection(flexRow).
 			AddItem(margin(), 0, 1, false).
 			AddItem(inner, height, 0, true).
 			AddItem(margin(), 0, 1, false),

@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -39,8 +38,8 @@ type nativeListItem struct {
 func newNativeList() *nativeList {
 	l := &nativeList{list: kit.NewList(), wrap: true}
 	l.list.Bar, l.list.ClickChooses, l.list.TextOnly = false, true, true
-	l.list.Style = styleOf(tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor)
-	l.list.SelectedStyle = styleOf(tview.Styles.PrimitiveBackgroundColor, tview.Styles.PrimaryTextColor)
+	l.list.Style = kit.Style{Fg: kit.Role(theme.RoleText), Bg: kit.Role(theme.RoleBackground)}
+	l.list.SelectedStyle = kit.Style{Fg: kit.Role(theme.RoleBackground), Bg: kit.Role(theme.RoleText)}
 	l.list.OnMove = func(i int) { l.fire(l.changed, i) }
 	l.list.OnChoose = l.choose
 	l.box = &kit.Panel{Child: l.list, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}

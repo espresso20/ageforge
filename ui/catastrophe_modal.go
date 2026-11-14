@@ -46,14 +46,14 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	ep, _ := set.Era(epochKey)
 	inner := catastropheModalWidth - 2
 
-	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", tview.Escape(catName))}
-	for _, l := range tview.WordWrap(catFlavor, inner-2) {
-		headerLines = append(headerLines, "[comment]"+tview.Escape(strings.TrimSpace(l))+"[-]")
+	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", kit.Escape(catName))}
+	for _, l := range kit.WordWrap(catFlavor, inner-2) {
+		headerLines = append(headerLines, "[comment]"+kit.Escape(strings.TrimSpace(l))+"[-]")
 	}
 
 	// The first line is long: it wraps under its bullet.
 	destroyed := []string{vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.01", "[white]── ENDURE: weather the catastrophe ──[-]")}
-	for i, l := range tview.WordWrap(vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.02", "• %s of buildings destroyed (wonders, storage and knowledge buildings are spared)", endurePct(eo.DestroyPct)), inner-4) {
+	for i, l := range kit.WordWrap(vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.02", "• %s of buildings destroyed (wonders, storage and knowledge buildings are spared)", endurePct(eo.DestroyPct)), inner-4) {
 		lead := ""
 		if i > 0 {
 			lead = "  "
@@ -116,9 +116,9 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 	name, flavorText := config.LastPassageInfo()
 	inner := catastropheModalWidth - 2
 
-	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", tview.Escape(name))}
-	for _, l := range tview.WordWrap(flavorText, inner-2) {
-		headerLines = append(headerLines, "[comment]"+tview.Escape(strings.TrimSpace(l))+"[-]")
+	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", kit.Escape(name))}
+	for _, l := range kit.WordWrap(flavorText, inner-2) {
+		headerLines = append(headerLines, "[comment]"+kit.Escape(strings.TrimSpace(l))+"[-]")
 	}
 	headerLines = append(headerLines, vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.01", "[gray]Prestige waits on your answer. Nothing else does.[-]"))
 
@@ -203,7 +203,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchFactor, outcome, st)
 	}
 
-	btnEndure := newNativeButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))).
+	btnEndure := newNativeButton(kit.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))).
 		SetSelectedFunc(func() {
 			if err := endure(); err != nil {
 				d.engine.AddLog("error", vibe.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
@@ -212,7 +212,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		})
 	styleFilledButton(btnEndure, theme.RoleNegative)
 
-	btnSuccumb := newNativeButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
+	btnSuccumb := newNativeButton(kit.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
 	if succumbOpen {
 		btnSuccumb.SetSelectedFunc(func() {
 			if err := succumb(); err != nil {
@@ -226,22 +226,22 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		styleFilledButton(btnSuccumb, theme.RoleChip)
 	}
 
-	btnRow := newNativeFlex().SetDirection(tview.FlexColumn).
+	btnRow := newNativeFlex().SetDirection(flexColumn).
 		AddItem(surfaceBox(), 0, 1, false).
 		AddItem(btnEndure, 14, 0, true).
 		AddItem(surfaceBox(), 4, 0, false).
 		AddItem(btnSuccumb, 14, 0, false).
 		AddItem(surfaceBox(), 0, 1, false)
 
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
-		AddItem(surfaceText(l.header, tview.AlignCenter), lineCount(l.header), 0, false).
+	inner := newNativeFlex().SetDirection(flexRow).
+		AddItem(surfaceText(l.header, kit.AlignCenter), lineCount(l.header), 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
-		AddItem(surfaceText(l.endure, tview.AlignLeft), lineCount(l.endure), 0, false).
+		AddItem(surfaceText(l.endure, kit.AlignLeft), lineCount(l.endure), 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
-		AddItem(surfaceText(l.succumb, tview.AlignLeft), lineCount(l.succumb), 0, false).
+		AddItem(surfaceText(l.succumb, kit.AlignLeft), lineCount(l.succumb), 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, true).
-		AddItem(surfaceText(l.hint, tview.AlignCenter), 1, 0, false)
+		AddItem(surfaceText(l.hint, kit.AlignCenter), 1, 0, false)
 	framed(inner, l.title, theme.RoleNegative).SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	modal := floatingModal(inner, catastropheModalWidth, l.height)

@@ -101,7 +101,7 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 		t.Fatal("S acted on a closed Succumb")
 	}
 	front.InputHandler()(tev(kit.KeyTab, 0, 0), func(tview.Primitive) {})
-	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != tview.Escape("[E] ENDURE") {
+	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != kit.Escape("[E] ENDURE") {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}
 }
@@ -117,7 +117,7 @@ func TestLastPassageModalLayoutFitsWidth(t *testing.T) {
 			for _, block := range []string{l.header, l.endure, l.succumb, l.hint} {
 				for _, line := range strings.Split(block, "\n") {
 					rows++
-					if w := tview.TaggedStringWidth(line); w > inner {
+					if w := kit.Width(line); w > inner {
 						t.Errorf("brace %d legacy %v: %q is %d cells, box interior is %d", brace, legacy, line, w, inner)
 					}
 				}

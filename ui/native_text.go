@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -77,8 +76,6 @@ func focusBorder(on, focus bool) kit.Border {
 	return kit.BorderLine
 }
 
-var kitAligns = map[int]kit.Align{tview.AlignLeft: kit.AlignLeft, tview.AlignCenter: kit.AlignCenter, tview.AlignRight: kit.AlignRight}
-
 func (t *nativeText) SetDynamicColors(on bool) *nativeText {
 	t.dynamic = on
 	return t.show()
@@ -109,8 +106,8 @@ func (t *nativeText) rewrap() *nativeText {
 	return t
 }
 
-func (t *nativeText) SetTextAlign(align int) *nativeText {
-	t.body.Align = kitAligns[align]
+func (t *nativeText) SetTextAlign(align kit.Align) *nativeText {
+	t.body.Align = align
 	return t
 }
 
@@ -210,8 +207,8 @@ func (t *nativeText) SetTitle(s string) *nativeText {
 
 func (t *nativeText) GetTitle() string { return t.box.Title }
 
-func (t *nativeText) SetTitleAlign(align int) *nativeText {
-	t.box.TitleAlign = kitAligns[align]
+func (t *nativeText) SetTitleAlign(align kit.Align) *nativeText {
+	t.box.TitleAlign = align
 	return t
 }
 

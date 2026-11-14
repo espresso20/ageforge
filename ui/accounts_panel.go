@@ -77,12 +77,12 @@ func newAccountsPanel(app *tview.Application, pages *nativePages, engine *game.G
 	// ── Title ──────────────────────────────────────────────────────────────────
 	p.title = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 	title := p.title
 
 	p.subtitle = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 	subtitle := p.subtitle
 
 	// ── Account list ───────────────────────────────────────────────────────────
@@ -113,24 +113,24 @@ func newAccountsPanel(app *tview.Application, pages *nativePages, engine *game.G
 	})
 
 	// ── Body: list (left) + detail (right) ─────────────────────────────────────
-	body := newNativeFlex().SetDirection(tview.FlexColumn).
+	body := newNativeFlex().SetDirection(flexColumn).
 		AddItem(p.list, 0, 1, true).
 		AddItem(p.detail, 0, 1, false)
 
 	// ── Transient status line (switch confirmation) ────────────────────────────
 	p.status = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	// ── Footer ─────────────────────────────────────────────────────────────────
 	// Two rows: nine actions do not fit on one line under 126 columns, so on a
 	// narrower terminal they are set over two (keyBar).
 	footer := newFitView(func(w, h int) string { return keyBar(accountsKeys, w, h) })
-	footer.SetTextAlign(tview.AlignCenter)
+	footer.SetTextAlign(kit.AlignCenter)
 	footer.changed()
 
 	// ── Layout ─────────────────────────────────────────────────────────────────
-	p.root = newNativeFlex().SetDirection(tview.FlexRow).
+	p.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(subtitle, 1, 0, false).
 		AddItem(body, 0, 1, true). // weighted — list+detail take remaining space
@@ -374,7 +374,7 @@ func (p *accountsPanel) doImport() {
 
 	errTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	input := newNativeInput().
@@ -387,7 +387,7 @@ func (p *accountsPanel) doImport() {
 
 	hintTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.accounts_panel.doImport.02", "[gray]Enter: import (merge)  ·  Esc: cancel[-]"))
 	hintTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
@@ -438,7 +438,7 @@ func (p *accountsPanel) doImport() {
 		}
 	})
 
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
@@ -552,7 +552,7 @@ func (p *accountsPanel) doWipe() {
 func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool) {
 	errTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	input := newNativeInput().
 		SetLabel(vibe.Line("ui.accounts_panel.showWipeTypeGate.01", "Account name: ")).
@@ -563,7 +563,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 
 	promptTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(fmt.Sprintf(
 			dangerTag+vibe.Line("ui.accounts_panel.showWipeTypeGate.02", "Type this name exactly to confirm:[-]\n")+dangerTagBold+"%s[-:-:-]\n"+dangerTagBold+vibe.Line("ui.accounts_panel.showWipeTypeGate.03", "This permanently deletes the account.[-:-:-]\n")+dangerTag+vibe.Line("ui.accounts_panel.showWipeTypeGate.04", "A backup (account and saves) goes to data/backups/ first; restoring it is manual.[-]"),
 			expectedName,
@@ -571,7 +571,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 
 	hintTV := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(dangerTag + vibe.Line("ui.accounts_panel.showWipeTypeGate.05", "Enter: confirm  ·  Esc: cancel[-]"))
 
 	abort := func() {
@@ -606,7 +606,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 	errTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	hintTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	input.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(promptTV, 4, 0, false).
 		AddItem(solidBox(theme.RoleNegative), 1, 0, false).
 		AddItem(input, 1, 0, true).
@@ -666,17 +666,17 @@ func (p *accountsPanel) showMessage(title, body string) {
 	tv := newNativeText().
 		SetDynamicColors(true).
 		SetWrap(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(body)
 	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	hint := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.accounts_panel.showMessage.01", "[gray]Enter / Esc: close[-]"))
 	hint.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(tv, 0, 1, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hint, 1, 0, false)

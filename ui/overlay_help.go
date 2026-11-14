@@ -3,10 +3,9 @@ package ui
 import (
 	"strings"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // helpProvider renders the Help overlay from the command registry
@@ -175,9 +174,9 @@ func helpForm(form string) string {
 	}
 	head := strings.Join(words[:n], " ")
 	rest := strings.Join(words[n:], " ")
-	out := "[cyan]" + tview.Escape(head) + "[-]"
+	out := "[cyan]" + kit.Escape(head) + "[-]"
 	if rest != "" {
-		out += " " + tview.Escape(rest)
+		out += " " + kit.Escape(rest)
 	}
 	return out
 }

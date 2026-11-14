@@ -132,12 +132,12 @@ func CreateThemePickerPage(app *tview.Application, pages *nativePages, engine *g
 	// ── Title ────────────────────────────────────────────────────────────────
 	title := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.theme_picker.CreateThemePickerPage.01", "[gold]═══ Themes ═══[-]"))
 
 	subtitle := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.theme_picker.CreateThemePickerPage.02", "[gray]The preview is live. Pick a theme that reads well in your terminal; light or dark, every theme paints its own background.[-]"))
 
 	// ── Theme list ───────────────────────────────────────────────────────────
@@ -172,17 +172,17 @@ func CreateThemePickerPage(app *tview.Application, pages *nativePages, engine *g
 	// ── Footer ───────────────────────────────────────────────────────────────
 	footer := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(themeFooterBar())
 
 	// ── Layout ───────────────────────────────────────────────────────────────
-	right := newNativeFlex().SetDirection(tview.FlexRow).
+	right := newNativeFlex().SetDirection(flexRow).
 		AddItem(p.detail, 0, 1, false).
 		AddItem(p.preview, 9, 0, false) // sample panel: caption + bordered 7-row mock
 	body := newNativeFlex().
 		AddItem(p.list, 0, 2, true).
 		AddItem(right, 0, 3, false)
-	p.root = newNativeFlex().SetDirection(tview.FlexRow).
+	p.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(subtitle, 1, 0, false).
 		AddItem(body, 0, 1, true).
