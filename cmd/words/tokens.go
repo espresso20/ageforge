@@ -6,7 +6,6 @@ import (
 	"unicode"
 
 	"github.com/espresso20/ageforge/theme"
-	"github.com/gdamore/tcell/v2"
 )
 
 // This file finds, in a line of game text, the pieces a rewrite must carry
@@ -214,12 +213,12 @@ func countWords(s string) int {
 	return n
 }
 
-// colorNames are the names a style tag may carry: tcell's colors and the
-// theme's roles. It is the same set as ui.knownColorNames, which the game's
-// own tag guard reads.
+// colorNames are the names a style tag may carry: the CSS colors and the
+// theme's roles. It is the same set as ui.knownColorName answers for, which
+// the game's own tag guard reads.
 var colorNames = func() map[string]bool {
 	m := map[string]bool{}
-	for k := range tcell.ColorNames {
+	for _, k := range theme.CSSNames() {
 		m[k] = true
 	}
 	for k := range theme.TagNames() {

@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -56,7 +54,7 @@ type panelFrame struct {
 
 func newPanelFrame(title vibe.Entry, tv *nativeText) *panelFrame {
 	f := &panelFrame{title: title, tv: tv}
-	f.nativeHost = newNativeHost(f)
+	f.nativeHost = newNativeHost()
 	return f
 }
 
@@ -130,8 +128,3 @@ func (f *panelFrame) Focus(delegate func(p Primitive)) { delegate(f.tv) }
 
 // HasFocus reports whether the text holds the keyboard.
 func (f *panelFrame) HasFocus() bool { return f.tv.HasFocus() }
-
-// InputHandler is the text's.
-func (f *panelFrame) InputHandler() func(*tcell.EventKey, func(Primitive)) {
-	return f.tv.InputHandler()
-}

@@ -653,7 +653,7 @@ type ledgerBox struct {
 
 func newLedgerBox(render func(w, h int) []string) *ledgerBox {
 	b := &ledgerBox{render: render, stale: true}
-	b.nativeHost = newNativeHost(b)
+	b.nativeHost = newNativeHost()
 	return b
 }
 

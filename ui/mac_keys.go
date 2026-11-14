@@ -1,8 +1,6 @@
 package ui
 
-import (
-	"github.com/gdamore/tcell/v2"
-)
+import "github.com/espresso20/ageforge/window/kit"
 
 // A MacBook has no Page Up, Page Down, Home or End, and Fn+arrows are often
 // taken by the terminal itself (Apple Terminal scrolls its own window). The
@@ -19,42 +17,39 @@ import (
 // two are also the prompt's word-left and word-right, so they are taken only
 // when the prompt has nothing in it to jump over.
 
-// macKeys returns the key the program should see for ev, given the widget
+// macKeys returns the key the program should see for k, given the widget
 // that has the focus.
-func macKeys(ev *tcell.EventKey, focus Primitive) *tcell.EventKey {
-	if ev == nil {
-		return ev
-	}
+func macKeys(k *kit.Key, focus Primitive) *kit.Key {
 	// Only Alt on its own: Shift, Ctrl and the rest keep their meanings.
-	if mod := ev.Modifiers(); mod&tcell.ModAlt == 0 || mod&^tcell.ModAlt != 0 {
-		return ev
+	if k == nil || k.Mod != kit.ModAlt {
+		return k
 	}
-	var to tcell.Key
-	switch ev.Key() {
-	case tcell.KeyUp:
-		to = tcell.KeyPgUp
-	case tcell.KeyDown:
-		to = tcell.KeyPgDn
-	case tcell.KeyLeft:
-		to = tcell.KeyHome
-	case tcell.KeyRight:
-		to = tcell.KeyEnd
-	case tcell.KeyRune:
-		switch ev.Rune() {
+	var to kit.KeyCode
+	switch k.Code {
+	case kit.KeyUp:
+		to = kit.KeyPgUp
+	case kit.KeyDown:
+		to = kit.KeyPgDn
+	case kit.KeyLeft:
+		to = kit.KeyHome
+	case kit.KeyRight:
+		to = kit.KeyEnd
+	case kit.KeyChord:
+		switch k.Rune {
 		case 'b':
-			to = tcell.KeyHome
+			to = kit.KeyHome
 		case 'f':
-			to = tcell.KeyEnd
+			to = kit.KeyEnd
 		default:
-			return ev
+			return k
 		}
 		if hasText(focus) {
-			return ev // word-left and word-right of what is being typed
+			return k // word-left and word-right of what is being typed
 		}
 	default:
-		return ev
+		return k
 	}
-	return tcell.NewEventKey(to, 0, tcell.ModNone)
+	return &kit.Key{Code: to}
 }
 
 // hasText reports whether the focused widget is a text field with something

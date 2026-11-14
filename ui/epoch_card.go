@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -39,17 +37,10 @@ const epochCardFile = "epoch-card.png"
 
 // epochPicture draws the front page of the epoch screen for a state.
 func epochPicture(state game.GameState) *image.RGBA {
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		return nil
-	}
-	defer sim.Fini()
 	// The page says how tall it is; the frame adds its edges (3 rows) and a
 	// blank row under the text.
 	page := hallFrontPage(state, epochPicCols, epochLayoutRows, mapmodel.TierUnicode, hallMotion{}, false)
 	picRows := max(epochPicMinRows, strings.Count(page, "\n")+1+panelChromeRows+1)
-	sim.SetSize(epochPicCols, picRows)
-	screen := theme.WrapScreen(sim)
 
 	tv := newNativeText().SetDynamicColors(true).SetWrap(true)
 	tv.SetBackgroundColor(theme.Of(theme.RoleBackground))
@@ -57,13 +48,7 @@ func epochPicture(state game.GameState) *image.RGBA {
 	// hint is for the player who is looking at it.
 	tv.SetText(safeTags(page))
 	frame := newPanelFrame(vibe.E("ui.epoch_card.epochPicture.01", "Epoch"), tv)
-	frame.SetRect(0, 0, epochPicCols, picRows)
-	screen.Clear()
-	frame.Draw(screen)
-	screen.Show()
-
-	cells, cols, rows := sim.GetContents()
-	return ScreenImage(cells, cols, rows, shotCellW, shotCellH)
+	return ScreenImage(paintAlone(frame, epochPicCols, picRows), shotCellW, shotCellH)
 }
 
 // epochCardResult is what making the card did: the file it was saved to

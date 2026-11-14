@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/gdamore/tcell/v2"
 )
 
 // OverlayProvider is a function that generates the full text content for a
@@ -96,10 +95,7 @@ func NewOverlayManager(pages *nativePages, app *appLoop, onClose func()) *Overla
 		screenW:       120, // sensible default before first draw
 		screenH:       40,
 	}
-	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
-		om.screenW, om.screenH = screen.Size()
-		return false
-	})
+	app.SetBeforeDrawFunc(func(w, h int) { om.screenW, om.screenH = w, h })
 	return om
 }
 
@@ -188,9 +184,7 @@ func (om *OverlayManager) scrollKey(ev *kit.Key, prompt string) bool {
 	}
 	switch ev.Code {
 	case kit.KeyUp, kit.KeyDown, kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome, kit.KeyEnd:
-		if h := e.tv.InputHandler(); h != nil {
-			h(tcellKey(*ev), func(Primitive) {})
-		}
+		keyTo(e.tv, *ev)
 		return true
 	}
 	return false

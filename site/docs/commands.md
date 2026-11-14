@@ -573,7 +573,7 @@ The game keeps several local accounts, one active at a time, each with its own s
 
 ## The window
 
-When AgeForge runs in its own window (not `--terminal`), the window has a few keys of its own. They never reach the game, and the game keeps every other key.
+AgeForge runs in its own window, and the window has a few keys of its own. They never reach the game, and the game keeps every other key.
 
 | Key | Description |
 |---|---|

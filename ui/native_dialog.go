@@ -32,7 +32,7 @@ type nativeDialog struct {
 // ground, in the theme's text color.
 func newNativeDialog(app *appLoop) *nativeDialog {
 	d := &nativeDialog{app: app, ground: kit.Role(theme.RoleSelection), ink: kit.Role(theme.RoleText)}
-	d.nativeHost = newNativeHost(d)
+	d.nativeHost = newNativeHost()
 	return d
 }
 

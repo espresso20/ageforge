@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
@@ -80,7 +78,7 @@ type nativeBox struct {
 // newNativeBox is a filler in the page's ground, as tview.NewBox is.
 func newNativeBox() *nativeBox {
 	b := &nativeBox{ground: kit.Role(theme.RoleBackground)}
-	b.nativeHost = newNativeHost(b)
+	b.nativeHost = newNativeHost()
 	return b
 }
 
@@ -109,7 +107,7 @@ type nativeGroup struct {
 
 func newNativeGroup(arrange func(x, y, w, h int)) *nativeGroup {
 	g := &nativeGroup{arrange: arrange, seen: map[Primitive]kit.Widget{}}
-	g.nativeHost = newNativeHost(g)
+	g.nativeHost = newNativeHost()
 	return g
 }
 
@@ -166,7 +164,7 @@ type nativeFlex struct {
 	// ground what they are drawn on (unset: the page's).
 	frame    kit.Panel
 	ground   kit.Color
-	drawFunc func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)
+	drawFunc func(x, y, w, h int)
 }
 
 type flexItem struct {
@@ -180,7 +178,7 @@ type flexItem struct {
 func newNativeFlex() *nativeFlex {
 	f := &nativeFlex{}
 	f.frame.TitleAlign = kit.AlignCenter
-	f.nativeHost = newNativeHost(f)
+	f.nativeHost = newNativeHost()
 	return f
 }
 
@@ -260,9 +258,8 @@ func (f *nativeFlex) SetBackgroundColor(c kit.Color) *nativeFlex {
 }
 
 // SetDrawFunc sets what is called with the flex's rectangle before its items
-// are placed, so a screen can size them for the room. The screen it is
-// handed is nil and what it returns is ignored.
-func (f *nativeFlex) SetDrawFunc(fn func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)) *nativeFlex {
+// are placed, so a screen can size them for the room.
+func (f *nativeFlex) SetDrawFunc(fn func(x, y, w, h int)) *nativeFlex {
 	f.drawFunc = fn
 	return f
 }
@@ -304,7 +301,7 @@ func (f *nativeFlex) Layout(r image.Rectangle) {
 	off := screenOffset(f, r)
 	if f.drawFunc != nil {
 		x, y, w, h := f.GetRect()
-		f.drawFunc(nil, x, y, w, h)
+		f.drawFunc(x, y, w, h)
 	}
 	in := f.inner(r)
 	left, props := in.Dx(), 0
@@ -427,7 +424,7 @@ type nativeCanvas struct {
 
 func newNativeCanvas(draw func(scr mapstyle.Cells, x, y, w, h int)) *nativeCanvas {
 	c := &nativeCanvas{draw: draw}
-	c.nativeHost = newNativeHost(c)
+	c.nativeHost = newNativeHost()
 	return c
 }
 

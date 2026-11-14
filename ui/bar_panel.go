@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -35,11 +33,6 @@ func newBarPanel(route func(ev *kit.Key, prompt string) bool) barPanel {
 // InputHandler is for when the panel itself has the focus (the command bar
 // normally keeps it): the panel's own keys work, and anything else goes to
 // the command bar, which takes the keyboard back.
-func (b *barPanel) InputHandler() func(*tcell.EventKey, func(Primitive)) {
-	return keysIn(func(ev *kit.Key) { b.Key(*ev) })
-}
-
-// Key is the same, where the panel stands in a kit tree.
 func (b *barPanel) Key(k kit.Key) bool {
 	prompt := ""
 	if b.prompt != nil {
@@ -119,7 +112,5 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 // a panel that had it for itself passes on a key it does not take.
 func (d *Dashboard) handToPrompt(ev *kit.Key) {
 	d.overlayMgr.FocusOn(d.inputField)
-	if h := d.inputField.InputHandler(); h != nil {
-		h(tcellKey(*ev), func(p Primitive) { d.app.SetFocus(p) })
-	}
+	keyTo(d.inputField, *ev)
 }

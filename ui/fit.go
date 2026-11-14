@@ -182,7 +182,6 @@ type fitView struct {
 
 func newFitView(render func(w, h int) string) *fitView {
 	v := &fitView{nativeText: newNativeText().SetDynamicColors(true).SetWrap(false), render: render, stale: true}
-	v.showWidget(v)
 	return v
 }
 

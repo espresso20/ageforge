@@ -5,7 +5,6 @@ import (
 	"image/color"
 	"math"
 
-	"github.com/gdamore/tcell/v2"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/gomonobold"
@@ -14,6 +13,7 @@ import (
 	"golang.org/x/image/math/fixed"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // screenshot.go turns the cells of a terminal screen into a picture: each
@@ -57,35 +57,22 @@ func loadShotFonts() (*shotFonts, error) {
 	return &f, nil
 }
 
-// shotColor is a tcell colour as pixels; a colour the screen left at its
-// default is the theme's text or background.
-func shotColor(c tcell.Color, fallback tcell.Color) color.RGBA {
-	if !c.Valid() {
-		c = fallback
-	}
-	r, g, b := c.RGB()
-	if r < 0 {
-		r, g, b = 0, 0, 0
-	}
-	return color.RGBA{uint8(r), uint8(g), uint8(b), 255}
-}
-
 // shotBlend is a mixed t of the way from a to b.
 func shotBlend(a, b color.RGBA, t float64) color.RGBA {
 	m := func(x, y uint8) uint8 { return uint8(float64(x)*(1-t) + float64(y)*t + 0.5) }
 	return color.RGBA{m(a.R, b.R), m(a.G, b.G), m(a.B, b.B), 255}
 }
 
-// ScreenImage is the picture of cols by rows cells (row by row), each cellW
-// by cellH pixels, with shotPad pixels of the screen's own background colour
+// ScreenImage is the picture of a buffer's cells, each cellW by cellH
+// pixels, with shotPad pixels of the screen's own background colour
 // round the edge. Go Mono is sized for a 12 by 24 cell; other sizes scale the
 // shapes but not the letters.
-func ScreenImage(cells []tcell.SimCell, cols, rows, cellW, cellH int) *image.RGBA {
-	th := theme.Active()
-	defFg, defBg := theme.Tcell(th.Color(theme.RoleText)), theme.Tcell(th.Color(theme.RoleBackground))
+func ScreenImage(b *kit.Buffer, cellW, cellH int) *image.RGBA {
+	cells, cols, rows := b.Cells, b.W, b.H
+	defBg := theme.RGBA(theme.RoleBackground)
 	w, h := cols*cellW+2*shotPad, rows*cellH+2*shotPad
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	edge := shotColor(defBg, defBg)
+	edge := defBg
 	// Padding takes the colour of the cell nearest to it, so that a screen
 	// painted in some other ground does not wear a frame.
 	for i := range img.Pix {
@@ -107,12 +94,14 @@ func ScreenImage(cells []tcell.SimCell, cols, rows, cellW, cellH int) *image.RGB
 	type cellPaint struct{ fg, bg color.RGBA }
 	paints := make([]cellPaint, cols*rows)
 	for i := 0; i < cols*rows; i++ {
-		fg, bg, attr := cells[i].Style.Decompose()
-		f, b := shotColor(fg, defFg), shotColor(bg, defBg)
-		if attr&tcell.AttrReverse != 0 {
+		f, b := cells[i].Fg, cells[i].Bg
+		if cells[i].Clear() {
+			b = defBg // a hole for the window's picture: the page's ground, in a still
+		}
+		if cells[i].Attr&kit.Reverse != 0 {
 			f, b = b, f
 		}
-		if attr&tcell.AttrDim != 0 {
+		if cells[i].Attr&kit.Dim != 0 {
 			f = shotBlend(f, b, 0.4)
 		}
 		paints[i] = cellPaint{f, b}
@@ -146,10 +135,10 @@ func ScreenImage(cells []tcell.SimCell, cols, rows, cellW, cellH int) *image.RGB
 	for cy := 0; cy < rows; cy++ {
 		for cx := 0; cx < cols; cx++ {
 			c := cells[cy*cols+cx]
-			if len(c.Runes) == 0 || c.Runes[0] == ' ' || c.Runes[0] == 0 {
+			if c.Cont || c.R == ' ' || c.R == 0 {
 				continue
 			}
-			r := c.Runes[0]
+			r := c.R
 			p := paints[cy*cols+cx]
 			o := origin(cx, cy)
 			cell := image.Rect(o.X, o.Y, o.X+cellW, o.Y+cellH)
@@ -161,8 +150,7 @@ func ScreenImage(cells []tcell.SimCell, cols, rows, cellW, cellH int) *image.RGB
 			case symbolShapes[r] != nil:
 				drawSymbol(img, cell, symbolShapes[r], p.fg)
 			case ferr == nil:
-				_, _, at := c.Style.Decompose()
-				drawGlyph(img, fonts, cell, r, p.fg, at&tcell.AttrBold != 0)
+				drawGlyph(img, fonts, cell, r, p.fg, c.Attr&kit.Bold != 0)
 			}
 		}
 	}

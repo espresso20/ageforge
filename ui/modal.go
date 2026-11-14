@@ -3,8 +3,6 @@ package ui
 import (
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -148,7 +146,7 @@ func (r *buttonRing) focus(i int) {
 func (r *buttonRing) press(letter rune) bool {
 	for i, l := range r.letters {
 		if l != 0 && l == unicode.ToLower(letter) {
-			r.buttons[i].InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
+			keyTo(r.buttons[i], kit.Key{Code: kit.KeyEnter})
 			return true
 		}
 	}

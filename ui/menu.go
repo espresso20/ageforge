@@ -161,7 +161,7 @@ func newMainMenu(app *appLoop, pages *nativePages, engine *game.GameEngine, curr
 		}
 	}
 	m.refresh(true)
-	m.nativeHost = newNativeHost(m)
+	m.nativeHost = newNativeHost()
 	return m
 }
 

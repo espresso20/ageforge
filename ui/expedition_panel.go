@@ -5,8 +5,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -40,7 +38,6 @@ type expeditionPanel struct {
 	kit.Base
 	// host paints the panel's kit cells and takes the mouse; the keys stay
 	// with barPanel.
-	host   *nativeHost
 	grid   *xgrid // what the panel last laid out, and where its pins are
 	engine *game.GameEngine
 	state  game.GameState
@@ -69,7 +66,6 @@ type expeditionPanel struct {
 func newExpeditionPanel() *expeditionPanel {
 	p := &expeditionPanel{w: 100, h: 30, now: time.Now, start: time.Now()}
 	p.barPanel = newBarPanel(p.routeKey)
-	p.host = newNativeHost(p)
 	return p
 }
 
@@ -160,12 +156,6 @@ func (p *expeditionPanel) frame(motion bool) int {
 		return atRest
 	}
 	return int(p.now().Sub(p.start) / (4 * mapAnimStep))
-}
-
-// Draw paints the panel: the host shows it, in the panel's rectangle.
-func (p *expeditionPanel) Draw(scr tcell.Screen) {
-	p.host.SetRect(p.GetRect())
-	p.host.Draw(scr)
 }
 
 // Layout takes the panel's rectangle and works the panel out in it.

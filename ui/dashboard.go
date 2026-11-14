@@ -7,8 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -382,10 +380,7 @@ func (d *Dashboard) build() {
 
 	// The bar's width, once it has been drawn: a toast written to fit
 	// (a badge's) asks for it. Until then it is 0, any width.
-	d.toastTV.SetDrawFunc(func(_ tcell.Screen, x, y, w, h int) (int, int, int, int) {
-		d.toastW = w
-		return x, y, w, h
-	})
+	d.toastTV.SetDrawFunc(func(_, _, w, _ int) { d.toastW = w })
 
 	// Subscribe to events for toasts
 	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
@@ -590,10 +585,7 @@ func (d *Dashboard) build() {
 		AddItem(d.inputField, promptRows, 0, true)
 	// The Ledger is as tall as the terminal calls for, chosen before the
 	// rows are shared out, so a resize shows the right one at once.
-	d.root.SetDrawFunc(func(_ tcell.Screen, x, y, w, h int) (int, int, int, int) {
-		d.root.ResizeItem(d.ledgerTV, ledgerHeight(w, h), 0)
-		return x, y, w, h
-	})
+	d.root.SetDrawFunc(func(_, _, w, h int) { d.root.ResizeItem(d.ledgerTV, ledgerHeight(w, h), 0) })
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *kit.Key) *kit.Key {

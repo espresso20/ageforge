@@ -21,7 +21,7 @@ func newNativeButton(label string) *nativeButton {
 	b := &nativeButton{btn: kit.NewButton(label, nil)}
 	b.btn.Style = kit.Style{Fg: kit.Role(theme.RoleText), Bg: kit.Role(theme.RoleSelection)}
 	b.btn.FocusStyle = kit.Style{Fg: kit.Role(theme.RoleBackground), Bg: kit.Role(theme.RoleText)}
-	b.nativeHost = newNativeHost(b)
+	b.nativeHost = newNativeHost()
 	b.SetRect(0, 0, kit.Width(label)+4, 1)
 	return b
 }

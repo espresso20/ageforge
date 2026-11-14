@@ -27,6 +27,15 @@ func TagRole(name string) (Role, bool) {
 	return r, ok
 }
 
+// CSSNames is every CSS color name an inline tag may carry.
+func CSSNames() []string {
+	out := make([]string, 0, len(cssNames))
+	for k := range cssNames {
+		out = append(out, k)
+	}
+	return out
+}
+
 // CSSRGBA is the literal color of a CSS color name ("blue", "orange"), as it
 // was before any theme retinted the names it owns; ok is false for a name
 // that is not a color.

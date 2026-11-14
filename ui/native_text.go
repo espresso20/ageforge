@@ -4,8 +4,6 @@ import (
 	"image"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -32,7 +30,7 @@ type nativeText struct {
 	maxLines   int
 	changed    func()
 	done       func(kit.KeyCode)
-	drawFunc   func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)
+	drawFunc   func(x, y, w, h int)
 }
 
 // newNativeText is a text view as tview makes one: scrollable, wrapping at
@@ -42,7 +40,7 @@ func newNativeText() *nativeText {
 	t.view = kit.NewScroll(t.body)
 	t.view.Focus, t.view.NoBar = true, true
 	t.box = &kit.Panel{Child: t.view, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
-	t.nativeHost = newNativeHost(t)
+	t.nativeHost = newNativeHost()
 	return t
 }
 
@@ -56,7 +54,7 @@ func (t *nativeText) Layout(r image.Rectangle) {
 	}
 	if t.drawFunc != nil {
 		x, y, w, h := t.GetRect()
-		t.drawFunc(nil, x, y, w, h)
+		t.drawFunc(x, y, w, h)
 	}
 	t.box.Border = focusBorder(t.border, t.HasFocus())
 	t.box.Layout(r)
@@ -220,10 +218,9 @@ func (t *nativeText) SetTitleColor(c kit.Color) *nativeText {
 	return t
 }
 
-// SetDrawFunc calls fn with the box's rectangle each time it is laid out, the
-// screen nil. Unlike tview's it cannot move the text: the rectangle it
-// returns is ignored, so it serves a view that only wants to know its size.
-func (t *nativeText) SetDrawFunc(fn func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)) *nativeText {
+// SetDrawFunc calls fn with the box's rectangle each time it is laid out, for
+// a view that wants to know its size.
+func (t *nativeText) SetDrawFunc(fn func(x, y, w, h int)) *nativeText {
 	t.drawFunc = fn
 	return t
 }

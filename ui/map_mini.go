@@ -71,7 +71,7 @@ func newMiniMap(mv *mapViews) *miniMap {
 	m := &miniMap{mv: mv, view: mapstyle.New(), now: time.Now}
 	m.start = m.now()
 	m.set = defaultMapSettings()
-	m.nativeHost = newNativeHost(m)
+	m.nativeHost = newNativeHost()
 	return m
 }
 

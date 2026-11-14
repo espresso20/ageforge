@@ -2,12 +2,10 @@ package ui
 
 import (
 	"strings"
-	"sync"
 
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/gdamore/tcell/v2"
 )
 
 // tags.go keeps bracketed words visible.
@@ -19,16 +17,15 @@ import (
 // strip): it keeps the color tags the UI writes on purpose and escapes every
 // other [word] so tview prints it literally.
 
-var knownColorNames = sync.OnceValue(func() map[string]bool {
-	m := make(map[string]bool, len(tcell.ColorNames)+32)
-	for k := range tcell.ColorNames {
-		m[k] = true
+// knownColorName reports whether name is a color an inline tag may use: one
+// the theme owns (a role, a legacy alias) or a CSS color name.
+func knownColorName(name string) bool {
+	if _, ok := theme.TagRole(name); ok {
+		return true
 	}
-	for k := range theme.TagNames() {
-		m[k] = true
-	}
-	return m
-})
+	_, ok := theme.CSSRGBA(name)
+	return ok
+}
 
 // isColorPart reports whether p is a valid fg or bg component of a style tag:
 // empty, "-", "#rrggbb" or a known color name.
@@ -47,7 +44,7 @@ func isColorPart(p string) bool {
 		}
 		return true
 	}
-	return knownColorNames()[p]
+	return knownColorName(p)
 }
 
 // tviewEatsTag reports whether tview would parse "[content]" as a style tag

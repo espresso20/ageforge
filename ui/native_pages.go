@@ -30,7 +30,7 @@ type nativePage struct {
 
 func newNativePages() *nativePages {
 	p := &nativePages{}
-	p.nativeHost = newNativeHost(p)
+	p.nativeHost = newNativeHost()
 	return p
 }
 

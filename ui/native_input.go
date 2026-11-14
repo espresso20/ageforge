@@ -34,7 +34,7 @@ func newNativeInput() *nativeInput {
 		}
 	}
 	f.box = &kit.Panel{Child: f.in, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
-	f.nativeHost = newNativeHost(f)
+	f.nativeHost = newNativeHost()
 	return f
 }
 

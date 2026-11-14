@@ -41,7 +41,7 @@ func newNativeList() *nativeList {
 	l.list.OnMove = func(i int) { l.fire(l.changed, i) }
 	l.list.OnChoose = l.choose
 	l.box = &kit.Panel{Child: l.list, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
-	l.nativeHost = newNativeHost(l)
+	l.nativeHost = newNativeHost()
 	return l
 }
 
