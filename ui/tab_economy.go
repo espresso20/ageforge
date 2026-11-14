@@ -103,7 +103,7 @@ var cultureThresholdLabels = []vibe.Entry{
 // is ever left for the terminal to wrap: see resources_box.go for the
 // Resources box, and layoutConstruction and buildingEntries below.
 type EconomyTab struct {
-	root           *tview.Flex
+	root           *nativeFlex
 	leftCol        *econColumn
 	resourceTV     *fitView
 	buildingTV     *fitView
@@ -174,7 +174,7 @@ func NewEconomyTab() *EconomyTab {
 	t.leftCol = &econColumn{Box: tview.NewBox(), resources: t.resourceTV, construction: t.constructionTV,
 		resourceRows: func() int { return resourceRowsNeed(t.rows()) }}
 
-	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
+	t.root = newNativeFlex().SetDirection(tview.FlexColumn).
 		AddItem(t.leftCol, 0, 1, false).
 		AddItem(t.buildingTV, 0, 1, false)
 

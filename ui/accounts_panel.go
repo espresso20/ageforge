@@ -39,7 +39,7 @@ type accountsPanel struct {
 	pages  *tview.Pages
 	engine *game.GameEngine
 
-	root     *tview.Flex
+	root     *nativeFlex
 	title    *nativeText
 	subtitle *nativeText
 	list     *nativeList
@@ -113,7 +113,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	})
 
 	// ── Body: list (left) + detail (right) ─────────────────────────────────────
-	body := tview.NewFlex().SetDirection(tview.FlexColumn).
+	body := newNativeFlex().SetDirection(tview.FlexColumn).
 		AddItem(p.list, 0, 1, true).
 		AddItem(p.detail, 0, 1, false)
 
@@ -130,7 +130,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	footer.changed()
 
 	// ── Layout ─────────────────────────────────────────────────────────────────
-	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
+	p.root = newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(subtitle, 1, 0, false).
 		AddItem(body, 0, 1, true). // weighted — list+detail take remaining space
@@ -438,7 +438,7 @@ func (p *accountsPanel) doImport() {
 		}
 	})
 
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
@@ -606,7 +606,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 	errTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	hintTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	input.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(promptTV, 4, 0, false).
 		AddItem(solidBox(theme.RoleNegative), 1, 0, false).
 		AddItem(input, 1, 0, true).
@@ -676,7 +676,7 @@ func (p *accountsPanel) showMessage(title, body string) {
 		SetText(vibe.Line("ui.accounts_panel.showMessage.01", "[gray]Enter / Esc: close[-]"))
 	hint.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(tv, 0, 1, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hint, 1, 0, false)

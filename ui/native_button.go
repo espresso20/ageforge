@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
@@ -11,6 +13,7 @@ import (
 // the kit, and a click presses it. Like tview's, it is pressed by Enter only.
 type nativeButton struct {
 	*nativeHost
+	kit.Base
 	btn *kit.Button
 }
 
@@ -20,7 +23,7 @@ func newNativeButton(label string) *nativeButton {
 	b := &nativeButton{btn: kit.NewButton(label, nil)}
 	b.btn.Style = styleOf(tview.Styles.PrimaryTextColor, tview.Styles.ContrastBackgroundColor)
 	b.btn.FocusStyle = styleOf(tview.Styles.InverseTextColor, tview.Styles.PrimaryTextColor)
-	b.nativeHost = newNativeHost(b.btn)
+	b.nativeHost = newNativeHost(b)
 	b.SetRect(0, 0, kit.Width(label)+4, 1)
 	return b
 }
@@ -49,17 +52,28 @@ func (b *nativeButton) SetLabelColor(c tcell.Color) *nativeButton {
 // asks for has never shown at rest. The screens look as they did.
 func (b *nativeButton) SetBackgroundColor(tcell.Color) *nativeButton { return b }
 
-// Draw shows the button as it is now: with the focus tview's primitive holds.
-func (b *nativeButton) Draw(scr tcell.Screen) {
-	b.btn.SetFocus(b.HasFocus())
-	b.nativeHost.Draw(scr)
+func (b *nativeButton) kitDrawn() {}
+
+func (b *nativeButton) Children() []kit.Widget { return []kit.Widget{b.btn} }
+
+func (b *nativeButton) Layout(r image.Rectangle) {
+	b.Place(r)
+	b.btn.Layout(r)
 }
 
-// InputHandler: Enter presses; every other key is the caller's.
-func (b *nativeButton) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(b.Box, func(ev *kit.Key) {
-		if ev.Code == kit.KeyEnter && b.btn.OnPress != nil {
-			b.btn.OnPress()
-		}
-	})
+// Paint shows the button as it is now: with the focus tview's primitive holds.
+func (b *nativeButton) Paint(p *kit.Painter) {
+	b.btn.SetFocus(b.HasFocus())
+	b.btn.Paint(p)
+}
+
+// Key: Enter presses; every other key is the caller's.
+func (b *nativeButton) Key(k kit.Key) bool {
+	if k.Code != kit.KeyEnter {
+		return false
+	}
+	if b.btn.OnPress != nil {
+		b.btn.OnPress()
+	}
+	return true
 }

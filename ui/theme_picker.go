@@ -55,7 +55,7 @@ type themePicker struct {
 	// locked flavor themes can be previewed but not confirmed.
 	engine *game.GameEngine
 
-	root    *tview.Flex
+	root    *nativeFlex
 	list    *nativeList
 	detail  *nativeText
 	preview *tview.Box
@@ -177,13 +177,13 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 		SetText(themeFooterBar())
 
 	// ── Layout ───────────────────────────────────────────────────────────────
-	right := tview.NewFlex().SetDirection(tview.FlexRow).
+	right := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(p.detail, 0, 1, false).
 		AddItem(p.preview, 9, 0, false) // sample panel: caption + bordered 7-row mock
-	body := tview.NewFlex().
+	body := newNativeFlex().
 		AddItem(p.list, 0, 2, true).
 		AddItem(right, 0, 3, false)
-	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
+	p.root = newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(subtitle, 1, 0, false).
 		AddItem(body, 0, 1, true).

@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
@@ -14,6 +16,7 @@ import (
 // labels and the sideways scroll of Left and Right.
 type nativeList struct {
 	*nativeHost
+	kit.Base
 	list *kit.List
 	box  *kit.Panel
 
@@ -41,8 +44,24 @@ func newNativeList() *nativeList {
 	l.list.OnMove = func(i int) { l.fire(l.changed, i) }
 	l.list.OnChoose = l.choose
 	l.box = &kit.Panel{Child: l.list, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
-	l.nativeHost = newNativeHost(l.box)
+	l.nativeHost = newNativeHost(l)
 	return l
+}
+
+func (l *nativeList) kitDrawn() {}
+
+func (l *nativeList) Children() []kit.Widget { return []kit.Widget{l.box} }
+
+func (l *nativeList) Layout(r image.Rectangle) {
+	l.Place(r)
+	if l.nativeHost == nil {
+		return // newNativeHost lays the tree out before the host is set
+	}
+	l.box.Border, l.box.Title = focusBorder(l.border, l.HasFocus()), ""
+	if l.border {
+		l.box.Title = l.title
+	}
+	l.box.Layout(r)
 }
 
 func (l *nativeList) fire(fn func(int, string, string, rune), i int) {
@@ -171,76 +190,63 @@ func (l *nativeList) GetInnerRect() (x, y, w, h int) {
 	return x, y, max(w, 0), max(h, 0)
 }
 
-// Draw draws the list, with the doubled border tview gives the primitive that
-// has the focus.
-func (l *nativeList) Draw(scr tcell.Screen) {
-	l.box.Border, l.box.Title = kit.BorderNone, ""
-	if l.border {
-		l.box.Title = l.title
-		l.box.Border = kit.BorderLine
-		if l.HasFocus() {
-			l.box.Border = kit.BorderDouble
-		}
-	}
-	l.nativeHost.Draw(scr)
-}
+func (l *nativeList) Paint(p *kit.Painter) { l.box.Paint(p) }
 
-// InputHandler takes a list's keys as tview's does: Up and Down (and Shift+Tab
-// and Tab) move, coming round at the ends, Home, End, PgUp and PgDn jump, Enter
+// Key takes a list's keys as tview's does: Up and Down (and Shift+Tab and
+// Tab) move, coming round at the ends, Home, End, PgUp and PgDn jump, Enter
 // chooses, and a row's shortcut selects and chooses it. Space chooses the
 // selected row.
-func (l *nativeList) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(l.Box, func(ev *kit.Key) {
-		n := len(l.items)
-		if n == 0 {
-			return
-		}
-		cur := l.GetCurrentItem()
-		to := cur
-		switch ev.Code {
-		case kit.KeyTab, kit.KeyDown:
-			to++
-		case kit.KeyBacktab, kit.KeyUp:
-			to--
-		case kit.KeyHome:
-			to = 0
-		case kit.KeyEnd:
-			to = n - 1
-		case kit.KeyPgDn:
-			_, _, _, h := l.GetInnerRect()
-			to = min(cur+h, n-1)
-		case kit.KeyPgUp:
-			_, _, _, h := l.GetInnerRect()
-			to = max(cur-h, 0)
-		case kit.KeyEnter:
-			l.choose(cur)
-			return
-		case kit.KeyRune:
-			if r := ev.Rune; r != ' ' {
-				found := false
-				for i, it := range l.items {
-					if it.shortcut == r {
-						to, found = i, true
-						break
-					}
-				}
-				if !found {
-					return
+func (l *nativeList) Key(k kit.Key) bool {
+	n := len(l.items)
+	if n == 0 {
+		return false
+	}
+	cur := l.GetCurrentItem()
+	to := cur
+	switch k.Code {
+	case kit.KeyTab, kit.KeyDown:
+		to++
+	case kit.KeyBacktab, kit.KeyUp:
+		to--
+	case kit.KeyHome:
+		to = 0
+	case kit.KeyEnd:
+		to = n - 1
+	case kit.KeyPgDn:
+		_, _, _, h := l.GetInnerRect()
+		to = min(cur+h, n-1)
+	case kit.KeyPgUp:
+		_, _, _, h := l.GetInnerRect()
+		to = max(cur-h, 0)
+	case kit.KeyEnter:
+		l.choose(cur)
+		return true
+	case kit.KeyRune:
+		if r := k.Rune; r != ' ' {
+			found := false
+			for i, it := range l.items {
+				if it.shortcut == r {
+					to, found = i, true
+					break
 				}
 			}
-			l.list.Select(to)
-			l.choose(l.GetCurrentItem())
-			return
-		default:
-			return
-		}
-		if to < 0 || to >= n {
-			if l.wrap {
-				to = (to + n) % n
-			} else {
-				to = max(0, min(to, n-1))
+			if !found {
+				return false
 			}
 		}
 		l.list.Select(to)
-	})
+		l.choose(l.GetCurrentItem())
+		return true
+	default:
+		return false
+	}
+	if to < 0 || to >= n {
+		if l.wrap {
+			to = (to + n) % n
+		} else {
+			to = max(0, min(to, n-1))
+		}
+	}
+	l.list.Select(to)
+	return true
 }

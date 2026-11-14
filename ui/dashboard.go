@@ -50,7 +50,7 @@ type Dashboard struct {
 	app    *tview.Application
 	engine *game.GameEngine
 	pages  *tview.Pages
-	root   *tview.Flex
+	root   *nativeFlex
 
 	// vibeSeen is the VibeMode switch as the dashboard last drew it.
 	vibeSeen bool
@@ -581,7 +581,7 @@ func (d *Dashboard) build() {
 	d.contentArea = mainHoriz
 
 	// Root layout (no tab bar)
-	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
+	d.root = newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(d.cheaterTV, 1, 0, false).
 		AddItem(d.statusTV, 1, 0, false).
 		AddItem(d.toastTV, 1, 0, false).
@@ -596,7 +596,7 @@ func (d *Dashboard) build() {
 	})
 
 	// Global key handling
-	captureKeys(d.root, func(event *kit.Key) *kit.Key {
+	d.root.SetInputCapture(func(event *kit.Key) *kit.Key {
 		// Ctrl+K — open passphrase modal (dev unlock)
 		if event.Ctrl('k') {
 			d.showDevUnlockModal()
@@ -773,7 +773,7 @@ func sidebarText(active string, w, h int) string {
 // over it the active theme's ambient effect.
 func (d *Dashboard) Root() tview.Primitive {
 	if d.rootFx == nil {
-		d.rootFx = &fxRoot{Flex: d.root, after: d.drawEffect}
+		d.rootFx = &fxRoot{nativeFlex: d.root, after: d.drawEffect}
 	}
 	return d.rootFx
 }
@@ -1410,7 +1410,7 @@ func (d *Dashboard) showDevUnlockModal() {
 		}
 	})
 
-	box := tview.NewFlex().SetDirection(tview.FlexRow).
+	box := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(field, 1, 0, true)
 	box.SetBorder(true).
 		SetBorderColor(theme.Color(theme.RoleDim)).

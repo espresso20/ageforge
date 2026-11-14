@@ -381,6 +381,79 @@ func TestKeysGoFocusThenOutwardThenGlobal(t *testing.T) {
 	}
 }
 
+// sieve is a parent that filters the keys on their way to its child.
+type sieve struct {
+	Stack
+	log  *[]string
+	name string
+	stop bool
+	swap *Key
+}
+
+func (s *sieve) FilterKey(k Key) (Key, bool) {
+	*s.log = append(*s.log, s.name)
+	if s.swap != nil {
+		k = *s.swap
+	}
+	return k, !s.stop
+}
+
+// A key passes each filter from the outside in before the focused widget
+// sees it; a filter may stop it or put another key in its place.
+func TestFiltersSeeAKeyOnItsWayDown(t *testing.T) {
+	var log []string
+	var got []Key
+	in := newProbe("in", &log, true)
+	in.OnKey = func(k Key) bool { log, got = append(log, "in"), append(got, k); return true }
+	inner := &sieve{log: &log, name: "inner"}
+	inner.Items = []Widget{in}
+	outer := &sieve{log: &log, name: "outer"}
+	outer.Items = []Widget{inner}
+	r, _ := screen(outer, 10, 2)
+
+	r.Key(key(KeyEnter))
+	if want := []string{"outer", "inner", "in"}; !reflect.DeepEqual(log, want) {
+		t.Errorf("order %v, want %v", log, want)
+	}
+	log, got = nil, nil
+	home := key(KeyHome)
+	outer.swap = &home
+	r.Key(key(KeyEnter))
+	if len(got) != 1 || got[0].Code != KeyHome {
+		t.Errorf("the key a filter put in its place did not arrive: %v", got)
+	}
+	log, outer.swap, inner.stop = nil, nil, true
+	if !r.Key(key(KeyEnter)) {
+		t.Error("a key a filter stopped counts as used")
+	}
+	if want := []string{"outer", "inner"}; !reflect.DeepEqual(log, want) {
+		t.Errorf("a stopped key went on: %v", log)
+	}
+}
+
+// A widget that is no Focusable can still be given the keys: its filters and
+// handlers hear them, and Tab never lands on it.
+func TestAnyWidgetCanBeGivenTheKeys(t *testing.T) {
+	var log []string
+	a, b := newProbe("a", &log, true), newProbe("b", &log, true)
+	box := &sieve{log: &log, name: "box"}
+	box.Items = []Widget{b}
+	row := Row().Add(a, 0, 1).Add(box, 0, 1)
+	r, _ := screen(row, 10, 2)
+	r.Focus(box)
+	if r.Focused() != Widget(box) || a.Focused() {
+		t.Fatalf("the box should hold the keys, %v does", r.Focused())
+	}
+	r.Key(key(KeyEnter))
+	if want := []string{"box"}; !reflect.DeepEqual(log, want) {
+		t.Errorf("keys went to %v, want only the box's filter", log)
+	}
+	r.Focus(b)
+	if !b.Focused() {
+		t.Error("the focus did not move on from a widget that is no Focusable")
+	}
+}
+
 func TestTabWalksTheFocus(t *testing.T) {
 	var log []string
 	a, b, c := newProbe("a", &log, false), newProbe("b", &log, false), newProbe("c", &log, false)

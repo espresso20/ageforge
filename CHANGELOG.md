@@ -50,6 +50,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Inside: every layout box in the game (the dashboard's frame, each popup, each menu page) is now laid out and painted by the UI kit as one picture a screen, where each box used to paint itself through the terminal library. Nothing looks or plays differently.
 - Alt held with a letter is no longer read as that letter by the panels and pages that take letter keys (Alt+Q does not close a panel). Inside, every screen now reads keys in the UI kit's own form, one more step off the terminal library.
 - Internal: the Ledger is drawn by the UI kit.
 - Internal: a UI kit for the window (`window/kit`). Its widgets lay out on the grid of text cells and paint in theme roles, with the game's color tags, keyboard focus and the mouse. No screen uses it yet, so nothing in play changes.

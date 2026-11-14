@@ -43,7 +43,7 @@ func TestButtonRingMovesAndPresses(t *testing.T) {
 // TestTakeKeysRunsAndSwallowsOnlyItsKeys: a key in the map runs its function
 // and is taken; every other key goes on.
 func TestTakeKeysRunsAndSwallowsOnlyItsKeys(t *testing.T) {
-	window := tview.NewFlex()
+	window := newNativeFlex()
 	ran := 0
 	takeKeys(window, map[kit.KeyCode]func(){kit.KeyEsc: func() { ran++ }})
 	esc, tab := tev(kit.KeyEsc, 0, 0), tev(kit.KeyTab, 0, 0)

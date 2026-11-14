@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 )
@@ -23,13 +22,13 @@ import (
 // fxRoot is the dashboard's root: its layout, and over it the active
 // theme's effect.
 type fxRoot struct {
-	*tview.Flex
+	*nativeFlex
 	// after draws over the layout once it is drawn.
 	after func(scr tcell.Screen, x, y, w, h int)
 }
 
 func (r *fxRoot) Draw(scr tcell.Screen) {
-	r.Flex.Draw(scr)
+	r.nativeFlex.Draw(scr)
 	if r.after != nil {
 		x, y, w, h := r.GetRect()
 		r.after(scr, x, y, w, h)

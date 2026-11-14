@@ -22,10 +22,17 @@ import (
 // InputHandler becomes Key, and Mouse is new. See design-private/port.
 
 // A nativeHost shows a kit tree where tview expects a primitive.
+//
+// While tview is here it still says who has the keyboard: each primitive's
+// own focus flag is the truth, and the tree's focus is read from the flags
+// before a key goes in (syncFocus).
 type nativeHost struct {
 	*tview.Box
 	root *kit.Root
+	self kit.Widget // the widget the host shows
 	buf  kit.Buffer
+	// capture sees the host's keys before its widget does (SetInputCapture).
+	capture func(*kit.Key) *kit.Key
 	// at is the host's corner on the screen and seen the frame it was last
 	// drawn in, for the mouse (see nativeScreen).
 	at   image.Point
@@ -35,50 +42,124 @@ type nativeHost struct {
 // newNativeHost hosts w. A screen that embeds the host calls it last, once
 // its own fields are set: the tree is laid out here.
 func newNativeHost(w kit.Widget) *nativeHost {
-	return &nativeHost{Box: tview.NewBox(), root: kit.NewRoot(w)}
+	h := &nativeHost{Box: tview.NewBox()}
+	h.showWidget(w)
+	return h
+}
+
+// showWidget makes w the widget the host shows. A type that embeds one of the
+// drop-in widgets and adds to its Layout, Paint or Key calls it with itself,
+// or the host would go on showing the widget inside.
+func (h *nativeHost) showWidget(w kit.Widget) {
+	h.self, h.root = w, kit.NewRoot(w)
+	h.root.Focus(w)
 }
 
 // Draw lays the tree out in the host's rectangle, paints it and copies the
-// cells to the screen.
+// cells to the screen: all of them, or only the rectangles the widget says
+// it covers. What is still a tview primitive inside the tree is drawn after.
 func (h *nativeHost) Draw(scr tcell.Screen) {
 	x, y, w, ht := h.GetRect()
+	h.root.Resize(max(w, 0), max(ht, 0))
+	h.root.Paint(&h.buf) // with no room too: what is inside is still placed
 	if w <= 0 || ht <= 0 {
 		return
 	}
-	h.root.Resize(w, ht)
-	h.root.Paint(&h.buf)
-	if ns, ok := scr.(*nativeScreen); ok {
-		ns.begin(h, image.Rect(x, y, x+w, y+ht))
-		defer ns.end()
+	full := image.Rect(0, 0, h.buf.W, h.buf.H)
+	rects := []image.Rectangle{full}
+	if c, ok := h.self.(interface{ covered() []image.Rectangle }); ok {
+		rects = c.covered()
 	}
-	for cy := 0; cy < h.buf.H; cy++ {
-		for cx := 0; cx < h.buf.W; cx++ {
-			c := &h.buf.Cells[cy*h.buf.W+cx]
-			if c.Cont {
-				continue // the right half of a wide glyph: the screen keeps it for the left
+	ns, _ := scr.(*nativeScreen)
+	if ns != nil {
+		ns.begin(h, image.Pt(x, y))
+	}
+	for _, r := range rects {
+		r = r.Intersect(full)
+		if ns != nil {
+			ns.claim(r.Add(image.Pt(x, y)))
+		}
+		for cy := r.Min.Y; cy < r.Max.Y; cy++ {
+			for cx := r.Min.X; cx < r.Max.X; cx++ {
+				c := &h.buf.Cells[cy*h.buf.W+cx]
+				if c.Cont {
+					continue // the right half of a wide glyph: the screen keeps it for the left
+				}
+				var comb []rune
+				if c.Comb != "" {
+					comb = []rune(c.Comb)
+				}
+				scr.SetContent(x+cx, y+cy, c.R, comb, cellStyle(c))
 			}
-			var comb []rune
-			if c.Comb != "" {
-				comb = []rune(c.Comb)
-			}
-			scr.SetContent(x+cx, y+cy, c.R, comb, cellStyle(c))
 		}
 	}
-	if h.buf.CursorOn && h.HasFocus() {
+	if ns != nil {
+		ns.end()
+	}
+	// The widget answers for the focus, not the host's own box: a container
+	// has it when something inside it does.
+	focused := h.Box.HasFocus()
+	if f, ok := h.self.(interface{ HasFocus() bool }); ok {
+		focused = f.HasFocus()
+	}
+	if h.buf.CursorOn && focused {
 		scr.ShowCursor(x+h.buf.Cursor.X, y+h.buf.Cursor.Y)
 	}
+	walkWidgets(h.self, func(w kit.Widget) {
+		if f, ok := w.(*foreign); ok {
+			f.prim.Draw(scr)
+		}
+	})
 }
 
 // InputHandler gives the tree the keys tview gives the host.
 func (h *nativeHost) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(h.Box, func(k *kit.Key) { h.root.Key(*k) })
+	return func(ev *tcell.EventKey, _ func(tview.Primitive)) {
+		h.syncFocus()
+		h.root.Key(kitKey(ev))
+	}
 }
 
-// SetInputCapture sets what sees the host's keys before the host does. It
+// boxFocused reports whether tview has given this very primitive the focus
+// (HasFocus also answers for what is inside a container).
+func (h *nativeHost) boxFocused() bool { return h.Box.HasFocus() }
+
+// syncFocus points the tree's keys at the primitive in it that tview has
+// given the focus, or at the host's own widget when none has it.
+func (h *nativeHost) syncFocus() {
+	at := h.self
+	walkWidgets(h.self, func(w kit.Widget) {
+		if f, ok := w.(interface{ boxFocused() bool }); ok && f.boxFocused() {
+			at = w
+		}
+	})
+	h.root.Focus(at)
+}
+
+// SetInputCapture sets what sees the host's keys before its widget does. It
 // returns the key to go on with, or nil to stop it there.
 func (h *nativeHost) SetInputCapture(fn func(*kit.Key) *kit.Key) *nativeHost {
-	h.Box.SetInputCapture(tcellCapture(fn))
+	h.capture = fn
 	return h
+}
+
+// GetInputCapture is the capture as tview hands one out, for the tests that
+// ask a screen what it does with a key.
+func (h *nativeHost) GetInputCapture() func(*tcell.EventKey) *tcell.EventKey {
+	return tcellCapture(h.capture)
+}
+
+// FilterKey is the capture, where the kit asks for it: on a key's way down
+// to whatever has the focus.
+func (h *nativeHost) FilterKey(k kit.Key) (kit.Key, bool) {
+	if h.capture == nil {
+		return k, true
+	}
+	out := h.capture(&k)
+	if out == nil {
+		return k, false
+	}
+	return *out, true
 }
 
 // keysIn is the key handler tview asks of box, for a handler that reads the
@@ -266,18 +347,22 @@ type nativeScreen struct {
 
 func newNativeScreen(s tcell.Screen) *nativeScreen { return &nativeScreen{Screen: s} }
 
-// begin marks r as h's cells: what tview draws over them afterward takes
-// them back.
-func (s *nativeScreen) begin(h *nativeHost, r image.Rectangle) {
+// begin says h is being drawn, its corner at pt. What tview draws afterward
+// over the cells h claims takes them back.
+func (s *nativeScreen) begin(h *nativeHost, pt image.Point) {
 	if w, ht := s.Size(); w != s.w || ht != s.h {
 		s.w, s.h = w, ht
 		s.owner = make([]*nativeHost, w*ht)
 	}
-	h.at, h.seen, s.cur = r.Min, s.frame, h
+	h.at, h.seen, s.cur = pt, s.frame, h
+}
+
+// claim marks r as the cells of the host being drawn.
+func (s *nativeScreen) claim(r image.Rectangle) {
 	r = r.Intersect(image.Rect(0, 0, s.w, s.h))
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		for x := r.Min.X; x < r.Max.X; x++ {
-			s.owner[y*s.w+x] = h
+			s.owner[y*s.w+x] = s.cur
 		}
 	}
 }

@@ -56,15 +56,15 @@ func (d *Dashboard) maybeShowPrestigeCue(state game.GameState) {
 			SetTitleColor(theme.Color(theme.RoleAccent)).
 			SetBackgroundColor(theme.Color(theme.RoleSurface))
 	})
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(tview.FlexRow).
 		AddItem(nil, 0, 1, false).
 		AddItem(tv, 8, 0, true).
 		AddItem(nil, 0, 1, false)
-	root := tview.NewFlex().
+	root := newNativeFlex().
 		AddItem(nil, 0, 1, false).
 		AddItem(inner, 0, 17, true).
 		AddItem(nil, 0, 1, false)
-	captureKeys(root, func(event *kit.Key) *kit.Key {
+	root.SetInputCapture(func(event *kit.Key) *kit.Key {
 		d.pages.RemovePage(prestigeCuePage)
 		d.app.SetFocus(d.inputField)
 		return nil
