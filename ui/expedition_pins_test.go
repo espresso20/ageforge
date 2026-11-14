@@ -76,14 +76,14 @@ func TestPinChipsAreThreeWideWithTheRightRoles(t *testing.T) {
 			}
 			_, bgc, _ := pal.styles[want].Decompose()
 			if tone == toneLegend {
-				gold := theme.Mix(theme.Color(theme.RoleHighlight), theme.MapHueColor(theme.HueGold), 0.6)
+				gold := theme.Mix(theme.Of(theme.RoleHighlight), theme.MapHueColor(theme.HueGold), 0.6)
 				if bgc != gold {
 					t.Errorf("legendary chip is %v, want the gold role %v", bgc, gold)
 				}
 				continue
 			}
-			if bgc != theme.Color(roles[tone]) {
-				t.Errorf("%s chip is %v, want the %s role %v", o.offer.Tier, bgc, roles[tone], theme.Color(roles[tone]))
+			if bgc != theme.Of(roles[tone]) {
+				t.Errorf("%s chip is %v, want the %s role %v", o.offer.Tier, bgc, roles[tone], theme.Of(roles[tone]))
 			}
 		}
 	})
@@ -95,7 +95,7 @@ func TestPinChipsAreThreeWideWithTheRightRoles(t *testing.T) {
 func TestPinMapInksReadInEveryTheme(t *testing.T) {
 	eachTheme(t, func(t *testing.T) {
 		pal := newExpPalette()
-		bg := theme.Color(theme.RoleBackground)
+		bg := theme.Of(theme.RoleBackground)
 		for k := xChipShort; k <= xChipGoalHi; k++ {
 			fg, chip, _ := pal.styles[k].Decompose()
 			if r := theme.ContrastRatio(fg, chip); r < 4.5 {

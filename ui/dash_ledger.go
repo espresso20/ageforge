@@ -7,7 +7,6 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
@@ -687,7 +686,7 @@ var ledgerTagRoles = sync.OnceValue(func() map[string]theme.Role { return theme.
 // ledgerTag reads the tag that opens at s[0] ('['): its length in bytes and
 // the colours it sets. ok is false when what follows is not one of the
 // Ledger's tags, which then print as they are.
-func ledgerTag(s string) (n int, fg, bg tcell.Color, setFg, setBg, ok bool) {
+func ledgerTag(s string) (n int, fg, bg kit.Color, setFg, setBg, ok bool) {
 	end := strings.IndexByte(s, ']')
 	if end < 2 || end > 24 {
 		return
@@ -696,16 +695,16 @@ func ledgerTag(s string) (n int, fg, bg tcell.Color, setFg, setBg, ok bool) {
 	fgName, bgName, _ := strings.Cut(body, ":")
 	bgName, _, _ = strings.Cut(bgName, ":")
 	// The reset tags are "-" and "-:-:-"; a name is a role's.
-	known := func(name string) (tcell.Color, bool, bool) {
+	known := func(name string) (kit.Color, bool, bool) {
 		switch name {
 		case "":
-			return 0, false, true
+			return kit.Color{}, false, true
 		case "-":
-			return tcell.ColorDefault, true, true
+			return kit.Color{}, true, true
 		}
 		role, found := ledgerTagRoles()[name]
 		if !found {
-			return 0, false, false
+			return kit.Color{}, false, false
 		}
 		return theme.Ref(role), true, true
 	}
@@ -754,16 +753,10 @@ func (b *ledgerBox) Paint(p *kit.Painter) {
 			if line[i] == '[' {
 				if n, fg, bg, setFg, setBg, ok := ledgerTag(line[i:]); ok {
 					if setFg {
-						style.Fg = kitColor(fg)
-						if fg == tcell.ColorDefault {
-							style.Fg = kit.Color{}
-						}
+						style.Fg = fg
 					}
 					if setBg {
-						style.Bg = kitColor(bg)
-						if bg == tcell.ColorDefault {
-							style.Bg = kit.Color{}
-						}
+						style.Bg = bg
 					}
 					i += n
 					continue

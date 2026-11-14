@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
@@ -55,11 +54,11 @@ var glyphRules = styletest.Rules{Query: styletest.Every, Width: styletest.Every}
 
 // drawOffset draws a view into a w by h rectangle inset in a screen filled
 // with the sentinel, so a test can tell what the view wrote outside it.
-func drawOffset(v Style, m *mapmodel.Model, w, h, anim int, tier mapmodel.GlyphTier, compact bool) tcell.SimulationScreen {
+func drawOffset(v Style, m *mapmodel.Model, w, h, anim int, tier mapmodel.GlyphTier, compact bool) *capture.Screen {
 	scr := capture.NewScreen(w+4, h+2)
 	for y := 0; y < h+2; y++ {
 		for x := 0; x < w+4; x++ {
-			scr.SetContent(x, y, sentinel, nil, tcell.StyleDefault)
+			scr.SetContent(x, y, sentinel, nil, kit.Style{})
 		}
 	}
 	r := Rect{X: 2, Y: 1, W: w, H: h}
@@ -75,7 +74,7 @@ func drawOffset(v Style, m *mapmodel.Model, w, h, anim int, tier mapmodel.GlyphT
 
 // checkRect fails if any cell inside r still holds the sentinel or any cell
 // outside it does not.
-func checkRect(t *testing.T, scr tcell.SimulationScreen, r Rect, what string) {
+func checkRect(t *testing.T, scr *capture.Screen, r Rect, what string) {
 	t.Helper()
 	cells, w, h := scr.GetContents()
 	bad := 0

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // DefaultKey is the theme applied when nothing else is selected. Forge is the
@@ -22,7 +20,7 @@ const DefaultKey = "forge"
 var (
 	mu           sync.RWMutex
 	active       Theme
-	activeColors atomic.Pointer[[numRoles]tcell.Color]
+	activeColors atomic.Pointer[[numRoles]Color]
 )
 
 // init seeds the active theme to Forge and applies its remap so the very first
@@ -78,19 +76,19 @@ func SetActive(key string) error {
 	return nil
 }
 
-// Color returns the active theme's color for role. Path B (direct widget chrome)
-// routes through here instead of tcell color literals (the theming design §3.3).
-func Color(role Role) tcell.Color {
+// Of returns the active theme's color for role, as it is now: a literal. Code
+// that keeps a color across a theme switch wants Ref instead.
+func Of(role Role) Color {
 	if role < 0 || role >= numRoles {
-		return tcell.ColorDefault
+		return ColorDefault
 	}
 	if cols := activeColors.Load(); cols != nil {
 		return cols[role]
 	}
-	return tcell.ColorDefault
+	return ColorDefault
 }
 
 // IsLight reports whether the active theme has a light background.
 func IsLight() bool {
-	return RelativeLuminance(Color(RoleBackground)) >= lightLuminanceThreshold
+	return RelativeLuminance(Of(RoleBackground)) >= lightLuminanceThreshold
 }

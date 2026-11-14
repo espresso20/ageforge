@@ -2,7 +2,6 @@ package ui
 
 import (
 	"image"
-	"image/color"
 	"strings"
 	"testing"
 
@@ -89,7 +88,7 @@ func TestAHostPaintsItsTreeOnTheScreen(t *testing.T) {
 	if attr&tcell.AttrBold == 0 || attr&tcell.AttrUnderline == 0 {
 		t.Errorf("bold and underline should both reach the screen, got %b", attr)
 	}
-	if _, bg, _ := at(2, 1).Style.Decompose(); bg != theme.Transparent {
+	if _, bg, _ := at(2, 1).Style.Decompose(); bg != theme.TcellTransparent {
 		t.Errorf("a cell with no ground should be transparent, got %v", bg)
 	}
 	if r := at(0, 0).Runes; len(r) > 0 && r[0] == 'a' {
@@ -194,24 +193,6 @@ func TestMenuMouseSelectsAndOpens(t *testing.T) {
 	}
 }
 
-func TestKitStyleReversesCellStyle(t *testing.T) {
-	for _, attr := range []kit.Attr{0, kit.Bold, kit.Italic | kit.Dim, kit.Reverse | kit.Underline, kit.Strike | kit.Bold | kit.Underline} {
-		c := &kit.Cell{R: 'x', Fg: color.RGBA{10, 20, 30, 255}, Bg: color.RGBA{40, 50, 60, 255}, Attr: attr}
-		got := kitStyle(cellStyle(c))
-		if got.Attr != attr {
-			t.Errorf("attr %b came back as %b", attr, got.Attr)
-		}
-		if got.Fg != kit.RGB(10, 20, 30) || got.Bg != kit.RGB(40, 50, 60) {
-			t.Errorf("colors came back as %+v", got)
-		}
-	}
-	st := tcell.StyleDefault.Foreground(theme.Ref(theme.RoleAccent)).Background(theme.Transparent).Bold(true)
-	got := kitStyle(st)
-	if got.Fg != kit.Role(theme.RoleAccent) || got.Bg != kit.Clear || got.Attr != kit.Bold {
-		t.Errorf("a role style came back as %+v", got)
-	}
-}
-
 // tev is a key press as tview takes one, for the tests that hand a key to a
 // primitive the way tview does.
 func tev(code kit.KeyCode, r rune, mod kit.Mod) *tcell.EventKey {
@@ -274,4 +255,58 @@ func TestACtrlChordIsNotALetter(t *testing.T) {
 			t.Errorf("%v reads as %+v: want a chord that is Ctrl+q and not the letter", ev.Name(), k)
 		}
 	}
+}
+
+// themeColor is a color read back from a tcell screen as the theme's: a
+// literal, Transparent, or no color.
+func themeColor(c tcell.Color) theme.Color {
+	if c == theme.TcellTransparent {
+		return theme.Transparent
+	}
+	r, g, b := c.RGB()
+	if r < 0 {
+		return theme.ColorDefault
+	}
+	return theme.NewRGBColor(r, g, b)
+}
+
+// decompose is a style read back from a tcell screen as its parts in the
+// kit's terms, for the tests that hold what was drawn against the theme.
+func decompose(st tcell.Style) (fg, bg theme.Color, attr kit.Attr) {
+	f, b, mask := st.Decompose()
+	for _, a := range cellAttrs {
+		if mask&a.tcell != 0 {
+			attr |= a.kit
+		}
+	}
+	if st.GetUnderlineStyle() != tcell.UnderlineStyleNone {
+		attr |= kit.Underline
+	}
+	return themeColor(f), themeColor(b), attr
+}
+
+// tcellStyle is a kit style as tcell's, colors resolved.
+func tcellStyle(st kit.Style) tcell.Style {
+	out := tcell.StyleDefault.Foreground(theme.Tcell(st.Fg)).Background(theme.Tcell(st.Bg))
+	var mask tcell.AttrMask
+	for _, a := range cellAttrs {
+		if st.Attr&a.kit != 0 {
+			mask |= a.tcell
+		}
+	}
+	return out.Attributes(mask).Underline(st.Attr&kit.Underline != 0)
+}
+
+// tcells is a tcell screen as the map and the weather draw on one
+// (mapstyle.Cells), for the tests that still read a tcell screen back.
+type tcells struct{ tcell.Screen }
+
+func (t tcells) SetContent(x, y int, r rune, comb []rune, st kit.Style) {
+	t.Screen.SetContent(x, y, r, comb, tcellStyle(st))
+}
+
+func (t tcells) GetContent(x, y int) (rune, []rune, kit.Style, int) {
+	r, comb, st, w := t.Screen.GetContent(x, y)
+	fg, bg, attr := decompose(st)
+	return r, comb, kit.Style{Fg: fg, Bg: bg, Attr: attr}, w
 }

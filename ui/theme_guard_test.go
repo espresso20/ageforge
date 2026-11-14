@@ -24,7 +24,7 @@ import (
 //     literal or a tcell color name the theme does not own ([aqua], [black:gold],
 //     [white:#30363d]) — theme-owned names are the role vocabulary ([accent],
 //     [onaccent:accent]) plus the legacy aliases ([gold], [green], …);
-//   - a named tcell color constant (tcell.ColorGold …) — use theme.Color(role);
+//   - a named tcell color constant (tcell.ColorGold …) — use theme.Of(role);
 //   - tcell.NewRGBColor / tcell.NewHexColor / tcell.GetColor — derive the
 //     color from theme roles.
 func TestNoRawColorsOutsideTheme(t *testing.T) {
@@ -88,7 +88,7 @@ func TestNoRawColorsOutsideTheme(t *testing.T) {
 					switch {
 					case name == "ColorDefault" || name == "ColorReset" || name == "ColorNames":
 					case strings.HasPrefix(name, "Color") && len(name) > 5 && name[5] >= 'A' && name[5] <= 'Z':
-						t.Errorf("%s: tcell.%s — use theme.Color(role)", fset.Position(x.Pos()), name)
+						t.Errorf("%s: tcell.%s — use theme.Of(role)", fset.Position(x.Pos()), name)
 					case name == "NewRGBColor" || name == "NewHexColor" || name == "GetColor":
 						t.Errorf("%s: tcell.%s — derive from theme roles", fset.Position(x.Pos()), name)
 					}

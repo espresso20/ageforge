@@ -241,7 +241,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, true).
 		AddItem(surfaceText(l.hint, kit.AlignCenter), 1, 0, false)
-	framed(inner, l.title, theme.RoleNegative).SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, l.title, theme.RoleNegative).SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	modal := floatingModal(inner, catastropheModalWidth, l.height)
 

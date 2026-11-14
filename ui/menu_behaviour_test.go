@@ -140,8 +140,8 @@ func (r *menuRig) draw(w, h int) menuScreen {
 		for x := 0; x < w; x++ {
 			ch, _, st, _ := sim.GetContent(x, y)
 			sb.WriteRune(ch)
-			fg, bg, attr := st.Decompose()
-			out.cells = append(out.cells, fmt.Sprintf("%c %06x %06x %d", ch, fg.Hex(), bg.Hex(), attr&tcell.AttrBold))
+			fg, bg, attr := decompose(st)
+			out.cells = append(out.cells, fmt.Sprintf("%c %06x %06x %d", ch, fg.Hex(), bg.Hex(), attr&kit.Bold))
 		}
 		out.rows = append(out.rows, sb.String())
 	}

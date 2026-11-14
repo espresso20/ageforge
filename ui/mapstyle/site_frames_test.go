@@ -12,13 +12,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // siteAges are the ages the landing page scrolls through, oldest first: four
@@ -51,11 +50,11 @@ func TestWriteSiteFrames(t *testing.T) {
 	const w, h, anim = 120, 36, 4
 
 	fixture.WithTheme(t, "forge")
-	defBg, defFg := theme.Color(theme.RoleBackground), theme.Color(theme.RoleText)
+	defBg, defFg := theme.Of(theme.RoleBackground), theme.Of(theme.RoleText)
 
 	var palette []string
 	palIdx := map[string]int{}
-	color := func(c tcell.Color) int {
+	color := func(c theme.Color) int {
 		hx := capture.Hex(c)
 		if i, ok := palIdx[hx]; ok {
 			return i
@@ -66,7 +65,7 @@ func TestWriteSiteFrames(t *testing.T) {
 	}
 	var styles [][3]int
 	styIdx := map[[3]int]int{}
-	style := func(fg, bg tcell.Color, bold bool) int {
+	style := func(fg, bg theme.Color, bold bool) int {
 		k := [3]int{color(fg), color(bg), 0}
 		if bold {
 			k[2] = 1
@@ -118,13 +117,13 @@ func TestWriteSiteFrames(t *testing.T) {
 						r = c.Runes[0]
 					}
 					fg, bg, attr := c.Style.Decompose()
-					if fg == tcell.ColorDefault || r == ' ' {
+					if fg == theme.ColorDefault || r == ' ' {
 						fg = defFg // a space only needs its background
 					}
-					if bg == tcell.ColorDefault {
+					if bg == theme.ColorDefault {
 						bg = defBg
 					}
-					s := style(fg, bg, attr&tcell.AttrBold != 0)
+					s := style(fg, bg, attr&kit.Bold != 0)
 					text.WriteRune(r)
 					if s != cur {
 						if n > 0 {

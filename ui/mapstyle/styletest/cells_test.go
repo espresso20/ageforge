@@ -3,9 +3,10 @@ package styletest
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 func TestFault(t *testing.T) {
@@ -39,13 +40,13 @@ func TestFault(t *testing.T) {
 }
 
 func TestHiddenInk(t *testing.T) {
-	red, blue := tcell.NewRGBColor(200, 0, 0), tcell.NewRGBColor(0, 0, 200)
-	cell := func(r []rune, fg, bg tcell.Color) tcell.SimCell {
-		return tcell.SimCell{Runes: r, Style: tcell.StyleDefault.Foreground(fg).Background(bg)}
+	red, blue := theme.NewRGBColor(200, 0, 0), theme.NewRGBColor(0, 0, 200)
+	cell := func(r []rune, fg, bg theme.Color) capture.Cell {
+		return capture.Cell{Runes: r, Style: kit.Style{}.Foreground(fg).Background(bg)}
 	}
 	for _, c := range []struct {
 		name string
-		cell tcell.SimCell
+		cell capture.Cell
 		want bool
 	}{
 		{"glyph in its own colour", cell([]rune{'x'}, red, red), true},

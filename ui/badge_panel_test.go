@@ -277,19 +277,19 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 	// Colours: the mark in the tier's ink, and everything legible, in
 	// every theme.
 	eachThemeInline(t, func(th theme.Theme) {
-		bg := theme.Color(theme.RoleBackground)
+		bg := theme.Of(theme.RoleBackground)
 		_, cells := render(badgeToast(hut, mapmodel.TierUnicode, 0))
 		for x, c := range cells {
 			if len(c.Runes) == 0 || c.Runes[0] == ' ' {
 				continue
 			}
-			fg, _, _ := c.Style.Decompose()
+			fg, _, _ := decompose(c.Style)
 			if r := theme.ContrastRatio(fg, bg); r < 2.99 {
 				t.Errorf("theme %s: the toast's %q at %d has a contrast of %.2f", th.Key, c.Runes[0], x, r)
 			}
 		}
 		pal := newGridPalette(0, nil)
-		if fg, _, _ := cells[0].Style.Decompose(); fg != pal.inkOn(inkGold, false) {
+		if fg, _, _ := decompose(cells[0].Style); fg != pal.inkOn(inkGold, false) {
 			t.Errorf("theme %s: the toast's mark is %06x, not gold (%06x)", th.Key, fg.Hex(), pal.inkOn(inkGold, false).Hex())
 		}
 	})
@@ -426,12 +426,12 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 			layoutOnly()
 			still := snap()
 			must(t, eng.Account().SetMotion(false))
-			d.drawEffect(scr, 0, 0, w, h)
+			d.drawEffect(tcells{scr}, 0, 0, w, h)
 			if off := snap(); d.fxOn.Load() || fmt.Sprint(off) != fmt.Sprint(still) {
 				t.Errorf("theme %s at %dx%d: an effect draws with motion off", th.Key, w, h)
 			}
 			must(t, eng.Account().SetMotion(true))
-			bg := theme.Color(theme.RoleBackground)
+			bg := theme.Of(theme.RoleBackground)
 			drawn := 0
 			frames := 4
 			if th.Effect != "" {
@@ -442,7 +442,7 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 				layoutOnly()
 				still = snap() // the mini map moves on its own clock
 				d.fxStart = time.Now().Add(-time.Duration(n) * mapAnimStep)
-				d.drawEffect(scr, 0, 0, w, h)
+				d.drawEffect(tcells{scr}, 0, 0, w, h)
 				direct := snap()
 				if n < 3 {
 					// The root's own paint of the effect, through the kit,
@@ -471,11 +471,11 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 							continue
 						}
 						near := still[y*w+x+dx]
-						if _, back, _ := near.Style.Decompose(); near.Runes[0] != ' ' || back != bg {
+						if _, back, _ := decompose(near.Style); near.Runes[0] != ' ' || back != bg {
 							t.Fatalf("theme %s at %dx%d: the effect drew %q at %d,%d, %d cells from %q", th.Key, w, h, c.Runes[0], x, y, dx, near.Runes[0])
 						}
 					}
-					if fg, back, _ := c.Style.Decompose(); back != bg || fg == bg {
+					if fg, back, _ := decompose(c.Style); back != bg || fg == bg {
 						t.Fatalf("theme %s: the effect's cell at %d,%d is %06x on %06x", th.Key, x, y, fg.Hex(), back.Hex())
 					}
 					if uniseg.StringWidth(string(c.Runes[0])) != 1 {
@@ -501,7 +501,7 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 		sim.SetSize(40, 12)
 		scr := theme.WrapScreen(sim)
 		scr.Clear()
-		drawThemeEffect(scr, 0, 0, 40, 12, theme.EffectRain, n, plain)
+		drawThemeEffect(tcells{scr}, 0, 0, 40, 12, theme.EffectRain, n, plain)
 		sim.Show()
 		cells, _, _ := sim.GetContents()
 		var sb strings.Builder
@@ -522,7 +522,7 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 	// nothing breaks.
 	for _, size := range [][2]int{{0, 0}, {40, 0}, {40, -2}, {-3, 5}} {
 		for _, effect := range []string{theme.EffectRain, theme.EffectGlitch, theme.EffectEmbers, theme.EffectGreenbar, theme.EffectPrism} {
-			drawThemeEffect(tcell.NewSimulationScreen("UTF-8"), 0, 0, size[0], size[1], effect, 7, false)
+			drawThemeEffect(tcells{tcell.NewSimulationScreen("UTF-8")}, 0, 0, size[0], size[1], effect, 7, false)
 		}
 	}
 }

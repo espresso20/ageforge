@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
@@ -221,7 +219,7 @@ func TestPeopleStackBar(t *testing.T) {
 // The four kinds have colours of their own in every theme.
 func TestPeopleKindsHaveColours(t *testing.T) {
 	p := newExpPalette()
-	seen := map[tcell.Style]xk{}
+	seen := map[kit.Style]xk{}
 	for _, k := range []xk{xWork, xRes, xArmy, xLore} {
 		if other, dup := seen[p.styles[k]]; dup {
 			t.Errorf("kinds %d and %d share a style", k, other)

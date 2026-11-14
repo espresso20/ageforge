@@ -2,8 +2,6 @@ package theme
 
 import (
 	"math"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // badgehues.go holds the badges' identity hues: the metals of the tiers and
@@ -108,14 +106,14 @@ var badgeHues = [NumBadgeHues][2]int32{
 }
 
 // BadgeHueColor returns a badge identity hue for a dark or a light theme.
-func BadgeHueColor(h BadgeHue, light bool) tcell.Color {
+func BadgeHueColor(h BadgeHue, light bool) Color {
 	if h >= NumBadgeHues {
 		h = BadgeHueNone
 	}
 	if light {
-		return tcell.NewHexColor(badgeHues[h][1])
+		return NewHexColor(badgeHues[h][1])
 	}
-	return tcell.NewHexColor(badgeHues[h][0])
+	return NewHexColor(badgeHues[h][0])
 }
 
 // The stops of a rim's gradient.
@@ -129,7 +127,7 @@ const (
 // degrees round its wheel, at a stop of its gradient. On a dark canvas the
 // pale stop is the lightest; on a light one the same hues run deeper and
 // the pale stop is the deepest.
-func PrismColor(hue float64, stop int, light bool) tcell.Color {
+func PrismColor(hue float64, stop int, light bool) Color {
 	sl := [3][2]float64{{60, 42}, {70, 62}, {80, 84}}
 	if light {
 		sl = [3][2]float64{{65, 46}, {75, 36}, {85, 25}}
@@ -142,7 +140,7 @@ func PrismColor(hue float64, stop int, light bool) tcell.Color {
 
 // hsl is a colour from a hue in degrees and a saturation and a lightness
 // in percent.
-func hsl(h, s, l float64) tcell.Color {
+func hsl(h, s, l float64) Color {
 	s, l = s/100, l/100
 	a := s * math.Min(l, 1-l)
 	f := func(n float64) int32 {
@@ -150,5 +148,5 @@ func hsl(h, s, l float64) tcell.Color {
 		v := l - a*math.Max(-1, math.Min(math.Min(k-3, 9-k), 1))
 		return int32(math.Round(v * 255))
 	}
-	return tcell.NewRGBColor(f(0), f(8), f(4))
+	return NewRGBColor(f(0), f(8), f(4))
 }

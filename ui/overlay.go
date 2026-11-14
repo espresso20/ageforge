@@ -114,7 +114,7 @@ func (om *OverlayManager) Register(name string, title vibe.Entry, provide Overla
 	// Persistent overlay chrome (built once, reused on every Show): enroll so a live
 	// theme switch restyles the background.
 	theme.Track(func() {
-		tv.SetBackgroundColor(theme.Color(theme.RoleBackground))
+		tv.SetBackgroundColor(theme.Of(theme.RoleBackground))
 	})
 	frame := newPanelFrame(title, tv)
 	frame.plain = func() bool { return om.plain != nil && om.plain() }

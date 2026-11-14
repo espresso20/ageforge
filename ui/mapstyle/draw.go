@@ -3,11 +3,10 @@ package mapstyle
 import (
 	"slices"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // Draw renders the full view: header, picture, side panel, news, inspector and
@@ -20,7 +19,7 @@ func (v *view) Draw(scr Cells, r Rect, f Frame) {
 		return
 	}
 	ink := v.begin(f)
-	cv := NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
+	cv := NewCanvas(scr, r, f.Tier, kit.Style{})
 	if ink == nil {
 		v.unhost(f)
 		drawNoMap(cv)
@@ -130,7 +129,7 @@ func (v *view) putBrackets(cv *Canvas, mp *Palette, box, clip mapgen.Rect, anim 
 		_, under := cv.Get(c.x, c.y)
 		ground := v.groundOf(under)
 		_, fill, _ := mp.CursorOver(ground, anim).Decompose()
-		cv.Put(c.x, c.y, c.r, tcell.StyleDefault.Foreground(fill).Background(ground).Bold(true))
+		cv.Put(c.x, c.y, c.r, kit.Style{}.Foreground(fill).Background(ground).Bold(true))
 	}
 }
 
@@ -142,7 +141,7 @@ func (v *view) putCursor(cv *Canvas, mp *Palette, x, y, anim int) {
 
 // groundOf is the colour a cell stands on; over an image it is the palette's
 // ground, which the image is drawn on.
-func (v *view) groundOf(st tcell.Style) tcell.Color {
+func (v *view) groundOf(st kit.Style) theme.Color {
 	_, ground, _ := st.Decompose()
 	if ground == theme.Transparent && v.pal != nil {
 		return v.pal.bg
@@ -263,7 +262,7 @@ func (v *view) DrawCompact(scr Cells, r Rect, f Frame) {
 		return
 	}
 	ink := v.begin(f)
-	cv := NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
+	cv := NewCanvas(scr, r, f.Tier, kit.Style{})
 	if ink == nil {
 		drawNoMap(cv)
 		return

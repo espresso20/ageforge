@@ -39,8 +39,8 @@ func mix(fg, bg color.RGBA, cover float64) color.RGBA {
 func (g *Game) colors(st tcell.Style) (fg, bg color.RGBA, attr tcell.AttrMask) {
 	th := theme.Active()
 	f, b, a := st.Decompose()
-	fg = toRGBA(f, toRGBA(th.Color(theme.RoleText), color.RGBA{255, 255, 255, 255}))
-	bg = toRGBA(b, toRGBA(th.Color(theme.RoleBackground), color.RGBA{A: 255}))
+	fg = toRGBA(f, toRGBA(theme.Tcell(th.Color(theme.RoleText)), color.RGBA{255, 255, 255, 255}))
+	bg = toRGBA(b, toRGBA(theme.Tcell(th.Color(theme.RoleBackground)), color.RGBA{A: 255}))
 	if a&tcell.AttrReverse != 0 {
 		fg, bg = bg, fg
 	}
@@ -68,7 +68,7 @@ func (g *Game) drawCell(x, y int, k cellKey) {
 	}
 	px, py := float32(x*g.cw), float32(y*g.ch)
 	fg, bg, attr := g.colors(k.st)
-	if _, b, _ := k.st.Decompose(); b == theme.Transparent {
+	if _, b, _ := k.st.Decompose(); b == theme.TcellTransparent {
 		g.buf.SubImage(image.Rect(int(px), int(py), int(px)+cw, int(py)+g.ch)).(*ebiten.Image).Clear() // an image shows through
 	} else {
 		vector.FillRect(g.buf, px, py, float32(cw), float32(g.ch), bg, false)

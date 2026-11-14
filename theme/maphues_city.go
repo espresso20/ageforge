@@ -1,7 +1,5 @@
 package theme
 
-import "github.com/gdamore/tcell/v2"
-
 // maphues_city.go holds the Earth arc's city colours, the Modern Age to the
 // Fusion Age: concrete, glass and asphalt, the last parks, landfill, the
 // data age's screens, the megacity's neon and the powered city's plasma. The
@@ -50,9 +48,9 @@ var cityHues = [numCityHues]int32{
 }
 
 // CityColor returns an Earth-arc city colour.
-func CityColor(h CityHue) tcell.Color {
+func CityColor(h CityHue) Color {
 	if h >= numCityHues {
 		h = CityConcrete
 	}
-	return tcell.NewHexColor(cityHues[h])
+	return NewHexColor(cityHues[h])
 }

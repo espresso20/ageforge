@@ -340,7 +340,7 @@ func (d *Dashboard) build() {
 	// column when the names fit that way, two when the screen is short.
 	d.sidebar = newFitView(func(w, h int) string { return sidebarText(d.sidebarActive, w, h) })
 	d.sidebar.SetBorder(true)
-	theme.Track(func() { d.sidebar.SetTitleColor(theme.Color(theme.RoleAccent)) })
+	theme.Track(func() { d.sidebar.SetTitleColor(theme.Of(theme.RoleAccent)) })
 
 	// Log panel
 	d.logTV = newNativeText().
@@ -349,7 +349,7 @@ func (d *Dashboard) build() {
 		SetWordWrap(true).
 		SetMaxLines(100)
 	d.logTV.SetBorder(true)
-	theme.Track(func() { d.logTV.SetTitleColor(theme.Color(theme.RoleDim)) })
+	theme.Track(func() { d.logTV.SetTitleColor(theme.Of(theme.RoleDim)) })
 
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
 	d.cheaterTV = newNativeText().
@@ -482,11 +482,11 @@ func (d *Dashboard) build() {
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
 	d.inputField.SetBorder(true)
 	theme.Track(func() {
-		d.inputField.SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
-			SetLabelColor(theme.Color(theme.RoleHighlight))
+		d.inputField.SetFieldBackgroundColor(theme.Of(theme.RoleBackground)).
+			SetLabelColor(theme.Of(theme.RoleHighlight))
 		// Frame the command bar so it reads as a first-class element, not an afterthought.
-		d.inputField.SetBorderColor(theme.Color(theme.RoleAccent)).
-			SetTitleColor(theme.Color(theme.RoleAccent))
+		d.inputField.SetBorderColor(theme.Of(theme.RoleAccent)).
+			SetTitleColor(theme.Of(theme.RoleAccent))
 	})
 
 	d.inputField.SetDoneFunc(func(key kit.KeyCode) {
@@ -565,7 +565,7 @@ func (d *Dashboard) build() {
 		return peopleBoxText(*d.lastState, w, d.workerDetail)
 	})
 	d.workerMiniTV.SetBorder(true)
-	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
+	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Of(theme.RoleAccent)) })
 	d.economyTab.AddPeopleBox(d.workerMiniTV, d.richLayout, func() int {
 		_, th := d.screenSize()
 		return richPeopleHeight(th)
@@ -1388,8 +1388,8 @@ func (d *Dashboard) showDevUnlockModal() {
 		SetLabel("").
 		SetFieldWidth(40).
 		SetMaskCharacter('·').
-		SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
-		SetFieldTextColor(theme.Color(theme.RoleText))
+		SetFieldBackgroundColor(theme.Of(theme.RoleBackground)).
+		SetFieldTextColor(theme.Of(theme.RoleText))
 
 	field.SetDoneFunc(func(key kit.KeyCode) {
 		if key == kit.KeyEsc {
@@ -1413,8 +1413,8 @@ func (d *Dashboard) showDevUnlockModal() {
 	box := newNativeFlex().SetDirection(flexRow).
 		AddItem(field, 1, 0, true)
 	box.SetBorder(true).
-		SetBorderColor(theme.Color(theme.RoleDim)).
-		SetBackgroundColor(theme.Color(theme.RoleBackground))
+		SetBorderColor(theme.Of(theme.RoleDim)).
+		SetBackgroundColor(theme.Of(theme.RoleBackground))
 
 	d.pages.AddPage(devUnlockPage, floatingModal(box, 44, 3), true, true)
 	d.app.SetFocus(field)

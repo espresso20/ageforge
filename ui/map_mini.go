@@ -4,8 +4,6 @@ import (
 	"image"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -95,9 +93,9 @@ func (m *miniMap) pointAt(p *mapPanel) {
 // drawMapFrame draws the border of a map box w by h cells at the canvas's
 // origin, with title in the top border.
 func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
-	bg := theme.Color(theme.RoleBackground)
-	border := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleBorder), bg, 1.8))
-	accent := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleAccent), bg, 3)).Bold(true)
+	bg := theme.Of(theme.RoleBackground)
+	border := kit.Style{}.Background(bg).Foreground(theme.Legible(theme.Of(theme.RoleBorder), bg, 1.8))
+	accent := kit.Style{}.Background(bg).Foreground(theme.Legible(theme.Of(theme.RoleAccent), bg, 3)).Bold(true)
 	for i := 1; i < w-1; i++ {
 		cv.Put(i, 0, '─', border)
 		cv.Put(i, h-1, '─', border)

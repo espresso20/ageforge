@@ -65,7 +65,7 @@ func showAccountNameConfirmModal(app *appLoop, pages *nativePages, name string, 
 	})
 	// Opaque background so the modal doesn't bleed the page beneath it, matching the
 	// other button-modals (and the earlier modal-opacity fix).
-	modal.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	modal.SetBackgroundColor(theme.Of(theme.RoleSurface))
 	app.SetFocus(modal)
 }
 
@@ -115,12 +115,12 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		SetFieldWidth(40).
 		// Dark slate field with white text — tview's default light field
 		// background renders the white name near-invisible on the dark modal.
-		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
-		SetFieldTextColor(theme.Color(theme.RoleSelectionText))
+		SetFieldBackgroundColor(theme.Of(theme.RoleSelection)).
+		SetFieldTextColor(theme.Of(theme.RoleSelectionText))
 	// Every child of the modal panel paints Surface so the panel reads as one
 	// piece on themes where Surface differs from the canvas (Daylight).
-	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
-	input.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	errTV.SetBackgroundColor(theme.Of(theme.RoleSurface))
+	input.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	escHint := vibe.Line("ui.newgame_modal.showSaveNameModalOpts.02", "Esc: cancel")
 	if escAccepts {
@@ -130,7 +130,7 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")
-	hintTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	hintTV.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	// closeAndRestore removes the modal page and restores focus to focusReturn.
 	// Used on cancel (Esc).
@@ -178,7 +178,7 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		AddItem(errTV, 1, 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
-	framed(inner, title, theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, title, theme.RoleAccent).SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
 	// DoneFunc above so plain typing keys still reach the input.

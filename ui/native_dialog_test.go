@@ -34,8 +34,8 @@ func TestNativeDialogDrawsAsAModalDid(t *testing.T) {
 				if i == 0 {
 					m := tview.NewModal().SetText(c.text).AddButtons(c.buttons)
 					if c.danger {
-						m.SetBackgroundColor(theme.Color(theme.RoleNegative))
-						m.SetTextColor(theme.Color(theme.RoleOnNegative))
+						m.SetBackgroundColor(theme.Tcell(theme.Of(theme.RoleNegative)))
+						m.SetTextColor(theme.Tcell(theme.Of(theme.RoleOnNegative)))
 					}
 					tview.NewApplication().SetFocus(m)
 					p = m

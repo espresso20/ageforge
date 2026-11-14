@@ -1,10 +1,9 @@
 package mapstyle
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The inspect cursor.
@@ -43,9 +42,9 @@ const cursorBlinkStep = 0.3
 // cursorCandidates lists the colours a fill is chosen from, all made from
 // the active theme's roles: first the warm ones (an orange where the theme
 // has one), then the roles that stand in for it elsewhere.
-func cursorCandidates() []tcell.Color {
-	warn, neg, bright := theme.Color(theme.RoleWarning), theme.Color(theme.RoleNegative), theme.Color(theme.RoleBright)
-	var out []tcell.Color
+func cursorCandidates() []theme.Color {
+	warn, neg, bright := theme.Of(theme.RoleWarning), theme.Of(theme.RoleNegative), theme.Of(theme.RoleBright)
+	var out []theme.Color
 	for _, t := range []float64{0.5, 0.6, 0.75, 0.4, 0.25} {
 		base := theme.Mix(warn, neg, t)
 		for _, lift := range []float64{0, 0.2, 0.4} {
@@ -53,15 +52,15 @@ func cursorCandidates() []tcell.Color {
 		}
 	}
 	for _, r := range []theme.Role{theme.RoleHighlight, theme.RoleAccent, theme.RoleWarning, theme.RoleNegative, theme.RoleBright, theme.RoleText} {
-		out = append(out, theme.Color(r))
+		out = append(out, theme.Of(r))
 	}
 	return out
 }
 
 // Paints lists every colour the palette draws the map in: each glyph class
 // and each background. The cursor's fill is chosen against them.
-func (p *Palette) Paints() []tcell.Color {
-	out := make([]tcell.Color, 0, int(mapmodel.NumClasses)+4)
+func (p *Palette) Paints() []theme.Color {
+	out := make([]theme.Color, 0, int(mapmodel.NumClasses)+4)
 	for c := mapmodel.Class(1); c < mapmodel.NumClasses; c++ {
 		out = append(out, p.Fg[c])
 	}
@@ -69,8 +68,8 @@ func (p *Palette) Paints() []tcell.Color {
 }
 
 // Backgrounds lists the colours the palette puts under a cell.
-func (p *Palette) Backgrounds() []tcell.Color {
-	return []tcell.Color{p.Bg, p.WaterBg, p.FreshBg, p.FlowBg}
+func (p *Palette) Backgrounds() []theme.Color {
+	return []theme.Color{p.Bg, p.WaterBg, p.FreshBg, p.FlowBg}
 }
 
 // FitCursor chooses the cursor's styles for the palette as it stands. A
@@ -82,8 +81,8 @@ func (p *Palette) FitCursor() {
 
 // fitCursor chooses the cursor's two styles from the candidate fills, against
 // the colours a map is drawn in and the background it stands on.
-func fitCursor(paints []tcell.Color, bg tcell.Color, candidates []tcell.Color) (cursor, alt tcell.Style) {
-	apart := func(c tcell.Color) float64 {
+func fitCursor(paints []theme.Color, bg theme.Color, candidates []theme.Color) (cursor, alt kit.Style) {
+	apart := func(c theme.Color) float64 {
 		least := -1.0
 		for _, m := range paints {
 			if d := theme.Distance(c, m); least < 0 || d < least {
@@ -92,7 +91,7 @@ func fitCursor(paints []tcell.Color, bg tcell.Color, candidates []tcell.Color) (
 		}
 		return least
 	}
-	fill, best, found := theme.Color(theme.RoleText), -1.0, false
+	fill, best, found := theme.Of(theme.RoleText), -1.0, false
 	for _, c := range candidates {
 		stands := theme.ContrastRatio(c, bg) >= cursorMinContrast
 		// The first candidate that stands out is taken; a later one must
@@ -105,15 +104,15 @@ func fitCursor(paints []tcell.Color, bg tcell.Color, candidates []tcell.Color) (
 	// The blink's other half is the same fill a step brighter (darker on a
 	// light theme): further from the background still.
 	brighter := theme.Mix(fill, theme.BestOn(bg), cursorBlinkStep)
-	cursor = tcell.StyleDefault.Foreground(theme.BestOn(fill)).Background(fill).Bold(true)
-	alt = tcell.StyleDefault.Foreground(theme.BestOn(brighter)).Background(brighter).Bold(true)
+	cursor = kit.Style{}.Foreground(theme.BestOn(fill)).Background(fill).Bold(true)
+	alt = kit.Style{}.Foreground(theme.BestOn(brighter)).Background(brighter).Bold(true)
 	return cursor, alt
 }
 
 // CursorStyle is the cursor's style at animation frame anim: the fill, and
 // every other CursorBlinkFrames frames its other shade. Frame 0 is the
 // fill, which is the frame the motion setting holds.
-func (p *Palette) CursorStyle(anim int) tcell.Style {
+func (p *Palette) CursorStyle(anim int) kit.Style {
 	if anim > 0 && (anim/CursorBlinkFrames)%2 == 1 {
 		return p.CursorAlt
 	}
@@ -125,12 +124,12 @@ func (p *Palette) CursorStyle(anim int) tcell.Style {
 // the ground; over a ground the palette never drew (a map that colours its
 // land itself) the fill is chosen again against that ground alone, black or
 // white being the last resort that always stands out.
-func (p *Palette) CursorOver(ground tcell.Color, anim int) tcell.Style {
+func (p *Palette) CursorOver(ground theme.Color, anim int) kit.Style {
 	_, fill, _ := p.Cursor.Decompose()
 	if theme.Distance(fill, ground) >= CursorFromGround && theme.ContrastRatio(fill, ground) >= CursorOverGround {
 		return p.CursorStyle(anim)
 	}
-	cursor, alt := fitCursor([]tcell.Color{ground}, ground, append(cursorCandidates(), theme.BestOn(ground)))
+	cursor, alt := fitCursor([]theme.Color{ground}, ground, append(cursorCandidates(), theme.BestOn(ground)))
 	return (&Palette{Cursor: cursor, CursorAlt: alt}).CursorStyle(anim)
 }
 
@@ -142,7 +141,7 @@ func (p *Palette) CursorOver(ground tcell.Color, anim int) tcell.Style {
 // cell; text the least contrast of the glyph drawn on either half.
 func (p *Palette) CursorMargins() (glyph, ground, over, text float64) {
 	glyph, ground, over, text = 9, 9, 99, 99
-	for i, st := range []tcell.Style{p.Cursor, p.CursorAlt} {
+	for i, st := range []kit.Style{p.Cursor, p.CursorAlt} {
 		fg, fill, _ := st.Decompose()
 		text = min(text, theme.ContrastRatio(fg, fill))
 		if i == 0 {
@@ -184,7 +183,7 @@ func CursorGlyphMargin() float64 {
 		if r == theme.RoleComment || r == theme.RoleEffect {
 			continue // text only, never a color the map draws
 		}
-		if red, green, blue := theme.Color(r).RGB(); red != green || green != blue {
+		if red, green, blue := theme.Of(r).RGB(); red != green || green != blue {
 			return CursorFromGlyph
 		}
 	}

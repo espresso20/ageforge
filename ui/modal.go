@@ -18,7 +18,7 @@ import (
 // primitive draws, so every row and column inside a window must belong to a
 // primitive that clears it, or the page beneath shows through.
 func solidBox(role theme.Role) *nativeBox {
-	return newNativeBox().SetBackgroundColor(theme.Color(role))
+	return newNativeBox().SetBackgroundColor(theme.Of(role))
 }
 
 // surfaceBox is solidBox in the modal surface colour.
@@ -27,7 +27,7 @@ func surfaceBox() *nativeBox { return solidBox(theme.RoleSurface) }
 // surfaceText is a line (or lines) of text on the modal surface.
 func surfaceText(text string, align kit.Align) *nativeText {
 	tv := newNativeText().SetDynamicColors(true).SetTextAlign(align).SetWrap(false).SetText(text)
-	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	tv.SetBackgroundColor(theme.Of(theme.RoleSurface))
 	return tv
 }
 
@@ -35,8 +35,8 @@ func surfaceText(text string, align kit.Align) *nativeText {
 func framed(inner *nativeFlex, title string, role theme.Role) *nativeFlex {
 	inner.SetBorder(true).
 		SetTitle(title).
-		SetTitleColor(theme.Color(role)).
-		SetBorderColor(theme.Color(role))
+		SetTitleColor(theme.Of(role)).
+		SetBorderColor(theme.Of(role))
 	return inner
 }
 

@@ -9,7 +9,7 @@ func TestSpaceHues(t *testing.T) {
 		if spaceHues[h] == 0 {
 			t.Errorf("space hue %d has no colour", h)
 		}
-		if !SpaceColor(h).Valid() {
+		if !SpaceColor(h).IsSet() {
 			t.Errorf("space hue %d is not a valid colour", h)
 		}
 	}

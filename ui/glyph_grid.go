@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 )
 
@@ -42,17 +40,6 @@ func (g *grid[C]) at(x, y int) C {
 func (g *grid[C]) store(x, y int, c C) {
 	if g.in(x, y) {
 		g.c[y*g.w+x] = c
-	}
-}
-
-// draw puts the grid on the screen with its top left corner at (x0, y0); look
-// is the glyph and the style each cell is drawn in.
-func (g *grid[C]) draw(scr tcell.Screen, x0, y0 int, look func(C) (rune, tcell.Style)) {
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			r, style := look(g.c[y*g.w+x])
-			scr.SetContent(x0+x, y0+y, r, nil, style)
-		}
 	}
 }
 

@@ -4,8 +4,6 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -81,7 +79,7 @@ var toneHues = [world.NumTones]mapgen.Hue{
 	world.ToneArm: mapgen.HArm, world.ToneDust: mapgen.HNebula,
 }
 
-func rgba(c tcell.Color) color.RGBA {
+func rgba(c theme.Color) color.RGBA {
 	r, g, b := c.RGB()
 	return color.RGBA{R: uint8(max(r, 0)), G: uint8(max(g, 0)), B: uint8(max(b, 0)), A: 255}
 }
@@ -121,7 +119,7 @@ func (v *view) hostSky(cv *Canvas, f Frame, p *cellPalette, x, y, w, h int) bool
 	}
 	key := v.sky.Key ^ v.skyPal.Hash()*0x100000001b3
 	f.Space.Show(image.Rect(cv.R.X+x, cv.R.Y+y, cv.R.X+x+w, cv.R.Y+y+h), v.sky, key, v.skyPal)
-	clear := tcell.StyleDefault.Foreground(p.bg).Background(theme.Transparent)
+	clear := kit.Style{}.Foreground(p.bg).Background(theme.Transparent)
 	for yy := 0; yy < h; yy++ {
 		for xx := 0; xx < w; xx++ {
 			cv.Put(x+xx, y+yy, ' ', clear)

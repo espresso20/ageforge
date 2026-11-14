@@ -10,20 +10,42 @@ import (
 // kit, window/kit): roles and tag names as plain RGBA.
 
 // RGBA is the active theme's color for role.
-func RGBA(role Role) color.RGBA { return plainRGBA(Color(role)) }
+func RGBA(role Role) color.RGBA { return plainRGBA(Of(role)) }
 
-func plainRGBA(c tcell.Color) color.RGBA {
-	r, g, b := c.RGB()
-	if r < 0 {
+func plainRGBA(c Color) color.RGBA {
+	if c.kind != colRGB {
 		return color.RGBA{A: 255}
 	}
-	return color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 255}
+	return color.RGBA{R: c.r, G: c.g, B: c.b, A: 255}
 }
 
 // FromRGBA is a plain color as tcell's, for the bridge that copies the kit's
 // cells onto a tcell screen (ui/native.go) while there still is one.
 func FromRGBA(c color.RGBA) tcell.Color {
 	return tcell.NewRGBColor(int32(c.R), int32(c.G), int32(c.B))
+}
+
+// Tcell is c as tcell's color, for the same bridge and for tests that read a
+// tcell screen back: a Ref as the color it is now, Transparent as
+// TcellTransparent, and no color as tcell's default.
+func Tcell(c Color) tcell.Color {
+	switch c.kind {
+	case colClear:
+		return TcellTransparent
+	case colUnset:
+		return tcell.ColorDefault
+	}
+	rgba, _ := c.RGBA()
+	return FromRGBA(rgba)
+}
+
+// fromTcell is a tcell color as the theme's: a literal, or no color.
+func fromTcell(c tcell.Color) Color {
+	r, g, b := c.RGB()
+	if r < 0 {
+		return ColorDefault
+	}
+	return NewRGBColor(r, g, b)
 }
 
 // tagRoles is TagNames, made once.

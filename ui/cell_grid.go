@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -113,30 +111,30 @@ func (g *tGrid) card(x0, y0, cw, ch int, name, esc string) {
 // gridPalette is the active theme's colours for a grid: a style for each
 // tStyle, the lanes' hues, and the inks.
 type gridPalette struct {
-	styles  [tsCount]tcell.Style
-	lane    []tcell.Style
-	bg, sel tcell.Color
+	styles  [tsCount]kit.Style
+	lane    []kit.Style
+	bg, sel kit.Color
 	light   bool
 	duo     bool
-	text    tcell.Color
+	text    kit.Color
 	// inks caches each ink's colour on the canvas and on the selection.
-	inks [2]map[ink]tcell.Color
+	inks [2]map[ink]kit.Color
 }
 
 // newGridPalette reads the active theme. Lane hues and inks go through the
 // contrast rule for art (3.0); text roles are held to the rule for text.
 func newGridPalette(lanes int, hue func(i int) string) *gridPalette {
 	p := &gridPalette{
-		bg:    theme.Color(theme.RoleBackground),
-		sel:   theme.Color(theme.RoleSelection),
-		text:  theme.Color(theme.RoleText),
+		bg:    theme.Of(theme.RoleBackground),
+		sel:   theme.Of(theme.RoleSelection),
+		text:  theme.Of(theme.RoleText),
 		light: theme.IsLight(),
 		duo:   theme.Active().Duotone,
 	}
-	p.inks[0], p.inks[1] = map[ink]tcell.Color{}, map[ink]tcell.Color{}
-	chip := theme.Color(theme.RoleChip)
-	on := func(role theme.Role, back tcell.Color, ratio float64) tcell.Style {
-		return tcell.StyleDefault.Background(back).Foreground(theme.Legible(theme.Color(role), back, ratio))
+	p.inks[0], p.inks[1] = map[ink]kit.Color{}, map[ink]kit.Color{}
+	chip := theme.Of(theme.RoleChip)
+	on := func(role theme.Role, back kit.Color, ratio float64) kit.Style {
+		return kit.Style{}.Background(back).Foreground(theme.Legible(theme.Of(role), back, ratio))
 	}
 	p.styles[tsText] = on(theme.RoleText, p.bg, 4.5)
 	p.styles[tsDim] = on(theme.RoleDim, p.bg, 3)
@@ -146,7 +144,7 @@ func newGridPalette(lanes int, hue func(i int) string) *gridPalette {
 	p.styles[tsGold] = on(theme.RoleHighlight, p.bg, 3).Bold(true)
 	p.styles[tsGoldDim] = on(theme.RoleWarning, p.bg, 3)
 	p.styles[tsGood] = on(theme.RolePositive, p.bg, 4.5)
-	p.styles[tsSel] = tcell.StyleDefault.Background(p.sel).Foreground(theme.Legible(theme.Color(theme.RoleSelectionText), p.sel, 4.5)).Bold(true)
+	p.styles[tsSel] = kit.Style{}.Background(p.sel).Foreground(theme.Legible(theme.Of(theme.RoleSelectionText), p.sel, 4.5)).Bold(true)
 	p.styles[tsChip] = on(theme.RoleText, chip, 4.5)
 	p.styles[tsChipKey] = on(theme.RoleAccent, chip, 3).Bold(true)
 	p.styles[tsChipDim] = on(theme.RoleDim, chip, 3)
@@ -154,17 +152,17 @@ func newGridPalette(lanes int, hue func(i int) string) *gridPalette {
 	p.styles[tsBad] = on(theme.RoleNegative, p.bg, 3).Bold(true)
 	// The chip colour as ink is quiet on purpose: it is a shape to make
 	// out, not text to read, so it is not pushed to the contrast rule.
-	p.styles[tsSlab] = tcell.StyleDefault.Background(p.bg).Foreground(chip)
+	p.styles[tsSlab] = kit.Style{}.Background(p.bg).Foreground(chip)
 	p.styles[tsLabel] = on(theme.RoleLabel, p.bg, 4.5)
 	p.styles[tsEffect] = on(theme.RoleEffect, p.bg, 4.5).Bold(true)
 	for i := 0; i < lanes; i++ {
-		p.lane = append(p.lane, tcell.StyleDefault.Background(p.bg).Foreground(theme.Hue(hue(i), p.bg)))
+		p.lane = append(p.lane, kit.Style{}.Background(p.bg).Foreground(theme.Hue(hue(i), p.bg)))
 	}
 	return p
 }
 
 // inkOn is an ink's colour on back (the canvas, or the selection).
-func (p *gridPalette) inkOn(k ink, selected bool) tcell.Color {
+func (p *gridPalette) inkOn(k ink, selected bool) kit.Color {
 	cache, back := p.inks[0], p.bg
 	if selected {
 		cache, back = p.inks[1], p.sel
@@ -185,7 +183,7 @@ func (p *gridPalette) inkOn(k ink, selected bool) tcell.Color {
 }
 
 // style is the screen style of a cell.
-func (p *gridPalette) style(c tCell) tcell.Style {
+func (p *gridPalette) style(c tCell) kit.Style {
 	st := p.styles[c.k]
 	if c.k == tsLane && int(c.lane) >= 0 && int(c.lane) < len(p.lane) {
 		st = p.lane[c.lane]
@@ -197,7 +195,7 @@ func (p *gridPalette) style(c tCell) tcell.Style {
 		if selected {
 			back = p.sel
 		}
-		st = tcell.StyleDefault.Background(back).Foreground(p.inkOn(c.ink, selected))
+		st = kit.Style{}.Background(back).Foreground(p.inkOn(c.ink, selected))
 	case selected && c.k != tsSel:
 		fg, _, _ := st.Decompose()
 		st = st.Background(p.sel).Foreground(theme.Legible(fg, p.sel, 3))
@@ -214,7 +212,7 @@ func paintGridKit(p *kit.Painter, g *tGrid, at image.Point, pal *gridPalette) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			c := g.c[y*g.w+x]
-			p.Put(at.X+x, at.Y+y, c.r, kitStyle(pal.style(c)))
+			p.Put(at.X+x, at.Y+y, c.r, pal.style(c))
 		}
 	}
 }

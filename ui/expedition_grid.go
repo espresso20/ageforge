@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
@@ -220,21 +218,21 @@ func (g *xgrid) fold() { g.foldWith(foldExpedition) }
 
 // expPalette is the active theme's colours for the panel.
 type expPalette struct {
-	styles [xCount]tcell.Style
+	styles [xCount]kit.Style
 }
 
 func newExpPalette() *expPalette {
-	bg := theme.Color(theme.RoleBackground)
+	bg := theme.Of(theme.RoleBackground)
 	mp := mapstyle.NewPalette(0)
-	on := func(c tcell.Color, ratio float64) tcell.Style {
-		return tcell.StyleDefault.Background(bg).Foreground(theme.Legible(c, bg, ratio))
+	on := func(c kit.Color, ratio float64) kit.Style {
+		return kit.Style{}.Background(bg).Foreground(theme.Legible(c, bg, ratio))
 	}
-	role := func(r theme.Role, ratio float64) tcell.Style { return on(theme.Color(r), ratio) }
+	role := func(r theme.Role, ratio float64) kit.Style { return on(theme.Of(r), ratio) }
 	p := &expPalette{}
 	s := &p.styles
 	s[xText] = role(theme.RoleText, 4.5)
 	s[xDim] = role(theme.RoleDim, 3)
-	s[xFaint] = on(theme.Mix(bg, theme.Color(theme.RoleDim), 0.55), 1.6)
+	s[xFaint] = on(theme.Mix(bg, theme.Of(theme.RoleDim), 0.55), 1.6)
 	s[xBorder] = role(theme.RoleBorder, 3)
 	s[xTitle] = role(theme.RoleHighlight, 4.5).Bold(true)
 	s[xAccent] = role(theme.RoleAccent, 3).Bold(true)
@@ -242,53 +240,53 @@ func newExpPalette() *expPalette {
 	s[xGood] = role(theme.RolePositive, 4.5)
 	s[xBad] = role(theme.RoleNegative, 4.5)
 	s[xGold] = role(theme.RoleHighlight, 4.5)
-	gold := theme.Mix(theme.Color(theme.RoleHighlight), theme.MapHueColor(theme.HueGold), 0.6)
+	gold := theme.Mix(theme.Of(theme.RoleHighlight), theme.MapHueColor(theme.HueGold), 0.6)
 	s[xLegend] = on(gold, 3).Bold(true)
-	s[xLegend2] = on(theme.Mix(gold, theme.Color(theme.RoleBright), 0.5), 3).Bold(true)
-	s[xWater] = tcell.StyleDefault.Background(bg).Foreground(mp.Fg[mapmodel.CWater])
-	s[xGrass] = tcell.StyleDefault.Background(bg).Foreground(mp.Fg[mapmodel.CGround])
-	s[xHill] = tcell.StyleDefault.Background(bg).Foreground(mp.Fg[mapmodel.CHill])
-	sel := theme.Color(theme.RoleSelection)
-	s[xSel] = tcell.StyleDefault.Background(sel).Foreground(theme.Legible(theme.Color(theme.RoleSelectionText), sel, 4.5)).Bold(true)
-	s[xSelGold] = tcell.StyleDefault.Background(gold).Foreground(theme.Legible(bg, gold, 4.5)).Bold(true)
-	chip := theme.Color(theme.RoleChip)
+	s[xLegend2] = on(theme.Mix(gold, theme.Of(theme.RoleBright), 0.5), 3).Bold(true)
+	s[xWater] = kit.Style{}.Background(bg).Foreground(mp.Fg[mapmodel.CWater])
+	s[xGrass] = kit.Style{}.Background(bg).Foreground(mp.Fg[mapmodel.CGround])
+	s[xHill] = kit.Style{}.Background(bg).Foreground(mp.Fg[mapmodel.CHill])
+	sel := theme.Of(theme.RoleSelection)
+	s[xSel] = kit.Style{}.Background(sel).Foreground(theme.Legible(theme.Of(theme.RoleSelectionText), sel, 4.5)).Bold(true)
+	s[xSelGold] = kit.Style{}.Background(gold).Foreground(theme.Legible(bg, gold, 4.5)).Bold(true)
+	chip := theme.Of(theme.RoleChip)
 	s[xWork] = role(theme.RoleHighlight, 3)
 	s[xRes] = role(theme.RolePositive, 3)
 	s[xArmy] = role(theme.RoleNegative, 3)
 	s[xLore] = role(theme.RoleLabel, 3)
-	s[xLabel] = tcell.StyleDefault.Background(chip).Foreground(theme.Legible(theme.Color(theme.RoleHighlight), chip, 4.5))
+	s[xLabel] = kit.Style{}.Background(chip).Foreground(theme.Legible(theme.Of(theme.RoleHighlight), chip, 4.5))
 	s[xRoute] = role(theme.RoleAccent, 4.5)
-	s[xDust] = on(theme.Mix(bg, theme.Color(theme.RoleDim), 0.55), mapstyle.TerrainFloor)
+	s[xDust] = on(theme.Mix(bg, theme.Of(theme.RoleDim), 0.55), mapstyle.TerrainFloor)
 	s[xPlace] = role(theme.RoleDim, 4.5)
 	// The pins: each tone is a chip, its glyph in the ink that reads on it.
 	// A chip's bright phase is the same chip lifted toward the bright role.
 	tones := [6]struct {
-		bg  tcell.Color
-		ink tcell.Color
+		bg  kit.Color
+		ink kit.Color
 	}{
-		{theme.Color(theme.RolePositive), theme.Color(theme.RoleBackground)},
-		{theme.Color(theme.RoleLabel), theme.Color(theme.RoleBackground)},
-		{theme.Color(theme.RoleNegative), theme.Color(theme.RoleOnNegative)},
-		{theme.Color(theme.RoleAccent), theme.Color(theme.RoleOnAccent)},
-		{gold, theme.Color(theme.RoleBackground)},
-		{theme.Color(theme.RolePositive), theme.Color(theme.RoleBackground)},
+		{theme.Of(theme.RolePositive), theme.Of(theme.RoleBackground)},
+		{theme.Of(theme.RoleLabel), theme.Of(theme.RoleBackground)},
+		{theme.Of(theme.RoleNegative), theme.Of(theme.RoleOnNegative)},
+		{theme.Of(theme.RoleAccent), theme.Of(theme.RoleOnAccent)},
+		{gold, theme.Of(theme.RoleBackground)},
+		{theme.Of(theme.RolePositive), theme.Of(theme.RoleBackground)},
 	}
 	for t, c := range tones {
-		chipOn := func(bg tcell.Color) tcell.Style {
+		chipOn := func(bg kit.Color) kit.Style {
 			ink := theme.Legible(c.ink, bg, 4.5)
 			if theme.ContrastRatio(ink, bg) < 4.5 { // a mid tone: black or white reads
 				ink = theme.BestOn(bg)
 			}
-			return tcell.StyleDefault.Background(bg).Foreground(ink).Bold(true)
+			return kit.Style{}.Background(bg).Foreground(ink).Bold(true)
 		}
 		s[chipKind(chipTone(t), false)] = chipOn(c.bg)
-		s[chipKind(chipTone(t), true)] = chipOn(theme.Mix(c.bg, theme.Color(theme.RoleBright), 0.4))
+		s[chipKind(chipTone(t), true)] = chipOn(theme.Mix(c.bg, theme.Of(theme.RoleBright), 0.4))
 	}
 	return p
 }
 
 // style is the screen style of a cell.
-func (p *expPalette) style(c xcell) tcell.Style {
+func (p *expPalette) style(c xcell) kit.Style {
 	st := p.styles[c.k]
 	if c.fl&cfItalic != 0 {
 		st = st.Italic(true)
@@ -302,7 +300,7 @@ func paintExpeditionKit(p *kit.Painter, g *xgrid, at image.Point, pal *expPalett
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			c := g.c[y*g.w+x]
-			p.Put(at.X+x, at.Y+y, c.r, kitStyle(pal.style(c)))
+			p.Put(at.X+x, at.Y+y, c.r, pal.style(c))
 		}
 	}
 }

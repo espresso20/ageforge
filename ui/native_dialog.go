@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -67,13 +65,13 @@ func (d *nativeDialog) SetDoneFunc(fn func(button int, label string)) *nativeDia
 	return d
 }
 
-func (d *nativeDialog) SetBackgroundColor(c tcell.Color) *nativeDialog {
-	d.ground = kitColor(c)
+func (d *nativeDialog) SetBackgroundColor(c kit.Color) *nativeDialog {
+	d.ground = c
 	return d
 }
 
-func (d *nativeDialog) SetTextColor(c tcell.Color) *nativeDialog {
-	d.ink = kitColor(c)
+func (d *nativeDialog) SetTextColor(c kit.Color) *nativeDialog {
+	d.ink = c
 	return d
 }
 

@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -74,18 +72,18 @@ func (f *nativeInput) SetText(s string) *nativeInput {
 
 func (f *nativeInput) GetText() string { return f.in.Text() }
 
-func (f *nativeInput) SetLabelColor(c tcell.Color) *nativeInput {
-	f.in.PromptStyle.Fg = kitColor(c)
+func (f *nativeInput) SetLabelColor(c kit.Color) *nativeInput {
+	f.in.PromptStyle.Fg = c
 	return f
 }
 
-func (f *nativeInput) SetFieldTextColor(c tcell.Color) *nativeInput {
-	f.in.Style.Fg = kitColor(c)
+func (f *nativeInput) SetFieldTextColor(c kit.Color) *nativeInput {
+	f.in.Style.Fg = c
 	return f
 }
 
-func (f *nativeInput) SetFieldBackgroundColor(c tcell.Color) *nativeInput {
-	f.in.Style.Bg = kitColor(c)
+func (f *nativeInput) SetFieldBackgroundColor(c kit.Color) *nativeInput {
+	f.in.Style.Bg = c
 	return f
 }
 
@@ -95,8 +93,8 @@ func (f *nativeInput) SetMaskCharacter(r rune) *nativeInput {
 	return f
 }
 
-func (f *nativeInput) SetBackgroundColor(c tcell.Color) *nativeInput {
-	f.box.Ground = kitColor(c)
+func (f *nativeInput) SetBackgroundColor(c kit.Color) *nativeInput {
+	f.box.Ground = c
 	return f
 }
 
@@ -131,10 +129,10 @@ func (f *nativeInput) SetTitleAlign(align kit.Align) *nativeInput {
 
 // SetTitleColor is accepted and does nothing: a kit title is the theme's
 // accent, which is what every caller sets.
-func (f *nativeInput) SetTitleColor(tcell.Color) *nativeInput { return f }
+func (f *nativeInput) SetTitleColor(kit.Color) *nativeInput { return f }
 
-func (f *nativeInput) SetBorderColor(c tcell.Color) *nativeInput {
-	f.box.BorderStyle.Fg = kitColor(c)
+func (f *nativeInput) SetBorderColor(c kit.Color) *nativeInput {
+	f.box.BorderStyle.Fg = c
 	return f
 }
 

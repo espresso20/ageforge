@@ -4,8 +4,6 @@ import (
 	"image"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -54,7 +52,7 @@ func TestStarAgeSkyGoesToTheHost(t *testing.T) {
 	}
 	r := h.shown[0]
 	_, _, sty, _ := scr.GetContent(r.Min.X+r.Dx()/2, r.Min.Y+r.Dy()/2)
-	if _, bg, _ := sty.Decompose(); bg != tcell.Color(theme.Transparent) {
+	if _, bg, _ := sty.Decompose(); bg != theme.Color(theme.Transparent) {
 		t.Errorf("a cell under the sky has ground %v, want transparent", bg)
 	}
 }
@@ -104,7 +102,7 @@ func TestNilHostDrawsCells(t *testing.T) {
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			r, _, sty, _ := scr.GetContent(x, y)
-			if _, bg, _ := sty.Decompose(); bg == tcell.Color(theme.Transparent) {
+			if _, bg, _ := sty.Decompose(); bg == theme.Color(theme.Transparent) {
 				t.Fatalf("cell %d,%d has a transparent ground with no host", x, y)
 			}
 			if r != ' ' {

@@ -4,7 +4,6 @@ import (
 	"math"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	colorful "github.com/lucasb-eyer/go-colorful"
 )
 
@@ -31,7 +30,7 @@ func srgbToLinear(c float64) float64 {
 
 // RelativeLuminance returns the WCAG relative luminance of c in [0,1]:
 // 0.2126 R + 0.7152 G + 0.0722 B over sRGB-linearized channels (the theming design §8).
-func RelativeLuminance(c tcell.Color) float64 {
+func RelativeLuminance(c Color) float64 {
 	r, g, b := rgbUnit(c)
 	rl := srgbToLinear(r)
 	gl := srgbToLinear(g)
@@ -41,7 +40,7 @@ func RelativeLuminance(c tcell.Color) float64 {
 
 // ContrastRatio returns the WCAG contrast ratio between a and b, in [1.0, 21.0]:
 // (Llighter + 0.05) / (Ldarker + 0.05). Order-independent.
-func ContrastRatio(a, b tcell.Color) float64 {
+func ContrastRatio(a, b Color) float64 {
 	la := RelativeLuminance(a)
 	lb := RelativeLuminance(b)
 	if la < lb {
@@ -75,7 +74,7 @@ const DistinguishableThreshold = 0.55
 //
 // This is the §8 colorblind check: it catches role-color collisions that luminance
 // contrast cannot see.
-func Distinguishable(a, b tcell.Color, sim string) bool {
+func Distinguishable(a, b Color, sim string) bool {
 	ca := simulate(a, sim)
 	cb := simulate(b, sim)
 	return ca.DistanceCIEDE2000(cb) >= DistinguishableThreshold
@@ -86,18 +85,18 @@ func Distinguishable(a, b tcell.Color, sim string) bool {
 // noticeable side by side, DistinguishableThreshold is two colors nobody
 // confuses). The map picks its cursor's color with it: the candidate
 // furthest from everything else on the map.
-func Distance(a, b tcell.Color) float64 {
+func Distance(a, b Color) float64 {
 	return toColorful(a).DistanceCIEDE2000(toColorful(b))
 }
 
-// toColorful converts a tcell.Color to a go-colorful Color via its RGB components.
-func toColorful(c tcell.Color) colorful.Color {
+// toColorful converts a Color to a go-colorful Color via its RGB components.
+func toColorful(c Color) colorful.Color {
 	r, g, b := rgbUnit(c)
 	return colorful.Color{R: r, G: g, B: b}
 }
 
 // rgbUnit returns c's RGB as floats in [0,1].
-func rgbUnit(c tcell.Color) (r, g, b float64) {
+func rgbUnit(c Color) (r, g, b float64) {
 	ri, gi, bi := c.RGB()
 	return float64(ri) / 255.0, float64(gi) / 255.0, float64(bi) / 255.0
 }
@@ -106,7 +105,7 @@ func rgbUnit(c tcell.Color) (r, g, b float64) {
 // the perceived color. Uses the Viénot/Brettel-style approach: linearize sRGB,
 // project onto the dichromat plane in LMS via a fixed matrix, then de-linearize.
 // "deut*" => deuteranopia, "prot*" => protanopia; anything else is identity.
-func simulate(c tcell.Color, sim string) colorful.Color {
+func simulate(c Color, sim string) colorful.Color {
 	r, g, b := rgbUnit(c)
 	// Linearize for the matrix math (the CVD matrices operate on linear light).
 	r, g, b = srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)

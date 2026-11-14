@@ -1401,7 +1401,7 @@ func TestArrivalInEveryTheme(t *testing.T) {
 					// on it). The heavy blow's own frame is all light.
 					x, y := p.x+firstLit(p), p.y
 					_, _, st, _ := sim.GetContent(x, y)
-					block, ground, _ := st.Decompose()
+					block, ground, _ := decompose(st)
 					if a.view.plain {
 						block = ground
 					}

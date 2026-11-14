@@ -82,7 +82,7 @@ func shotBlend(a, b color.RGBA, t float64) color.RGBA {
 // shapes but not the letters.
 func ScreenImage(cells []tcell.SimCell, cols, rows, cellW, cellH int) *image.RGBA {
 	th := theme.Active()
-	defFg, defBg := th.Color(theme.RoleText), th.Color(theme.RoleBackground)
+	defFg, defBg := theme.Tcell(th.Color(theme.RoleText)), theme.Tcell(th.Color(theme.RoleBackground))
 	w, h := cols*cellW+2*shotPad, rows*cellH+2*shotPad
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	edge := shotColor(defBg, defBg)

@@ -5,11 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // menu_page.go lays the main menu out and draws it. There are two pages:
@@ -531,7 +530,7 @@ func (sc *menuScene) drawMenu(g *mGrid, pal *menuPalette, v *menuView, leaders b
 	}
 }
 
-func ternaryColor(cond bool, a, b tcell.Color) tcell.Color {
+func ternaryColor(cond bool, a, b kit.Color) kit.Color {
 	if cond {
 		return a
 	}

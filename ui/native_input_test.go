@@ -74,7 +74,7 @@ func TestNativeInputKeysAndCalls(t *testing.T) {
 	if got := in.GetText(); got != "hXu" {
 		t.Errorf("after a click and a letter: %q", got)
 	}
-	in.SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).SetLabelColor(theme.Color(theme.RoleHighlight)).SetFieldTextColor(theme.Color(theme.RoleText))
+	in.SetFieldBackgroundColor(theme.Of(theme.RoleBackground)).SetLabelColor(theme.Of(theme.RoleHighlight)).SetFieldTextColor(theme.Of(theme.RoleText))
 	if in.GetLabel() != "> " || in.SetTitle("T").GetTitle() != "T" {
 		t.Error("the label and the title read back")
 	}

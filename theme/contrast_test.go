@@ -2,8 +2,6 @@ package theme
 
 import (
 	"testing"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // TestContrast_AccessibleColorblind asserts that for every accessible theme, the
@@ -51,8 +49,8 @@ func TestContrast_AccessibleColorblind(t *testing.T) {
 // must FAIL the colorblind check, proving the threshold actually discriminates and
 // isn't trivially satisfied by any two colors.
 func TestContrast_RedGreenCollapses(t *testing.T) {
-	red := tcell.NewRGBColor(0xf8, 0x51, 0x49)
-	green := tcell.NewRGBColor(0x3f, 0xb9, 0x50)
+	red := NewRGBColor(0xf8, 0x51, 0x49)
+	green := NewRGBColor(0x3f, 0xb9, 0x50)
 	for _, sim := range []string{"deuteranopia", "protanopia"} {
 		if Distinguishable(red, green, sim) {
 			t.Errorf("red/green reported distinguishable under %s — threshold %.0f is too low",
@@ -68,8 +66,8 @@ func TestContrast_RedGreenCollapses(t *testing.T) {
 // TestRelativeLuminance_Endpoints sanity-checks the WCAG math at the extremes:
 // black -> 0, white -> 1, and white/black contrast == 21.
 func TestRelativeLuminance_Endpoints(t *testing.T) {
-	black := tcell.NewRGBColor(0, 0, 0)
-	white := tcell.NewRGBColor(255, 255, 255)
+	black := NewRGBColor(0, 0, 0)
+	white := NewRGBColor(255, 255, 255)
 	if l := RelativeLuminance(black); l > 1e-9 {
 		t.Errorf("luminance(black) = %v, want ~0", l)
 	}

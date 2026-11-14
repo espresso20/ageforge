@@ -307,7 +307,7 @@ func (s *siteStage) close() { s.d.overlayMgr.Hide() }
 
 // draw refreshes the dashboard from the engine and draws the whole screen at
 // w x h, the way the app does on its own screen.
-func (s *siteStage) draw(w, h int) ([]tcell.SimCell, tcell.Color, tcell.Color) {
+func (s *siteStage) draw(w, h int) ([]tcell.SimCell, theme.Color, theme.Color) {
 	s.t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
 	must(s.t, sim.Init())
@@ -327,7 +327,7 @@ func (s *siteStage) draw(w, h int) ([]tcell.SimCell, tcell.Color, tcell.Color) {
 		got, _, _ := sim.GetContents()
 		cells = append(cells[:0], got...)
 	}
-	return cells, theme.Color(theme.RoleText), theme.Color(theme.RoleBackground)
+	return cells, theme.Of(theme.RoleText), theme.Of(theme.RoleBackground)
 }
 
 // --- the staged game ------------------------------------------------------------
@@ -655,7 +655,7 @@ func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 
 	cols, rows := siteDashW, siteDashH
 	cells := drawWrapped(w.t, m, cols, rows, 1).Cells()
-	raw, text, err := encodeSiteScreen(cells, cols, rows, theme.Color(theme.RoleText), theme.Color(theme.RoleBackground), false)
+	raw, text, err := encodeSiteScreen(cells, cols, rows, theme.Of(theme.RoleText), theme.Of(theme.RoleBackground), false)
 	if err != nil {
 		w.t.Fatalf("%s: %v", name, err)
 	}
@@ -1054,7 +1054,7 @@ type siteScreenRow struct {
 	R []int  `json:"r"`
 }
 
-func siteHex(c tcell.Color) string {
+func siteHex(c theme.Color) string {
 	r, g, b := c.RGB()
 	return fmt.Sprintf("#%02x%02x%02x", r&0xff, g&0xff, b&0xff)
 }
@@ -1062,13 +1062,13 @@ func siteHex(c tcell.Color) string {
 // encodeSiteScreen turns drawn cells into the file's bytes and a plain-text
 // copy. It refuses a cell the wiki's grid could not hold: a wide rune or a
 // combining one.
-func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg tcell.Color, ownGround bool) ([]byte, string, error) {
+func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg theme.Color, ownGround bool) ([]byte, string, error) {
 	f := siteScreenFile{W: w, H: h}
 	if ownGround {
 		f.Bg = siteHex(defBg)
 	}
 	palIdx := map[string]int{}
-	color := func(c tcell.Color) int {
+	color := func(c theme.Color) int {
 		hx := siteHex(c)
 		if i, ok := palIdx[hx]; ok {
 			return i
@@ -1078,7 +1078,7 @@ func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg tcell.Color,
 		return palIdx[hx]
 	}
 	styIdx := map[[3]int]int{}
-	style := func(fg, bg tcell.Color, attr int) int {
+	style := func(fg, bg theme.Color, attr int) int {
 		k := [3]int{color(fg), color(bg), attr}
 		if i, ok := styIdx[k]; ok {
 			return i
@@ -1093,7 +1093,7 @@ func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg tcell.Color,
 	for y := 0; y < h; y++ {
 		type cell struct {
 			r      rune
-			fg, bg tcell.Color
+			fg, bg theme.Color
 			attr   int
 		}
 		row := make([]cell, w)
@@ -1107,24 +1107,24 @@ func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg tcell.Color,
 			if len(c.Runes) > 1 || uniseg.StringWidth(string(r)) != 1 {
 				return nil, "", fmt.Errorf("cell (%d,%d) holds %q, which is not one column wide", x, y, string(c.Runes))
 			}
-			fg, bg, attrs := c.Style.Decompose()
-			if fg == tcell.ColorDefault {
+			fg, bg, attrs := decompose(c.Style)
+			if fg == theme.ColorDefault {
 				fg = defFg
 			}
-			if bg == tcell.ColorDefault {
+			if bg == theme.ColorDefault {
 				bg = defBg
 			}
-			if attrs&tcell.AttrReverse != 0 {
+			if attrs&kit.Reverse != 0 {
 				fg, bg = bg, fg
 			}
 			attr := 0
-			if attrs&tcell.AttrBold != 0 {
+			if attrs&kit.Bold != 0 {
 				attr |= 1
 			}
-			if attrs&tcell.AttrItalic != 0 {
+			if attrs&kit.Italic != 0 {
 				attr |= 2
 			}
-			if attrs&tcell.AttrUnderline != 0 {
+			if attrs&kit.Underline != 0 {
 				attr |= 4
 			}
 			row[x] = cell{r, fg, bg, attr}

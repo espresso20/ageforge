@@ -5,12 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // chrome.go is everything round the picture: the header, the news line, the
@@ -26,7 +25,7 @@ const firstNightEpoch = 5
 type inks struct {
 	*Palette
 	theme  string
-	border tcell.Style
+	border kit.Style
 }
 
 // inksFor returns in when it still fits the theme and the epoch, else a new
@@ -44,7 +43,7 @@ func inksFor(in *inks, epoch int) *inks {
 		}
 	}
 	pal.FitCursor()
-	border := tcell.StyleDefault.Foreground(theme.Legible(theme.Color(theme.RoleBorder), pal.Bg, 1.8)).Background(pal.Bg)
+	border := kit.Style{}.Foreground(theme.Legible(theme.Of(theme.RoleBorder), pal.Bg, 1.8)).Background(pal.Bg)
 	return &inks{Palette: pal, theme: key, border: border}
 }
 
@@ -72,7 +71,7 @@ func (v *view) drawHeader(cv *Canvas, width int, m *mapmodel.Model, zoom string)
 	ink := v.ink.Chrome
 	_, background, _ := ink.Decompose()
 	cv.Fill(0, 0, width, 1, ' ', ink)
-	x := cv.Text(1, 0, width-2, "◆ "+m.TownName, ink.Foreground(theme.Legible(theme.Color(theme.RoleAccent), background, 3)).Bold(true))
+	x := cv.Text(1, 0, width-2, "◆ "+m.TownName, ink.Foreground(theme.Legible(theme.Of(theme.RoleAccent), background, 3)).Bold(true))
 	x = cv.Text(x, 0, width-x-1, " · "+m.AgeName+" · "+m.EpochName, ink)
 	idle := ink
 	if m.Workers.Idle > 0 {
@@ -80,7 +79,7 @@ func (v *view) drawHeader(cv *Canvas, width int, m *mapmodel.Model, zoom string)
 	}
 	segments := []struct {
 		text  string
-		style tcell.Style
+		style kit.Style
 	}{
 		{string(weatherRune(m, v.tier)) + " " + m.Clock.String() + "  ", ink},
 		{vibe.Line("ui.mapstyle.roguelike.chrome.header.01", "pop ") + strconv.Itoa(m.Workers.Pop) + "  ", ink},
@@ -124,7 +123,7 @@ func weatherRune(m *mapmodel.Model, tier mapmodel.GlyphTier) rune {
 
 // news is the one line worth knowing: the recap headline, the pending
 // catastrophe, or what is stuck.
-func (v *view) news(m *mapmodel.Model, width int) (string, tcell.Style) {
+func (v *view) news(m *mapmodel.Model, width int) (string, kit.Style) {
 	danger := v.ink.Role(theme.RoleNegative).Bold(true)
 	headline := ""
 	if v.changes {
@@ -319,7 +318,7 @@ func (v *view) drawLegend(cv *Canvas, mp *Palette, x, y, w, h int, m *mapmodel.M
 		if skyOf(m) >= 2 { // on the star map a line is a sector, whose hub is a ring
 			sign = '◉'
 		}
-		cv.Put(x, y+1+i, sign, tcell.StyleDefault.Foreground(v.pal.colour(mapgen.LineHue(l.Key))).Background(bg))
+		cv.Put(x, y+1+i, sign, kit.Style{}.Foreground(v.pal.colour(mapgen.LineHue(l.Key))).Background(bg))
 		cv.Text(x+2, y+1+i, w-2, l.Name, st)
 	}
 }

@@ -28,8 +28,8 @@ func TestNativeButtonDrawsAsAButtonDid(t *testing.T) {
 	} {
 		old, nb := tview.NewButton(c.label), newNativeButton(c.label)
 		if c.colored {
-			old.SetBackgroundColor(theme.Color(c.fill))
-			old.SetLabelColor(onFill(c.fill))
+			old.SetBackgroundColor(theme.Tcell(theme.Of(c.fill)))
+			old.SetLabelColor(theme.Tcell(onFill(c.fill)))
 			styleFilledButton(nb, c.fill)
 		}
 		if c.focus {

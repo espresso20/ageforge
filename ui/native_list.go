@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -134,18 +132,18 @@ func (l *nativeList) SetChangedFunc(fn func(int, string, string, rune)) *nativeL
 	return l
 }
 
-func (l *nativeList) SetMainTextColor(c tcell.Color) *nativeList {
-	l.list.Style.Fg = kitColor(c)
+func (l *nativeList) SetMainTextColor(c kit.Color) *nativeList {
+	l.list.Style.Fg = c
 	return l
 }
 
-func (l *nativeList) SetSelectedTextColor(c tcell.Color) *nativeList {
-	l.list.SelectedStyle.Fg = kitColor(c)
+func (l *nativeList) SetSelectedTextColor(c kit.Color) *nativeList {
+	l.list.SelectedStyle.Fg = c
 	return l
 }
 
-func (l *nativeList) SetSelectedBackgroundColor(c tcell.Color) *nativeList {
-	l.list.SelectedStyle.Bg = kitColor(c)
+func (l *nativeList) SetSelectedBackgroundColor(c kit.Color) *nativeList {
+	l.list.SelectedStyle.Bg = c
 	return l
 }
 
@@ -168,13 +166,13 @@ func (l *nativeList) SetTitle(s string) *nativeList {
 	return l
 }
 
-func (l *nativeList) SetBorderColor(c tcell.Color) *nativeList {
-	l.box.BorderStyle.Fg = kitColor(c)
+func (l *nativeList) SetBorderColor(c kit.Color) *nativeList {
+	l.box.BorderStyle.Fg = c
 	return l
 }
 
-func (l *nativeList) SetBackgroundColor(c tcell.Color) *nativeList {
-	l.box.Ground = kitColor(c)
+func (l *nativeList) SetBackgroundColor(c kit.Color) *nativeList {
+	l.box.Ground = c
 	return l
 }
 

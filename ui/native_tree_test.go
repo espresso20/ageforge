@@ -110,15 +110,15 @@ func newTreePage(native bool) *treePage {
 	title := surfaceText("A page", kit.AlignCenter)
 	if native {
 		body := newNativeFlex().AddItem(p.list, 0, 1, true).AddItem(p.text, 0, 2, false)
-		body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder)).
-			SetBackgroundColor(theme.Color(theme.RoleNegative))
+		body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Of(theme.RoleAccent)).SetBorderColor(theme.Of(theme.RoleBorder)).
+			SetBackgroundColor(theme.Of(theme.RoleNegative))
 		p.page = newNativeFlex().SetDirection(flexRow).
 			AddItem(title, 1, 0, false).AddItem(body, 0, 1, true).AddItem(newNativeBox(), 1, 0, false).AddItem(p.input, 1, 0, false)
 		return p
 	}
 	body := tview.NewFlex().AddItem(shim(p.list), 0, 1, true).AddItem(shim(p.text), 0, 2, false)
-	body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder)).
-		SetBackgroundColor(theme.Color(theme.RoleNegative))
+	body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Tcell(theme.Of(theme.RoleAccent))).SetBorderColor(theme.Tcell(theme.Of(theme.RoleBorder))).
+		SetBackgroundColor(theme.Tcell(theme.Of(theme.RoleNegative)))
 	p.page = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(shim(title), 1, 0, false).AddItem(body, 0, 1, true).AddItem(tview.NewBox(), 1, 0, false).AddItem(shim(p.input), 1, 0, false)
 	return p

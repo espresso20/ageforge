@@ -4,8 +4,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
@@ -192,7 +190,7 @@ func TestVisitorChangesThePictureAtEverySize(t *testing.T) {
 			frame, spots := visitorAt(t, m, form)
 			for _, sz := range sizes {
 				// the cursor stands on the visitor, so the close-up has it in view
-				look := func(clock int) tcell.SimulationScreen {
+				look := func(clock int) *capture.Screen {
 					v := New().(*view)
 					f := Frame{Model: m, Anim: 5, Clock: clock}
 					v.scene(f)
@@ -202,7 +200,7 @@ func TestVisitorChangesThePictureAtEverySize(t *testing.T) {
 				with, without := look(frame), look(0)
 				a, _, _ := with.GetContents()
 				b, _, _ := without.GetContents()
-				if slices.EqualFunc(a, b, func(x, y tcell.SimCell) bool { return x.Style == y.Style && slices.Equal(x.Runes, y.Runes) }) {
+				if slices.EqualFunc(a, b, func(x, y capture.Cell) bool { return x.Style == y.Style && slices.Equal(x.Runes, y.Runes) }) {
 					t.Errorf("%s %s %s: a visit does not change the picture", age, form, sz.name)
 				}
 				with.Fini()
@@ -221,7 +219,7 @@ func TestVisitorChangesThePictureAtEverySize(t *testing.T) {
 }
 
 // drawFrame draws a view of a frame into a w by h screen.
-func drawFrame(v Style, f Frame, w, h int, compact bool) tcell.SimulationScreen {
+func drawFrame(v Style, f Frame, w, h int, compact bool) *capture.Screen {
 	scr := capture.NewScreen(w, h)
 	if compact {
 		v.DrawCompact(scr, Rect{W: w, H: h}, f)
@@ -240,7 +238,7 @@ func TestVisitorNeverCoversTheCursor(t *testing.T) {
 	frame, cells := visitorAt(t, m, "alien")
 	f := Frame{Model: m, Anim: frame, Clock: frame}
 	target := cells[len(cells)/2]
-	draw := func(cursor bool) (rune, tcell.Style) {
+	draw := func(cursor bool) (rune, kit.Style) {
 		v := New().(*view)
 		v.scene(f)
 		v.cur, v.recentre, v.inspect = target, true, cursor
@@ -269,7 +267,7 @@ func TestVisitorHoldsStillWithMotionOff(t *testing.T) {
 	m := modelFor(t, fixture.Options{Age: "space_age", Seed: 3})
 	frame, _ := visitorAt(t, m, "alien")
 	sg, _ := m.SightingAt(frame)
-	var first []tcell.SimCell
+	var first []capture.Cell
 	for clock := sg.Start; clock < sg.Start+sg.Frames; clock += 9 {
 		scr := drawFrame(New(), Frame{Model: m, Anim: 0, Clock: clock}, 120, 36, false)
 		cells, _, _ := scr.GetContents()

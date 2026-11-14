@@ -182,7 +182,7 @@ func TestNativeTextWriteTitleColorAndDrawFunc(t *testing.T) {
 		t.Errorf("Write: %q", got)
 	}
 	var w int
-	kt.SetBorder(true).SetTitle("T").SetTitleColor(tcell.ColorRed).SetDrawFunc(func(_ tcell.Screen, _, _, ww, _ int) (int, int, int, int) {
+	kt.SetBorder(true).SetTitle("T").SetTitleColor(kit.RGB(255, 0, 0)).SetDrawFunc(func(_ tcell.Screen, _, _, ww, _ int) (int, int, int, int) {
 		w = ww
 		return 0, 0, 0, 0
 	})

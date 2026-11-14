@@ -3,18 +3,18 @@ package mapstyle
 import (
 	"unicode/utf8"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // Cells is what the map is drawn on: a grid of cells that can be written and
-// read back. A tcell.Screen is one; so is the UI kit's buffer, through the
-// ui package's adapter.
+// read back. The UI kit's painter is one, through the ui package's adapter,
+// and so is a capture.Screen.
 type Cells interface {
-	SetContent(x, y int, primary rune, combining []rune, style tcell.Style)
-	GetContent(x, y int) (primary rune, combining []rune, style tcell.Style, width int)
+	SetContent(x, y int, primary rune, combining []rune, style kit.Style)
+	GetContent(x, y int) (primary rune, combining []rune, style kit.Style, width int)
 }
 
 // Canvas writes into one rectangle of a screen: it clips to the rectangle,
@@ -30,7 +30,7 @@ type Canvas struct {
 }
 
 // NewCanvas clears r to st and returns a canvas on it.
-func NewCanvas(scr Cells, r Rect, tier mapmodel.GlyphTier, st tcell.Style) *Canvas {
+func NewCanvas(scr Cells, r Rect, tier mapmodel.GlyphTier, st kit.Style) *Canvas {
 	c := &Canvas{Scr: scr, R: r, Tier: tier}
 	c.Fill(0, 0, r.W, r.H, ' ', st)
 	return c
@@ -40,7 +40,7 @@ func NewCanvas(scr Cells, r Rect, tier mapmodel.GlyphTier, st tcell.Style) *Canv
 func (c *Canvas) In(x, y int) bool { return x >= 0 && y >= 0 && x < c.R.W && y < c.R.H }
 
 // Put writes one cell.
-func (c *Canvas) Put(x, y int, r rune, st tcell.Style) {
+func (c *Canvas) Put(x, y int, r rune, st kit.Style) {
 	if !c.In(x, y) {
 		return
 	}
@@ -70,7 +70,7 @@ func (c *Canvas) isWide(r rune) bool {
 
 // Text writes s from (x, y), at most max cells (max <= 0: to the edge), and
 // returns the column after it.
-func (c *Canvas) Text(x, y, max int, s string, st tcell.Style) int {
+func (c *Canvas) Text(x, y, max int, s string, st kit.Style) int {
 	if max <= 0 {
 		max = c.R.W - x
 	}
@@ -86,7 +86,7 @@ func (c *Canvas) Text(x, y, max int, s string, st tcell.Style) int {
 }
 
 // Fill paints a rectangle with one rune.
-func (c *Canvas) Fill(x, y, w, h int, r rune, st tcell.Style) {
+func (c *Canvas) Fill(x, y, w, h int, r rune, st kit.Style) {
 	for yy := y; yy < y+h; yy++ {
 		for xx := x; xx < x+w; xx++ {
 			c.Put(xx, yy, r, st)
@@ -95,9 +95,9 @@ func (c *Canvas) Fill(x, y, w, h int, r rune, st tcell.Style) {
 }
 
 // Get reads back a cell (relative coordinates).
-func (c *Canvas) Get(x, y int) (rune, tcell.Style) {
+func (c *Canvas) Get(x, y int) (rune, kit.Style) {
 	if !c.In(x, y) {
-		return ' ', tcell.StyleDefault
+		return ' ', kit.Style{}
 	}
 	r, _, st, _ := c.Scr.GetContent(c.R.X+x, c.R.Y+y)
 	return r, st

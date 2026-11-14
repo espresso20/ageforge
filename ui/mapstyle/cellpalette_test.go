@@ -3,8 +3,6 @@ package mapstyle
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
@@ -12,8 +10,8 @@ import (
 
 // onRamp is the distance of c from the nearest colour on the ramp from the
 // theme's background to its text.
-func onRamp(c tcell.Color) float64 {
-	bg, text := theme.Color(theme.RoleBackground), theme.Color(theme.RoleText)
+func onRamp(c theme.Color) float64 {
+	bg, text := theme.Of(theme.RoleBackground), theme.Of(theme.RoleText)
 	best := 99.0
 	for i := 0; i <= 100; i++ {
 		best = min(best, theme.Distance(c, theme.Mix(bg, text, float64(i)/100)))

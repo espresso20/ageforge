@@ -22,25 +22,24 @@ import "github.com/gdamore/tcell/v2"
 // theme color (all themes are RGB) or a real palette slot.
 const refBase = tcell.ColorValid | 0xA0000
 
-// Transparent is a background that is no colour: a cell with it shows what the
-// window has drawn under the cells (a map image), and the screen leaves it as
-// it is. It sits past the role sentinels, so RefRole does not know it, and only
-// the window reads it; a terminal never draws a cell with it.
-const Transparent = refBase + 0x1000
+// TcellTransparent is Transparent as a tcell color, for the cells the UI's
+// bridge copies to a tcell screen: a cell with it shows what the window has
+// drawn under the cells. It sits past the role sentinels, and only the window
+// reads it; a terminal never draws a cell with it.
+const TcellTransparent = refBase + 0x1000
 
-// Ref returns a late-bound color for role. It is only meaningful on a screen
-// wrapped by WrapScreen (the app installs one before Run); tview.Styles is
-// populated with Refs by applyRemap.
-func Ref(role Role) tcell.Color {
+// tcellRef is Ref as a tcell color: a sentinel a screen wrapped by WrapScreen
+// resolves on every write. tview.Styles is populated with them by applyRemap.
+func tcellRef(role Role) tcell.Color {
 	if role < 0 || role >= numRoles {
 		return tcell.ColorDefault
 	}
 	return refBase + tcell.Color(role)
 }
 
-// RefRole reports the role a sentinel stands for, and ok=false for any other
-// color (including real RGB colors and tcell.ColorDefault).
-func RefRole(c tcell.Color) (Role, bool) {
+// tcellRefRole reports the role a sentinel stands for, and ok=false for any
+// other color (including real RGB colors and tcell.ColorDefault).
+func tcellRefRole(c tcell.Color) (Role, bool) {
 	if c < refBase || c >= refBase+tcell.Color(numRoles) {
 		return 0, false
 	}
@@ -57,15 +56,15 @@ func ResolveStyle(st tcell.Style) tcell.Style {
 func resolveStyleFor(st tcell.Style, t Theme) tcell.Style {
 	fg, bg, _ := st.Decompose()
 	nfg, nbg := fg, bg
-	if r, ok := RefRole(fg); ok {
-		nfg = t.Color(r)
+	if r, ok := tcellRefRole(fg); ok {
+		nfg = Tcell(t.Color(r))
 	} else if fg == tcell.ColorDefault {
-		nfg = t.Color(RoleText)
+		nfg = Tcell(t.Color(RoleText))
 	}
-	if r, ok := RefRole(bg); ok {
-		nbg = t.Color(r)
+	if r, ok := tcellRefRole(bg); ok {
+		nbg = Tcell(t.Color(r))
 	} else if bg == tcell.ColorDefault {
-		nbg = t.Color(RoleBackground)
+		nbg = Tcell(t.Color(RoleBackground))
 	}
 	if nfg != fg {
 		st = st.Foreground(nfg)
@@ -109,7 +108,7 @@ func WrapScreen(s tcell.Screen) *ThemedScreen {
 
 func (s *ThemedScreen) canvas() tcell.Style {
 	t := Active()
-	return tcell.StyleDefault.Foreground(t.Color(RoleText)).Background(t.Color(RoleBackground))
+	return tcell.StyleDefault.Foreground(Tcell(t.Color(RoleText))).Background(Tcell(t.Color(RoleBackground)))
 }
 
 // Clear fills the screen with the active theme's canvas instead of the

@@ -4,10 +4,9 @@ import (
 	"math"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // medal.go is the one badge renderer. The Research panel's tech badges and
@@ -324,7 +323,7 @@ func prismInk(hue float64, stop int) ink {
 
 // inkValue is an ink's colour for a dark or a light theme, before the
 // contrast rule.
-func inkValue(k ink, light bool) tcell.Color {
+func inkValue(k ink, light bool) kit.Color {
 	if k >= inkPrism {
 		i := int(k - inkPrism)
 		return theme.PrismColor(float64(i/3)*(360/prismHues), i%3, light)

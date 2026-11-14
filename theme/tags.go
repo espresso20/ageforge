@@ -67,7 +67,7 @@ func Selected(label string) string {
 // for legibility against the active background (Legible at 4.5:1). Use it for
 // data-driven colors that must keep their own hue (epoch colors) rather than map
 // to a role. The text it tags should be rebuilt on refresh, as overlays are.
-func LegibleTag(c tcell.Color) string {
+func LegibleTag(c Color) string {
 	return HexTag(LegibleOnActive(c))
 }
 
@@ -89,10 +89,10 @@ func NameTag(name string) string {
 // cssColors snapshots tcell's named colors at package init, BEFORE applyRemap
 // overwrites the theme-owned keys, so NameTag resolves e.g. "blue" to the real
 // CSS blue rather than whatever a later remap stored.
-var cssColors = func() map[string]tcell.Color {
-	m := make(map[string]tcell.Color, len(tcell.ColorNames))
+var cssColors = func() map[string]Color {
+	m := make(map[string]Color, len(tcell.ColorNames))
 	for k, v := range tcell.ColorNames {
-		m[k] = v
+		m[k] = fromTcell(v)
 	}
 	return m
 }()

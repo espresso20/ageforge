@@ -6,14 +6,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // epoch_hall_art.go draws the Epoch screen's front page: a canvas of cells
@@ -47,7 +46,7 @@ type hallCtx struct {
 	pal      *menuPalette
 	duo      bool
 	gap      int // rows between two blocks
-	bg, text tcell.Color
+	bg, text kit.Color
 }
 
 func newHallCtx(w, rows int, tier mapmodel.GlyphTier, mo hallMotion) *hallCtx {
@@ -71,7 +70,7 @@ func newHallCtx(w, rows int, tier mapmodel.GlyphTier, mo hallMotion) *hallCtx {
 // ink is a colour the page may draw with: folded to one ink on one paper
 // in a duotone theme (Monochrome, Parchment), and held to the contrast
 // rule for art.
-func (c *hallCtx) ink(col tcell.Color) tcell.Color {
+func (c *hallCtx) ink(col kit.Color) kit.Color {
 	if c.duo {
 		col = theme.Mix(c.bg, c.text, 0.2+0.8*theme.RelativeLuminance(col))
 	}
@@ -79,10 +78,10 @@ func (c *hallCtx) ink(col tcell.Color) tcell.Color {
 }
 
 // role is a theme role as an ink.
-func (c *hallCtx) role(r theme.Role) tcell.Color { return c.ink(theme.Color(r)) }
+func (c *hallCtx) role(r theme.Role) kit.Color { return c.ink(theme.Of(r)) }
 
 // hue is a fixed identity colour (a rarity's, a tile's) as an ink.
-func (c *hallCtx) hue(hex string) tcell.Color {
+func (c *hallCtx) hue(hex string) kit.Color {
 	return c.ink(theme.Hue(hex, c.bg))
 }
 
@@ -93,7 +92,7 @@ func (c *hallCtx) mark(uni, ascii string) string { return hallMark(c.plain, uni,
 func (c *hallCtx) left(n int) int { return max((c.w-n)/2, 0) }
 
 // centre writes s centred on the row y, and returns its width.
-func (c *hallCtx) centre(y int, s string, fg tcell.Color, bold bool) int {
+func (c *hallCtx) centre(y int, s string, fg kit.Color, bold bool) int {
 	n := runeLen(s)
 	c.g.text(c.left(n), y, s, fg, bold)
 	return n
@@ -112,7 +111,7 @@ func (c *hallCtx) heading(title string) {
 
 // paragraph writes plain text wrapped to the content width, each line
 // centred, never cut.
-func (c *hallCtx) paragraph(s string, fg tcell.Color) {
+func (c *hallCtx) paragraph(s string, fg kit.Color) {
 	for _, l := range wrapText(s, c.cw) {
 		c.centre(c.y, l, fg, false)
 		c.y++
@@ -121,7 +120,7 @@ func (c *hallCtx) paragraph(s string, fg tcell.Color) {
 
 // box draws a rounded frame in fg around (x, y, w, h), with ground
 // behind it when hasGround is set.
-func (c *hallCtx) box(x, y, w, h int, fg tcell.Color, ground *tcell.Color, bold bool) {
+func (c *hallCtx) box(x, y, w, h int, fg kit.Color, ground *kit.Color, bold bool) {
 	if ground != nil {
 		c.g.fill(x, y, w, h, fg, *ground)
 	}
@@ -154,11 +153,11 @@ func (c *hallCtx) box(x, y, w, h int, fg tcell.Color, ground *tcell.Color, bold 
 
 // epochInks are the four stops of an epoch's gradient: a shadow that
 // leans toward grey, its own hue, a pale one and the heat of a shimmer.
-func (c *hallCtx) epochInks(order int) [4]tcell.Color {
+func (c *hallCtx) epochInks(order int) [4]kit.Color {
 	base := theme.MapHueColor(theme.EpochHue(order))
 	grey := theme.Mix(c.bg, c.text, 0.55)
 	white := theme.Mix(base, c.text, 0.9)
-	return [4]tcell.Color{
+	return [4]kit.Color{
 		theme.Mix(theme.Mix(base, grey, 0.6), c.bg, 0.2),
 		base,
 		theme.Mix(base, white, 0.45),
@@ -166,7 +165,7 @@ func (c *hallCtx) epochInks(order int) [4]tcell.Color {
 	}
 }
 
-func stopsAt(stops [4]tcell.Color, v float64) tcell.Color {
+func stopsAt(stops [4]kit.Color, v float64) kit.Color {
 	v = math.Max(0, math.Min(1, v)) * float64(len(stops)-1)
 	i := int(v)
 	if i >= len(stops)-1 {
@@ -178,7 +177,7 @@ func stopsAt(stops [4]tcell.Color, v float64) tcell.Color {
 // bannerInk is the colour of the banner's cell (x, y) of a w by h one:
 // two slow waves along the name, brighter toward the foot, and, with
 // motion, a glint that runs through it.
-func (c *hallCtx) bannerInk(stops [4]tcell.Color, x, y, w, h int) tcell.Color {
+func (c *hallCtx) bannerInk(stops [4]kit.Color, x, y, w, h int) kit.Color {
 	u, v := float64(x)/float64(max(w-1, 1)), float64(y)/float64(max(h-1, 1))
 	ph := 0.6
 	if c.mo.on {
@@ -311,7 +310,7 @@ func bigNumber(s string, sx int) (rows [3]string, ok bool) {
 
 // tileInks are the tiles' accents, one each, from the theme's roles and
 // three fixed hues for the rest.
-func (c *hallCtx) tileInk(i int) tcell.Color {
+func (c *hallCtx) tileInk(i int) kit.Color {
 	switch i % 5 {
 	case 0:
 		return c.role(theme.RolePositive)
@@ -396,7 +395,7 @@ func (c *hallCtx) tiles(stats []hallStat) {
 			edge := theme.Mix(ink, c.bg, 0.35)
 			y := c.y
 			c.box(x, y, tw, th, edge, &ground, false)
-			ctr := func(row int, s string, fg tcell.Color, bold bool) {
+			ctr := func(row int, s string, fg kit.Color, bold bool) {
 				c.g.text(x+(tw-runeLen(s))/2, y+row, s, fg, bold)
 			}
 			barRow := 0
@@ -459,7 +458,7 @@ func (c *hallCtx) track(v hallView) {
 			break
 		}
 	}
-	filled := func(ink tcell.Color) func(x, y int) {
+	filled := func(ink kit.Color) func(x, y int) {
 		return func(x, y int) {
 			for r := 0; r < 2; r++ {
 				for i := 0; i < bw; i++ {
@@ -552,7 +551,7 @@ func (c *hallCtx) track(v hallView) {
 
 // rarityInk is a rarity's colour: dim for common, up through green, blue
 // and violet to gold.
-func (c *hallCtx) rarityInk(word string) tcell.Color {
+func (c *hallCtx) rarityInk(word string) kit.Color {
 	switch word {
 	case "uncommon":
 		return c.hue("#5fc77a")
@@ -596,7 +595,7 @@ func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
 			}
 			fg, _, attr := pal.style(cell).Decompose()
 			c.g.put(x+dx, y+dy, cell.r, fg)
-			if attr&tcell.AttrBold != 0 && c.g.in(x+dx, y+dy) {
+			if attr&kit.Bold != 0 && c.g.in(x+dx, y+dy) {
 				c.g.c[(y+dy)*c.g.w+x+dx].bold = true
 			}
 		}
@@ -684,7 +683,7 @@ func (c *hallCtx) feats(v hallView) {
 		return
 	}
 	icons := [4]string{c.mark("✸", "*"), c.mark("◈", "@"), c.mark("★", "*"), c.mark("»", ">")}
-	inks := [4]tcell.Color{c.role(theme.RoleNegative), c.role(theme.RoleWarning), c.role(theme.RoleHighlight), c.role(theme.RolePositive)}
+	inks := [4]kit.Color{c.role(theme.RoleNegative), c.role(theme.RoleWarning), c.role(theme.RoleHighlight), c.role(theme.RolePositive)}
 	lines := make([]string, len(v.feats))
 	width := 0
 	for i, f := range v.feats {
@@ -801,7 +800,7 @@ func (c *hallCtx) render() string {
 }
 
 func hallTag(c mCell) string {
-	hex := func(col tcell.Color) string {
+	hex := func(col kit.Color) string {
 		if v := col.Hex(); v >= 0 {
 			return fmt.Sprintf("#%06x", v)
 		}
