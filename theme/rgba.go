@@ -20,6 +20,12 @@ func plainRGBA(c tcell.Color) color.RGBA {
 	return color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 255}
 }
 
+// FromRGBA is a plain color as tcell's, for the bridge that copies the kit's
+// cells onto a tcell screen (ui/native.go) while there still is one.
+func FromRGBA(c color.RGBA) tcell.Color {
+	return tcell.NewRGBColor(int32(c.R), int32(c.G), int32(c.B))
+}
+
 // tagRoles is TagNames, made once.
 var tagRoles = TagNames()
 

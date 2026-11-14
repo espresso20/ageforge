@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"github.com/espresso20/ageforge/presence"
+	"image"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -19,6 +20,7 @@ import (
 	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // menu.go is the main menu: the page the game opens on and returns to.
@@ -68,9 +70,11 @@ const menuStrikeHold = 90 * time.Millisecond
 // clock up; a longer gap is skipped, not replayed.
 const menuCatchUp = 4
 
-// mainMenu is the main menu's page.
+// mainMenu is the main menu's page. It is drawn by the kit: the menu is the
+// widget, and the host it embeds is the primitive tview's pages hold.
 type mainMenu struct {
-	*tview.Box
+	*nativeHost
+	kit.Base
 	app     *tview.Application
 	pages   *tview.Pages
 	engine  *game.GameEngine
@@ -143,7 +147,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 // nothing.
 func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) *mainMenu {
 	m := &mainMenu{
-		Box: tview.NewBox(), app: app, pages: pages, engine: engine, version: currentVersion,
+		app: app, pages: pages, engine: engine, version: currentVersion,
 		now: time.Now, active: true, appID: presence.AppID,
 		eliteAt: rand.Intn(len(eliteLines)),
 	}
@@ -159,6 +163,7 @@ func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEn
 		}
 	}
 	m.refresh(true)
+	m.nativeHost = newNativeHost(m)
 	return m
 }
 
@@ -350,7 +355,7 @@ func menuEdition(version string) string {
 // Focus is how the menu learns it is the page in use again: tview focuses
 // it when a page it opened closes and when the game returns to it.
 func (m *mainMenu) Focus(delegate func(p tview.Primitive)) {
-	m.Box.Focus(delegate)
+	m.nativeHost.Focus(delegate)
 	m.enter()
 }
 
@@ -413,26 +418,39 @@ func (m *mainMenu) stopClock() {
 // moving reports whether the page's motion is running.
 func (m *mainMenu) moving() bool { return m.active && m.set.Motion }
 
-// Draw draws the page.
+// Draw draws the page, and keeps its clock running only while it moves.
 func (m *mainMenu) Draw(scr tcell.Screen) {
 	if !m.active {
 		return // under a page it opened, which covers the screen
 	}
-	// A new account (the first run names one over the menu) is a new page.
-	if m.engine.Account() != m.acct {
-		m.refresh(true)
-	}
-	x, y, w, h := m.GetRect()
-	if w <= 0 || h <= 0 {
-		return
-	}
-	grid, pal := m.frameGrid(w, h)
-	grid.flush(scr, x, y, pal, m.view.plain)
+	m.nativeHost.Draw(scr)
 	if m.moving() {
 		m.startClock()
 	} else {
 		m.stopClock()
 	}
+}
+
+// CanFocus: the menu takes the keys.
+func (m *mainMenu) CanFocus() bool { return true }
+
+// Layout takes the page's rectangle. A new account (the first run names one
+// over the menu) is a new page.
+func (m *mainMenu) Layout(r image.Rectangle) {
+	m.Place(r)
+	if m.engine.Account() != m.acct {
+		m.refresh(true)
+	}
+}
+
+// Paint draws the page at the clock's frame.
+func (m *mainMenu) Paint(p *kit.Painter) {
+	r := m.Bounds()
+	if r.Empty() {
+		return
+	}
+	grid, pal := m.frameGrid(r.Dx(), r.Dy())
+	grid.paint(p, r.Min, pal, m.view.plain)
 }
 
 // frameGrid brings the scene to the clock's frame and draws the page at
@@ -472,58 +490,82 @@ func (m *mainMenu) frameGrid(w, h int) (*mGrid, *menuPalette) {
 
 // ---- keys ----
 
-// InputHandler takes the menu's keys: the arrows (and Tab) move, Enter
-// opens, and each entry has a letter.
-func (m *mainMenu) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return m.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		if m.pending || len(m.view.items) == 0 {
-			return
-		}
-		n := len(m.view.items)
+// Key takes the menu's keys: the arrows (and Tab) move, Enter opens, and
+// each entry has a letter.
+func (m *mainMenu) Key(k kit.Key) bool {
+	if m.pending || len(m.view.items) == 0 {
+		return false
+	}
+	n := len(m.view.items)
+	if m.settings {
+		defer func() { m.settingsSel = m.view.sel }()
+	}
+	switch k.Code {
+	case kit.KeyEsc:
 		if m.settings {
-			defer func() { m.settingsSel = m.view.sel }()
+			m.closeSettings()
 		}
-		switch ev.Key() {
-		case tcell.KeyEsc:
-			if m.settings {
-				m.closeSettings()
+	case kit.KeyLeft, kit.KeyRight:
+		if m.settings {
+			dir := 1
+			if k.Code == kit.KeyLeft {
+				dir = -1
 			}
-		case tcell.KeyLeft, tcell.KeyRight:
-			if m.settings {
-				dir := 1
-				if ev.Key() == tcell.KeyLeft {
-					dir = -1
-				}
-				m.changeSetting(m.view.items[m.view.sel].id, dir)
-			}
-		case tcell.KeyUp, tcell.KeyBacktab:
-			m.view.sel = (m.view.sel + n - 1) % n
-		case tcell.KeyDown, tcell.KeyTab:
-			m.view.sel = (m.view.sel + 1) % n
-		case tcell.KeyHome, tcell.KeyPgUp:
-			m.view.sel = 0
-		case tcell.KeyEnd, tcell.KeyPgDn:
-			m.view.sel = n - 1
-		case tcell.KeyEnter:
+			m.changeSetting(m.view.items[m.view.sel].id, dir)
+		}
+	case kit.KeyUp, kit.KeyBacktab:
+		m.view.sel = (m.view.sel + n - 1) % n
+	case kit.KeyDown, kit.KeyTab:
+		m.view.sel = (m.view.sel + 1) % n
+	case kit.KeyHome, kit.KeyPgUp:
+		m.view.sel = 0
+	case kit.KeyEnd, kit.KeyPgDn:
+		m.view.sel = n - 1
+	case kit.KeyEnter:
+		m.choose(m.view.sel)
+	case kit.KeyRune:
+		r := k.Rune
+		if r == ' ' {
 			m.choose(m.view.sel)
-		case tcell.KeyRune:
-			r := ev.Rune()
-			if r == ' ' {
-				m.choose(m.view.sel)
-				return
-			}
-			if r >= 'A' && r <= 'Z' {
-				r += 'a' - 'A'
-			}
-			for i, it := range m.view.items {
-				if it.key == r {
-					m.view.sel = i
-					m.choose(i)
-					return
-				}
+			return true
+		}
+		if r >= 'A' && r <= 'Z' {
+			r += 'a' - 'A'
+		}
+		for i, it := range m.view.items {
+			if it.key == r {
+				m.view.sel = i
+				m.choose(i)
+				return true
 			}
 		}
-	})
+		return false
+	default:
+		return false
+	}
+	return true
+}
+
+// Mouse: the entry under the pointer is the selected one, and a click opens
+// it, as Enter does.
+func (m *mainMenu) Mouse(ev kit.Mouse) bool {
+	if m.pending || m.scene == nil || ev.Button != kit.ButtonLeft || (ev.Kind != kit.MouseMove && ev.Kind != kit.MousePress) {
+		return false
+	}
+	i := m.scene.entryAt(ev.Pt().Sub(m.Bounds().Min))
+	if i < 0 || i >= len(m.view.items) {
+		return false
+	}
+	moved := i != m.view.sel
+	m.view.sel = i
+	if m.settings {
+		m.settingsSel = i
+	}
+	if ev.Kind == kit.MousePress {
+		m.choose(i)
+		return true
+	}
+	return moved
 }
 
 // choose opens entry i. With motion on the title is struck first and the

@@ -21,6 +21,7 @@ import (
 
 	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // Options are what the window needs from main.
@@ -29,6 +30,7 @@ type Options struct {
 	Dir     string          // where the window's settings are kept
 	Done    <-chan struct{} // closed when the game has ended; the window then closes
 	OnClose func()          // the player closed the window: leave the game as Ctrl+C does
+	Mouse   func(kit.Mouse) // the pointer, at a cell of the grid, for the game's own screens; nil for none
 	Script  string          // dev only: a file of steps for a run nobody is watching (see script.go)
 }
 
@@ -56,6 +58,7 @@ type Game struct {
 	script     *script
 	adv        map[advKey]float64
 	tface      map[faceID]*text.GoTextFace
+	ptr        cellPointer
 }
 
 // New is a window for the host, with the settings saved in dir.
@@ -198,6 +201,7 @@ func (g *Game) Update() error {
 		return ebiten.Termination
 	}
 	g.keys()
+	g.pointer()
 	g.sky.mouse(time.Now())
 	g.sky.update()
 	return nil

@@ -9,11 +9,14 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
+
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // script is a dev-only hook (AGEFORGE_WINDOW_SCRIPT=<file>) for checking the
 // window without a person: one step per line, "wait N" frames, "key enter|esc|
 // up|down|tab", "text abc", "shot <file.png>", "quit", and on the map's canvas (art pixels) "click x y", "focus x y", "wheel x y n", "drag x1 y1 x2 y2".
+// For the game's own screens, at a cell of the grid: "mouse move|press|release x y" and "mouse wheel x y rows".
 type script struct {
 	steps []string
 	i     int
@@ -27,6 +30,8 @@ func loadScript(path string) *script {
 }
 
 var scriptKeys = map[string]tcell.Key{"enter": tcell.KeyEnter, "esc": tcell.KeyEscape, "up": tcell.KeyUp, "down": tcell.KeyDown, "tab": tcell.KeyTab, "left": tcell.KeyLeft, "right": tcell.KeyRight, "home": tcell.KeyHome, "pgup": tcell.KeyPgUp, "pgdn": tcell.KeyPgDn}
+
+var scriptMouse = map[string]kit.MouseKind{"move": kit.MouseMove, "press": kit.MousePress, "release": kit.MouseRelease, "wheel": kit.MouseWheel}
 
 // step runs the next line; it reports true on "quit".
 func (s *script) step(g *Game) bool {
@@ -66,6 +71,14 @@ func (s *script) step(g *Game) bool {
 		case "drag":
 			_, _, n := g.sky.size()
 			g.sky.pan(float64((v[2]-v[0])*n), float64((v[3]-v[1])*n))
+		}
+	case "mouse":
+		f := strings.Fields(arg + " 0 0 0")
+		x, _ := strconv.Atoi(f[1])
+		y, _ := strconv.Atoi(f[2])
+		rows, _ := strconv.Atoi(f[3])
+		if kind, ok := scriptMouse[f[0]]; ok && g.o.Mouse != nil {
+			g.o.Mouse(kit.Mouse{Kind: kind, X: x, Y: y, Wheel: rows})
 		}
 	case "shot":
 		s.shot = arg

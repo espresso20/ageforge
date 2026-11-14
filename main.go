@@ -55,6 +55,7 @@ func main() {
 			Host: host, Dir: game.RootDataDir(), Done: done,
 			// Closing the window leaves the game the way Ctrl+C does.
 			OnClose: func() { leave(engine); app.Stop() },
+			Mouse:   app.Mouse,
 			Script:  os.Getenv("AGEFORGE_WINDOW_SCRIPT"),
 		})
 		app.SetScreen(host)
