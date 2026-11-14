@@ -14,8 +14,9 @@ const doubleClick = 400 * time.Millisecond
 // A Root is one screen: a stack of layers, the top one taking the input. The
 // first layer is the screen itself; a Modal pushed over it is the next.
 //
-// A key goes to the top layer's focused widget, then outward through the
-// widgets around it, then to Tab's walk of the focus, then to Keys. The mouse
+// A key goes down through the top layer to the focused widget, past each
+// KeyFilter on the way, then to that widget and outward through the widgets
+// around it, then to Tab's walk of the focus, then to Keys. The mouse
 // goes to the deepest widget under the pointer in the top layer and outward
 // from there. Layers underneath get nothing.
 type Root struct {
@@ -50,9 +51,7 @@ func NewRoot(base Widget) *Root {
 // the first widget in it that takes one.
 func (r *Root) Push(w Widget) {
 	r.dropPointer()
-	if f := r.Focused(); f != nil {
-		f.(Focusable).SetFocus(false)
-	}
+	setFocus(r.Focused(), false)
 	r.layers = append(r.layers, layer{w: w})
 	r.layout()
 	r.Focus(first(focusables(w)))
@@ -73,13 +72,9 @@ func (r *Root) Remove(w Widget) {
 			continue
 		}
 		r.dropPointer()
-		if f := r.Focused(); f != nil {
-			f.(Focusable).SetFocus(false)
-		}
+		setFocus(r.Focused(), false)
 		r.layers = append(r.layers[:i], r.layers[i+1:]...)
-		if f := r.Focused(); f != nil {
-			f.(Focusable).SetFocus(true)
-		}
+		setFocus(r.Focused(), true)
 		return
 	}
 }
@@ -116,25 +111,29 @@ func (r *Root) Focused() Widget {
 	return r.layers[len(r.layers)-1].focus
 }
 
-// Focus gives the keyboard to w, which must be in the top layer and able to
-// take it; nil takes it from everything.
+// Focus gives the keyboard to w, which must be in the top layer; nil takes
+// it from everything. A Focusable that cannot take it now is refused. A
+// widget that is not a Focusable may still be given the keys: it is never
+// told, and Tab and the mouse never choose it.
 func (r *Root) Focus(w Widget) {
 	top := &r.layers[len(r.layers)-1]
 	if w != nil {
-		f, ok := w.(Focusable)
-		if !ok || !f.CanFocus() || pathTo(top.w, w) == nil {
+		if f, ok := w.(Focusable); ok && !f.CanFocus() || pathTo(top.w, w) == nil {
 			return
 		}
 	}
 	if top.focus == w {
 		return
 	}
-	if top.focus != nil {
-		top.focus.(Focusable).SetFocus(false)
-	}
+	setFocus(top.focus, false)
 	top.focus = w
-	if w != nil {
-		w.(Focusable).SetFocus(true)
+	setFocus(w, true)
+}
+
+// setFocus tells w the focus has come or gone, if it wants to know.
+func setFocus(w Widget, on bool) {
+	if f, ok := w.(Focusable); ok {
+		f.SetFocus(on)
 	}
 }
 
@@ -169,6 +168,14 @@ func (r *Root) Key(k Key) bool {
 	path := pathTo(top.w, top.focus)
 	if top.focus == nil || path == nil {
 		path = []Widget{top.w} // nothing focused: the layer itself still hears keys
+	}
+	for _, w := range path {
+		if f, ok := w.(KeyFilter); ok {
+			var on bool
+			if k, on = f.FilterKey(k); !on {
+				return true
+			}
+		}
 	}
 	for i := len(path) - 1; i >= 0; i-- {
 		if h, ok := path[i].(KeyHandler); ok && h.Key(k) {

@@ -28,6 +28,14 @@ type KeyHandler interface {
 	Key(k Key) bool
 }
 
+// A KeyFilter sees a key on its way down to the widget that has the focus,
+// when that widget is it or is inside it, before the widget does. It returns
+// the key to go on with (the same one, or another in its place) and false to
+// stop the key there.
+type KeyFilter interface {
+	FilterKey(k Key) (Key, bool)
+}
+
 // A MouseHandler takes the mouse while the pointer is over it. It returns
 // true when it used the event.
 type MouseHandler interface {

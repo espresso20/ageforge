@@ -1,10 +1,10 @@
 package ui
 
 import (
+	"image"
 	"regexp"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -181,7 +181,9 @@ type fitView struct {
 }
 
 func newFitView(render func(w, h int) string) *fitView {
-	return &fitView{nativeText: newNativeText().SetDynamicColors(true).SetWrap(false), render: render, stale: true}
+	v := &fitView{nativeText: newNativeText().SetDynamicColors(true).SetWrap(false), render: render, stale: true}
+	v.showWidget(v)
+	return v
 }
 
 // changed says what the box shows has changed, and writes it again: for the
@@ -207,10 +209,15 @@ func (v *fitView) layout() {
 	}
 }
 
-func (v *fitView) Draw(screen tcell.Screen) {
+// Layout writes the text for the size the box is given, then places it.
+func (v *fitView) Layout(r image.Rectangle) {
+	if r.Empty() {
+		v.nativeText.Layout(r) // not on the screen yet: its size means nothing
+		return
+	}
 	if !v.drawn {
 		v.drawn, v.stale = true, true
 	}
 	v.layout()
-	v.nativeText.Draw(screen)
+	v.nativeText.Layout(r)
 }

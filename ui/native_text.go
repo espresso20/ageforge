@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -19,6 +20,7 @@ import (
 // their layout directly.
 type nativeText struct {
 	*nativeHost
+	kit.Base
 	body *kit.Text
 	view *kit.Scroll
 	box  *kit.Panel
@@ -41,8 +43,38 @@ func newNativeText() *nativeText {
 	t.view = kit.NewScroll(t.body)
 	t.view.Focus, t.view.NoBar = true, true
 	t.box = &kit.Panel{Child: t.view, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
-	t.nativeHost = newNativeHost(t.box)
+	t.nativeHost = newNativeHost(t)
 	return t
+}
+
+func (t *nativeText) kitDrawn() {}
+
+func (t *nativeText) Children() []kit.Widget { return []kit.Widget{t.box} }
+
+// Layout places the box, after telling the draw func (if any) the size.
+func (t *nativeText) Layout(r image.Rectangle) {
+	t.Place(r)
+	if t.nativeHost == nil {
+		return // newNativeHost lays the tree out before the host is set
+	}
+	if t.drawFunc != nil {
+		x, y, w, h := t.GetRect()
+		t.drawFunc(nil, x, y, w, h)
+	}
+	t.box.Border = focusBorder(t.border, t.HasFocus())
+	t.box.Layout(r)
+}
+
+// focusBorder is the border of a box that has one: a line, doubled while the
+// box has the focus, as tview draws it.
+func focusBorder(on, focus bool) kit.Border {
+	switch {
+	case !on:
+		return kit.BorderNone
+	case focus:
+		return kit.BorderDouble
+	}
+	return kit.BorderLine
 }
 
 var kitAligns = map[int]kit.Align{tview.AlignLeft: kit.AlignLeft, tview.AlignCenter: kit.AlignCenter, tview.AlignRight: kit.AlignRight}
@@ -193,9 +225,9 @@ func (t *nativeText) SetTitleColor(c tcell.Color) *nativeText {
 	return t
 }
 
-// SetDrawFunc calls fn with the box's rectangle each time it is drawn. Unlike
-// tview's it cannot move the text: the rectangle it returns is ignored, so it
-// serves a view that only wants to know its size.
+// SetDrawFunc calls fn with the box's rectangle each time it is laid out, the
+// screen nil. Unlike tview's it cannot move the text: the rectangle it
+// returns is ignored, so it serves a view that only wants to know its size.
 func (t *nativeText) SetDrawFunc(fn func(scr tcell.Screen, x, y, w, h int) (int, int, int, int)) *nativeText {
 	t.drawFunc = fn
 	return t
@@ -216,21 +248,9 @@ func (t *nativeText) GetInnerRect() (x, y, w, h int) {
 	return x, y, max(w, 0), max(h, 0)
 }
 
-// Draw draws the box, with the doubled border tview gives the primitive
-// that has the focus.
-func (t *nativeText) Draw(scr tcell.Screen) {
-	if t.drawFunc != nil {
-		x, y, w, h := t.GetRect()
-		t.drawFunc(scr, x, y, w, h)
-	}
-	t.box.Border = kit.BorderNone
-	if t.border {
-		t.box.Border = kit.BorderLine
-		if t.HasFocus() {
-			t.box.Border = kit.BorderDouble
-		}
-	}
-	t.nativeHost.Draw(scr)
+// Paint draws the box.
+func (t *nativeText) Paint(p *kit.Painter) {
+	t.box.Paint(p)
 	if t.maxLines > 0 {
 		if ls := strings.Split(t.raw, "\n"); len(ls) > t.maxLines {
 			t.raw = strings.Join(ls[len(ls)-t.maxLines:], "\n")
@@ -242,29 +262,26 @@ func (t *nativeText) Draw(scr tcell.Screen) {
 // viKeys are the letters a text view scrolls by, as the keys they stand for.
 var viKeys = map[rune]kit.KeyCode{'j': kit.KeyDown, 'k': kit.KeyUp, 'g': kit.KeyHome, 'G': kit.KeyEnd}
 
-// InputHandler takes a text view's keys: Esc, Enter and Tab are done, and
-// the arrows, the page keys, Home, End and j, k, g, G scroll.
-func (t *nativeText) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(t.Box, func(ev *kit.Key) {
-		switch ev.Code {
-		case kit.KeyEsc, kit.KeyEnter, kit.KeyTab, kit.KeyBacktab:
-			if t.done != nil {
-				t.done(ev.Code)
-			}
-			return
+// Key takes a text view's keys: Esc, Enter and Tab are done, and the arrows,
+// the page keys, Home, End and j, k, g, G scroll.
+func (t *nativeText) Key(k kit.Key) bool {
+	switch k.Code {
+	case kit.KeyEsc, kit.KeyEnter, kit.KeyTab, kit.KeyBacktab:
+		if t.done != nil {
+			t.done(k.Code)
 		}
-		k := *ev
-		if !t.scrollable {
-			return
-		}
-		switch code, vi := viKeys[k.Rune]; {
-		case k.Ctrl('f'):
-			k = kit.Key{Code: kit.KeyPgDn}
-		case k.Ctrl('b'):
-			k = kit.Key{Code: kit.KeyPgUp}
-		case vi && k.Code == kit.KeyRune && k.Mod == 0:
-			k = kit.Key{Code: code}
-		}
-		t.root.Key(k)
-	})
+		return true
+	}
+	if !t.scrollable {
+		return false
+	}
+	switch code, vi := viKeys[k.Rune]; {
+	case k.Ctrl('f'):
+		k = kit.Key{Code: kit.KeyPgDn}
+	case k.Ctrl('b'):
+		k = kit.Key{Code: kit.KeyPgUp}
+	case vi && k.Code == kit.KeyRune && k.Mod == 0:
+		k = kit.Key{Code: code}
+	}
+	return t.view.Key(k)
 }

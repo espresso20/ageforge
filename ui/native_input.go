@@ -1,8 +1,9 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -14,6 +15,7 @@ import (
 // tree.
 type nativeInput struct {
 	*nativeHost
+	kit.Base
 	in  *kit.Input
 	box *kit.Panel
 
@@ -34,8 +36,21 @@ func newNativeInput() *nativeInput {
 		}
 	}
 	f.box = &kit.Panel{Child: f.in, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
-	f.nativeHost = newNativeHost(f.box)
+	f.nativeHost = newNativeHost(f)
 	return f
+}
+
+func (f *nativeInput) kitDrawn() {}
+
+func (f *nativeInput) Children() []kit.Widget { return []kit.Widget{f.box} }
+
+func (f *nativeInput) Layout(r image.Rectangle) {
+	f.Place(r)
+	if f.nativeHost == nil {
+		return // newNativeHost lays the tree out before the host is set
+	}
+	f.box.Border = focusBorder(f.border, f.HasFocus())
+	f.box.Layout(r)
 }
 
 func (f *nativeInput) SetLabel(s string) *nativeInput {
@@ -135,30 +150,21 @@ func (f *nativeInput) GetInnerRect() (x, y, w, h int) {
 	return x, y, max(w, 0), max(h, 0)
 }
 
-// Draw draws the field, with the doubled border tview gives the primitive
-// that has the focus.
-func (f *nativeInput) Draw(scr tcell.Screen) {
-	f.box.Border = kit.BorderNone
-	if f.border {
-		f.box.Border = kit.BorderLine
-		if f.HasFocus() {
-			f.box.Border = kit.BorderDouble
-		}
-	}
-	f.nativeHost.Draw(scr)
+// Paint draws the field, the cursor only while it has the focus.
+func (f *nativeInput) Paint(p *kit.Painter) {
+	f.in.SetFocus(f.HasFocus())
+	f.box.Paint(p)
 }
 
-// InputHandler takes an input field's keys: Enter, Esc, Tab and Shift+Tab
-// are done, the rest edit the line.
-func (f *nativeInput) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(f.Box, func(ev *kit.Key) {
-		switch ev.Code {
-		case kit.KeyEnter, kit.KeyEsc, kit.KeyTab, kit.KeyBacktab:
-			if f.done != nil {
-				f.done(ev.Code)
-			}
-			return
+// Key takes an input field's keys: Enter, Esc, Tab and Shift+Tab are done,
+// the rest edit the line.
+func (f *nativeInput) Key(k kit.Key) bool {
+	switch k.Code {
+	case kit.KeyEnter, kit.KeyEsc, kit.KeyTab, kit.KeyBacktab:
+		if f.done != nil {
+			f.done(k.Code)
 		}
-		f.root.Key(*ev)
-	})
+		return true
+	}
+	return f.in.Key(k)
 }
