@@ -560,7 +560,7 @@ func (l infoLine) width() (n int) {
 	return n
 }
 
-// tagRun matches a tview colour tag: a foreground, and after colons a
+// tagRun matches a colour tag: a foreground, and after colons a
 // background and attributes. (Its classes start with a mark, not a letter,
 // so the copy guard does not read them as tags a panel would swallow.)
 var tagRun = regexp.MustCompile(`\[([#a-zA-Z][#a-zA-Z0-9]*|-)?(?::([#a-zA-Z][#a-zA-Z0-9]*|-)?)?(?::([-a-zA-Z]*))?\]`)

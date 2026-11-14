@@ -6,9 +6,9 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// A nativePages stands where tview.Pages stood: named pages, one over
+// A nativePages is a stack of named pages, one over
 // another, the visible ones drawn back to front and the top one taking the
-// keyboard. The calls and what they do to the focus are tview's. It is a kit
+// keyboard. The calls and what they do to the focus are the UI's. It is a kit
 // container, so the pages the kit draws are one tree: a page painted later
 // lies over the ones before it, and where it paints nothing they show.
 type nativePages struct {
@@ -16,7 +16,7 @@ type nativePages struct {
 	kit.Base
 	pages []*nativePage
 	// setFocus is how the stack hands the keyboard on, once it has been
-	// given it (tview passes it to Focus).
+	// given it (Focus passes it on).
 	setFocus func(p Primitive)
 }
 
@@ -203,6 +203,6 @@ func (p *nativePages) Paint(kp *kit.Painter) {
 	}
 }
 
-// own: the stack clears its whole rectangle to the page's ground, as
-// tview's Pages did, under whatever its pages paint.
+// own: the stack clears its whole rectangle to the page's ground, under
+// whatever its pages paint.
 func (p *nativePages) own() []image.Rectangle { return []image.Rectangle{p.Bounds()} }

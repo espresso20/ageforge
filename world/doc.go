@@ -1,7 +1,7 @@
 // Package world is the sky: everything in space the map shows, from the Local
 // Group down to the home planet's moons and stations, as nested frames with
 // their own units. It decides what is there; it draws nothing. It is pure: no
-// ebiten, tview, tcell, theme or ui. Colours are Tone roles, never RGB.
+// ebiten, theme or ui. Colours are Tone roles, never RGB.
 //
 // Frames (unit; zoom band as view width in the unit):
 //

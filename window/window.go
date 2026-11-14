@@ -1,6 +1,6 @@
 // Package window shows the game in its own window. It is a thin host: the game
-// is still drawn by tview into a simulation screen, and this package paints
-// that screen's cells with Ebitengine and turns the window's keys into key
+// is drawn by the kit into a buffer of cells, and this package paints
+// those cells with Ebitengine and turns the window's keys into key
 // events for it.
 package window
 

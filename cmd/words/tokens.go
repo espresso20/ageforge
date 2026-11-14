@@ -39,7 +39,7 @@ var (
 	verbRe = regexp.MustCompile(`%(?:%|[-+#0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?[sdvqwfxXcTtbeEgGU])`)
 	// A template slot: {name}, {count}, {res_stores}.
 	slotRe = regexp.MustCompile(`\{[A-Za-z_][A-Za-z0-9_]*\}`)
-	// A bracketed word tview would take for a style tag, and its escaped
+	// A bracketed word the kit would take for a style tag, and its escaped
 	// form ("[count[]").
 	tagRe = regexp.MustCompile(`\[[A-Za-z0-9#:\-]*(?:\]|\[\])`)
 	keyRe = regexp.MustCompile(`\b(?:Ctrl\+[A-Za-z]|Enter|Esc|Tab|Shift|PgUp|PgDn|Backspace)\b`)

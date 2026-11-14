@@ -70,6 +70,6 @@ func (d *Dashboard) maybeShowPrestigeCue(state game.GameState) {
 	})
 	d.pages.AddPage(prestigeCuePage, root, true, true)
 	d.app.SetFocus(root)
-	// This runs in Dashboard.refresh on the tview goroutine, outside engine callbacks.
+	// This runs in Dashboard.refresh on the UI goroutine, outside engine callbacks.
 	d.engine.MarkPrestigeCueSeen()
 }

@@ -11,7 +11,7 @@ import (
 // the InputHandler that tries the panel's own keys first, and the layout that
 // keeps the bar's rows free under the panel.
 
-// barPanel is embedded in each of those panels in place of *tview.Box, so its
+// barPanel is embedded in each of those panels in place of a bare box, so its
 // InputHandler is the one the panel has.
 type barPanel struct {
 	*primBase

@@ -10,12 +10,12 @@ import (
 
 // tags.go keeps bracketed words visible.
 //
-// tview reads any [word] as a color tag and removes it, so "Usage: sell
+// The kit reads any [word] as a color tag and removes it, so "Usage: sell
 // <building> [count]" used to render as "Usage: sell <building> ", and a
 // civilization's "[allied]" status vanished. safeTags runs at every place
-// player text reaches a TextView (the log, every panel, toasts, the status
+// player text reaches a text view (the log, every panel, toasts, the status
 // strip): it keeps the color tags the UI writes on purpose and escapes every
-// other [word] so tview prints it literally.
+// other [word] so it prints literally.
 
 // knownColorName reports whether name is a color an inline tag may use: one
 // the theme owns (a role, a legacy alias) or a CSS color name.
@@ -47,7 +47,7 @@ func isColorPart(p string) bool {
 	return knownColorName(p)
 }
 
-// tviewEatsTag reports whether tview would parse "[content]" as a style tag
+// tviewEatsTag reports whether the kit would parse "[content]" as a style tag
 // and remove it from the output. Only letters, digits, '#', ':' and '-' can
 // form one, and a name may not start with a digit.
 func tviewEatsTag(content string) bool {
@@ -87,7 +87,7 @@ func isStyleTag(content string) bool {
 	return true
 }
 
-// safeTags escapes every [word] in s that tview would otherwise eat as a
+// safeTags escapes every [word] in s that the kit would otherwise eat as a
 // color tag, and leaves real color tags alone. Already-escaped text
 // ("[count[]") is left as is, so calling it twice is harmless.
 func safeTags(s string) string {
@@ -115,7 +115,7 @@ func safeTags(s string) string {
 		}
 		content := s[i+1 : j]
 		if tviewEatsTag(content) && !isStyleTag(content) {
-			// tview's escape: "[word[]" prints as "[word]".
+			// the escape: "[word[]" prints as "[word]".
 			b.WriteString("[" + content + "[]")
 		} else {
 			b.WriteString(s[i : j+1])

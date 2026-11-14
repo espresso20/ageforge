@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// A nativeInput stands where a tview.InputField stood: the same calls, drawn
+// A nativeInput is an input field drawn
 // by the kit (a kit.Input in a kit.Panel on a host). A click puts the cursor
 // where it lands. Like nativeText it goes when the screen around it is a kit
 // tree.
@@ -22,7 +22,7 @@ type nativeInput struct {
 	changed func(text string)
 }
 
-// newNativeInput is an input field as tview makes one: the field on the
+// newNativeInput is an input field: the field on the
 // selection's ground, the label dim before it.
 func newNativeInput() *nativeInput {
 	f := &nativeInput{in: kit.NewInput("")}

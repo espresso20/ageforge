@@ -43,7 +43,7 @@ func logsProvider(state game.GameState, _ int) string {
 	}
 
 	for _, entry := range visible {
-		// The severity prefixes are written tview-escaped ("[X[]" prints as
+		// The severity prefixes are written escaped ("[X[]" prints as
 		// "[X]") so all five show; "[+]", "[!]" and "[*]" never parse as tags.
 		color := "white"
 		prefix := "   "

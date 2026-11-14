@@ -39,7 +39,7 @@ import (
 //
 // w is the full terminal width; the panel's text is that less its frame. Table
 // columns lay out at the capped panelUsableWidth, while prose wraps at the full
-// inner width (with colour re-applied per line, as tview's soft wrap does not
+// inner width (with colour re-applied per line, as a soft wrap does not
 // carry colour tags across a break).
 func factionsProvider(state game.GameState, w int) string {
 	var sb strings.Builder
@@ -291,7 +291,7 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 
 	// Backstory is prose: wrapped at the panel's real inner width (textW, not the
 	// capped column width), each line indented under the first and coloured on
-	// its own, since tview's soft wrap does not carry colour tags across a break.
+	// its own, since a soft wrap does not carry colour tags across a break.
 	if def.Backstory != "" {
 		for _, line := range wrapWords(def.Backstory, textW-3) {
 			fmt.Fprintf(sb, "   [gray]%s[-]\n", line)
@@ -486,7 +486,7 @@ func effectMagnitude(eff game.EventEffectInfo) (plain, colored string) {
 	return plain, "[" + color + "]" + plain + "[-]"
 }
 
-// personalityColor maps a civilization personality to a tview color for the
+// personalityColor maps a civilization personality to a color for the
 // overlay header. Unknown personalities render gray (panic-safe default).
 func personalityColor(personality string) string {
 	switch personality {

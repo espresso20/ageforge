@@ -30,7 +30,7 @@ var shameMessages = []vibe.Entry{
 
 // Dashboard is the main gameplay screen. The economy tab is the always-visible
 // background; named overlays (research, trade, military, etc.) are rendered on
-// top of it via tview.Pages. Only one overlay can be visible at a time.
+// top of it via the page stack. Only one overlay can be visible at a time.
 // promptRows is the command bar's height: one line inside its border. The
 // Map panel leaves these rows free, so the prompt works while it is open.
 const promptRows = 3
@@ -120,13 +120,13 @@ type Dashboard struct {
 	lastState  *game.GameState
 
 	// harbPanel is the Harbinger panel's UI state (feedback line, Invite
-	// confirmation). Owned by the tview goroutine.
+	// confirmation). Owned by the UI goroutine.
 	harbPanel harbingerPanel
 	// planPanel is the Plan panel's UI state (selection, feedback line,
-	// Clear confirmation). Owned by the tview goroutine.
+	// Clear confirmation). Owned by the UI goroutine.
 	planPanel planPanel
 	// iconsWin is the icons check's window (icons.go), built on first open.
-	// Owned by the tview goroutine.
+	// Owned by the UI goroutine.
 	iconsWin *iconsWindow
 
 	// The maps: the shared model builder, the Map panel and the dashboard's
@@ -239,7 +239,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.SetBackHandler("wonders", d.wonders.back)
 	d.overlayMgr.SetFooter("wonders", d.wonders.footer)
 	d.overlayMgr.SetKeyHandler("wonders", func(event *kit.Key) *kit.Key {
-		// tview goroutine, no engine lock held (see the harbinger handler).
+		// UI goroutine, no engine lock held (see the harbinger handler).
 		if !d.wonders.handleKey(event) {
 			return event
 		}
@@ -266,7 +266,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.SetBackHandler("epoch", d.epochHall.back)
 	d.overlayMgr.SetFooter("epoch", d.epochHall.footer)
 	d.overlayMgr.SetKeyHandler("epoch", func(event *kit.Key) *kit.Key {
-		// tview goroutine, no engine lock held (see the harbinger handler).
+		// UI goroutine, no engine lock held (see the harbinger handler).
 		if !d.epochHall.handleKey(event) {
 			return event
 		}
@@ -276,7 +276,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.Register("harbinger", vibe.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
 	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
 	d.overlayMgr.SetKeyHandler("harbinger", func(event *kit.Key) *kit.Key {
-		// tview goroutine, no engine lock held: the engine's action methods and
+		// UI goroutine, no engine lock held: the engine's action methods and
 		// GetState take their own locks.
 		if !d.harbPanel.handleKey(event, d.engine) {
 			return event
@@ -289,7 +289,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
 	d.overlayMgr.SetFooter("plan", planFooter)
 	d.overlayMgr.SetKeyHandler("plan", func(event *kit.Key) *kit.Key {
-		// tview goroutine, no engine lock held (see the harbinger handler).
+		// UI goroutine, no engine lock held (see the harbinger handler).
 		if !d.planPanel.handleKey(event, d.engine) {
 			return event
 		}
@@ -306,13 +306,13 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.mapPanel.settings = d.mapSettings
 	d.mapPanel.hintShown = d.markMapHintShown
 	d.mapPanel.stage = func(cmd string) {
-		// tview goroutine (a key handler): stage the command in the prompt,
+		// UI goroutine (a key handler): stage the command in the prompt,
 		// under the still-open map, for the player to run with Enter.
 		d.inputField.SetText(cmd)
 	}
 	d.mapPanel.prompt = d.researchPanel.prompt
 	d.mapPanel.spotted = func(kind string) {
-		// tview goroutine (a refresh or a key handler), outside the engine
+		// UI goroutine (a refresh or a key handler), outside the engine
 		// lock: the account hears that its player looked at a visitor.
 		d.engine.NoteVisitorInspected(kind)
 	}
@@ -799,9 +799,9 @@ func (d *Dashboard) drawEffect(scr mapstyle.Cells, x, y, w, h int) {
 
 // StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).
 // This is intentionally slower than the game tick rate (which can reach ~5 fps
-// at 2x speed) to avoid burning CPU on terminal redraws.
-// NOTE: app.QueueUpdateDraw is the only safe way to touch tview primitives from
-// a background goroutine — it serialises with the tview event loop.
+// at 2x speed) to avoid burning CPU on redraws.
+// NOTE: app.QueueUpdateDraw is the only safe way to touch the UI's primitives from
+// a background goroutine: it serialises with the app loop.
 func (d *Dashboard) StartUpdates() {
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
@@ -881,7 +881,7 @@ func (d *Dashboard) retitle() {
 }
 
 // refresh is the central UI update function, called every 500 ms from StartUpdates.
-// It must only be called from within app.QueueUpdateDraw (i.e. on the tview goroutine).
+// It must only be called from within app.QueueUpdateDraw (i.e. on the UI goroutine).
 // Order matters: catastrophe modal and age splash are checked first because they may
 // swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {

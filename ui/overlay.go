@@ -23,7 +23,7 @@ type overlayEntry struct {
 	root    Primitive   // the frame over the command bar — added/removed from pages.Pages
 	provide OverlayProvider
 	// keys, when set, sees every key but Esc while the overlay has focus and
-	// returns nil to consume it (SetKeyHandler). Runs on the tview goroutine,
+	// returns nil to consume it (SetKeyHandler). Runs on the UI goroutine,
 	// never under the engine lock.
 	keys func(event *kit.Key) *kit.Key
 	// back, when set, is offered Esc before it closes the overlay: it returns
@@ -57,7 +57,7 @@ type OverlayManager struct {
 	widgetEntries map[string]*widgetEntry
 	active        string // name of currently visible overlay; "" if none
 	// focus is what holds the keyboard while the active overlay shows (its
-	// TextView, or a widget overlay's root); nil with none.
+	// text view, or a widget overlay's root); nil with none.
 	focus   Primitive
 	pages   *nativePages
 	app     *appLoop
@@ -99,9 +99,9 @@ func NewOverlayManager(pages *nativePages, app *appLoop, onClose func()) *Overla
 	return om
 }
 
-// Register adds a named text overlay backed by a TextView. Must be called before Show.
+// Register adds a named text overlay backed by a text view. Must be called before Show.
 // The overlay is the whole screen but the command bar: a framed panel (panel_frame.go)
-// with the TextView inside it, over the rows the bar keeps.
+// with the text view inside it, over the rows the bar keeps.
 func (om *OverlayManager) Register(name string, title vibe.Entry, provide OverlayProvider) {
 	tv := newNativeText().
 		SetDynamicColors(true).
@@ -240,7 +240,7 @@ func (om *OverlayManager) seenState() *game.GameState {
 	return om.seen
 }
 
-// RegisterWidget registers an overlay backed by any Primitive instead of a TextView.
+// RegisterWidget registers an overlay backed by any Primitive instead of a text view.
 // The build function receives the current GameState and returns a ready-to-display primitive,
 // which fills the entire screen (the panel leaves the command bar's rows to the dashboard).
 func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) Primitive, refresh func(state game.GameState)) {

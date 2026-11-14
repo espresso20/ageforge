@@ -58,7 +58,7 @@ const (
 	skPrompt                 // how to go on
 )
 
-// splashLine is one line of the arrival's text: as tview markup, and what
+// splashLine is one line of the arrival's text: as tagged text, and what
 // kind of line it is.
 type splashLine struct {
 	text string

@@ -8,8 +8,8 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// A nativeText stands where a tview.TextView stood. It answers the calls the
-// UI makes of a text view, with the same names, and is drawn by the kit: a
+// A nativeText is a text view. It answers the calls the UI makes of one, and
+// is drawn by the kit: a
 // kit.Text in a kit.Scroll in a kit.Panel, on a host. So a text view moves
 // to the kit by changing its constructor, and gets the mouse wheel with it.
 //
@@ -33,7 +33,7 @@ type nativeText struct {
 	drawFunc   func(x, y, w, h int)
 }
 
-// newNativeText is a text view as tview makes one: scrollable, wrapping at
+// newNativeText is a text view: scrollable, wrapping at
 // the edge, tags not read until SetDynamicColors says so.
 func newNativeText() *nativeText {
 	t := &nativeText{body: &kit.Text{Wrap: kit.WrapChar}, wrap: true, scrollable: true}
@@ -61,7 +61,7 @@ func (t *nativeText) Layout(r image.Rectangle) {
 }
 
 // focusBorder is the border of a box that has one: a line, doubled while the
-// box has the focus, as tview draws it.
+// box has the focus.
 func focusBorder(on, focus bool) kit.Border {
 	switch {
 	case !on:
@@ -108,14 +108,14 @@ func (t *nativeText) SetTextAlign(align kit.Align) *nativeText {
 }
 
 // SetScrollable(false) makes it a view of the text's end that takes no
-// scrolling keys, as tview does.
+// scrolling keys.
 func (t *nativeText) SetScrollable(on bool) *nativeText {
 	t.scrollable, t.view.Follow = on, !on
 	return t
 }
 
-// SetMaxLines keeps the text to its last n lines (0: all of it). As in
-// tview the older lines go after a draw, so text that was just set is shown
+// SetMaxLines keeps the text to its last n lines (0: all of it). The older
+// lines go after a draw, so text that was just set is shown
 // whole once.
 func (t *nativeText) SetMaxLines(n int) *nativeText {
 	t.maxLines = n

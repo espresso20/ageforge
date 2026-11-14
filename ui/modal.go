@@ -12,8 +12,8 @@ import (
 // close them, the ring of buttons the keyboard moves around, and the plain
 // button dialog. It holds no player text; every string comes from the caller.
 
-// solidBox is an opaque filler in a role's colour. tview only paints cells a
-// primitive draws, so every row and column inside a window must belong to a
+// solidBox is an opaque filler in a role's colour. Only cells a
+// primitive paints are drawn, so every row and column inside a window must belong to a
 // primitive that clears it, or the page beneath shows through.
 func solidBox(role theme.Role) *nativeBox {
 	return newNativeBox().SetBackgroundColor(theme.Of(role))

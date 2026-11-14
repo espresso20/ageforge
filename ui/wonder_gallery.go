@@ -90,7 +90,7 @@ func bankRows(cost, banked map[string]float64) []bankRow {
 	return rows
 }
 
-// wonderCollectHint is the registry's wonder collect form, escaped for tview.
+// wonderCollectHint is the registry's wonder collect form, escaped for the kit's tags.
 func wonderCollectHint() string {
 	return lit(helpRow("wonder collect").Form)
 }

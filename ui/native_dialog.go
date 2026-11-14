@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// A nativeDialog stands where a tview.Modal stood: text over a row of
+// A nativeDialog is text over a row of
 // buttons, in a box in the middle of the page, with the same calls, the same
 // size and the same keys (Tab and the arrows move between the buttons, Enter
 // presses one, Esc is button -1). The kit draws it, so a click presses a
@@ -28,7 +28,7 @@ type nativeDialog struct {
 	lines []string        // the text, wrapped for it
 }
 
-// newNativeDialog is an empty dialog as tview makes one: on the contrast
+// newNativeDialog is an empty dialog: on the contrast
 // ground, in the theme's text color.
 func newNativeDialog(app *appLoop) *nativeDialog {
 	d := &nativeDialog{app: app, ground: kit.Role(theme.RoleSelection), ink: kit.Role(theme.RoleText)}
@@ -83,7 +83,7 @@ func (d *nativeDialog) Children() []kit.Widget {
 	return out
 }
 
-// Layout sizes the dialog as tview's Modal does: a third of the page wide,
+// Layout sizes the dialog: a third of the page wide,
 // or as wide as its buttons need, and as tall as its wrapped text asks.
 func (d *nativeDialog) Layout(r image.Rectangle) {
 	d.Place(r)

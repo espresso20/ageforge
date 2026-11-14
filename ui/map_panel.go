@@ -199,7 +199,7 @@ func (p *mapPanel) hide() {
 func (p *mapPanel) Layout(r image.Rectangle) { p.Place(r) }
 
 // Paint draws the map over all but the last row, and the key bar on it. The
-// map still writes tcell's cells, at the panel's place on the screen: scr
+// map still writes cells through mapstyle.Cells, at the panel's place on the screen: scr
 // puts them on the painter.
 func (p *mapPanel) Paint(kp *kit.Painter) {
 	x, y, w, h := p.GetRect()

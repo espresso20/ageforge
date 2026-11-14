@@ -24,13 +24,13 @@ func widgetOf(p Primitive) kit.Widget {
 }
 
 // place gives a child of a kit container its rectangle: the kit's, in the
-// buffer, and tview's, on the screen, which is off further on. Code that
+// buffer, and the screen's, which is off further on. Code that
 // asks a primitive for its rectangle still gets the right answer.
 func place(w kit.Widget, r image.Rectangle, off image.Point) {
 	placeAt(w, r.Min.X, r.Min.Y, r.Dx(), r.Dy(), off)
 }
 
-// placeAt is place for a size that may be below nothing, which tview hands
+// placeAt is place for a size that may be below nothing, which is passed
 // on as it is when the room has run out.
 func placeAt(w kit.Widget, x, y, wd, ht int, off image.Point) {
 	if p, ok := w.(interface{ SetRect(x, y, w, h int) }); ok {
@@ -67,7 +67,7 @@ func coveredBy(w kit.Widget) []image.Rectangle {
 	return []image.Rectangle{w.Bounds()}
 }
 
-// A nativeBox stands where a bare tview.Box stood as a filler: a rectangle
+// A nativeBox is a filler: a rectangle
 // of one ground.
 type nativeBox struct {
 	*nativeHost
@@ -75,7 +75,7 @@ type nativeBox struct {
 	ground kit.Color
 }
 
-// newNativeBox is a filler in the page's ground, as tview.NewBox is.
+// newNativeBox is a filler in the page's ground.
 func newNativeBox() *nativeBox {
 	b := &nativeBox{ground: kit.Role(theme.RoleBackground)}
 	b.nativeHost = newNativeHost()
@@ -152,8 +152,8 @@ func (g *nativeGroup) covered() []image.Rectangle {
 	return out
 }
 
-// A nativeFlex stands where a tview.Flex stood: the same calls, and the same
-// sharing out of the room. Like tview's it paints nothing of its own but a
+// A nativeFlex is a row or column of items, sharing out the room by fixed size
+// and proportion. It paints nothing of its own but a
 // border, so where it has a gap the page beneath shows.
 type nativeFlex struct {
 	*nativeHost
@@ -174,7 +174,7 @@ type flexItem struct {
 	focus       bool
 }
 
-// newNativeFlex is an empty flex, its items side by side, as tview makes one.
+// newNativeFlex is an empty flex, its items side by side.
 func newNativeFlex() *nativeFlex {
 	f := &nativeFlex{}
 	f.frame.TitleAlign = kit.AlignCenter
@@ -291,7 +291,7 @@ func (f *nativeFlex) Children() []kit.Widget {
 	return out
 }
 
-// Layout shares the room out as tview's Flex does: the fixed items first,
+// Layout shares the room out: the fixed items first,
 // then the rest by proportion, each share rounded down in turn.
 func (f *nativeFlex) Layout(r image.Rectangle) {
 	f.Place(r)
@@ -341,8 +341,8 @@ func (f *nativeFlex) Layout(r image.Rectangle) {
 	}
 }
 
-// Paint draws the border, doubled while the keyboard is inside as tview
-// draws it, and the items the kit draws.
+// Paint draws the border, doubled while the keyboard is inside,
+// and the items the kit draws.
 func (f *nativeFlex) Paint(p *kit.Painter) {
 	if f.framed() {
 		for _, r := range f.own() {
@@ -393,7 +393,7 @@ func (f *nativeFlex) Covers(pt image.Point) bool {
 }
 
 // Focus gives the keyboard to the first item added with focus, or keeps it
-// when there is none: as tview's Flex does.
+// when there is none.
 func (f *nativeFlex) Focus(delegate func(p Primitive)) {
 	for _, it := range f.items {
 		if it.prim != nil && it.focus {
@@ -414,7 +414,7 @@ func (f *nativeFlex) HasFocus() bool {
 	return f.primBase.HasFocus()
 }
 
-// A nativeCanvas is a box filled by a func that still writes tcell's cells,
+// A nativeCanvas is a box filled by a func that writes cells through mapstyle.Cells,
 // at the box's place on the screen (the theme picker's sample).
 type nativeCanvas struct {
 	*nativeHost
@@ -430,7 +430,7 @@ func newNativeCanvas(draw func(scr mapstyle.Cells, x, y, w, h int)) *nativeCanva
 
 func (c *nativeCanvas) Layout(r image.Rectangle) { c.Place(r) }
 
-// Paint clears the box to the page's ground, as a tview.Box did, then draws.
+// Paint clears the box to the page's ground, then draws.
 func (c *nativeCanvas) Paint(p *kit.Painter) {
 	if c.nativeHost == nil || c.Bounds().Empty() {
 		return

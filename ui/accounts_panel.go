@@ -56,8 +56,8 @@ type accountsPanel struct {
 //
 // returnPage names the page to return to on Esc (the splash menu). It is modeled on the
 // load-game browser: a List on the left, a detail pane on the right, a footer action bar, and a
-// live detail refresh wired through SetChangedFunc. Per the tview deadlock rule (Trello
-// TCGiSWYX) NO handler here calls QueueUpdateDraw — tview redraws automatically after each
+// live detail refresh wired through SetChangedFunc. Per the redraw deadlock rule (Trello
+// TCGiSWYX) NO handler here calls QueueUpdateDraw — the loop redraws automatically after each
 // input event, so SetText / re-filling the list / applyAccountTheme all paint on the next frame.
 func CreateAccountsPage(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) Primitive {
 	return newAccountsPanel(app, pages, engine, returnPage).root
@@ -94,7 +94,7 @@ func newAccountsPanel(app *appLoop, pages *nativePages, engine *game.GameEngine,
 	})
 	p.list.ShowSecondaryText(false)
 	p.list.SetChangedFunc(func(index int, _ string, _ string, _ rune) {
-		// Live detail refresh. Runs on the tview MAIN goroutine, where tview redraws
+		// Live detail refresh. Runs on the UI goroutine, where the loop redraws
 		// automatically after the input event — so we MUST NOT QueueUpdateDraw here (it
 		// would deadlock the app, Trello TCGiSWYX). We only SetText; the auto-redraw paints.
 		p.updateDetail(index)
@@ -207,7 +207,7 @@ func (p *accountsPanel) selected() (game.AccountSummary, bool) {
 	return p.summaries[idx], true
 }
 
-// handleKey routes the action keys. tview.List handles ↑/↓ natively; we intercept the rest.
+// handleKey routes the action keys. the list handles ↑/↓ natively; we intercept the rest.
 func (p *accountsPanel) handleKey(event *kit.Key) *kit.Key {
 	switch event.Code {
 	case kit.KeyEnter:
@@ -270,7 +270,7 @@ func (p *accountsPanel) doSwitch() {
 	}
 	// Re-apply the now-active account's persisted theme so the whole UI retints (the theming design
 	// §6). applyAccountTheme runs SetActive + Restyle; no QueueUpdateDraw — we're on the main
-	// goroutine and tview redraws after this input event.
+	// goroutine and the loop redraws after this input event.
 	applyAccountTheme(p.engine)
 	// Rebuild so the ● (current) marker moves to the now-active row, then keep the selection
 	// on it. ListAccounts sorts active-first, so the active row is index 0 after the rebuild.

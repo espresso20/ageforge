@@ -280,7 +280,7 @@ func (b *loadGameBrowser) selected() (game.SaveInfo, bool) {
 	return b.saves[idx], true
 }
 
-// handleKey routes the action keys for the browser. tview.List handles ↑/↓
+// handleKey routes the action keys for the browser. the list handles ↑/↓
 // natively; we intercept Enter/d/r/c/Esc/q.
 func (b *loadGameBrowser) handleKey(event *kit.Key) *kit.Key {
 	switch event.Code {

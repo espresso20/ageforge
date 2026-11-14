@@ -1218,7 +1218,7 @@ func accountListed(engine *game.GameEngine, id string) bool {
 }
 
 // accountLabel names an account in a reply: its display name, or its short ID when it
-// has none (an identity restored from a recovery code). Escaped for tview.
+// has none (an identity restored from a recovery code). Escaped for the kit's tags.
 func accountLabel(acct *game.Account) string {
 	if name := strings.TrimSpace(acct.Name()); name != "" {
 		return lit(name)

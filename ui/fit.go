@@ -10,12 +10,12 @@ import (
 
 // fit.go holds the helpers that lay text out for the width it will be drawn
 // at, so a panel breaks its lines on purpose instead of leaving it to the
-// terminal: tview wraps an overlong line back to column 0, which splits a
+// screen: a wrapped overlong line restarts at column 0, which splits a
 // rate after its slash and drops a wrapped description under the command
 // column.
 
 // visibleLen is how many cells s takes once drawn: color tags take none,
-// and a bracketed word tview would not eat counts in full.
+// and a bracketed word the kit would not eat counts in full.
 func visibleLen(s string) int {
 	return kit.Width(safeTags(s))
 }
@@ -176,7 +176,7 @@ type fitView struct {
 	w, h   int
 	stale  bool
 	// drawn: the box has been drawn, so it has a real size. Until then its
-	// size is tview's default and means nothing.
+	// size is a default and means nothing.
 	drawn bool
 }
 
@@ -187,7 +187,7 @@ func newFitView(render func(w, h int) string) *fitView {
 
 // changed says what the box shows has changed, and writes it again: for the
 // box's size once it has been drawn, and for an unbounded one until then
-// (the size of a box never drawn is tview's default and means nothing), so
+// (the size of a box never drawn is a default and means nothing), so
 // code that reads the text back without a screen gets it whole.
 func (v *fitView) changed() {
 	v.stale = true

@@ -37,7 +37,7 @@ var wonderIcons = map[string]wonderIconColors{
 	"singularity_core":     {0x040c04, 0x040c04, 0x040c04, 0x040c04},
 }
 
-// WonderSpriteIcon renders a wonder's icon as two half-block cells (tview color
+// WonderSpriteIcon renders a wonder's icon as two half-block cells (color
 // tags). Each cell is a '▄' whose foreground is the lower colour and whose
 // background is the upper colour.
 func WonderSpriteIcon(key string) string {

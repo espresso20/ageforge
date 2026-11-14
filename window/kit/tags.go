@@ -9,7 +9,7 @@ import (
 )
 
 // tags.go reads the inline tags the game's strings carry. The syntax is the
-// one the strings were written in (tview's), so no string changes:
+// one the strings were written in (the one the game's earlier text library used), so no string changes:
 //
 //	[fg:bg:attrs]   any part may be empty; "-" puts a part back to the base
 //	[#rrggbb]       a literal color, in either place

@@ -20,7 +20,7 @@ type App struct {
 // NewApp creates the UI application
 func NewApp(engine *game.GameEngine, version string) *App {
 	// Assert the active theme before any widget is built so the name-remap and
-	// tview.Styles chrome defaults are in place for the first Draw, and every
+	// chrome defaults are in place for the first Draw, and every
 	// theme.Track closure in setup() applies against a known palette. The theme
 	// package init() already seeds Forge defensively; this makes the boot explicit
 	// and survives a future import reshuffle. Phase 2 swaps DefaultKey for the

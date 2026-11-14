@@ -15,7 +15,7 @@ import (
 //
 // The frame and the text are one kit tree on one host: the frame is the
 // widget, and the text view's kit box is its child. This is the shape every
-// container takes as it leaves tview: adopt the children's kit widgets, paint
+// container takes: adopt the children's kit widgets, paint
 // them in one tree, and let the mouse find them there.
 
 const (
@@ -31,7 +31,7 @@ const (
 
 // panelFrame is the primitive: a box with a title, the text inside, and the
 // keys. It hands the keyboard to the text view, which still takes its keys as
-// a tview primitive (its input capture is where a panel's own keys live), so
+// a Primitive (its input capture is where a panel's own keys live), so
 // only the painting and the mouse go through the frame's host.
 type panelFrame struct {
 	*nativeHost

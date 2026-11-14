@@ -302,7 +302,7 @@ func badgeToast(v game.BadgeView, tier mapmodel.GlyphTier, w int) string {
 }
 
 // badgeMark is a badge in three cells: its emblem between two half discs in
-// its tier's colours, as tview text. The toast and the epoch screen wear it.
+// its tier's colours, as tagged text. The toast and the epoch screen wear it.
 func badgeMark(v game.BadgeView, tier mapmodel.GlyphTier) string {
 	pal := newGridPalette(0, nil)
 	hex := func(k ink) string { return theme.HexTag(pal.inkOn(k, false)) }

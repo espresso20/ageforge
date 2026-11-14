@@ -113,7 +113,7 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		SetLabel(vibe.Line("ui.newgame_modal.showSaveNameModalOpts.01", "Name: ")).
 		SetText(initial).
 		SetFieldWidth(40).
-		// Dark slate field with white text — tview's default light field
+		// Dark slate field with white text — the default light field
 		// background renders the white name near-invisible on the dark modal.
 		SetFieldBackgroundColor(theme.Of(theme.RoleSelection)).
 		SetFieldTextColor(theme.Of(theme.RoleSelectionText))
