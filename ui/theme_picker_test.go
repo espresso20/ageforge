@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -239,7 +237,7 @@ func TestThemePicker_NoDeadlockOnNavigate(t *testing.T) {
 	// BEFORE the buggy QueueUpdateDraw, so the theme change lands even on the broken
 	// code; we wait for it (proving we reached SetChangedFunc), THEN probe liveness —
 	// which is where the bug strands the loop.
-	app.QueueEvent(tk(kit.KeyDown, 0, 0))
+	app.Key(tk(kit.KeyDown, 0, 0))
 	if k := waitTheme(func(s string) bool { return s != "forge" }, 3*time.Second); k == "forge" {
 		t.Fatal("preview never applied after Down — test did not reach SetChangedFunc")
 	}

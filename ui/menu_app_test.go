@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -132,7 +130,6 @@ func TestMenuInTheRunningApp(t *testing.T) {
 
 	// The smallest terminal, live.
 	h.sim.SetSize(80, 24)
-	must(t, h.sim.PostEvent(tcell.NewEventResize(80, 24)))
 	h.waitFor("the menu at 80x24", 5*time.Second, func() bool {
 		s := screen()
 		return strings.Contains(s, "▸ Continue") && strings.Contains(s, "Quit") && strings.Contains(s, "choose")

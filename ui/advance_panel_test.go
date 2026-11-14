@@ -15,7 +15,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/gdamore/tcell/v2"
 )
 
 // advanceSizes are the terminals the panel is drawn at (80x24, 100x30 and
@@ -61,7 +60,7 @@ func advanceFixture(t *testing.T, age string) (*Dashboard, *game.GameEngine, *ad
 }
 
 // sendKey gives the dashboard a key as the app's input capture sees it.
-func sendKey(d *Dashboard, k kit.KeyCode) *tcell.EventKey {
+func sendKey(d *Dashboard, k kit.KeyCode) *kit.Key {
 	return captured(d.root, tk(k, 0, 0))
 }
 

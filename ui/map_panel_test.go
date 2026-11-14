@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/window/kit"
@@ -305,12 +303,12 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	}
 	typeText := func(s string) {
 		for _, r := range s {
-			sim.InjectKey(tcell.KeyRune, r, 0)
+			sim.InjectKey(kit.KeyRune, r, 0)
 		}
 	}
 
 	typeText("map")
-	sim.InjectKey(tcell.KeyEnter, 0, 0)
+	sim.InjectKey(kit.KeyEnter, 0, 0)
 	waitFor("the Map panel", func() bool { look(); return active == "map" && prompt == "" && focused })
 	var txt string
 	onLoop(func() { txt = simCells(sim).Text() })
@@ -321,44 +319,44 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	typeText("stat")
 	waitFor("letters in the prompt", func() bool { look(); return prompt == "stat" })
 	for range "stat" {
-		sim.InjectKey(tcell.KeyBackspace2, 0, 0)
+		sim.InjectKey(kit.KeyBackspace, 0, 0)
 	}
 	waitFor("Backspace in the prompt", func() bool { look(); return prompt == "" })
 
-	sim.InjectKey(tcell.KeyPgUp, 0, 0)
+	sim.InjectKey(kit.KeyPgUp, 0, 0)
 	waitFor("PgUp to zoom out to the region", func() bool { return strings.Contains(simCells(sim).Text(), "REGION") })
 	onLoop(look)
 	before := pointer
-	sim.InjectKey(tcell.KeyTab, 0, 0)
+	sim.InjectKey(kit.KeyTab, 0, 0)
 	waitFor("Tab to move the map's cursor", func() bool { look(); return pointed && pointer != before })
-	sim.InjectKey(tcell.KeyRight, 0, 0)
-	sim.InjectKey(tcell.KeyLeft, 0, 0)
+	sim.InjectKey(kit.KeyRight, 0, 0)
+	sim.InjectKey(kit.KeyLeft, 0, 0)
 	onLoop(look)
 	if prompt != "" || active != "map" {
 		t.Errorf("the arrows reached the prompt (%q) or closed the map (%q)", prompt, active)
 	}
 
 	typeText("status")
-	sim.InjectKey(tcell.KeyEnter, 0, 0)
+	sim.InjectKey(kit.KeyEnter, 0, 0)
 	waitFor("status to run", func() bool { look(); return prompt == "" && d.mapPanel.note != "" })
 	if active != "map" {
 		t.Errorf("running a command closed the map (active %q)", active)
 	}
 
-	sim.InjectKey(tcell.KeyTab, 0, 0)
+	sim.InjectKey(kit.KeyTab, 0, 0)
 	waitFor("the cursor on a target with a command", func() bool {
 		look()
 		in, ok := d.mapPanel.current().Inspect(d.mapPanel.frame())
 		if !ok || in.Command == "" {
-			sim.InjectKey(tcell.KeyTab, 0, 0)
+			sim.InjectKey(kit.KeyTab, 0, 0)
 			return false
 		}
 		return true
 	})
-	sim.InjectKey(tcell.KeyEnter, 0, 0)
+	sim.InjectKey(kit.KeyEnter, 0, 0)
 	waitFor("Enter to type the inspected command", func() bool { look(); return prompt != "" })
 	staged := prompt
-	sim.InjectKey(tcell.KeyEsc, 0, 0)
+	sim.InjectKey(kit.KeyEsc, 0, 0)
 	waitFor("Esc to close the map", func() bool { look(); return active == "" && focused })
 	if prompt != staged {
 		t.Errorf("closing the map changed the prompt from %q to %q", staged, prompt)

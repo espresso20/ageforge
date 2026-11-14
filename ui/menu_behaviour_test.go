@@ -12,12 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -90,7 +87,7 @@ func (r *menuRig) key(k kit.KeyCode, ch rune) {
 	r.t.Helper()
 	// From the root down, as the app sends it, so a page's own key capture
 	// has its say.
-	r.pages.InputHandler()(tk(k, ch, 0), func(p Primitive) { r.app.SetFocus(p) })
+	rootKey(r.pages, tk(k, ch, 0))
 }
 
 // release lets the choices that were waiting out their strike act.
@@ -541,7 +538,7 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	sim := newSimScreen(t, 120, 40)
 	scr := sim
 	key := func(k kit.KeyCode, ch rune) {
-		pages.InputHandler()(tk(k, ch, 0), func(p Primitive) { app.SetFocus(p) })
+		rootKey(pages, tk(k, ch, 0))
 	}
 	for _, size := range [][2]int{{120, 40}, {80, 24}, {144, 46}} {
 		sim.SetSize(size[0], size[1])

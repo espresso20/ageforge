@@ -99,7 +99,7 @@ func (s *sweeper) fail(format string, args ...interface{}) {
 func (s *sweeper) ping() {
 	s.t.Helper()
 	done := make(chan struct{})
-	go s.a.tviewApp.QueueUpdateDraw(func() { close(done) })
+	go s.a.loop.QueueUpdateDraw(func() { close(done) })
 	select {
 	case <-done:
 	case <-time.After(sweepTimeout):
@@ -111,7 +111,7 @@ func (s *sweeper) ping() {
 func (s *sweeper) ui(f func()) {
 	s.t.Helper()
 	done := make(chan struct{})
-	go s.a.tviewApp.QueueUpdate(func() { f(); close(done) })
+	go s.a.loop.QueueUpdate(func() { f(); close(done) })
 	select {
 	case <-done:
 	case <-time.After(sweepTimeout):
@@ -162,7 +162,7 @@ func (s *sweeper) activeOverlay() string {
 
 func (s *sweeper) inputFocused() bool {
 	var ok bool
-	s.ui(func() { ok = s.a.tviewApp.GetFocus() == s.a.dashboard.inputField })
+	s.ui(func() { ok = s.a.loop.GetFocus() == s.a.dashboard.inputField })
 	return ok
 }
 

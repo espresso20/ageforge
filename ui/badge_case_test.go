@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/rivo/uniseg"
 
@@ -1003,7 +1002,7 @@ func paintGrid(scr *simScreen, g *tGrid, x0, y0 int, p *gridPalette) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			c := g.c[y*g.w+x]
-			scr.SetContent(x0+x, y0+y, c.r, nil, tcellStyle(p.style(c)))
+			scr.SetContent(x0+x, y0+y, c.r, nil, p.style(c))
 		}
 	}
 }

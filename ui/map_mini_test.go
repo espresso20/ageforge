@@ -9,7 +9,6 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/theme"
 )
 
 // miniTestGame is a game with something to show: a few buildings, and a

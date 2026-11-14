@@ -49,7 +49,7 @@ func TestTakeKeysRunsAndSwallowsOnlyItsKeys(t *testing.T) {
 	if got := captured(window, esc); got != nil || ran != 1 {
 		t.Errorf("Esc: returned %v, ran %d times; want it taken and run once", got, ran)
 	}
-	if got := captured(window, tab); got != tab || ran != 1 {
+	if got := captured(window, tab); got == nil || *got != tab || ran != 1 {
 		t.Errorf("Tab: returned %v, ran %d times; want it passed on", got, ran)
 	}
 }

@@ -5,30 +5,30 @@ import (
 	"image/color"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/font/sfnt"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // shotCells is cols by rows blank cells, white on black, with set drawing
 // into them.
-func shotCells(cols, rows int, set func(x, y int) (rune, tcell.Style, bool)) []simCell {
-	base := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
-	cells := make([]simCell, cols*rows)
+func shotCells(cols, rows int, set func(x, y int) (rune, kit.Style, bool)) *kit.Buffer {
+	base := kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0))
+	b := kit.NewBuffer(cols, rows)
+	p := kit.NewPainter(b)
 	for y := 0; y < rows; y++ {
 		for x := 0; x < cols; x++ {
-			c := &cells[y*cols+x]
-			c.Style = base
+			p.Put(x, y, ' ', base)
 			if r, st, ok := set(x, y); ok {
-				c.Runes, c.Style = []rune{r}, st
+				p.Put(x, y, r, st)
 			}
 		}
 	}
-	return cells
+	return b
 }
 
 // cellPixels counts the pixels of one cell that are white and that are black.
@@ -50,13 +50,13 @@ func cellPixels(img *image.RGBA, x, y int) (white, black, other int) {
 }
 
 func TestScreenImageSizeAndLetters(t *testing.T) {
-	cells := shotCells(4, 2, func(x, y int) (rune, tcell.Style, bool) {
+	cells := shotCells(4, 2, func(x, y int) (rune, kit.Style, bool) {
 		if x == 1 && y == 0 {
-			return 'W', tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0)), true
+			return 'W', kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0)), true
 		}
-		return 0, tcell.StyleDefault, false
+		return 0, kit.Style{}, false
 	})
-	img := ScreenImage(cells, 4, 2, shotCellW, shotCellH)
+	img := ScreenImage(cells, shotCellW, shotCellH)
 	if b := img.Bounds(); b.Dx() != 4*shotCellW+2*shotPad || b.Dy() != 2*shotCellH+2*shotPad {
 		t.Fatalf("size = %v", b)
 	}
@@ -66,34 +66,34 @@ func TestScreenImageSizeAndLetters(t *testing.T) {
 	if w, b, o := cellPixels(img, 0, 0); w != 0 || o != 0 || b != shotCellW*shotCellH {
 		t.Errorf("a blank cell is not one colour: %d %d %d", w, b, o)
 	}
-	again := ScreenImage(cells, 4, 2, shotCellW, shotCellH)
+	again := ScreenImage(cells, shotCellW, shotCellH)
 	if string(img.Pix) != string(again.Pix) {
 		t.Error("the same cells gave two pictures")
 	}
 }
 
 func TestScreenImageBlocksFillTheirCells(t *testing.T) {
-	st := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
+	st := kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0))
 	area := shotCellW * shotCellH
 	for r, want := range map[rune]int{
 		'█': area, '▀': area / 2, '▄': area / 2, '▌': area / 2, '▐': area / 2,
 		'▘': area / 4, '▗': area / 4, '▚': area / 2, '▙': area * 3 / 4,
 	} {
-		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, tcell.Style, bool) { return r, st, true }), 1, 1, shotCellW, shotCellH)
+		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return r, st, true }), shotCellW, shotCellH)
 		if w, _, o := cellPixels(img, 0, 0); w != want || o != 0 {
 			t.Errorf("%c: %d white pixels, %d other, want %d white", r, w, o, want)
 		}
 	}
 	// A shade is a mix: no pixel is pure foreground or pure background.
-	img := ScreenImage(shotCells(1, 1, func(int, int) (rune, tcell.Style, bool) { return '▒', st, true }), 1, 1, shotCellW, shotCellH)
+	img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return '▒', st, true }), shotCellW, shotCellH)
 	if w, b, o := cellPixels(img, 0, 0); w != 0 || b != 0 || o != area {
 		t.Errorf("shade: %d white, %d black, %d mixed", w, b, o)
 	}
 }
 
 func TestScreenImageLinesMeetAcrossCells(t *testing.T) {
-	st := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
-	img := ScreenImage(shotCells(3, 1, func(int, int) (rune, tcell.Style, bool) { return '─', st, true }), 3, 1, shotCellW, shotCellH)
+	st := kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0))
+	img := ScreenImage(shotCells(3, 1, func(int, int) (rune, kit.Style, bool) { return '─', st, true }), shotCellW, shotCellH)
 	y := shotPad + shotCellH/2
 	for x := shotPad; x < shotPad+3*shotCellW; x++ {
 		if img.RGBAAt(x, y) != (color.RGBA{255, 255, 255, 255}) {
@@ -103,10 +103,10 @@ func TestScreenImageLinesMeetAcrossCells(t *testing.T) {
 }
 
 func TestScreenImageDrawsNoTofu(t *testing.T) {
-	st := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
+	st := kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0))
 	// Marks Go Mono has no shape for stay blank, and so does a diagonal.
 	for _, r := range []rune{'🙂', '╱'} {
-		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, tcell.Style, bool) { return r, st, true }), 1, 1, shotCellW, shotCellH)
+		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return r, st, true }), shotCellW, shotCellH)
 		if _, b, _ := cellPixels(img, 0, 0); b != shotCellW*shotCellH {
 			t.Errorf("%c is not blank", r)
 		}
@@ -114,9 +114,9 @@ func TestScreenImageDrawsNoTofu(t *testing.T) {
 }
 
 func TestScreenImageDrawsTheEpochIcons(t *testing.T) {
-	st := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
+	st := kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0))
 	for r := range symbolShapes {
-		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, tcell.Style, bool) { return r, st, true }), 1, 1, shotCellW, shotCellH)
+		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return r, st, true }), shotCellW, shotCellH)
 		if _, b, _ := cellPixels(img, 0, 0); b == shotCellW*shotCellH {
 			t.Errorf("%c is blank", r)
 		}

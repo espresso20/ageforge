@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
@@ -223,7 +221,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 		by[v.Key] = v
 	}
 	render := func(markup string) (text string, cells []simCell) {
-		tv := tview.NewTextView().SetDynamicColors(true)
+		tv := newNativeText().SetDynamicColors(true)
 		tv.SetText(safeTags(markup))
 		sim := newSim()
 		must(t, sim.Init())

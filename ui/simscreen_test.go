@@ -5,8 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -20,6 +18,32 @@ type simScreen struct {
 	buf  kit.Buffer
 	cur  image.Point
 	curs bool
+	// app is the running loop the screen stands in front of, for the tests
+	// that run one (SetScreen): its frames are what the screen shows, and
+	// the screen's keys go to it.
+	app *appLoop
+}
+
+// SetScreen puts the loop behind s, as the window is in play: the loop
+// paints at s's size, s shows the loop's frames and hands it the keys.
+func (a *appLoop) SetScreen(s *simScreen) *appLoop {
+	s.app = a
+	a.Resize(s.buf.W, s.buf.H)
+	return a
+}
+
+// SetScreen is the same for the whole App.
+func (a *App) SetScreen(s *simScreen) { a.loop.SetScreen(s) }
+
+// InjectKey presses a key on the loop behind the screen.
+func (s *simScreen) InjectKey(code kit.KeyCode, r rune, mod kit.Mod) { s.app.Key(tk(code, r, mod)) }
+
+// sync takes the loop's last frame, when there is a loop.
+func (s *simScreen) sync() {
+	if s.app != nil {
+		s.app.Frame(&s.buf)
+		s.cur, s.curs = s.buf.Cursor, s.buf.CursorOn
+	}
 }
 
 // A simCell is one cell read back: its rune (and what combines with it) and
@@ -43,10 +67,15 @@ func newSimScreen(_ testing.TB, w, h int) *simScreen {
 	return s
 }
 
-func (s *simScreen) Init() error      { return nil }
-func (s *simScreen) Fini()            {}
-func (s *simScreen) Show()            {}
-func (s *simScreen) SetSize(w, h int) { s.buf.Resize(w, h) }
+func (s *simScreen) Init() error { return nil }
+func (s *simScreen) Fini()       {}
+func (s *simScreen) Show()       {}
+func (s *simScreen) SetSize(w, h int) {
+	s.buf.Resize(w, h)
+	if s.app != nil {
+		s.app.Resize(w, h)
+	}
+}
 func (s *simScreen) Size() (int, int) { return s.buf.W, s.buf.H }
 
 // Clear blanks the screen to the theme's text on its ground.
@@ -55,9 +84,12 @@ func (s *simScreen) Clear() {
 	s.curs = false
 }
 
-func (s *simScreen) HideCursor()                { s.curs = false }
-func (s *simScreen) ShowCursor(x, y int)        { s.cur, s.curs = image.Pt(x, y), true }
-func (s *simScreen) GetCursor() (int, int, bool) { return s.cur.X, s.cur.Y, s.curs }
+func (s *simScreen) HideCursor()         { s.curs = false }
+func (s *simScreen) ShowCursor(x, y int) { s.cur, s.curs = image.Pt(x, y), true }
+func (s *simScreen) GetCursor() (int, int, bool) {
+	s.sync()
+	return s.cur.X, s.cur.Y, s.curs
+}
 
 // SetContent writes one cell: the screen is a mapstyle.Cells, so the map and
 // the weather can be drawn straight onto it.
@@ -78,12 +110,14 @@ func (s *simScreen) cell(c kit.Cell) simCell {
 }
 
 func (s *simScreen) GetContent(x, y int) (rune, []rune, kit.Style, int) {
+	s.sync()
 	c := s.cell(s.buf.At(x, y))
 	return c.Runes[0], c.Runes[1:], c.Style, 1
 }
 
 // GetContents is every cell, row by row, and the screen's size.
 func (s *simScreen) GetContents() ([]simCell, int, int) {
+	s.sync()
 	out := make([]simCell, len(s.buf.Cells))
 	for i, c := range s.buf.Cells {
 		out[i] = s.cell(c)
@@ -111,6 +145,15 @@ func drawOn(scr *simScreen, p Primitive) {
 	}
 	if b.CursorOn && p.HasFocus() {
 		scr.ShowCursor(x+b.Cursor.X, y+b.Cursor.Y)
+	}
+}
+
+// rootKey gives the root a key as the app does: from the root down, past
+// each capture, to whatever has the keyboard, and to nothing when nothing in
+// the root has it.
+func rootKey(root Primitive, k kit.Key) {
+	if root.HasFocus() {
+		keyTo(root, k)
 	}
 }
 

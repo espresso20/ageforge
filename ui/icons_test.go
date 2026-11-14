@@ -290,7 +290,7 @@ func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string
 
 // pressKey sends a key to whatever holds the keyboard, as the event loop does.
 func pressKey(d *Dashboard, pages *nativePages, k kit.KeyCode, r rune) {
-	pages.InputHandler()(tk(k, r, 0), func(p Primitive) { d.app.SetFocus(p) })
+	rootKey(pages, tk(k, r, 0))
 }
 
 // TestIconsWindowOnScreen: icons at the prompt opens the window over the
