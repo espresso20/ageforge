@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"math"
 	"sort"
 	"strings"
@@ -129,6 +130,23 @@ type treeModel struct {
 
 	known, inReach, nextAge, later int // counts for the title
 	lines                          map[[2]int]lineCell
+	cardAt                         image.Rectangle // where the card was drawn last, for the mouse
+}
+
+// techAt is the tech drawn at a cell of the panel ("" for none): its lane's
+// width, from its name plate down to the foot of its badge.
+func (m *treeModel) techAt(pt image.Point, v treeView, w, h int) string {
+	ox, oy, mw, mh := mapRect(m.geom, w, h)
+	if pt.X < ox || pt.Y < oy || pt.X >= ox+mw || pt.Y >= oy+mh {
+		return ""
+	}
+	x, y := v.vx+pt.X-ox, v.vy+pt.Y-oy
+	for _, n := range m.nodes {
+		if x/m.geom.laneW == n.lane && y >= n.top && y <= m.bottom(n) {
+			return n.key
+		}
+	}
+	return ""
 }
 
 func (m *treeModel) bottom(n *treeNode) int { return n.top + m.geom.nameH + m.geom.badgeH - 1 }
@@ -724,6 +742,7 @@ func shortAge(name string, room int) string {
 // key bar, and the selected tech's card over the map when it is open.
 func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid {
 	out := newTGrid(w, h)
+	m.cardAt = image.Rectangle{}
 	if w < 20 || h < 8 {
 		out.text(0, 0, vibe.Line("ui.research_tree.renderTree.01", "Research: make the window larger."), tsText, -1)
 		return out
@@ -1428,6 +1447,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		lines = lines[:max(ch-2, 0)]
 	}
 	x0, y0 := ox+(mw-cw)/2, oy+(mh-ch)/2
+	m.cardAt = image.Rect(x0, y0, x0+cw, y0+ch)
 	out.card(x0, y0, cw, ch, n.def.Name, txtEscCloses.String())
 	if badge {
 		ring := tsLane

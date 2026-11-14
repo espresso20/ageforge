@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // treeSizes are the terminal sizes the Research panel must read well at.
@@ -955,5 +957,56 @@ func TestResearchEffectSentenceCarriesTheEffectTag(t *testing.T) {
 	}
 	if attr&tcell.AttrBold == 0 {
 		t.Errorf("tsEffect is not bold")
+	}
+}
+
+// TestResearchPanelMouse: a click selects the tech under the pointer, a double
+// click opens its card as Enter does, a click outside the card closes it, and
+// the wheel moves the selection.
+func TestResearchPanelMouse(t *testing.T) {
+	ge := classicalGame(t)
+	p := newResearchPanel()
+	p.engine = ge
+	p.w, p.h = 80, 21
+	p.update(ge.GetState())
+	p.Layout(image.Rect(0, 0, 80, 21))
+	ox, oy, mw, mh := mapRect(p.model.geom, p.w, p.h)
+	at := func(key string) image.Point {
+		n := p.model.by[key]
+		return image.Pt(ox+n.lane*p.model.geom.laneW+1-p.view.vx, oy+n.top-p.view.vy)
+	}
+	other := ""
+	for _, n := range p.model.nodes {
+		pt := at(n.key)
+		if n.key != p.view.sel && pt.X >= ox && pt.X < ox+mw && pt.Y >= oy && pt.Y < oy+mh {
+			other = n.key
+			break
+		}
+	}
+	if other == "" {
+		t.Fatal("no other tech is on screen")
+	}
+	press := func(pt image.Point, clicks int) bool {
+		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: clicks})
+	}
+	if !press(at(other), 1) || p.view.sel != other || p.view.card {
+		t.Fatalf("a click: selected %q (want %q), card open %v", p.view.sel, other, p.view.card)
+	}
+	if press(image.Pt(0, 0), 1) {
+		t.Error("a click on the title bar changed something")
+	}
+	if !press(at(other), 2) || !p.view.card {
+		t.Error("a double click did not open the card")
+	}
+	drawPrimitive(t, p, 80, 21)
+	if press(image.Pt(ox+mw/2, oy+mh/2), 1) {
+		t.Error("a click on the card closed it")
+	}
+	if !press(image.Pt(0, 0), 1) || p.view.card {
+		t.Error("a click outside the card did not close it")
+	}
+	before := p.view.sel
+	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || p.view.sel == before {
+		t.Error("the wheel did not move the selection")
 	}
 }
