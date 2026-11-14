@@ -29,7 +29,7 @@ type loadGameBrowser struct {
 	engine *game.GameEngine
 
 	root     *tview.Flex
-	list     *tview.List
+	list     *nativeList
 	detail   *nativeText
 	subtitle *nativeText
 
@@ -83,7 +83,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 		SetTextAlign(tview.AlignCenter)
 
 	// ── Save list ────────────────────────────────────────────────────────────
-	b.list = tview.NewList()
+	b.list = newNativeList()
 	b.list.SetBorder(false)
 	// Selection backs light text, so it uses the Selection role (dark slate under
 	// Forge), not Accent — white-on-gold is unreadable (theme/themes_forge.go).

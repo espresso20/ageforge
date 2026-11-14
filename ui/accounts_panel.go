@@ -42,7 +42,7 @@ type accountsPanel struct {
 	root     *tview.Flex
 	title    *nativeText
 	subtitle *nativeText
-	list     *tview.List
+	list     *nativeList
 	detail   *nativeText
 	status   *nativeText // transient confirmation line ("Now playing as …")
 
@@ -86,7 +86,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	subtitle := p.subtitle
 
 	// ── Account list ───────────────────────────────────────────────────────────
-	p.list = tview.NewList()
+	p.list = newNativeList()
 	p.list.SetBorder(false)
 	// Selection backs light text → Selection role (dark slate under Forge), not the gold
 	// Accent — white-on-gold is unreadable (theme/themes_forge.go), same as load_game.
