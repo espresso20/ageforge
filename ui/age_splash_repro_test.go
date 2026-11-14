@@ -129,6 +129,16 @@ func (h *reproHarness) teardown() {
 	}
 }
 
+// freezeWait is how long a key may take to show its effect before the UI
+// counts as frozen: 2s, and five times that under the race detector, where a
+// frame of the space ages alone can take most of a second on a busy runner.
+var freezeWait = func() time.Duration {
+	if raceOn {
+		return 10 * time.Second
+	}
+	return 2 * time.Second
+}()
+
 // dumpGoroutines returns the stacks of all goroutines.
 func dumpGoroutines() string {
 	buf := make([]byte, 1<<22)
@@ -392,13 +402,13 @@ func (h *reproHarness) dismissArrival(label string, k kit.KeyCode, r rune) {
 	press := func(before int) (stage, keys int, auto bool) {
 		h.t.Helper()
 		h.key(k, r)
-		deadline := time.Now().Add(2 * time.Second)
+		deadline := time.Now().Add(freezeWait)
 		for {
 			if stage, keys, auto = look(); keys > before {
 				return
 			}
 			if time.Now().After(deadline) {
-				h.t.Fatalf("[%s] FROZEN: key %v/%q did not reach the arrival screen within 2s\n%s", label, k, r, h.describeUI())
+				h.t.Fatalf("[%s] FROZEN: key %v/%q did not reach the arrival screen within %v\n%s", label, k, r, freezeWait, h.describeUI())
 			}
 			time.Sleep(15 * time.Millisecond)
 		}
@@ -420,10 +430,10 @@ func (h *reproHarness) dismissArrival(label string, k kit.KeyCode, r rune) {
 		time.Sleep(arrivalKeyGap + 20*time.Millisecond) // a second press, not the first held down
 		stage, keys, _ = press(keys)
 	}
-	deadline := time.Now().Add(2 * time.Second)
+	deadline := time.Now().Add(freezeWait)
 	for h.hasPage("age_splash") {
 		if time.Now().After(deadline) {
-			h.t.Fatalf("[%s] FROZEN: splash not dismissed by key %v/%q within 2s\n%s", label, k, r, h.describeUI())
+			h.t.Fatalf("[%s] FROZEN: splash not dismissed by key %v/%q within %v\n%s", label, k, r, freezeWait, h.describeUI())
 		}
 		time.Sleep(15 * time.Millisecond)
 	}
@@ -463,7 +473,7 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 			// A valid prestige cue can surface after the arrival closes; dismiss
 			// this independent notice before asserting the arrival flow is settled.
 			h.key(kit.KeyRune, 'x')
-			deadline := time.Now().Add(2 * time.Second)
+			deadline := time.Now().Add(freezeWait)
 			for h.hasPage(prestigeCuePage) {
 				if time.Now().After(deadline) {
 					h.t.Fatalf("[%s] prestige cue ignored a key\n%s", label, h.describeUI())
@@ -474,7 +484,7 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 			h.catsSeen++
 			h.t.Logf("%s catastrophe modal in front; pressing %q", label, catChoice)
 			h.key(kit.KeyRune, catChoice)
-			deadline := time.Now().Add(2 * time.Second)
+			deadline := time.Now().Add(freezeWait)
 			for h.hasPage("catastrophe") {
 				if time.Now().After(deadline) {
 					h.t.Fatalf("[%s] FROZEN: catastrophe modal ignored %q\n%s", label, catChoice, h.describeUI())
@@ -668,7 +678,7 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	// Player presses Esc on the visible modal: it must close and hand the
 	// keyboard back, leaving the catastrophe pending.
 	h.key(kit.KeyEsc, 0)
-	deadline := time.Now().Add(2 * time.Second)
+	deadline := time.Now().Add(freezeWait)
 	for !(!h.hasPage("catastrophe") && h.inputHasFocus()) {
 		if time.Now().After(deadline) {
 			t.Fatalf("FROZEN: catastrophe modal left on screen but unreachable by keyboard after splash auto-dismiss\n%s", h.describeUI())
