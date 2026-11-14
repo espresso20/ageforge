@@ -40,11 +40,11 @@ type accountsPanel struct {
 	engine *game.GameEngine
 
 	root     *tview.Flex
-	title    *tview.TextView
-	subtitle *tview.TextView
+	title    *nativeText
+	subtitle *nativeText
 	list     *tview.List
-	detail   *tview.TextView
-	status   *tview.TextView // transient confirmation line ("Now playing as …")
+	detail   *nativeText
+	status   *nativeText // transient confirmation line ("Now playing as …")
 
 	summaries []game.AccountSummary // current rows, 1:1 with list items
 
@@ -75,12 +75,12 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	}
 
 	// ── Title ──────────────────────────────────────────────────────────────────
-	p.title = tview.NewTextView().
+	p.title = newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 	title := p.title
 
-	p.subtitle = tview.NewTextView().
+	p.subtitle = newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 	subtitle := p.subtitle
@@ -103,7 +103,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	})
 
 	// ── Detail pane ────────────────────────────────────────────────────────────
-	p.detail = tview.NewTextView().
+	p.detail = newNativeText().
 		SetDynamicColors(true).
 		SetWrap(true)
 	p.detail.SetBorder(true)
@@ -118,7 +118,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 		AddItem(p.detail, 0, 1, false)
 
 	// ── Transient status line (switch confirmation) ────────────────────────────
-	p.status = tview.NewTextView().
+	p.status = newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
@@ -372,7 +372,7 @@ func (p *accountsPanel) doImport() {
 		defaultPath = game.AccountExportPath(s.AccountID)
 	}
 
-	errTV := tview.NewTextView().
+	errTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
@@ -385,7 +385,7 @@ func (p *accountsPanel) doImport() {
 		SetFieldTextColor(theme.Color(theme.RoleSelectionText))
 	input.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	hintTV := tview.NewTextView().
+	hintTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(vibe.Line("ui.accounts_panel.doImport.02", "[gray]Enter: import (merge)  ·  Esc: cancel[-]"))
@@ -550,7 +550,7 @@ func (p *accountsPanel) doWipe() {
 // with an inline error; Esc aborts with no wipe. On a match it wipes the SELECTED slot by id,
 // then resolves the post-wipe state.
 func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool) {
-	errTV := tview.NewTextView().
+	errTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
@@ -561,7 +561,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
 		SetFieldTextColor(theme.Color(theme.RoleText))
 
-	promptTV := tview.NewTextView().
+	promptTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(fmt.Sprintf(
@@ -569,7 +569,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 			expectedName,
 		))
 
-	hintTV := tview.NewTextView().
+	hintTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(dangerTag + vibe.Line("ui.accounts_panel.showWipeTypeGate.05", "Enter: confirm  ·  Esc: cancel[-]"))
@@ -663,14 +663,14 @@ func (p *accountsPanel) resolveAfterWipe(wasActive bool, backupPath string) {
 // showMessage pops a simple OK modal with a title + body. Opaque background so nothing bleeds.
 // Focus returns to the list on dismiss.
 func (p *accountsPanel) showMessage(title, body string) {
-	tv := tview.NewTextView().
+	tv := newNativeText().
 		SetDynamicColors(true).
 		SetWrap(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(body)
 	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	hint := tview.NewTextView().
+	hint := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(vibe.Line("ui.accounts_panel.showMessage.01", "[gray]Enter / Esc: close[-]"))
