@@ -171,7 +171,7 @@ func hangingRow(lead, text string, width int) string {
 // fit would be cut, not broken. The text is written again when the size
 // changes or changed is called (new game state).
 type fitView struct {
-	*tview.TextView
+	*nativeText
 	render func(w, h int) string
 	w, h   int
 	stale  bool
@@ -181,7 +181,7 @@ type fitView struct {
 }
 
 func newFitView(render func(w, h int) string) *fitView {
-	return &fitView{TextView: tview.NewTextView().SetDynamicColors(true).SetWrap(false), render: render, stale: true}
+	return &fitView{nativeText: newNativeText().SetDynamicColors(true).SetWrap(false), render: render, stale: true}
 }
 
 // changed says what the box shows has changed, and writes it again: for the
@@ -212,5 +212,5 @@ func (v *fitView) Draw(screen tcell.Screen) {
 		v.drawn, v.stale = true, true
 	}
 	v.layout()
-	v.TextView.Draw(screen)
+	v.nativeText.Draw(screen)
 }
