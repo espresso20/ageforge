@@ -11,11 +11,11 @@ On a first visit the game asks you to name your account, then opens its [main me
 You are in the Primitive Age. The screen shows:
 - The status ribbon: your account name, `Primitive Age`, the year, `People 0/0`, `Morale 50%` and the next age
 - The Ledger under it: a long bar to the Stone Age with what it is waiting on, and the four pillars
-- The Resources box, the Under construction box (with the People box beside it on a big terminal) and the Log on the left
+- The Resources box, the Under construction box (with the People box beside it on a big window) and the Log on the left
 - The Buildings list in the middle, with the Getting started guide at the end of it while it shows
-- The Panels list on the right, which names each panel (and, on a big terminal, what it is for)
+- The Panels list on the right, which names each panel (and, on a big window, what it is for)
 
-Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. A short mini map sits above the Buildings list on a terminal of 105 columns by 34 rows or larger (`minimap off` hides it).
+Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. A short mini map sits above the Buildings list on a window of 105 columns by 34 rows or larger (`minimap off` hides it).
 
 <figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: almost nothing in stock, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 
@@ -164,7 +164,7 @@ The grove also speeds research and gives +0.05 food a tick permanently.
 
 ## Step 10: Check the long bar and advance
 
-The long bar under the status ribbon runs to the next age, and the Waiting on line beside it (under it on a big terminal) names what is still missing, with your count beside each one. Type `charter` for the whole list. For the Stone Age the gate asks for:
+The long bar under the status ribbon runs to the next age, and the Waiting on line beside it (under it on a big window) names what is still missing, with your count beside each one. Type `charter` for the whole list. For the Stone Age the gate asks for:
 - Gathering Camps: 8
 - Huts: 10
 - Shrines: 8

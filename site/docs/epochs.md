@@ -122,9 +122,9 @@ Type `epoch` to open the Epoch screen, a full-screen page to show off your run. 
 - Feats: catastrophes met, how each harbinger ended, milestones reached and your fastest age, each with a colored icon.
 - A centered hint closes the page: press `c` to copy a picture for Discord.
 
-The blocks spread across a wide terminal up to about 190 columns and stay centered beyond that. With Motion off the page is a still, with a monochrome theme it has no color but keeps its boxes, and the plain glyph setting draws plain ASCII boxes and letters.
+The blocks spread across a wide window up to about 190 columns and stay centered beyond that. With Motion off the page is a still, with a monochrome theme it has no color but keeps its boxes, and the plain glyph setting draws plain ASCII boxes and letters.
 
-On a small terminal the sections stack and the page scrolls.
+On a small window the sections stack and the page scrolls.
 
 ### The Discord card
 

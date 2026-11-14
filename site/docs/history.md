@@ -59,4 +59,4 @@ Time you spend away from the game is sampled the same way, so the samples stay e
 - After an age advance, the `│` marker shows which metrics jumped or dipped at the change.
 - A **Food rate** line that drops below zero is a food deficit. Catch it before your workers start to starve.
 - A flat **All production** line means nothing new has joined the pool during the window.
-- A taller terminal window fits more graphs on the screen at once. Scroll to reach the rest.
+- A taller window fits more graphs on the screen at once. Scroll to reach the rest.

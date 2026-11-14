@@ -116,7 +116,7 @@ People walk the streets of every era. Carts roll through the first three eras, c
 | Settlement | The close-up: your town round the cursor, one cell of the world to a cell of the screen |
 | District | The close-up framed on one kind of building's part of town, with every other kind dimmed so the district stands out. The top row names it |
 
-A large terminal opens the Map on the close-up. A smaller one, and the mini map, show the whole town. `PgDn` or `=` zooms in a step, from cosmos to region to inner to settlement to a district (the inner step exists only in space ages), and `PgUp` or `-` zooms out a step. In the space ages the close-up is a calm view of Earth: the planet, the Moon on a slow orbit, a couple of stations with blinking lights, all different from one world to the next. Your buildings wait one step further in, at a district. In space ages, `PgUp` or `-` zooms out past region into the cosmic view (`COSMOS`), and `PgDn` from region stops at the inner system (`INNER`) before the settlement. In a district, `Tab` and `Shift-Tab` go on to the next or previous district, and the cursor lands on a building in it. The close-up scrolls only when the cursor nears its edge. In the region zoom the arrows move the cursor a block at a time, and the cursor still tells you what it is on.
+A large window opens the Map on the close-up. A smaller one, and the mini map, show the whole town. `PgDn` or `=` zooms in a step, from cosmos to region to inner to settlement to a district (the inner step exists only in space ages), and `PgUp` or `-` zooms out a step. In the space ages the close-up is a calm view of Earth: the planet, the Moon on a slow orbit, a couple of stations with blinking lights, all different from one world to the next. Your buildings wait one step further in, at a district. In space ages, `PgUp` or `-` zooms out past region into the cosmic view (`COSMOS`), and `PgDn` from region stops at the inner system (`INNER`) before the settlement. In a district, `Tab` and `Shift-Tab` go on to the next or previous district, and the cursor lands on a building in it. The close-up scrolls only when the cursor nears its edge. In the region zoom the arrows move the cursor a block at a time, and the cursor still tells you what it is on.
 
 In the window, the space views are drawn by the window itself and zoom continuously from the Local Group to Earth, one smooth step at a time with the views dissolving into each other. The keys are the same: arrows pan (`Shift` four times as far), `PgUp` and `PgDn` zoom, `Tab` and `Shift-Tab` jump between objects, `Home` goes back to Earth. The mouse works on the space views too: the wheel zooms about the pointer, dragging pans, a click selects the nearest object (the scale label and the lines under the map follow it) and a double click selects it and flies in. The names of what is in view are drawn on the map, and the selected one is lit. At the deepest zoom Earth is a large lit pixel sphere with the Moon on a dim dotted orbit, and your stations and ships sit on low orbits off its disc, each with a name when it is selected. The terminal keeps the stepped views above.
 
@@ -186,7 +186,7 @@ All of them work while the Map is open, so you see the change at once. The `moti
 
 ### The flows overlay
 
-`map flows` shows where your economy is stuck: stocks that are falling and about to run dry, buildings short of workers, and idle workers. A flows panel lists each of those, then the five lineages that make most of your output, with a bar for each one's share, so you can see what your settlement actually runs on. On a terminal too narrow for a side panel the list opens in a box over the map. The inspect cursor on the town square gives a one-line summary.
+`map flows` shows where your economy is stuck: stocks that are falling and about to run dry, buildings short of workers, and idle workers. A flows panel lists each of those, then the five lineages that make most of your output, with a bar for each one's share, so you can see what your settlement actually runs on. On a window too narrow for a side panel the list opens in a box over the map. The inspect cursor on the town square gives a one-line summary.
 
 ---
 
@@ -196,7 +196,7 @@ The mini map is on by default. The dashboard shows a compact view of the Map abo
 
 It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back. It shows the whole town, and it marks the cell the Map panel's cursor is on with the same highlighted cell.
 
-The mini map needs room: it appears on terminals of 105 columns by 34 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
+The mini map needs room: it appears on windows of 105 columns by 34 rows and larger. On smaller windows (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 
 ---
 

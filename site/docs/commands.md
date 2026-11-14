@@ -363,7 +363,7 @@ worldmap
 icons
 ```
 
-`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On terminals of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list. On smaller terminals it hides, and `minimap off` hides it anywhere.
+`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list. On smaller windows it hides, and `minimap off` hides it anywhere.
 
 The prompt keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing:
 

@@ -1,6 +1,6 @@
 # The AgeForge Compendium
 
-> A terminal idle civilization game: 22 ages in 7 epochs, from the Primitive Age to the Transcendent Age.
+> An idle civilization game: 22 ages in 7 epochs, from the Primitive Age to the Transcendent Age.
 
 > Version note: this Compendium describes version 4.0, the game on the master branch, which has no release yet. The downloads are version 3.6, which has the `speed` command and the old city map. To play version 4.0, build it from source (see [Installation](getting-started.md)).
 

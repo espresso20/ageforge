@@ -217,7 +217,7 @@ Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or
 
 On the accessible [themes](themes.md) the panel's greens and reds are blue and orange.
 
-The People box is always visible. On a terminal of 120 columns by 36 rows or more it sits beside Under construction; on a smaller one it sits under the Panels list. It shows the population over the housing, one line for each kind of person with the age's word for it and the count (the soldiers add how many are out on missions when there is room) and, when something holds your population back, what it is. The larger box also has a bar across the homes in the colors of the four kinds. The food use and net food are on the Overview.
+The People box is always visible. On a window of 120 columns by 36 rows or more it sits beside Under construction; on a smaller one it sits under the Panels list. It shows the population over the housing, one line for each kind of person with the age's word for it and the count (the soldiers add how many are out on missions when there is room) and, when something holds your population back, what it is. The larger box also has a bar across the homes in the colors of the four kinds. The food use and net food are on the Overview.
 
 ### Completion
 
