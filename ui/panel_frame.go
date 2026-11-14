@@ -1,19 +1,25 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // panel_frame.go is the frame the text panels are drawn in, the one the
 // People, Advance and Expeditions panels have: the whole screen but the
 // command bar, a box with the panel's name in its top edge, the text inside
-// it, and a line of keys along the foot. The text is a tview TextView laid
-// inside the box, so it scrolls, wraps and takes colour tags as it always did;
-// only the frame around it is new. Like the other full-screen panels it
+// it, and a line of keys along the foot. Like the other full-screen panels it
 // leaves the command bar showing under it (promptRows).
+//
+// The frame and the text are one kit tree on one host: the frame is the
+// widget, and the text view's kit box is its child. This is the shape every
+// container takes as it leaves tview: adopt the children's kit widgets, paint
+// them in one tree, and let the mouse find them there.
 
 const (
 	// panelPadX is the columns from the box's outer edge to the text, each
@@ -26,10 +32,13 @@ const (
 	panelMinRows = 6
 )
 
-// panelFrame is the primitive: a box with a title, a TextView inside, and the
-// keys. It hands the keyboard to the TextView.
+// panelFrame is the primitive: a box with a title, the text inside, and the
+// keys. It hands the keyboard to the text view, which still takes its keys as
+// a tview primitive (its input capture is where a panel's own keys live), so
+// only the painting and the mouse go through the frame's host.
 type panelFrame struct {
-	*tview.Box
+	*nativeHost
+	kit.Base
 	title vibe.Entry
 	tv    *nativeText
 	// keys is the foot's keys, read on every draw (the Wonders panel's change
@@ -47,7 +56,9 @@ type panelFrame struct {
 }
 
 func newPanelFrame(title vibe.Entry, tv *nativeText) *panelFrame {
-	return &panelFrame{Box: tview.NewBox(), title: title, tv: tv}
+	f := &panelFrame{title: title, tv: tv}
+	f.nativeHost = newNativeHost(f)
+	return f
 }
 
 // renderPanelFrame draws the frame at w by h: the box, the name in its top
@@ -69,10 +80,39 @@ func panelTextSize(w, h int) (tw, th int) {
 	return max(1, w-2*panelPadX), max(1, h-panelChromeRows)
 }
 
-// Draw paints the frame, then the text inside it.
+// textRect is where the text goes in a frame at r.
+func panelTextRect(r image.Rectangle) image.Rectangle {
+	tw, th := panelTextSize(r.Dx(), r.Dy())
+	return image.Rect(r.Min.X+panelPadX, r.Min.Y+1, r.Min.X+panelPadX+tw, r.Min.Y+1+th)
+}
+
+// Draw tells the text view where it is (code that asks it for its rectangle
+// still gets the answer), then draws the frame and the text as one tree.
 func (f *panelFrame) Draw(scr tcell.Screen) {
 	x, y, w, h := f.GetRect()
 	if w <= 0 || h <= 0 {
+		return
+	}
+	t := panelTextRect(image.Rect(x, y, x+w, y+h))
+	f.tv.SetRect(t.Min.X, t.Min.Y, t.Dx(), t.Dy())
+	f.nativeHost.Draw(scr)
+}
+
+// Children: the text view's box is the frame's child.
+func (f *panelFrame) Children() []kit.Widget { return []kit.Widget{f.tv.box} }
+
+// Layout places the text inside the frame.
+func (f *panelFrame) Layout(r image.Rectangle) {
+	f.Place(r)
+	t := panelTextRect(r)
+	f.iw, f.ih = t.Dx(), t.Dy()
+	f.tv.box.Layout(t)
+}
+
+// Paint draws the frame, then the text inside it.
+func (f *panelFrame) Paint(p *kit.Painter) {
+	r := f.Bounds()
+	if r.Empty() {
 		return
 	}
 	var keys [][2]string
@@ -87,15 +127,12 @@ func (f *panelFrame) Draw(scr tcell.Screen) {
 	if f.notice != nil {
 		notice = f.notice()
 	}
-	g := renderPanelFrame(w, h, f.title.String(), keys, hint, notice)
+	g := renderPanelFrame(r.Dx(), r.Dy(), f.title.String(), keys, hint, notice)
 	if f.plain != nil && f.plain() {
 		g.fold()
 	}
-	paintExpedition(scr, g, x, y, newExpPalette())
-	tw, th := panelTextSize(w, h)
-	f.iw, f.ih = tw, th
-	f.tv.SetRect(x+panelPadX, y+1, tw, th)
-	f.tv.Draw(scr)
+	paintExpeditionKit(p, g, r.Min, newExpPalette())
+	f.tv.box.Paint(p)
 }
 
 // Focus gives the keyboard to the text.

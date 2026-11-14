@@ -296,11 +296,6 @@ func (p *expPalette) style(c xcell) tcell.Style {
 	return st
 }
 
-// paintExpedition puts a grid on the screen at (x0, y0).
-func paintExpedition(scr tcell.Screen, g *xgrid, x0, y0 int, p *expPalette) {
-	g.draw(scr, x0, y0, func(c xcell) (rune, tcell.Style) { return c.r, p.style(c) })
-}
-
 // paintExpeditionKit puts a grid on a kit painter, its top left corner at the
 // given point.
 func paintExpeditionKit(p *kit.Painter, g *xgrid, at image.Point, pal *expPalette) {
