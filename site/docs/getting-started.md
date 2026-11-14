@@ -40,7 +40,7 @@ chmod +x ageforge
 
 ## Windows
 
-Download `ageforge-windows-amd64.exe` from the [GitHub Releases](https://github.com/espresso20/ageforge/releases/latest) page and run it in Windows Terminal. In PowerShell, one line does both:
+Download `ageforge-windows-amd64.exe` from the [GitHub Releases](https://github.com/espresso20/ageforge/releases/latest) page and run it. In PowerShell, one line does both:
 
 ```powershell
 iwr https://github.com/espresso20/ageforge/releases/latest/download/ageforge-windows-amd64.exe -OutFile ageforge.exe; .\ageforge.exe
@@ -63,13 +63,12 @@ go build -o ageforge .
 
 ---
 
-## Terminal requirements
+## Window size
 
-AgeForge draws a full-screen text interface.
+AgeForge draws a text interface in its own window, on a grid of character cells.
 
-- A terminal of 120 columns by 40 rows or larger draws the full layout. A smaller terminal gets a more compact one, and the dashboard fits any terminal from 80 columns by 24 rows up.
-- The themes use full RGB color, so a terminal with 24-bit (truecolor) color shows them as designed.
-- Use a monospace font. The map draws with `unicode` glyphs by default. The `nerd` glyph set needs a Nerd Font: the `icons` command checks your font and can install JetBrains Mono Nerd Font for you. `map glyphs ascii` draws the map in plain characters.
+- A window of 120 columns by 40 rows or larger draws the full layout. A smaller one gets a more compact layout, and the dashboard fits any window from 80 columns by 24 rows up. Changing the text size changes how many columns and rows fit.
+- The map draws with `unicode` glyphs by default. The `nerd` glyph set needs a Nerd Font: the `icons` command checks your font and can install JetBrains Mono Nerd Font for you. `map glyphs ascii` draws the map in plain characters.
 
 ---
 

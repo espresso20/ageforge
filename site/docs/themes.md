@@ -36,7 +36,7 @@ A theme paints the **whole surface**, text included: the page background, panels
 <figure class="screen" data-screen="theme-daylight"><figcaption>The same panel in Daylight.</figcaption></figure>
 </div>
 
-Themes use exact RGB colors, so a **truecolor** terminal shows them as designed.
+Themes use exact RGB colors, and the window shows them as designed.
 
 ### Motion
 
