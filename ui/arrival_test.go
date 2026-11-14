@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -844,7 +843,7 @@ type arrivalShow struct {
 
 func newArrivalShow() *arrivalShow {
 	s := &arrivalShow{pages: newNativePages(), clock: time.Unix(3_000_000, 0), timers: map[time.Duration]func(){}}
-	s.om = NewOverlayManager(s.pages, tview.NewApplication(), func() { s.closed++ })
+	s.om = NewOverlayManager(s.pages, newAppLoop(), func() { s.closed++ })
 	s.om.after = func(d time.Duration, fn func()) func() {
 		s.timers[d] = fn
 		return func() { delete(s.timers, d) }
@@ -878,7 +877,7 @@ func (s *arrivalShow) advance(prev *game.GameState, cur game.GameState, epoch bo
 }
 
 func (s *arrivalShow) press(a *arrival, k kit.KeyCode, r rune) {
-	a.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
+	a.InputHandler()(tev(k, r, 0), func(Primitive) {})
 }
 
 // stoneToBronze is the game before and after an advance into the Bronze
@@ -1132,7 +1131,7 @@ func TestArrivalStill(t *testing.T) {
 			}
 
 			// No clock runs behind a still frame.
-			r.om.app = tview.NewApplication()
+			r.om.app = newAppLoop()
 			sim := tcell.NewSimulationScreen("UTF-8")
 			must(t, sim.Init())
 			sim.SetSize(w, h)
@@ -1169,7 +1168,7 @@ func TestArrivalStill(t *testing.T) {
 // by its first draw and stopped when it closes.
 func TestArrivalClock(t *testing.T) {
 	r := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
-	r.om.app = tview.NewApplication()
+	r.om.app = newAppLoop()
 	sim := newSimScreen(t, 100, 30)
 	r.a.SetRect(0, 0, 100, 30)
 	if r.a.stop != nil {

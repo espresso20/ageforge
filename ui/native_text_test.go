@@ -14,11 +14,18 @@ import (
 
 // textViewLike is what the tests ask of both text views.
 type textViewLike interface {
-	tview.Primitive
+	Primitive
 }
 
 // cellsOf draws p at w by h and returns each cell as glyph and style.
-func cellsOf(t *testing.T, p tview.Primitive, w, h int) []string {
+// drawable is what a test draws on a screen: one of the game's primitives,
+// or the tview widget it is compared with.
+type drawable interface {
+	SetRect(x, y, w, h int)
+	Draw(scr tcell.Screen)
+}
+
+func cellsOf(t *testing.T, p drawable, w, h int) []string {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
 	must(t, sim.Init())
@@ -64,7 +71,7 @@ func TestNativeTextDrawsAsATextViewDid(t *testing.T) {
 	type opts struct {
 		name                string
 		dynamic, wrap, word bool
-		align               int
+		align               kit.Align
 		border, focus       bool
 		title               string
 		scroll              int
@@ -73,15 +80,15 @@ func TestNativeTextDrawsAsATextViewDid(t *testing.T) {
 	for _, o := range []opts{
 		{name: "plain", dynamic: true, wrap: true, w: 40, h: 10},
 		{name: "word wrap", dynamic: true, wrap: true, word: true, w: 31, h: 12},
-		{name: "no wrap centered", dynamic: true, align: tview.AlignCenter, w: 50, h: 8},
-		{name: "right", dynamic: true, wrap: true, align: tview.AlignRight, w: 44, h: 9},
+		{name: "no wrap centered", dynamic: true, align: kit.AlignCenter, w: 50, h: 8},
+		{name: "right", dynamic: true, wrap: true, align: kit.AlignRight, w: 44, h: 9},
 		{name: "border and title", dynamic: true, wrap: true, border: true, title: " [gold]Help[-] ", w: 36, h: 9},
 		{name: "focused border", dynamic: true, wrap: true, border: true, focus: true, title: "Log", w: 36, h: 9},
 		{name: "scrolled", dynamic: true, wrap: true, scroll: 3, w: 30, h: 5},
 		{name: "scrolled past the end", dynamic: true, wrap: true, scroll: 400, w: 30, h: 5},
 		{name: "tags off", wrap: true, w: 40, h: 10},
 	} {
-		old := tview.NewTextView().SetDynamicColors(o.dynamic).SetWrap(o.wrap).SetWordWrap(o.word).SetTextAlign(o.align)
+		old := tview.NewTextView().SetDynamicColors(o.dynamic).SetWrap(o.wrap).SetWordWrap(o.word).SetTextAlign(int(o.align))
 		old.SetBorder(o.border).SetTitle(o.title)
 		old.SetText(text)
 		old.ScrollTo(o.scroll, 0)
@@ -91,7 +98,7 @@ func TestNativeTextDrawsAsATextViewDid(t *testing.T) {
 		kt.ScrollTo(o.scroll, 0)
 		if o.focus {
 			old.Focus(func(tview.Primitive) {})
-			kt.Focus(func(tview.Primitive) {})
+			kt.Focus(func(Primitive) {})
 		}
 		want, got := cellsOf(t, old, o.w, o.h), cellsOf(t, kt, o.w, o.h)
 		for i := range want {
@@ -119,7 +126,7 @@ func TestNativeTextKeysAndCalls(t *testing.T) {
 	}
 	top := func() string { return strings.TrimSpace(rowsOf(cellsOf(t, kt, 12, 5), 12)[:12]) }
 	press := func(k kit.KeyCode, r rune) {
-		kt.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
+		kt.InputHandler()(tev(k, r, 0), func(Primitive) {})
 	}
 	if top() != "line 00" {
 		t.Fatalf("starts at %q", top())
@@ -235,7 +242,7 @@ func TestPanelFrameIsOneTree(t *testing.T) {
 		t.Errorf("the text view reports row %d", row)
 	}
 	// The keys still go to the text view, as the frame hands them over.
-	f.InputHandler()(tev(kit.KeyHome, 0, 0), func(tview.Primitive) {})
+	f.InputHandler()(tev(kit.KeyHome, 0, 0), func(Primitive) {})
 	if got := draw(); got != "row 00" {
 		t.Errorf("Home through the frame shows %q", got)
 	}

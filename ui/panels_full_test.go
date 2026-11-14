@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -38,14 +38,12 @@ func poisonedStage(t *testing.T) (*Dashboard, *nativePages) {
 	t.Helper()
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "medieval_age")
-	poison := tview.NewBox()
-	poison.SetDrawFunc(func(scr tcell.Screen, x, y, w, h int) (int, int, int, int) {
+	poison := newNativeCanvas(func(scr mapstyle.Cells, x, y, w, h int) {
 		for yy := y; yy < y+h; yy++ {
 			for xx := x; xx < x+w; xx++ {
 				scr.SetContent(xx, yy, poisonRune, nil, tcell.StyleDefault)
 			}
 		}
-		return x, y, w, h
 	})
 	pages.AddPage("poison", poison, true, true)
 	return d, pages
@@ -151,7 +149,7 @@ func TestTextPanelsShareOneFrame(t *testing.T) {
 	var cur mapmodel.GlyphTier
 	// a dashboard whose pages hold only the panel: the frame is judged on its own
 	pages := newNativePages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
+	d := NewDashboard(newAppLoop(), eng, pages)
 	d.overlayMgr.plain = func() bool { return cur == mapmodel.TierASCII }
 	for _, th := range theme.All() {
 		if err := theme.SetActive(th.Key); err != nil {

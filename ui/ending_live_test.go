@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -278,11 +276,11 @@ func TestAWindowThatWaitsGetsTheKeyboardBack(t *testing.T) {
 	d.overlayMgr.after = func(time.Duration, func()) func() { return func() {} }
 	d.showAncientMemoryModal("pottery", "Pottery")
 	button := app.GetFocus()
-	if button == nil || button == tview.Primitive(d.inputField) {
+	if button == nil || button == Primitive(d.inputField) {
 		t.Fatal("the Ancient Memory window did not take the keyboard")
 	}
 	ShowAgeSplashFull(d.overlayMgr, "primitive_age", "stone_age", game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
-	if app.GetFocus() != tview.Primitive(d.overlayMgr.arrival) {
+	if app.GetFocus() != Primitive(d.overlayMgr.arrival) {
 		t.Fatal("the arrival did not take the keyboard")
 	}
 	d.overlayMgr.arrival.close()
@@ -297,7 +295,7 @@ func TestAWindowThatWaitsGetsTheKeyboardBack(t *testing.T) {
 	}
 	// Answered, it gives the keyboard to the prompt.
 	d.closeAncientMemoryModal()
-	if app.GetFocus() != tview.Primitive(d.inputField) || pages.HasPage(ancientMemoryPage) {
+	if app.GetFocus() != Primitive(d.inputField) || pages.HasPage(ancientMemoryPage) {
 		t.Error("the prompt did not get the keyboard when the window closed")
 	}
 }

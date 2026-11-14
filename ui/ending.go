@@ -241,10 +241,6 @@ func (e *ending) key() {
 	e.arm()
 }
 
-// kitDrawn: the film draws itself in Paint, the theme's weather and the
-// redraw clock with it, so a kit container takes it in.
-func (e *ending) kitDrawn() {}
-
 // Covers: once closed the film is not there for the pointer.
 func (e *ending) Covers(image.Point) bool { return !e.closed }
 

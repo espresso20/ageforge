@@ -12,8 +12,6 @@ import (
 
 	"github.com/espresso20/ageforge/presence"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -75,7 +73,7 @@ const menuCatchUp = 4
 type mainMenu struct {
 	*nativeHost
 	kit.Base
-	app     *tview.Application
+	app     *appLoop
 	pages   *nativePages
 	engine  *game.GameEngine
 	version string
@@ -125,7 +123,7 @@ type mainMenu struct {
 
 // CreateSplashPage creates the main menu. A release build also asks, in
 // the background, whether a newer version is out.
-func CreateSplashPage(app *tview.Application, pages *nativePages, engine *game.GameEngine, currentVersion string) tview.Primitive {
+func CreateSplashPage(app *appLoop, pages *nativePages, engine *game.GameEngine, currentVersion string) Primitive {
 	m := newMainMenu(app, pages, engine, currentVersion)
 	// Background update check: a no-op on dev builds or network errors.
 	if currentVersion != "dev" && !steam.Build {
@@ -145,7 +143,7 @@ func CreateSplashPage(app *tview.Application, pages *nativePages, engine *game.G
 
 // newMainMenu makes the menu and reads what it says. It asks the network
 // nothing.
-func newMainMenu(app *tview.Application, pages *nativePages, engine *game.GameEngine, currentVersion string) *mainMenu {
+func newMainMenu(app *appLoop, pages *nativePages, engine *game.GameEngine, currentVersion string) *mainMenu {
 	m := &mainMenu{
 		app: app, pages: pages, engine: engine, version: currentVersion,
 		now: time.Now, active: true, appID: presence.AppID,
@@ -354,7 +352,7 @@ func menuEdition(version string) string {
 
 // Focus is how the menu learns it is the page in use again: tview focuses
 // it when a page it opened closes and when the game returns to it.
-func (m *mainMenu) Focus(delegate func(p tview.Primitive)) {
+func (m *mainMenu) Focus(delegate func(p Primitive)) {
 	m.nativeHost.Focus(delegate)
 	m.enter()
 }
@@ -417,8 +415,6 @@ func (m *mainMenu) stopClock() {
 
 // moving reports whether the page's motion is running.
 func (m *mainMenu) moving() bool { return m.active && m.set.Motion }
-
-func (m *mainMenu) kitDrawn() {}
 
 // Covers: under a page it opened the menu is not there for the pointer.
 func (m *mainMenu) Covers(image.Point) bool { return m.active }

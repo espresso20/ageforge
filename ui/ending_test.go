@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
@@ -95,7 +93,7 @@ func sampleEnding(kind string, level int) game.RunEnding {
 func stagedEnding(t testing.TB, end game.RunEnding, tier mapmodel.GlyphTier, motion, towns bool) *endingRig {
 	t.Helper()
 	r := &endingRig{pages: newNativePages(), clock: time.Unix(3_000_000, 0)}
-	r.om = NewOverlayManager(r.pages, tview.NewApplication(), func() { r.closed++ })
+	r.om = NewOverlayManager(r.pages, newAppLoop(), func() { r.closed++ })
 	r.om.after = func(d time.Duration, fn func()) func() {
 		tm := &endTimer{d: d, fn: fn}
 		r.timers = append(r.timers, tm)
@@ -684,7 +682,7 @@ func TestEndingKeys(t *testing.T) {
 				}
 				return
 			}
-			e.InputHandler()(tev(kit.KeyRune, 'x', 0), func(tview.Primitive) {})
+			e.InputHandler()(tev(kit.KeyRune, 'x', 0), func(Primitive) {})
 		}
 		if r.om.ActiveName() != endingPageName || !r.pages.HasPage(endingPageName) || !r.om.FullScreenUp() {
 			t.Fatal("the film is not up")
@@ -771,7 +769,7 @@ func TestEndingStill(t *testing.T) {
 	e := r.e
 	t.Cleanup(e.close)
 	const w, h = 100, 30
-	r.om.app = tview.NewApplication()
+	r.om.app = newAppLoop()
 	sim := newSimScreen(t, w, h)
 	e.SetRect(0, 0, w, h)
 	var stills []string

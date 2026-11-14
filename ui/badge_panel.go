@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -83,7 +82,7 @@ func newBadgePanel() *badgePanel {
 }
 
 // open is the overlay's build: it runs on every Show.
-func (p *badgePanel) open(state game.GameState) tview.Primitive {
+func (p *badgePanel) open(state game.GameState) Primitive {
 	p.update(state)
 	return overBar(p)
 }
@@ -161,9 +160,6 @@ func (p *badgePanel) moves() bool {
 	}
 	return false
 }
-
-// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
-func (p *badgePanel) kitDrawn() {}
 
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *badgePanel) Draw(scr tcell.Screen) {

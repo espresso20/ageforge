@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -48,7 +47,7 @@ const (
 )
 
 type Dashboard struct {
-	app    *tview.Application
+	app    *appLoop
 	engine *game.GameEngine
 	pages  *nativePages
 	root   *nativeFlex
@@ -84,7 +83,7 @@ type Dashboard struct {
 	toastMgr            *ToastManager
 	toastTV             *nativeText
 	toastW              int // the toast bar's width as last drawn; 0 before that
-	contentArea         tview.Primitive
+	contentArea         Primitive
 
 	// Shame badge — set once on first load when CheaterBadge is true
 	cheaterTV *nativeText
@@ -100,10 +99,10 @@ type Dashboard struct {
 	// freshly loaded save with a pending catastrophe shows its modal again.
 	catReshow atomic.Bool
 	// catFocus is the catastrophe modal button that owns focus while it is open.
-	catFocus tview.Primitive
+	catFocus Primitive
 	// memFocus is the Ancient Memory window's button that owns focus while
 	// it is open.
-	memFocus tview.Primitive
+	memFocus Primitive
 
 	// memoryModalShown guards the Ancient Memory offer modal the same way catModalShown
 	// guards the catastrophe modal: it holds the offered tech key once shown so a Defer
@@ -178,7 +177,7 @@ type Dashboard struct {
 }
 
 // NewDashboard creates the gameplay dashboard
-func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *nativePages) *Dashboard {
+func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Dashboard {
 	mv := newMapViews()
 	d := &Dashboard{
 		app:           app,
@@ -355,7 +354,7 @@ func (d *Dashboard) build() {
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
 	d.cheaterTV = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	// Status ribbon: written for the bar's width (statusLine).
 	d.statusTV = newFitView(func(w, _ int) string {
@@ -379,7 +378,7 @@ func (d *Dashboard) build() {
 	d.toastMgr = NewToastManager()
 	d.toastTV = newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 
 	// The bar's width, once it has been drawn: a toast written to fit
 	// (a badge's) asks for it. Until then it is 0, any width.
@@ -547,7 +546,7 @@ func (d *Dashboard) build() {
 
 	// The mini map docks above the Buildings list and hides itself when the
 	// terminal is too small for it (mapDock).
-	d.economyTab.WrapBuildings(func(list tview.Primitive) tview.Primitive {
+	d.economyTab.WrapBuildings(func(list Primitive) Primitive {
 		d.mapDock = newMapDock(d.miniMap, list)
 		return d.mapDock
 	})
@@ -582,7 +581,7 @@ func (d *Dashboard) build() {
 	d.contentArea = mainHoriz
 
 	// Root layout (no tab bar)
-	d.root = newNativeFlex().SetDirection(tview.FlexRow).
+	d.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(d.cheaterTV, 1, 0, false).
 		AddItem(d.statusTV, 1, 0, false).
 		AddItem(d.toastTV, 1, 0, false).
@@ -772,7 +771,7 @@ func sidebarText(active string, w, h int) string {
 
 // Root returns the root primitive for page registration: the layout, and
 // over it the active theme's ambient effect.
-func (d *Dashboard) Root() tview.Primitive {
+func (d *Dashboard) Root() Primitive {
 	if d.rootFx == nil {
 		d.rootFx = newFxRoot(d.root, d.drawEffect)
 	}
@@ -1411,7 +1410,7 @@ func (d *Dashboard) showDevUnlockModal() {
 		}
 	})
 
-	box := newNativeFlex().SetDirection(tview.FlexRow).
+	box := newNativeFlex().SetDirection(flexRow).
 		AddItem(field, 1, 0, true)
 	box.SetBorder(true).
 		SetBorderColor(theme.Color(theme.RoleDim)).
@@ -1450,9 +1449,9 @@ const codeWindowPage = "code_window"
 func (d *Dashboard) showWindow(text string) {
 	tv := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(kit.AlignCenter)
 	tv.SetBorder(true).SetTitle(vibe.Line("ui.dashboard.showWindow.01", " Recovery code "))
-	tv.SetText("\n" + tview.Escape(text) + "\n\n" + theme.KeycapButton("Esc", vibe.Line("ui.dashboard.showWindow.03", "Close")))
+	tv.SetText("\n" + kit.Escape(text) + "\n\n" + theme.KeycapButton("Esc", vibe.Line("ui.dashboard.showWindow.03", "Close")))
 	done := func() {
 		d.pages.RemovePage(codeWindowPage)
 		d.app.SetFocus(d.inputField)

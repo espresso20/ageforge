@@ -5,7 +5,6 @@ import (
 
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/rivo/tview"
 )
 
 // drawOnWindow draws the pages on a screen that knows which kit host drew
@@ -92,7 +91,7 @@ func TestTheCommandBarTakesAClickUnderAPanel(t *testing.T) {
 	at := x + kit.Width(d.inputField.GetLabel()) + 1 // on the "u" of "build"
 	scr.mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: at, Y: y})
 	scr.mouse(kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonLeft, X: at, Y: y})
-	d.inputField.InputHandler()(tev(kit.KeyRune, 'X', 0), func(tview.Primitive) {})
+	d.inputField.InputHandler()(tev(kit.KeyRune, 'X', 0), func(Primitive) {})
 	if got := d.inputField.GetText(); got != "bXuild hut" {
 		t.Errorf("after a click on the second letter and an X the bar reads %q", got)
 	}

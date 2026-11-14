@@ -32,7 +32,7 @@ func TestNativeInputDrawsAsAnInputFieldDid(t *testing.T) {
 		in.SetBorder(c.border).SetTitle(c.title)
 		if c.focus {
 			old.Focus(func(tview.Primitive) {})
-			in.Focus(func(tview.Primitive) {})
+			in.Focus(func(Primitive) {})
 		}
 		want, got := cellsOf(t, old, c.w, c.h), cellsOf(t, in, c.w, c.h)
 		for i := range want {
@@ -50,9 +50,9 @@ func TestNativeInputKeysAndCalls(t *testing.T) {
 	var changes []string
 	var done []kit.KeyCode
 	in.SetChangedFunc(func(s string) { changes = append(changes, s) }).SetDoneFunc(func(k kit.KeyCode) { done = append(done, k) })
-	in.Focus(func(tview.Primitive) {})
+	in.Focus(func(Primitive) {})
 	press := func(k kit.KeyCode, r rune) {
-		in.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
+		in.InputHandler()(tev(k, r, 0), func(Primitive) {})
 	}
 	for _, r := range "hut" {
 		press(kit.KeyRune, r)

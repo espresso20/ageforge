@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -77,7 +76,7 @@ func newExpeditionPanel() *expeditionPanel {
 // open is the overlay's build: it runs on every Show. The panel opens on
 // the Report while a party is out or one has come home since it was last
 // looked at, and on the Ready Room otherwise.
-func (p *expeditionPanel) open(state game.GameState) tview.Primitive {
+func (p *expeditionPanel) open(state game.GameState) Primitive {
 	mil := state.Military
 	p.state = state
 	p.view = expView{}
@@ -162,9 +161,6 @@ func (p *expeditionPanel) frame(motion bool) int {
 	}
 	return int(p.now().Sub(p.start) / (4 * mapAnimStep))
 }
-
-// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
-func (p *expeditionPanel) kitDrawn() {}
 
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *expeditionPanel) Draw(scr tcell.Screen) {

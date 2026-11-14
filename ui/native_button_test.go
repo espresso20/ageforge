@@ -21,7 +21,7 @@ func TestNativeButtonDrawsAsAButtonDid(t *testing.T) {
 		{name: "plain", label: "Close", w: 9},
 		{name: "plain with the focus", label: "Close", focus: true, w: 9},
 		{name: "wider than its label", label: "OK", w: 14},
-		{name: "escaped tag", label: tview.Escape("[E] ENDURE"), colored: true, fill: theme.RoleNegative, w: 14},
+		{name: "escaped tag", label: kit.Escape("[E] ENDURE"), colored: true, fill: theme.RoleNegative, w: 14},
 		{name: "colored with the focus", label: "[ OK ]", colored: true, fill: theme.RoleAccent, focus: true, w: 8},
 		{name: "chip", label: "Close", colored: true, fill: theme.RoleChip, w: 9},
 		{name: "chip with the focus", label: "Close", colored: true, fill: theme.RoleChip, focus: true, w: 9},
@@ -34,7 +34,7 @@ func TestNativeButtonDrawsAsAButtonDid(t *testing.T) {
 		}
 		if c.focus {
 			old.Focus(func(tview.Primitive) {})
-			nb.Focus(func(tview.Primitive) {})
+			nb.Focus(func(Primitive) {})
 		}
 		want, got := cellsOf(t, old, c.w, 1), cellsOf(t, nb, c.w, 1)
 		for i := range want {
@@ -51,7 +51,7 @@ func TestNativeButtonPressedByEnterAndAClick(t *testing.T) {
 	n := 0
 	b := newNativeButton("Go").SetSelectedFunc(func() { n++ })
 	key := func(k kit.KeyCode, r rune) {
-		b.InputHandler()(tev(k, r, 0), func(tview.Primitive) {})
+		b.InputHandler()(tev(k, r, 0), func(Primitive) {})
 	}
 	key(kit.KeyRune, ' ')
 	key(kit.KeyEsc, 0)

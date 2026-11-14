@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/rivo/tview"
 )
 
 // TestButtonRingMovesAndPresses: Tab and Shift-Tab go round the ring, a
@@ -12,14 +11,14 @@ import (
 // any other key is left for the caller.
 func TestButtonRingMovesAndPresses(t *testing.T) {
 	var pressed []string
-	var held tview.Primitive
-	ring := newButtonRing(tview.NewApplication(), func(p tview.Primitive) { held = p })
+	var held Primitive
+	ring := newButtonRing(newAppLoop(), func(p Primitive) { held = p })
 	for _, b := range []struct {
 		name   string
 		letter rune
 	}{{"first", 'f'}, {"second", 's'}, {"third", 0}} {
 		name := b.name
-		ring.add(tview.NewButton(name).SetSelectedFunc(func() { pressed = append(pressed, name) }), b.letter)
+		ring.add(newNativeButton(name).SetSelectedFunc(func() { pressed = append(pressed, name) }), b.letter)
 	}
 
 	key := func(k kit.KeyCode, r rune) bool { return ring.key(newKey(k, r, 0)) }

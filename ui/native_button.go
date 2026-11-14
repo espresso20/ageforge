@@ -4,8 +4,8 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -21,8 +21,8 @@ type nativeButton struct {
 // ground, inverted while it has the focus.
 func newNativeButton(label string) *nativeButton {
 	b := &nativeButton{btn: kit.NewButton(label, nil)}
-	b.btn.Style = styleOf(tview.Styles.PrimaryTextColor, tview.Styles.ContrastBackgroundColor)
-	b.btn.FocusStyle = styleOf(tview.Styles.InverseTextColor, tview.Styles.PrimaryTextColor)
+	b.btn.Style = kit.Style{Fg: kit.Role(theme.RoleText), Bg: kit.Role(theme.RoleSelection)}
+	b.btn.FocusStyle = kit.Style{Fg: kit.Role(theme.RoleBackground), Bg: kit.Role(theme.RoleText)}
 	b.nativeHost = newNativeHost(b)
 	b.SetRect(0, 0, kit.Width(label)+4, 1)
 	return b
@@ -51,8 +51,6 @@ func (b *nativeButton) SetLabelColor(c tcell.Color) *nativeButton {
 // draw overwrites the box ground with the style's, so the fill styleFilledButton
 // asks for has never shown at rest. The screens look as they did.
 func (b *nativeButton) SetBackgroundColor(tcell.Color) *nativeButton { return b }
-
-func (b *nativeButton) kitDrawn() {}
 
 func (b *nativeButton) Children() []kit.Widget { return []kit.Widget{b.btn} }
 

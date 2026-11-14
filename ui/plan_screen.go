@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The Workbench drawing: header, queue, detail pane and the lines at the
@@ -177,9 +176,9 @@ func planQueueLines(sc planScreen, width, rows int) []string {
 		when := planWhen(v, est)
 		if i == sc.sel {
 			marker = theme.Paint(theme.RoleAccent, "▸ ")
-			title = theme.Selected(tview.Escape(title))
+			title = theme.Selected(kit.Escape(title))
 		} else {
-			title = theme.Paint(theme.RoleText, tview.Escape(title))
+			title = theme.Paint(theme.RoleText, kit.Escape(title))
 		}
 		out = append(out, marker+title+" "+padVis(planStatusText(v), statusW)+" "+theme.Paint(theme.RoleDim, truncate(when, whenW)))
 	}
@@ -194,14 +193,14 @@ func planDetailLines(sc planScreen, width int) []string {
 		est = &sc.est.Items[sc.sel]
 	}
 	var out []string
-	head := theme.Paint(theme.RoleAccent, tview.Escape(planItemTitle(v))) + "  " + planStatusText(v)
+	head := theme.Paint(theme.RoleAccent, kit.Escape(planItemTitle(v))) + "  " + planStatusText(v)
 	if when := planWhen(v, est); when != "" {
 		head += theme.Paint(theme.RoleDim, "  ·  "+vibe.Line("ui.overlay_plan.planDetailLines.01", "starts ")+when)
 	}
 	out = append(out, head, "")
 	if v.Status == game.PlanStatusBlocked && v.Note != "" {
 		for _, l := range wrapWords(v.Note, width) {
-			out = append(out, theme.Paint(theme.RoleWarning, tview.Escape(l)))
+			out = append(out, theme.Paint(theme.RoleWarning, kit.Escape(l)))
 		}
 		out = append(out, "")
 	}
@@ -283,7 +282,7 @@ func planHoldingLine(sc planScreen, width int) []string {
 	}
 	var out []string
 	for _, l := range wrapWords(vibe.Line("ui.overlay_plan.planHoldingLine.02", "Holding back: ")+strings.Join(parts, "; "), width) {
-		out = append(out, theme.Paint(theme.RoleDim, tview.Escape(l)))
+		out = append(out, theme.Paint(theme.RoleDim, kit.Escape(l)))
 	}
 	return append(out, "")
 }
@@ -318,7 +317,7 @@ func planKindLines(sc planScreen, v game.PlanItemView, width int) []string {
 			case p.Done:
 				line += theme.Paint(theme.RolePositive, " "+vibe.Line("ui.overlay_plan.planKindLines.01", "done"))
 			case p.Blocker != "":
-				line += theme.Paint(theme.RoleDim, " "+tview.Escape(p.Blocker))
+				line += theme.Paint(theme.RoleDim, " "+kit.Escape(p.Blocker))
 				if p.Item > 0 {
 					line += theme.Paint(theme.RoleAccent, vibe.Sprintf("ui.overlay_plan.planKindLines.02", "  (item %d)", p.Item))
 				} else {
@@ -332,27 +331,27 @@ func planKindLines(sc planScreen, v game.PlanItemView, width int) []string {
 		out = append(out, theme.Paint(theme.RoleWarning, vibe.Line("ui.overlay_plan.planKindLines.05", "Deposit by hand: wonder bank")))
 	case v.Kind == game.PlanResearch:
 		if v.Holds != "" {
-			line := vibe.Line("ui.overlay_plan.planKindLines.06", "The research slot holds ") + tview.Escape(v.Holds)
+			line := vibe.Line("ui.overlay_plan.planKindLines.06", "The research slot holds ") + kit.Escape(v.Holds)
 			if v.Frees > 0 {
 				line += vibe.Line("ui.overlay_plan.planKindLines.07", "; it frees in ") + textfmt.Duration(v.Frees)
 			}
 			out = append(out, line)
 		}
 	case v.Kind == game.PlanExpedition:
-		out = append(out, vibe.Line("ui.overlay_plan.planKindLines.08", "Mission: ")+tview.Escape(v.Name))
+		out = append(out, vibe.Line("ui.overlay_plan.planKindLines.08", "Mission: ")+kit.Escape(v.Name))
 		if len(v.Cost) > 0 {
 			out = append(out, vibe.Line("ui.overlay_plan.planKindLines.09", "Price: ")+strings.ReplaceAll(planPriceWhole(v.Cost), glue, " "))
 		}
 		slot := vibe.Line("ui.overlay_plan.planKindLines.10", "Party: at home, free to go")
 		if v.Status == game.PlanStatusBlocked && v.Note != "" {
-			slot = vibe.Line("ui.overlay_plan.planKindLines.11", "Party: ") + tview.Escape(v.Note)
+			slot = vibe.Line("ui.overlay_plan.planKindLines.11", "Party: ") + kit.Escape(v.Note)
 		}
 		out = append(out, slot)
 	}
 	if len(out) > 0 {
 		// A note under the lines, for a status the table above does not say.
 		if v.Kind != game.PlanAdvance && v.Status != game.PlanStatusBlocked && v.Note != "" && v.When != game.PlanWhenHand {
-			out = append(out, theme.Paint(theme.RoleDim, tview.Escape(v.Note)))
+			out = append(out, theme.Paint(theme.RoleDim, kit.Escape(v.Note)))
 		}
 	}
 	if v.Kind == game.PlanBuild || v.Kind == game.PlanUpgrade {
@@ -383,5 +382,5 @@ func planFootLines(sc planScreen) []string {
 	} else if sc.clearArmed {
 		role = theme.RoleWarning
 	}
-	return []string{" " + theme.Paint(role, tview.Escape(sc.note)), ""}
+	return []string{" " + theme.Paint(role, kit.Escape(sc.note)), ""}
 }

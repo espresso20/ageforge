@@ -40,8 +40,6 @@ func newNativeInput() *nativeInput {
 	return f
 }
 
-func (f *nativeInput) kitDrawn() {}
-
 func (f *nativeInput) Children() []kit.Widget { return []kit.Widget{f.box} }
 
 func (f *nativeInput) Layout(r image.Rectangle) {
@@ -126,8 +124,8 @@ func (f *nativeInput) SetTitle(s string) *nativeInput {
 
 func (f *nativeInput) GetTitle() string { return f.box.Title }
 
-func (f *nativeInput) SetTitleAlign(align int) *nativeInput {
-	f.box.TitleAlign = kitAligns[align]
+func (f *nativeInput) SetTitleAlign(align kit.Align) *nativeInput {
+	f.box.TitleAlign = align
 	return f
 }
 

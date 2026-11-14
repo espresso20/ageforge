@@ -30,23 +30,24 @@ func TestNativeDialogDrawsAsAModalDid(t *testing.T) {
 		for _, size := range [][2]int{{80, 24}, {50, 15}, {30, 9}} {
 			var frames [2]frame
 			for i := range frames {
-				app := tview.NewApplication()
-				var p tview.Primitive
+				var p drawable
 				if i == 0 {
 					m := tview.NewModal().SetText(c.text).AddButtons(c.buttons)
 					if c.danger {
 						m.SetBackgroundColor(theme.Color(theme.RoleNegative))
 						m.SetTextColor(theme.Color(theme.RoleOnNegative))
 					}
+					tview.NewApplication().SetFocus(m)
 					p = m
 				} else {
+					app := newAppLoop()
 					d := newNativeDialog(app).SetText(c.text).AddButtons(c.buttons)
 					if c.danger {
 						styleDangerModal(d)
 					}
+					app.SetFocus(d)
 					p = d
 				}
-				app.SetFocus(p)
 				frames[i] = drawWrapped(t, p, size[0], size[1], 2)
 			}
 			old, now := frames[0], frames[1]
@@ -67,7 +68,7 @@ func TestNativeDialogDrawsAsAModalDid(t *testing.T) {
 // click presses a button too.
 func TestNativeDialogKeysAndMouse(t *testing.T) {
 	keepTheme(t)
-	app := tview.NewApplication()
+	app := newAppLoop()
 	var got []int
 	d := newNativeDialog(app).SetText("Delete?").AddButtons([]string{"Cancel", "Delete", "Later"}).
 		SetDoneFunc(func(i int, _ string) { got = append(got, i) })
@@ -80,7 +81,7 @@ func TestNativeDialogKeysAndMouse(t *testing.T) {
 		scr.Show()
 	}
 	draw()
-	press := func(code kit.KeyCode) { d.InputHandler()(tev(code, 0, 0), func(tview.Primitive) {}) }
+	press := func(code kit.KeyCode) { d.InputHandler()(tev(code, 0, 0), func(Primitive) {}) }
 	on := func() int {
 		for i, b := range d.buttons {
 			if b.HasFocus() {

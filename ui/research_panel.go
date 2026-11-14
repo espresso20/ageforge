@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -58,7 +57,7 @@ func newResearchPanel() *researchPanel {
 }
 
 // open is the overlay's build: it runs on every Show.
-func (p *researchPanel) open(state game.GameState) tview.Primitive {
+func (p *researchPanel) open(state game.GameState) Primitive {
 	p.update(state)
 	return overBar(p)
 }
@@ -123,9 +122,6 @@ func (m *treeModel) home() string {
 	}
 	return ""
 }
-
-// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
-func (p *researchPanel) kitDrawn() {}
 
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *researchPanel) Draw(scr tcell.Screen) {

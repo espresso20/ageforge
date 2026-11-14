@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -32,7 +30,7 @@ func planOptimizeText(res game.PlanOptimizeResult) string {
 				fmt.Fprint(&sb, vibe.Sprintf("ui.plan_optimize.planOptimizeText.03", "  and %d more", len(res.Order)-planOptimizeShown))
 				break
 			}
-			fmt.Fprintf(&sb, "  %d. %s\n", i+1, tview.Escape(label))
+			fmt.Fprintf(&sb, "  %d. %s\n", i+1, kit.Escape(label))
 		}
 	} else {
 		sb.WriteString(vibe.Line("ui.plan_optimize.planOptimizeText.04", "The plan is already in the fastest order I could find, so I left it alone."))
@@ -110,12 +108,12 @@ func planOptimizePopup(sc planScreen, room int) []string {
 			old = sc.opt.Previous[i]
 		}
 		mark := "  "
-		right := tview.Escape(sc.opt.Order[i])
+		right := kit.Escape(sc.opt.Order[i])
 		if i < len(sc.opt.Moved) && sc.opt.Moved[i] {
 			mark = theme.Paint(theme.RoleHighlight, "* ")
 			right = theme.Paint(theme.RoleHighlight, right)
 		}
-		out = append(out, pad+padVis(fmt.Sprintf("%2d. %s", i+1, truncate(tview.Escape(old), half-6)), half)+mark+right)
+		out = append(out, pad+padVis(fmt.Sprintf("%2d. %s", i+1, truncate(kit.Escape(old), half-6)), half)+mark+right)
 	}
 	if n > shown {
 		out = append(out, pad+theme.Paint(theme.RoleDim, vibe.Sprintf("ui.plan_optimize.planOptimizePopup.08", "and %d more", n-shown)))

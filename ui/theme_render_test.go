@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -52,7 +51,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 
 	// The prompt with ghost text: "adv" typed, "ance" drawn dim after it.
 	d.inputField.SetText("adv")
-	d.inputField.Focus(func(tview.Primitive) {})
+	d.inputField.Focus(func(Primitive) {})
 	out["dashboard_ghost"] = draw()
 	if !d.inputField.in.AtEnd() || d.inputField.Ghost() != "ance" {
 		t.Fatalf("no ghost text drawn for %q (at end %v, ghost %q)", "adv", d.inputField.in.AtEnd(), d.inputField.Ghost())

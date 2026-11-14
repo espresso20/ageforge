@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -382,11 +381,11 @@ func TestMapKeepsThePromptFocused(t *testing.T) {
 		t.Errorf("the window closing gave the keyboard to %T, not the prompt", d.app.GetFocus())
 	}
 	d.app.SetFocus(d.mapPanel)
-	d.mapPanel.InputHandler()(tcellKey(*key('b')), func(tview.Primitive) {})
+	d.mapPanel.InputHandler()(tcellKey(*key('b')), func(Primitive) {})
 	if d.app.GetFocus() != d.inputField || d.inputField.GetText() != "b" {
 		t.Errorf("a letter typed with the map focused: focus %T, prompt %q", d.app.GetFocus(), d.inputField.GetText())
 	}
-	d.mapPanel.InputHandler()(tev(kit.KeyPgUp, 0, 0), func(tview.Primitive) {})
+	d.mapPanel.InputHandler()(tev(kit.KeyPgUp, 0, 0), func(Primitive) {})
 	if d.inputField.GetText() != "b" {
 		t.Errorf("PgUp reached the prompt: %q", d.inputField.GetText())
 	}

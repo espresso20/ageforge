@@ -6,8 +6,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -312,7 +310,7 @@ func planListText(state game.GameState) string {
 		if when := planWhen(v, nil); when != "" && v.Status != game.PlanStatusBlocked {
 			status += "  ·  " + vibe.Line("ui.overlay_plan.planListText.06", "starts ") + when
 		}
-		fmt.Fprintf(&sb, "  %d. %s  %s\n", i+1, tview.Escape(planItemTitle(v)), theme.Paint(theme.RoleDim, status))
+		fmt.Fprintf(&sb, "  %d. %s  %s\n", i+1, kit.Escape(planItemTitle(v)), theme.Paint(theme.RoleDim, status))
 	}
 	return strings.TrimRight(sb.String(), "\n")
 }

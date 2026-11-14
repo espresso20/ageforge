@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/nerdfont"
@@ -223,14 +221,14 @@ func (b iconsButton) caption() string {
 	if b.key != 0 {
 		k = strings.ToUpper(string(b.key))
 	}
-	return tview.Escape("[" + k + "] " + b.label)
+	return kit.Escape("[" + k + "] " + b.label)
 }
 
 // view is the window's text and buttons at the current stage.
 func (f *iconsFlow) view() (string, []iconsButton) {
 	closeBtn := iconsButton{label: vibe.Line("ui.icons.view.01", "Close"), fill: theme.RoleChip, press: f.close}
 	para := func(sb *strings.Builder, role theme.Role, s string) {
-		sb.WriteString(theme.Paint(role, tview.Escape(s)) + "\n")
+		sb.WriteString(theme.Paint(role, kit.Escape(s)) + "\n")
 	}
 	var sb strings.Builder
 	switch f.stage {
@@ -271,7 +269,7 @@ func (f *iconsFlow) view() (string, []iconsButton) {
 		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.19", "Installing JetBrains Mono Nerd Font ")+nerdfont.Version+vibe.Line("ui.icons.view.20", " for your user. You can close this window and keep playing: type icons to look in again."))
 		sb.WriteString("\n")
 		for _, p := range f.progress {
-			sb.WriteString("  " + theme.Paint(theme.RoleDim, tview.Escape(p)) + "\n")
+			sb.WriteString("  " + theme.Paint(theme.RoleDim, kit.Escape(p)) + "\n")
 		}
 		if len(f.progress) == 0 {
 			sb.WriteString("  " + theme.Paint(theme.RoleDim, vibe.Line("ui.icons.view.21", "Starting...")) + "\n")
@@ -306,9 +304,9 @@ func (f *iconsFlow) view() (string, []iconsButton) {
 func (f *iconsFlow) stepsText() string {
 	name, steps := terminalFontSteps(f.environ(), f.goos)
 	var sb strings.Builder
-	sb.WriteString(theme.Paint(theme.RoleAccent, tview.Escape(vibe.Line("ui.icons.stepsText.01", "In ")+name+":")) + "\n")
+	sb.WriteString(theme.Paint(theme.RoleAccent, kit.Escape(vibe.Line("ui.icons.stepsText.01", "In ")+name+":")) + "\n")
 	for i, s := range steps {
-		sb.WriteString("  " + strconv.Itoa(i+1) + ". " + tview.Escape(s) + "\n")
+		sb.WriteString("  " + strconv.Itoa(i+1) + ". " + kit.Escape(s) + "\n")
 	}
 	return sb.String()
 }
@@ -430,8 +428,8 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 	w := &iconsWindow{ring: newButtonRing(d.app, nil)}
 	w.body = newNativeText().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 	w.body.SetTextColor(theme.Color(theme.RoleText)).SetBackgroundColor(theme.Color(theme.RoleSurface))
-	w.btnRow = newNativeFlex().SetDirection(tview.FlexColumn)
-	hint := surfaceText(theme.Paint(theme.RoleDim, vibe.Line("ui.icons.newIconsWindow.01", "Tab moves between buttons · Enter presses · Esc closes")), tview.AlignCenter)
+	w.btnRow = newNativeFlex().SetDirection(flexColumn)
+	hint := surfaceText(theme.Paint(theme.RoleDim, vibe.Line("ui.icons.newIconsWindow.01", "Tab moves between buttons · Enter presses · Esc closes")), kit.AlignCenter)
 	// A Flex paints nothing of its own, so the margins beside the text are
 	// surface boxes: every cell inside the border belongs to something that
 	// clears it, or the dashboard shows through.
@@ -439,7 +437,7 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(w.body, 0, 1, false).
 		AddItem(surfaceBox(), 1, 0, false)
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(bodyRow, 0, 1, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(w.btnRow, 1, 0, true).
@@ -478,7 +476,7 @@ func (d *Dashboard) refreshIconsWindow() {
 		if i > 0 {
 			w.btnRow.AddItem(surfaceBox(), 2, 0, false)
 		}
-		w.btnRow.AddItem(b, tview.TaggedStringWidth(k.caption())+4, 0, i == 0)
+		w.btnRow.AddItem(b, kit.Width(k.caption())+4, 0, i == 0)
 		w.ring.add(b, k.key)
 	}
 	w.btnRow.AddItem(surfaceBox(), 0, 1, false)

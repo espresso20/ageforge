@@ -38,7 +38,7 @@ func TestNativeFlexSharesRoomAsTviewDoes(t *testing.T) {
 					old, now := tview.NewFlex(), newNativeFlex()
 					if down {
 						old.SetDirection(tview.FlexRow)
-						now.SetDirection(tview.FlexRow)
+						now.SetDirection(flexRow)
 					}
 					old.SetBorder(border)
 					now.SetBorder(border)
@@ -73,10 +73,26 @@ func TestNativeFlexSharesRoomAsTviewDoes(t *testing.T) {
 	}
 }
 
+// A tvShim puts one of the game's primitives in a tview layout, for the
+// tests that compare a page on nativeFlex with the same page on tview's Flex.
+type tvShim struct {
+	*tview.Box
+	p Primitive
+}
+
+func shim(p Primitive) *tvShim { return &tvShim{Box: tview.NewBox(), p: p} }
+
+func (s *tvShim) Draw(scr tcell.Screen) {
+	s.p.SetRect(s.GetRect())
+	s.p.Draw(scr)
+}
+
+func (s *tvShim) HasFocus() bool { return s.p.HasFocus() }
+
 // treePage is a small page built twice over the same kind of children: on
 // tview's Flex, each child drawing itself, and on nativeFlex, one tree.
 type treePage struct {
-	page  tview.Primitive
+	page  drawable
 	list  *nativeList
 	text  *nativeText
 	input *nativeInput
@@ -91,20 +107,20 @@ func newTreePage(native bool) *treePage {
 	p.text.SetDynamicColors(true).SetText(strings.Repeat("[yellow]one[-] two three four five six seven\n", 30))
 	p.text.SetBorder(true)
 	p.input.SetLabel("> ").SetText("build hut")
-	title := surfaceText("A page", tview.AlignCenter)
+	title := surfaceText("A page", kit.AlignCenter)
 	if native {
 		body := newNativeFlex().AddItem(p.list, 0, 1, true).AddItem(p.text, 0, 2, false)
 		body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder)).
 			SetBackgroundColor(theme.Color(theme.RoleNegative))
-		p.page = newNativeFlex().SetDirection(tview.FlexRow).
+		p.page = newNativeFlex().SetDirection(flexRow).
 			AddItem(title, 1, 0, false).AddItem(body, 0, 1, true).AddItem(newNativeBox(), 1, 0, false).AddItem(p.input, 1, 0, false)
 		return p
 	}
-	body := tview.NewFlex().AddItem(p.list, 0, 1, true).AddItem(p.text, 0, 2, false)
+	body := tview.NewFlex().AddItem(shim(p.list), 0, 1, true).AddItem(shim(p.text), 0, 2, false)
 	body.SetBorder(true).SetTitle(" Body ").SetTitleColor(theme.Color(theme.RoleAccent)).SetBorderColor(theme.Color(theme.RoleBorder)).
 		SetBackgroundColor(theme.Color(theme.RoleNegative))
 	p.page = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(title, 1, 0, false).AddItem(body, 0, 1, true).AddItem(tview.NewBox(), 1, 0, false).AddItem(p.input, 1, 0, false)
+		AddItem(shim(title), 1, 0, false).AddItem(body, 0, 1, true).AddItem(tview.NewBox(), 1, 0, false).AddItem(shim(p.input), 1, 0, false)
 	return p
 }
 
@@ -141,7 +157,7 @@ func TestAFlexPageDrawsAsItDidOnTview(t *testing.T) {
 func TestAFlexPageRoutesFocusAndKeys(t *testing.T) {
 	keepTheme(t)
 	p := newTreePage(true)
-	app := tview.NewApplication()
+	app := newAppLoop()
 	page := p.page.(*nativeFlex)
 	app.SetFocus(page)
 	if app.GetFocus() != p.list || !page.HasFocus() || !p.list.HasFocus() || p.input.HasFocus() {
@@ -164,7 +180,7 @@ func TestAFlexPageRoutesFocusAndKeys(t *testing.T) {
 		}
 		return k
 	})
-	press := func(code kit.KeyCode, r rune) { page.InputHandler()(tev(code, r, 0), func(tview.Primitive) {}) }
+	press := func(code kit.KeyCode, r rune) { page.InputHandler()(tev(code, r, 0), func(Primitive) {}) }
 
 	press(kit.KeyDown, 0)
 	if got := strings.Join(seen, " "); got != "page list" || p.list.GetCurrentItem() != 1 {
@@ -195,7 +211,7 @@ func TestAFlexPageRoutesFocusAndKeys(t *testing.T) {
 	heard := 0
 	bare.SetInputCapture(func(k *kit.Key) *kit.Key { heard++; return k })
 	app.SetFocus(bare)
-	bare.InputHandler()(tev(kit.KeyEnter, 0, 0), func(tview.Primitive) {})
+	bare.InputHandler()(tev(kit.KeyEnter, 0, 0), func(Primitive) {})
 	if app.GetFocus() != bare || heard != 1 {
 		t.Errorf("a flex with no focus item: focus on %T, capture heard %d keys", app.GetFocus(), heard)
 	}
@@ -207,7 +223,7 @@ func TestAFlexPageShowsTheCursorOfItsInput(t *testing.T) {
 	keepTheme(t)
 	sim := newSimScreen(t, 50, 14)
 	p := newTreePage(true)
-	app := tview.NewApplication()
+	app := newAppLoop()
 	draw := func() (int, int, bool) {
 		sim.HideCursor()
 		p.page.SetRect(0, 0, 50, 14)
@@ -284,52 +300,5 @@ func TestAFlexLeavesItsGapsToThePageBeneath(t *testing.T) {
 		if scr.hostAt(15, 4) != window.nativeHost {
 			t.Errorf("clear %v: the window's own cells are not its own", clear)
 		}
-	}
-}
-
-// oldBox is a primitive that still draws itself on the screen.
-type oldBox struct {
-	*tview.Box
-	keys int
-}
-
-func (o *oldBox) Draw(scr tcell.Screen) {
-	x, y, w, h := o.GetRect()
-	for cy := y; cy < y+h; cy++ {
-		for cx := x; cx < x+w; cx++ {
-			scr.SetContent(cx, cy, 'F', nil, tcell.StyleDefault)
-		}
-	}
-}
-
-func (o *oldBox) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return func(*tcell.EventKey, func(tview.Primitive)) { o.keys++ }
-}
-
-// A child that still draws itself keeps its place in the layout, is drawn
-// there, and gets the keys when tview has given it the focus.
-func TestAFlexKeepsAPrimitiveThatDrawsItself(t *testing.T) {
-	keepTheme(t)
-	old := &oldBox{Box: tview.NewBox()}
-	list := newNativeList()
-	list.AddItem("one", "", 0, nil).AddItem("two", "", 0, nil)
-	page := newNativeFlex().AddItem(list, 10, 0, true).AddItem(old, 0, 1, false)
-	f := drawWrapped(t, page, 30, 4, 1)
-	if x, y, w, h := old.GetRect(); [4]int{x, y, w, h} != [4]int{10, 0, 20, 4} {
-		t.Fatalf("the old primitive was placed at %v", [4]int{x, y, w, h})
-	}
-	if f.Rune(9, 1) == 'F' || f.Rune(10, 1) != 'F' || f.Rune(29, 3) != 'F' {
-		t.Errorf("the old primitive was not drawn in its place:\n%s", f.Text())
-	}
-	app := tview.NewApplication()
-	app.SetFocus(page)
-	page.InputHandler()(tev(kit.KeyDown, 0, 0), func(tview.Primitive) {})
-	if old.keys != 0 || list.GetCurrentItem() != 1 {
-		t.Errorf("with the list focused: the old primitive heard %d keys, list on row %d", old.keys, list.GetCurrentItem())
-	}
-	app.SetFocus(old)
-	page.InputHandler()(tev(kit.KeyDown, 0, 0), func(tview.Primitive) {})
-	if old.keys != 1 || list.GetCurrentItem() != 1 || !page.HasFocus() {
-		t.Errorf("with the old primitive focused: it heard %d keys, list on row %d", old.keys, list.GetCurrentItem())
 	}
 }

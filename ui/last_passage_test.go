@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
@@ -46,7 +44,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 
 	// Esc hides it; the next refresh does not re-pop it; the badge stays.
 	_, front := pages.GetFrontPage()
-	front.InputHandler()(tev(kit.KeyEsc, 0, 0), func(tview.Primitive) {})
+	front.InputHandler()(tev(kit.KeyEsc, 0, 0), func(Primitive) {})
 	if pages.HasPage(catastrophePage) {
 		t.Fatal("Esc did not close the modal")
 	}
@@ -72,7 +70,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 
 	// E endures: prestige completes and the modal is gone.
 	_, front = pages.GetFrontPage()
-	front.InputHandler()(tev(kit.KeyRune, 'e', 0), func(tview.Primitive) {})
+	front.InputHandler()(tev(kit.KeyRune, 'e', 0), func(Primitive) {})
 	st := engine.GetState()
 	if st.LastPassage.Pending || st.Prestige.Level != 1 || st.Age != "primitive_age" {
 		t.Fatalf("after E: pending %v level %d age %s", st.LastPassage.Pending, st.Prestige.Level, st.Age)
@@ -96,12 +94,12 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 		t.Error("offers the legacy the player already holds")
 	}
 	_, front := pages.GetFrontPage()
-	front.InputHandler()(tev(kit.KeyRune, 's', 0), func(tview.Primitive) {})
+	front.InputHandler()(tev(kit.KeyRune, 's', 0), func(Primitive) {})
 	if !engine.GetState().LastPassage.Pending || !pages.HasPage(catastrophePage) {
 		t.Fatal("S acted on a closed Succumb")
 	}
-	front.InputHandler()(tev(kit.KeyTab, 0, 0), func(tview.Primitive) {})
-	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != tview.Escape("[E] ENDURE") {
+	front.InputHandler()(tev(kit.KeyTab, 0, 0), func(Primitive) {})
+	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != kit.Escape("[E] ENDURE") {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}
 }
@@ -117,7 +115,7 @@ func TestLastPassageModalLayoutFitsWidth(t *testing.T) {
 			for _, block := range []string{l.header, l.endure, l.succumb, l.hint} {
 				for _, line := range strings.Split(block, "\n") {
 					rows++
-					if w := tview.TaggedStringWidth(line); w > inner {
+					if w := kit.Width(line); w > inner {
 						t.Errorf("brace %d legacy %v: %q is %d cells, box interior is %d", brace, legacy, line, w, inner)
 					}
 				}

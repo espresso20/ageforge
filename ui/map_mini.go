@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -114,8 +113,6 @@ func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 	cv.Text(1, 0, w-2, title, accent)
 }
 
-func (m *miniMap) kitDrawn() {}
-
 func (m *miniMap) Layout(r image.Rectangle) { m.Place(r) }
 
 // Paint draws the border and the compact view inside it. The map still
@@ -145,7 +142,7 @@ func (m *miniMap) Paint(p *kit.Painter) {
 type mapDock struct {
 	*nativeGroup
 	mini *miniMap
-	body tview.Primitive
+	body Primitive
 	// off is the minimap setting turned off: the body gets the column. The
 	// dashboard sets this from the account's setting on every refresh.
 	off bool
@@ -154,7 +151,7 @@ type mapDock struct {
 	shown, drawn bool
 }
 
-func newMapDock(mini *miniMap, body tview.Primitive) *mapDock {
+func newMapDock(mini *miniMap, body Primitive) *mapDock {
 	d := &mapDock{mini: mini, body: body}
 	d.nativeGroup = newNativeGroup(d.arrange)
 	return d
@@ -180,6 +177,6 @@ func (d *mapDock) arrange(x, y, w, h int) {
 }
 
 // Focus and input go to the body; the mini map takes no keys.
-func (d *mapDock) Focus(delegate func(p tview.Primitive)) { delegate(d.body) }
+func (d *mapDock) Focus(delegate func(p Primitive)) { delegate(d.body) }
 
 func (d *mapDock) HasFocus() bool { return d.body.HasFocus() }

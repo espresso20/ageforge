@@ -4,8 +4,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
@@ -169,7 +167,7 @@ func (p *planPanel) add(engine *game.GameEngine, pick planPick) {
 
 // planAddLines is the name box and what the name fits so far.
 func planAddLines(sc planScreen) []string {
-	box := " " + theme.Paint(theme.RoleAccent, vibe.Line("ui.plan_add.planAddLines.01", "Add: ")) + tview.Escape(sc.input) + theme.Paint(theme.RoleHighlight, "▏")
+	box := " " + theme.Paint(theme.RoleAccent, vibe.Line("ui.plan_add.planAddLines.01", "Add: ")) + kit.Escape(sc.input) + theme.Paint(theme.RoleHighlight, "▏")
 	hint := vibe.Line("ui.plan_add.planAddLines.02", "type a building, tech or mission   Enter add below   Esc cancel")
 	if sc.input != "" {
 		fits := planPicks(sc.state, nil, sc.input)
@@ -187,14 +185,14 @@ func planAddLines(sc planScreen) []string {
 			hint = vibe.Line("ui.plan_add.planAddLines.03", "no match")
 		}
 	}
-	return []string{box, " " + theme.Paint(theme.RoleDim, tview.Escape(hint))}
+	return []string{box, " " + theme.Paint(theme.RoleDim, kit.Escape(hint))}
 }
 
 // planPickLines is the choice when the name fits several items.
 func planPickLines(sc planScreen) []string {
 	var parts []string
 	for i, f := range sc.picks {
-		item := tview.Escape(f.label) + " (" + planKindWord(f.kind) + ")"
+		item := kit.Escape(f.label) + " (" + planKindWord(f.kind) + ")"
 		if i == sc.pickSel {
 			item = theme.Selected(" " + item + " ")
 		}

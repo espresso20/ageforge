@@ -4,8 +4,8 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -17,7 +17,7 @@ import (
 type nativeDialog struct {
 	*nativeHost
 	kit.Base
-	app     *tview.Application
+	app     *appLoop
 	text    string
 	labels  []string
 	buttons []*nativeButton
@@ -32,13 +32,11 @@ type nativeDialog struct {
 
 // newNativeDialog is an empty dialog as tview makes one: on the contrast
 // ground, in the theme's text color.
-func newNativeDialog(app *tview.Application) *nativeDialog {
-	d := &nativeDialog{app: app, ground: kitColor(tview.Styles.ContrastBackgroundColor), ink: kitColor(tview.Styles.PrimaryTextColor)}
+func newNativeDialog(app *appLoop) *nativeDialog {
+	d := &nativeDialog{app: app, ground: kit.Role(theme.RoleSelection), ink: kit.Role(theme.RoleText)}
 	d.nativeHost = newNativeHost(d)
 	return d
 }
-
-func (d *nativeDialog) kitDrawn() {}
 
 func (d *nativeDialog) SetText(s string) *nativeDialog {
 	d.text = s
@@ -50,8 +48,8 @@ func (d *nativeDialog) SetText(s string) *nativeDialog {
 func (d *nativeDialog) AddButtons(labels []string) *nativeDialog {
 	for _, label := range labels {
 		i, b := len(d.buttons), newNativeButton(label)
-		b.btn.Style = styleOf(tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor)
-		b.btn.FocusStyle = styleOf(tview.Styles.PrimitiveBackgroundColor, tview.Styles.PrimaryTextColor)
+		b.btn.Style = kit.Style{Fg: kit.Role(theme.RoleText), Bg: kit.Role(theme.RoleBackground)}
+		b.btn.FocusStyle = kit.Style{Fg: kit.Role(theme.RoleBackground), Bg: kit.Role(theme.RoleText)}
 		b.SetSelectedFunc(func() {
 			if d.done != nil {
 				d.done(i, label)
@@ -128,9 +126,9 @@ func (d *nativeDialog) Paint(p *kit.Painter) {
 	}
 	// The border keeps the contrast ground whatever the dialog's own is, as
 	// the Modal's did: only the inside takes SetBackgroundColor.
-	p.Fill(d.box, kitColor(tview.Styles.ContrastBackgroundColor))
+	p.Fill(d.box, kit.Role(theme.RoleSelection))
 	p.Fill(d.box.Inset(1), d.ground)
-	p.Box(d.box, focusBorder(true, d.HasFocus()), kit.Style{Fg: kitColor(tview.Styles.BorderColor)})
+	p.Box(d.box, focusBorder(true, d.HasFocus()), kit.Style{Fg: kit.Role(theme.RoleBorder)})
 	for i, line := range d.lines {
 		p.PrintAligned(d.box.Min.X+2, d.box.Min.Y+2+i, d.box.Dx()-4, line, kit.Style{Fg: d.ink}, kit.AlignCenter)
 	}
@@ -171,9 +169,9 @@ func (d *nativeDialog) move(by int) {
 }
 
 // Focus gives the keyboard to the button it was last on.
-func (d *nativeDialog) Focus(delegate func(p tview.Primitive)) {
+func (d *nativeDialog) Focus(delegate func(p Primitive)) {
 	if len(d.buttons) == 0 {
-		d.Box.Focus(delegate)
+		d.primBase.Focus(delegate)
 		return
 	}
 	delegate(d.buttons[d.at])
@@ -186,5 +184,5 @@ func (d *nativeDialog) HasFocus() bool {
 			return true
 		}
 	}
-	return d.Box.HasFocus()
+	return d.primBase.HasFocus()
 }

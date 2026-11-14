@@ -5,10 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // armyGarrison is a Classical Age garrison: 2,000 soldiers, defense 4,000,
@@ -153,7 +152,7 @@ func TestCatastropheModal_DefenseLinesFit(t *testing.T) {
 	} {
 		l := buildCatastropheModalLayout("steel_era", false, 0, o, game.GameState{})
 		for _, line := range strings.Split(l.endure, "\n") {
-			if w := tview.TaggedStringWidth(line); w > inner {
+			if w := kit.Width(line); w > inner {
 				t.Errorf("line %q is %d cells, box interior is %d", line, w, inner)
 			}
 		}

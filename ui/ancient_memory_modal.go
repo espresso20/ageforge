@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/rivo/tview"
 )
 
 // ancientMemoryPage is the tview page name for the Ancient Memory offer overlay.
@@ -31,7 +30,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 
 	header := newNativeText().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
+		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.01", "[gray]You have discovered an old cache. It appears to contain\n"+
 			"memories of a now-extinct civilization.[-]"))
 
@@ -58,12 +57,12 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 			d.closeAncientMemoryModal()
 		})
 
-	btnRow := newNativeFlex().SetDirection(tview.FlexColumn).
+	btnRow := newNativeFlex().SetDirection(flexColumn).
 		AddItem(btnAccept, 12, 0, true).
 		AddItem(newNativeBox(), 2, 0, false).
 		AddItem(btnDecline, 12, 0, false)
 
-	inner := newNativeFlex().SetDirection(tview.FlexRow).
+	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(header, 3, 0, false).
 		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(body, 7, 0, false).
@@ -74,7 +73,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	modal := centeredModal(inner, 64, 17)
 
 	// Tab/arrows cycle the buttons; a/d are shortcuts for Accept/Decline.
-	ring := newButtonRing(d.app, func(p tview.Primitive) { d.memFocus = p })
+	ring := newButtonRing(d.app, func(p Primitive) { d.memFocus = p })
 	ring.add(btnAccept, 'a')
 	ring.add(btnDecline, 'd')
 	modal.SetInputCapture(func(event *kit.Key) *kit.Key {

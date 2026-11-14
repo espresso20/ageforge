@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
@@ -86,8 +85,6 @@ func panelTextRect(r image.Rectangle) image.Rectangle {
 	return image.Rect(r.Min.X+panelPadX, r.Min.Y+1, r.Min.X+panelPadX+tw, r.Min.Y+1+th)
 }
 
-func (f *panelFrame) kitDrawn() {}
-
 // Children: the text view is the frame's child.
 func (f *panelFrame) Children() []kit.Widget { return []kit.Widget{f.tv} }
 
@@ -129,12 +126,12 @@ func (f *panelFrame) Paint(p *kit.Painter) {
 }
 
 // Focus gives the keyboard to the text.
-func (f *panelFrame) Focus(delegate func(p tview.Primitive)) { delegate(f.tv) }
+func (f *panelFrame) Focus(delegate func(p Primitive)) { delegate(f.tv) }
 
 // HasFocus reports whether the text holds the keyboard.
 func (f *panelFrame) HasFocus() bool { return f.tv.HasFocus() }
 
 // InputHandler is the text's.
-func (f *panelFrame) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
+func (f *panelFrame) InputHandler() func(*tcell.EventKey, func(Primitive)) {
 	return f.tv.InputHandler()
 }

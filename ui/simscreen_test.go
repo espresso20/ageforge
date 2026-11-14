@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -41,7 +40,7 @@ func simCells(sim tcell.SimulationScreen) frame {
 }
 
 // drawPrimitive draws p over a fresh w×h screen and returns what it showed.
-func drawPrimitive(t testing.TB, p tview.Primitive, w, h int) frame {
+func drawPrimitive(t testing.TB, p drawable, w, h int) frame {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
 	must(t, sim.Init())
@@ -56,7 +55,7 @@ func drawPrimitive(t testing.TB, p tview.Primitive, w, h int) frame {
 // drawWrapped draws p on a fresh w×h screen through theme.WrapScreen, as the
 // app does, passes times (the first gives every box its size, the next ones
 // lay out what depends on it) and returns what the last showed.
-func drawWrapped(t testing.TB, p tview.Primitive, w, h, passes int) frame {
+func drawWrapped(t testing.TB, p drawable, w, h, passes int) frame {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
 	must(t, sim.Init())
@@ -115,7 +114,7 @@ func newTestDashboard(eng *game.GameEngine) (*Dashboard, *nativePages) {
 		eng = game.NewGameEngine()
 	}
 	pages := newNativePages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
+	d := NewDashboard(newAppLoop(), eng, pages)
 	pages.AddPage("dashboard", d.Root(), true, true)
 	return d, pages
 }
