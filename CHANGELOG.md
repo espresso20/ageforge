@@ -59,6 +59,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- The dashboard's mini map is a square box under the Panels list. It is no longer a strip above the Buildings list, which now has the whole middle column. In a window too small for it, the mini map is not shown.
 - The map keeps its own colours in every theme. A light theme or a one-ink theme no longer redraws it; the words and the frame around it still follow the theme.
 - In the Research panel, one click on a tech opens its card. It used to take a double click, and a single click looked like nothing had happened.
 - The Windows download no longer opens an empty console window beside the game. `ageforge.exe --version` prints nothing there as a result.

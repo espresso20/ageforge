@@ -90,7 +90,7 @@ func TestClicksOnTheDashboardsBoxes(t *testing.T) {
 		return name
 	}
 	st := newStage(pages, playtestCols, playtestRows)
-	if !d.mapDock.shown {
+	if !d.body.miniShown {
 		t.Fatal("staging: the mini map does not show on the playtest's screen")
 	}
 	for _, c := range []struct {
