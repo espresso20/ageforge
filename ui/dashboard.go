@@ -665,7 +665,14 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 
 // panelLink is a panel's name as the Panels list shows it, in a region named
 // for the panel: a click on it opens the panel.
-func panelLink(name, shown string) string { return `["` + name + `"]` + shown + `[""]` }
+func panelLink(name, shown string) string { return clickRegion(name, shown) }
+
+// clickRegion is shown in a click region called name: a click on it tells
+// the box's OnRegion the name.
+func clickRegion(name, shown string) string { return `["` + name + `"]` + shown + `[""]` }
+
+// buildLine is the command line that builds one of a building.
+func buildLine(key string) string { return "build " + key }
 
 // sidebarPanels is the Panels list, in order.
 var sidebarPanels = []string{"milestones", "badges", "research", "plan", "charter", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
