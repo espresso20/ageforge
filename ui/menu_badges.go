@@ -38,6 +38,7 @@ func (b *menuBadges) Key(k kit.Key) bool {
 // returnPage when it is closed.
 func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) {
 	p := newBadgePanel()
+	p.buttons.press = app.Key
 	p.settings = func() mapSettings { return resolveMapSettings(engine.Account()) }
 	// The case reads a snapshot's account part and nothing else of it.
 	st := game.GameState{}
@@ -47,7 +48,7 @@ func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, r
 	}
 	p.update(st)
 
-	// A badge that moves is redrawn at the map's rate while the case is open.
+	// A coin in its show is redrawn at the coins' rate while the case is open.
 	stop := make(chan struct{})
 	b := &menuBadges{badgePanel: p}
 	b.close = func() {
@@ -61,7 +62,7 @@ func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, r
 	}
 	if p.motion {
 		go func() {
-			tk := time.NewTicker(mapAnimStep)
+			tk := time.NewTicker(coinStep)
 			defer tk.Stop()
 			for {
 				select {

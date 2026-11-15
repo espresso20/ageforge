@@ -212,6 +212,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.badgePanel.settings = d.mapSettings
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
+	d.badgePanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
 	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
@@ -784,8 +785,12 @@ func (d *Dashboard) StartUpdates() {
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
-		anim := time.NewTicker(mapAnimStep)
+		// The animation ticker runs at the rate of the badge case's coins,
+		// twice the rate of everything else that moves, which redraws on
+		// every other tick.
+		anim := time.NewTicker(coinStep)
 		defer anim.Stop()
+		other := false
 		for {
 			select {
 			case <-ticker.C:
@@ -797,7 +802,8 @@ func (d *Dashboard) StartUpdates() {
 				// is enough, since its frame counter runs on the clock.
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect.
-				if d.mapOpen.Load() || d.badgePanel.moving.Load() || d.expPanel.moving.Load() || d.fxOn.Load() {
+				other = !other
+				if d.badgePanel.moving.Load() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)

@@ -53,10 +53,15 @@ type badgePanel struct {
 	// with barPanel.
 	views []game.BadgeView
 	sum   game.BadgeSummary
-	// coinSet is the pictures of the coins, by look, for the cell size
-	// coinCell (coinImage).
-	coinSet  map[coinKey]*image.RGBA
-	coinCell [2]int
+	// coinSet is the pictures of the coins, by look and pose, for the cell
+	// size coinCell, and coinBytes how many bytes they hold (coinImage).
+	coinSet   map[coinKey]*image.RGBA
+	coinCell  [2]int
+	coinBytes int
+	// picked is the badge whose large medal was painted last, and pickedAt
+	// the pose number it was first painted at: its turn starts there.
+	picked   string
+	pickedAt int
 	account  bool
 	view     caseView
 	model    *caseModel
@@ -83,6 +88,7 @@ func newBadgePanel() *badgePanel {
 
 // open is the overlay's build: it runs on every Show.
 func (p *badgePanel) open(state game.GameState) Primitive {
+	p.picked = "" // the large medal turns to face the player again
 	p.update(state)
 	return overBar(p)
 }
@@ -143,7 +149,7 @@ func (p *badgePanel) frame() int {
 // the selected badge's art, or a legendary badge on the page.
 func (p *badgePanel) moves() bool {
 	if !p.motion || p.model == nil || !p.account || p.view.pix {
-		return false // a coin struck as a picture does not move
+		return false // the coins' shows are paintCoins' to report
 	}
 	if it := p.model.selected(p.view); it != nil && medalOf(it.v, p.view.tier).animated() {
 		return true
@@ -187,54 +193,108 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 		foldBadges(grid)
 	}
 	paintGridKit(p2, grid, r.Min, newGridPalette(0, nil))
+	if g := p.model.chrome; g != nil {
+		// The buttons, over the case: the key bar's row, and the close
+		// button's cells of the title bar.
+		pal := newExpPalette()
+		paintExpeditionKit(p2.Clip(image.Rect(r.Min.X, r.Max.Y-1, r.Max.X, r.Max.Y)), g, r.Min, pal)
+		for _, k := range g.keys {
+			if k.r.Min.Y == 0 {
+				paintExpeditionKit(p2.Clip(k.r.Add(r.Min)), g, r.Min, pal)
+			}
+		}
+		p.buttons.paintLit(p2, g, r.Min, pal)
+	}
+	p.moving.Store(p.paintCoins(p2, r.Min) || p.moves())
+}
+
+// paintCoins paints the case's coins as pictures, each in the pose its show
+// has come to, and reports whether any of them is in a show. The shows of a
+// shelf set off one after another, from the upper left, so a band of light
+// seems to cross the whole case; the picked badge's large medal turns to
+// face the player when it is picked, and its show begins there.
+func (p *badgePanel) paintCoins(p2 *kit.Painter, org image.Point) bool {
+	n, moving := p.coinFrame(), false
 	for _, c := range p.model.coins {
-		p2.Picture(c.r.Add(r.Min), p.coinImage(c.it, c.r.Size(), coinArt))
+		l := p.look(c.it, coinArt)
+		at := n
+		if n != atRest {
+			at -= 2*c.it.col + 3*c.it.line
+		}
+		p2.Picture(c.r.Add(org), p.coinImage(l, c.r.Size(), coinPoseAt(l, at)))
+		moving = moving || l.earned()
 	}
-	if at := p.model.medalAt; !at.Empty() {
-		p2.Picture(at.Add(r.Min), p.coinImage(p.model.medalFor, at.Size(), medalArt))
+	at, it := p.model.medalAt, p.model.medalFor
+	if at.Empty() || it == nil {
+		return moving && n != atRest
 	}
-	p.moving.Store(p.moves())
+	if it.id != p.picked {
+		p.picked, p.pickedAt = it.id, n
+	}
+	l, since := p.look(it, medalArt), atRest
+	if n != atRest {
+		since = n - p.pickedAt
+	}
+	p2.Picture(at.Add(org), p.coinImage(l, at.Size(), pickedPoseAt(l, since)))
+	return n != atRest && (moving || l.earned() || since < turnSteps)
+}
+
+// coinFrame is the pose number the coins' shows are at: the clock's, or
+// atRest when the motion setting is off.
+func (p *badgePanel) coinFrame() int {
+	if !p.motion {
+		return atRest
+	}
+	// It starts well above zero, so a coin's own delay never takes it to
+	// atRest.
+	return 1<<16 + int(p.now().Sub(p.start)/coinStep)
+}
+
+// look is how a badge's coin looks at a size of art.
+func (p *badgePanel) look(it *caseItem, art int) coinLook {
+	return lookOf(medalOf(it.v, p.view.tier), medalSign(it.v.Family), art)
 }
 
 // pix reports whether the case is drawn in pictures: the window says how
 // large a cell is, and the glyph tier is not the plain one.
 func (p *badgePanel) pix() bool { return pictureCell != nil && !p.view.plain() }
 
-// coinImage is a badge's medal as a picture for a room of cells, struck art
-// pixels across (coinArt for the case, medalArt for the picked badge). Coins
-// that look alike share one picture: it is kept by the look, not the badge,
-// so a case of hundreds of badges holds a few dozen pictures, and an image
-// that has been painted is never drawn on. A change of cell size starts the
-// set again.
-func (p *badgePanel) coinImage(it *caseItem, cells image.Point, art int) *image.RGBA {
+// coinSetMax is how many bytes of coin pictures the panel keeps before it
+// starts the set again.
+const coinSetMax = 24 << 20
+
+// coinImage is a coin in a pose as a picture for a room of cells. Coins that
+// look alike share one picture: it is kept by the look and the pose, not the
+// badge, so a case of hundreds of badges holds a few dozen pictures at rest,
+// and an image that has been painted is never drawn on. A change of cell
+// size starts the set again, and so does a set grown too large.
+func (p *badgePanel) coinImage(l coinLook, cells image.Point, pose coinPose) *image.RGBA {
 	cw, ch := pictureCell()
-	md := medalOf(it.v, p.view.tier)
-	key := coinKey{md.tier, md.state, medalSign(it.v.Family), md.crossed, cells.X * cw, cells.Y * ch, art}
-	if p.coinCell != [2]int{cw, ch} {
-		p.coinSet, p.coinCell = nil, [2]int{cw, ch}
+	key := coinKey{l, cells.X * cw, cells.Y * ch, pose}
+	if p.coinCell != [2]int{cw, ch} || p.coinBytes > coinSetMax {
+		p.coinSet, p.coinCell, p.coinBytes = nil, [2]int{cw, ch}, 0
 	}
 	img, ok := p.coinSet[key]
 	if !ok {
 		if p.coinSet == nil {
 			p.coinSet = map[coinKey]*image.RGBA{}
 		}
-		img = coinPicture(md, it.v.Family, key.w, key.h, art)
+		img = coinPicture(l, key.w, key.h, pose)
 		p.coinSet[key] = img
+		p.coinBytes += len(img.Pix)
 	}
 	return img
 }
 
-// coinKey is the look a coin's picture was struck for.
+// coinKey is what a coin's picture was struck for.
 type coinKey struct {
-	tier    config.BadgeTier
-	state   medalState
-	sign    string
-	crossed bool
-	w, h    int
-	art     int
+	look coinLook
+	w, h int
+	pose coinPose
 }
 
-// Mouse: a click selects the badge under the pointer and a double click
+// Mouse: a click on a key of the key bar presses it, and the close button
+// presses Esc; a click selects the badge under the pointer and a double click
 // opens its detail, as Enter does; a click on a tab opens it, and on the
 // arrow at an end of the tab row the nearest tab out of sight that way; a
 // click outside an open detail closes it, as Esc does; the wheel moves the
@@ -244,6 +304,8 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 		return false
 	}
 	switch {
+	case p.buttons.mouse(p.model.chrome, p.Bounds().Min, m):
+		return true
 	case m.Kind == kit.MouseWheel && !p.view.card:
 		key := kit.KeyDown
 		if m.Wheel < 0 {
@@ -280,10 +342,14 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	return true
 }
 
-// PointerAt: the hand over a badge, and over a tab a click would open.
+// PointerAt: the hand over a key button, a badge, and a tab a click would
+// open.
 func (p *badgePanel) PointerAt(at image.Point) kit.Pointer {
-	if p.model == nil || p.view.card {
+	if p.model == nil {
 		return kit.PointerArrow
+	}
+	if key := p.buttons.pointer(p.model.chrome, p.Bounds().Min, at); key != kit.PointerArrow || p.view.card {
+		return key
 	}
 	pt := at.Sub(p.Bounds().Min)
 	if pt.Y == 1 {

@@ -68,12 +68,12 @@ func TestMedalPicture(t *testing.T) {
 	earned := medal{tier: config.BadgeBronze, state: medalEarned}
 	crossed := earned
 	crossed.crossed = true
-	if bytes.Equal(coinPicture(crossed, "age", 84, 72, coinArt).Pix, coinPicture(earned, "age", 84, 72, coinArt).Pix) {
+	if bytes.Equal(coinPicture(lookOf(crossed, "age", coinArt), 84, 72, coinPose{}).Pix, coinPicture(lookOf(earned, "age", coinArt), 84, 72, coinPose{}).Pix) {
 		t.Error("a crossed medal draws the same coin as one earned fairly")
 	}
 	// The small coin is the medal at half the art: whole, centred, and not
 	// the large one shrunk.
-	small := coinPicture(earned, "age", 70, 63, coinArt)
+	small := coinPicture(lookOf(earned, "age", coinArt), 70, 63, coinPose{})
 	if small.Rect.Dx() != 70 || small.Rect.Dy() != 63 || small.RGBAAt(0, 0).A != 0 || small.RGBAAt(35, 31).A == 0 {
 		t.Errorf("the small coin is %v with corner alpha %d and centre alpha %d", small.Rect, small.RGBAAt(0, 0).A, small.RGBAAt(35, 31).A)
 	}

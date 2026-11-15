@@ -190,6 +190,9 @@ type caseModel struct {
 	// as a picture, and medalOf the badge it is for; empty when there is none.
 	medalAt  image.Rectangle
 	medalFor *caseItem
+	// chrome holds the panel's buttons, drawn over the case: the close
+	// button at the right of the title bar and the keys of the key bar.
+	chrome *xgrid
 	// coins are the badges of the grid that are drawn as pictures: where
 	// each coin goes, as the last render left them.
 	coins  []caseCoin
@@ -743,7 +746,12 @@ func renderCase(m *caseModel, v caseView, n int) *tGrid {
 		out.put(x, h-1, ' ', tsChip, -1)
 	}
 	m.drawTitle(out)
-	m.drawKeys(out, v)
+	m.chrome = newXGrid(w, h)
+	m.chrome.closeButton(w)
+	m.drawKeys(m.chrome, v)
+	if v.plain() {
+		m.chrome.fold()
+	}
 	if !m.account {
 		out.text(1, caseTop, clipRunes(vibe.Line("ui.badge_case.renderCase.02", "No account is loaded, so there are no badges to show."), w-2), tsDim, -1)
 		return out
@@ -907,6 +915,9 @@ var txtCountOfTotal = vibe.E("ui.badge_case.drawTitle.02", "%d of %d")
 // holds.
 func (m *caseModel) drawTitle(out *tGrid) {
 	w := m.lay.w
+	if w >= closeButtonMinW {
+		w -= closeButtonCols // the close button's end of the bar
+	}
 	x := out.text(0, 0, vibe.Line("ui.badge_case.drawTitle.01", " BADGES"), tsChipKey, -1)
 	if !m.account {
 		return
@@ -1163,7 +1174,7 @@ func (m *caseModel) drawRow(out *tGrid, it *caseItem, y int, selected bool, v ca
 // medalPixCols and medalPixRows are the room the pane leaves for the medal
 // as a picture: about square on the screen (a cell is about twice as tall
 // as it is wide).
-const medalPixCols, medalPixRows = 18, 9
+const medalPixCols, medalPixRows = 22, 10
 
 // drawPane draws the selected badge beside the grid: its full art, then
 // what the case says of it. Under the grid (a narrow window) there is no
@@ -1245,16 +1256,16 @@ func (m *caseModel) statusLine(sel *caseItem, v caseView, room int) []seg {
 // txtRunsCommandBelow is said the same way on several screens, so it has one id.
 var txtRunsCommandBelow = vibe.E("ui.badge_case.drawKeys.15", "runs the command below")
 
-// drawKeys writes the key bar: as many of the keys as the bar holds, and
-// always how to close.
-func (m *caseModel) drawKeys(out *tGrid, v caseView) {
+// drawKeys draws the key bar on the panel's buttons: as many of the keys as
+// the bar holds, each a button a click presses, and Esc the last to go.
+func (m *caseModel) drawKeys(g *xgrid, v caseView) {
 	w, h := m.lay.w, m.lay.h
 	move := [2]string{"←↑↓→", "move"}
 	card := [2]string{"←→", vibe.Line("ui.badge_case.drawKeys.02", "the badge before, the next")}
 	if v.plain() {
 		move[0], card[0] = "Arrows", "Left Right"
 	}
-	tab, enter, page, ends, esc := [2]string{"Tab", "family"}, [2]string{"Enter", "detail"}, [2]string{"PgUp PgDn " + pageKeysHint(v.plain()), vibe.Line("ui.badge_case.drawKeys.10", "page")}, [2]string{"Home End", vibe.Line("ui.badge_case.drawKeys.12", "first, last")}, [2]string{"Esc", "close"}
+	tab, enter, page, ends, esc := [2]string{"Tab", "family"}, [2]string{"Enter", "detail"}, [2]string{"PgUp PgDn (" + pageKeysHint(v.plain()) + ")", vibe.Line("ui.badge_case.drawKeys.10", "page")}, [2]string{"Home End", vibe.Line("ui.badge_case.drawKeys.12", "first, last")}, [2]string{"Esc", "close"}
 	// Each set gives up one more key; the first that fits is drawn.
 	sets := [][][2]string{
 		{move, tab, enter, page, ends, esc},
@@ -1274,9 +1285,9 @@ func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	width := func(keys [][2]string) int {
 		n := 1
 		for _, k := range keys {
-			n += runeLen(k[0]) + 1 + runeLen(k[1]) + 2
+			n += keyButtonW(k[0], k[1]) + 1
 		}
-		return n - 2
+		return n - 1
 	}
 	keys := sets[len(sets)-1]
 	for _, set := range sets {
@@ -1287,8 +1298,7 @@ func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	}
 	x := 1
 	for _, k := range keys {
-		x = out.text(x, h-1, k[0], tsChipKey, -1)
-		x = out.text(x+1, h-1, k[1], tsChipDim, -1) + 2
+		x = g.keyButton(x, h-1, k[0], k[1]) + 1
 	}
 }
 
@@ -1306,6 +1316,9 @@ func (m *caseModel) drawCard(out *tGrid, it *caseItem, v caseView, n int) {
 	}
 	md := medalOf(it.v, v.tier)
 	aw, ah := medalSize(md)
+	if v.pix {
+		aw, ah = medalPixCols, medalPixRows
+	}
 	art := cw >= aw+30 && bh >= ah+4
 	tx, tw := 3, cw-6
 	if art {
@@ -1320,8 +1333,11 @@ func (m *caseModel) drawCard(out *tGrid, it *caseItem, v caseView, n int) {
 	x0, y0 := 1+(bw-cw)/2, caseTop+(bh-ch)/2
 	m.cardAt = image.Rect(x0, y0, x0+cw, y0+ch)
 	out.card(x0, y0, cw, ch, it.v.Name, txtEscCloses.String())
-	if art {
-		drawMedal(out, x0+3, y0+2+(ch-4-ah)/2, md, caseFrame(n, md.animated()), v.plain())
+	switch ax, ay := x0+3, y0+2+(ch-4-ah)/2; {
+	case art && v.pix:
+		m.medalAt, m.medalFor = image.Rect(ax, ay, ax+aw, ay+ah), it
+	case art:
+		drawMedal(out, ax, ay, md, caseFrame(n, md.animated()), v.plain())
 	}
 	for i, l := range lines {
 		if 2+i >= ch-1 {

@@ -291,7 +291,17 @@ The frame is the tier, so two tiers differ in shape before they differ in color.
 
 <figure class="screen" data-screen="badge-detail"><figcaption>One badge's detail: its tier, rarity and points, what it asked for, when it was earned and in which game, and its place on its ladder.</figcaption></figure>
 
-Platinum badges glint, and legendary badges turn through their colors with a band of light crossing the rim. Eleven badges have a drawing of their own that moves: eight legendary ones, and the three that sit outside the families. `motion off` holds all of it still (see [Motion](themes.md#motion)). Drawn as coins, the badges do not move.
+Platinum badges glint, and legendary badges turn through their colors with a band of light crossing the rim. Eleven badges have a drawing of their own that moves: eight legendary ones, and the three that sit outside the families. `motion off` holds all of it still (see [Motion](themes.md#motion)). Drawn as coins, every earned badge moves, and a higher tier moves more:
+
+| Tier | What its coin does |
+|---|---|
+| Bronze | A band of light crosses it now and then. |
+| Silver | The band is brighter, and a sparkle opens on the rim. |
+| Gold | Two sparkles, and a light runs once round the rim. |
+| Platinum | A second band of light, three sparkles and two lights round the rim; the four blue studs in its rim flare as a light goes by. |
+| Legendary | The rim turns through the colors without rest, with three sparkles in its colors; the large medal stands on turning rays. |
+
+The lights set off one coin after another, from the upper left, so they cross the whole case. When you select a badge its large medal turns to face you, and its lights begin there. A coin not earned yet does not move.
 
 The keys are listed under [Badges](commands.md#badges) on the commands page and in the Help panel.
 
