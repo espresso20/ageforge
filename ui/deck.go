@@ -290,9 +290,9 @@ func deckKeys(pg *deckPage, sel int, pages bool) [][2]string {
 		keys = append(keys, [2]string{"Enter", c.Action})
 	}
 	if pages {
-		keys = append(keys, [2]string{"PgUp PgDn", vibe.Line("ui.deck.deckKeys.02", "page")})
+		keys = append(keys, [2]string{"PgUp PgDn", vibe.Line("ui.deck.deckKeys.04", "page")})
 	}
-	return append(keys, [2]string{"Esc", vibe.Line("ui.deck.deckKeys.03", "close")})
+	return append(keys, [2]string{"Esc", "close"})
 }
 
 // drawDeckCard draws card n in r. The picked card has a bright edge and its
