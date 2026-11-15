@@ -38,7 +38,12 @@ func TestAClickOnABuildingWritesItsCommand(t *testing.T) {
 	st := newStage(pages, playtestCols, playtestRows)
 	now := time.Unix(1_700_000_000, 0)
 	st.root.Now = func() time.Time { return now }
-	camps := func() int { return d.engine.GetState().Buildings["gathering_camp"].Count }
+	// A build goes into the queue; it stands a while later.
+	camps := func() int {
+		st := d.engine.GetState()
+		n := st.Buildings["gathering_camp"].Count
+		return n + len(st.BuildQueue) // nothing else is built in this test
+	}
 	before := camps()
 	at := rowWith(t, st, d.economyTab.buildingTV, "Gathering Camp")
 
@@ -48,7 +53,7 @@ func TestAClickOnABuildingWritesItsCommand(t *testing.T) {
 	}
 	st.click(at.X, at.Y)
 	if got := d.inputField.GetText(); got != "build gathering_camp" || !d.inputField.HasFocus() || camps() != before {
-		t.Errorf("a click: the prompt reads %q (has the keyboard: %v) and there are %d camps, want the command written, the keyboard there and still %d", got, d.inputField.HasFocus(), camps(), before)
+		t.Errorf("a click: the prompt reads %q (has the keyboard: %v) and there are %d camps built or under way, want the command written, the keyboard there and still %d", got, d.inputField.HasFocus(), camps(), before)
 	}
 	// The row under it (the cost) is the same building's.
 	now = now.Add(time.Minute)
@@ -63,7 +68,7 @@ func TestAClickOnABuildingWritesItsCommand(t *testing.T) {
 	st.click(at.X, at.Y)
 	st.click(at.X, at.Y)
 	if got := d.inputField.GetText(); got != "" || camps() != before+1 {
-		t.Errorf("a double click: the prompt reads %q and there are %d camps, want it empty and %d", got, camps(), before+1)
+		t.Errorf("a double click: the prompt reads %q and there are %d camps built or under way, want it empty and %d", got, camps(), before+1)
 	}
 }
 
