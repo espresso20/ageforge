@@ -39,7 +39,7 @@ const epochCardFile = "epoch-card.png"
 func epochPicture(state game.GameState) *image.RGBA {
 	// The page says how tall it is; the frame adds its edges (3 rows) and a
 	// blank row under the text.
-	page := hallFrontPage(state, epochPicCols, epochLayoutRows, mapmodel.TierUnicode, hallMotion{}, false)
+	page := hallFrontPage(state, epochPicCols, epochLayoutRows, mapmodel.TierUnicode, hallMotion{}, false).text
 	picRows := max(epochPicMinRows, strings.Count(page, "\n")+1+panelChromeRows+1)
 
 	tv := newNativeText().SetDynamicColors(true).SetWrap(true)

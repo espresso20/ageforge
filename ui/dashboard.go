@@ -261,6 +261,12 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
 	d.epochHall.card = func(st game.GameState) (epochCardResult, error) { return makeEpochCard(st, copyImageToClipboard) }
 	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
+	// The Badges panel and the epoch screen draw their coins from one set
+	// of pictures.
+	coins := &coinCache{}
+	d.badgePanel.setCoins(coins)
+	d.epochHall.pics.cache = coins
+	d.overlayMgr.SetOver("epoch", d.epochHall.paintCoins)
 	d.overlayMgr.SetNotice("epoch", d.epochHall.notice)
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
 	d.overlayMgr.SetBackHandler("epoch", d.epochHall.back)
@@ -803,7 +809,7 @@ func (d *Dashboard) StartUpdates() {
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect.
 				other = !other
-				if d.badgePanel.moving.Load() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.badgePanel.moving.Load() || d.epochHall.pics.moving.Load() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
@@ -811,6 +817,9 @@ func (d *Dashboard) StartUpdates() {
 						}
 						if d.overlayMgr.ActiveName() != "badges" {
 							d.badgePanel.moving.Store(false)
+						}
+						if d.overlayMgr.ActiveName() != "epoch" {
+							d.epochHall.pics.moving.Store(false)
 						}
 						if d.overlayMgr.ActiveName() != "expedition" {
 							d.expPanel.moving.Store(false)

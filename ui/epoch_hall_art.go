@@ -2,11 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"math"
 	"regexp"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -47,6 +47,7 @@ type hallCtx struct {
 	duo      bool
 	gap      int // rows between two blocks
 	bg, text kit.Color
+	coins    []hallCoin // the badges' coins, painted over the text
 }
 
 func newHallCtx(w, rows int, tier mapmodel.GlyphTier, mo hallMotion) *hallCtx {
@@ -565,41 +566,32 @@ func (c *hallCtx) rarityInk(word string) kit.Color {
 	return c.role(theme.RoleDim)
 }
 
-// medalOn draws a badge's art on the canvas with its top left corner at
-// (x, y): the case's full art where there is room, its mini where not.
+// hallCoin is a badge's coin on the page: the cells it covers, in the
+// page's own coordinates, its look, and its place in the order of the
+// page, which sets off its show after the ones before it.
+type hallCoin struct {
+	r    image.Rectangle
+	look coinLook
+	i    int
+}
+
+// The sizes of a coin on the page, in cells: the small layout's, which is
+// the Badges shelf's, and the large one's.
+const (
+	hallMiniCoinW, hallMiniCoinH = 7, 3
+	hallCoinW, hallCoinH         = 15, 7
+)
+
+// medalOn leaves the room for a badge's coin with its top left corner at
+// (x, y), blank, and records the coin: a small one where there is not room
+// for a large one. The page's owner paints it as a picture.
 func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
-	md := medalOf(v, c.tier)
-	w, h := miniW, miniH
-	if !mini {
-		w, h = medalSize(md)
-	}
-	tg := newTGrid(w, h)
-	n := atRest
-	if c.mo.on {
-		n = int(c.mo.t * 6)
-	}
+	w, h, art := hallCoinW, hallCoinH, medalArt
 	if mini {
-		drawMini(tg, 0, 0, md, caseFrame(n, md.state == medalEarned && md.tier == config.BadgeLegendary))
-	} else {
-		drawMedal(tg, 0, 0, md, caseFrame(n, md.animated()), c.plain)
+		w, h, art = hallMiniCoinW, hallMiniCoinH, coinArt
 	}
-	if c.plain {
-		foldBadges(tg)
-	}
-	pal := newGridPalette(0, nil)
-	for dy := 0; dy < h; dy++ {
-		for dx := 0; dx < w; dx++ {
-			cell := tg.c[dy*tg.w+dx]
-			if cell.r == ' ' || cell.r == 0 {
-				continue
-			}
-			fg, _, attr := pal.style(cell).Decompose()
-			c.g.put(x+dx, y+dy, cell.r, fg)
-			if attr&kit.Bold != 0 && c.g.in(x+dx, y+dy) {
-				c.g.c[(y+dy)*c.g.w+x+dx].bold = true
-			}
-		}
-	}
+	look := lookOf(medalOf(v, c.tier), medalSign(v.Family), art)
+	c.coins = append(c.coins, hallCoin{r: image.Rect(x, y, x+w, y+h), look: look, i: len(c.coins)})
 }
 
 // badges draws the cards: art, name, and the rarity in its colour, in a
@@ -611,12 +603,9 @@ func (c *hallCtx) badges(list []game.BadgeView) {
 	}
 	gap := 2
 	mini := c.rows < 36 || c.cw < 110
-	artW, artH := miniW, miniH
-	if !mini {
-		for _, b := range list {
-			w, h := medalSize(medalOf(b, c.tier))
-			artW, artH = max(artW, w), max(artH, h)
-		}
+	artW, artH := hallCoinW, hallCoinH
+	if mini {
+		artW, artH = hallMiniCoinW, hallMiniCoinH
 	}
 	longest := 0
 	for _, b := range list {
@@ -643,11 +632,7 @@ func (c *hallCtx) badges(list []game.BadgeView) {
 		for i, b := range row {
 			rar := c.rarityInk(b.Rarity)
 			c.box(x, c.y, cardW, ch, rar, &ground, b.Rarity == "legendary" || b.Rarity == "epic")
-			aw, ah := miniW, miniH
-			if !mini {
-				aw, ah = medalSize(medalOf(b, c.tier))
-			}
-			c.medalOn(b, x+(cardW-aw)/2, c.y+2+(artH-ah)/2, mini)
+			c.medalOn(b, x+(cardW-artW)/2, c.y+2, mini)
 			ty := c.y + 2 + artH + 1
 			for k, l := range names[i] {
 				c.g.text(x+(cardW-runeLen(l))/2, ty+k, l, c.role(theme.RoleBright), true)

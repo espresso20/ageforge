@@ -8,6 +8,9 @@ type coinCache struct {
 	set   map[coinKey]*image.RGBA
 	cell  [2]int
 	bytes int
+	// px, when set, is the size in pixels of a cell the coins are struck
+	// for, in place of the window's (a picture made offscreen).
+	px image.Point
 }
 
 // coinSetMax is how many bytes of coin pictures the panel keeps before it
@@ -20,7 +23,10 @@ const coinSetMax = 24 << 20
 // and an image that has been painted is never drawn on. A change of cell
 // size starts the set again, and so does a set grown too large.
 func (c *coinCache) image(l coinLook, cells image.Point, pose coinPose) *image.RGBA {
-	cw, ch := pictureCell()
+	cw, ch := c.px.X, c.px.Y
+	if cw == 0 || ch == 0 {
+		cw, ch = pictureCell()
+	}
 	key := coinKey{l, cells.X * cw, cells.Y * ch, pose}
 	if c.cell != [2]int{cw, ch} || c.bytes > coinSetMax {
 		c.set, c.cell, c.bytes = nil, [2]int{cw, ch}, 0
