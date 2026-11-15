@@ -274,11 +274,8 @@ func badgeToast(v game.BadgeView, tier mapmodel.GlyphTier, w int) string {
 		_, rim, _ = tierInks(v.Level)
 	}
 	mark := badgeMark(v, tier)
-	head := vibe.Line("ui.badge_list.badgeToast.01", "Badge earned:")
-	name, tierText, desc := v.Name, "", v.Desc
-	if v.Tier != "" {
-		tierText = " (" + v.Tier + ")"
-	}
+	head, tierText := badgeToastWords(v)
+	name, desc := v.Name, v.Desc
 	// The mark, a space, the head, a space, the name, the tier, a full stop.
 	fixed := 3 + 1 + runeLen(head) + 1 + runeLen(tierText) + 1
 	if w > 0 && fixed+runeLen(name)+1+runeLen(desc) > w {
@@ -299,6 +296,16 @@ func badgeToast(v game.BadgeView, tier mapmodel.GlyphTier, w int) string {
 		sb.WriteString(" " + lit(desc))
 	}
 	return sb.String()
+}
+
+// badgeToastWords are the toast's head and the badge's tier text (" (gold)",
+// or nothing), as the one-row toast and the card of the moment print them.
+func badgeToastWords(v game.BadgeView) (head, tierText string) {
+	head = vibe.Line("ui.badge_list.badgeToast.01", "Badge earned:")
+	if v.Tier != "" {
+		tierText = " (" + v.Tier + ")"
+	}
+	return head, tierText
 }
 
 // badgeMark is a badge in three cells: its emblem between two half discs in
