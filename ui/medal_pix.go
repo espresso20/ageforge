@@ -199,9 +199,9 @@ func coinPicture(md medal, family string, w, h, art int) *image.RGBA {
 func medalIcon(md medal, family string) []string {
 	switch md.state {
 	case medalHidden:
-		return medalIcons["hidden"]
+		return medalIcons["question"]
 	case medalLocked:
-		return medalIcons["locked"]
+		return medalIcons["keyhole"]
 	}
 	return medalIcons[medalSign(family)]
 }
@@ -480,7 +480,7 @@ var medalIcons = map[string][]string{
 		".............",
 		".###########.",
 	},
-	"locked": { // a keyhole
+	"keyhole": { // on a medal not earned yet
 		"....#####....",
 		"..#########..",
 		".###########.",
@@ -495,7 +495,7 @@ var medalIcons = map[string][]string{
 		"..#########..",
 		"....#####....",
 	},
-	"hidden": { // a question mark
+	"question": { // on a hidden medal
 		"...#######...",
 		"..#########..",
 		"..###...###..",
