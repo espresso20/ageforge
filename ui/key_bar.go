@@ -156,9 +156,13 @@ func (k *keyPresser) mouse(g *xgrid, org image.Point, m kit.Mouse) bool {
 		k.over = m.Pt().Sub(org)
 	}
 	now, isLit := k.lit(g)
-	if isLit && m.Kind == kit.MousePress && m.Button == kit.ButtonLeft {
-		k.press(now.key)
-		return true
+	if m.Kind == kit.MousePress {
+		// A press is a key's or it is not: one that only moved the light is
+		// left for the panel to use.
+		if isLit && m.Button == kit.ButtonLeft {
+			k.press(now.key)
+		}
+		return isLit && m.Button == kit.ButtonLeft
 	}
 	return isLit != wasLit || now.r != was.r
 }
