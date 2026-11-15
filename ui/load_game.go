@@ -585,9 +585,22 @@ func capKey(name string) (kit.Key, bool) {
 		return kit.Key{Code: kit.KeyEsc}, true
 	case "Tab":
 		return kit.Key{Code: kit.KeyTab}, true
+	case "PgUp":
+		return kit.Key{Code: kit.KeyPgUp}, true
+	case "PgDn":
+		return kit.Key{Code: kit.KeyPgDn}, true
+	case "Home":
+		return kit.Key{Code: kit.KeyHome}, true
+	case "End":
+		return kit.Key{Code: kit.KeyEnd}, true
 	}
-	if r := []rune(name); len(r) == 1 && (unicode.IsLetter(r[0]) || unicode.IsDigit(r[0])) {
-		return kit.Key{Code: kit.KeyRune, Rune: unicode.ToLower(r[0])}, true
+	if r := []rune(name); len(r) == 1 {
+		if k, ok := arrowKey(r[0]); ok {
+			return k, true
+		}
+		if unicode.IsLetter(r[0]) || unicode.IsDigit(r[0]) {
+			return kit.Key{Code: kit.KeyRune, Rune: unicode.ToLower(r[0])}, true
+		}
 	}
 	return kit.Key{}, false
 }
