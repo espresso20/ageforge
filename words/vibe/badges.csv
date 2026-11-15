@@ -87,8 +87,6 @@ badge.map_glyphs_ascii.name,Ascii Purist
 badge.map_glyphs_ascii.description,"Plain ascii glyphs, minimalist and unbothered, age up."
 badge.map_glyphs_unicode.name,Box Art Girlie
 badge.map_glyphs_unicode.description,"Unicode glyphs, the boxes are doing a lot, age up."
-badge.map_glyphs_nerd.name,Font Stan
-badge.map_glyphs_nerd.description,"Nerd Font glyphs, the icons go hard, age up."
 badge.special_hut_hoarder.name,Crash Pad Hoarder
 badge.special_hut_hoarder.description,"Hoard 30 Crash Pads standing before you leave the Touch Grass Age. The 30th costs 693 Sticks, 34 times the first."
 badge.special_zoning_board.name,Permit Pusher

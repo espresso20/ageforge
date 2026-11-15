@@ -31,7 +31,7 @@ A few keys that print are the Map's too, while the prompt is empty (no command b
 
 The settings are commands you can type with the Map open: `map glyphs`, `map flows` and `minimap` (see [Settings](#settings)). With VibeMode on, the words on the Map come in its second script too (see [VibeMode](commands.md#vibemode)).
 
-The top row names your town, its age and era, the weather and the time of day, your people, your idle workers, how many civilizations you have met and the zoom you are in. The rows at the foot hold the news line, what the cursor is on, the command to type for it and the keys. Below them is a key bar. It shows what `Enter` will do, the current glyph set, and the reply to the last command you typed (the log is hidden behind the Map). The first time you open the Map it also shows a one-time hint, "Want real icons on your map? Type icons." (see [Icons](#icons-nerd-fonts)).
+The top row names your town, its age and era, the weather and the time of day, your people, your idle workers, how many civilizations you have met and the zoom you are in. The rows at the foot hold the news line, what the cursor is on, the command to type for it and the keys. Below them is a key bar. It shows what `Enter` will do, the current glyph set, and the reply to the last command you typed (the log is hidden behind the Map).
 
 ### The inspect cursor
 
@@ -176,7 +176,6 @@ Two settings shape the Map: the glyph set and the mini map. They are saved per a
 | `map glyphs` | Show the current glyph set |
 | `map glyphs ascii` | Plain ASCII, for fonts with poor symbol coverage |
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |
-| `map glyphs nerd` | Nerd Font icons. Needs a Nerd Font in your terminal; every icon has a Unicode fallback |
 | `minimap` | Show whether the dashboard's mini map is on |
 | `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
 | `minimap on` | Show the mini map above the Buildings list (the default) |
@@ -197,24 +196,6 @@ The mini map is on by default. The dashboard shows a compact view of the Map abo
 It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back. It shows the whole town, and it marks the cell the Map panel's cursor is on with the same highlighted cell.
 
 The mini map needs room: it appears on windows of 105 columns by 34 rows and larger. On smaller windows (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
-
----
-
-## Icons (Nerd Fonts)
-
-The `nerd` glyph set draws real icons, but only if your terminal uses a Nerd Font. The `icons` command opens a window over the dashboard that walks you through it. The window has its own buttons: press a button's letter, or move with `Tab` or the arrow keys and press `Enter`. `Esc` closes it at any step.
-
-1. Check. It shows sample Nerd Font icons next to their Unicode fallbacks. Press "I see icons" (`I`) or "I see boxes" (`B`). If you see icons, it sets `map glyphs nerd` for you.
-2. Install. If you see boxes, it offers to install JetBrains Mono Nerd Font for your user: "Install" (`Y`) or "No, show me how" (`N`). Install downloads the official JetBrains Mono zip from the [Nerd Fonts v3.5.1 release](https://github.com/ryanoasis/nerd-fonts/releases) (about 130 MB), checks its SHA-256, and installs the font files of the font's Nerd Font Mono variant for your user only, with no admin rights:
-   - macOS: `~/Library/Fonts`
-   - Linux: `~/.local/share/fonts` (or `$XDG_DATA_HOME/fonts`), then `fc-cache -f` if it is available
-   - Windows: `%LOCALAPPDATA%\Microsoft\Windows\Fonts`, plus per-user font entries in the registry (under HKCU, so no admin rights)
-
-   The install runs in the background with its progress in the window. You can close the window and keep playing: `icons` opens it again, and the log tells you when the install is done. It never runs anything else and never edits your terminal's config files. If the download fails or the checksum does not match, it says so, changes nothing and offers "Try again" (`R`). "No, show me how" points you to [nerdfonts.com/font-downloads](https://www.nerdfonts.com/font-downloads) to install one yourself.
-3. Select the font. It detects your terminal (Terminal.app, iTerm2, VS Code, WezTerm, Windows Terminal, kitty, Alacritty, Konsole, GNOME Terminal; generic steps for anything else) and shows the two or three steps to select the font. It gives the font's exact name as your terminal lists it.
-4. Restart. Restart your terminal, then run `icons` again to check.
-
-The first time you open the Map it shows a one-time hint: "Want real icons on your map? Type icons." It is remembered per account.
 
 ---
 

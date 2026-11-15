@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
@@ -143,7 +144,7 @@ func TestTextPanelsShareOneFrame(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "medieval_age")
 	st := eng.GetState()
-	tiers := []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd}
+	tiers := []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode}
 	var cur mapmodel.GlyphTier
 	// a dashboard whose pages hold only the panel: the frame is judged on its own
 	pages := newNativePages()
@@ -289,5 +290,27 @@ func TestPanelFooterOffersTheBar(t *testing.T) {
 			}
 		}
 		pressKey(d, pages, kit.KeyEsc, 0)
+	}
+}
+
+// pressKey sends a key to whatever holds the keyboard, as the event loop does.
+func pressKey(d *Dashboard, pages *nativePages, k kit.KeyCode, r rune) {
+	rootKey(pages, tk(k, r, 0))
+}
+
+// The Ancient Memory offer gives the keyboard back when it closes: to the
+// prompt, not to a button that is no longer on screen (where every key was
+// lost until something else took focus).
+func TestAncientMemoryModalGivesTheKeyboardBack(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	eng := game.NewGameEngine()
+	acct, err := game.CreateAccount("Memory Tester")
+	must(t, err)
+	eng.SetAccount(acct)
+	d, pages := newTestDashboard(eng)
+	d.showAncientMemoryModal("tool_making", "Tool Making")
+	pressKey(d, pages, kit.KeyRune, 'd') // Decline
+	if pages.HasPage(ancientMemoryPage) || !d.inputField.HasFocus() {
+		t.Errorf("after Decline: modal still there %v, prompt focused %v", pages.HasPage(ancientMemoryPage), d.inputField.HasFocus())
 	}
 }

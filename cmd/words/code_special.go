@@ -163,7 +163,6 @@ var fileNotes = map[string]fileNote{
 	"ui/ending.go":               {place: "on the film shown when a run ends in a prestige or a fall", age: "medieval_age", seen: seenRare},
 	"ui/ending_page.go":          {place: "on the film shown when a run ends in a prestige or a fall", age: "medieval_age", seen: seenRare},
 	"ui/fit.go":                  {place: "in the main window", age: "primitive_age", seen: seenAlways},
-	"ui/icons.go":                {place: "in the icons check (the icons command)", age: "primitive_age", seen: seenRare},
 	"ui/input.go":                {place: "in the reply to a command you typed", age: "primitive_age", seen: seenNews},
 	"ui/keystone.go":             {place: "where a panel says a wonder waits for its tech", age: "primitive_age"},
 	"ui/last_passage.go":         {place: "in the Last Passage window", age: "interstellar_age", seen: seenRare, voice: true},

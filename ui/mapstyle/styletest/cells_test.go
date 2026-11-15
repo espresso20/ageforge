@@ -25,7 +25,7 @@ func TestFault(t *testing.T) {
 		{"'?' in every tier", all, '?', mapmodel.TierASCII, "a '?' fallback"},
 		{"'?' beyond ASCII only", beyond, '?', mapmodel.TierASCII, ""},
 		{"'?' beyond ASCII only, in Unicode", beyond, '?', mapmodel.TierUnicode, "a '?' fallback"},
-		{"'?' not checked", Rules{}, '?', mapmodel.TierNerd, ""},
+		{"'?' not checked", Rules{}, '?', mapmodel.TierUnicode, ""},
 		{"wide rune", beyond, '世', mapmodel.TierUnicode, "not one cell wide"},
 		{"wide rune not checked", Rules{}, '世', mapmodel.TierUnicode, ""},
 		{"control rune in every tier", all, '\x00', mapmodel.TierASCII, "not one cell wide"},

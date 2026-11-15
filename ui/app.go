@@ -58,7 +58,7 @@ func (a *App) setup() {
 	// either, Option+arrows become PgUp, PgDn, Home and End (mac_keys.go), so
 	// every screen and panel sees keys a MacBook does not have.
 	a.loop.SetInputCapture(func(k *kit.Key) *kit.Key {
-		k = macKeys(k, a.loop.GetFocus())
+		k = macKeys(k)
 		if k.Code == kit.KeyEsc && a.dashboard.overlayMgr.arrivalKey() {
 			return nil
 		}

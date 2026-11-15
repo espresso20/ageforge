@@ -134,6 +134,7 @@ All notable changes to AgeForge are documented here.
 - **The Primitive Age dinosaurs and the asteroid.** The sauropod, raptor and pterodactyl no longer roam the Primitive town, and the asteroid no longer streaks across the sky near the end of the Late Cretaceous.
 - **The old map renderer.** The symbol-chart map, with its district zoom, region plates and city scenes, is gone with its code; the engine draws every age.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
+- The `icons` command, the Nerd Font installer and the `nerd` map glyph set are gone, and the Font Snob badge with them. The window draws with its own fonts, which have no such icons. Option+B and Option+F no longer act as Home and End on an empty prompt.
 
 ### Fixed
 - On Windows, a failure to start, or to save on the way out, is shown in a message box. The Windows build has no console, so the message used to go nowhere.

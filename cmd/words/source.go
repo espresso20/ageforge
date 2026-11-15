@@ -53,7 +53,6 @@ var notScanned = map[string]string{
 	"detmath":               "arithmetic, no text",
 	"mapgen":                "the map engine: art, hues and internal keys, no player text (the ui reads the game's own words)",
 	"mapmodel/fixture":      "test fixtures",
-	"pkg/nerdfont":          "the icon font installer's glyph table and system paths",
 	"pkg/sprites":           "pixel art",
 	"platform/steam":        "the Steamworks door: no player text",
 	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",

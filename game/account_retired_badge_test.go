@@ -22,6 +22,10 @@ const retiredTradeCounter = "market_trade"
 // when the map had two.
 var retiredMapStyleBadges = []string{"map.style.roguelike", "map.style.skyline"}
 
+// retiredGlyphBadges is the badge for the nerd glyph set (Font Snob), which
+// the map no longer has.
+var retiredGlyphBadges = []string{"map.glyphs.nerd"}
+
 // retiredMissionBadges are the sixteen per-mission badges of the old
 // mission list. The catalog now has one per era and kind.
 var retiredMissionBadges = []string{
@@ -40,7 +44,7 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 	ge0, acct := earnSome(t, "Ada")
 	id := acct.AccountID
 	_, before := ge0.Badges()
-	retired := slices.Concat(retiredTradeRungs, retiredMissionBadges, retiredMapStyleBadges)
+	retired := slices.Concat(retiredTradeRungs, retiredMissionBadges, retiredMapStyleBadges, retiredGlyphBadges)
 
 	// The badge file as the game that still had the ladder signed it.
 	var bf badgeFile

@@ -421,12 +421,11 @@ ui.help.commands.theme.2,Switch fits: pick a theme by key
 ui.help.commands.theme.list,Raid the closet: every theme fit and whether it is unlocked
 ui.help.panels.map,"The map: your settlement plus the known world, the whole canon in one view (aliases: citymap, worldmap)"
 ui.help.commands.map,Open the Map panel (worldmap opens it on the known world); the prompt stays locked in while it is open
-ui.help.commands.map.glyphs,Show or set the map's glyph drip (default unicode; nerd needs a Nerd Font)
+ui.help.commands.map.glyphs,Show or set the map's glyph drip (default unicode)
 ui.help.commands.map.flows,"The Map's flows overlay, on or off (bare: just flip it), it lowkey slaps"
 ui.help.commands.minimap,Show or set the smol map perched above the Buildings list (default on)
 ui.help.commands.motion,"Show or set motion: do the maps, the badge case and theme effects move, or freeze like an NPC (default on)"
 ui.help.commands.vibemode,"Show or set VibeMode: the game's words in GenZ script, the one you are reading rn (default off)"
-ui.help.commands.icons,"Check if your font can show Nerd Font icons, and install one if it is lacking"
 ui.help.commands.save,"Save, lock in your run (no name: overwrite or branch; a name: branch a fresh save)"
 ui.help.commands.save.list,"saves, just spelled different, same energy"
 ui.help.commands.load,Run it back from a save (no name: open the save browser)
@@ -626,45 +625,6 @@ ui.expedition_view.drawReport.04,Pulled up home
 ui.expedition_view.drawReport.05,No squad has pulled up home yet.
 ui.expedition_view.drawReport.06,pick a squad
 ui.expedition_view.drawReport.08,ready room lineup
-ui.icons.seeIcons.01,"Map glyphs set to nerd, because your font is serving Nerd Font icons."
-ui.icons.installed.01,Secured the bag: JetBrains Mono Nerd Font 
-ui.icons.installed.02,The Nerd Font install flopped: 
-ui.icons.installed.03,JetBrains Mono Nerd Font is in the building. Type icons for the steps to pick it in your terminal.
-ui.icons.installed.04,The Nerd Font install bombed: 
-ui.icons.installed.05,. Type icons for the next side quest.
-ui.icons.view.01,Dip out
-ui.icons.view.02,"The map can serve its symbols as Nerd Font icons, if your font has the range."
-ui.icons.view.03,Nerd Font drip
-ui.icons.view.04,Plan B unicode
-ui.icons.view.05,"Vibe check: are the icons on the first line real symbols, or boxes and question marks?"
-ui.icons.view.06,Icons are serving
-ui.icons.view.07,"Just boxes, sadge"
-ui.icons.view.08,"Your font shows the icons, but saving the setting fumbled: "
-ui.icons.view.09,. Type map glyphs nerd to run it back.
-ui.icons.view.10,"Your font has Nerd Font icons, so the map is serving them now (map glyphs nerd)."
-ui.icons.view.11,"No Nerd Font icons in your font, so the map sticks with its Unicode symbols, still valid."
-ui.icons.view.12,Wanna yoink JetBrains Mono Nerd Font 
-ui.icons.view.13," for your user? It grabs the official release from GitHub (about 130 MB), vibe checks it, and drops the fonts into your user font folder. No admin rights needed, and it touches nothing else."
-ui.icons.view.14,Send it
-ui.icons.view.15,"Nah, show me how"
-ui.icons.view.16,"Nothing installed, no worries. DIY side quest: grab JetBrainsMono from "
-ui.icons.view.17,", then select it in your terminal settings, easy W."
-ui.icons.view.18,Then restart your terminal and type icons again for a vibe check.
-ui.icons.view.19,Cooking up JetBrains Mono Nerd Font 
-ui.icons.view.20," for your user. Feel free to close this window and keep grinding: type icons to check back in."
-ui.icons.view.21,Loading the vibe...
-ui.icons.view.22,JetBrains Mono Nerd Font landed and it ate.
-ui.icons.view.23,Last side quest is yours: 
-ui.icons.view.24,Final boss step: select it in your terminal.
-ui.icons.view.25,"Restart the terminal, then type icons again for the vibe check."
-ui.icons.view.26,The install flopped.
-ui.icons.view.27,The font install took an L: 
-ui.icons.view.28," Nothing else got touched, on god."
-ui.icons.view.29,"You can try again, or manually yoink it from "
-ui.icons.view.30,Run it back
-ui.icons.stepsText.01,In 
-ui.icons.newIconsWindow.01,Tab hops buttons · Enter smashes it · Esc dips
-ui.icons.newIconsWindow.02," Icon Vibe Check "
 ui.input.unknownCommandText.01,"Never heard of a command called '%s', who is she?"
 ui.input.unknownCommandText.02," Were you looking for '%s'? Close enough, the vibes match."
 ui.input.unknownCommandText.03," Type help for the full command tea."
@@ -962,11 +922,10 @@ ui.input.cmdMapFlows.03,map flows only takes on or off; %q is not it
 ui.input.flowsReply.01,"Flows overlay on: the Map now snitches on stocks running dry, understaffed buildings and idle workers."
 ui.input.flowsReply.02,"Flows overlay gone, the snitching stops."
 ui.input.mapSessionOnly.01," No account is loaded, so this is a situationship: it lasts for this session only."
-ui.input.cmdMapGlyphs.01,Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch up the drip (icons checks your font for nerd).
+ui.input.cmdMapGlyphs.01,Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch up the drip.
 ui.input.cmdMapGlyphs.02,"one glyph tier, not a whole playlist"
 ui.input.cmdMapGlyphs.03,"glyph tier %q is not real, sus"
 ui.input.cmdMapGlyphs.04,Map glyphs now serving %s.
-ui.input.cmdMapGlyphs.05," If the map is all boxes and question marks, type icons for a vibe check."
 ui.input.cmdBadges.01,"Nothing in the badge case answers to %q, sus. Type badges to scroll the whole case."
 ui.input.cmdTitle.01,"Titles live on an account, and none is loaded, so no flex for now. Type account to make one."
 ui.input.cmdTitle.02," (wearing it rn)"
@@ -1104,7 +1063,6 @@ ui.locked_hint.lockedNeedsLine.04," and %d more"
 ui.locked_hint.lockedNeedsLine.05,"Gatekept by %s (research), %d techs before it"
 ui.locked_hint.lockedBuildingEntry.01,"   Damage: "
 ui.map_mini.miniMap.Draw.01," Smol Map "
-ui.map_panel.mapIconsHint.01,Want real icons on your map? Icons glow-up: type icons.
 ui.map_panel.drawBar.02," sends the command below · "
 ui.map_panel.drawBar.04," sends "
 ui.map_panel.drawBar.06," bounce"
@@ -1112,7 +1070,6 @@ ui.map_panel.drawBar.08," peace out"
 ui.map_panel.handleKey.01,This spot has zero lore to type. Slide the cursor onto a building or a civilization.
 ui.map_panel.reply.01,Sent it: 
 ui.map_settings.saveMapSettings.01,"The setting refused to save to your account, the audacity: "
-ui.map_settings.markMapHintShown.01,"The map setting did not stick to your account, sadge: "
 ui.mastery.masteryNowText.01,"new ground, 1x speed, tutorial era"
 ui.mastery.masteryNowText.02,"known ground, %s faster (speedrunning back to your record)"
 ui.mastery.masteryNowText.03,"known ground, %s faster (aura lvl %d)"

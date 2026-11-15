@@ -15,50 +15,29 @@ func TestMacKeysTranslation(t *testing.T) {
 	for _, c := range []struct{ from, to kit.KeyCode }{
 		{kit.KeyUp, kit.KeyPgUp}, {kit.KeyDown, kit.KeyPgDn}, {kit.KeyLeft, kit.KeyHome}, {kit.KeyRight, kit.KeyEnd},
 	} {
-		got := macKeys(ev(c.from, 0, kit.ModAlt), nil)
+		got := macKeys(ev(c.from, 0, kit.ModAlt))
 		if got.Code != c.to || got.Mod != 0 {
 			t.Errorf("Alt with key %v became %v with modifiers %v, want %v", c.from, got.Code, got.Mod, c.to)
 		}
 		for _, m := range []kit.Mod{0, kit.ModShift, kit.ModCtrl, kit.ModAlt | kit.ModShift, kit.ModAlt | kit.ModCtrl} {
-			if in := ev(c.from, 0, m); macKeys(in, nil) != in {
+			if in := ev(c.from, 0, m); macKeys(in) != in {
 				t.Errorf("key %v with modifiers %v was changed", c.from, m)
 			}
 		}
 	}
 	other := ev(kit.KeyChord, 'x', kit.ModAlt)
-	if macKeys(other, nil) != other {
+	if macKeys(other) != other {
 		t.Error("Alt+x was changed")
 	}
-	if macKeys(nil, nil) != nil {
+	if macKeys(nil) != nil {
 		t.Error("a nil event came back as something")
 	}
 
-	// Apple Terminal's Option+Left and Option+Right are ESC b and ESC f, which
-	// are the prompt's word jumps: Home and End only when there is no word.
-	empty, typed := newNativeInput(), newNativeInput().SetText("build hut")
-	for _, f := range []struct {
-		r        rune
-		to       kit.KeyCode
-		focus    Primitive
-		wantMove bool
-	}{
-		{'b', kit.KeyHome, nil, true}, {'f', kit.KeyEnd, nil, true},
-		{'b', kit.KeyHome, empty, true}, {'f', kit.KeyEnd, empty, true},
-		{'b', kit.KeyHome, newNativeBox(), true},
-		{'b', kit.KeyHome, typed, false}, {'f', kit.KeyEnd, typed, false},
-	} {
-		in := ev(kit.KeyChord, f.r, kit.ModAlt)
-		got := macKeys(in, f.focus)
-		if f.wantMove && got.Code != f.to || !f.wantMove && got != in {
-			t.Errorf("Alt+%c with focus %T (text %v): got key %v", f.r, f.focus, f.focus == Primitive(typed), got.Code)
-		}
-	}
 }
 
 // TestOptionKeysReachThePanels runs the real app: Option+Up and Option+Down
 // reach the badge case as PgUp and PgDn, Option+Left and Option+Right as
-// Home and End, ESC b and ESC f too while the prompt is empty, and the map
-// zooms on - and = when it is.
+// Home and End, and the map zooms on - and = when it is.
 func TestOptionKeysReachThePanels(t *testing.T) {
 	h := newReproHarness(t)
 	press := func(k kit.KeyCode, r rune, m kit.Mod) {
@@ -129,22 +108,6 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 	if sel() != first {
 		t.Errorf("Alt+Left selected %q, want the first badge %q", sel(), first)
 	}
-	press(kit.KeyChord, 'f', alt) // ESC f
-	if sel() != last {
-		t.Errorf("ESC f selected %q, want the last badge %q", sel(), last)
-	}
-	press(kit.KeyChord, 'b', alt) // ESC b
-	if sel() != first {
-		t.Errorf("ESC b selected %q, want the first badge %q", sel(), first)
-	}
-	// With a word in the prompt ESC f is the prompt's own (a word jump), so
-	// the badge case does not move.
-	press(kit.KeyRune, 'x', 0)
-	press(kit.KeyChord, 'f', alt)
-	if sel() != first || h.inputText() != "x" {
-		t.Errorf("ESC f with text in the prompt: selection %q, prompt %q", sel(), h.inputText())
-	}
-	press(kit.KeyBackspace, 0, 0)
 
 	// The map: Option+arrows and - = zoom it, the prompt having the rest.
 	h.submit("map")

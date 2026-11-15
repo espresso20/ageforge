@@ -68,7 +68,7 @@ go build -o ageforge .
 AgeForge draws a text interface in its own window, on a grid of character cells.
 
 - A window of 120 columns by 40 rows or larger draws the full layout. A smaller one gets a more compact layout, and the dashboard fits any window from 80 columns by 24 rows up. Changing the text size changes how many columns and rows fit.
-- The map draws with `unicode` glyphs by default. The `nerd` glyph set needs a Nerd Font: the `icons` command checks your font and can install JetBrains Mono Nerd Font for you. `map glyphs ascii` draws the map in plain characters.
+- The map draws with `unicode` glyphs by default. `map glyphs ascii` draws the map in plain characters.
 
 ---
 

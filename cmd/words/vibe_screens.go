@@ -85,10 +85,6 @@ func screenReason(r *row) string {
 	if r.area != areaScreens && r.area != areaMap {
 		return "" // the map's key hints are named like the screens' are
 	}
-	// How to pick a font in each terminal: the names of their menus and the lines of their config files.
-	if strings.HasPrefix(r.id, "ui.icons.terminalFontSteps.") {
-		return leftOtherApp
-	}
 	text := styleTagRe.ReplaceAllString(r.current, "")
 	words := keycapSplit.Split(strings.TrimSpace(text), -1)
 	if len(words) > 0 && words[0] != "" {

@@ -125,9 +125,6 @@ type Dashboard struct {
 	// planPanel is the Plan panel's UI state (selection, feedback line,
 	// Clear confirmation). Owned by the UI goroutine.
 	planPanel planPanel
-	// iconsWin is the icons check's window (icons.go), built on first open.
-	// Owned by the UI goroutine.
-	iconsWin *iconsWindow
 
 	// The maps: the shared model builder, the Map panel and the dashboard's
 	// mini map. UI goroutine only. mapLocal holds the
@@ -159,8 +156,6 @@ type Dashboard struct {
 	miniMap  *miniMap
 	mapDock  *mapDock
 	mapLocal *mapSettings
-	// icons is the guided icons check (icons.go).
-	icons *iconsFlow
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
 	mapOpen atomic.Bool
@@ -304,7 +299,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// The Map panel: the map full screen (map, and its aliases citymap and
 	// worldmap). Its settings travel with the account.
 	d.mapPanel.settings = d.mapSettings
-	d.mapPanel.hintShown = d.markMapHintShown
 	d.mapPanel.stage = func(cmd string) {
 		// UI goroutine (a key handler): stage the command in the prompt,
 		// under the still-open map, for the player to run with Enter.
@@ -320,13 +314,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.mapPanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("map", vibe.E("ui.dashboard.NewDashboard.19", "Map"), d.mapPanel.open, d.mapPanel.update)
 	d.barOverlays = d.newBarOverlays()
-
-	// The icons check is a window of its own (icons.go). It logs through
-	// the engine and brings the install's progress and outcome back to the
-	// UI goroutine.
-	d.icons = newIconsFlow(func(kind, msg string) { d.engine.AddLog(kind, msg) }, d.setMapGlyphsNerd,
-		func(f func()) { d.app.QueueUpdateDraw(f) })
-	d.icons.changed = d.refreshIconsWindow
 
 	return d
 }
@@ -1596,9 +1583,6 @@ func (d *Dashboard) runLine(text string) {
 	if result.OverlayName == "badges" {
 		d.badgePanel.request(result.Badges)
 	}
-	if result.Icons {
-		d.startIcons()
-	}
 	if result.Vibe {
 		d.syncVibe()
 		d.refresh()
@@ -1632,5 +1616,25 @@ func (d *Dashboard) runLine(text string) {
 		// player asked for, is the last line in the log and stays in view.
 		d.announceBadges()
 		d.engine.AddLog(result.Type, result.Message)
+	}
+}
+
+// returnFocus gives the keyboard back when a window over the dashboard
+// closes: to a window that waits on a choice (the catastrophe's, an Ancient
+// Memory's), else to the open panel, else to the prompt. An arrival that
+// came up over an Ancient Memory left unanswered (a planned advance goes by
+// itself) would otherwise leave that window in front with no key able to
+// reach it.
+func (d *Dashboard) returnFocus() {
+	switch {
+	case d.catFocus != nil && d.pages.HasPage(catastrophePage):
+		d.pages.SendToFront(catastrophePage)
+		d.app.SetFocus(d.catFocus)
+	case d.memFocus != nil && d.pages.HasPage(ancientMemoryPage):
+		d.pages.SendToFront(ancientMemoryPage)
+		d.app.SetFocus(d.memFocus)
+	case d.overlayMgr != nil && d.overlayMgr.Focus():
+	default:
+		d.app.SetFocus(d.inputField)
 	}
 }

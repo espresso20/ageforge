@@ -75,7 +75,7 @@ func BadgeThemes() []BadgeThemeDef {
 
 // The glyph sets a badge is worn for. They belong to the UI, which checks
 // them against its own (TestBadgeMapLooksMatchTheGame).
-var BadgeMapGlyphs = []string{"ascii", "unicode", "nerd"}
+var BadgeMapGlyphs = []string{"ascii", "unicode"}
 
 // BadgeTitleDef is a title an account may wear: the title, and what earns
 // it. Exactly one of Badge and Set is set: the badge to hold, or the set

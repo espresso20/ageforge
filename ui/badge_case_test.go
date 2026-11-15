@@ -19,7 +19,7 @@ import (
 )
 
 // caseTiers are the glyph tiers the case is checked in.
-var caseTiers = []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII, mapmodel.TierNerd}
+var caseTiers = []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII}
 
 // blockAt is the w by h block of a grid at (x, y) as rows of runes.
 func blockAt(g *tGrid, x, y, w, h int) []string {
@@ -691,7 +691,7 @@ func TestBadgeEmblemsAreMapGlyphs(t *testing.T) {
 			t.Errorf("the emblem %q has no plain glyph (%q)", name, e.glyph.ASCII)
 		}
 		for _, tier := range caseTiers {
-			if r := e.glyph.In(tier); uniseg.StringWidth(string(r)) != 1 && tier != mapmodel.TierNerd {
+			if r := e.glyph.In(tier); uniseg.StringWidth(string(r)) != 1 {
 				t.Errorf("the emblem %q is %q in the %s tier, which is not one cell wide", name, r, tier)
 			}
 		}

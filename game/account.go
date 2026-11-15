@@ -173,9 +173,6 @@ type AccountPrefs struct {
 	// MapGlyphs is the glyph tier of the Map panel and the mini map; empty is unicode.
 	MapGlyphs string `json:"map_glyphs,omitempty"`
 	MapZoom   string `json:"map_zoom,omitempty"`
-	// MapIconsHint records that the Map panel's one-time "Type icons" hint
-	// was shown, so it is shown once per account.
-	MapIconsHint bool `json:"map_icons_hint,omitempty"`
 	// Minimap is the dashboard mini map setting: "on", "off", or empty for
 	// the default (on).
 	Minimap string `json:"minimap,omitempty"`
@@ -923,11 +920,9 @@ func (a *Account) SetActiveTheme(key string) error {
 	return a.editPrefs(func(p *AccountPrefs) { p.ActiveTheme = key })
 }
 
-// MapPrefs returns the persisted map settings: the glyph tier name ("" for
-// the default) and whether the icons hint was shown.
-func (a *Account) MapPrefs() (glyphs string, hintShown bool) {
-	prefs := a.readPrefs()
-	return prefs.MapGlyphs, prefs.MapIconsHint
+// MapPrefs returns the persisted glyph tier name ("" for the default).
+func (a *Account) MapPrefs() string {
+	return a.readPrefs().MapGlyphs
 }
 
 // SetMapGlyphs persists the map glyph tier name.
@@ -965,14 +960,6 @@ func (a *Account) SetDiscord(on bool) error {
 			p.Discord = "on"
 		}
 	})
-}
-
-// SetMapIconsHintShown records that the one-time icons hint was shown.
-func (a *Account) SetMapIconsHintShown() error {
-	if _, shown := a.MapPrefs(); shown {
-		return nil
-	}
-	return a.editPrefs(func(p *AccountPrefs) { p.MapIconsHint = true })
 }
 
 // --- Recovery code (identity backup, the accounts design §3.5 / §8 / §9 Phase 4) ---
@@ -1413,7 +1400,6 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	p.MapGlyphs = cmp.Or(p.MapGlyphs, exp.Prefs.MapGlyphs)
 	p.Minimap = cmp.Or(p.Minimap, exp.Prefs.Minimap)
 	p.Discord = cmp.Or(p.Discord, exp.Prefs.Discord)
-	p.MapIconsHint = p.MapIconsHint || exp.Prefs.MapIconsHint
 }
 
 // importExport folds a verified export into this LIVE account and saves it: the engine's

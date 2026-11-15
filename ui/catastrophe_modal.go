@@ -268,7 +268,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 }
 
 // closeCatastropheModal removes the catastrophe overlay page and hands focus
-// back (returnFocus: the icons window if open, else an open panel, else the
+// back (returnFocus: an open panel, else the
 // command input). catModalShown stays set, so refresh() does not re-pop the
 // modal for the same pending catastrophe; `catastrophe` reopens it.
 func (d *Dashboard) closeCatastropheModal() {

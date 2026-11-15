@@ -18,8 +18,6 @@ type mapSettings struct {
 	// Minimap: the dashboard shows the mini map above the Buildings list.
 	// On unless the player turned it off (minimap off).
 	Minimap bool
-	// HintShown: the one-time "Type icons" hint was shown on this account.
-	HintShown bool
 	// Motion: things move (the default). Off holds the maps, the badge
 	// case and a theme's ambient effect still.
 	Motion bool
@@ -38,12 +36,10 @@ func resolveMapSettings(acct *game.Account) mapSettings {
 	if acct == nil {
 		return out
 	}
-	glyphs, hint := acct.MapPrefs()
-	if t, ok := mapmodel.ParseTier(glyphs); ok {
+	if t, ok := mapmodel.ParseTier(acct.MapPrefs()); ok {
 		out.Tier = t
 	}
 	out.Minimap = acct.MinimapOn()
-	out.HintShown = hint
 	out.Motion = acct.MotionOn()
 	return out
 }
@@ -116,21 +112,4 @@ func (d *Dashboard) applyMapPref(p mapPref) {
 	s := d.mapSettings()
 	p.apply(&s)
 	d.saveMapSettings(s)
-}
-
-// markMapHintShown records that the icons hint was shown.
-func (d *Dashboard) markMapHintShown() {
-	var acct *game.Account
-	if d.engine != nil {
-		acct = d.engine.Account()
-	}
-	if acct == nil {
-		s := d.mapSettings()
-		s.HintShown = true
-		d.mapLocal = &s
-		return
-	}
-	if err := acct.SetMapIconsHintShown(); err != nil {
-		d.engine.AddLog("warning", vibe.Line("ui.map_settings.markMapHintShown.01", "The map setting could not be saved to your account: ")+err.Error())
-	}
 }

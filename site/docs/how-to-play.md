@@ -22,7 +22,7 @@ An account with no game yet sees the forge and a title page, with **New game** f
 | **New game** | `n` | Asks you to name a civilization, then starts it (see [Starting a new game](saving-and-loading.md#starting-a-new-game)) |
 | **Load game** | `l` | Opens the [Load Game browser](saving-and-loading.md#the-load-game-browser), where you can also mark your main game |
 | **Badges** | `b` | Shows how many badges you hold and the title you wear, and opens the [badge case](account.md#the-badge-case). No game needs to be loaded |
-| **Settings** | `s` | Opens a page of display settings, one row each with its value at the right: **Themes** (opens the [theme](themes.md) picker), **VibeMode**, **Map glyphs**, **Motion**, **Minimap** and **Discord status** (your age and town on your Discord profile while Discord is running; see [Account settings](account.md#account-settings)). `Enter` flips a switch, and `←` and `→` step the map glyphs through ascii, unicode and nerd. A change applies and saves at once, as the matching command does. `Esc` returns to the menu |
+| **Settings** | `s` | Opens a page of display settings, one row each with its value at the right: **Themes** (opens the [theme](themes.md) picker), **VibeMode**, **Map glyphs**, **Motion**, **Minimap** and **Discord status** (your age and town on your Discord profile while Discord is running; see [Account settings](account.md#account-settings)). `Enter` flips a switch, and `←` and `→` step the map glyphs through ascii and unicode. A change applies and saves at once, as the matching command does. `Esc` returns to the menu |
 | **Accounts** | `a` | Opens the [Accounts panel](account.md#the-accounts-panel): switch, create, back up and wipe accounts, and delete an account's saves |
 | **Check for updates** | `u` | Asks for the latest release (see [Updating](getting-started.md#updating)) |
 | **Quit** | `q` | Leaves the game |
@@ -199,6 +199,6 @@ build stonehenge
 
 Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, and your wonders). It is a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, along roads that grow from the town square. It has three zooms: the whole town, the close-up and a district. **PgUp** (or **-**) zooms out a step, and **PgDn** (or **=**) zooms in a step.
 
-`map glyphs` chooses the glyph set (`ascii`, `unicode` or `nerd`), and it is saved with your account.
+`map glyphs` chooses the glyph set (`ascii` or `unicode`), and it is saved with your account.
 
 The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab, Enter and the zoom keys `-` and `=`. An inspect cursor tells you what it is on and the command to type for it. Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large window the dashboard also shows a **mini map** above the Buildings list (`minimap off` hides it). `citymap` and `worldmap` also open the Map. See [The Map](map.md) for all the keys.

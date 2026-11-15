@@ -1,17 +1,12 @@
 package mapmodel
 
-// glyphs.go is the map's symbol table, in three tiers. A terminal cannot
-// bundle a font (the player's font draws every cell), so the maps pick
-// symbols by what the player's font can show:
+// glyphs.go is the map's symbol table, in two tiers:
 //
 //   - TierASCII: plain printable ASCII, for poor fonts and dumb terminals.
 //   - TierUnicode (default): box drawing, blocks, shades, geometric shapes,
 //     arrows and the widely supported dingbats and symbols, every one single
 //     width. Emoji-presentation code points (which draw double width) are
 //     never used.
-//   - TierNerd (opt-in): Nerd Font icons from the Private Use Area (the Font
-//     Awesome set), for players with a Nerd Font installed. Every icon has a
-//     Unicode fallback.
 //
 // Styles ask for a symbol by ID (Sym) and a tier; Fold maps any art rune a
 // renderer draws itself (blocks, shades, box drawing) down to ASCII.
@@ -22,18 +17,15 @@ type GlyphTier uint8
 const (
 	TierUnicode GlyphTier = iota // the default
 	TierASCII
-	TierNerd
 )
 
 // TierNames lists the tiers in the order a setting offers them.
-var TierNames = []string{"ascii", "unicode", "nerd"}
+var TierNames = []string{"ascii", "unicode"}
 
 func (t GlyphTier) String() string {
 	switch t {
 	case TierASCII:
 		return "ascii"
-	case TierNerd:
-		return "nerd"
 	}
 	return "unicode"
 }
@@ -45,24 +37,17 @@ func ParseTier(s string) (GlyphTier, bool) {
 		return TierASCII, true
 	case "unicode", "":
 		return TierUnicode, true
-	case "nerd":
-		return TierNerd, true
 	}
 	return TierUnicode, false
 }
 
-// Glyph is one symbol in every tier. Nerd is 0 when the symbol has no icon.
-type Glyph struct{ ASCII, Unicode, Nerd rune }
+// Glyph is one symbol in every tier.
+type Glyph struct{ ASCII, Unicode rune }
 
-// In returns the symbol for tier t, falling back nerd → unicode → ascii.
+// In returns the symbol for tier t.
 func (g Glyph) In(t GlyphTier) rune {
-	switch t {
-	case TierASCII:
+	if t == TierASCII {
 		return g.ASCII
-	case TierNerd:
-		if g.Nerd != 0 {
-			return g.Nerd
-		}
 	}
 	return g.Unicode
 }
@@ -128,63 +113,62 @@ const (
 	numSyms
 )
 
-// glyphTable is the symbol table. Nerd code points are Font Awesome icons
-// as Nerd Fonts ships them (nf-fa-*), all single width in a Nerd Font.
+// glyphTable is the symbol table.
 var glyphTable = [numSyms]Glyph{
-	SymNone:    {' ', ' ', 0},
-	SymStarBig: {'*', '✦', 0xf005},
+	SymNone:    {' ', ' '},
+	SymStarBig: {'*', '✦'},
 
-	SymHut:         {'n', '∩', 0xf015},
-	SymHouse:       {'h', '⌂', 0xf015},
-	SymHouseBlock:  {'H', '▪', 0xf0f7},
-	SymTower:       {'#', '▓', 0xf1ad},
-	SymHabitat:     {'O', '◘', 0xf1ad},
-	SymField:       {'"', '"', 0xf06c},
-	SymFieldPlough: {'=', '≡', 0xf06c},
-	SymFieldGrid:   {'#', '▤', 0xf06c},
-	SymFieldHydro:  {'#', '▦', 0xf06c},
-	SymStore:       {'o', '□', 0xf187},
-	SymDataStore:   {'o', '▣', 0xf1c0},
-	SymWood:        {'Y', '♠', 0xf1bb},
-	SymMine:        {'v', '▼', 0xf1b2},
-	SymMetal:       {'*', '♦', 0xf0e3},
-	SymEngineer:    {'%', '¤', 0xf085},
-	SymEnergy:      {'&', '☼', 0xf0e7},
-	SymHarbor:      {'J', '╤', 0xf13d},
-	SymHacker:      {'L', 'λ', 0xf121},
-	SymKnowledge:   {'S', '§', 0xf02d},
-	SymFaith:       {'+', 'Ω', 0xf0f3},
-	SymCulture:     {'m', '♫', 0xf001},
-	SymMonument:    {'I', '◊', 0xf091},
-	SymTrade:       {'$', '$', 0xf155},
-	SymMilitary:    {'x', '†', 0xf132},
-	SymDiplomacy:   {'=', '≡', 0xf2b5},
-	SymWonder:      {'W', '★', 0xf219},
+	SymHut:         {'n', '∩'},
+	SymHouse:       {'h', '⌂'},
+	SymHouseBlock:  {'H', '▪'},
+	SymTower:       {'#', '▓'},
+	SymHabitat:     {'O', '◘'},
+	SymField:       {'"', '"'},
+	SymFieldPlough: {'=', '≡'},
+	SymFieldGrid:   {'#', '▤'},
+	SymFieldHydro:  {'#', '▦'},
+	SymStore:       {'o', '□'},
+	SymDataStore:   {'o', '▣'},
+	SymWood:        {'Y', '♠'},
+	SymMine:        {'v', '▼'},
+	SymMetal:       {'*', '♦'},
+	SymEngineer:    {'%', '¤'},
+	SymEnergy:      {'&', '☼'},
+	SymHarbor:      {'J', '╤'},
+	SymHacker:      {'L', 'λ'},
+	SymKnowledge:   {'S', '§'},
+	SymFaith:       {'+', 'Ω'},
+	SymCulture:     {'m', '♫'},
+	SymMonument:    {'I', '◊'},
+	SymTrade:       {'$', '$'},
+	SymMilitary:    {'x', '†'},
+	SymDiplomacy:   {'=', '≡'},
+	SymWonder:      {'W', '★'},
 
-	SymHearth:       {'*', '*', 0xf06d},
-	SymHall:         {'P', 'Π', 0xf19c},
-	SymTownHall:     {'@', 'Φ', 0xf19c},
-	SymPlazaDigital: {'O', '◘', 0xf0ac},
-	SymPlazaNeon:    {'O', '◙', 0xf0ac},
-	SymPlazaCosmic:  {'*', '☼', 0xf185},
+	SymHearth:       {'*', '*'},
+	SymHall:         {'P', 'Π'},
+	SymTownHall:     {'@', 'Φ'},
+	SymPlazaDigital: {'O', '◘'},
+	SymPlazaNeon:    {'O', '◙'},
+	SymPlazaCosmic:  {'*', '☼'},
 
-	SymRuin:      {'%', '%', 0xf127},
-	SymWar:       {'X', '×', 0xf00d},
-	SymHarbinger: {'Y', 'Ψ', 0xf06e},
-	SymHazard:    {'!', '‼', 0xf071},
-	SymCiv:       {'C', '▪', 0xf286},
+	SymRuin:      {'%', '%'},
+	SymWar:       {'X', '×'},
+	SymHarbinger: {'Y', 'Ψ'},
+	SymHazard:    {'!', '‼'},
+	SymCiv:       {'C', '▪'},
 
-	SymSun:   {'O', '☼', 0xf185},
-	SymMoon:  {'C', '☾', 0xf186},
-	SymCloud: {'~', '☁', 0xf0c2},
-	SymRain:  {'/', '╱', 0xf043},
-	SymSnow:  {'*', '❄', 0xf2dc},
-	SymBolt:  {'Z', 'ϟ', 0xf0e7},
+	SymSun:   {'O', '☼'},
+	SymMoon:  {'C', '☾'},
+	SymCloud: {'~', '☁'},
+	SymRain:  {'/', '╱'},
+	SymSnow:  {'*', '❄'},
+	SymBolt:  {'Z', 'ϟ'},
 
-	SymGold: {'$', '¤', 0xf155},
-	SymFood: {'f', '♣', 0xf06c},
+	SymGold: {'$', '¤'},
+	SymFood: {'f', '♣'},
 
-	SymUFO: {'O', '◉', 0xf192}, // dot in a circle
+	SymUFO: {'O', '◉'}, // dot in a circle
 }
 
 // G returns a symbol's glyph record.
@@ -267,8 +251,8 @@ func pickEpoch(epoch int, s ...Sym) Sym {
 	return s[epoch]
 }
 
-// Fold maps an art rune to what tier t can show. Unicode and nerd tiers
-// keep it; the ASCII tier folds blocks, shades, box drawing and the symbols
+// Fold maps an art rune to what tier t can show. The Unicode tier
+// keeps it; the ASCII tier folds blocks, shades, box drawing and the symbols
 // the maps draw to their nearest ASCII shape, and anything else non-ASCII
 // to '?'.
 func Fold(r rune, t GlyphTier) rune {
@@ -279,7 +263,7 @@ func Fold(r rune, t GlyphTier) rune {
 		return a
 	}
 	for _, g := range glyphTable {
-		if g.Unicode == r || g.Nerd == r {
+		if g.Unicode == r {
 			return g.ASCII
 		}
 	}

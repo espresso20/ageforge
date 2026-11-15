@@ -49,8 +49,6 @@ type CommandResult struct {
 	// tab, or on a badge with its detail open. The zero value leaves the
 	// case as it was.
 	Badges badgeRequest
-	// Icons asks the dashboard to start the guided icons check.
-	Icons bool
 	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
 	// the account; with no account loaded the dashboard keeps it for the
@@ -107,14 +105,6 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 // runPanel is the Run of a command that only opens the panel of that name.
 func runPanel(name string) func(args []string, engine *game.GameEngine) CommandResult {
 	return func([]string, *game.GameEngine) CommandResult { return panelReply(name) }
-}
-
-// cmdIcons is `icons`: start the guided icons check.
-func cmdIcons(args []string, _ *game.GameEngine) CommandResult {
-	if len(args) > 0 {
-		return errorReply(usageFor("icons"))
-	}
-	return CommandResult{Icons: true}
 }
 
 // unknownCommandText is the refusal for a first word that is no command:
@@ -2686,7 +2676,7 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
 	cur := resolveMapSettings(acct)
 	if len(args) == 0 {
-		return infoReply(vibe.Sprintf("ui.input.cmdMapGlyphs.01", "Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch (icons checks your font for nerd).",
+		return infoReply(vibe.Sprintf("ui.input.cmdMapGlyphs.01", "Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch.",
 			cur.Tier, strings.Join(mapmodel.TierNames, ", ")))
 	}
 	if len(args) > 1 {
@@ -2694,16 +2684,12 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	}
 	name := strings.ToLower(args[0])
 	switch name {
-	case "ascii", "unicode", "nerd":
+	case "ascii", "unicode":
 	default:
 		return usageError(usageFor("map glyphs"), vibe.Errorf("ui.input.cmdMapGlyphs.03", "there is no glyph tier %q", args[0]))
 	}
 	res := CommandResult{Type: game.LogRoutine, Message: vibe.Sprintf("ui.input.cmdMapGlyphs.04", "Map glyphs set to %s.", name),
 		MapPref: mapPref{Key: "glyphs", Value: name}}
-	if name == "nerd" {
-		res.Type = "info" // advice, not a plain confirmation
-		res.Message += vibe.Line("ui.input.cmdMapGlyphs.05", " If the map shows boxes or question marks, type icons.")
-	}
 	if acct == nil {
 		res.Type, res.Message = "info", res.Message+mapSessionOnly.String()
 		return res
