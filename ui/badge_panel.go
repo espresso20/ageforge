@@ -53,11 +53,8 @@ type badgePanel struct {
 	// with barPanel.
 	views []game.BadgeView
 	sum   game.BadgeSummary
-	// coinSet is the pictures of the coins, by look and pose, for the cell
-	// size coinCell, and coinBytes how many bytes they hold (coinImage).
-	coinSet   map[coinKey]*image.RGBA
-	coinCell  [2]int
-	coinBytes int
+	// coins is the pictures of the coins; other screens may share it.
+	coins *coinCache
 	// picked is the badge whose large medal was painted last, and pickedAt
 	// the pose number it was first painted at: its turn starts there.
 	picked   string
@@ -81,7 +78,7 @@ type badgePanel struct {
 }
 
 func newBadgePanel() *badgePanel {
-	p := &badgePanel{w: 120, h: 37, now: time.Now, start: time.Now(), motion: true}
+	p := &badgePanel{w: 120, h: 37, now: time.Now, start: time.Now(), motion: true, coins: &coinCache{}}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
 }
@@ -221,7 +218,7 @@ func (p *badgePanel) paintCoins(p2 *kit.Painter, org image.Point) bool {
 		if n != atRest {
 			at -= 2*c.it.col + 3*c.it.line
 		}
-		p2.Picture(c.r.Add(org), p.coinImage(l, c.r.Size(), coinPoseAt(l, at)))
+		p2.Picture(c.r.Add(org), p.coins.image(l, c.r.Size(), coinPoseAt(l, at)))
 		moving = moving || l.earned()
 	}
 	at, it := p.model.medalAt, p.model.medalFor
@@ -235,7 +232,7 @@ func (p *badgePanel) paintCoins(p2 *kit.Painter, org image.Point) bool {
 	if n != atRest {
 		since = n - p.pickedAt
 	}
-	p2.Picture(at.Add(org), p.coinImage(l, at.Size(), pickedPoseAt(l, since)))
+	p2.Picture(at.Add(org), p.coins.image(l, at.Size(), pickedPoseAt(l, since)))
 	return n != atRest && (moving || l.earned() || since < turnSteps)
 }
 
@@ -259,38 +256,12 @@ func (p *badgePanel) look(it *caseItem, art int) coinLook {
 // large a cell is, and the glyph tier is not the plain one.
 func (p *badgePanel) pix() bool { return pictureCell != nil && !p.view.plain() }
 
-// coinSetMax is how many bytes of coin pictures the panel keeps before it
-// starts the set again.
-const coinSetMax = 24 << 20
-
-// coinImage is a coin in a pose as a picture for a room of cells. Coins that
-// look alike share one picture: it is kept by the look and the pose, not the
-// badge, so a case of hundreds of badges holds a few dozen pictures at rest,
-// and an image that has been painted is never drawn on. A change of cell
-// size starts the set again, and so does a set grown too large.
-func (p *badgePanel) coinImage(l coinLook, cells image.Point, pose coinPose) *image.RGBA {
-	cw, ch := pictureCell()
-	key := coinKey{l, cells.X * cw, cells.Y * ch, pose}
-	if p.coinCell != [2]int{cw, ch} || p.coinBytes > coinSetMax {
-		p.coinSet, p.coinCell, p.coinBytes = nil, [2]int{cw, ch}, 0
+// setCoins makes the panel draw its coins from a cache shared with other
+// screens.
+func (p *badgePanel) setCoins(c *coinCache) {
+	if c != nil {
+		p.coins = c
 	}
-	img, ok := p.coinSet[key]
-	if !ok {
-		if p.coinSet == nil {
-			p.coinSet = map[coinKey]*image.RGBA{}
-		}
-		img = coinPicture(l, key.w, key.h, pose)
-		p.coinSet[key] = img
-		p.coinBytes += len(img.Pix)
-	}
-	return img
-}
-
-// coinKey is what a coin's picture was struck for.
-type coinKey struct {
-	look coinLook
-	w, h int
-	pose coinPose
 }
 
 // Mouse: a click on a key of the key bar presses it, and the close button
