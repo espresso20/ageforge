@@ -253,8 +253,8 @@ func (p *badgePanel) look(it *caseItem, art int) coinLook {
 }
 
 // pix reports whether the case is drawn in pictures: the window says how
-// large a cell is, and the glyph tier is not the plain one.
-func (p *badgePanel) pix() bool { return pictureCell != nil && !p.view.plain() }
+// large a cell is. The glyph tier does not matter to a picture.
+func (p *badgePanel) pix() bool { return pictureCell != nil }
 
 // setCoins makes the panel draw its coins from a cache shared with other
 // screens.
