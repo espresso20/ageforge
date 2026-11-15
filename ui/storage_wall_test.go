@@ -190,10 +190,10 @@ func TestNextAgeRowListsTheStorageRequirement(t *testing.T) {
 	for _, sz := range wallSizes {
 		w, h := sz[0], sz[1]
 		cells := drawnDashboard(t, d, pages, w, h)
-		rows := checkFittedBox(t, fmt.Sprintf("Ledger at %dx%d", w, h), d.ledgerTV, cells, w)
+		rows := checkHeader(t, fmt.Sprintf("header at %dx%d", w, h), d, cells, w)
 		got := flat(rows)
 		if !strings.Contains(got, name+" 3/5") {
-			t.Errorf("%dx%d: the Ledger does not list the %s still to build:\n%s", w, h, name, strings.Join(rows, "\n"))
+			t.Errorf("%dx%d: the header does not list the %s still to build:\n%s", w, h, name, strings.Join(rows, "\n"))
 		}
 	}
 }

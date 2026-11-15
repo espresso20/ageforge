@@ -80,7 +80,7 @@ func TestNoScreenLeaksTheFate(t *testing.T) {
 			panel:    harbingerPanelText(st, "", false, false),
 			cmd:      HandleCommand("catastrophe", engine).Message,
 			epoch:    epochProvider(st, 120),
-			status:   d.statusTV.GetText(false),
+			status:   d.headerTV.GetText(false),
 			mapPrint: m.Fingerprint(),
 		}
 	}
@@ -95,7 +95,7 @@ func TestNoScreenLeaksTheFate(t *testing.T) {
 		t.Errorf("Epoch panel differs:\n%s\n---\n%s", fated.epoch, quiet.epoch)
 	}
 	if fated.status != quiet.status {
-		t.Errorf("status bar differs:\n%s\n---\n%s", fated.status, quiet.status)
+		t.Errorf("header differs:\n%s\n---\n%s", fated.status, quiet.status)
 	}
 	if fated.mapPrint != quiet.mapPrint {
 		t.Errorf("the map model differs:\n%s\n---\n%s", fated.mapPrint, quiet.mapPrint)
@@ -223,13 +223,13 @@ func TestHarbingerPanelKeys(t *testing.T) {
 func TestHarbingerStatusBadgeAndSidebar(t *testing.T) {
 	d, _, _ := harbDashboard(t, "")
 	d.refresh()
-	if strings.Contains(d.statusTV.GetText(true), "⚑ Harbinger") {
+	if strings.Contains(d.headerTV.GetText(true), "⚑ Harbinger") {
 		t.Error("badge shown with no harbinger")
 	}
 	d2, _, _ := harbDashboard(t, "medieval_age")
 	d2.refresh()
-	if !strings.Contains(d2.statusTV.GetText(true), "⚑ Harbinger.") {
-		t.Errorf("no harbinger badge in status bar: %q", d2.statusTV.GetText(true))
+	if !strings.Contains(d2.headerTV.GetText(true), "⚑ Harbinger: type harbinger") {
+		t.Errorf("no harbinger badge in the header: %q", d2.headerTV.GetText(true))
 	}
 	if !strings.Contains(buildSidebarText(""), "harbinger") {
 		t.Error("harbinger missing from the sidebar Panels list")

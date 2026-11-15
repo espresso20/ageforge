@@ -436,7 +436,7 @@ The History panel shows 7 graphs: Population, Food rate, Research rate, Faith, M
 |---|---|
 | `catastrophe` (or `cat`) | Reopen the Endure or Succumb choice for a pending catastrophe or Last Passage. With nothing pending, show the outlook as you can know it: the doom a harbinger present foretells, or that no harbinger has come and the era is quiet, for now (in the Cosmic Era, the odds of the Last Passage at your next prestige take that line's place). |
 
-A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `E` endures, `S` succumbs and `Esc` closes it without choosing. The status bar shows a pending badge until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
+A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `E` endures, `S` succumbs and `Esc` closes it without choosing. The header shows a pending chip until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
 
 ---
 

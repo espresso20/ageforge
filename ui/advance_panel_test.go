@@ -432,7 +432,7 @@ func TestAdvancePanelWording(t *testing.T) {
 			}
 		}
 	}
-	for _, s := range []string{charterStripHint.String(), advanceKeys[0].what.String(), advanceKeys[1].what.String(), advanceKeys[2].what.String()} {
+	for _, s := range []string{advanceKeys[0].what.String(), advanceKeys[1].what.String(), advanceKeys[2].what.String()} {
 		if strings.ContainsAny(s, "—!") {
 			t.Errorf("wording %q", s)
 		}
@@ -518,32 +518,6 @@ func TestAdvanceFlashGivesWay(t *testing.T) {
 	drawPanel(t, p, 100, 27)
 	if p.ui.flash != "" {
 		t.Errorf("the flash %q outlived its time", p.ui.flash)
-	}
-}
-
-// The Ledger's long bar says how to open the panel when it has room, and
-// never at the cost of the width.
-func TestLedgerPointsAtTheCharter(t *testing.T) {
-	restoreForge(t)
-	_, _, eng := stagedDashboard(t, "bronze_age")
-	l := ledgerOf(eng.GetState(), eng)
-	wide := untag(strings.Join(ledgerLines(&l.data, ledgerFull, 160, 11, mapmodel.TierUnicode), "\n"))
-	if !strings.Contains(wide, charterStripHint.String()) {
-		t.Errorf("a wide Ledger has no hint:\n%s", wide)
-	}
-	for w := 40; w <= 200; w++ {
-		for _, tier := range []ledgerTier{ledgerCompact, ledgerStandard, ledgerFull} {
-			for _, line := range ledgerLines(&l.data, tier, w, 11, mapmodel.TierUnicode) {
-				if n := runeLen(plainLogText(line)); n > w {
-					t.Fatalf("tier %d at width %d: a line of %d cells: %q", tier, w, n, line)
-				}
-			}
-		}
-	}
-	final := &ledger{}
-	final.data.v = game.AdvanceView{Final: true}
-	if lines := ledgerLines(&final.data, ledgerFull, 160, 11, mapmodel.TierUnicode); strings.Contains(strings.Join(lines, ""), charterStripHint.String()) {
-		t.Errorf("the final age points at a panel with no gate: %v", lines)
 	}
 }
 

@@ -16,7 +16,7 @@ Type `milestones` (or `ms`) to open the Milestones panel. It opens full screen a
 
 ## Civilization titles
 
-A civilization title belongs to the run you are playing. It shows next to your progress count at the top of the Milestones panel, and in quotes on the status ribbon when the window is wide enough. It is not the title your account wears, which comes from your badges (see [Titles](badges.md#titles)).
+A civilization title belongs to the run you are playing. It shows next to your progress count at the top of the Milestones panel, and in quotes on the header's top edge when the window is wide enough. It is not the title your account wears, which comes from your badges (see [Titles](badges.md#titles)).
 
 When a chain is completed, its title overrides any count-based fallback. If you finish more than one chain, the title of the one lower in this table shows. The boost adds to game speed, so +300% runs the game four times as fast for its duration:
 

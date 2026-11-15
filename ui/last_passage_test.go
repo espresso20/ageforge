@@ -38,8 +38,8 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 	if strings.Contains(screen, "buildings destroyed") {
 		t.Error("the Last Passage modal shows the epoch catastrophe's Endure terms")
 	}
-	if !strings.Contains(d.statusTV.GetText(true), "☄ Last Passage. Type catastrophe to choose.") {
-		t.Errorf("no Last Passage badge: %q", d.statusTV.GetText(true))
+	if !strings.Contains(alertRow(d), "☄ Last Passage: type catastrophe") {
+		t.Errorf("no Last Passage badge: %q", alertRow(d))
 	}
 
 	// Esc hides it; the next refresh does not re-pop it; the badge stays.
@@ -52,7 +52,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 	if pages.HasPage(catastrophePage) {
 		t.Error("refresh re-popped a modal the player closed")
 	}
-	if !strings.Contains(d.statusTV.GetText(true), "Last Passage") {
+	if !strings.Contains(alertRow(d), "Last Passage") {
 		t.Error("badge gone after Esc")
 	}
 
@@ -76,7 +76,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 		t.Fatalf("after E: pending %v level %d age %s", st.LastPassage.Pending, st.Prestige.Level, st.Age)
 	}
 	d.refresh()
-	if pages.HasPage(catastrophePage) || strings.Contains(d.statusTV.GetText(true), "Last Passage") {
+	if pages.HasPage(catastrophePage) || strings.Contains(alertRow(d), "Last Passage") {
 		t.Error("modal or badge survived the choice")
 	}
 }
@@ -365,3 +365,7 @@ func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed
 
 // narrowestScreenW is the narrowest terminal the game is laid out for.
 const narrowestScreenW = 80
+
+// alertRow is the header's first row, where the alerts are: the notice in the
+// top edge may name the same thing.
+func alertRow(d *Dashboard) string { return strings.Split(d.headerTV.GetText(true), "\n")[1] }

@@ -40,7 +40,7 @@ func (tm *ToastManager) Show(message, color string, duration time.Duration) {
 	tm.show(Toast{Message: message, Color: color, Duration: duration})
 }
 
-// ShowFit queues a toast that is written for the width of the toast bar
+// ShowFit queues a toast that is written for the room the header's notice has
 // and carries its own colour tags (thread-safe).
 func (tm *ToastManager) ShowFit(fit func(w int) string, duration time.Duration) {
 	tm.show(Toast{Fit: fit, Duration: duration})

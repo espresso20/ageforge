@@ -36,11 +36,11 @@ var shameMessages = []vibe.Entry{
 const promptRows = 3
 
 // The dashboard's other fixed sizes: the rows over the boxes on the smallest
-// terminals (the badge line, the status ribbon, the toast line and the two of
-// the Ledger, dash_ledger.go; a bigger terminal gives the Ledger more) and
-// the width of the right column (the Panels list and the People box).
+// terminals (the header, dash_header.go; a bigger terminal gives it one
+// more) and the width of the right column (the Panels list and the People
+// box).
 const (
-	dashHeaderRows = 1 + 1 + 1 + ledgerCompactRows
+	dashHeaderRows = headerSmallRows
 	sidebarW       = 22
 )
 
@@ -64,11 +64,10 @@ type Dashboard struct {
 	workerDetail  bool // the terminal has the rows for the People box's food detail line
 
 	// Shared UI
-	logTV    *nativeText
-	statusTV *fitView
-	// ledgerTV is the Ledger under the status ribbon (dash_ledger.go) and
-	// ledger what it draws.
-	ledgerTV         *ledgerBox
+	logTV *nativeText
+	// headerTV is the framed header at the top (dash_header.go) and ledger
+	// the gate's facts it draws under the age.
+	headerTV         *headerBox
 	ledger           ledger
 	inputField       *commandInput
 	lastAge          string
@@ -79,13 +78,11 @@ type Dashboard struct {
 	pendingEnding       atomic.Pointer[game.RunEnding]
 	pendingEpochChanged bool // whether the pending age advance also crossed an epoch boundary
 	toastMgr            *ToastManager
-	toastTV             *nativeText
-	toastW              int // the toast bar's width as last drawn; 0 before that
 	contentArea         Primitive
 
-	// Shame badge — set once on first load when CheaterBadge is true
-	cheaterTV *nativeText
-	shame     *vibe.Entry // the message picked for the session; read as it is now each frame
+	// Shame badge — set once on first load when CheaterBadge is true; the
+	// header shows it as an alert.
+	shame *vibe.Entry // the message picked for the session; read as it is now each frame
 
 	// catModalShown tracks the pending catastrophe key we have already shown a modal for,
 	// so that closing it with Esc does not re-pop it on the next refresh tick (the
@@ -353,40 +350,10 @@ func (d *Dashboard) build() {
 	d.logTV.click = func() { d.runLine("logs") }
 	theme.Track(func() { d.logTV.SetTitleColor(theme.Of(theme.RoleDim)) })
 
-	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
-	d.cheaterTV = newNativeText().
-		SetDynamicColors(true).
-		SetTextAlign(kit.AlignCenter)
-
-	// Status ribbon: written for the bar's width (statusLine).
-	d.statusTV = newFitView(func(w, _ int) string {
-		if d.lastState == nil {
-			return ""
-		}
-		return statusLine(*d.lastState, d.ribbonFacts(), w)
-	})
-
-	// The Ledger: the long bar to the next age with what it waits on and the
-	// four pillars, written for the size it is drawn at (ledgerLines).
-	d.ledgerTV = newLedgerBox(func(w, h int) []string {
-		if d.lastState == nil || !d.ledger.ready {
-			return nil
-		}
-		tw, th := d.screenSize()
-		return ledgerLines(&d.ledger.data, ledgerTierFor(tw, th), w, h, d.mapSettings().Tier)
-	})
-	// A click on the Ledger opens the Advance panel, the Ledger in full.
-	d.ledgerTV.onClick = func() { d.runLine("charter") }
-
-	// Toast notification
+	// The header at the top: the account, the age, the people, the way to
+	// the next age (headerView).
 	d.toastMgr = NewToastManager()
-	d.toastTV = newNativeText().
-		SetDynamicColors(true).
-		SetTextAlign(kit.AlignCenter)
-
-	// The bar's width, once it has been drawn: a toast written to fit
-	// (a badge's) asks for it. Until then it is 0, any width.
-	d.toastTV.SetDrawFunc(func(_, _, w, _ int) { d.toastW = w })
+	d.headerTV = newHeaderBox(d.headerView, func() bool { return headerPlain(d.mapSettings()) }, d.runLine, d.app.Key)
 
 	// Subscribe to events for toasts
 	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
@@ -582,15 +549,12 @@ func (d *Dashboard) build() {
 
 	// Root layout (no tab bar)
 	d.root = newNativeFlex().SetDirection(flexRow).
-		AddItem(d.cheaterTV, 1, 0, false).
-		AddItem(d.statusTV, 1, 0, false).
-		AddItem(d.toastTV, 1, 0, false).
-		AddItem(d.ledgerTV, ledgerCompactRows, 0, false).
+		AddItem(d.headerTV, headerSmallRows, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
 		AddItem(d.inputField, promptRows, 0, true)
-	// The Ledger is as tall as the terminal calls for, chosen before the
+	// The header is as tall as the terminal calls for, chosen before the
 	// rows are shared out, so a resize shows the right one at once.
-	d.root.SetDrawFunc(func(_, _, w, h int) { d.root.ResizeItem(d.ledgerTV, ledgerHeight(w, h), 0) })
+	d.root.SetDrawFunc(func(_, _, w, h int) { d.root.ResizeItem(d.headerTV, headerHeight(w, h), 0) })
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *kit.Key) *kit.Key {
@@ -876,11 +840,11 @@ func (d *Dashboard) syncVibe() {
 		d.retitle()
 		d.economyTab.retitle()
 		// A box that keeps the text it wrote for its size writes it again.
-		for _, v := range []*fitView{d.sidebar, d.statusTV, d.workerMiniTV,
+		for _, v := range []*fitView{d.sidebar, d.workerMiniTV,
 			d.economyTab.resourceTV, d.economyTab.buildingTV, d.economyTab.constructionTV} {
 			v.changed()
 		}
-		d.ledgerTV.changed()
+		d.headerTV.changed()
 	}
 }
 
@@ -931,7 +895,7 @@ func (d *Dashboard) refresh() {
 	// Badges earned since the last refresh: a toast and a log line each, and a
 	// line for the theme a badge gives. Here, in the UI goroutine: outside the
 	// engine lock, never in a Bus handler. They wait for the film of a run's
-	// ending, which covers the toast bar, and are told when it is over.
+	// ending, which covers the header, and are told when it is over.
 	if d.overlayMgr.ActiveName() != endingPageName {
 		d.announceBadges()
 	}
@@ -977,18 +941,13 @@ func (d *Dashboard) refresh() {
 		pick := shameMessages[rand.Intn(len(shameMessages))]
 		d.shame = &pick
 	}
-	if d.shame != nil {
-		d.cheaterTV.SetText(fmt.Sprintf("[red]%s[-]", d.shame.String()))
-	}
 
 	if d.lastAge != state.Age {
 		d.lastAge = state.Age
 	}
 
 	d.refreshAgeProgress(state)
-	d.refreshStatus(state)
 	d.refreshLog(state)
-	d.toastTV.SetText(safeTags(d.toastMgr.CurrentFor(d.toastW)))
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
@@ -1013,7 +972,7 @@ func (d *Dashboard) refresh() {
 // its record already proved when it was loaded get one line between them.
 // Then it drains the badges the account earned since the last refresh
 // (the engine judged them under its lock and only queued them) and gives each a
-// toast in the badge's own colours, written for the width of the toast bar, and
+// toast in the badge's own colours, written for the room the header's notice has, and
 // one log line, with a second line for the theme it unlocks when it gives one. The line is fixed per badge, so earning one draws
 // nothing from the run's random streams.
 func (d *Dashboard) announceBadges() {
@@ -1189,143 +1148,103 @@ func peopleBoxText(state game.GameState, w int, detail bool) string {
 	return sb.String()
 }
 
-func (d *Dashboard) refreshStatus(game.GameState) {
-	// The line is written from d.lastState for the bar's width at its next
-	// draw (statusLine), and in full until the bar has been drawn.
-	d.statusTV.changed()
-}
-
-// ribbonFacts are the facts the status ribbon takes from the Ledger's view
-// of the gate: the calendar year and the next age (both "" when there is
-// nothing to say), and whether the plain glyph tier is on.
-type ribbonFacts struct {
-	year, next string
-	plain      bool
-}
-
-// ribbonFacts reads them from the last refresh.
-func (d *Dashboard) ribbonFacts() ribbonFacts {
-	f := ribbonFacts{plain: d.mapSettings().Tier == mapmodel.TierASCII}
+// headerView reads what the header shows from the last refresh, for a header
+// w cells wide: the facts of statusLine, the cheater badge before any alert,
+// the toast on show as the notice, and the Ledger's rows under them.
+func (d *Dashboard) headerView(w int) headerView {
+	if d.lastState == nil {
+		return headerView{}
+	}
+	year := ""
 	if d.ledger.ready {
-		v := d.ledger.data.v
-		f.year = v.YearText
-		if !v.Final {
-			f.next = v.NextName
-		}
+		year = d.ledger.data.v.YearText
 	}
-	return f
+	v := statusLine(*d.lastState, year)
+	if d.shame != nil {
+		msg := kit.Strip(safeTags(d.shame.String()))
+		v.Alerts = append([]headerAlert{{text: msg, short: fitText(msg, 14), k: xBad}}, v.Alerts...)
+	}
+	// A toast written to fit (a badge's) is asked for the room the notice has.
+	v.Notice = strings.TrimSpace(kit.Strip(safeTags(d.toastMgr.CurrentFor(max(w-31, 0)))))
+	if d.ledger.ready {
+		v.Led = &d.ledger.data
+	}
+	return v
 }
 
-// statusLine writes the status ribbon for a bar w cells wide (0: as wide as
-// it likes): the age and the account's marks, then the calendar year, the
-// people, morale and the next age. When the whole line does not fit it gives
-// up, in order: half the hint, then all of it, the next age, the wording of
-// the catastrophe and harbinger badges (and long counts are written short),
-// what morale does to production, the civilization's title, the account's
-// name, the rest of the badges' words, the calendar year and the wide
-// spacing. The age, the badges, the people and morale always show.
-func statusLine(state game.GameState, f ribbonFacts, w int) string {
-	prestigeStr := ""
-	if state.Prestige.Level > 0 {
-		prestigeStr = vibe.Sprintf("ui.dashboard.statusLine.01", "  [cyan]Prestige %d[-]", state.Prestige.Level)
+// moraleKind is the kind a morale band is drawn in: green for a bonus, red
+// for a penalty, plain for neither.
+func moraleKind(b moraleBand) xk {
+	switch {
+	case b.Bonus:
+		return xGood
+	case b.Penalty:
+		return xBad
 	}
-	devStr := ""
+	return xText
+}
+
+// plainFact is the text a vibe line wrote, without its colour tags and the
+// spaces that set it off from what was beside it.
+func plainFact(s string) string { return strings.TrimSpace(kit.Strip(s)) }
+
+// statusLine is the facts of the header for a snapshot: the account's name
+// and titles, the age, the calendar year (year; "" when there is nothing to
+// say), Prestige, DEV, the people, morale and any alert, each in the lengths
+// the header gives up in (dash_header.go).
+func statusLine(state game.GameState, year string) headerView {
+	var v headerView
+	v.Age = state.AgeName
+	if state.Prestige.Level > 0 {
+		v.Prestige = plainFact(vibe.Sprintf("ui.dashboard.statusLine.01", "  [cyan]Prestige %d[-]", state.Prestige.Level))
+	}
 	if game.DevModeActive {
-		devStr = vibe.Line("ui.dashboard.statusLine.02", "  [red]DEV[-]")
+		v.Dev = plainFact(vibe.Line("ui.dashboard.statusLine.02", "  [red]DEV[-]"))
 	}
 	// Colour morale by the continuous production multiplier, not the raw percent:
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
 	// computeMoraleBand is the shared source of truth (same as the workers panel).
 	mBand := computeMoraleBand(state.Morale, state.MoraleMultiplier)
-	dot := "·"
-	if f.plain {
-		dot = "|"
+	v.MoraleK = moraleKind(mBand)
+	// Pending catastrophe badge: persistent until the player chooses, so a player
+	// who closed the modal (or came back after a long idle) sees why advancing
+	// is blocked and how to reopen the choice.
+	if state.PendingCatastrophe != "" {
+		v.Alerts = append(v.Alerts, headerAlert{vibe.Line("ui.dashboard.statusLine.04", "☄ Catastrophe: type catastrophe"), vibe.Line("ui.dashboard.statusLine.05", "☄ Catastrophe"), "catastrophe", xChipMil})
+	} else if state.LastPassage.Pending {
+		v.Alerts = append(v.Alerts, headerAlert{vibe.Line("ui.dashboard.statusLine.07", "☄ Last Passage: type catastrophe"), vibe.Line("ui.dashboard.statusLine.08", "☄ Last Passage"), "catastrophe", xChipMil})
 	}
-
-	// build writes the line at a level of brevity: each level gives up one
-	// more thing.
-	build := func(level int) string {
-		titleStr := ""
-		if state.Milestones.CurrentTitle != "" && level < 5 {
-			titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
-		}
-		// Pending catastrophe badge: persistent until the player chooses, so a player
-		// who closed the modal (or came back after a long idle) sees why advancing
-		// is blocked and how to reopen the choice.
-		catStr := ""
-		badge := func(fg, bg theme.Role, full, brief, least string) {
-			text := full
-			if level >= 7 {
-				text = least
-			} else if level >= 3 {
-				text = brief
-			}
-			catStr += fmt.Sprintf("  %s %s %s", theme.TagFgBg(fg, bg), text, theme.Reset)
-		}
-		if state.PendingCatastrophe != "" {
-			badge(theme.RoleOnNegative, theme.RoleNegative, vibe.Line("ui.dashboard.statusLine.03", "☄ Catastrophe pending. Type catastrophe to choose."), vibe.Line("ui.dashboard.statusLine.04", "☄ Catastrophe: type catastrophe"), vibe.Line("ui.dashboard.statusLine.05", "☄ Catastrophe"))
-		} else if state.LastPassage.Pending {
-			badge(theme.RoleOnNegative, theme.RoleNegative, vibe.Line("ui.dashboard.statusLine.06", "☄ Last Passage. Type catastrophe to choose."), vibe.Line("ui.dashboard.statusLine.07", "☄ Last Passage: type catastrophe"), vibe.Line("ui.dashboard.statusLine.08", "☄ Last Passage"))
-		}
-		// Harbinger badge: present until the doom it warns of resolves. Nothing
-		// expires, so the badge is the idle player's reminder that there is a
-		// choice waiting (it never blocks anything).
-		if state.Harbinger != nil {
-			badge(theme.RoleOnAccent, theme.RoleAccent, vibe.Line("ui.dashboard.statusLine.09", "⚑ Harbinger. Type harbinger to read it."), vibe.Line("ui.dashboard.statusLine.10", "⚑ Harbinger: type harbinger"), vibe.Line("ui.dashboard.statusLine.11", "⚑ Harbinger"))
-		}
-		moraleDelta := ""
-		if mBand.DeltaLabel != "" && level < 4 {
-			moraleDelta = vibe.Sprintf("ui.dashboard.statusLine.12", " (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)
-		}
-		// The text starts with the spaces that used to set it off from the
-		// population; the ribbon sets its facts off with a mark instead.
-		moraleStr := strings.TrimLeft(vibe.Sprintf("ui.dashboard.statusLine.13", "  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta), " ")
-		// Leading account-name segment, when an account is wired. Truncate a long name so
-		// the status line stays readable on narrow terminals.
-		acctStr := ""
-		if state.AccountStats != nil && state.AccountStats.DisplayName != "" && level < 6 {
-			name := state.AccountStats.DisplayName
-			if len(name) > 20 {
-				name = name[:19] + "…"
-			}
-			acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
-			// The title the account wears, once it is not the one every
-			// account starts with, and only on a bar with room.
-			if sum := state.AccountStats.BadgeSummary; level == 0 && (sum.TitleRank > 0 || wornTitle(sum) != sum.Title) {
-				acctStr = fmt.Sprintf("[gold]%s[-] [gray]%s[-] · ", name, wornTitle(sum))
-			}
-		}
-		hint := ""
-		switch level {
-		case 0:
-			hint = vibe.Line("ui.dashboard.statusLine.14", "  |  [gray]type a panel name to open it · Esc: close or menu[-]")
-		case 1:
-			hint = vibe.Line("ui.dashboard.statusLine.15", "  |  [gray]Esc: close or menu[-]")
-		}
-		pop := groupedCount(state.Workers.TotalPop) + "/" + groupedCount(state.Workers.MaxPop)
-		if level >= 3 {
-			pop = textfmt.Number(float64(state.Workers.TotalPop)) + "/" + textfmt.Number(float64(state.Workers.MaxPop))
-		}
-		facts := make([]string, 0, 4)
-		if f.year != "" && level < 8 {
-			facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.19", "Year %s", f.year))
-		}
-		facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.17", "People %s", pop), moraleStr)
-		if f.next != "" && level < 2 {
-			facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.18", "[gray]Next: %s[-]", f.next))
-		}
-		line := " " + acctStr + "[gold]" + state.AgeName + "[-]" + prestigeStr + titleStr + catStr + devStr +
-			"  [gray]" + dot + "[-]  " + strings.Join(facts, "  [gray]"+dot+"[-]  ") + hint
-		if level >= 9 {
-			line = strings.ReplaceAll(line, "  ", " ")
-		}
-		return line
+	// Harbinger badge: present until the doom it warns of resolves. Nothing
+	// expires, so the badge is the idle player's reminder that there is a
+	// choice waiting (it never blocks anything).
+	if state.Harbinger != nil {
+		v.Alerts = append(v.Alerts, headerAlert{vibe.Line("ui.dashboard.statusLine.10", "⚑ Harbinger: type harbinger"), vibe.Line("ui.dashboard.statusLine.11", "⚑ Harbinger"), "harbinger", xChipLegend})
 	}
-	line := build(0)
-	for level := 1; level <= 9 && w > 0 && visibleLen(line) > w; level++ {
-		line = build(level)
+	if mBand.DeltaLabel != "" {
+		v.Delta = headFact{plainFact(vibe.Sprintf("ui.dashboard.statusLine.12", " (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)), mBand.DeltaLabel}
 	}
-	return line
+	pct := fmt.Sprintf("%.0f%%", state.Morale*100)
+	v.Morale = headFact{plainFact(vibe.Sprintf("ui.dashboard.statusLine.13", "  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, "")), pct}
+	// The name is cut to what a bar can hold; the title the account wears is
+	// shown once it is not the one every account starts with.
+	if st := state.AccountStats; st != nil && st.DisplayName != "" {
+		v.Name = st.DisplayName
+		if r := []rune(v.Name); len(r) > 20 {
+			v.Name = string(r[:19]) + "…"
+		}
+		if sum := st.BadgeSummary; sum.TitleRank > 0 || wornTitle(sum) != sum.Title {
+			v.Worn = wornTitle(sum)
+		}
+	}
+	v.Honour = state.Milestones.CurrentTitle
+	if year != "" {
+		v.Year = vibe.Sprintf("ui.dashboard.statusLine.19", "Year %s", year)
+	}
+	pop := groupedCount(state.Workers.TotalPop) + "/" + groupedCount(state.Workers.MaxPop)
+	short := textfmt.Number(float64(state.Workers.TotalPop)) + "/" + textfmt.Number(float64(state.Workers.MaxPop))
+	v.People = headFact{vibe.Sprintf("ui.dashboard.statusLine.17", "People %s", pop), pop}
+	v.PeopleShort = headFact{strings.Replace(v.People.Text, pop, short, 1), short}
+	return v
 }
 
 // groupedCount writes a whole count with a comma between its thousands
@@ -1338,15 +1257,13 @@ func groupedCount(n int) string {
 }
 
 func (d *Dashboard) refreshAgeProgress(state game.GameState) {
-	// The Ledger is worked out here, once, from the snapshot: the status
-	// ribbon reads its year and next age, and both are written from it at
-	// their next draw (ledgerLines).
+	// The Ledger is worked out here, once, from the snapshot: the header
+	// reads its year, its bar and what it waits on, and is written from it at
+	// its next layout. (The notice is the toast on show, which a refresh
+	// also moves on.)
 	d.ledger.update(state, d.engine)
-	d.ledgerTV.changed()
+	d.headerTV.changed()
 }
-
-// charterStripHint ends the Ledger's long bar when it has the room.
-var charterStripHint = vibe.E("ui.dashboard.charterStripHint.01", "type charter")
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
