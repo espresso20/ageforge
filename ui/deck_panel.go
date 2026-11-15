@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image"
+	"strings"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -33,6 +34,9 @@ type deckPanel struct {
 	lay    deckLayout
 	sel    int
 	scroll int
+	// said is the last command run over the panel and what came of it,
+	// shown over the keys: the log is behind the panel.
+	said []xseg
 }
 
 func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
@@ -44,7 +48,7 @@ func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
 // open is the overlay's build: it runs on every Show, with the first card
 // that can do something picked.
 func (p *deckPanel) open(state game.GameState) Primitive {
-	p.state, p.sel, p.scroll = state, 0, 0
+	p.state, p.sel, p.scroll, p.said = state, 0, 0, nil
 	pg := p.page(state)
 	for n := 0; n < pg.count(); n++ {
 		if c, _ := pg.card(n); c.Command != "" {
@@ -58,6 +62,17 @@ func (p *deckPanel) open(state game.GameState) Primitive {
 // update takes a new snapshot.
 func (p *deckPanel) update(state game.GameState) { p.state = state }
 
+// reply shows what a command run over the panel did: the command, then the
+// first line of its answer, in the bad colour when it failed.
+func (p *deckPanel) reply(cmd string, res CommandResult) {
+	msg, _, _ := strings.Cut(res.Message, "\n")
+	k := xGood
+	if res.Type == "error" || res.Type == "warning" {
+		k = xBad
+	}
+	p.said = []xseg{{"› " + cmd + "  ", xDim}, {strings.TrimSpace(barTags.ReplaceAllString(msg, "")), k}}
+}
+
 // Layout takes the panel's rectangle and works the panel out in it.
 func (p *deckPanel) Layout(r image.Rectangle) {
 	p.Place(r)
@@ -66,7 +81,7 @@ func (p *deckPanel) Layout(r image.Rectangle) {
 	}
 	p.pg = p.page(p.state)
 	p.sel = clamp(p.sel, 0, max(0, p.pg.count()-1))
-	p.grid, p.lay = renderDeck(&p.pg, p.sel, p.scroll, r.Dx(), r.Dy())
+	p.grid, p.lay = renderDeck(&p.pg, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
 	p.scroll = clamp(p.scroll, 0, max(0, p.lay.total-p.lay.viewH))
 	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
 		p.grid.fold()

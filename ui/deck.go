@@ -56,10 +56,10 @@ type deckSection struct {
 // deckPage is everything a deck panel shows.
 type deckPage struct {
 	Title string
-	// Head is a line of facts under the title; Warn are lines in the bad
-	// colour under that.
+	// Head is a line of facts under the title; Notes are lines under that,
+	// each wrapped and in its own colour (a warning in the bad one).
 	Head     []xseg
-	Warn     []string
+	Notes    []deckLine
 	Sections []deckSection
 	// Hint is what the foot says may be typed.
 	Hint string
@@ -98,11 +98,18 @@ func (pg *deckPage) card(n int) (deckCard, bool) {
 	return deckCard{}, false
 }
 
-// warnLines is the page's warnings wrapped to inner cells.
-func (pg *deckPage) warnLines(inner int) []string {
-	var out []string
-	for _, l := range pg.Warn {
-		out = append(out, deckWrap(l, inner)...)
+// noteLines is the page's notes wrapped to inner cells, each line with its
+// colour (quiet when the note names none).
+func (pg *deckPage) noteLines(inner int) []xseg {
+	var out []xseg
+	for _, n := range pg.Notes {
+		k := n.K
+		if k == 0 {
+			k = xDim
+		}
+		for _, l := range deckWrap(n.Label+n.Value, inner) {
+			out = append(out, xseg{l, k})
+		}
 	}
 	return out
 }
@@ -164,8 +171,8 @@ func layoutDeck(pg *deckPage, inner int) (cards []image.Rectangle, total int) {
 	if len(pg.Head) > 0 {
 		y += 2
 	}
-	if warn := pg.warnLines(inner); len(warn) > 0 {
-		y += len(warn) + 1
+	if notes := pg.noteLines(inner); len(notes) > 0 {
+		y += len(notes) + 1
 	}
 	for _, s := range pg.Sections {
 		y += 1 + len(s.Notes)
@@ -187,8 +194,10 @@ func layoutDeck(pg *deckPage, inner int) (cards []image.Rectangle, total int) {
 }
 
 // renderDeck draws the page w by h with card sel picked and the content
-// scrolled down by scroll rows (held in range).
-func renderDeck(pg *deckPage, sel, scroll, w, h int) (*xgrid, deckLayout) {
+// scrolled down by scroll rows (held in range). said, when not empty, is
+// written on the row over the keys: the last command the panel ran and what
+// came of it.
+func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout) {
 	g := newXGrid(w, h)
 	g.box(0, 0, w, h, xBorder, pg.Title, xTitle, false)
 	g.closeButton(w)
@@ -208,12 +217,12 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int) (*xgrid, deckLayout) {
 		tall.segsFit(0, y, inner, pg.Head...)
 		y += 2
 	}
-	warn := pg.warnLines(inner)
-	for _, l := range warn {
-		tall.put(0, y, l, xBad)
+	notes := pg.noteLines(inner)
+	for _, l := range notes {
+		tall.put(0, y, l.s, l.k)
 		y++
 	}
-	if len(warn) > 0 {
+	if len(notes) > 0 {
 		y++
 	}
 	for _, s := range pg.Sections {
@@ -265,6 +274,7 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int) (*xgrid, deckLayout) {
 			g.set(w-1, top+i, '┃', xAccent)
 		}
 	}
+	g.segsFit(2, h-3, inner, said...)
 	expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, deckKeys(pg, sel, total > viewH), pg.Hint)
 	return g, lay
 }

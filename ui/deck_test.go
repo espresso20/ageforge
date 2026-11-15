@@ -25,7 +25,7 @@ func sampleDeck() deckPage {
 	return deckPage{
 		Title: "Trade",
 		Head:  []xseg{{"Routes ", xDim}, {"7 open", xText}},
-		Warn:  []string{"Routes importing iron are suspended."},
+		Notes: []deckLine{{Value: "Routes importing iron are suspended.", K: xBad}},
 		Sections: []deckSection{
 			{Title: "Overview", Cards: []deckCard{{Title: "Caravans", Meter: true, Share: 0.5, MeterText: "1 of 2 out"}}},
 			open,
@@ -54,7 +54,7 @@ func TestDeckFitsEverySize(t *testing.T) {
 	for w := 20; w <= 200; w += 7 {
 		for h := 5; h <= 50; h += 3 {
 			g, lay := renderDeck(&pg, 3, 4, w, h)
-			for i, line := range strings.Split(g.String(), "\n") {
+			for i, line := range strings.Split(strings.TrimSuffix(g.String(), "\n"), "\n") {
 				if n := len([]rune(line)); n != w {
 					t.Fatalf("%dx%d: row %d is %d cells", w, h, i, n)
 				}
@@ -161,6 +161,12 @@ func TestDeckPanelKeysAndClicks(t *testing.T) {
 	click(hitDeckCard, 6, 2)
 	if p.sel != 6 || len(*ran) != 2 || (*ran)[0] != "trade route start echo" || (*ran)[1] != "trade route start foxtrot" {
 		t.Errorf("a click on a button and a double click on a card ran %v with card %d picked", *ran, p.sel)
+	}
+	// What a command did shows over the keys.
+	p.reply("trade route start echo", CommandResult{Message: "[green]Route started.[-]\nmore", Type: "success"})
+	relay()
+	if text := p.grid.String(); !strings.Contains(text, "› trade route start echo  Route started.") || strings.Contains(text, "more\n") {
+		t.Errorf("the panel does not say what the command did:\n%s", text)
 	}
 	// A card with no command: picked by a click, and Enter is not the panel's.
 	relay()
