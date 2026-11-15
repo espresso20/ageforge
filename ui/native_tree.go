@@ -165,6 +165,9 @@ type nativeFlex struct {
 	frame    kit.Panel
 	ground   kit.Color
 	drawFunc func(x, y, w, h int)
+	// hold keeps the pointer over the gaps: they show the page beneath,
+	// which gets no press, move or wheel there.
+	hold bool
 }
 
 type flexItem struct {
@@ -387,9 +390,9 @@ func (f *nativeFlex) covered() []image.Rectangle {
 }
 
 // Covers: the flex itself is only its border; the rest is its items' or a
-// gap, which leaves the pointer to the page beneath.
+// gap, which leaves the pointer to the page beneath unless the flex holds it.
 func (f *nativeFlex) Covers(pt image.Point) bool {
-	return f.framed() && !pt.In(f.inner(f.Bounds()))
+	return f.hold || f.framed() && !pt.In(f.inner(f.Bounds()))
 }
 
 // Focus gives the keyboard to the first item added with focus, or keeps it

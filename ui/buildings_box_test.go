@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The playtest's screen and town: a MacBook at a large font, where the
@@ -221,5 +222,40 @@ func TestLayoutBuildings(t *testing.T) {
 				t.Errorf("a %d-row box from entry %d was given %d lines", h, first, len(lines))
 			}
 		}
+	}
+}
+
+// The wheel over the Buildings list moves it an entry at a time, down for a
+// turn toward the player, and stops at either end.
+func TestTheWheelMovesTheBuildingsList(t *testing.T) {
+	d, pages := playtestTown(t)
+	d.runForTest("minimap off")
+	d.refresh()
+	st := newStage(pages, playtestCols, playtestRows)
+	x, y, bw, _ := d.economyTab.buildingTV.GetInnerRect()
+	_, entries := buildingEntries(d.economyTab.state, bw)
+	wheel := func(rows int) bool {
+		moved := st.mouse(kit.Mouse{Kind: kit.MouseWheel, X: x + 2, Y: y + 2, Wheel: rows})
+		st.paint()
+		return moved
+	}
+	st.mouse(kit.Mouse{Kind: kit.MouseMove, X: x + 2, Y: y + 2}) // the pointer arrives: not a turn of the wheel
+	if wheel(-1) || d.economyTab.bldFirst != 0 {
+		t.Errorf("a turn up at the top moved the list to entry %d", d.economyTab.bldFirst)
+	}
+	if !wheel(3) || d.economyTab.bldFirst != 1 {
+		t.Errorf("a turn down left the list at entry %d, want 1 (one entry a turn, however far)", d.economyTab.bldFirst)
+	}
+	if !wheel(-1) || d.economyTab.bldFirst != 0 {
+		t.Errorf("a turn back up left the list at entry %d, want 0", d.economyTab.bldFirst)
+	}
+	for i := 0; i < 2*len(entries); i++ {
+		wheel(1)
+	}
+	if got := d.economyTab.bldFirst + d.economyTab.bldShown; got != len(entries) || d.economyTab.bldFirst == 0 {
+		t.Errorf("turning down to the end shows entries %d to %d of %d", d.economyTab.bldFirst, got, len(entries))
+	}
+	if wheel(1) {
+		t.Error("a turn down at the end still moved the list")
 	}
 }

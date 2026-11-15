@@ -840,13 +840,15 @@ func (m *caseModel) drawTitle(out *tGrid) {
 	}
 }
 
-// drawTabs writes the tab row: the open tab in brackets, the row scrolled
-// so it shows, and an arrow at an end that has more.
-func (m *caseModel) drawTabs(out *tGrid, v caseView) {
+// tabRow is where each tab sits on the tab row: the column of its opening
+// bracket (its title starts one further on), or -1 for a tab scrolled out of
+// sight. The row is scrolled so the open tab shows; left and right say
+// whether that end has more.
+func (m *caseModel) tabRow(v caseView) (at []int, open int, left, right bool) {
 	w := m.lay.w
 	type span struct{ a, z int }
 	spans := make([]span, len(m.tabs))
-	x, open := 0, 0
+	x := 0
 	for i, t := range m.tabs {
 		spans[i] = span{x, x + runeLen(t.title) + 2}
 		x = spans[i].z + 1
@@ -859,9 +861,23 @@ func (m *caseModel) drawTabs(out *tGrid, v caseView) {
 	if x-1 > room {
 		off = min(max(spans[open].z-room, 0), spans[open].a)
 	}
+	at = make([]int, len(m.tabs))
 	for i, t := range m.tabs {
-		a := 2 + spans[i].a - off
-		if a < 2 || a+runeLen(t.title)+2 > w-2 {
+		at[i] = 2 + spans[i].a - off
+		if at[i] < 2 || at[i]+runeLen(t.title)+2 > w-2 {
+			at[i] = -1
+		}
+	}
+	return at, open, off > 0, x-1-off > room
+}
+
+// drawTabs writes the tab row: the open tab in brackets, the row scrolled
+// so it shows, and an arrow at an end that has more.
+func (m *caseModel) drawTabs(out *tGrid, v caseView) {
+	at, open, left, right := m.tabRow(v)
+	for i, t := range m.tabs {
+		a := at[i]
+		if a < 0 {
 			continue
 		}
 		if i == open {
@@ -873,12 +889,37 @@ func (m *caseModel) drawTabs(out *tGrid, v caseView) {
 			out.text(a+1, 1, t.title, tsDim, -1)
 		}
 	}
-	if off > 0 {
+	if left {
 		out.put(0, 1, '◂', tsHi, -1)
 	}
-	if x-1-off > room {
-		out.put(w-1, 1, '▸', tsHi, -1)
+	if right {
+		out.put(m.lay.w-1, 1, '▸', tsHi, -1)
 	}
+}
+
+// tabAt is the tab at column x of the tab row: the one whose title is there,
+// or, on the arrow at an end that has more, the nearest tab out of sight
+// that way.
+func (m *caseModel) tabAt(x int, v caseView) (key string, ok bool) {
+	at, open, left, right := m.tabRow(v)
+	for i, t := range m.tabs {
+		if at[i] >= 0 && x >= at[i] && x < at[i]+runeLen(t.title)+2 {
+			return t.key, true
+		}
+	}
+	step := 0
+	switch {
+	case left && x == 0:
+		step = -1
+	case right && x == m.lay.w-1:
+		step = 1
+	}
+	for i := open + step; step != 0 && i >= 0 && i < len(m.tabs); i += step {
+		if at[i] < 0 {
+			return m.tabs[i].key, true
+		}
+	}
+	return "", false
 }
 
 // txtEarned is said the same way on several screens, so it has one id.

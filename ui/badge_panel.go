@@ -183,9 +183,10 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 }
 
 // Mouse: a click selects the badge under the pointer and a double click
-// opens its detail, as Enter does; a click outside an open detail closes it,
-// as Esc does; the wheel moves the selection a line a notch, as the up and
-// down arrows do.
+// opens its detail, as Enter does; a click on a tab opens it, and on the
+// arrow at an end of the tab row the nearest tab out of sight that way; a
+// click outside an open detail closes it, as Esc does; the wheel moves the
+// selection a line a notch, as the up and down arrows do.
 func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	if p.model == nil {
 		return false
@@ -205,7 +206,17 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	case p.view.card:
 		return !m.Pt().Sub(p.Bounds().Min).In(p.model.cardAt) && p.closeCard()
 	}
-	id := p.model.badgeAt(m.Pt().Sub(p.Bounds().Min), p.view.vy)
+	pt := m.Pt().Sub(p.Bounds().Min)
+	if pt.Y == 1 { // the tab row
+		key, ok := p.model.tabAt(pt.X, p.view)
+		if !ok || key == p.view.tab {
+			return false
+		}
+		p.showTab(key)
+		p.layout()
+		return true
+	}
+	id := p.model.badgeAt(pt, p.view.vy)
 	if id == "" {
 		return false
 	}
@@ -332,7 +343,12 @@ func (p *badgePanel) tab(dir int) {
 			at = i
 		}
 	}
-	p.view.tab = tabs[((at+dir)%len(tabs)+len(tabs))%len(tabs)].key
+	p.showTab(tabs[((at+dir)%len(tabs)+len(tabs))%len(tabs)].key)
+}
+
+// showTab opens a tab from its top, with nothing picked.
+func (p *badgePanel) showTab(key string) {
+	p.view.tab = key
 	p.view.sel, p.view.vy, p.view.card = "", 0, false
 }
 

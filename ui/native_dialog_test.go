@@ -52,9 +52,38 @@ func TestNativeDialogKeysAndMouse(t *testing.T) {
 	if len(got) != 1 || got[0] != 2 {
 		t.Errorf("a click on the third button called done with %v", got)
 	}
-	// Round its box the dialog is not there: the page beneath shows, and
-	// the pointer is that page's.
-	if d.Covers(image.Pt(0, 0)) || !d.Covers(image.Pt(x+1, y)) || len(d.covered()) != 1 {
-		t.Error("the dialog should cover its box and nothing round it")
+	// Round its box the dialog paints nothing, so the page beneath shows,
+	// but the pointer is the dialog's there too.
+	if !d.Covers(image.Pt(0, 0)) || !d.Covers(image.Pt(x+1, y)) || len(d.covered()) != 1 {
+		t.Error("the dialog should paint its box only and keep the pointer over the whole page")
+	}
+}
+
+// A press or the wheel beside a dialog reaches nothing on the page beneath:
+// the dialog has the keyboard, and the pointer goes with it.
+func TestADialogKeepsThePointerFromThePageBeneath(t *testing.T) {
+	keepTheme(t)
+	under := newNativeList()
+	for _, s := range []string{"one", "two", "three", "four"} {
+		under.AddItem(s, "", 0, nil)
+	}
+	pages := newNativePages()
+	pages.AddPage("under", under, true, true)
+	asked := 0
+	d := showButtonModal(newAppLoop(), pages, "ask", "Sure?", []string{"Yes", "No"}, func(int, string) { asked++ })
+	st := newStage(pages, 60, 20)
+	bx, by, _, _ := d.buttons[0].GetRect()
+	if bx < 3 || by < 3 {
+		t.Fatalf("the dialog's first button is at %d,%d: no room beside the box to test", bx, by)
+	}
+	st.click(2, 2) // the third row of the list beneath, beside the dialog
+	st.mouse(kit.Mouse{Kind: kit.MouseWheel, X: 2, Y: 2, Wheel: 2})
+	if under.GetCurrentItem() != 0 || asked != 0 {
+		t.Errorf("a press beside the dialog moved the list beneath to row %d (answers given: %d)", under.GetCurrentItem(), asked)
+	}
+	st.paint()
+	st.click(bx+1, by)
+	if asked != 1 {
+		t.Errorf("a click on the dialog's button gave %d answers, want 1", asked)
 	}
 }

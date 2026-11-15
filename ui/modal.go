@@ -40,7 +40,9 @@ func framed(inner *nativeFlex, title string, role theme.Role) *nativeFlex {
 
 // centerModal centers inner at width by height cells. A margin that is nil
 // draws nothing, so the page beneath stays visible around the window; a Box
-// margin clears it.
+// margin clears it. Either way the pointer is the window's over the whole
+// page: the window has the keyboard, so a press beside it must not reach
+// what is beneath.
 func centerModal(inner Primitive, width, height int, clearMargins bool) *nativeFlex {
 	margin := func() Primitive {
 		if clearMargins {
@@ -48,7 +50,7 @@ func centerModal(inner Primitive, width, height int, clearMargins bool) *nativeF
 		}
 		return nil
 	}
-	return newNativeFlex().
+	page := newNativeFlex().
 		AddItem(margin(), 0, 1, false).
 		AddItem(newNativeFlex().SetDirection(flexRow).
 			AddItem(margin(), 0, 1, false).
@@ -56,6 +58,8 @@ func centerModal(inner Primitive, width, height int, clearMargins bool) *nativeF
 			AddItem(margin(), 0, 1, false),
 			width, 0, true).
 		AddItem(margin(), 0, 1, false)
+	page.hold = true
+	return page
 }
 
 // centeredModal is a window with the page beneath cleared around it.

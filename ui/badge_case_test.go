@@ -997,6 +997,58 @@ func TestBadgePanelMouse(t *testing.T) {
 	}
 }
 
+// TestBadgePanelTabsTakeClicks: a click on a tab's title opens that tab, as
+// Tab reaching it does; a click on the arrow at an end of the row opens the
+// nearest tab out of sight that way; a click on the row between tabs, or on
+// the open tab, changes nothing.
+func TestBadgePanelTabsTakeClicks(t *testing.T) {
+	views, sum := caseFixture()
+	st := game.GameState{AccountStats: &game.AccountStatsView{Badges: views, BadgeSummary: sum}}
+	clock := time.Unix(1_700_000_000, 0)
+	p := newBadgePanel()
+	p.now, p.start = func() time.Time { return clock }, clock
+	const w = 44 // too narrow for every tab: the row has more to the right
+	p.SetRect(0, 0, w, 27)
+	p.open(st)
+	drawPrimitive(t, p, w, 27)
+	press := func(x int) bool {
+		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: x, Y: 1, Clicks: 1})
+	}
+	at, open, left, right := p.model.tabRow(p.view)
+	if open != 0 || left || !right || at[1] < 0 || at[len(at)-1] >= 0 {
+		t.Fatalf("the fixture's tab row at %d columns: open %d, more left %v, more right %v, columns %v", w, open, left, right, at)
+	}
+	if press(at[0] + 1) {
+		t.Error("a click on the open tab changed something")
+	}
+	if press(at[1] - 1) {
+		t.Error("a click between two tabs changed something")
+	}
+	second := p.model.tabs[1].key
+	p.view.vy = 3
+	if !press(at[1]+2) || p.view.tab != second || p.view.vy != 0 {
+		t.Errorf("a click on the second tab: open %q (want %q), scrolled to %d (want its top)", p.view.tab, second, p.view.vy)
+	}
+	// The arrow at the right end opens the first tab that did not fit.
+	at, _, _, right = p.model.tabRow(p.view)
+	hidden := -1
+	for i := range at {
+		if at[i] < 0 && i > 1 {
+			hidden = i
+			break
+		}
+	}
+	if !right || hidden < 0 {
+		t.Fatalf("after the click the row has nothing more to the right: %v", at)
+	}
+	if want := p.model.tabs[hidden].key; !press(w-1) || p.view.tab != want {
+		t.Errorf("a click on the right arrow opened %q, want %q, the nearest tab out of sight", p.view.tab, want)
+	}
+	if at, _, _, _ = p.model.tabRow(p.view); at[hidden] < 0 {
+		t.Error("the tab the arrow opened is still out of sight")
+	}
+}
+
 // paintGrid puts a rendered grid on the screen in theme colours.
 func paintGrid(scr *simScreen, g *tGrid, x0, y0 int, p *gridPalette) {
 	for y := 0; y < g.h; y++ {

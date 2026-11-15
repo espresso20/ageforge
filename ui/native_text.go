@@ -31,6 +31,9 @@ type nativeText struct {
 	changed    func()
 	done       func(kit.KeyCode)
 	drawFunc   func(x, y, w, h int)
+	// wheel, when set, takes a turn of the wheel the scroll view had no use
+	// for: a box that pages its own text has nothing for the view to move.
+	wheel func(rows int) bool
 }
 
 // newNativeText is a text view: scrollable, wrapping at
@@ -249,6 +252,11 @@ func (t *nativeText) Paint(p *kit.Painter) {
 			t.show()
 		}
 	}
+}
+
+// Mouse gives the wheel to the box's own rule, where it has one.
+func (t *nativeText) Mouse(m kit.Mouse) bool {
+	return m.Kind == kit.MouseWheel && t.wheel != nil && t.wheel(m.Wheel)
 }
 
 // viKeys are the letters a text view scrolls by, as the keys they stand for.

@@ -199,9 +199,10 @@ func TestAFlexPageTakesTheMouse(t *testing.T) {
 	}
 }
 
-// Where a window's margin is a gap, the page beneath still shows and takes
-// the pointer; a filler box clears the margin and keeps the pointer.
-func TestAFlexLeavesItsGapsToThePageBeneath(t *testing.T) {
+// Where a window's margin is a gap the page beneath still shows, and a
+// filler box clears it. Either way the pointer is the window's: the page
+// beneath gets nothing while the window is up.
+func TestAWindowShowsThePageBeneathAndKeepsThePointer(t *testing.T) {
 	keepTheme(t)
 	for _, clear := range []bool{false, true} {
 		under := newNativeText().SetText(strings.Repeat(strings.Repeat("u", 30)+"\n", 40))
@@ -217,13 +218,11 @@ func TestAFlexLeavesItsGapsToThePageBeneath(t *testing.T) {
 		if got := margin == 'u'; got == clear {
 			t.Errorf("clear %v: the margin shows %q", clear, margin)
 		}
-		// The wheel over the margin scrolls the page beneath only where the
-		// margin is a gap.
+		// The wheel over the margin never scrolls the page beneath.
 		before, _ := under.GetScrollOffset()
 		st.mouse(kit.Mouse{Kind: kit.MouseWheel, X: 2, Y: 1, Wheel: 1})
-		after, _ := under.GetScrollOffset()
-		if got := after != before; got == clear {
-			t.Errorf("clear %v: the wheel over the margin moved the page beneath: %v", clear, got)
+		if after, _ := under.GetScrollOffset(); after != before {
+			t.Errorf("clear %v: the wheel over the margin moved the page beneath from row %d to %d", clear, before, after)
 		}
 	}
 }
