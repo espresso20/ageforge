@@ -506,20 +506,14 @@ ui.dashboard.peopleBoxText.02,"[gray]Pop vibes[white] [%s]%s[white]/[green]%s[-]
 "
 ui.dashboard.statusLine.01,"  [cyan]Glow-ups %d[-]"
 ui.dashboard.statusLine.02,"  [red]DEV cheats[-]"
-ui.dashboard.statusLine.03,☄ A catastrophe is left on read. Type catastrophe to answer it.
 ui.dashboard.statusLine.04,☄ Doom arc: type catastrophe
 ui.dashboard.statusLine.05,☄ Doom arc
-ui.dashboard.statusLine.06,☄ The Last Passage boss fight is here. Type catastrophe to pick.
 ui.dashboard.statusLine.07,☄ Last Passage boss: type catastrophe
 ui.dashboard.statusLine.08,☄ Last Passage boss fight
-ui.dashboard.statusLine.09,⚑ New tea from the harbinger. Type harbinger and read it.
 ui.dashboard.statusLine.10,⚑ Omen tea: type harbinger
 ui.dashboard.statusLine.11,⚑ Harbinger tea
 ui.dashboard.statusLine.12," (output drip [%s]%s[-])"
 ui.dashboard.statusLine.13,"  Vibes [%s]%.0f%%[-]%s"
-ui.dashboard.statusLine.14,"  |  [gray]type a panel name to summon it · Esc: dip or menu[-]"
-ui.dashboard.statusLine.15,"  |  [gray]Esc: bounce or menu[-]"
-ui.dashboard.charterStripHint.01,type charter for the tea
 ui.dashboard.showDevUnlockModal.01,"[red]Dev mode unlocked, cheat codes on.[-] Start commands with / (for example /god, /fill, /give wood 9999)."
 ui.dashboard.leaveToMenu.02,Say less
 ui.dashboard.showWindow.01," Respawn code "
@@ -2249,11 +2243,9 @@ ui.dash_ledger.readyText.01,"Every pillar ate, no notes. Type advance, it's go t
 ui.dash_ledger.readyText.02,"Every pillar's up, but the catastrophe is sitting in your DMs. Answer it first (type catastrophe)."
 ui.dash_ledger.waitText.01,then the %s boss
 ui.dash_ledger.waitText.02,Manifesting: 
-ui.dash_ledger.waitText.03,Pls: 
 ui.dash_ledger.shortText.01,Broke on: 
 ui.dashboard.statusLine.19,%s rn
 ui.dashboard.statusLine.17,Squad %s
-ui.dashboard.statusLine.18,[gray]Next arc: %s[-]
 ui.badge_case.drawKeys.10,doomscroll
 ui.overlay_plan.planStatusText.01,on deck
 ui.research_tree.renderTree.15,4K zoom

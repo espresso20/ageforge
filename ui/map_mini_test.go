@@ -135,14 +135,16 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 			}
 		}
 	}
-	// 192x51: the list keeps its own form and the box is shorter than
-	// square, with at least ten picture rows (case B).
-	draw(192, 51)
+	// 192x49: the list keeps its own form and the box is shorter than
+	// square, with at least ten picture rows (case B). (The header is two
+	// rows shorter than the top it replaced on a tall window, so the rows
+	// the case had at 51 are these at 49.)
+	draw(192, 49)
 	if _, _, _, mh := d.miniMap.GetRect(); !d.body.miniShown || mh-2 < 10 || mh >= 18 {
-		t.Errorf("192x51: mini map shown = %v, %d rows; want a box under square with 10 picture rows or more", d.body.miniShown, mh)
+		t.Errorf("192x49: mini map shown = %v, %d rows; want a box under square with 10 picture rows or more", d.body.miniShown, mh)
 	}
-	if txt := draw(192, 51); !strings.Contains(txt, "PROGRESS") {
-		t.Errorf("192x51: the Panels list lost its grouped form\n%s", txt)
+	if txt := draw(192, 49); !strings.Contains(txt, "PROGRESS") {
+		t.Errorf("192x49: the Panels list lost its grouped form\n%s", txt)
 	}
 	// 160x42: the list steps down a form (a name a row, no groups) so the
 	// map can show, and every panel is still listed (case D).

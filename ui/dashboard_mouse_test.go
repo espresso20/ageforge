@@ -73,8 +73,8 @@ func TestAClickOnABuildingWritesItsCommand(t *testing.T) {
 }
 
 // A click on a box of the dashboard opens the panel that is the box in full,
-// as typing the panel's name does: the mini map opens the Map, the Ledger
-// Advance, the People box People, the Log the full record and Under
+// as typing the panel's name does: the mini map opens the Map, the header's
+// bar Advance, the People box People, the Log the full record and Under
 // construction the build plan. The pointer is the hand over each.
 func TestClicksOnTheDashboardsBoxes(t *testing.T) {
 	d, pages := playtestTown(t)
@@ -98,7 +98,7 @@ func TestClicksOnTheDashboardsBoxes(t *testing.T) {
 		box  Primitive
 		want string
 	}{
-		{"the mini map", d.miniMap, opens("map")}, {"the Ledger", d.ledgerTV, opens("charter")},
+		{"the mini map", d.miniMap, opens("map")}, {"the header's bar", d.headerTV, opens("charter")},
 		{"the People box", d.workerMiniTV, opens("people")}, {"the Log", d.logTV, opens("logs")},
 		{"Under construction", d.economyTab.constructionTV, opens("plan")},
 	} {

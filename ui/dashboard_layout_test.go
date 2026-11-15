@@ -204,8 +204,8 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 				t.Errorf("%s: Under construction shows nothing with buildings under way", where)
 			}
 
-			// The Ledger, the Panels list and the Buildings list.
-			checkFittedBox(t, where+", Ledger", d.ledgerTV, cells, w)
+			// The header, the Panels list and the Buildings list.
+			checkHeader(t, where+", header", d, cells, w)
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
 			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
 			for _, row := range checkFitted(t, where+", Buildings", d.economyTab.buildingTV, cells, w) {
@@ -214,10 +214,9 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 				}
 			}
 
-			// The status ribbon and the People box are one line a fact.
-			_, sy, _, _ := d.statusTV.GetInnerRect()
-			if status := rectText(cells, w, 0, sy, w, 1)[0]; !strings.Contains(status, st.AgeName) || !strings.Contains(status, "People") || !strings.Contains(status, "Morale") {
-				t.Errorf("%s: the status ribbon lost the age, the people or morale: %q", where, status)
+			// The header's first row and the People box are one line a fact.
+			if status := rectText(cells, w, 0, 1, w, 1)[0]; !strings.Contains(status, st.AgeName) || !strings.Contains(status, "People") || !strings.Contains(status, "Morale") {
+				t.Errorf("%s: the header lost the age, the people or morale: %q", where, status)
 			}
 			mini := strings.Join(checkFitted(t, where+", People", d.workerMiniTV, cells, w), "\n")
 			// With something holding the population back the headcount moves to
@@ -553,76 +552,6 @@ func TestPanelsListAlwaysWhole(t *testing.T) {
 	}
 	if one := sidebarText("", 20, 24); one != buildSidebarText("") {
 		t.Errorf("24 rows: want the one-column list")
-	}
-}
-
-// TestStatusLineGivesUpTheHintFirst: the status ribbon keeps the age, the
-// badges, the people and morale at any width, and sheds the rest in order:
-// the hint, the next age, the badge's words, what morale does, the title and
-// last the calendar year.
-func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
-	// The widths below are counted without the DEV badge, and another test
-	// in this package leaves developer mode on.
-	prevDev := game.DevModeActive
-	game.DevModeActive = false
-	t.Cleanup(func() { game.DevModeActive = prevDev })
-	st := game.GameState{AgeName: "Bronze Age", EpochKey: "stone_era", EpochName: "Stone Era", EpochIcon: "◈",
-		Morale: 1.1, MoraleMultiplier: 1.2, Workers: game.WorkerState{TotalPop: 216, MaxPop: 875},
-		Milestones: game.MilestoneState{CurrentTitle: "Aspiring"}, Harbinger: &game.HarbingerView{}}
-	facts := ribbonFacts{year: "1,948 BC", next: "Iron Age"}
-	full := untag(statusLine(st, facts, 0))
-	wantAll(t, "the whole line", full, "Bronze Age", "\"Aspiring\"", "⚑ Harbinger. Type harbinger to read it.", "Year 1,948 BC", "People 216/875", "Morale 110% (production +20%)", "Next: Iron Age", "type a panel name to open it · Esc: close or menu")
-	// The facts come in the order the card names: age, year, people, morale, next age.
-	last := -1
-	for _, want := range []string{"Bronze Age", "Year 1,948 BC", "People 216/875", "Morale 110%", "Next: Iron Age"} {
-		at := strings.Index(full, want)
-		if at <= last {
-			t.Errorf("%q is out of order in %q", want, full)
-		}
-		last = at
-	}
-	for w := 70; w <= 220; w++ {
-		line := untag(statusLine(st, facts, w))
-		if runeLen(line) > w {
-			t.Errorf("width %d: the line is %d cells: %q", w, runeLen(line), line)
-		}
-		wantAll(t, fmt.Sprintf("width %d: the line", w), line, "Bronze Age", "⚑ Harbinger", "People 216/875", "Morale 110%")
-	}
-	// What goes first needs the most room to stay: the narrowest bar each
-	// piece is still on never grows as the pieces go in the order above.
-	least := func(piece string) int {
-		for w := 70; w <= 260; w++ {
-			if strings.Contains(untag(statusLine(st, facts, w)), piece) {
-				return w
-			}
-		}
-		return 1 << 20
-	}
-	order := []string{"type a panel name", "Esc: close or menu", "Next: Iron Age", "Type harbinger to read it.", "(production +20%)", "\"Aspiring\"", "Year 1,948 BC"}
-	for i := 1; i < len(order); i++ {
-		if least(order[i-1]) < least(order[i]) {
-			t.Errorf("%q stays on a narrower bar (%d) than %q (%d), but is given up first", order[i-1], least(order[i-1]), order[i], least(order[i]))
-		}
-	}
-	if least("type a panel name") <= least("Esc: close or menu") || least("Esc: close or menu") <= least("Type harbinger to read it.") {
-		t.Errorf("the hint does not go before the badge's words: %d, %d, %d", least("type a panel name"), least("Esc: close or menu"), least("Type harbinger to read it."))
-	}
-	// Developer mode adds its own badge, and the line still fits.
-	game.DevModeActive = true
-	for w := 70; w <= 200; w++ {
-		if line := untag(statusLine(st, facts, w)); runeLen(line) > w || !strings.Contains(line, "DEV") || !strings.Contains(line, "Morale 110%") {
-			t.Errorf("width %d in developer mode: %d cells, %q", w, runeLen(line), line)
-		}
-	}
-	game.DevModeActive = false
-	// The worst case at the smallest size: both badges and long counts.
-	st.PendingCatastrophe, st.Workers = "iron_era", game.WorkerState{TotalPop: 8311, MaxPop: 51785785}
-	if line := untag(statusLine(st, facts, 80)); runeLen(line) > 80 || !strings.Contains(line, "☄ Catastrophe") || !strings.Contains(line, "⚑ Harbinger") || !strings.Contains(line, "People 8.31K/51.8M") || !strings.Contains(line, "Morale 110%") {
-		t.Errorf("80 cells with both badges: %d cells, %q", runeLen(line), line)
-	}
-	// The plain glyph tier sets the facts off with a bar, not a dot.
-	if line := untag(statusLine(st, ribbonFacts{year: "1,948 BC", plain: true}, 0)); !strings.Contains(line, "Year 1,948 BC  |  People") {
-		t.Errorf("the plain tier does not set the facts off with a bar: %q", line)
 	}
 }
 

@@ -265,7 +265,7 @@ func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 // badgeToast is the one-row toast for a badge just earned, written for a
 // bar w cells wide (0: any width): the badge in three cells, its emblem
 // between two half discs in its tier's colours, then its name and tier,
-// and its description when the bar has the room. The toast bar is one row,
+// and its description when the notice has the room. The notice is one row,
 // so this is the badge's art at its smallest.
 func badgeToast(v game.BadgeView, tier mapmodel.GlyphTier, w int) string {
 	pal := newGridPalette(0, nil)

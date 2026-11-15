@@ -9,14 +9,13 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/theme"
 )
 
-// The Ledger is the top of the dashboard under the status ribbon: the long
-// bar to the next age, what it waits on and the four pillars. These tests
-// draw the real dashboard at the three sizes it is written for, hold its
-// numbers to the Advance panel's, and hold what it waits on and what it is
-// short of to the rules in dash_ledger.go.
+// The Ledger is what the header's way to the next age reads: the long bar,
+// what it waits on and the four pillars. These tests hold its numbers to the
+// Advance panel's, hold what it waits on and what it is short of to the rules
+// in dash_ledger.go, and draw it in the real header at the sizes it is
+// written for (dash_header_test.go holds the header's own layout).
 
 // ledgerOf works the Ledger out for a snapshot, as a refresh does.
 func ledgerOf(st game.GameState, eng *game.GameEngine) *ledger {
@@ -25,8 +24,8 @@ func ledgerOf(st game.GameState, eng *game.GameEngine) *ledger {
 	return l
 }
 
-// ledgerSizes are the three terminals the Ledger is written for: the smallest
-// (compact), the common one (standard) and a big one (full).
+// ledgerSizes are the three terminals the header is written for: the
+// smallest (two rows inside), the common one (three) and a big one.
 var ledgerSizes = [][2]int{{80, 24}, {100, 30}, {160, 45}}
 
 // plainTier puts the dashboard on the plain glyph tier, for the session.
@@ -36,80 +35,48 @@ func plainTier(d *Dashboard) {
 	d.mapLocal = &s
 }
 
-// ledgerRowsOn draws the dashboard and returns what the Ledger wrote, row by
+// headerRowsOn draws the dashboard and returns what the header wrote, row by
 // row, held to its box.
-func ledgerRowsOn(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []string {
+func headerRowsOn(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []string {
 	t.Helper()
 	cells := drawnDashboard(t, d, pages, w, h)
-	return checkFittedBox(t, fmt.Sprintf("Ledger at %dx%d", w, h), d.ledgerTV, cells, w)
+	return checkHeader(t, fmt.Sprintf("header at %dx%d", w, h), d, cells, w)
 }
 
-// checkFittedBox holds the Ledger to what it wrote, as checkFitted holds a
-// text box: no row wider than the box, and the rows on screen are the rows it
-// wrote, one each.
-func checkFittedBox(t *testing.T, where string, b *ledgerBox, cells []simCell, screenW int) []string {
+// checkHeader holds the header to what it wrote: the box is the top of the
+// screen, as wide as it, and the rows on screen are the rows of its grid.
+func checkHeader(t *testing.T, where string, d *Dashboard, cells []simCell, screenW int) []string {
 	t.Helper()
-	x, y, w, h := b.GetInnerRect()
-	if w <= 0 || h <= 0 {
-		t.Errorf("%s: the box has no room inside (%dx%d)", where, w, h)
-		return nil
+	x, y, w, h := d.headerTV.GetRect()
+	g := d.headerTV.grid
+	if g == nil || w <= 0 || h <= 0 {
+		t.Fatalf("%s: the header has no grid (%dx%d)", where, w, h)
 	}
-	text := strings.Split(b.GetText(true), "\n")
-	if len(b.lines) > h {
-		t.Errorf("%s: %d rows written for a box %d tall", where, len(b.lines), h)
-	}
-	for i, line := range text {
-		if n := runeLen(strings.TrimRight(line, " ")); n > w {
-			t.Errorf("%s: row %d is %d cells in a box %d wide, so it is cut: %q", where, i+1, n, w, line)
-		}
+	if x != 0 || y != 0 || w != screenW || g.w != w || g.h != h {
+		t.Errorf("%s: the header is at (%d,%d) %dx%d with a grid of %dx%d, want the top row, %d wide", where, x, y, w, h, g.w, g.h, screenW)
 	}
 	drawn := rectText(cells, screenW, x, y, w, h)
-	for row, got := range drawn {
-		want := ""
-		if row < len(text) {
-			want = strings.TrimRight(text[row], " ")
+	for row, want := range g.Lines() {
+		if row >= len(drawn) {
+			break
 		}
-		if got != want {
-			t.Errorf("%s: row %d shows %q, the box wrote %q", where, row+1, got, want)
+		if drawn[row] != want {
+			t.Errorf("%s: row %d shows %q, the header wrote %q", where, row+1, drawn[row], want)
 		}
 	}
 	return drawn
 }
 
-// TestLedgerHeights: the rows the Ledger takes for each size, and the
-// dashboard gives it exactly those, right under the toast line.
-func TestLedgerHeights(t *testing.T) {
-	for _, c := range []struct{ w, h, want int }{
-		{80, 24, 1}, {99, 60, 1}, {100, 29, 1}, // the compact Ledger: the long bar
-		{100, 30, 2}, {119, 60, 2}, {120, 36, 2}, {120, 38, 2}, // the standard one: the bar and the pillars
-		{120, 39, 4}, {160, 45, 4}, {240, 60, 4}, // the full one: the bar, the waiting line, the pillars in two rows
-	} {
-		if got := ledgerHeight(c.w, c.h); got != c.want {
-			t.Errorf("%dx%d: %d rows, want %d", c.w, c.h, got, c.want)
-		}
+// GetText is the header's rows as text, one to a line.
+func (b *headerBox) GetText(bool) string {
+	if b.grid == nil {
+		return ""
 	}
-	// The smallest terminal keeps the badge line, the ribbon, the toast line
-	// and the one row of the Ledger over the boxes.
-	if dashHeaderRows != 1+1+1+ledgerCompactRows {
-		t.Errorf("dashHeaderRows = %d", dashHeaderRows)
-	}
-	restoreForge(t)
-	d, pages, _ := stagedDashboard(t, "bronze_age")
-	for _, sz := range append(layoutSizes, ledgerSizes...) {
-		w, h := sz[0], sz[1]
-		drawnDashboard(t, d, pages, w, h)
-		x, y, lw, lh := d.ledgerTV.GetRect()
-		if want := ledgerHeight(w, h); x != 0 || y != 3 || lw != w || lh != want {
-			t.Errorf("%dx%d: the Ledger is at (%d,%d) %dx%d, want (0,3) %dx%d", w, h, x, y, lw, lh, w, want)
-		}
-		if _, cy, _, _ := d.contentArea.GetRect(); cy != 3+lh {
-			t.Errorf("%dx%d: the boxes start at row %d, the Ledger ends at %d", w, h, cy, 3+lh)
-		}
-	}
+	return strings.Join(b.grid.Lines(), "\n")
 }
 
 // TestLedgerAtThreeSizes draws the real dashboard at 80x24, 100x30 and
-// 160x45 and holds each Ledger to what it is for.
+// 160x45 and holds each header to what it is for.
 func TestLedgerAtThreeSizes(t *testing.T) {
 	restoreForge(t)
 	for _, age := range []string{"bronze_age", "medieval_age", "quantum_age"} {
@@ -119,47 +86,40 @@ func TestLedgerAtThreeSizes(t *testing.T) {
 		for _, sz := range ledgerSizes {
 			w, h := sz[0], sz[1]
 			where := fmt.Sprintf("%s at %dx%d", age, w, h)
-			rows := ledgerRowsOn(t, d, pages, w, h)
+			rows := headerRowsOn(t, d, pages, w, h)
 			text := strings.Join(rows, "\n")
 			// Every size: the long bar to the next age, with its percent, and
 			// what it waits on.
-			if !strings.Contains(rows[0], "To the "+next) || !strings.Contains(rows[0], "%") || !strings.ContainsAny(rows[0], "█░") {
+			if !strings.Contains(rows[2], "To the "+next) || !strings.Contains(rows[2], "%") || !strings.ContainsAny(rows[2], "█░") {
 				t.Errorf("%s: no long bar to the %s:\n%s", where, next, text)
 			}
-			if !strings.Contains(text, "Waiting on: ") && !strings.Contains(text, "Needs: ") {
-				t.Errorf("%s: the Ledger does not say what it waits on:\n%s", where, text)
+			if !strings.Contains(text, "Waiting on: ") {
+				t.Errorf("%s: the header does not say what it waits on:\n%s", where, text)
 			}
 			pillars := 0
 			for _, name := range []string{"Knowledge", "People", "Industry", "Monument"} {
-				if strings.Contains(strings.ToLower(text), strings.ToLower(name)) {
+				if strings.Contains(strings.Join(rows[2:], "\n"), name) {
 					pillars++
 				}
 			}
-			switch ledgerTierFor(w, h) {
-			case ledgerCompact:
-				// The long bar, on one row: no pillars.
-				if len(rows) != 1 || strings.Contains(text, "Knowledge") {
-					t.Errorf("%s: the compact Ledger is not the long bar alone:\n%s", where, text)
+			if headerHeight(w, h) == headerSmallRows {
+				// Two rows inside: the bar with what it waits on, and no pillars.
+				if len(rows) != 4 || strings.Contains(text, "Knowledge") || !strings.Contains(rows[2], "Waiting on: ") {
+					t.Errorf("%s: the small header is not the bar with what it waits on:\n%s", where, text)
 				}
-			case ledgerStandard:
-				if !strings.Contains(rows[1], "Knowledge") || !strings.Contains(rows[1], "Monument") || len(rows) != 2 {
-					t.Errorf("%s: the standard Ledger is not the bar and a row of pillars:\n%s", where, text)
-				}
-			case ledgerFull:
-				if pillars != 4 || len(rows) != 4 || !strings.Contains(rows[1], "Waiting on: ") || !strings.Contains(rows[2], "KNOWLEDGE") {
-					t.Errorf("%s: the full Ledger lacks its waiting line or its pillars:\n%s", where, text)
-				}
+			} else if pillars != 4 || len(rows) != 5 || !strings.Contains(rows[3], "Waiting on: ") {
+				t.Errorf("%s: the header lacks its waiting line or its pillars:\n%s", where, text)
 			}
-			// The resources are the Resources panel's: the Ledger has no cards,
+			// The resources are the Resources panel's: the header has no cards,
 			// no trend lines and no count of resources it leaves out.
 			if strings.ContainsAny(text, "▲▼▬▶▁▂▃▄▅▆▇") || strings.Contains(text, "rising") || strings.Contains(text, "falling") {
-				t.Errorf("%s: the Ledger draws a resource card:\n%s", where, text)
+				t.Errorf("%s: the header draws a resource card:\n%s", where, text)
 			}
 		}
 	}
 }
 
-// TestLedgerInPlainASCII: on the plain glyph tier the Ledger is nothing but
+// TestLedgerInPlainASCII: on the plain glyph tier the header is nothing but
 // ASCII at every size, its bars in plain marks.
 func TestLedgerInPlainASCII(t *testing.T) {
 	restoreForge(t)
@@ -168,7 +128,7 @@ func TestLedgerInPlainASCII(t *testing.T) {
 		plainTier(d)
 		for _, sz := range ledgerSizes {
 			w, h := sz[0], sz[1]
-			rows := ledgerRowsOn(t, d, pages, w, h)
+			rows := headerRowsOn(t, d, pages, w, h)
 			for i, row := range rows {
 				for _, r := range row {
 					if r > 0x7e {
@@ -184,7 +144,7 @@ func TestLedgerInPlainASCII(t *testing.T) {
 	}
 }
 
-// TestLedgerReadsTheAdvancePanel: the long bar, the pillars' meters and the
+// TestLedgerReadsTheAdvancePanel: the long bar, the pillars' counts and the
 // year are the Advance panel's own numbers, from the same view and the same
 // held calendar.
 func TestLedgerReadsTheAdvancePanel(t *testing.T) {
@@ -225,32 +185,34 @@ func TestLedgerReadsTheAdvancePanel(t *testing.T) {
 		for _, sz := range ledgerSizes {
 			w, h := sz[0], sz[1]
 			where := fmt.Sprintf("%s at %dx%d", age, w, h)
-			rows := ledgerRowsOn(t, d, pages, w, h)
-			if !strings.Contains(rows[0], fmt.Sprintf("%3d%%", pct)) {
-				t.Errorf("%s: the long bar's row has no %d%%: %q", where, pct, rows[0])
+			rows := headerRowsOn(t, d, pages, w, h)
+			if !strings.Contains(rows[2], fmt.Sprintf("%d%%", pct)) {
+				t.Errorf("%s: the long bar's row has no %d%%: %q", where, pct, rows[2])
 			}
-			cells := drawnDashboard(t, d, pages, w, h)
-			if ribbon := rectText(cells, w, 0, 1, w, 1)[0]; !strings.Contains(ribbon, "Year "+v.YearText) {
-				t.Errorf("%s: the ribbon does not show the year %s: %q", where, v.YearText, ribbon)
+			if !strings.Contains(rows[1], "Year "+v.YearText) {
+				t.Errorf("%s: the first row does not show the year %s: %q", where, v.YearText, rows[1])
 			}
-			filled, empty := strings.Count(rows[0], "█"), strings.Count(rows[0], "░")
+			bar := rows[2][:strings.Index(rows[2], "%")]
+			filled, empty := strings.Count(bar, "█"), strings.Count(bar, "░")
 			if filled+empty < 6 || filled != barFill(v.Share, filled+empty) {
 				t.Errorf("%s: the long bar fills %d of %d cells for a share of %.3f (the panel's fill is %d)", where, filled, filled+empty, v.Share, barFill(v.Share, filled+empty))
 			}
-			if ledgerTierFor(w, h) == ledgerCompact {
+			if headerHeight(w, h) == headerSmallRows {
 				continue
 			}
-			text := strings.Join(rows, "\n")
-			for _, p := range v.Pillars {
-				if !p.Met && !strings.Contains(text, fmt.Sprintf("%d%%", sharePercent(p.Progress, false))) {
-					t.Errorf("%s: %s's %d%% is not in the Ledger:\n%s", where, p.Name, sharePercent(p.Progress, false), text)
+			for _, p := range l.data.Pillars {
+				if !p.Met && !strings.Contains(rows[2], p.Name+" ") {
+					t.Errorf("%s: pillar %s is not on the bar's row:\n%s", where, p.Name, rows[2])
+				}
+				if !p.Met && !strings.Contains(rows[2], p.Count) {
+					t.Errorf("%s: %s's count %s is not on the bar's row:\n%s", where, p.Name, p.Count, rows[2])
 				}
 			}
 		}
 	}
 }
 
-// TestLedgerCalendarDoesNotRunBack: the year on the ribbon and the share on
+// TestLedgerCalendarDoesNotRunBack: the year in the header and the share on
 // the bar are held by the engine, as the Advance panel's are, so selling a
 // building shows in the pillars and does not turn the town back.
 func TestLedgerCalendarDoesNotRunBack(t *testing.T) {
@@ -299,30 +261,27 @@ func TestLedgerWaitingOnKeepsItemsWhole(t *testing.T) {
 			Resources: map[string]game.ResourceState{"food": {Name: "Food", Unlocked: true, Amount: 5, Rate: 1}}}
 		l := ledgerOf(st, nil)
 		items := l.data.Waits
-		if l.data.Then != "" {
-			items = append(append([]string(nil), items...), "then "+l.data.Then)
-		}
 		if len(items) == 0 {
 			t.Errorf("%s: a town with nothing built waits on nothing", ages[i].Key)
 			continue
 		}
-		longest = max(longest, len(items))
-		lv := ledgerView{m: &l.data}
-		for avail := 10; avail <= 200; avail++ {
-			text, tw := lv.waitText(avail)
-			if tw == 0 {
-				if text != "" {
-					t.Errorf("%s at %d: no width but text %q", ages[i].Key, avail, text)
-				}
+		longest = max(longest, len(items)+min(len(l.data.Then), 1))
+		for avail := 24; avail <= 200; avail++ {
+			var plain strings.Builder
+			for _, p := range l.data.waitText(avail) {
+				plain.WriteString(p.s)
+			}
+			text := plain.String()
+			if runeLen(text) > avail {
+				t.Errorf("%s at %d: the text is %d cells: %q", ages[i].Key, avail, runeLen(text), text)
 				continue
 			}
-			plain := untag(text)
-			if runeLen(plain) != tw || tw > avail {
-				t.Errorf("%s at %d: the text is %d cells (said %d): %q", ages[i].Key, avail, runeLen(plain), tw, plain)
-				continue
+			parts := strings.Split(text[strings.Index(text, ": ")+2:], " · ")
+			then := false
+			if last := parts[len(parts)-1]; strings.HasPrefix(last, "then ") {
+				then = true
+				parts = parts[:len(parts)-1]
 			}
-			body := plain[strings.Index(plain, ": ")+2:]
-			parts := strings.Split(body, " · ")
 			listed := len(parts)
 			counted := 0
 			if last := parts[len(parts)-1]; strings.HasPrefix(last, "+") && strings.HasSuffix(last, " more") {
@@ -335,7 +294,10 @@ func TestLedgerWaitingOnKeepsItemsWhole(t *testing.T) {
 				}
 			}
 			if listed+counted != len(items) {
-				t.Errorf("%s at %d: %d listed and %d counted, of %d:\n%s", ages[i].Key, avail, listed, counted, len(items), plain)
+				t.Errorf("%s at %d: %d listed and %d counted, of %d:\n%s", ages[i].Key, avail, listed, counted, len(items), text)
+			}
+			if then && (counted > 0 || l.data.Then == "") {
+				t.Errorf("%s at %d: the wonder comes after the list when it is cut or when there is none: %q", ages[i].Key, avail, text)
 			}
 		}
 	}
@@ -346,7 +308,7 @@ func TestLedgerWaitingOnKeepsItemsWhole(t *testing.T) {
 
 // TestLedgerLongestGateOnTheDashboard: the age whose gate asks for the most
 // kinds of building, on the real dashboard at the two smallest terminals:
-// whole rows, none cut or wrapped, with the count of what it leaves out.
+// whole rows, with the count of what it leaves out.
 func TestLedgerLongestGateOnTheDashboard(t *testing.T) {
 	restoreForge(t)
 	ages := config.Ages()
@@ -358,9 +320,9 @@ func TestLedgerLongestGateOnTheDashboard(t *testing.T) {
 	}
 	d, pages, _ := stagedDashboard(t, age)
 	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
-		rows := ledgerRowsOn(t, d, pages, sz[0], sz[1])
+		rows := headerRowsOn(t, d, pages, sz[0], sz[1])
 		if text := strings.Join(rows, "\n"); !strings.Contains(text, " more") {
-			t.Errorf("%s at %dx%d: the Ledger does not say how many it leaves out:\n%s", age, sz[0], sz[1], text)
+			t.Errorf("%s at %dx%d: the header does not say how many it leaves out:\n%s", age, sz[0], sz[1], text)
 		}
 	}
 }
@@ -483,24 +445,26 @@ func TestLedgerShortOfFollowsTheBlockers(t *testing.T) {
 		e := bottleneckTown(t, "stone_age", 1e12, res)
 		l := ledgerOf(e.GetState(), e)
 		if got := l.data.Need[res]; got != costs[res] {
-			t.Errorf("with %s empty the Ledger lists it as short = %v, but a waiting building costs it = %v", res, got, costs[res])
+			t.Errorf("with %s empty the header lists it as short = %v, but a waiting building costs it = %v", res, got, costs[res])
 		}
-		lines := untag(strings.Join(ledgerLines(&l.data, ledgerFull, 160, ledgerFullHeight, mapmodel.TierUnicode), "\n"))
+		g := renderHeader(headerView{Led: &l.data}, 160, 3)
+		lines := strings.Join(g.Lines(), "\n")
 		if !costs[res] {
 			if len(l.data.Short) != 0 || strings.Contains(lines, "Short of") {
 				t.Errorf("%s is empty but nothing waiting costs it, and the Ledger is short of %v:\n%s", res, l.data.Short, lines)
 			}
 			continue
 		}
-		// The name is the only one in the "Short of" line, on the accent.
+		// The name is the only one in the "Short of" line, as a chip.
 		if len(l.data.Short) != 1 || l.data.Short[0] != rs.Name {
 			t.Errorf("%s is the only store empty and a waiting building costs it, but the Ledger is short of %v", res, l.data.Short)
 		}
-		if !strings.Contains(lines, "Short of: "+rs.Name) {
+		row := g.Lines()[3]
+		at := strings.LastIndex(row, " "+rs.Name+" ")
+		if !strings.Contains(row, "Short of:") || at < 0 {
 			t.Errorf("the Ledger does not name %s as short:\n%s", rs.Name, lines)
-		}
-		if chip := theme.TagFgBg(theme.RoleOnAccent, theme.RoleAccent) + rs.Name; !strings.Contains(strings.Join(ledgerLines(&l.data, ledgerFull, 160, ledgerFullHeight, mapmodel.TierUnicode), "\n"), chip) {
-			t.Errorf("the name of %s is not on the accent", res)
+		} else if k := g.c[3*g.w+utf8.RuneCountInString(row[:at])+1].k; k != xChipMil {
+			t.Errorf("the name of %s is drawn as kind %d, want a chip", res, k)
 		}
 	}
 	// The gate met: nothing waited on, nothing marked, and the line says so.
@@ -510,14 +474,18 @@ func TestLedgerShortOfFollowsTheBlockers(t *testing.T) {
 	if len(l.data.Waits) != 0 || l.data.Then != "" || len(l.data.Need) != 0 || len(l.data.Short) != 0 {
 		t.Errorf("a town that meets the gate still waits on %v then %q, short of %v", l.data.Waits, l.data.Then, l.data.Need)
 	}
-	lv := ledgerView{m: &l.data, w: 160}
-	if text, _ := lv.waitText(150); !strings.Contains(untag(text), "Every pillar stands") {
-		t.Errorf("a met gate says %q", untag(text))
+	if _, text := l.data.readyText(); !strings.Contains(text, "Every pillar stands") {
+		t.Errorf("a met gate says %q", text)
+	}
+	if lines := renderHeader(headerView{Led: &l.data}, 160, 3).Lines(); !strings.Contains(lines[3], "Every pillar stands") || strings.Contains(strings.Join(lines, ""), "Short of") {
+		t.Errorf("a met gate reads %q", lines)
 	}
 }
 
-// TestLedgerRowsFitAtEveryWidth: no row is wider than its Ledger at any
-// width, in either glyph tier, for a town and a final age alike.
+// TestLedgerRowsFitAtEveryWidth: no row spills out of the header at any
+// width, in either glyph tier, for a town and a final age alike: the frame's
+// edges hold, the air beside the text stays empty, and the plain tier is
+// ASCII.
 func TestLedgerRowsFitAtEveryWidth(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "quantum_age")
@@ -525,20 +493,37 @@ func TestLedgerRowsFitAtEveryWidth(t *testing.T) {
 	final := &ledger{}
 	final.data = l.data
 	final.data.v.Final = true
+	v := statusLine(eng.GetState(), l.data.v.YearText)
+	v.Notice = "★ Badge earned: Stonecutter"
+	v.Alerts = append(v.Alerts, headerAlert{"⚑ Harbinger: type harbinger", "⚑ Harbinger", "harbinger", xChipLegend})
 	for _, m := range []*ledgerData{&l.data, &final.data} {
-		for _, g := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
+		v.Led = m
+		for _, glyphs := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 			for w := 30; w <= 260; w++ {
-				for _, c := range []struct {
-					tier ledgerTier
-					h    int
-				}{{ledgerCompact, ledgerCompactRows}, {ledgerStandard, ledgerStandardRows}, {ledgerFull, ledgerFullHeight}} {
-					lines := ledgerLines(m, c.tier, w, c.h, g)
-					if len(lines) > c.h {
-						t.Fatalf("tier %d at %d: %d rows for %d", c.tier, w, len(lines), c.h)
+				for _, rows := range []int{2, 3} {
+					g := renderHeader(v, w, rows)
+					if glyphs == mapmodel.TierASCII {
+						g.fold()
 					}
-					for _, line := range lines {
-						if n := visibleLen(line); n > w {
-							t.Fatalf("tier %d, glyphs %v at width %d: a row of %d cells: %q", c.tier, g, w, n, untag(line))
+					lines := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
+					if len(lines) != rows+2 {
+						t.Fatalf("width %d: %d rows for %d inside", w, len(lines), rows)
+					}
+					for y := 1; y < len(lines)-1; y++ {
+						r := []rune(lines[y])
+						if len(r) != w {
+							t.Fatalf("width %d, %d rows: row %d is %d cells", w, rows, y, len(r))
+						}
+						if glyphs == mapmodel.TierASCII && string(r) != strings.Map(func(c rune) rune {
+							if c > 0x7e {
+								return '?'
+							}
+							return c
+						}, string(r)) {
+							t.Fatalf("width %d: the plain tier has a mark that is not ASCII: %q", w, lines[y])
+						}
+						if r[1] != ' ' || r[w-2] != ' ' {
+							t.Fatalf("width %d, %d rows, glyphs %v: row %d runs into the frame: %q", w, rows, glyphs, y, lines[y])
 						}
 					}
 				}
@@ -547,23 +532,7 @@ func TestLedgerRowsFitAtEveryWidth(t *testing.T) {
 	}
 }
 
-// TestLedgerTierBoundaries: the Ledger a terminal gets.
-func TestLedgerTierBoundaries(t *testing.T) {
-	for _, c := range []struct {
-		w, h int
-		want ledgerTier
-	}{
-		{80, 24, ledgerCompact}, {99, 40, ledgerCompact}, {100, 29, ledgerCompact}, {100, 30, ledgerStandard},
-		{119, 60, ledgerStandard}, {120, 35, ledgerStandard}, {120, 36, ledgerStandard}, {120, 38, ledgerStandard},
-		{120, 39, ledgerFull}, {160, 45, ledgerFull},
-	} {
-		if got := ledgerTierFor(c.w, c.h); got != c.want {
-			t.Errorf("%dx%d is tier %d, want %d", c.w, c.h, got, c.want)
-		}
-	}
-}
-
-// TestLedgerResizeShowsTheRightLedger: a resize shows the Ledger of the new
+// TestLedgerResizeShowsTheRightLedger: a resize shows the header of the new
 // size at the next draw, with no refresh between.
 func TestLedgerResizeShowsTheRightLedger(t *testing.T) {
 	restoreForge(t)
@@ -575,38 +544,8 @@ func TestLedgerResizeShowsTheRightLedger(t *testing.T) {
 		sim.SetSize(sz.w, sz.h)
 		pages.SetRect(0, 0, sz.w, sz.h)
 		drawOn(screen, pages) // no d.refresh in between
-		if _, _, _, lh := d.ledgerTV.GetRect(); lh != ledgerHeight(sz.w, sz.h) {
-			t.Errorf("%dx%d: the Ledger is %d rows after the resize, want %d", sz.w, sz.h, lh, ledgerHeight(sz.w, sz.h))
+		if _, _, w, h := d.headerTV.GetRect(); h != headerHeight(sz.w, sz.h) || w != sz.w || d.headerTV.grid.h != h || d.headerTV.grid.w != w {
+			t.Errorf("%dx%d: the header is %dx%d after the resize (grid %dx%d), want %d rows", sz.w, sz.h, w, h, d.headerTV.grid.w, d.headerTV.grid.h, headerHeight(sz.w, sz.h))
 		}
 	}
-}
-
-// GetText is the rows as text, one to a line, with the colour tags left in
-// unless stripTags.
-func (b *ledgerBox) GetText(stripTags bool) string {
-	lines := make([]string, len(b.lines))
-	for i, l := range b.lines {
-		if stripTags {
-			l = stripLedgerTags(l)
-		}
-		lines[i] = l
-	}
-	return strings.Join(lines, "\n")
-}
-
-// stripLedgerTags is s without the tags the Ledger writes.
-func stripLedgerTags(s string) string {
-	var sb strings.Builder
-	for i := 0; i < len(s); {
-		if s[i] == '[' {
-			if n, _, _, _, _, ok := ledgerTag(s[i:]); ok {
-				i += n
-				continue
-			}
-		}
-		r, size := utf8.DecodeRuneInString(s[i:])
-		sb.WriteRune(r)
-		i += size
-	}
-	return sb.String()
 }
