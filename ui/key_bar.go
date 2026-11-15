@@ -175,20 +175,31 @@ func (k *keyPresser) pointer(g *xgrid, org, at image.Point) kit.Pointer {
 // paintLit repaints the key under the pointer in its lit colours, over the
 // grid already painted at org.
 func (k *keyPresser) paintLit(p *kit.Painter, g *xgrid, org image.Point, pal *expPalette) {
-	hit, ok := k.lit(g)
-	if !ok {
-		return
+	if hit, ok := k.lit(g); ok {
+		paintLitRect(p, g, org, pal, hit.r)
 	}
-	for y := hit.r.Min.Y; y < hit.r.Max.Y; y++ {
-		for x := hit.r.Min.X; x < hit.r.Max.X; x++ {
+}
+
+// paintLitRect repaints the cells of r as they look under the pointer, over
+// the grid already painted at org: a key button in its lit colours, a chip
+// in its bright phase, and anything else on the chip ground under its ink.
+func paintLitRect(p *kit.Painter, g *xgrid, org image.Point, pal *expPalette, r image.Rectangle) {
+	r = r.Intersect(image.Rect(0, 0, g.w, g.h))
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		for x := r.Min.X; x < r.Max.X; x++ {
 			c := g.c[y*g.w+x]
-			switch c.k {
-			case xKeycap:
-				c.k = xKeycapLit
-			case xKeyName:
-				c.k = xKeyNameLit
+			st := pal.style(c)
+			switch {
+			case c.k == xKeycap:
+				st = pal.styles[xKeycapLit]
+			case c.k == xKeyName:
+				st = pal.styles[xKeyNameLit]
+			case c.k >= xChipShort && c.k <= xChipGoal:
+				st = pal.styles[c.k+xChipShortHi-xChipShort]
+			default:
+				st = st.Background(pal.styles[xKeyName].Bg)
 			}
-			p.Put(org.X+x, org.Y+y, c.r, pal.style(c))
+			p.Put(org.X+x, org.Y+y, c.r, st)
 		}
 	}
 }
