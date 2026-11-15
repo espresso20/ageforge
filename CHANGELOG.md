@@ -141,6 +141,7 @@ All notable changes to AgeForge are documented here.
 - The `icons` command, the Nerd Font installer and the `nerd` map glyph set are gone, and the Font Snob badge with them. The window draws with its own fonts, which have no such icons. Option+B and Option+F no longer act as Home and End on an empty prompt.
 
 ### Fixed
+- The History panel's charts show again. In the window every dot of them was a question mark, because no font the game ships has the braille dots they are drawn with. The window now draws those dots itself.
 - A right click followed quickly by a left click on the same spot no longer counts as a double click. It could build a building from one left click.
 - On Windows, a failure to start, or to save on the way out, is shown in a message box. The Windows build has no console, so the message used to go nowhere.
 - With a dialog or a floating window open, a click or the wheel beside it no longer reaches the page behind it. A click beside the account confirmation could change the main menu's page.
