@@ -36,7 +36,8 @@ builds:
         goarch: arm64
     ldflags:
       # Same variable and the same "v1.2.3" form release.yml sets from the tag.
-      - -X main.version=v{{ .Version }}
+      # windowsgui on Windows: no console opens beside the game's window.
+      - -X main.version=v{{ .Version }}{{ if eq .Os "windows" }} -H=windowsgui{{ end }}
 
 archives:
   - id: raw
