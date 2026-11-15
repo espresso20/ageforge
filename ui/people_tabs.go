@@ -313,7 +313,7 @@ func (c peopleBody) work() {
 		g.put(rx, y, l, k)
 		y++
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.work.19", "pick an area")}}, "roster <area> <%|auto>")
+	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.work.19", "pick an area")}, escClose()}, "roster <area> <%|auto>")
 }
 
 // areaList is the built buildings of a work area that take workers.
@@ -403,7 +403,7 @@ func (c peopleBody) army() {
 		g.box(c.x, by, c.w, bh, xBorder, vibe.Line("ui.people_tabs.army.14", "Fallen and filled"), xTitle, false)
 		drawLog(g, 3, by+1, c.w-4, bh-2, recentLog(st, armyEvent, bh-2), vibe.Line("ui.people_tabs.army.15", "No news from the army."))
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.army.17", "pick a building")}}, "army")
+	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.army.17", "pick a building")}, escClose()}, "army")
 }
 
 // ===== Scholars =====
@@ -500,5 +500,5 @@ func (c peopleBody) scholars() {
 			g.putFit(3, by+1+i, c.w-4, "· "+t, xText)
 		}
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.scholars.22", "pick a building")}}, "scholars")
+	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.scholars.22", "pick a building")}, escClose()}, "scholars")
 }

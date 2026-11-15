@@ -96,6 +96,7 @@ func newSiteStage(t *testing.T) *siteStage {
 	still := time.Unix(0, 0)
 	d.mapPanel.start, d.mapPanel.now = still, func() time.Time { return still }
 	d.miniMap.start, d.miniMap.now = still, func() time.Time { return still }
+	d.expPanel.start, d.expPanel.now = still, func() time.Time { return still }
 	// The arrival screen reads the game through the engine, as it does in
 	// the app (app.go). Its timers are held: nothing here waits for them.
 	d.overlayMgr.engine = eng
