@@ -33,7 +33,7 @@ func (v *view) Draw(scr Cells, r Rect, f Frame) {
 		side = sideWidth
 	}
 	mapW, mapH := r.W-side, r.H-5
-	v.drawPicture(cv, ink.Palette, 0, 1, mapW, mapH, sc, f)
+	v.drawPicture(cv, ink.pic, 0, 1, mapW, mapH, sc, f)
 	zoom := v.zoomLabel()
 	v.drawHeader(cv, r.W, f.Model, zoom)
 	switch {
@@ -55,6 +55,7 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 	anim := f.Anim
 	var cx, cy int
 	var on bool
+	cv.Fill(x, y, w, h, ' ', mp.Style(mapmodel.CText)) // the picture's ground, not the theme's
 	if f.Space != nil && sc.Grid.Space {
 		v.pal = cellPaletteFor(v.pal, sc.Grid)
 		if v.hosted = v.hostSky(cv, f, v.pal, x, y, w, h); v.hosted {
@@ -274,9 +275,10 @@ func (v *view) DrawCompact(scr Cells, r Rect, f Frame) {
 		return
 	}
 	v.overview = true
+	cv.Fill(0, 1, r.W, mh, ' ', ink.pic.Style(mapmodel.CText))
 	ov := v.scene(f).Overview(r.W, mh)
 	v.blit(cv, 0, 1, ov.Grid)
 	if cx, cy, ok := ov.CellOf(mapgen.Pt{X: v.mark.X, Y: v.mark.Y}); v.marked && ok {
-		v.putCursor(cv, ink.Palette, cx, 1+cy, f.Anim)
+		v.putCursor(cv, ink.pic, cx, 1+cy, f.Anim)
 	}
 }

@@ -7,9 +7,9 @@ import (
 )
 
 // The engine says what a cell is made of (a hue and a weight); this file turns
-// that into a colour of the player's theme, the way the rest of the map gets
-// its colours: a theme role leaning toward an identity hue, laid over the
-// theme's own ground by the weight and clamped legible where a glyph is drawn.
+// that into a colour of the picture's own theme (Forge, in every theme the
+// player wears; see fixed.go): a role leaning toward an identity hue, laid over
+// the ground by the weight and clamped legible where a glyph is drawn.
 
 // hueFrom is where a hue's identity colour comes from; nil leans on nothing.
 type hueFrom func() theme.Color
@@ -19,7 +19,8 @@ func fromCity(h theme.CityHue) hueFrom   { return func() theme.Color { return th
 func fromSpace(h theme.SpaceHue) hueFrom { return func() theme.Color { return theme.SpaceColor(h) } }
 func fromEpoch(epoch int) hueFrom        { return fromMap(theme.EpochHue(epoch)) }
 
-// recipe makes a hue: start from a theme role, lean toward a colour by mix.
+// recipe makes a hue: start from a role of the picture's theme, lean toward a
+// colour by mix.
 type recipe struct {
 	role theme.Role
 	from hueFrom
@@ -92,7 +93,7 @@ var recipes = [mapgen.NumHues]recipe{
 // and stay apart from the stars strewn along them.
 func armColour() theme.Color {
 	lav := theme.Mix(theme.SpaceColor(theme.SpaceStar), theme.SpaceColor(theme.SpaceNebulaViolet), 0.35)
-	return theme.Mix(lav, theme.Of(theme.RoleDim), 0.35)
+	return theme.Mix(lav, pictureRole(theme.RoleDim), 0.35)
 }
 
 // lineRecipes are the hues of the building lines, in the order of
@@ -137,28 +138,13 @@ func isBlockRune(r rune) bool {
 
 func (r recipe) colour(h mapgen.Hue) theme.Color {
 	if isSpaceHue(h) && r.from != nil {
-		return inkOf(r.from())
+		return r.from()
 	}
-	base := theme.Of(r.role)
+	base := pictureRole(r.role)
 	if r.from == nil {
-		return inkOf(base)
+		return base
 	}
-	return inkOf(theme.Mix(base, r.from(), r.mix))
-}
-
-// inkOf is c as the active theme draws it: as it is, or on a one-ink-on-one-
-// paper theme (Monochrome, Parchment) only how light it is, laid on the ramp
-// from the theme's background to its text.
-func inkOf(c theme.Color) theme.Color {
-	if !theme.Active().Duotone {
-		return c
-	}
-	lum := theme.RelativeLuminance(c)
-	if theme.IsLight() {
-		lum = 1.0 - lum
-	}
-	light := float64(0.2 + float64(0.8*lum))
-	return theme.Mix(theme.Of(theme.RoleBackground), theme.Of(theme.RoleText), light)
+	return theme.Mix(base, r.from(), r.mix)
 }
 
 // paintKey is one cell's colours: what the style cache is keyed by.
@@ -169,10 +155,9 @@ type paintKey struct {
 	block  bool
 }
 
-// cellPalette is the colours of one theme and one age's walls. It is rebuilt when
-// either changes.
+// cellPalette is the colours of one age's walls. It is rebuilt when they
+// change, never for a theme: the picture wears one palette in every theme.
 type cellPalette struct {
-	theme string
 	wall  mapgen.Hue
 	tint  mapgen.Hue
 	space bool
@@ -182,44 +167,29 @@ type cellPalette struct {
 	cache map[paintKey]kit.Style
 }
 
-// cellPaletteFor returns p when it still fits the theme and the grid, else a new
-// one.
+// cellPaletteFor returns p when it still fits the grid, else a new one.
 func cellPaletteFor(p *cellPalette, g *mapgen.Grid) *cellPalette {
-	key := theme.Active().Key
-	if p != nil && p.theme == key && p.wall == g.Wall && p.tint == g.Tint && p.space == g.Space {
+	if p != nil && p.wall == g.Wall && p.tint == g.Tint && p.space == g.Space {
 		return p
 	}
-	bg := theme.Of(theme.RoleBackground)
+	bg := pictureRole(theme.RoleBackground)
 	if g.Space {
-		bg = inkOf(theme.SpaceColor(theme.SpaceVoid))
+		bg = theme.SpaceColor(theme.SpaceVoid)
 	}
-	p = &cellPalette{theme: key, wall: g.Wall, tint: g.Tint, space: g.Space, bg: bg, cache: map[paintKey]kit.Style{}}
+	p = &cellPalette{wall: g.Wall, tint: g.Tint, space: g.Space, bg: bg, cache: map[paintKey]kit.Style{}}
 	for h := range p.hue {
 		p.hue[h] = recipes[h].colour(mapgen.Hue(h))
-	}
-	if g.Space && theme.IsLight() {
-		p.hue[mapgen.HSteel] = inkOf(theme.CityColor(theme.CitySteel))
-	}
-	if theme.Active().Key == "daylight" || g.Space {
-		if !theme.Active().Duotone {
-			p.hue[mapgen.HWhite] = inkOf(theme.SpaceWhiteColor())
-		}
 	}
 	wall := p.hue[g.Wall]
 	for i, r := range lineRecipes {
 		p.hue[mapgen.HLine+mapgen.Hue(i)] = theme.Mix(wall, r.colour(mapgen.HLine+mapgen.Hue(i)), lineWallMix)
 	}
-	// The dark falls toward a deep blue-black, whatever the theme: a light
-	// theme's night is dark too, with its own text colour as the black.
-	black := p.bg
-	if theme.IsLight() && !g.Space {
-		black = theme.Of(theme.RoleText)
-	}
-	p.night = theme.Mix(black, inkOf(theme.MapHueColor(theme.HueWaterDeep)), 0.2)
+	// The dark falls toward a deep blue-black.
+	p.night = theme.Mix(p.bg, theme.MapHueColor(theme.HueWaterDeep), 0.2)
 	return p
 }
 
-// over is a paint laid over the theme's ground.
+// over is a paint laid over the picture's ground.
 func (p *cellPalette) over(pt mapgen.Paint) theme.Color {
 	if pt.Hue == mapgen.HNone || pt.Weight == 0 {
 		return p.bg

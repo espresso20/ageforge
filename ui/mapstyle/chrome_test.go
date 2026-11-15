@@ -60,7 +60,7 @@ func TestCursorIsAHighlightedCell(t *testing.T) {
 				v.SetOption(OptWorld, world)
 				v.SetOption(OptInspect, false)
 				plain := drawOffset(v, m, 120, 40, 0, mapmodel.TierUnicode, false)
-				if cells, _ := cursorCells(plain, v.ink.Palette); len(cells) != 0 {
+				if cells, _ := cursorCells(plain, v.ink.pic); len(cells) != 0 {
 					t.Errorf("%s, %s: %d cells are drawn in the cursor's fill with no cursor out", th.Key, age, len(cells))
 				}
 				v.SetOption(OptInspect, true)
@@ -103,15 +103,15 @@ func TestCursorBlinksWithTheMap(t *testing.T) {
 	bgAt := func(anim int) theme.Color {
 		scr := drawOffset(v, m, 120, 40, anim, mapmodel.TierUnicode, false)
 		defer scr.Fini()
-		cells, _ := cursorCells(scr, v.ink.Palette)
+		cells, _ := cursorCells(scr, v.ink.pic)
 		if len(cells) == 0 {
 			t.Fatalf("frame %d: no cursor", anim)
 		}
 		_, bg, _ := cells[0].Style.Decompose()
 		return bg
 	}
-	_, fill, _ := v.begin(Frame{Model: m}).Cursor.Decompose()
-	_, alt, _ := v.ink.CursorAlt.Decompose()
+	_, fill, _ := v.begin(Frame{Model: m}).pic.Cursor.Decompose()
+	_, alt, _ := v.ink.pic.CursorAlt.Decompose()
 	if got := bgAt(0); got != fill {
 		t.Errorf("with motion off the cursor is #%06x, want the fill #%06x", got.Hex(), fill.Hex())
 	}
@@ -133,14 +133,14 @@ func TestMiniMapMarksTheCursor(t *testing.T) {
 	drawOffset(panel, m, 120, 40, 0, mapmodel.TierUnicode, false).Fini() // places the cursor
 	mini.Point(panel.Pointer())
 	scr := drawOffset(mini, m, 58, 9, 0, mapmodel.TierUnicode, true)
-	if cells, _ := cursorCells(scr, mini.ink.Palette); len(cells) != 1 {
+	if cells, _ := cursorCells(scr, mini.ink.pic); len(cells) != 1 {
 		t.Errorf("the mini map marks %d cells for the Map panel's cursor, want 1", len(cells))
 	}
 	scr.Fini()
 	panel.SetOption(OptInspect, false)
 	mini.Point(panel.Pointer())
 	scr = drawOffset(mini, m, 58, 9, 0, mapmodel.TierUnicode, true)
-	if cells, _ := cursorCells(scr, mini.ink.Palette); len(cells) != 0 {
+	if cells, _ := cursorCells(scr, mini.ink.pic); len(cells) != 0 {
 		t.Errorf("the mini map marks %d cells with no cursor out, want none", len(cells))
 	}
 	scr.Fini()

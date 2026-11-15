@@ -987,17 +987,14 @@ func TestResearchPanelMouse(t *testing.T) {
 	press := func(pt image.Point, clicks int) bool {
 		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: clicks})
 	}
-	if !press(at(other), 1) || p.view.sel != other || p.view.card {
-		t.Fatalf("a click: selected %q (want %q), card open %v", p.view.sel, other, p.view.card)
-	}
 	if press(image.Pt(0, 0), 1) {
 		t.Error("a click on the title bar changed something")
 	}
 	if p.PointerAt(at(other)) != kit.PointerHand || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
 		t.Error("the hand should show over a tech and not over the title bar")
 	}
-	if !press(at(other), 2) || !p.view.card {
-		t.Error("a double click did not open the card")
+	if !press(at(other), 1) || p.view.sel != other || !p.view.card {
+		t.Fatalf("a click: picked %q (want %q), card open %v (want it open)", p.view.sel, other, p.view.card)
 	}
 	if p.PointerAt(at(other)) != kit.PointerArrow {
 		t.Error("with the card open the hand still shows over the tech behind it")

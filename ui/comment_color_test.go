@@ -37,7 +37,6 @@ var commentSites = map[string]int{
 	"ui/arrival_page.go":        3,
 	"ui/catastrophe_modal.go":   2,
 	"ui/ending_page.go":         1,
-	"ui/mapstyle/cursor.go":     1, // skips the role when it asks "are all the roles grey"
 	"ui/overlay_buildings.go":   1,
 	"ui/overlay_epoch.go":       1,
 	"ui/overlay_harbinger.go":   1,
