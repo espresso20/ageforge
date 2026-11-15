@@ -25,7 +25,7 @@ const coinSetMax = 24 << 20
 func (c *coinCache) image(l coinLook, cells image.Point, pose coinPose) *image.RGBA {
 	cw, ch := c.px.X, c.px.Y
 	if cw == 0 || ch == 0 {
-		cw, ch = pictureCell()
+		cw, ch = cellPixels()
 	}
 	key := coinKey{l, cells.X * cw, cells.Y * ch, pose}
 	if c.cell != [2]int{cw, ch} || c.bytes > coinSetMax {

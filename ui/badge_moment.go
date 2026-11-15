@@ -89,19 +89,11 @@ func (m *badgeMoment) draw(p *kit.Painter, card image.Rectangle, v game.BadgeVie
 	p = p.Clip(card.Inset(1))
 	if withCoin {
 		coin := image.Rect(org.X+2, org.Y+1, org.X+2+momentCoinW, org.Y+1+momentCoinH)
-		if pictureCell != nil && !plain {
-			pose := coinPose{}
-			if motion {
-				pose = pickedPoseAt(look, steps-momentOpen)
-			}
-			p.Picture(coin, m.coins.image(look, coin.Size(), pose))
-		} else {
-			mark := badgeMark(v, tier)
-			if plain {
-				mark = foldRunes(mark)
-			}
-			p.Print(coin.Min.X+(momentCoinW-3)/2, coin.Min.Y+momentCoinH/2, 3, mark, kit.Style{Bg: ground})
+		pose := coinPose{}
+		if motion {
+			pose = pickedPoseAt(look, steps-momentOpen)
 		}
+		p.Picture(coin, m.coins.image(look, coin.Size(), pose))
 	}
 	if !withText {
 		return

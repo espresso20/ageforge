@@ -31,10 +31,6 @@ func (h *hallCoins) paint(p *kit.Painter, text image.Rectangle, top, n int) {
 	if h.cache == nil {
 		h.cache = &coinCache{}
 	}
-	if h.cache.px == (image.Point{}) && pictureCell == nil {
-		h.moving.Store(false)
-		return
-	}
 	p = p.Clip(text)
 	org := image.Pt(text.Min.X, text.Min.Y-top)
 	for _, c := range h.list {
