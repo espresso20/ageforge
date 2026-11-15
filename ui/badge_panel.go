@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
@@ -119,7 +118,7 @@ func (p *badgePanel) update(state game.GameState) {
 // layout rebuilds the model for the current size and tab, keeps the
 // selection on something the tab lists, and scrolls it into view.
 func (p *badgePanel) layout() {
-	p.model = buildCase(p.views, p.sum, p.account, p.view.tab, caseLayoutFor(p.w, p.h, p.view.tab, p.pix()))
+	p.model = buildCase(p.views, p.sum, p.account, p.view.tab, caseLayoutFor(p.w, p.h, p.view.tab))
 	known := false
 	for _, t := range p.model.tabs {
 		known = known || t.key == p.view.tab
@@ -131,37 +130,6 @@ func (p *badgePanel) layout() {
 		p.view.sel, p.view.card = p.model.home(), false
 	}
 	p.model.follow(&p.view)
-}
-
-// frame is the animation frame: the clock's, or atRest when the motion
-// setting is off.
-func (p *badgePanel) frame() int {
-	if !p.motion {
-		return atRest
-	}
-	return int(p.now().Sub(p.start) / mapAnimStep)
-}
-
-// moves reports whether the case as it stands draws anything that moves:
-// the selected badge's art, or a legendary badge on the page.
-func (p *badgePanel) moves() bool {
-	if !p.motion || p.model == nil || !p.account || p.view.pix {
-		return false // the coins' shows are paintCoins' to report
-	}
-	if it := p.model.selected(p.view); it != nil && medalOf(it.v, p.view.tier).animated() {
-		return true
-	}
-	for _, ln := range p.model.lines {
-		if ln.kind != lineBadges || !p.model.visible(ln, p.view.vy) {
-			continue
-		}
-		for _, i := range ln.items {
-			if md := medalOf(p.model.items[i].v, p.view.tier); md.state == medalEarned && md.tier == config.BadgeLegendary {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // Layout takes the panel's rectangle and lays the case out again when its
@@ -181,11 +149,7 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 		return
 	}
 	p.view.prompt = p.prompt != nil && p.prompt() != ""
-	p.view.pix = p.pix()
-	if p.model.lay.pix != p.view.pix {
-		p.layout() // the window gained or lost its pictures since the case was laid out
-	}
-	grid := renderCase(p.model, p.view, p.frame())
+	grid := renderCase(p.model, p.view)
 	if p.view.plain() {
 		foldBadges(grid)
 	}
@@ -202,7 +166,7 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 		}
 		p.buttons.paintLit(p2, g, r.Min, pal)
 	}
-	p.moving.Store(p.paintCoins(p2, r.Min) || p.moves())
+	p.moving.Store(p.paintCoins(p2, r.Min))
 }
 
 // paintCoins paints the case's coins as pictures, each in the pose its show
@@ -251,10 +215,6 @@ func (p *badgePanel) coinFrame() int {
 func (p *badgePanel) look(it *caseItem, art int) coinLook {
 	return lookOf(medalOf(it.v, p.view.tier), medalSign(it.v.Family), art)
 }
-
-// pix reports whether the case is drawn in pictures: the window says how
-// large a cell is. The glyph tier does not matter to a picture.
-func (p *badgePanel) pix() bool { return pictureCell != nil }
 
 // setCoins makes the panel draw its coins from a cache shared with other
 // screens.
