@@ -202,7 +202,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	// The text panels' frames fold to ASCII with the map glyphs.
 	d.overlayMgr.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
-	d.overlayMgr.Register("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesProvider)
+	d.registerDeck("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesPage)
 	// The Research panel: the tech tree as a map. Like the Map it leaves
 	// the keyboard with the command bar.
 	d.researchPanel.engine = d.engine

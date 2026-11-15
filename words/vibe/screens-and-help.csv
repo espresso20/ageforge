@@ -1568,12 +1568,6 @@ ui.overlay_logs.logsProvider.13,"
 "
 ui.overlay_logs.logsProvider.14,"  [cyan]%s[-] ×%d (bench: %d)
 "
-ui.overlay_milestones.milestonesProvider.01," [gold]Grind progress:[-] %d/%d"
-ui.overlay_milestones.milestonesProvider.02," [cyan]⚡ buff active[-]"
-ui.overlay_milestones.milestonesProvider.03,"     [gray]Loot: %s[-]%s
-"
-ui.overlay_milestones.milestonesProvider.04,gatekept milestone
-ui.overlay_milestones.milestonesProvider.05,gatekept milestones
 ui.overlay_military.garrisonSavedSummary.01,building
 ui.overlay_military.garrisonSavedSummary.03," [gray](%d %s tanked)[-]"
 ui.overlay_military.garrisonSavedSummary.04,raid

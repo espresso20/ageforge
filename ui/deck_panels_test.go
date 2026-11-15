@@ -134,7 +134,11 @@ func TestDeckPanelsOnTheDashboard(t *testing.T) {
 		}
 		cells := drawnDashboard(t, d, pages, 100, 30)
 		foot := rectText(cells, 100, 0, 30-promptRows-2, 100, 1)[0]
-		for _, want := range []string{"Esc", "or type"} {
+		wants := []string{"Esc"}
+		if d.decks[name].pg.Hint != "" {
+			wants = append(wants, "or type")
+		}
+		for _, want := range wants {
 			if !strings.Contains(foot, want) {
 				t.Errorf("%s: the foot does not say %q: %q", name, want, foot)
 			}

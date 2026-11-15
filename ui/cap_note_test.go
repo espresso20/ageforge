@@ -139,12 +139,12 @@ func TestFestivalSaysNothingOnALargePool(t *testing.T) {
 func TestMilestonesAndWondersTagOnlyLimitedRewards(t *testing.T) {
 	ge, _ := cappedState(t)
 	ge.GrantBonusForTest("research_speed", 1.2)
-	ms := milestonesProvider(ge.GetState(), 120)
+	ms := deckText(milestonesPage(ge.GetState()))
 	wantAll(t, "the Milestones panel", ms,
-		"+20% all production[-]\n",
-		"+10% all production[-]\n",
-		"+5% all production[-]\n",
-		"+5% research speed[-] [yellow](capped: no effect now)[-]",
+		"Reward +20% all production\n",
+		"Reward +10% all production\n",
+		"Reward +5% all production\n",
+		"Reward +5% research speed (capped: no effect now)\n",
 	)
 	if strings.Contains(ms, "a quarter") {
 		t.Errorf("the Milestones panel still talks of a quarter:\n%s", ms)
