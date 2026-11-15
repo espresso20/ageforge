@@ -34,6 +34,9 @@ type nativeText struct {
 	// wheel, when set, takes a turn of the wheel the scroll view had no use
 	// for: a box that pages its own text has nothing for the view to move.
 	wheel func(rows int) bool
+	// click, when set, is what a click on the box does when nothing in
+	// its text took the click.
+	click func()
 }
 
 // newNativeText is a text view: scrollable, wrapping at
@@ -254,10 +257,21 @@ func (t *nativeText) Paint(p *kit.Painter) {
 	}
 }
 
-// Mouse gives the wheel to the box's own rule, where it has one.
+// Mouse gives the wheel to the box's own rule and a click to its own
+// action, where it has them and nothing in its text took them.
 func (t *nativeText) Mouse(m kit.Mouse) bool {
-	return m.Kind == kit.MouseWheel && t.wheel != nil && t.wheel(m.Wheel)
+	switch {
+	case m.Kind == kit.MouseWheel:
+		return t.wheel != nil && t.wheel(m.Wheel)
+	case m.Kind == kit.MousePress && m.Button == kit.ButtonLeft && t.click != nil:
+		t.click()
+		return true
+	}
+	return false
 }
+
+// PointerAt: the hand over a box a click acts on.
+func (t *nativeText) PointerAt(image.Point) kit.Pointer { return handIf(t.click != nil) }
 
 // viKeys are the letters a text view scrolls by, as the keys they stand for.
 var viKeys = map[rune]kit.KeyCode{'j': kit.KeyDown, 'k': kit.KeyUp, 'g': kit.KeyHome, 'G': kit.KeyEnd}

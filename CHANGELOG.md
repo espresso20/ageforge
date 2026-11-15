@@ -7,6 +7,8 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the key buttons along the foot of the Load game, Accounts and Themes pages take clicks: a click on one presses its key.
+- In the window, a click on a building in the dashboard's Buildings list writes its `build` command in the prompt, and a double click builds one. A click on a box of the dashboard opens the panel that is that box in full: the mini map opens the Map, the Ledger opens Advance, the People box People, the Log the full record and Under construction the build plan.
 - In the window, a click on a name in the dashboard's Panels list opens that panel, as typing the name does. What is typed in the prompt stays as it is.
 - In the window, the mouse pointer turns into a hand over anything a click acts on (menu entries, buttons, rows, badges, techs, tabs, pillars, expedition pins) and into a text bar over a line you can type in.
 - In the window, the mouse wheel over the dashboard's Buildings list moves it one building at a time.

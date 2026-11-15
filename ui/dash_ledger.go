@@ -649,6 +649,9 @@ type ledgerBox struct {
 	stale  bool
 	// drawn: the box has been drawn, so it has a real size.
 	drawn bool
+	// onClick is what a click on the Ledger does (the dashboard opens the
+	// Advance panel, which is the Ledger in full).
+	onClick func()
 }
 
 func newLedgerBox(render func(w, h int) []string) *ledgerBox {
@@ -739,6 +742,18 @@ func (b *ledgerBox) Layout(r image.Rectangle) {
 
 // CanFocus: the Ledger takes no keys.
 func (b *ledgerBox) CanFocus() bool { return false }
+
+// Mouse: a click on the Ledger does what the dashboard set for it.
+func (b *ledgerBox) Mouse(ev kit.Mouse) bool {
+	if ev.Kind != kit.MousePress || ev.Button != kit.ButtonLeft || b.onClick == nil {
+		return false
+	}
+	b.onClick()
+	return true
+}
+
+// PointerAt: the hand, where a click does something.
+func (b *ledgerBox) PointerAt(image.Point) kit.Pointer { return handIf(b.onClick != nil) }
 
 // Paint writes the box's rows, rune by rune.
 func (b *ledgerBox) Paint(p *kit.Painter) {

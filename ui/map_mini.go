@@ -65,6 +65,9 @@ type miniMap struct {
 	model *mapmodel.Model
 	start time.Time
 	now   func() time.Time
+	// onClick is what a click on the mini map does (the dashboard opens
+	// the Map panel).
+	onClick func()
 }
 
 func newMiniMap(mv *mapViews) *miniMap {
@@ -112,6 +115,18 @@ func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 }
 
 func (m *miniMap) Layout(r image.Rectangle) { m.Place(r) }
+
+// Mouse: a click on the mini map does what the dashboard set for it.
+func (m *miniMap) Mouse(ev kit.Mouse) bool {
+	if ev.Kind != kit.MousePress || ev.Button != kit.ButtonLeft || m.onClick == nil {
+		return false
+	}
+	m.onClick()
+	return true
+}
+
+// PointerAt: the hand, where a click does something.
+func (m *miniMap) PointerAt(image.Point) kit.Pointer { return handIf(m.onClick != nil) }
 
 // Paint draws the border and the compact view inside it. The map still
 // writes cells through mapstyle.Cells, at the box's place on the screen: scr puts them on
