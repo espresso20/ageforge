@@ -87,6 +87,20 @@ type Cell struct {
 	Attr   Attr
 	Wide   bool // R covers this cell and the next
 	Cont   bool // the right half of a wide glyph: nothing is drawn here
+	// Pic is one more than the index, in the buffer's Pics, of the picture
+	// whose pixels this cell shows; 0 for none. Whatever is painted on the
+	// cell afterwards takes the cell back.
+	Pic uint16
+}
+
+// A Pic is a picture the window draws in real pixels over a rectangle of
+// cells, stretched to fill it. The grid only keeps its place: each cell of
+// the rectangle that still shows the picture is marked with it (Cell.Pic).
+// The image must not be written to once it has been painted; to change the
+// picture, paint another image.
+type Pic struct {
+	Rect image.Rectangle // in cells
+	Img  *image.RGBA
 }
 
 // Clear reports whether the cell has no ground (see the Clear color).
@@ -101,6 +115,8 @@ type Buffer struct {
 	CursorOn bool
 	// Pointer is the shape the mouse pointer takes where it is.
 	Pointer Pointer
+	// Pics are the pictures painted this frame (see Painter.Picture).
+	Pics []Pic
 }
 
 // NewBuffer is a blank buffer of w by h cells.
@@ -129,6 +145,7 @@ func (b *Buffer) Reset() {
 		b.Cells[i] = blank
 	}
 	b.CursorOn = false
+	b.Pics = b.Pics[:0]
 }
 
 // At is the cell at x, y; a blank outside the buffer.

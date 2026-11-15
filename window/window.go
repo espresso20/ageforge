@@ -6,6 +6,7 @@ package window
 
 import (
 	"errors"
+	"image"
 	"log"
 	"math"
 	"runtime"
@@ -67,7 +68,9 @@ type Game struct {
 	adv        map[advKey]float64
 	tface      map[faceID]*text.GoTextFace
 	ptr        cellPointer
-	pointing   kit.Pointer // the shape the mouse pointer was last given
+	pointing   kit.Pointer                   // the shape the mouse pointer was last given
+	pics       map[*image.RGBA]*ebiten.Image // the pictures on show, as the graphics card holds them
+	prevPics   []kit.Pic                     // the pictures of the frame before
 }
 
 // New is a window for the host, with the settings saved in dir.
@@ -362,6 +365,7 @@ func (g *Game) paint() {
 			g.prev[i].R = -1 // matches nothing
 		}
 	}
+	g.syncPics()
 	for i, c := range g.fr.Cells {
 		// The right half of a wide rune is painted with it, never on its own:
 		// a fill there would wipe half the glyph.

@@ -332,6 +332,7 @@ func (a *appLoop) Frame(dst *kit.Buffer) {
 	dst.Cells = append(dst.Cells[:0], a.front.Cells...)
 	dst.Cursor, dst.CursorOn = a.front.Cursor, a.front.CursorOn
 	dst.Pointer = a.front.Pointer
+	dst.Pics = append(dst.Pics[:0], a.front.Pics...)
 }
 
 // Size is the screen in cells, as the last frame was painted.

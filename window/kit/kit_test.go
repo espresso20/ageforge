@@ -414,6 +414,59 @@ func TestARightPressDoesNotBeginADoubleClick(t *testing.T) {
 	}
 }
 
+// A picture marks the cells of its rectangle that the painter may touch, and
+// whatever is painted on one of them afterwards takes that cell back: text,
+// a fill, another picture. A new frame starts with no pictures.
+func TestAPictureKeepsItsCellsUntilSomethingIsPaintedOnThem(t *testing.T) {
+	b := NewBuffer(10, 4)
+	p := NewPainter(b)
+	img := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	p.Print(0, 1, -1, "abcdefghij", Style{})
+	p.Picture(image.Rect(2, 1, 6, 3), img)
+	shows := func() string {
+		var sb strings.Builder
+		for y := 0; y < 4; y++ {
+			for x := 0; x < 10; x++ {
+				sb.WriteByte("._23456789"[min(int(b.At(x, y).Pic), 9)])
+			}
+			sb.WriteByte('\n')
+		}
+		return sb.String()
+	}
+	if got, want := shows(), "..........\n..____....\n..____....\n..........\n"; got != want {
+		t.Fatalf("the picture's cells:\n%swant\n%s", got, want)
+	}
+	if len(b.Pics) != 1 || b.Pics[0].Rect != image.Rect(2, 1, 6, 3) || b.Pics[0].Img != img {
+		t.Fatalf("the buffer lists %v", b.Pics)
+	}
+	if b.At(2, 1).R != ' ' || b.At(1, 1).R != 'b' {
+		t.Errorf("under the picture the text should be gone and beside it stay: %q %q", b.At(2, 1).R, b.At(1, 1).R)
+	}
+	// Text, a fill and a second picture each take cells back.
+	p.Print(3, 1, -1, "X", Style{})
+	p.Fill(image.Rect(5, 2, 8, 3), Role(theme.RoleSurface))
+	p.Picture(image.Rect(2, 2, 3, 4), img)
+	if got, want := shows(), "..........\n.._.__....\n..2__.....\n..2.......\n"; got != want {
+		t.Errorf("after text, a fill and another picture:\n%swant\n%s", got, want)
+	}
+	// A clipped painter marks only what it may touch, but the picture keeps its whole rectangle.
+	b.Reset()
+	if len(b.Pics) != 0 || b.At(2, 1).Pic != 0 {
+		t.Fatal("a new frame still has the last one's pictures")
+	}
+	p.Clip(image.Rect(0, 0, 4, 4)).Picture(image.Rect(2, 0, 8, 2), img)
+	if got, want := shows(), "..__......\n..__......\n..........\n..........\n"; got != want {
+		t.Errorf("a clipped picture:\n%swant\n%s", got, want)
+	}
+	if b.Pics[0].Rect != image.Rect(2, 0, 8, 2) {
+		t.Errorf("a clipped picture's rectangle is %v, want the whole of it", b.Pics[0].Rect)
+	}
+	p.Picture(image.Rect(0, 0, 2, 2), nil)
+	if len(b.Pics) != 1 {
+		t.Error("a picture with no image was listed")
+	}
+}
+
 func lines(n int) string {
 	var s []string
 	for i := 0; i < n; i++ {
