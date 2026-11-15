@@ -371,7 +371,7 @@ Morale multiplies the output of every building with worker slots:
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity) × morale_multiplier
 ```
 
-A new game starts at 50%, where morale has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its ceiling. Starvation, military workers above 30% of your workers (only the Geographic Society takes any) and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The People panel's Overview shows it beside the food figures, and the status ribbon shows it all the time. Everything else is on [Morale](morale.md).
+A new game starts at 50%, where morale has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its ceiling. Starvation, military workers above 30% of your workers (only the Geographic Society takes any) and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The People panel's Overview shows it beside the food figures, and the header shows it all the time. Everything else is on [Morale](morale.md).
 
 ---
 

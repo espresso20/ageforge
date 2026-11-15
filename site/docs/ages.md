@@ -14,7 +14,7 @@ If more than one age goes by before the screen can show (a queued [`plan advance
 
 ## Wonder requirement
 
-Each age opens exactly one wonder, and you must build it before you can advance to the next age. The [Advance panel](advance.md) shows it in the Monument pillar as two rows: the wonder's bank, and the wonder itself with a note on what it waits for (`bank it first`, `needs <tech> first`, `ready to build` or `building, 40%`). The Waiting on line in the Ledger at the top of the game lists the same items while they are missing. See [Wonders](wonders.md) for prices and how to build one. The Advance panel sorts the whole gate into four pillars.
+Each age opens exactly one wonder, and you must build it before you can advance to the next age. The [Advance panel](advance.md) shows it in the Monument pillar as two rows: the wonder's bank, and the wonder itself with a note on what it waits for (`bank it first`, `needs <tech> first`, `ready to build` or `building, 40%`). The Waiting on line in the header at the top of the game lists the same items while they are missing. See [Wonders](wonders.md) for prices and how to build one. The Advance panel sorts the whole gate into four pillars.
 
 ## Keystone techs
 
@@ -63,7 +63,7 @@ To leave an age you need all of these:
 
 No age asks you to hold an amount of any resource, and advancing spends nothing. The log tells you when the gate is met. You advance by typing `advance`, or by queuing `plan advance`. A pending catastrophe stops the advance until you choose, and a doom foretold for the age is met first (see [In the way](advance.md#in-the-way)).
 
-The table under each age below lists the building counts that the gate into it asks for. The Waiting on line in the Ledger at the top of the game lists what is still missing from the same list, with your count beside each one (`Gathering Camp 3/8`).
+The table under each age below lists the building counts that the gate into it asks for. The Waiting on line in the header at the top of the game lists what is still missing from the same list, with your count beside each one (`Gathering Camp 3/8`).
 
 ### How the counts are set
 

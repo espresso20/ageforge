@@ -10,7 +10,7 @@ A window opens with two buttons, Endure and Succumb. Press `E` or `S`, or move b
 
 <figure class="screen" data-screen="catastrophe"><figcaption>The choice a catastrophe brings, here the Great Plague in the Iron Era: what Endure would cost with this garrison, and what Succumb would keep.</figcaption></figure>
 
-While a catastrophe is pending, the status ribbon shows a **☄ Catastrophe** badge (on a wide window it reads "☄ Catastrophe pending. Type catastrophe to choose."). The game refuses to advance to the next age or to prestige until you choose. Type `catastrophe` to reopen the choice. The pending catastrophe is saved with your game, so if you close the game and come back, the window opens again when the save loads.
+While a catastrophe is pending, the header shows a **☄ Catastrophe** chip (on a wide window it reads "☄ Catastrophe: type catastrophe"; a click on it opens the choice). The game refuses to advance to the next age or to prestige until you choose. Type `catastrophe` to reopen the choice. The pending catastrophe is saved with your game, so if you close the game and come back, the window opens again when the save loads.
 
 If a catastrophe strikes while the arrival screen of an age advance is up, the arrival comes first. The catastrophe window opens once you close that screen (any key moves on to what the age opens, and a second key closes it), or when it closes by itself after 20 seconds.
 
@@ -46,7 +46,7 @@ The Epoch panel shows the same outlook. Neither tells a false prophet from a tru
 
 ## The Last Passage
 
-The Cosmic Era has no next epoch, so its passage is prestige. A prestige from the Cosmic Era can bring the **Last Passage**: a choice between keeping part of the run's prestige points (Endure) and the permanent Cosmic Legacy (Succumb). It blocks only prestige. Like a catastrophe it waits behind a badge on the status ribbon until you answer it with `catastrophe`. See [The Last Passage](prestige.md#the-last-passage).
+The Cosmic Era has no next epoch, so its passage is prestige. A prestige from the Cosmic Era can bring the **Last Passage**: a choice between keeping part of the run's prestige points (Endure) and the permanent Cosmic Legacy (Succumb). It blocks only prestige. Like a catastrophe it waits behind a chip in the header until you answer it with `catastrophe`. See [The Last Passage](prestige.md#the-last-passage).
 
 The roll happens when you confirm the prestige. It reads the same faith bands as a doom, at 18%, 15% or 12% from low to high faith. A harbinger warns of it from the moment you enter the era, and its Appease lowers the odds like any other (×0.6 per level, two levels at most). Invite makes it certain. Brace does not touch the odds. It raises the share of the run's prestige points that an Endure keeps, from 50% to 70% at level 1 and 85% at level 2.
 

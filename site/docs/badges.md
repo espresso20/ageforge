@@ -176,7 +176,7 @@ Three of them, as examples:
 
 The badge case never names something the game has not shown you yet:
 
-- A badge for reaching an age shows once that age is your next age, because the long bar in the Ledger already names it. Badges tied to an age (its wonder, its Maximalist and Research badges, and the lineages, resources, payrolls and missions that begin in it) stay hidden until you reach that age.
+- A badge for reaching an age shows once that age is your next age, because the long bar in the header already names it. Badges tied to an age (its wonder, its Maximalist and Research badges, and the lineages, resources, payrolls and missions that begin in it) stay hidden until you reach that age.
 - A badge about a civilization or a harbinger stays hidden until you have met it, one about an awakening until it happens, and one about a catastrophe until its warning names it or it strikes.
 - The badge for wearing a theme that a badge unlocks stays hidden until you hold the theme.
 - A family with nothing in sight has no tab and no heading until you have reached the last age.
@@ -209,7 +209,7 @@ Six more titles come with badges, not with the score:
 | The Undying | Enduring every catastrophe and the Last Passage |
 | Hut Magnate | A secret badge |
 
-You wear one title at a time. It shows in the badge case's top bar and, once you wear anything but Settler and the window has room, beside your account's name in the status bar.
+You wear one title at a time. It shows in the badge case's top bar and, once you wear anything but Settler and the window has room, beside your account's name in the header's top edge.
 
 ```
 title

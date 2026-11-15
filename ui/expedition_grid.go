@@ -218,6 +218,9 @@ var foldExpedition = map[rune]rune{
 	'○': 'o', '◇': 'd', '▲': '^', '■': '#', '◈': '*', '◆': '+', '▣': 'T', '†': '+',
 	'▰': '#', '▱': '-', '█': '#', '░': '-', '·': '.', '•': '*', '≈': '~', '∩': 'n', '●': '*',
 	'←': '<', '→': '>', '↑': '^', '↓': 'v', '…': '~', '▸': '>', '×': 'x',
+	// the header's: a pillar that stands (the Ledger's choice), a catastrophe,
+	// a harbinger
+	'✓': '+', '☄': '!', '⚑': '^',
 }
 
 func (g *xgrid) fold() { g.foldWith(foldExpedition) }

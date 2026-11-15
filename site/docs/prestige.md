@@ -360,7 +360,7 @@ Prestige is the Cosmic Era's passage, so its fated doom can't be outrun past it.
 
 ### While it is pending
 
-- `Esc` closes the choice. The status ribbon shows a **☄ Last Passage** badge telling you to type `catastrophe` (or `cat`), and a bare `catastrophe` reopens the choice.
+- `Esc` closes the choice. The header shows a **☄ Last Passage** chip telling you to type `catastrophe` (or `cat`), and a bare `catastrophe` reopens the choice.
 - Only prestige is blocked. You can still advance ages, build and play on.
 - It is saved with your game, and the Load Game browser lists it as the pending choice.
 

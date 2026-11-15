@@ -117,7 +117,7 @@ The worship buildings also make faith, which adds its own lift once your faith r
 
 ## Where morale is shown
 
-- Status ribbon: `Morale 62% (production +5%)`, green when morale boosts production and red when it costs production. At exactly 50% it reads just `Morale 50%`. On a narrow window the ribbon drops the production part.
+- Header: `Morale 62% (production +5%)`, green when morale boosts production and red when it costs production. At exactly 50% it reads just `Morale 50%`. On a narrow window the header drops the production part.
 - People panel (`people`): the Overview shows morale beside the food figures, for example `morale 62%`, in the same colors.
 - Stats panel (`stats`): when morale is off neutral it appears under Active multipliers, in the All production line, as a `Morale ×N.NN` factor next to your research, wonder, milestone and active-event bonuses. Each source is listed and colored on its own, so a penalty is never hidden by a bonus on the same line.
 - Civilization History panel (`history`): a Morale graph. See [Civilization History](history.md).

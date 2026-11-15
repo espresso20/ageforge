@@ -9,8 +9,7 @@ A walkthrough of the Primitive Age, your first age. It goes further than the Get
 On a first visit the game asks you to name your account, then opens its [main menu](how-to-play.md#the-main-menu) with New game first. Press `Enter` (or `n`), name your civilization, and the game starts.
 
 You are in the Primitive Age. The screen shows:
-- The status ribbon: your account name, `Primitive Age`, the year, `People 0/0`, `Morale 50%` and the next age
-- The Ledger under it: a long bar to the Stone Age with what it is waiting on, and the four pillars
+- The header across the top: your account name, `Primitive Age`, the year, `People 0/0` and `Morale 50%`, then a long bar to the Stone Age with the four pillars, and what it is waiting on. Each part takes a click
 - The Resources box, the Under construction box (with the People box beside it on a big window) and the Log on the left
 - The Buildings list in the middle, with the Getting started guide at the end of it while it shows
 - The Panels list on the right, which names each panel (and, on a big window, what it is for)
@@ -164,7 +163,7 @@ The grove also speeds research and gives +0.05 food a tick permanently.
 
 ## Step 10: Check the long bar and advance
 
-The long bar under the status ribbon runs to the next age, and the Waiting on line beside it (under it on a big window) names what is still missing, with your count beside each one. Type `charter` for the whole list. For the Stone Age the gate asks for:
+The long bar in the header runs to the next age, and the Waiting on line beside it (under it on a big window) names what is still missing, with your count beside each one. Type `charter` for the whole list. For the Stone Age the gate asks for:
 - Gathering Camps: 8
 - Huts: 10
 - Shrines: 8
@@ -175,7 +174,7 @@ The long bar under the status ribbon runs to the next age, and the Waiting on li
 
 No age asks you to hold an amount of a resource, and advancing spends none. See [Advancement Requirements](ages.md#advancement-requirements) for the rule, and [The Advance Panel](advance.md) for the screen. Keep building huts (new huts bring new workers) and keep your scholars researching. When the bar is full and the line says every pillar stands, type `advance`. The age changes only when you advance: with `advance`, with `Enter` in the Advance panel, or through a `plan advance` item. If you are stepping away, `plan advance` queues it, and the plan advances once everything is ready.
 
-A `⚑ Harbinger` badge may appear on the status ribbon. Type `harbinger` to read it, or ignore it: it never blocks anything here, and no catastrophe can strike before the Iron Era. See [The Harbinger](harbinger.md).
+A `⚑ Harbinger` chip may appear in the header; a click on it reads it. Type `harbinger` to read it, or ignore it: it never blocks anything here, and no catastrophe can strike before the Iron Era. See [The Harbinger](harbinger.md).
 
 ---
 
