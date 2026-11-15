@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -121,6 +122,7 @@ func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngin
 	// ── Footer ───────────────────────────────────────────────────────────────
 	// Written for the width it is drawn at, so no key is cut off at 80 columns.
 	footer := newFitView(func(w, h int) string { return keyBar(loadGameKeys, w, h) })
+	pressesKeys(app, footer.nativeText)
 	footer.SetTextAlign(kit.AlignCenter)
 	footer.changed()
 
@@ -562,8 +564,42 @@ func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 // Precedence: autosave first, then modified, then elite.
 // footerButton renders one keycap-style action button: the hotkey on a gold
 // cap fused to its label on a dark chip — e.g. a gold "Enter" beside "Load".
+//
+// A button whose key is one press is a click region named for the key, so
+// a box that pressesKeys makes a click on it press that key.
 func footerButton(key, label string) string {
-	return theme.KeycapButton(key, label)
+	chip := theme.KeycapButton(key, label)
+	if _, ok := capKey(key); !ok {
+		return chip // a pair of keys, like ↑↓: nothing one click could mean
+	}
+	return `["key ` + key + `"]` + chip + `[""]`
+}
+
+// capKey is the key a keycap names, when it names one press: Enter, Esc, Tab
+// or a letter or digit (as pressed without Shift).
+func capKey(name string) (kit.Key, bool) {
+	switch name {
+	case "Enter":
+		return kit.Key{Code: kit.KeyEnter}, true
+	case "Esc":
+		return kit.Key{Code: kit.KeyEsc}, true
+	case "Tab":
+		return kit.Key{Code: kit.KeyTab}, true
+	}
+	if r := []rune(name); len(r) == 1 && (unicode.IsLetter(r[0]) || unicode.IsDigit(r[0])) {
+		return kit.Key{Code: kit.KeyRune, Rune: unicode.ToLower(r[0])}, true
+	}
+	return kit.Key{}, false
+}
+
+// pressesKeys makes a click on a keycap button in t press its key, as the
+// keyboard would: the key goes to whatever has the keyboard.
+func pressesKeys(app *appLoop, t *nativeText) {
+	t.body.OnRegion = func(name string, _ int) {
+		if k, ok := capKey(strings.TrimPrefix(name, "key ")); ok {
+			app.Key(k)
+		}
+	}
 }
 
 // footerKey is one action on a key bar: its key, its name, and a shorter

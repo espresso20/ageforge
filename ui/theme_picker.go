@@ -171,6 +171,7 @@ func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEn
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
 		SetText(themeFooterBar())
+	pressesKeys(app, footer)
 
 	// ── Layout ───────────────────────────────────────────────────────────────
 	right := newNativeFlex().SetDirection(flexRow).

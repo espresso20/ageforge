@@ -124,6 +124,7 @@ func newAccountsPanel(app *appLoop, pages *nativePages, engine *game.GameEngine,
 	// Two rows: nine actions do not fit on one line under 126 columns, so on a
 	// narrower terminal they are set over two (keyBar).
 	footer := newFitView(func(w, h int) string { return keyBar(accountsKeys, w, h) })
+	pressesKeys(app, footer.nativeText)
 	footer.SetTextAlign(kit.AlignCenter)
 	footer.changed()
 
