@@ -15,17 +15,15 @@
 //     retinted through the tcell.ColorNames remap (remap.go);
 //   - widget chrome uses Ref(role) sentinels that WrapScreen resolves to the
 //     active theme on every SetContent (screen.go), so no widget can go stale;
-//   - code that needs a concrete color calls Color(role) / the derive helpers.
+//   - code that needs a concrete color calls Of(role) / the derive helpers.
 package theme
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/vibe"
 )
 
 // Role enumerates the semantic color slots a theme must fill. Order is fixed and
-// load-bearing: themes declare their palette as a [numRoles]tcell.Color indexed by
+// load-bearing: themes declare their palette as a [numRoles]Color indexed by
 // these constants (see the theming design §3.1).
 //
 // The first nine are the original Phase-1 roles. The rest arrived with the
@@ -102,7 +100,7 @@ type Theme struct {
 	Accessible bool       // true => never milestone-gated, always unlocked
 	Standard   bool       // true => always unlocked, listed under Standard (Forge, Daylight)
 
-	Colors [numRoles]tcell.Color
+	Colors [numRoles]Color
 
 	// Signed sentinels for the ± distinction in accessible themes (the theming design §4):
 	// the sign is encoded by shape as well as hue so colorblind players never rely
@@ -153,10 +151,10 @@ const (
 func (t Theme) Gated() bool { return t.UnlockBadge != "" }
 
 // Color returns the theme's color for a role. Out-of-range roles return
-// tcell.ColorDefault rather than panicking.
-func (t Theme) Color(role Role) tcell.Color {
+// ColorDefault rather than panicking.
+func (t Theme) Color(role Role) Color {
 	if role < 0 || role >= numRoles {
-		return tcell.ColorDefault
+		return ColorDefault
 	}
 	return t.Colors[role]
 }

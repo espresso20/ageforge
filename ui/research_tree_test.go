@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
@@ -360,7 +358,7 @@ func TestResearchTreePaintsInEveryTheme(t *testing.T) {
 					continue
 				}
 				seen++
-				fg, bg, _ := c.Style.Decompose()
+				fg, bg, _ := decompose(c.Style)
 				if fg == bg {
 					t.Fatalf("theme %s at %dx%d: cell %d,%d (%q) is drawn in its own background colour", th.Key, w, h, i%f.w, i/f.w, c.Runes[0])
 				}
@@ -952,10 +950,10 @@ func TestResearchEffectSentenceCarriesTheEffectTag(t *testing.T) {
 
 	p := newGridPalette(1, func(int) string { return "#ffffff" })
 	fg, bg, attr := p.styles[tsEffect].Decompose()
-	if want := theme.Legible(theme.Color(theme.RoleEffect), p.bg, 4.5); fg != want || bg != p.bg {
+	if want := theme.Legible(theme.Of(theme.RoleEffect), p.bg, 4.5); fg != want || bg != p.bg {
 		t.Errorf("tsEffect paints %06x on %06x, want %06x on %06x", fg.Hex(), bg.Hex(), want.Hex(), p.bg.Hex())
 	}
-	if attr&tcell.AttrBold == 0 {
+	if attr&kit.Bold == 0 {
 		t.Errorf("tsEffect is not bold")
 	}
 }

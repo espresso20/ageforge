@@ -89,8 +89,8 @@ func newAccountsPanel(app *appLoop, pages *nativePages, engine *game.GameEngine,
 	// Selection backs light text → Selection role (dark slate under Forge), not the gold
 	// Accent — white-on-gold is unreadable (theme/themes_forge.go), same as load_game.
 	theme.Track(func() {
-		p.list.SetSelectedBackgroundColor(theme.Color(theme.RoleSelection)).
-			SetSelectedTextColor(theme.Color(theme.RoleText))
+		p.list.SetSelectedBackgroundColor(theme.Of(theme.RoleSelection)).
+			SetSelectedTextColor(theme.Of(theme.RoleText))
 	})
 	p.list.ShowSecondaryText(false)
 	p.list.SetChangedFunc(func(index int, _ string, _ string, _ rune) {
@@ -106,8 +106,8 @@ func newAccountsPanel(app *appLoop, pages *nativePages, engine *game.GameEngine,
 		SetWrap(true)
 	p.detail.SetBorder(true)
 	theme.Track(func() {
-		p.detail.SetBorderColor(theme.Color(theme.RoleAccent)).
-			SetTitleColor(theme.Color(theme.RoleAccent))
+		p.detail.SetBorderColor(theme.Of(theme.RoleAccent)).
+			SetTitleColor(theme.Of(theme.RoleAccent))
 	})
 
 	// ── Body: list (left) + detail (right) ─────────────────────────────────────
@@ -373,21 +373,21 @@ func (p *accountsPanel) doImport() {
 	errTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter)
-	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	errTV.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	input := newNativeInput().
 		SetLabel(vibe.Line("ui.accounts_panel.doImport.01", "File path: ")).
 		SetText(defaultPath).
 		SetFieldWidth(48).
-		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
-		SetFieldTextColor(theme.Color(theme.RoleSelectionText))
-	input.SetBackgroundColor(theme.Color(theme.RoleSurface))
+		SetFieldBackgroundColor(theme.Of(theme.RoleSelection)).
+		SetFieldTextColor(theme.Of(theme.RoleSelectionText))
+	input.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	hintTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.accounts_panel.doImport.02", "[gray]Enter: import (merge)  ·  Esc: cancel[-]"))
-	hintTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	hintTV.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	close := func() {
 		p.pages.RemovePage(accountsImportPage)
@@ -442,7 +442,7 @@ func (p *accountsPanel) doImport() {
 		AddItem(errTV, 1, 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
-	framed(inner, vibe.Line("ui.accounts_panel.doImport.07", " Import account backup "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, vibe.Line("ui.accounts_panel.doImport.07", " Import account backup "), theme.RoleAccent).SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	modal := centeredModal(inner, 68, 7)
 	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: close})
@@ -554,10 +554,10 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 
 	input := newNativeInput().
 		SetLabel(vibe.Line("ui.accounts_panel.showWipeTypeGate.01", "Account name: ")).
-		SetLabelColor(theme.Color(theme.RoleOnNegative)).
+		SetLabelColor(theme.Of(theme.RoleOnNegative)).
 		SetFieldWidth(40).
-		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
-		SetFieldTextColor(theme.Color(theme.RoleText))
+		SetFieldBackgroundColor(theme.Of(theme.RoleSelection)).
+		SetFieldTextColor(theme.Of(theme.RoleText))
 
 	promptTV := newNativeText().
 		SetDynamicColors(true).
@@ -600,10 +600,10 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 	})
 
 	// Paint every interior primitive dark-red so the modal reads as one solid danger panel.
-	promptTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	errTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	hintTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	input.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	promptTV.SetBackgroundColor(theme.Of(theme.RoleNegative))
+	errTV.SetBackgroundColor(theme.Of(theme.RoleNegative))
+	hintTV.SetBackgroundColor(theme.Of(theme.RoleNegative))
+	input.SetBackgroundColor(theme.Of(theme.RoleNegative))
 	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(promptTV, 4, 0, false).
 		AddItem(solidBox(theme.RoleNegative), 1, 0, false).
@@ -612,7 +612,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		AddItem(errTV, 1, 0, false).
 		AddItem(solidBox(theme.RoleNegative), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
-	framed(inner, vibe.Line("ui.accounts_panel.showWipeTypeGate.08", " Confirm account wipe "), theme.RoleOnNegative).SetBackgroundColor(theme.Color(theme.RoleNegative))
+	framed(inner, vibe.Line("ui.accounts_panel.showWipeTypeGate.08", " Confirm account wipe "), theme.RoleOnNegative).SetBackgroundColor(theme.Of(theme.RoleNegative))
 
 	modal := centeredModal(inner, 72, 13)
 	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: abort})
@@ -666,19 +666,19 @@ func (p *accountsPanel) showMessage(title, body string) {
 		SetWrap(true).
 		SetTextAlign(kit.AlignCenter).
 		SetText(body)
-	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	tv.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	hint := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
 		SetText(vibe.Line("ui.accounts_panel.showMessage.01", "[gray]Enter / Esc: close[-]"))
-	hint.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	hint.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(tv, 0, 1, false).
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hint, 1, 0, false)
-	framed(inner, fmt.Sprintf(" %s ", title), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, fmt.Sprintf(" %s ", title), theme.RoleAccent).SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	close := func() {
 		p.pages.RemovePage(accountsMessagePage)

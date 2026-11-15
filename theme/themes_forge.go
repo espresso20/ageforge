@@ -1,8 +1,6 @@
 package theme
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -31,22 +29,22 @@ var Forge = define(Theme{
 	Blurb:      vibe.E("theme.forge.blurb", "The classic dark-and-gold AgeForge look."),
 	Accessible: false,
 	Standard:   true,
-	Colors: [numRoles]tcell.Color{
-		RoleBackground: tcell.NewRGBColor(0x0d, 0x11, 0x17),
-		RoleText:       tcell.NewRGBColor(0xff, 0xff, 0xff),
-		RoleDim:        tcell.NewRGBColor(0xa8, 0xb3, 0xc0),
-		RoleLabel:      tcell.NewRGBColor(0x39, 0xc5, 0xcf),
-		RoleAccent:     tcell.NewRGBColor(0xff, 0xd7, 0x00),
-		RoleHighlight:  tcell.NewRGBColor(0xf2, 0xcc, 0x60),
-		RolePositive:   tcell.NewRGBColor(0x3f, 0xb9, 0x50),
-		RoleNegative:   tcell.NewRGBColor(0xf8, 0x51, 0x49),
-		RoleSelection:  tcell.NewRGBColor(0x21, 0x30, 0x4a),
-		RoleComment:    tcell.NewRGBColor(0xff, 0x7a, 0x1a), // flavor sentences only: neon orange
-		RoleEffect:     tcell.NewRGBColor(0x79, 0xb8, 0xff), // what a tech does: sky blue on the dark canvas
+	Colors: [numRoles]Color{
+		RoleBackground: NewRGBColor(0x0d, 0x11, 0x17),
+		RoleText:       NewRGBColor(0xff, 0xff, 0xff),
+		RoleDim:        NewRGBColor(0xa8, 0xb3, 0xc0),
+		RoleLabel:      NewRGBColor(0x39, 0xc5, 0xcf),
+		RoleAccent:     NewRGBColor(0xff, 0xd7, 0x00),
+		RoleHighlight:  NewRGBColor(0xf2, 0xcc, 0x60),
+		RolePositive:   NewRGBColor(0x3f, 0xb9, 0x50),
+		RoleNegative:   NewRGBColor(0xf8, 0x51, 0x49),
+		RoleSelection:  NewRGBColor(0x21, 0x30, 0x4a),
+		RoleComment:    NewRGBColor(0xff, 0x7a, 0x1a), // flavor sentences only: neon orange
+		RoleEffect:     NewRGBColor(0x79, 0xb8, 0xff), // what a tech does: sky blue on the dark canvas
 		// Extended roles left unset derive to the pre-overhaul look (Surface =
 		// Background, Border = Accent, OnAccent = black, …). Chip is pinned to the
 		// footer-keycap label grey the UI hard-coded before it was a role.
-		RoleChip: tcell.NewRGBColor(0x30, 0x36, 0x3d),
+		RoleChip: NewRGBColor(0x30, 0x36, 0x3d),
 	},
 	// Non-accessible: sign carried by color alone, glyphs left empty.
 	GainGlyph: "",

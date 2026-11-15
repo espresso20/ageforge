@@ -56,12 +56,12 @@ func (p *Painter) unpair(x, y int, c *Cell) {
 // ink sets a cell's colors and attributes from a style: an unset foreground
 // is the theme's text, an unset ground stays.
 func ink(c *Cell, st Style) {
-	if fg, ok := st.Fg.rgba(); ok {
+	if fg, ok := st.Fg.RGBA(); ok {
 		c.Fg = fg
 	} else {
 		c.Fg = theme.RGBA(theme.RoleText)
 	}
-	if bg, ok := st.Bg.rgba(); ok {
+	if bg, ok := st.Bg.RGBA(); ok {
 		c.Bg = bg
 	}
 	c.Attr = st.Attr
@@ -70,7 +70,7 @@ func ink(c *Cell, st Style) {
 // Fill blanks r and gives it the ground bg (Clear makes a hole).
 func (p *Painter) Fill(r image.Rectangle, bg Color) {
 	r = r.Intersect(p.clip)
-	c, ok := bg.rgba()
+	c, ok := bg.RGBA()
 	if !ok || r.Empty() {
 		return
 	}
@@ -223,7 +223,7 @@ func mixRGBA(a, b color.RGBA, t float64) color.RGBA {
 // it, 1 is the color): how a modal dims the screen behind it. Holes stay
 // holes.
 func (p *Painter) Shade(r image.Rectangle, toward Color, t float64) {
-	to, ok := toward.rgba()
+	to, ok := toward.RGBA()
 	r = r.Intersect(p.clip)
 	if !ok || r.Empty() || t <= 0 {
 		return

@@ -211,7 +211,7 @@ func (s *sweeper) ghost(themeKey string) {
 					r = c.Runes[0]
 				}
 				sb.WriteRune(r)
-				fg, bg, _ := c.Style.Decompose()
+				fg, bg, _ := decompose(c.Style)
 				if r != ' ' && fg.Hex() == bg.Hex() {
 					invisible++
 				}

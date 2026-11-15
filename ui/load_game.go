@@ -86,8 +86,8 @@ func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngin
 	// Selection backs light text, so it uses the Selection role (dark slate under
 	// Forge), not Accent — white-on-gold is unreadable (theme/themes_forge.go).
 	theme.Track(func() {
-		b.list.SetSelectedBackgroundColor(theme.Color(theme.RoleSelection)).
-			SetSelectedTextColor(theme.Color(theme.RoleText))
+		b.list.SetSelectedBackgroundColor(theme.Of(theme.RoleSelection)).
+			SetSelectedTextColor(theme.Of(theme.RoleText))
 	})
 	b.list.ShowSecondaryText(false)
 	b.list.SetChangedFunc(func(index int, _ string, _ string, _ rune) {
@@ -103,8 +103,8 @@ func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngin
 	legend.SetBorder(true).
 		SetTitle(vibe.Line("ui.load_game.newLoadGameBrowser.02", " Key "))
 	theme.Track(func() {
-		legend.SetBorderColor(theme.Color(theme.RoleAccent)).
-			SetTitleColor(theme.Color(theme.RoleAccent))
+		legend.SetBorderColor(theme.Of(theme.RoleAccent)).
+			SetTitleColor(theme.Of(theme.RoleAccent))
 	})
 
 	// ── Detail pane ──────────────────────────────────────────────────────────
@@ -114,8 +114,8 @@ func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngin
 	b.detail.SetBorder(true).
 		SetTitle(txtDetailsTitle.String())
 	theme.Track(func() {
-		b.detail.SetBorderColor(theme.Color(theme.RoleAccent)).
-			SetTitleColor(theme.Color(theme.RoleAccent))
+		b.detail.SetBorderColor(theme.Of(theme.RoleAccent)).
+			SetTitleColor(theme.Of(theme.RoleAccent))
 	})
 
 	// ── Footer ───────────────────────────────────────────────────────────────

@@ -59,8 +59,8 @@ func TestSetActive(t *testing.T) {
 	if Active().Key != "high_contrast" {
 		t.Errorf("Active().Key = %q, want high_contrast", Active().Key)
 	}
-	if Color(RoleBackground).Hex() != HighContrast.Color(RoleBackground).Hex() {
-		t.Errorf("Color(RoleBackground) did not follow the active theme")
+	if Of(RoleBackground).Hex() != HighContrast.Color(RoleBackground).Hex() {
+		t.Errorf("Of(RoleBackground) did not follow the active theme")
 	}
 
 	if err := SetActive("nope"); err == nil {

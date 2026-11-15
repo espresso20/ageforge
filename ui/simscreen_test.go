@@ -215,7 +215,7 @@ func wordReadable(t testing.TB, where string, sim tcell.SimulationScreen, rows [
 				continue
 			}
 			_, _, st, _ := sim.GetContent(x0+i, y)
-			fg, bg, _ := st.Decompose()
+			fg, bg, _ := decompose(st)
 			if k := theme.ContrastRatio(fg, bg); k < 3-0.02 {
 				t.Errorf("%s: %q is drawn at a contrast of %.2f (%06x on %06x)", where, word, k, fg.Hex(), bg.Hex())
 				return

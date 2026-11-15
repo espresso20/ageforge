@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
@@ -34,7 +32,7 @@ var sizes = []struct {
 	compact bool
 }{{"120x36", 120, 36, false}, {"80x24", 80, 24, false}, {"mini", 40, 9, true}}
 
-func draw(v Style, m *mapmodel.Model, w, h int, compact bool, tier mapmodel.GlyphTier) tcell.SimulationScreen {
+func draw(v Style, m *mapmodel.Model, w, h int, compact bool, tier mapmodel.GlyphTier) *capture.Screen {
 	scr := capture.NewScreen(w, h)
 	f := Frame{Model: m, Tier: tier}
 	if compact {

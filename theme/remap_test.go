@@ -100,13 +100,13 @@ func TestApplyRemap_OverwritesFullSet(t *testing.T) {
 
 	// Chrome defaults are late-bound sentinels, not concrete colors (screen.go):
 	// they must name the right role and resolve to the active theme's color.
-	if r, ok := RefRole(tview.Styles.BorderColor); !ok || r != RoleBorder {
+	if r, ok := tcellRefRole(tview.Styles.BorderColor); !ok || r != RoleBorder {
 		t.Errorf("tview.Styles.BorderColor = %v, want Ref(RoleBorder)", tview.Styles.BorderColor)
 	}
-	if r, ok := RefRole(tview.Styles.PrimitiveBackgroundColor); !ok || r != RoleBackground {
+	if r, ok := tcellRefRole(tview.Styles.PrimitiveBackgroundColor); !ok || r != RoleBackground {
 		t.Errorf("tview.Styles.PrimitiveBackgroundColor = %v, want Ref(RoleBackground)", tview.Styles.PrimitiveBackgroundColor)
 	}
-	if r, ok := RefRole(tview.Styles.PrimaryTextColor); !ok || r != RoleText {
+	if r, ok := tcellRefRole(tview.Styles.PrimaryTextColor); !ok || r != RoleText {
 		t.Errorf("tview.Styles.PrimaryTextColor = %v, want Ref(RoleText)", tview.Styles.PrimaryTextColor)
 	}
 }

@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -186,7 +184,7 @@ func TestWorldRoundTheTownNeverCoversTheCursor(t *testing.T) {
 		if !ok {
 			t.Fatalf("nothing of kind %d to put the cursor on", kind)
 		}
-		draw := func(cursor bool) (rune, tcell.Style) {
+		draw := func(cursor bool) (rune, kit.Style) {
 			v := New().(*view)
 			v.scene(f)
 			v.cur, v.recentre, v.inspect = target, true, cursor

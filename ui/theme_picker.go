@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
@@ -479,16 +477,16 @@ func drawThemeSample(screen mapstyle.Cells, x, y, w, h int, th theme.Theme) {
 		return
 	}
 	col := th.Color
-	fill := func(x0, y0, x1, y1 int, bg tcell.Color) {
-		st := tcell.StyleDefault.Background(bg).Foreground(col(theme.RoleText))
+	fill := func(x0, y0, x1, y1 int, bg kit.Color) {
+		st := kit.Style{}.Background(bg).Foreground(col(theme.RoleText))
 		for yy := y0; yy < y1; yy++ {
 			for xx := x0; xx < x1; xx++ {
 				screen.SetContent(xx, yy, ' ', nil, st)
 			}
 		}
 	}
-	put := func(xx, yy int, s string, fg, bg tcell.Color, bold bool) int {
-		st := tcell.StyleDefault.Foreground(fg).Background(bg).Bold(bold)
+	put := func(xx, yy int, s string, fg, bg kit.Color, bold bool) int {
+		st := kit.Style{}.Foreground(fg).Background(bg).Bold(bold)
 		for _, r := range s {
 			if xx >= x+w-1 {
 				break
@@ -511,7 +509,7 @@ func drawThemeSample(screen mapstyle.Cells, x, y, w, h int, th theme.Theme) {
 	}
 	surf := col(theme.RoleSurface)
 	fill(px0, py0, px1, py1, surf)
-	bst := tcell.StyleDefault.Foreground(col(theme.RoleBorder)).Background(surf)
+	bst := kit.Style{}.Foreground(col(theme.RoleBorder)).Background(surf)
 	for xx := px0; xx < px1; xx++ {
 		screen.SetContent(xx, py0, '─', nil, bst)
 		screen.SetContent(xx, py1-1, '─', nil, bst)

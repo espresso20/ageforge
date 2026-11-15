@@ -556,9 +556,9 @@ func TestDashboardLayoutInEveryTheme(t *testing.T) {
 			w, h := sz[0], sz[1]
 			bad := 0
 			for i, c := range drawnDashboard(t, d, pages, w, h) {
-				fg, bg, _ := c.Style.Decompose()
+				fg, bg, _ := decompose(c.Style)
 				blank := len(c.Runes) == 0 || c.Runes[0] == ' ' || pixelGlyph(c.Runes[0])
-				if !bg.IsRGB() || (!blank && (!fg.IsRGB() || fg.Hex() == bg.Hex())) {
+				if !(bg.Hex() >= 0) || (!blank && (!(fg.Hex() >= 0) || fg.Hex() == bg.Hex())) {
 					if bad++; bad <= 3 {
 						t.Errorf("%s at %dx%d: cell (%d,%d) %q is not legible (fg %v on bg %v)", th.Key, w, h, i%w, i/w, string(c.Runes), fg, bg)
 					}

@@ -4,13 +4,12 @@ import (
 	"math"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // ending_page.go draws the film of a run's ending (ending.go runs it). A
@@ -577,7 +576,7 @@ func emberGlyph(plain bool) rune {
 
 // centreText writes a line centred on a row, in ink that reads on what is
 // behind it.
-func centreText(g *mGrid, pal *menuPalette, y int, s string, ink tcell.Color, bold bool) {
+func centreText(g *mGrid, pal *menuPalette, y int, s string, ink kit.Color, bold bool) {
 	x := centred(g.w, runeLen(s))
 	readable(g, pal, x, y, g.text(x, y, s, ink, bold))
 }

@@ -48,14 +48,14 @@ func TestDashboardMapFillsWideScreen(t *testing.T) {
 		}
 		sim.SetSize(w, h)
 		st := mapstyle.New()
-		st.Draw(theme.WrapScreen(sim), mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: town.model, Tier: mapmodel.TierUnicode})
+		st.Draw(tcells{theme.WrapScreen(sim)}, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: town.model, Tier: mapmodel.TierUnicode})
 		picW := w - 40 // the legend sits at the right
 		for x := 0; x < picW; x++ {
 			live := false
 			for y := 1; y < h-5 && !live; y++ {
 				r, _, style, _ := sim.GetContent(x, y)
-				_, bg, _ := style.Decompose()
-				live = (r != ' ' && r != 0) || bg != tcell.ColorDefault
+				_, bg, _ := decompose(style)
+				live = (r != ' ' && r != 0) || bg != theme.ColorDefault
 			}
 			if !live {
 				t.Fatalf("%dx%d: map column %d is blank", w, h, x)

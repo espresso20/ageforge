@@ -87,7 +87,7 @@ func gridText(g *mGrid) string {
 // gridHTML is a page as a block of HTML: one span per run of cells of one
 // colour, for a look at it in a browser.
 func gridHTML(g *mGrid, pal *menuPalette, plain bool) string {
-	hex := func(c tcell.Color) string {
+	hex := func(c theme.Color) string {
 		r, gr, b := c.RGB()
 		return fmt.Sprintf("#%02x%02x%02x", r&0xff, gr&0xff, b&0xff)
 	}
@@ -493,8 +493,8 @@ func TestMenuRampsInEveryTheme(t *testing.T) {
 	}
 	for _, th := range theme.All() {
 		p := newMenuPalette(th)
-		con := func(c tcell.Color) float64 { return theme.ContrastRatio(c, p.bg) }
-		for name, ramp := range map[string][6]tcell.Color{"heat": p.heatStops, "fire": p.fireStops} {
+		con := func(c theme.Color) float64 { return theme.ContrastRatio(c, p.bg) }
+		for name, ramp := range map[string][6]theme.Color{"heat": p.heatStops, "fire": p.fireStops} {
 			for i := 1; i < len(ramp); i++ {
 				if con(ramp[i]) <= con(ramp[i-1]) {
 					t.Errorf("%s: the %s ramp's stop %d (%06x, %.2f) does not stand out more than stop %d (%06x, %.2f)",
@@ -551,7 +551,7 @@ func TestMenuRampsInEveryTheme(t *testing.T) {
 			"the selected row in the box": {p.band, p.ground, 3.0},
 			"the elite line's second ink": {p.label, p.bg, 3.0},
 		} {
-			if c := theme.ContrastRatio(pair[0].(tcell.Color), pair[1].(tcell.Color)); c < pair[2].(float64)-0.02 {
+			if c := theme.ContrastRatio(pair[0].(theme.Color), pair[1].(theme.Color)); c < pair[2].(float64)-0.02 {
 				t.Errorf("%s: %s has a contrast of %.2f, under %.2f", th.Key, what, c, pair[2].(float64))
 			}
 		}
@@ -585,7 +585,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 					sim.SetSize(w, h)
 					rows := flushRows(t, where, sim, g, pal, v.plain)
 					_, _, corner, _ := sim.GetContent(0, 0)
-					if _, bg, _ := corner.Decompose(); bg != pal.bg || bg != th.Color(theme.RoleBackground) {
+					if _, bg, _ := decompose(corner); bg != pal.bg || bg != th.Color(theme.RoleBackground) {
 						t.Errorf("%s: the page's corner is not on the theme's ground", where)
 					}
 

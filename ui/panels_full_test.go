@@ -41,7 +41,7 @@ func poisonedStage(t *testing.T) (*Dashboard, *nativePages) {
 	poison := newNativeCanvas(func(scr mapstyle.Cells, x, y, w, h int) {
 		for yy := y; yy < y+h; yy++ {
 			for xx := x; xx < x+w; xx++ {
-				scr.SetContent(xx, yy, poisonRune, nil, tcell.StyleDefault)
+				scr.SetContent(xx, yy, poisonRune, nil, kit.Style{})
 			}
 		}
 	})

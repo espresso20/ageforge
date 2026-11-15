@@ -2,8 +2,6 @@ package theme
 
 import (
 	"fmt"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // derive.go holds the pure color math the rest of the codebase leans on when it
@@ -13,8 +11,8 @@ import (
 // reinventing a blend.
 
 var (
-	black = tcell.NewRGBColor(0, 0, 0)
-	white = tcell.NewRGBColor(0xff, 0xff, 0xff)
+	black = NewRGBColor(0, 0, 0)
+	white = NewRGBColor(0xff, 0xff, 0xff)
 )
 
 // deriveRoles fills every unset (zero / ColorDefault) extended role from the core
@@ -37,7 +35,7 @@ var (
 // the contrast test will catch.
 func deriveRoles(t Theme) Theme {
 	c := &t.Colors
-	unset := func(r Role) bool { return c[r] == tcell.ColorDefault }
+	unset := func(r Role) bool { return c[r] == ColorDefault }
 	if unset(RoleSurface) {
 		c[RoleSurface] = c[RoleBackground]
 	}
@@ -76,13 +74,13 @@ func deriveRoles(t Theme) Theme {
 }
 
 // neonOrange is the comment color's starting point.
-var neonOrange = tcell.NewRGBColor(0xff, 0x7a, 0x1a)
+var neonOrange = NewRGBColor(0xff, 0x7a, 0x1a)
 
 // effectBlue is the effect color's starting point.
-var effectBlue = tcell.NewRGBColor(0x4f, 0x8c, 0xff)
+var effectBlue = NewRGBColor(0x4f, 0x8c, 0xff)
 
 // BestOn returns black or white, whichever has the higher contrast against bg.
-func BestOn(bg tcell.Color) tcell.Color {
+func BestOn(bg Color) Color {
 	if ContrastRatio(black, bg) >= ContrastRatio(white, bg) {
 		return black
 	}
@@ -90,7 +88,7 @@ func BestOn(bg tcell.Color) tcell.Color {
 }
 
 // Mix linearly interpolates a toward b by t in [0,1] in sRGB space.
-func Mix(a, b tcell.Color, t float64) tcell.Color {
+func Mix(a, b Color, t float64) Color {
 	if t <= 0 {
 		return a
 	}
@@ -100,7 +98,7 @@ func Mix(a, b tcell.Color, t float64) tcell.Color {
 	ar, ag, ab := a.RGB()
 	br, bg, bb := b.RGB()
 	lerp := func(x, y int32) int32 { return x + int32(float64(y-x)*t+0.5*sign(y-x)) }
-	return tcell.NewRGBColor(lerp(ar, br), lerp(ag, bg), lerp(ab, bb))
+	return NewRGBColor(lerp(ar, br), lerp(ag, bg), lerp(ab, bb))
 }
 
 func sign(v int32) float64 {
@@ -115,7 +113,7 @@ func sign(v int32) float64 {
 // contrast against bg — lighter on a dark background, darker on a light one. A
 // color that already clears min is returned untouched, so dark themes keep their
 // original hues wherever those were already readable.
-func Legible(c, bg tcell.Color, min float64) tcell.Color {
+func Legible(c, bg Color, min float64) Color {
 	if ContrastRatio(c, bg) >= min {
 		return c
 	}
@@ -139,19 +137,19 @@ func Legible(c, bg tcell.Color, min float64) tcell.Color {
 
 // LegibleOnActive is Legible against the active theme's Background at the
 // body-text floor (4.5:1).
-func LegibleOnActive(c tcell.Color) tcell.Color {
-	return Legible(c, Color(RoleBackground), 4.5)
+func LegibleOnActive(c Color) Color {
+	return Legible(c, Of(RoleBackground), 4.5)
 }
 
 // HexTag renders a literal color as a tview "[#rrggbb]" tag. Use it only for
 // colors that are NOT the active theme's roles (e.g. the picker drawing another
 // theme's swatches) — hex tags are early-bound and do not retint on a switch.
-func HexTag(c tcell.Color) string {
+func HexTag(c Color) string {
 	h := c.Hex()
 	if h < 0 {
 		// Invalid/default color: fall back to the active Dim so the tag is never
 		// malformed and never a hard-coded grey.
-		h = Color(RoleDim).Hex()
+		h = Of(RoleDim).Hex()
 		if h < 0 {
 			h = 0x808080
 		}
@@ -160,7 +158,7 @@ func HexTag(c tcell.Color) string {
 }
 
 // HexTagFgBg renders a literal fg/bg pair as a tview "[#rrggbb:#rrggbb]" tag.
-func HexTagFgBg(fg, bg tcell.Color) string {
+func HexTagFgBg(fg, bg Color) string {
 	f := HexTag(fg)
 	b := HexTag(bg)
 	return f[:len(f)-1] + ":" + b[1:]
@@ -170,10 +168,10 @@ func HexTagFgBg(fg, bg tcell.Color) string {
 // lane table) and holds it to the contrast rule for art on bg: at least 3.0
 // against the background it is drawn on. A string that is not a colour reads
 // as the Accent role.
-func Hue(hex string, bg tcell.Color) tcell.Color {
+func Hue(hex string, bg Color) Color {
 	var r, g, b int32
 	if _, err := fmt.Sscanf(hex, "#%02x%02x%02x", &r, &g, &b); err != nil {
-		return Legible(Color(RoleAccent), bg, 3)
+		return Legible(Of(RoleAccent), bg, 3)
 	}
-	return Legible(tcell.NewRGBColor(r, g, b), bg, 3)
+	return Legible(NewRGBColor(r, g, b), bg, 3)
 }

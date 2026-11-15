@@ -574,7 +574,7 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 				if len(c.Runes) == 0 || c.Runes[0] == ' ' {
 					continue
 				}
-				fg, bg, _ := c.Style.Decompose()
+				fg, bg, _ := decompose(c.Style)
 				if fg == bg {
 					t.Fatalf("theme %s, %s: cell %d,%d (%q) is drawn in its own background colour", th.Key, where, i%cw, i/cw, c.Runes[0])
 				}
@@ -628,7 +628,7 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 		if th.Duotone {
 			continue
 		}
-		base := map[string]tcell.Color{
+		base := map[string]theme.Color{
 			"bronze": pal.inkOn(inkBronze, false), "silver": pal.inkOn(inkSilver, false),
 			"gold": pal.inkOn(inkGold, false), "platinum": pal.inkOn(inkPlatinum, false),
 			"legendary": pal.inkOn(tierInk(config.BadgeLegendary), false),
@@ -649,8 +649,8 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 // white): about 7 of the usual units, a difference seen at a glance.
 const tierColourGap = 0.07
 
-func colourDistance(a, b tcell.Color) float64 {
-	col := func(c tcell.Color) colorful.Color {
+func colourDistance(a, b theme.Color) float64 {
+	col := func(c theme.Color) colorful.Color {
 		r, g, bl := c.RGB()
 		return colorful.Color{R: float64(r) / 255, G: float64(g) / 255, B: float64(bl) / 255}
 	}
@@ -663,7 +663,7 @@ func colourDistance(a, b tcell.Color) float64 {
 func TestEveryInkHasAColour(t *testing.T) {
 	for k := inkNone + 1; k < inkPrism+3*prismHues; k++ {
 		for _, light := range []bool{false, true} {
-			if c := inkValue(k, light); !c.IsRGB() {
+			if c := inkValue(k, light); !(c.Hex() >= 0) {
 				t.Errorf("ink %d has no colour (light=%v)", k, light)
 			}
 		}
@@ -862,7 +862,7 @@ func TestBadgePanelKeysAndMotion(t *testing.T) {
 		var sb strings.Builder
 		cells, _, _ := scr.GetContents()
 		for _, c := range cells {
-			fg, bg, _ := c.Style.Decompose()
+			fg, bg, _ := decompose(c.Style)
 			fmt.Fprintf(&sb, "%c%d.%d ", c.Runes[0], fg, bg)
 		}
 		return sb.String()
@@ -1000,5 +1000,10 @@ func TestBadgePanelMouse(t *testing.T) {
 
 // paintGrid puts a rendered grid on the screen in theme colours.
 func paintGrid(scr tcell.Screen, g *tGrid, x0, y0 int, p *gridPalette) {
-	g.draw(scr, x0, y0, func(c tCell) (rune, tcell.Style) { return c.r, p.style(c) })
+	for y := 0; y < g.h; y++ {
+		for x := 0; x < g.w; x++ {
+			c := g.c[y*g.w+x]
+			scr.SetContent(x0+x, y0+y, c.r, nil, tcellStyle(p.style(c)))
+		}
+	}
 }

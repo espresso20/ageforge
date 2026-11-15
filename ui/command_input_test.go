@@ -15,8 +15,8 @@ func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) frame {
 	t.Helper()
 	in := newCommandInput(newCompleter(eng, nil))
 	in.SetLabel("❯ ").SetFieldWidth(0).
-		SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
-		SetLabelColor(theme.Color(theme.RoleHighlight))
+		SetFieldBackgroundColor(theme.Of(theme.RoleBackground)).
+		SetLabelColor(theme.Of(theme.RoleHighlight))
 	in.SetText(text)
 	in.Focus(func(Primitive) {})
 	sim := newSimScreen(t, w, 1)
@@ -29,10 +29,10 @@ func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) frame {
 
 // dimRun is the text drawn in the Dim role's colour.
 func dimRun(f frame) string {
-	dim := theme.Color(theme.RoleDim).Hex()
+	dim := theme.Of(theme.RoleDim).Hex()
 	var sb strings.Builder
 	for _, c := range f.Cells() {
-		fg, _, _ := c.Style.Decompose()
+		fg, _, _ := decompose(c.Style)
 		if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg.Hex() == dim {
 			sb.WriteRune(c.Runes[0])
 		}
@@ -53,7 +53,7 @@ func TestCommandInputGhostText(t *testing.T) {
 		t.Errorf("dim text = %q, want %q", got, "ance")
 	}
 	// The typed part is not dim.
-	if fg, _, _ := f.Cells()[2].Style.Decompose(); fg.Hex() == theme.Color(theme.RoleDim).Hex() {
+	if fg, _, _ := f.Cells()[2].Style.Decompose(); fg.Hex() == theme.Of(theme.RoleDim).Hex() {
 		t.Error("the typed text is drawn dim")
 	}
 

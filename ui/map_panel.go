@@ -236,12 +236,12 @@ type barPart struct {
 // setting commands and Esc. When it does not fit it drops what Enter does,
 // then shortens the rest, so the hint and Esc always show.
 func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Style, f mapstyle.Frame) {
-	bg := theme.Color(theme.RoleChip)
-	base := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleText), bg, 4.5))
-	styles := [3]tcell.Style{
+	bg := theme.Of(theme.RoleChip)
+	base := kit.Style{}.Background(bg).Foreground(theme.Legible(theme.Of(theme.RoleText), bg, 4.5))
+	styles := [3]kit.Style{
 		base,
-		base.Foreground(theme.Legible(theme.Color(theme.RoleAccent), bg, 3)).Bold(true),
-		base.Foreground(theme.Legible(theme.Color(theme.RoleDim), bg, 3)),
+		base.Foreground(theme.Legible(theme.Of(theme.RoleAccent), bg, 3)).Bold(true),
+		base.Foreground(theme.Legible(theme.Of(theme.RoleDim), bg, 3)),
 	}
 	var lead, cmd []barPart
 	if p.hint {

@@ -9,11 +9,10 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/espresso20/ageforge/world"
 )
 
@@ -239,5 +238,5 @@ func (v *view) blit(cv *Canvas, x0, y0 int, g *mapgen.Grid) {
 // panel round them.
 func Blit(scr Cells, r Rect, g *mapgen.Grid, tier mapmodel.GlyphTier) {
 	v := &view{}
-	v.blit(NewCanvas(scr, r, tier, tcell.StyleDefault), 0, 0, g)
+	v.blit(NewCanvas(scr, r, tier, kit.Style{}), 0, 0, g)
 }

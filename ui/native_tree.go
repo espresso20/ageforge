@@ -84,8 +84,8 @@ func newNativeBox() *nativeBox {
 	return b
 }
 
-func (b *nativeBox) SetBackgroundColor(c tcell.Color) *nativeBox {
-	b.ground = kitColor(c)
+func (b *nativeBox) SetBackgroundColor(c kit.Color) *nativeBox {
+	b.ground = c
 	return b
 }
 
@@ -242,20 +242,20 @@ func (f *nativeFlex) SetTitle(s string) *nativeFlex {
 	return f
 }
 
-func (f *nativeFlex) SetTitleColor(c tcell.Color) *nativeFlex {
-	f.frame.TitleStyle.Fg = kitColor(c)
+func (f *nativeFlex) SetTitleColor(c kit.Color) *nativeFlex {
+	f.frame.TitleStyle.Fg = c
 	return f
 }
 
-func (f *nativeFlex) SetBorderColor(c tcell.Color) *nativeFlex {
-	f.frame.BorderStyle.Fg = kitColor(c)
+func (f *nativeFlex) SetBorderColor(c kit.Color) *nativeFlex {
+	f.frame.BorderStyle.Fg = c
 	return f
 }
 
 // SetBackgroundColor sets the ground the border and the title are drawn on.
 // Inside the border the flex still paints nothing: its items do.
-func (f *nativeFlex) SetBackgroundColor(c tcell.Color) *nativeFlex {
-	f.ground = kitColor(c)
+func (f *nativeFlex) SetBackgroundColor(c kit.Color) *nativeFlex {
+	f.ground = c
 	return f
 }
 
@@ -443,9 +443,9 @@ func (c *nativeCanvas) Paint(p *kit.Painter) {
 	c.draw(cellsFor(p, c, c.Bounds()), x, y, w, h)
 }
 
-// kitCells lets the map, which still writes tcell's cells (mapstyle.Cells),
-// draw on a kit painter. The map keeps working in the screen's coordinates;
-// off is how far those are from the painter's.
+// kitCells is a kit painter as the map draws on one (mapstyle.Cells). The
+// map works in the screen's coordinates; off is how far those are from the
+// painter's.
 type kitCells struct {
 	p   *kit.Painter
 	off image.Point
@@ -457,11 +457,17 @@ func cellsFor(p *kit.Painter, prim interface{ GetRect() (int, int, int, int) }, 
 	return kitCells{p: p, off: screenOffset(prim, r)}
 }
 
-func (c kitCells) SetContent(x, y int, r rune, _ []rune, st tcell.Style) {
-	c.p.Put(x-c.off.X, y-c.off.Y, r, kitStyle(st))
+func (c kitCells) SetContent(x, y int, r rune, _ []rune, st kit.Style) {
+	c.p.Put(x-c.off.X, y-c.off.Y, r, st)
 }
 
-func (c kitCells) GetContent(x, y int) (rune, []rune, tcell.Style, int) {
+// GetContent reads a cell back as it was painted: its colors are literals,
+// and a ground that is none is Transparent.
+func (c kitCells) GetContent(x, y int) (rune, []rune, kit.Style, int) {
 	cell := c.p.At(x-c.off.X, y-c.off.Y)
-	return cell.R, nil, cellStyle(&cell), 1
+	st := kit.Style{Fg: kit.RGB(cell.Fg.R, cell.Fg.G, cell.Fg.B), Bg: kit.Clear, Attr: cell.Attr}
+	if !cell.Clear() {
+		st.Bg = kit.RGB(cell.Bg.R, cell.Bg.G, cell.Bg.B)
+	}
+	return cell.R, nil, st, 1
 }

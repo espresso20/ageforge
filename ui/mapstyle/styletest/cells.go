@@ -4,10 +4,10 @@
 package styletest
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
 
 // Scope says in which glyph tiers a rune rule holds.
@@ -50,7 +50,7 @@ func (k Rules) Fault(r rune, tier mapmodel.GlyphTier) string {
 
 // HiddenInk reports whether c is a drawn glyph (not a blank) whose ink is
 // its own background colour, so no one can read it.
-func HiddenInk(c tcell.SimCell) bool {
+func HiddenInk(c capture.Cell) bool {
 	if len(c.Runes) == 0 || c.Runes[0] == ' ' {
 		return false
 	}

@@ -3,27 +3,26 @@ package mapstyle
 import (
 	"slices"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // Palette resolves the model's colour classes against the active theme for
 // one epoch. Build one per frame (it is a few dozen colour mixes) or cache
 // it by (theme key, epoch).
 type Palette struct {
-	Bg      tcell.Color
-	Fg      [mapmodel.NumClasses]tcell.Color
+	Bg      theme.Color
+	Fg      [mapmodel.NumClasses]theme.Color
 	Light   bool
-	WaterBg tcell.Color // a faint water tint under sea cells
-	FreshBg tcell.Color // under tiles new since the last visit
-	FlowBg  tcell.Color // under tiles the flows overlay flags
+	WaterBg theme.Color // a faint water tint under sea cells
+	FreshBg theme.Color // under tiles new since the last visit
+	FlowBg  theme.Color // under tiles the flows overlay flags
 	// Cursor is the inspect cursor: a highlighted cell (see cursor.go).
 	// CursorAlt is the other half of its slow blink; draw it through
 	// CursorStyle.
-	Cursor, CursorAlt tcell.Style
-	Chrome            tcell.Style // header and status lines
+	Cursor, CursorAlt kit.Style
+	Chrome            kit.Style // header and status lines
 	Epoch             int
 }
 
@@ -32,11 +31,11 @@ type Palette struct {
 // against the background, so light themes darken and dark themes brighten
 // on their own.
 func NewPalette(epoch int) *Palette {
-	bg := theme.Color(theme.RoleBackground)
+	bg := theme.Of(theme.RoleBackground)
 	p := &Palette{Bg: bg, Light: theme.IsLight(), Epoch: epoch}
 	for c := mapmodel.Class(0); c < mapmodel.NumClasses; c++ {
 		s := mapmodel.ClassSpecs[c]
-		base := theme.Color(s.Role)
+		base := theme.Of(s.Role)
 		hue := s.Hue
 		if s.EpochHue {
 			hue = theme.EpochHue(epoch)
@@ -47,9 +46,9 @@ func NewPalette(epoch int) *Palette {
 		}
 		switch c {
 		case mapmodel.CMemory:
-			col = theme.Mix(bg, theme.Color(theme.RoleDim), 0.5)
+			col = theme.Mix(bg, theme.Of(theme.RoleDim), 0.5)
 		case mapmodel.CStar:
-			col = theme.Mix(bg, theme.Color(theme.RoleText), 0.55)
+			col = theme.Mix(bg, theme.Of(theme.RoleText), 0.55)
 		case mapmodel.CGround, mapmodel.CHill:
 			col = theme.Mix(bg, col, 0.7)
 		case mapmodel.CLegacy:
@@ -61,10 +60,10 @@ func NewPalette(epoch int) *Palette {
 		p.Fg[c] = theme.Legible(col, bg, MinContrast(c))
 	}
 	p.WaterBg = theme.Mix(bg, theme.MapHueColor(theme.HueWaterDeep), 0.10)
-	p.FreshBg = theme.Mix(bg, theme.Color(theme.RolePositive), 0.25)
-	p.FlowBg = theme.Mix(bg, theme.Color(theme.RoleWarning), 0.22)
+	p.FreshBg = theme.Mix(bg, theme.Of(theme.RolePositive), 0.25)
+	p.FlowBg = theme.Mix(bg, theme.Of(theme.RoleWarning), 0.22)
 	p.FitCursor()
-	p.Chrome = tcell.StyleDefault.Foreground(theme.Color(theme.RoleText)).Background(theme.Color(theme.RoleSurface))
+	p.Chrome = kit.Style{}.Foreground(theme.Of(theme.RoleText)).Background(theme.Of(theme.RoleSurface))
 	return p
 }
 
@@ -99,16 +98,16 @@ func terrainDims(c mapmodel.Class) bool {
 }
 
 // Style is class c on the palette background.
-func (p *Palette) Style(c mapmodel.Class) tcell.Style {
-	return tcell.StyleDefault.Foreground(p.Fg[c]).Background(p.Bg)
+func (p *Palette) Style(c mapmodel.Class) kit.Style {
+	return kit.Style{}.Foreground(p.Fg[c]).Background(p.Bg)
 }
 
 // On is class c on background bg, nudged legible against it.
-func (p *Palette) On(c mapmodel.Class, bg tcell.Color) tcell.Style {
-	return tcell.StyleDefault.Foreground(theme.Legible(p.Fg[c], bg, 3)).Background(bg)
+func (p *Palette) On(c mapmodel.Class, bg theme.Color) kit.Style {
+	return kit.Style{}.Foreground(theme.Legible(p.Fg[c], bg, 3)).Background(bg)
 }
 
 // Role is a theme role on the palette background.
-func (p *Palette) Role(r theme.Role) tcell.Style {
-	return tcell.StyleDefault.Foreground(theme.Legible(theme.Color(r), p.Bg, 3)).Background(p.Bg)
+func (p *Palette) Role(r theme.Role) kit.Style {
+	return kit.Style{}.Foreground(theme.Legible(theme.Of(r), p.Bg, 3)).Background(p.Bg)
 }

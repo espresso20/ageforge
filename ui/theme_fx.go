@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
@@ -56,7 +54,7 @@ const fxMargin = 3
 
 // fxEmpty reports whether the cells of row y from x-fxMargin to x+fxMargin
 // are all blank on bg: room for an effect at (x, y).
-func fxEmpty(scr mapstyle.Cells, x, y, x0, x1 int, bg tcell.Color) bool {
+func fxEmpty(scr mapstyle.Cells, x, y, x0, x1 int, bg kit.Color) bool {
 	for cx := x - fxMargin; cx <= x+fxMargin; cx++ {
 		if cx < x0 || cx >= x1 {
 			continue
@@ -75,9 +73,9 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 	if w <= 0 || h <= 0 {
 		return // a window with no room: nothing to draw into
 	}
-	bg := theme.Color(theme.RoleBackground)
-	style := func(c tcell.Color, bold bool) tcell.Style {
-		return tcell.StyleDefault.Background(bg).Foreground(theme.Legible(c, bg, 1.6)).Bold(bold)
+	bg := theme.Of(theme.RoleBackground)
+	style := func(c kit.Color, bold bool) kit.Style {
+		return kit.Style{}.Background(bg).Foreground(theme.Legible(c, bg, 1.6)).Bold(bold)
 	}
 	// The cells that were empty before this frame drew anything: a glyph
 	// drawn into one must not make its neighbour look taken.
@@ -124,9 +122,9 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 				if !free[r*w+c] || artHash(n, r*w+c, 63) >= 0.3 {
 					continue
 				}
-				col := theme.Color(theme.RoleAccent)
+				col := theme.Of(theme.RoleAccent)
 				if artHash(n, r, c) < 0.5 {
-					col = theme.Color(theme.RoleLabel)
+					col = theme.Of(theme.RoleLabel)
 				}
 				scr.SetContent(x+c, y+r, pickRune(noise, artHash(n, c, r)), nil, style(col, false))
 			}
@@ -150,12 +148,12 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 				if r < 0 || !free[r*w+c] {
 					continue
 				}
-				glyph, col := low, theme.Color(theme.RoleHighlight)
+				glyph, col := low, theme.Of(theme.RoleHighlight)
 				switch {
 				case up > h*2/3:
-					glyph, col = high, theme.Color(theme.RoleDim)
+					glyph, col = high, theme.Of(theme.RoleDim)
 				case up > h/3:
-					glyph, col = high, theme.Color(theme.RoleLabel)
+					glyph, col = high, theme.Of(theme.RoleLabel)
 				}
 				scr.SetContent(x+c, y+r, glyph, nil, style(col, up <= h/3))
 			}
@@ -167,7 +165,7 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 		if plain {
 			bar = '.'
 		}
-		tint := tcell.StyleDefault.Background(bg).Foreground(theme.Color(theme.RoleSelection))
+		tint := kit.Style{}.Background(bg).Foreground(theme.Of(theme.RoleSelection))
 		for r := 1; r < h; r += 2 {
 			for c := 0; c < w; c++ {
 				if free[r*w+c] {

@@ -1,8 +1,6 @@
 package theme
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -32,18 +30,18 @@ var Deuteranopia = define(Theme{
 	Name:       vibe.E("theme.deuteranopia.name", "Deuteranopia-safe"),
 	Blurb:      vibe.E("theme.deuteranopia.blurb", "Red-green safe: blue gains, orange losses, ▲/▼ signs."),
 	Accessible: true,
-	Colors: [numRoles]tcell.Color{
-		RoleBackground: tcell.NewRGBColor(0x10, 0x14, 0x1a),
-		RoleText:       tcell.NewRGBColor(0xf5, 0xf7, 0xfa),
-		RoleDim:        tcell.NewRGBColor(0x9a, 0xa4, 0xb2),
-		RoleLabel:      tcell.NewRGBColor(0xe9, 0xd8, 0x5a), // warm yellow label, far from the blues
-		RoleAccent:     tcell.NewRGBColor(0xc9, 0xa2, 0x27), // muted gold accent
-		RoleHighlight:  tcell.NewRGBColor(0xf0, 0xc8, 0x4b),
-		RolePositive:   tcell.NewRGBColor(0x3b, 0x9e, 0xff), // blue = gain
-		RoleNegative:   tcell.NewRGBColor(0xff, 0x8c, 0x42), // orange = loss
-		RoleSelection:  tcell.NewRGBColor(0x24, 0x3b, 0x55),
-		RoleComment:    tcell.NewRGBColor(0xff, 0xb9, 0x8a), // flavor sentences only: light apricot: orange is this theme's loss color
-		RoleEffect:     tcell.NewRGBColor(0x9e, 0xc5, 0xff), // what a tech does: pale blue; blue is this theme's gain, so this stays lighter
+	Colors: [numRoles]Color{
+		RoleBackground: NewRGBColor(0x10, 0x14, 0x1a),
+		RoleText:       NewRGBColor(0xf5, 0xf7, 0xfa),
+		RoleDim:        NewRGBColor(0x9a, 0xa4, 0xb2),
+		RoleLabel:      NewRGBColor(0xe9, 0xd8, 0x5a), // warm yellow label, far from the blues
+		RoleAccent:     NewRGBColor(0xc9, 0xa2, 0x27), // muted gold accent
+		RoleHighlight:  NewRGBColor(0xf0, 0xc8, 0x4b),
+		RolePositive:   NewRGBColor(0x3b, 0x9e, 0xff), // blue = gain
+		RoleNegative:   NewRGBColor(0xff, 0x8c, 0x42), // orange = loss
+		RoleSelection:  NewRGBColor(0x24, 0x3b, 0x55),
+		RoleComment:    NewRGBColor(0xff, 0xb9, 0x8a), // flavor sentences only: light apricot: orange is this theme's loss color
+		RoleEffect:     NewRGBColor(0x9e, 0xc5, 0xff), // what a tech does: pale blue; blue is this theme's gain, so this stays lighter
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,
@@ -58,18 +56,18 @@ var Protanopia = define(Theme{
 	Name:       vibe.E("theme.protanopia.name", "Protanopia-safe"),
 	Blurb:      vibe.E("theme.protanopia.blurb", "Red-green safe (L-cone): blue gains, amber losses, ▲/▼ signs."),
 	Accessible: true,
-	Colors: [numRoles]tcell.Color{
-		RoleBackground: tcell.NewRGBColor(0x10, 0x14, 0x1a),
-		RoleText:       tcell.NewRGBColor(0xf5, 0xf7, 0xfa),
-		RoleDim:        tcell.NewRGBColor(0x9a, 0xa4, 0xb2),
-		RoleLabel:      tcell.NewRGBColor(0xe9, 0xd8, 0x5a),
-		RoleAccent:     tcell.NewRGBColor(0xcf, 0xb0, 0x3a),
-		RoleHighlight:  tcell.NewRGBColor(0xf2, 0xd0, 0x55),
-		RolePositive:   tcell.NewRGBColor(0x4f, 0xa8, 0xff), // blue = gain
-		RoleNegative:   tcell.NewRGBColor(0xff, 0xa6, 0x3d), // amber = loss (lighter than deutan's)
-		RoleSelection:  tcell.NewRGBColor(0x24, 0x3b, 0x55),
-		RoleComment:    tcell.NewRGBColor(0xff, 0xb9, 0x8a), // flavor sentences only: light apricot: amber is this theme's loss color
-		RoleEffect:     tcell.NewRGBColor(0xa0, 0xc8, 0xff), // what a tech does: pale blue; blue is this theme's gain, so this stays lighter
+	Colors: [numRoles]Color{
+		RoleBackground: NewRGBColor(0x10, 0x14, 0x1a),
+		RoleText:       NewRGBColor(0xf5, 0xf7, 0xfa),
+		RoleDim:        NewRGBColor(0x9a, 0xa4, 0xb2),
+		RoleLabel:      NewRGBColor(0xe9, 0xd8, 0x5a),
+		RoleAccent:     NewRGBColor(0xcf, 0xb0, 0x3a),
+		RoleHighlight:  NewRGBColor(0xf2, 0xd0, 0x55),
+		RolePositive:   NewRGBColor(0x4f, 0xa8, 0xff), // blue = gain
+		RoleNegative:   NewRGBColor(0xff, 0xa6, 0x3d), // amber = loss (lighter than deutan's)
+		RoleSelection:  NewRGBColor(0x24, 0x3b, 0x55),
+		RoleComment:    NewRGBColor(0xff, 0xb9, 0x8a), // flavor sentences only: light apricot: amber is this theme's loss color
+		RoleEffect:     NewRGBColor(0xa0, 0xc8, 0xff), // what a tech does: pale blue; blue is this theme's gain, so this stays lighter
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,
@@ -84,18 +82,18 @@ var HighContrast = define(Theme{
 	Name:       vibe.E("theme.high_contrast.name", "High Contrast"),
 	Blurb:      vibe.E("theme.high_contrast.blurb", "Maximum legibility: near-black on near-white, bold roles."),
 	Accessible: true,
-	Colors: [numRoles]tcell.Color{
-		RoleBackground: tcell.NewRGBColor(0x00, 0x00, 0x00),
-		RoleText:       tcell.NewRGBColor(0xff, 0xff, 0xff),
-		RoleDim:        tcell.NewRGBColor(0xc8, 0xc8, 0xc8),
-		RoleLabel:      tcell.NewRGBColor(0x6e, 0xd6, 0xff), // bright sky-blue label
-		RoleAccent:     tcell.NewRGBColor(0xff, 0xe0, 0x33), // vivid yellow accent
-		RoleHighlight:  tcell.NewRGBColor(0xff, 0xff, 0x66),
-		RolePositive:   tcell.NewRGBColor(0x5a, 0xb6, 0xff), // blue = gain
-		RoleNegative:   tcell.NewRGBColor(0xff, 0x9d, 0x3d), // orange = loss
-		RoleSelection:  tcell.NewRGBColor(0x33, 0x33, 0x33),
-		RoleComment:    tcell.NewRGBColor(0xff, 0xbf, 0x8f), // flavor sentences only: light apricot: orange is this theme's loss color
-		RoleEffect:     tcell.NewRGBColor(0x9d, 0xbc, 0xff), // what a tech does: pale blue on black
+	Colors: [numRoles]Color{
+		RoleBackground: NewRGBColor(0x00, 0x00, 0x00),
+		RoleText:       NewRGBColor(0xff, 0xff, 0xff),
+		RoleDim:        NewRGBColor(0xc8, 0xc8, 0xc8),
+		RoleLabel:      NewRGBColor(0x6e, 0xd6, 0xff), // bright sky-blue label
+		RoleAccent:     NewRGBColor(0xff, 0xe0, 0x33), // vivid yellow accent
+		RoleHighlight:  NewRGBColor(0xff, 0xff, 0x66),
+		RolePositive:   NewRGBColor(0x5a, 0xb6, 0xff), // blue = gain
+		RoleNegative:   NewRGBColor(0xff, 0x9d, 0x3d), // orange = loss
+		RoleSelection:  NewRGBColor(0x33, 0x33, 0x33),
+		RoleComment:    NewRGBColor(0xff, 0xbf, 0x8f), // flavor sentences only: light apricot: orange is this theme's loss color
+		RoleEffect:     NewRGBColor(0x9d, 0xbc, 0xff), // what a tech does: pale blue on black
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,

@@ -3,10 +3,9 @@ package mapstyle
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // checkCursor holds one palette's cursor, both halves of its blink, to the
@@ -15,8 +14,8 @@ import (
 // a glyph colour.
 func checkCursor(t *testing.T, where string, p *Palette) float64 {
 	t.Helper()
-	for name, st := range map[string]tcell.Style{"fill": p.Cursor, "blink": p.CursorAlt} {
-		if _, _, attr := st.Decompose(); attr&tcell.AttrBold == 0 {
+	for name, st := range map[string]kit.Style{"fill": p.Cursor, "blink": p.CursorAlt} {
+		if _, _, attr := st.Decompose(); attr&kit.Bold == 0 {
 			t.Errorf("%s: the cursor's %s is not bold", where, name)
 		}
 	}
@@ -47,7 +46,7 @@ func TestCursorStandsOutInEveryTheme(t *testing.T) {
 	}
 	for th := range fixture.Themes(t) {
 		least := 9.0
-		var fill tcell.Color
+		var fill theme.Color
 		for epoch := 0; epoch < 7; epoch++ {
 			p := NewPalette(epoch)
 			least = min(least, checkCursor(t, th.Key, p))
@@ -68,7 +67,7 @@ func TestCursorStandsOutInEveryTheme(t *testing.T) {
 		// A warm fill on a dark theme that has colour to make one from:
 		// red leads, blue trails. (Monochrome has only greys; the two
 		// neon themes' warning and negative are pinks.)
-		if warn := theme.Color(theme.RoleWarning); !theme.IsLight() && isWarm(warn) && !(r > g && g > b) {
+		if warn := theme.Of(theme.RoleWarning); !theme.IsLight() && isWarm(warn) && !(r > g && g > b) {
 			t.Errorf("%s: the fill #%06x is not an orange, and the theme's warning colour #%06x could make one", th.Key, fill.Hex(), warn.Hex())
 		}
 		t.Logf("%-20s fill #%06x, at least %.3f from every glyph colour", th.Key, fill.Hex(), least)
@@ -77,7 +76,7 @@ func TestCursorStandsOutInEveryTheme(t *testing.T) {
 
 // isWarm reports whether c is a yellow, an orange or a red with some
 // colour to it: red at or above green, green well above blue.
-func isWarm(c tcell.Color) bool {
+func isWarm(c theme.Color) bool {
 	r, g, b := c.RGB()
 	return r >= g && g > b+40
 }
@@ -114,7 +113,7 @@ func TestCursorOverAnyGround(t *testing.T) {
 		p := NewPalette(0)
 		for level := 0; level <= 255; level += 15 {
 			for _, tint := range [][3]int32{{0, 0, 0}, {40, 0, 0}, {0, 40, 0}, {0, 0, 40}} {
-				ground := tcell.NewRGBColor(int32(level)/2+tint[0], int32(level)/2+tint[1], int32(level)/2+tint[2])
+				ground := theme.NewRGBColor(int32(level)/2+tint[0], int32(level)/2+tint[1], int32(level)/2+tint[2])
 				for _, anim := range []int{0, CursorBlinkFrames} {
 					fg, fill, _ := p.CursorOver(ground, anim).Decompose()
 					if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < CursorFromGround || cr < CursorOverGround {

@@ -51,9 +51,9 @@ func (d *Dashboard) maybeShowPrestigeCue(state game.GameState) {
 	tv := newNativeText().SetText(prestigeCueText(state, width)).SetWrap(false)
 	tv.SetBorder(true)
 	theme.Track(func() {
-		tv.SetBorderColor(theme.Color(theme.RoleAccent)).
-			SetTitleColor(theme.Color(theme.RoleAccent)).
-			SetBackgroundColor(theme.Color(theme.RoleSurface))
+		tv.SetBorderColor(theme.Of(theme.RoleAccent)).
+			SetTitleColor(theme.Of(theme.RoleAccent)).
+			SetBackgroundColor(theme.Of(theme.RoleSurface))
 	})
 	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(nil, 0, 1, false).

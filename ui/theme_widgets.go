@@ -1,9 +1,8 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // theme_widgets.go collects the few widget-styling idioms that need more than a
@@ -18,24 +17,24 @@ import (
 // whichever reads better (theme.BestOn). Buttons styled here are transient
 // (rebuilt with their modal), so construction-time colors are fine.
 func styleFilledButton(b *nativeButton, fill theme.Role) *nativeButton {
-	b.SetBackgroundColor(theme.Color(fill))
+	b.SetBackgroundColor(theme.Of(fill))
 	b.SetLabelColor(onFill(fill))
 	return b
 }
 
 // onFill returns the label color for text drawn on a fill role.
-func onFill(fill theme.Role) tcell.Color {
+func onFill(fill theme.Role) kit.Color {
 	switch fill {
 	case theme.RoleAccent:
-		return theme.Color(theme.RoleOnAccent)
+		return theme.Of(theme.RoleOnAccent)
 	case theme.RoleNegative:
-		return theme.Color(theme.RoleOnNegative)
+		return theme.Of(theme.RoleOnNegative)
 	case theme.RoleSelection:
-		return theme.Color(theme.RoleSelectionText)
+		return theme.Of(theme.RoleSelectionText)
 	case theme.RoleChip, theme.RoleSurface, theme.RoleBackground:
-		return theme.Color(theme.RoleText)
+		return theme.Of(theme.RoleText)
 	default:
-		return theme.BestOn(theme.Color(fill))
+		return theme.BestOn(theme.Of(fill))
 	}
 }
 
@@ -43,8 +42,8 @@ func onFill(fill theme.Role) tcell.Color {
 // OnNegative text. Buttons keep tview's defaults (Selection fill / Text), which
 // the contrast test guarantees read on every theme.
 func styleDangerModal(m *nativeDialog) *nativeDialog {
-	m.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	m.SetTextColor(theme.Color(theme.RoleOnNegative))
+	m.SetBackgroundColor(theme.Of(theme.RoleNegative))
+	m.SetTextColor(theme.Of(theme.RoleOnNegative))
 	return m
 }
 

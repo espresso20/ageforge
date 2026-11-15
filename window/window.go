@@ -300,7 +300,7 @@ func (g *Game) NextFont() {
 // Draw paints the cells that changed, then the buffer.
 func (g *Game) Draw(screen *ebiten.Image) {
 	th := theme.Active()
-	bg := toRGBA(th.Color(theme.RoleBackground), color.RGBA{A: 255})
+	bg := toRGBA(theme.Tcell(th.Color(theme.RoleBackground)), color.RGBA{A: 255})
 	screen.Fill(bg)
 	if g.buf == nil {
 		return

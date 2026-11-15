@@ -75,10 +75,10 @@ func TestContrast_RoleMatrix(t *testing.T) {
 func TestRoles_AllSet(t *testing.T) {
 	for _, th := range All() {
 		for r := Role(0); r < numRoles; r++ {
-			if th.Color(r) == tcell.ColorDefault {
+			if th.Color(r) == ColorDefault {
 				t.Errorf("%s: role %s is unset", th.Key, r)
 			}
-			if !th.Color(r).IsRGB() {
+			if th.Color(r).Hex() < 0 {
 				t.Errorf("%s: role %s is not a true-RGB color", th.Key, r)
 			}
 		}
@@ -158,12 +158,12 @@ func TestGroups(t *testing.T) {
 // TestLegible checks the identity-hue correction: an unreadable hue is pushed to
 // the floor in the right direction; a readable one is untouched.
 func TestLegible(t *testing.T) {
-	blue := tcell.NewRGBColor(0, 0, 0xff)
-	lightBlue := tcell.NewRGBColor(0xad, 0xd8, 0xe6)
+	blue := NewRGBColor(0, 0, 0xff)
+	lightBlue := NewRGBColor(0xad, 0xd8, 0xe6)
 	for _, tc := range []struct {
 		name string
-		c    tcell.Color
-		bg   tcell.Color
+		c    Color
+		bg   Color
 	}{
 		{"blue on forge", blue, Forge.Color(RoleBackground)},
 		{"lightblue on daylight", lightBlue, Daylight.Color(RoleBackground)},
@@ -196,7 +196,7 @@ func TestRefResolve(t *testing.T) {
 			}
 		}
 	}
-	for _, c := range []tcell.Color{tcell.ColorDefault, tcell.ColorReset, tcell.ColorWhite, tcell.PaletteColor(255)} {
+	for _, c := range []Color{ColorDefault, Transparent, NewRGBColor(255, 255, 255), NewHexColor(0xA0000)} {
 		if _, isRef := RefRole(c); isRef {
 			t.Errorf("%v parses as a sentinel", c)
 		}
@@ -220,7 +220,7 @@ func TestThemedScreen_ResolvesStyles(t *testing.T) {
 		th, _ := ByKey(key)
 		ts.Clear()
 		ts.SetContent(0, 0, 'a', nil, tcell.StyleDefault)
-		ts.SetContent(1, 0, 'b', nil, tcell.StyleDefault.Foreground(Ref(RoleAccent)).Background(Ref(RoleSurface)))
+		ts.SetContent(1, 0, 'b', nil, tcell.StyleDefault.Foreground(tcellRef(RoleAccent)).Background(tcellRef(RoleSurface)))
 		ts.SetContent(2, 0, 'c', nil, tcell.StyleDefault.Foreground(tcell.NewRGBColor(1, 2, 3)).Bold(true))
 		ts.Show()
 		check := func(x int, wantFg, wantBg tcell.Color) {
@@ -230,11 +230,11 @@ func TestThemedScreen_ResolvesStyles(t *testing.T) {
 				t.Errorf("%s cell %d: fg/bg = %06x/%06x, want %06x/%06x", key, x, fg.Hex(), bg.Hex(), wantFg.Hex(), wantBg.Hex())
 			}
 		}
-		check(0, th.Color(RoleText), th.Color(RoleBackground))
-		check(1, th.Color(RoleAccent), th.Color(RoleSurface))
-		check(2, tcell.NewRGBColor(1, 2, 3), th.Color(RoleBackground))
+		check(0, Tcell(th.Color(RoleText)), Tcell(th.Color(RoleBackground)))
+		check(1, Tcell(th.Color(RoleAccent)), Tcell(th.Color(RoleSurface)))
+		check(2, tcell.NewRGBColor(1, 2, 3), Tcell(th.Color(RoleBackground)))
 		// A cell nobody wrote is the theme canvas, not the terminal default.
-		check(3, th.Color(RoleText), th.Color(RoleBackground))
+		check(3, Tcell(th.Color(RoleText)), Tcell(th.Color(RoleBackground)))
 	}
 }
 
@@ -261,7 +261,7 @@ func TestCommentColorIsOnlyTheComments(t *testing.T) {
 			}
 		}
 		// A new theme that leaves it unset gets a legible orange.
-		bare := deriveRoles(Theme{Colors: [numRoles]tcell.Color{RoleBackground: th.Color(RoleBackground)}})
+		bare := deriveRoles(Theme{Colors: [numRoles]Color{RoleBackground: th.Color(RoleBackground)}})
 		if r := ContrastRatio(bare.Color(RoleComment), th.Color(RoleBackground)); r < 4.5 {
 			t.Errorf("%s: the derived Comment is %.2f:1, want >= 4.5", th.Key, r)
 		}

@@ -1,7 +1,5 @@
 package theme
 
-import "github.com/gdamore/tcell/v2"
-
 // maphues_space.go holds the sky arc's colours: the palettes the map draws
 // from the Space Age on, when it leaves the ground. Like the other map hues
 // they are never drawn as they are: the map makes each one legible on the
@@ -58,14 +56,14 @@ var spaceHues = [numSpaceHues]int32{
 }
 
 // SpaceColor returns a sky arc colour.
-func SpaceColor(h SpaceHue) tcell.Color {
+func SpaceColor(h SpaceHue) Color {
 	if h >= numSpaceHues {
 		h = SpaceNone
 	}
-	return tcell.NewHexColor(spaceHues[h])
+	return NewHexColor(spaceHues[h])
 }
 
 // SpaceWhiteColor returns pure RGB white for high-res celestial bodies.
-func SpaceWhiteColor() tcell.Color {
-	return tcell.NewHexColor(0xffffff)
+func SpaceWhiteColor() Color {
+	return NewHexColor(0xffffff)
 }

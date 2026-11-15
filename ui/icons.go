@@ -427,7 +427,7 @@ type iconsWindow struct {
 func (d *Dashboard) newIconsWindow() *iconsWindow {
 	w := &iconsWindow{ring: newButtonRing(d.app, nil)}
 	w.body = newNativeText().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
-	w.body.SetTextColor(theme.Color(theme.RoleText)).SetBackgroundColor(theme.Color(theme.RoleSurface))
+	w.body.SetTextColor(theme.Of(theme.RoleText)).SetBackgroundColor(theme.Of(theme.RoleSurface))
 	w.btnRow = newNativeFlex().SetDirection(flexColumn)
 	hint := surfaceText(theme.Paint(theme.RoleDim, vibe.Line("ui.icons.newIconsWindow.01", "Tab moves between buttons · Enter presses · Esc closes")), kit.AlignCenter)
 	// A Flex paints nothing of its own, so the margins beside the text are
@@ -442,7 +442,7 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(w.btnRow, 1, 0, true).
 		AddItem(hint, 1, 0, false)
-	framed(inner, vibe.Line("ui.icons.newIconsWindow.02", " Icons check "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, vibe.Line("ui.icons.newIconsWindow.02", " Icons check "), theme.RoleAccent).SetBackgroundColor(theme.Of(theme.RoleSurface))
 	w.root = floatingModal(inner, iconsWindowWidth, iconsWindowHeight)
 	w.root.SetInputCapture(d.iconsKey)
 	return w

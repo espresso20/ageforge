@@ -6,9 +6,8 @@ import (
 	"image/draw"
 	"math"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // banner.go draws the README banner (docs/banner.png, made by
@@ -54,7 +53,7 @@ func BannerImage(ages, cellW, cellH int) *image.RGBA {
 	g, pal := bannerGrid(ages)
 	img := image.NewRGBA(image.Rect(0, 0, g.w*cellW, g.h*cellH))
 	dot := max(1, min(cellW/5, cellH/8))
-	box := func(x, y, w, h int, c tcell.Color) {
+	box := func(x, y, w, h int, c kit.Color) {
 		draw.Draw(img, image.Rect(x, y, x+w, y+h), image.NewUniform(rgba(c)), image.Point{}, draw.Src)
 	}
 	for y := 0; y < g.h; y++ {
@@ -122,7 +121,7 @@ func IconImage(size int) *image.RGBA {
 	cellH := size / 32
 	img := image.NewRGBA(image.Rect(0, 0, g.w*cellW, g.h*cellH))
 	dot := max(1, min(cellW/5, cellH/8))
-	box := func(x, y, w, h int, c tcell.Color) {
+	box := func(x, y, w, h int, c kit.Color) {
 		draw.Draw(img, image.Rect(x, y, x+w, y+h), image.NewUniform(rgba(c)), image.Point{}, draw.Src)
 	}
 	for y := 0; y < g.h; y++ {
@@ -342,7 +341,7 @@ func drawIntegerWordmark(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0,
 func gridToImage(g *mGrid, pal *menuPalette, cellW, cellH int) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, g.w*cellW, g.h*cellH))
 	dot := max(1, min(cellW/5, cellH/8))
-	box := func(x, y, w, h int, c tcell.Color) {
+	box := func(x, y, w, h int, c kit.Color) {
 		draw.Draw(img, image.Rect(x, y, x+w, y+h), image.NewUniform(rgba(c)), image.Point{}, draw.Src)
 	}
 	for y := 0; y < g.h; y++ {
@@ -396,7 +395,7 @@ func gridToImage(g *mGrid, pal *menuPalette, cellW, cellH int) *image.RGBA {
 	return img
 }
 
-func rgba(c tcell.Color) color.RGBA {
+func rgba(c kit.Color) color.RGBA {
 	r, g, b := c.RGB()
 	return color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 255}
 }

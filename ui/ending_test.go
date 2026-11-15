@@ -900,7 +900,7 @@ func TestEndingInEveryTheme(t *testing.T) {
 					}
 					p := e.sc.L.word
 					_, _, st, _ := sim.GetContent(p.x+firstLit(&p), p.y)
-					block, ground, _ := st.Decompose()
+					block, ground, _ := decompose(st)
 					if plain {
 						block = ground
 					}

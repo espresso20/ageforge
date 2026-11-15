@@ -90,7 +90,7 @@ func TagNames() map[string]Role {
 // safe to call repeatedly; every call overwrites the full set.
 func applyRemap(t Theme) {
 	for _, m := range remappedNames() {
-		tcell.ColorNames[m.name] = t.Color(m.role)
+		tcell.ColorNames[m.name] = Tcell(t.Color(m.role))
 	}
 
 	// Chrome defaults, read by tview at widget construction. They are Refs, not
@@ -100,15 +100,15 @@ func applyRemap(t Theme) {
 	// screen.go. Every field is set, including the ones tview uses for inverse
 	// states (button activation, list selection, dropdowns), so no tview default
 	// color leaks through.
-	tview.Styles.PrimitiveBackgroundColor = Ref(RoleBackground)
-	tview.Styles.ContrastBackgroundColor = Ref(RoleSelection)
-	tview.Styles.MoreContrastBackgroundColor = Ref(RoleChip)
-	tview.Styles.BorderColor = Ref(RoleBorder)
-	tview.Styles.TitleColor = Ref(RoleAccent)
-	tview.Styles.GraphicsColor = Ref(RoleBorder)
-	tview.Styles.PrimaryTextColor = Ref(RoleText)
-	tview.Styles.SecondaryTextColor = Ref(RoleDim)
-	tview.Styles.TertiaryTextColor = Ref(RoleLabel)
-	tview.Styles.InverseTextColor = Ref(RoleBackground) // drawn on a PrimaryTextColor (Text) fill
-	tview.Styles.ContrastSecondaryTextColor = Ref(RoleDim)
+	tview.Styles.PrimitiveBackgroundColor = tcellRef(RoleBackground)
+	tview.Styles.ContrastBackgroundColor = tcellRef(RoleSelection)
+	tview.Styles.MoreContrastBackgroundColor = tcellRef(RoleChip)
+	tview.Styles.BorderColor = tcellRef(RoleBorder)
+	tview.Styles.TitleColor = tcellRef(RoleAccent)
+	tview.Styles.GraphicsColor = tcellRef(RoleBorder)
+	tview.Styles.PrimaryTextColor = tcellRef(RoleText)
+	tview.Styles.SecondaryTextColor = tcellRef(RoleDim)
+	tview.Styles.TertiaryTextColor = tcellRef(RoleLabel)
+	tview.Styles.InverseTextColor = tcellRef(RoleBackground) // drawn on a PrimaryTextColor (Text) fill
+	tview.Styles.ContrastSecondaryTextColor = tcellRef(RoleDim)
 }

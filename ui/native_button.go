@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -28,7 +26,7 @@ func newNativeButton(label string) *nativeButton {
 	return b
 }
 
-func styleOf(fg, bg tcell.Color) kit.Style { return kit.Style{Fg: kitColor(fg), Bg: kitColor(bg)} }
+func styleOf(fg, bg kit.Color) kit.Style { return kit.Style{Fg: fg, Bg: bg} }
 
 func (b *nativeButton) SetLabel(s string) *nativeButton {
 	b.btn.Label = s
@@ -42,15 +40,15 @@ func (b *nativeButton) SetSelectedFunc(fn func()) *nativeButton {
 	return b
 }
 
-func (b *nativeButton) SetLabelColor(c tcell.Color) *nativeButton {
-	b.btn.Style.Fg = kitColor(c)
+func (b *nativeButton) SetLabelColor(c kit.Color) *nativeButton {
+	b.btn.Style.Fg = c
 	return b
 }
 
 // SetBackgroundColor is accepted and does nothing, as on a tview.Button: its
 // draw overwrites the box ground with the style's, so the fill styleFilledButton
 // asks for has never shown at rest. The screens look as they did.
-func (b *nativeButton) SetBackgroundColor(tcell.Color) *nativeButton { return b }
+func (b *nativeButton) SetBackgroundColor(kit.Color) *nativeButton { return b }
 
 func (b *nativeButton) Children() []kit.Widget { return []kit.Widget{b.btn} }
 

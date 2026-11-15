@@ -1,7 +1,5 @@
 package theme
 
-import "github.com/gdamore/tcell/v2"
-
 // maphues.go holds the maps' identity hues: the few fixed colours that make
 // water read as water and war read as war on every theme. They are never
 // drawn as they are. A map colour class starts from a theme role, leans
@@ -74,11 +72,11 @@ var mapHues = [numMapHues]int32{
 }
 
 // MapHueColor returns a map identity hue.
-func MapHueColor(h MapHue) tcell.Color {
+func MapHueColor(h MapHue) Color {
 	if h >= numMapHues {
 		h = HueNone
 	}
-	return tcell.NewHexColor(mapHues[h])
+	return NewHexColor(mapHues[h])
 }
 
 // EpochHue is the production hue of an epoch (0 Stone … 6 Cosmic).

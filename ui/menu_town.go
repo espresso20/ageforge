@@ -1,12 +1,11 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // menu_town.go draws the player's own town behind the main menu: the map
@@ -31,9 +30,9 @@ type menuTown struct {
 	// name and age caption the picture: the town's name and its age's.
 	name, age string
 
-	sim    tcell.SimulationScreen
-	scr    tcell.Screen
-	sw, sh int
+	// buf is the cells the map draws the picture into, before the menu
+	// takes them over, faded, into its own.
+	buf kit.Buffer
 	// failed is set when the map could not draw the picture. The menu
 	// then shows its first page; it never shows an error.
 	failed bool
@@ -138,26 +137,18 @@ func (t *menuTown) paint(g *mGrid, pal *menuPalette, x0, y0, w, h int, foot bool
 	if fw < townMinW || fh < townMinH {
 		return false
 	}
-	if t.sim == nil {
-		sim := tcell.NewSimulationScreen("UTF-8")
-		if err := sim.Init(); err != nil {
-			t.failed = true
-			return false
-		}
-		t.sim, t.scr = sim, theme.WrapScreen(sim)
-	}
-	if fw != t.sw || fh != t.sh {
-		t.sim.SetSize(fw, fh)
-		t.sw, t.sh = fw, fh
+	if fw != t.buf.W || fh != t.buf.H {
+		t.buf.Resize(fw, fh)
 	}
 	f.Model = t.model
-	t.style.Draw(t.scr, mapstyle.Rect{W: fw, H: fh}, f)
+	t.style.Draw(kitCells{p: kit.NewPainter(&t.buf)}, mapstyle.Rect{W: fw, H: fh}, f)
 
 	for y := 0; y < h; y++ {
 		rowLevel := min(3, y)
 		for x := 0; x < w; x++ {
-			r, _, st, _ := t.sim.GetContent(x, y+top)
-			fg, bg, attr := st.Decompose()
+			c := t.buf.At(x, y+top)
+			r, attr := c.R, c.Attr
+			fg, bg := kit.RGB(c.Fg.R, c.Fg.G, c.Fg.B), kit.RGB(c.Bg.R, c.Bg.G, c.Bg.B)
 			if (r == ' ' || r == 0) && bg == pal.bg {
 				continue // open ground: the sky and the sparks show through
 			}
@@ -168,22 +159,20 @@ func (t *menuTown) paint(g *mGrid, pal *menuPalette, x0, y0, w, h int, foot bool
 			k := townFade[level]
 			if bg == pal.bg {
 				g.put(x0+x, y0+y, r, theme.Mix(fg, pal.bg, k))
-				if attr&tcell.AttrBold != 0 && g.in(x0+x, y0+y) {
+				if attr&kit.Bold != 0 && g.in(x0+x, y0+y) {
 					g.c[(y0+y)*g.w+x0+x].bold = true
 				}
 				continue
 			}
-			g.set(x0+x, y0+y, r, theme.Mix(fg, pal.bg, k), theme.Mix(bg, pal.bg, k), attr&tcell.AttrBold != 0)
+			g.set(x0+x, y0+y, r, theme.Mix(fg, pal.bg, k), theme.Mix(bg, pal.bg, k), attr&kit.Bold != 0)
 		}
 	}
 	return true
 }
 
-// close lets go of the picture's screen.
+// close lets go of the picture's cells.
 func (t *menuTown) close() {
-	if t != nil && t.sim != nil {
-		t.sim.Fini()
-		t.sim, t.scr = nil, nil
-		t.sw, t.sh = 0, 0
+	if t != nil {
+		t.buf = kit.Buffer{}
 	}
 }

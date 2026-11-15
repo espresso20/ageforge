@@ -3,8 +3,6 @@ package mapstyle
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
@@ -121,7 +119,7 @@ func TestGroundMapsInLightThemes(t *testing.T) {
 		}
 
 		// 2. Building block runes should keep material colors and NOT invert to black ink (RoleText).
-		textInk := theme.Color(theme.RoleText)
+		textInk := theme.Of(theme.RoleText)
 		materials := []struct {
 			name string
 			hue  mapgen.Hue
@@ -266,7 +264,7 @@ func TestRenderedAgesLightAndDarkThemes(t *testing.T) {
 	}
 }
 
-func isYellowGold(c tcell.Color) bool {
+func isYellowGold(c theme.Color) bool {
 	r, g, b := c.RGB()
 	// Yellow/Gold has high red and green, lower blue
 	return r > 180 && g > 140 && b < 120

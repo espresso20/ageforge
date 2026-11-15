@@ -3,7 +3,6 @@ package ui
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
@@ -18,11 +17,7 @@ func listPair() (*tview.List, *nativeList) {
 		old.AddItem(r, "", 0, nil)
 		nl.AddItem(r, "", 0, nil)
 	}
-	for _, l := range []interface {
-		SetSelectedBackgroundColor(tcell.Color) *tview.List
-	}{old} {
-		l.SetSelectedBackgroundColor(theme.Ref(theme.RoleSelection)).SetSelectedTextColor(theme.Ref(theme.RoleSelectionText))
-	}
+	old.SetSelectedBackgroundColor(theme.Tcell(theme.Ref(theme.RoleSelection))).SetSelectedTextColor(theme.Tcell(theme.Ref(theme.RoleSelectionText)))
 	nl.SetSelectedBackgroundColor(theme.Ref(theme.RoleSelection)).SetSelectedTextColor(theme.Ref(theme.RoleSelectionText))
 	return old, nl
 }

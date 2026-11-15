@@ -31,47 +31,21 @@ const (
 	Blink
 )
 
-// A Color is late bound: a theme role, a literal, or nothing at all (the zero
-// value), which leaves whatever is there. It is resolved against the active
-// theme when a cell is painted.
-type Color struct {
-	kind, role uint8 // role is a theme.Role, kept small: text holds a Color per glyph
-	r, g, b    uint8
-}
-
-const (
-	colUnset uint8 = iota
-	colRole
-	colRGB
-	colClear
-)
+// A Color is the theme's: late bound (a theme role), a literal, Clear, or
+// nothing at all (the zero value), which leaves whatever is there. It is
+// resolved against the active theme when a cell is painted.
+type Color = theme.Color
 
 // Role is the active theme's color for a role, whichever theme that is when
 // the cell is painted.
-func Role(r theme.Role) Color { return Color{kind: colRole, role: uint8(r)} }
+func Role(r theme.Role) Color { return theme.Ref(r) }
 
 // RGB is a literal color, for the hues that are not the theme's to choose.
-func RGB(r, g, b uint8) Color { return Color{kind: colRGB, r: r, g: g, b: b} }
+func RGB(r, g, b uint8) Color { return theme.RGB(r, g, b) }
 
 // Clear is a ground that is no color: a cell with it shows what the window
 // draws under the cells (a map). It means nothing as a foreground.
-var Clear = Color{kind: colClear}
-
-// IsSet reports whether c is a color (or Clear) rather than nothing.
-func (c Color) IsSet() bool { return c.kind != colUnset }
-
-// rgba resolves c; ok is false for the zero Color.
-func (c Color) rgba() (color.RGBA, bool) {
-	switch c.kind {
-	case colRole:
-		return theme.RGBA(theme.Role(c.role)), true
-	case colRGB:
-		return color.RGBA{c.r, c.g, c.b, 255}, true
-	case colClear:
-		return color.RGBA{}, true
-	}
-	return color.RGBA{}, false
-}
+var Clear = theme.Transparent
 
 // Style is how text is painted. An unset Fg is the theme's text color; an
 // unset Bg keeps the ground the cell already has.
@@ -79,6 +53,28 @@ type Style struct {
 	Fg, Bg Color
 	Attr   Attr
 }
+
+// Foreground is s with fg as its ink, and Background with bg as its ground.
+func (s Style) Foreground(fg Color) Style { s.Fg = fg; return s }
+func (s Style) Background(bg Color) Style { s.Bg = bg; return s }
+
+// with is s with an attribute set or cleared.
+func (s Style) with(a Attr, on bool) Style {
+	if on {
+		s.Attr |= a
+	} else {
+		s.Attr &^= a
+	}
+	return s
+}
+
+// Bold, Italic and Underline are s with that attribute on or off.
+func (s Style) Bold(on bool) Style      { return s.with(Bold, on) }
+func (s Style) Italic(on bool) Style    { return s.with(Italic, on) }
+func (s Style) Underline(on bool) Style { return s.with(Underline, on) }
+
+// Decompose is the style's parts.
+func (s Style) Decompose() (fg, bg Color, attr Attr) { return s.Fg, s.Bg, s.Attr }
 
 // Fg is a style with only a foreground.
 func Fg(r theme.Role) Style { return Style{Fg: Role(r)} }

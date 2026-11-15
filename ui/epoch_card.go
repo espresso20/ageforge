@@ -52,7 +52,7 @@ func epochPicture(state game.GameState) *image.RGBA {
 	screen := theme.WrapScreen(sim)
 
 	tv := newNativeText().SetDynamicColors(true).SetWrap(true)
-	tv.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	tv.SetBackgroundColor(theme.Of(theme.RoleBackground))
 	// The page has no key hint here: the picture is of the screen, and the
 	// hint is for the player who is looking at it.
 	tv.SetText(safeTags(page))

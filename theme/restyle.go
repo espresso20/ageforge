@@ -23,8 +23,8 @@ var (
 // stores it for re-application on every later theme switch. This is the single
 // combined "apply-now-and-enroll" operation that prevents untracked chrome.
 //
-// The apply closure should pull from theme.Color(role) each time it runs — never
-// capture a tcell.Color once — so it reflects whatever theme is active when
+// The apply closure should pull from theme.Of(role) each time it runs — never
+// capture a Color once — so it reflects whatever theme is active when
 // Restyle() re-invokes it. Typical shape:
 //
 //	theme.Track(func() {

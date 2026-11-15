@@ -3,10 +3,9 @@ package mapstyle
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
+	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -25,7 +24,7 @@ func spaceView(t *testing.T, age string) (*view, Frame) {
 
 func press(v *view, f Frame, k kit.KeyCode) { v.HandleKey(kit.Key{Code: k, Rune: 0, Mod: 0}, f) }
 
-func shot(v *view, f Frame) tcell.SimulationScreen { return drawFrame(v, f, 140, 45, false) }
+func shot(v *view, f Frame) *capture.Screen { return drawFrame(v, f, 140, 45, false) }
 
 // onBody puts the cursor on a body of the overview at the given zoom.
 func onBody(t *testing.T, v *view, f Frame, zoom int, th mapgen.Thing) {
@@ -121,12 +120,12 @@ func TestBracketsSurroundTheBodyAndNotItsPixels(t *testing.T) {
 	}
 }
 
-func reds(scr tcell.SimulationScreen) (n int) {
+func reds(scr *capture.Screen) (n int) {
 	cells, w, _ := scr.GetContents()
 	_ = w
 	for _, c := range cells {
 		fg, bg, _ := c.Style.Decompose()
-		for _, col := range []tcell.Color{fg, bg} {
+		for _, col := range []theme.Color{fg, bg} {
 			r, g, b := col.RGB()
 			if r > g+40 && r > b+40 {
 				n++

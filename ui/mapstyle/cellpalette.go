@@ -1,10 +1,9 @@
 package mapstyle
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The engine says what a cell is made of (a hue and a weight); this file turns
@@ -13,11 +12,11 @@ import (
 // theme's own ground by the weight and clamped legible where a glyph is drawn.
 
 // hueFrom is where a hue's identity colour comes from; nil leans on nothing.
-type hueFrom func() tcell.Color
+type hueFrom func() theme.Color
 
-func fromMap(h theme.MapHue) hueFrom     { return func() tcell.Color { return theme.MapHueColor(h) } }
-func fromCity(h theme.CityHue) hueFrom   { return func() tcell.Color { return theme.CityColor(h) } }
-func fromSpace(h theme.SpaceHue) hueFrom { return func() tcell.Color { return theme.SpaceColor(h) } }
+func fromMap(h theme.MapHue) hueFrom     { return func() theme.Color { return theme.MapHueColor(h) } }
+func fromCity(h theme.CityHue) hueFrom   { return func() theme.Color { return theme.CityColor(h) } }
+func fromSpace(h theme.SpaceHue) hueFrom { return func() theme.Color { return theme.SpaceColor(h) } }
 func fromEpoch(epoch int) hueFrom        { return fromMap(theme.EpochHue(epoch)) }
 
 // recipe makes a hue: start from a theme role, lean toward a colour by mix.
@@ -91,9 +90,9 @@ var recipes = [mapgen.NumHues]recipe{
 // armColour is the light of a spiral arm: the star's blue-white leaning toward
 // the nebula violet and then toward grey, so the arms read as pale lavender
 // and stay apart from the stars strewn along them.
-func armColour() tcell.Color {
+func armColour() theme.Color {
 	lav := theme.Mix(theme.SpaceColor(theme.SpaceStar), theme.SpaceColor(theme.SpaceNebulaViolet), 0.35)
-	return theme.Mix(lav, theme.Color(theme.RoleDim), 0.35)
+	return theme.Mix(lav, theme.Of(theme.RoleDim), 0.35)
 }
 
 // lineRecipes are the hues of the building lines, in the order of
@@ -136,11 +135,11 @@ func isBlockRune(r rune) bool {
 	return false
 }
 
-func (r recipe) colour(h mapgen.Hue) tcell.Color {
+func (r recipe) colour(h mapgen.Hue) theme.Color {
 	if isSpaceHue(h) && r.from != nil {
 		return inkOf(r.from())
 	}
-	base := theme.Color(r.role)
+	base := theme.Of(r.role)
 	if r.from == nil {
 		return inkOf(base)
 	}
@@ -150,7 +149,7 @@ func (r recipe) colour(h mapgen.Hue) tcell.Color {
 // inkOf is c as the active theme draws it: as it is, or on a one-ink-on-one-
 // paper theme (Monochrome, Parchment) only how light it is, laid on the ramp
 // from the theme's background to its text.
-func inkOf(c tcell.Color) tcell.Color {
+func inkOf(c theme.Color) theme.Color {
 	if !theme.Active().Duotone {
 		return c
 	}
@@ -159,7 +158,7 @@ func inkOf(c tcell.Color) tcell.Color {
 		lum = 1.0 - lum
 	}
 	light := float64(0.2 + float64(0.8*lum))
-	return theme.Mix(theme.Color(theme.RoleBackground), theme.Color(theme.RoleText), light)
+	return theme.Mix(theme.Of(theme.RoleBackground), theme.Of(theme.RoleText), light)
 }
 
 // paintKey is one cell's colours: what the style cache is keyed by.
@@ -177,10 +176,10 @@ type cellPalette struct {
 	wall  mapgen.Hue
 	tint  mapgen.Hue
 	space bool
-	bg    tcell.Color
-	night tcell.Color
-	hue   [mapgen.NumHues]tcell.Color
-	cache map[paintKey]tcell.Style
+	bg    theme.Color
+	night theme.Color
+	hue   [mapgen.NumHues]theme.Color
+	cache map[paintKey]kit.Style
 }
 
 // cellPaletteFor returns p when it still fits the theme and the grid, else a new
@@ -190,11 +189,11 @@ func cellPaletteFor(p *cellPalette, g *mapgen.Grid) *cellPalette {
 	if p != nil && p.theme == key && p.wall == g.Wall && p.tint == g.Tint && p.space == g.Space {
 		return p
 	}
-	bg := theme.Color(theme.RoleBackground)
+	bg := theme.Of(theme.RoleBackground)
 	if g.Space {
 		bg = inkOf(theme.SpaceColor(theme.SpaceVoid))
 	}
-	p = &cellPalette{theme: key, wall: g.Wall, tint: g.Tint, space: g.Space, bg: bg, cache: map[paintKey]tcell.Style{}}
+	p = &cellPalette{theme: key, wall: g.Wall, tint: g.Tint, space: g.Space, bg: bg, cache: map[paintKey]kit.Style{}}
 	for h := range p.hue {
 		p.hue[h] = recipes[h].colour(mapgen.Hue(h))
 	}
@@ -214,14 +213,14 @@ func cellPaletteFor(p *cellPalette, g *mapgen.Grid) *cellPalette {
 	// theme's night is dark too, with its own text colour as the black.
 	black := p.bg
 	if theme.IsLight() && !g.Space {
-		black = theme.Color(theme.RoleText)
+		black = theme.Of(theme.RoleText)
 	}
 	p.night = theme.Mix(black, inkOf(theme.MapHueColor(theme.HueWaterDeep)), 0.2)
 	return p
 }
 
 // over is a paint laid over the theme's ground.
-func (p *cellPalette) over(pt mapgen.Paint) tcell.Color {
+func (p *cellPalette) over(pt mapgen.Paint) theme.Color {
 	if pt.Hue == mapgen.HNone || pt.Weight == 0 {
 		return p.bg
 	}
@@ -236,7 +235,7 @@ const (
 
 // style is the style of a cell: its paints over the ground, pulled toward the
 // night by its dim, the glyph kept legible on the ground it stands on.
-func (p *cellPalette) style(c mapgen.Cell) tcell.Style {
+func (p *cellPalette) style(c mapgen.Cell) kit.Style {
 	k := paintKey{c.Fg, c.Bg, c.Dim, c.R == ' ' || c.R == 0, isBlockRune(c.R)}
 	if st, ok := p.cache[k]; ok {
 		return st
@@ -259,13 +258,13 @@ func (p *cellPalette) style(c mapgen.Cell) tcell.Style {
 			fg = theme.Legible(fg, bg, floor)
 		}
 	}
-	st := tcell.StyleDefault.Foreground(fg).Background(bg)
+	st := kit.Style{}.Foreground(fg).Background(bg)
 	p.cache[k] = st
 	return st
 }
 
 // colour is the colour of a hue at full weight, for chrome that borrows it
 // (the legend's signs).
-func (p *cellPalette) colour(h mapgen.Hue) tcell.Color {
+func (p *cellPalette) colour(h mapgen.Hue) theme.Color {
 	return theme.Legible(p.hue[h], p.bg, dayContrast)
 }

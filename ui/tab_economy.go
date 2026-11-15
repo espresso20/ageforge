@@ -163,9 +163,9 @@ func NewEconomyTab() *EconomyTab {
 
 	// Persistent tab chrome: enroll titles so a live theme switch restyles them.
 	theme.Track(func() {
-		t.resourceTV.SetTitleColor(theme.Color(theme.RoleLabel))
-		t.buildingTV.SetTitleColor(theme.Color(theme.RoleHighlight))
-		t.constructionTV.SetTitleColor(theme.Color(theme.RoleHighlight))
+		t.resourceTV.SetTitleColor(theme.Of(theme.RoleLabel))
+		t.buildingTV.SetTitleColor(theme.Of(theme.RoleHighlight))
+		t.constructionTV.SetTitleColor(theme.Of(theme.RoleHighlight))
 	})
 
 	t.leftCol = &econColumn{resources: t.resourceTV, construction: t.constructionTV,

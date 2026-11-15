@@ -5,8 +5,6 @@ import (
 	"math"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -32,8 +30,8 @@ import (
 // mCell is one cell of the menu.
 type mCell struct {
 	r     rune
-	fg    tcell.Color
-	bg    tcell.Color
+	fg    kit.Color
+	bg    kit.Color
 	bold  bool
 	hasBg bool // bg is set; otherwise the cell stands on the page's ground
 }
@@ -51,7 +49,7 @@ func newMGrid(w, h int) *mGrid {
 }
 
 // put writes a glyph and its ink, and leaves the cell's ground as it is.
-func (g *mGrid) put(x, y int, r rune, fg tcell.Color) {
+func (g *mGrid) put(x, y int, r rune, fg kit.Color) {
 	if g.in(x, y) {
 		c := &g.c[y*g.w+x]
 		c.r, c.fg, c.bold = r, fg, false
@@ -59,12 +57,12 @@ func (g *mGrid) put(x, y int, r rune, fg tcell.Color) {
 }
 
 // set writes a whole cell: glyph, ink, ground and weight.
-func (g *mGrid) set(x, y int, r rune, fg, bg tcell.Color, bold bool) {
+func (g *mGrid) set(x, y int, r rune, fg, bg kit.Color, bold bool) {
 	g.store(x, y, mCell{r: r, fg: fg, bg: bg, bold: bold, hasBg: true})
 }
 
 // fill paints a block's ground and clears what was on it.
-func (g *mGrid) fill(x, y, w, h int, fg, bg tcell.Color) {
+func (g *mGrid) fill(x, y, w, h int, fg, bg kit.Color) {
 	for j := y; j < y+h; j++ {
 		for i := x; i < x+w; i++ {
 			g.set(i, j, ' ', fg, bg, false)
@@ -74,7 +72,7 @@ func (g *mGrid) fill(x, y, w, h int, fg, bg tcell.Color) {
 
 // text writes s from (x, y) on the ground already there and returns its
 // length in cells. Text that runs off the grid is cut and noted.
-func (g *mGrid) text(x, y int, s string, fg tcell.Color, bold bool) int {
+func (g *mGrid) text(x, y int, s string, fg kit.Color, bold bool) int {
 	n := 0
 	for _, r := range s {
 		if g.in(x+n, y) {
@@ -89,7 +87,7 @@ func (g *mGrid) text(x, y int, s string, fg tcell.Color, bold bool) int {
 }
 
 // textOn is text on a ground of its own.
-func (g *mGrid) textOn(x, y int, s string, fg, bg tcell.Color, bold bool) int {
+func (g *mGrid) textOn(x, y int, s string, fg, bg kit.Color, bold bool) int {
 	n := 0
 	for _, r := range s {
 		if g.in(x+n, y) {
@@ -103,7 +101,7 @@ func (g *mGrid) textOn(x, y int, s string, fg, bg tcell.Color, bold bool) int {
 }
 
 // box draws a frame, heavy or light, and leaves its inside alone.
-func (g *mGrid) box(x, y, w, h int, heavy bool, fg tcell.Color) {
+func (g *mGrid) box(x, y, w, h int, heavy bool, fg kit.Color) {
 	if w < 2 || h < 2 {
 		return
 	}
@@ -132,9 +130,9 @@ func (g *mGrid) paint(p *kit.Painter, at image.Point, pal *menuPalette, plain bo
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			c := g.c[y*g.w+x]
-			st := kit.Style{Fg: kitColor(c.fg), Bg: kitColor(pal.bg)}
+			st := kit.Style{Fg: c.fg, Bg: pal.bg}
 			if c.hasBg {
-				st.Bg = kitColor(c.bg)
+				st.Bg = c.bg
 			}
 			if c.bold {
 				st.Attr = kit.Bold
@@ -158,25 +156,25 @@ type menuPalette struct {
 	key string
 	// bg is the page; ink, dim and faint are text from strongest to
 	// weakest; accent marks the selection and the headings.
-	bg, ink, dim, faint, accent tcell.Color
+	bg, ink, dim, faint, accent kit.Color
 	// band and onBand are the selected row of the boxed menu.
-	band, onBand tcell.Color
+	band, onBand kit.Color
 	// ground is the boxed menu's own ground, with its inks.
-	ground, groundInk, groundDim tcell.Color
+	ground, groundInk, groundDim kit.Color
 	// label is the second colour of the elite line.
-	label tcell.Color
+	label kit.Color
 	// anvil is the anvil's body, and anvilInk its ink where a glyph draws
 	// it (the plain glyph set).
-	anvil, anvilInk tcell.Color
+	anvil, anvilInk kit.Color
 	// heat is the wordmark's ramp from cold iron to white heat; fire the
 	// forge's, from the page to its brightest.
-	heat, fire [menuLUT]tcell.Color
+	heat, fire [menuLUT]kit.Color
 	// heatStops and fireStops are the ramps' six stops (the tests read them).
-	heatStops, fireStops [6]tcell.Color
+	heatStops, fireStops [6]kit.Color
 }
 
 // colourHue is a colour's hue in degrees and its saturation from 0 to 1.
-func colourHue(c tcell.Color) (hue, sat float64) {
+func colourHue(c kit.Color) (hue, sat float64) {
 	r, g, b := c.RGB()
 	rf, gf, bf := float64(r)/255, float64(g)/255, float64(b)/255
 	hi, lo := max(rf, gf, bf), min(rf, gf, bf)
@@ -200,7 +198,7 @@ func colourHue(c tcell.Color) (hue, sat float64) {
 }
 
 // warmColour reports whether c is a colour of fire: red through gold.
-func warmColour(c tcell.Color) bool {
+func warmColour(c kit.Color) bool {
 	h, s := colourHue(c)
 	return s >= 0.25 && (h <= 75 || h >= 345)
 }
@@ -220,7 +218,7 @@ const menuColdIron = 1.6
 // or Highlight). Any other burns in its own two colours (Accent and Label):
 // green on Source, magenta to cyan on Glitch. A theme of one ink runs
 // straight from paper to ink.
-func menuRampStops(th theme.Theme) (heat, fire [6]tcell.Color) {
+func menuRampStops(th theme.Theme) (heat, fire [6]kit.Color) {
 	bg, ink, bright := th.Color(theme.RoleBackground), th.Color(theme.RoleText), th.Color(theme.RoleBright)
 	if th.Duotone {
 		for i, k := range []float64{0.24, 0.40, 0.56, 0.72, 0.86, 1} {
@@ -242,20 +240,20 @@ func menuRampStops(th theme.Theme) (heat, fire [6]tcell.Color) {
 			hi = hl
 		}
 		mid, top := theme.Mix(ember, hi, 0.5), theme.Mix(hi, bright, 0.75)
-		heat = [6]tcell.Color{cold, theme.Mix(bg, ember, 0.42), theme.Mix(bg, ember, 0.78), mid, hi, top}
-		fire = [6]tcell.Color{bg, theme.Mix(bg, ember, 0.30), theme.Mix(bg, ember, 0.70), mid, hi, top}
+		heat = [6]kit.Color{cold, theme.Mix(bg, ember, 0.42), theme.Mix(bg, ember, 0.78), mid, hi, top}
+		fire = [6]kit.Color{bg, theme.Mix(bg, ember, 0.30), theme.Mix(bg, ember, 0.70), mid, hi, top}
 	} else {
 		lo, hi := accent, th.Color(theme.RoleLabel)
 		if theme.ContrastRatio(lo, bg) > theme.ContrastRatio(hi, bg) {
 			lo, hi = hi, lo
 		}
 		mid, top := theme.Mix(lo, hi, 0.5), theme.Mix(hi, bright, 0.75)
-		heat = [6]tcell.Color{cold, theme.Mix(bg, lo, 0.5), lo, mid, hi, top}
-		fire = [6]tcell.Color{bg, theme.Mix(bg, lo, 0.30), theme.Mix(bg, lo, 0.70), mid, hi, top}
+		heat = [6]kit.Color{cold, theme.Mix(bg, lo, 0.5), lo, mid, hi, top}
+		fire = [6]kit.Color{bg, theme.Mix(bg, lo, 0.30), theme.Mix(bg, lo, 0.70), mid, hi, top}
 	}
 	// Hotter always stands out more than cooler: a stop that does not is
 	// pushed toward the theme's ink until it does.
-	for _, ramp := range []*[6]tcell.Color{&heat, &fire} {
+	for _, ramp := range []*[6]kit.Color{&heat, &fire} {
 		for i := 1; i < len(ramp); i++ {
 			if want := theme.ContrastRatio(ramp[i-1], bg) * 1.06; theme.ContrastRatio(ramp[i], bg) < want {
 				ramp[i] = theme.Legible(ramp[i], bg, want)
@@ -266,7 +264,7 @@ func menuRampStops(th theme.Theme) (heat, fire [6]tcell.Color) {
 }
 
 // menuRamp spreads six stops over the ramp's steps.
-func menuRamp(stops [6]tcell.Color) (lut [menuLUT]tcell.Color) {
+func menuRamp(stops [6]kit.Color) (lut [menuLUT]kit.Color) {
 	for i := range lut {
 		v := float64(i) / float64(menuLUT-1) * float64(len(stops)-1)
 		j := min(int(v), len(stops)-2)
@@ -276,7 +274,7 @@ func menuRamp(stops [6]tcell.Color) (lut [menuLUT]tcell.Color) {
 }
 
 // rampAt picks a ramp's colour for v from 0 to 1.
-func rampAt(lut *[menuLUT]tcell.Color, v float64) tcell.Color {
+func rampAt(lut *[menuLUT]kit.Color, v float64) kit.Color {
 	switch {
 	case v <= 0 || v != v:
 		return lut[0]
@@ -651,7 +649,7 @@ var plainFire = []rune(" .:-=+*%#")
 // Two half cells make a cell; in the plain glyph set a cell is one glyph
 // whose weight is the fire's heat there.
 func (f *menuForge) draw(g *mGrid, pal *menuPalette, x0, y0 int, strike float64, plain bool) {
-	half := func(i int) (tcell.Color, bool) {
+	half := func(i int) (kit.Color, bool) {
 		switch {
 		case f.mask[i] == 2 && strike > 0.06:
 			return rampAt(&pal.heat, 0.3+strike*0.7), true

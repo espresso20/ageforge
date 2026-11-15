@@ -5,11 +5,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // arrival_page.go lays out and draws the arrival screen: what a player
@@ -153,8 +152,8 @@ func (v *arrivalView) underLines(w int) (out []underLine) {
 
 // commentInk is the theme's comment color, nudged to read on the page: the ink
 // of a flavor sentence in the full-screen scenes.
-func commentInk(pal *menuPalette) tcell.Color {
-	return theme.Legible(theme.Color(theme.RoleComment), pal.bg, 4.5)
+func commentInk(pal *menuPalette) kit.Color {
+	return theme.Legible(theme.Of(theme.RoleComment), pal.bg, 4.5)
 }
 
 // drawUnder draws the lines under the age's name, the first n of them.
@@ -544,7 +543,7 @@ func (sc *arrivalScene) renderMoment(pal *menuPalette, v *arrivalView, old, cur 
 // infoSeg is a run of text in one ink.
 type infoSeg struct {
 	text string
-	ink  tcell.Color
+	ink  kit.Color
 	bold bool
 }
 
@@ -569,7 +568,7 @@ var tagRun = regexp.MustCompile(`\[([#a-zA-Z][#a-zA-Z0-9]*|-)?(?::([#a-zA-Z][#a-
 // parseSplashLine turns a line of the splash's markup into runs of ink on
 // ground. A colour is a name the theme owns (the role names and the old
 // aliases); anything else in brackets is text.
-func parseSplashLine(text string, pal *menuPalette, ground tcell.Color) []infoSeg {
+func parseSplashLine(text string, pal *menuPalette, ground kit.Color) []infoSeg {
 	names := theme.TagNames()
 	base := theme.Legible(pal.ink, ground, 7)
 	ink, bold := base, false
@@ -599,7 +598,7 @@ func parseSplashLine(text string, pal *menuPalette, ground tcell.Color) []infoSe
 		case hasFg && fg == "-":
 			ink = base
 		case hasFg:
-			ink = theme.Legible(theme.Color(role), ground, 3)
+			ink = theme.Legible(theme.Of(role), ground, 3)
 		}
 		if hasAttrs {
 			bold = strings.Contains(attrs, "b")
@@ -617,7 +616,7 @@ func wrapInfo(l infoLine, w int) []infoLine {
 	}
 	type cell struct {
 		r    rune
-		ink  tcell.Color
+		ink  kit.Color
 		bold bool
 	}
 	var cells []cell

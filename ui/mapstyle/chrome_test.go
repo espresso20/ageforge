@@ -5,8 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -19,7 +17,7 @@ import (
 
 // cursorCells returns the cells of a screen drawn in the cursor's fill
 // (either half of its blink), with the position of each.
-func cursorCells(scr tcell.SimulationScreen, ink *Palette) (cells []tcell.SimCell, at [][2]int) {
+func cursorCells(scr *capture.Screen, ink *Palette) (cells []capture.Cell, at [][2]int) {
 	_, fill, _ := ink.Cursor.Decompose()
 	_, alt, _ := ink.CursorAlt.Decompose()
 	all, w, h := scr.GetContents()
@@ -37,7 +35,7 @@ func cursorCells(scr tcell.SimulationScreen, ink *Palette) (cells []tcell.SimCel
 
 // changedCells returns the cells of the rows from top to bottom whose style
 // differs between two drawings of one screen, with the position of each.
-func changedCells(before, after tcell.SimulationScreen, top, bottom int) (cells []tcell.SimCell, at [][2]int) {
+func changedCells(before, after *capture.Screen, top, bottom int) (cells []capture.Cell, at [][2]int) {
 	was, w, _ := before.GetContents()
 	now, _, _ := after.GetContents()
 	for i := top * w; i < bottom*w; i++ {
@@ -102,7 +100,7 @@ func TestCursorBlinksWithTheMap(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := grown(t, fixture.Options{Age: "stone_age", Seed: 5})
 	v := New().(*view)
-	bgAt := func(anim int) tcell.Color {
+	bgAt := func(anim int) theme.Color {
 		scr := drawOffset(v, m, 120, 40, anim, mapmodel.TierUnicode, false)
 		defer scr.Fini()
 		cells, _ := cursorCells(scr, v.ink.Palette)

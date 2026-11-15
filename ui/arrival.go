@@ -149,7 +149,7 @@ func (a *arrival) say(cur *game.GameState) {
 				continue
 			}
 			if nth == 0 {
-				return strings.TrimSpace(plainOf(parseSplashLine(l.text, newMenuPalette(theme.Active()), 0)))
+				return strings.TrimSpace(plainOf(parseSplashLine(l.text, newMenuPalette(theme.Active()), kit.Color{})))
 			}
 			nth--
 		}

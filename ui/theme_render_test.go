@@ -12,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // renderScreens draws the key screens into a SimulationScreen wrapped by
@@ -182,8 +183,8 @@ func TestThemeRender_NoInvisibleText(t *testing.T) {
 			for name, cells := range renderScreens(t, w, h) {
 				bad := 0
 				for i, c := range cells {
-					fg, bg, _ := c.Style.Decompose()
-					if !bg.IsRGB() {
+					fg, bg, _ := decompose(c.Style)
+					if !(bg.Hex() >= 0) {
 						if bad < 5 {
 							t.Errorf("%s: cell (%d,%d) %q has non-RGB bg %v", name, i%w, i/w, string(c.Runes), bg)
 						}
@@ -193,7 +194,7 @@ func TestThemeRender_NoInvisibleText(t *testing.T) {
 					if len(c.Runes) == 0 || c.Runes[0] == ' ' || pixelGlyph(c.Runes[0]) {
 						continue
 					}
-					if !fg.IsRGB() {
+					if !(fg.Hex() >= 0) {
 						if bad < 5 {
 							t.Errorf("%s: cell (%d,%d) %q has non-RGB fg %v", name, i%w, i/w, string(c.Runes), fg)
 						}
@@ -235,10 +236,10 @@ func TestThemeRender_CanvasIsThemeBackground(t *testing.T) {
 		pages.Draw(screen)
 		screen.Show()
 		cells := simCells(sim).Cells()
-		want := theme.Color(theme.RoleBackground).Hex()
+		want := theme.Of(theme.RoleBackground).Hex()
 		counts := map[int32]int{}
 		for _, c := range cells {
-			_, bg, _ := c.Style.Decompose()
+			_, bg, _ := decompose(c.Style)
 			counts[bg.Hex()]++
 		}
 		// The canvas must dominate: most cells are plain Background.
@@ -278,7 +279,7 @@ func TestThemeRender_DumpANSI(t *testing.T) {
 			for y := 0; y < h; y++ {
 				for x := 0; x < w; x++ {
 					c := cells[y*w+x]
-					fg, bg, _ := c.Style.Decompose()
+					fg, bg, _ := decompose(c.Style)
 					fr, fgc, fb := fg.RGB()
 					br, bgc, bb := bg.RGB()
 					r := " "
@@ -303,14 +304,14 @@ func cellsHTML(cells []tcell.SimCell, w, h int, title string) string {
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			c := cells[y*w+x]
-			fg, bg, attr := c.Style.Decompose()
+			fg, bg, attr := decompose(c.Style)
 			r := " "
 			if len(c.Runes) > 0 {
 				r = string(c.Runes)
 			}
 			r = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(r)
 			weight := ""
-			if attr&tcell.AttrBold != 0 {
+			if attr&kit.Bold != 0 {
 				weight = ";font-weight:bold"
 			}
 			fmt.Fprintf(&sb, "<span style=\"color:#%06x;background:#%06x%s\">%s</span>", fg.Hex(), bg.Hex(), weight, r)

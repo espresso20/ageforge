@@ -183,13 +183,13 @@ func (t *nativeText) SetDoneFunc(fn func(key kit.KeyCode)) *nativeText {
 	return t
 }
 
-func (t *nativeText) SetTextColor(c tcell.Color) *nativeText {
-	t.body.Style.Fg = kitColor(c)
+func (t *nativeText) SetTextColor(c kit.Color) *nativeText {
+	t.body.Style.Fg = c
 	return t
 }
 
-func (t *nativeText) SetBackgroundColor(c tcell.Color) *nativeText {
-	t.box.Ground = kitColor(c)
+func (t *nativeText) SetBackgroundColor(c kit.Color) *nativeText {
+	t.box.Ground = c
 	return t
 }
 
@@ -210,13 +210,13 @@ func (t *nativeText) SetTitleAlign(align kit.Align) *nativeText {
 	return t
 }
 
-func (t *nativeText) SetBorderColor(c tcell.Color) *nativeText {
-	t.box.BorderStyle.Fg = kitColor(c)
+func (t *nativeText) SetBorderColor(c kit.Color) *nativeText {
+	t.box.BorderStyle.Fg = c
 	return t
 }
 
-func (t *nativeText) SetTitleColor(c tcell.Color) *nativeText {
-	t.box.TitleStyle.Fg = kitColor(c)
+func (t *nativeText) SetTitleColor(c kit.Color) *nativeText {
+	t.box.TitleStyle.Fg = c
 	return t
 }
 
