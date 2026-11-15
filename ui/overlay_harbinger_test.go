@@ -12,8 +12,9 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// tagRe matches tview colour/attribute tags, for reading panel text plainly.
-var tagRe = regexp.MustCompile(`\[[a-zA-Z0-9#:\-]*\]`)
+// tagRe matches the kit's colour and attribute tags, and its region tags
+// (["name"]), for reading panel text plainly.
+var tagRe = regexp.MustCompile(`\[[a-zA-Z0-9#:\-]*\]|\["[^"\]]*"\]`)
 
 func untag(s string) string { return tagRe.ReplaceAllString(s, "") }
 

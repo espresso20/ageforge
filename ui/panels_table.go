@@ -94,12 +94,12 @@ func panelsRichText(active string, w, h int) string {
 		sb.WriteString(" " + theme.Paint(theme.RoleDim, strings.ToUpper(g.title.String())) + "\n")
 		for _, p := range g.panels {
 			name := p.name + strings.Repeat(" ", max(0, panelNameW-len(p.name)))
+			row := " [white]" + name + "[-] "
 			if p.name == active {
-				sb.WriteString(theme.Selected(" "+name) + " ")
-			} else {
-				sb.WriteString(" [white]" + name + "[-] ")
+				row = theme.Selected(" "+name) + " "
 			}
-			sb.WriteString(theme.Paint(theme.RoleDim, fitText(p.job.String(), max(0, w-1-panelNameW-1))) + "\n")
+			// The whole row is the panel's: a click anywhere on it opens the panel.
+			sb.WriteString(panelLink(p.name, row+theme.Paint(theme.RoleDim, fitText(p.job.String(), max(0, w-1-panelNameW-1)))) + "\n")
 		}
 	}
 	return sb.String()
