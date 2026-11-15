@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -48,7 +49,7 @@ func TestTradePage_Cards(t *testing.T) {
 		"left in this cycle", "14 cycles done",
 		"Send wood to the quarries for stone.", "Export 15 wood", "Import 12 stone",
 		"needs 1 Black Market Hub (have 0)",
-		"Commands: trade route start/stop <key>")
+		"trade route start/stop <key>")
 	barter, _ := deckCardNamed(t, pg, "Local Barter")
 	if !barter.Meter || barter.Share < 0.39 || barter.Share > 0.41 || barter.Command != "trade route stop local_barter" {
 		t.Errorf("Local Barter = %+v", barter)
@@ -122,5 +123,25 @@ func TestTradePage_AllyBonuses(t *testing.T) {
 	}
 	if out := deckText(tradePage(game.GameState{})); strings.Contains(out, "Allied bonuses") {
 		t.Errorf("no allies, yet Allied bonuses shows:\n%s", out)
+	}
+}
+
+// TestTradePageLocksRoutesWithTheFeature: while trade routes themselves are
+// locked, a route's card has no button: it says what the game would answer.
+func TestTradePageLocksRoutesWithTheFeature(t *testing.T) {
+	st := game.GameState{
+		Age:      "medieval_age",
+		Features: map[string]game.FeatureState{config.FeatureTradeRoutes: {Open: false, Tech: "the_wheel", TechName: "The Wheel"}},
+	}
+	st.Trade.AvailableRoutes = []game.TradeRouteInfo{{Key: "local_barter", Name: "Local Barter", CanStart: true}}
+	pg := tradePage(st)
+	c, ok := pg.card(0)
+	if !ok || c.Command != "" || c.Why == "" || !strings.Contains(c.Why, "The Wheel") {
+		t.Errorf("with trade routes locked the card is %+v; want no command and the refusal that names The Wheel", c)
+	}
+	st.Features[config.FeatureTradeRoutes] = game.FeatureState{Open: true}
+	pg = tradePage(st)
+	if c, _ := pg.card(0); c.Command != "trade route start local_barter" || c.Why != "" {
+		t.Errorf("with trade routes open the card is %+v; want its start command", c)
 	}
 }

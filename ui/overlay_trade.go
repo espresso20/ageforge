@@ -17,7 +17,7 @@ func tradePage(state game.GameState) deckPage {
 	trade := state.Trade
 	pg := deckPage{
 		Title: vibe.Line("ui.overlay_trade.tradePage.01", "Trade routes"),
-		Hint:  vibe.Line("ui.overlay_trade.tradePage.02", "Commands: trade route start/stop <key>"),
+		Hint:  vibe.Line("ui.overlay_trade.tradePage.02", "trade route start/stop <key>"),
 	}
 	pg.Notes = append(pg.Notes, noteLinesOf(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce, config.FeatureBlackMarket), xGold)...)
 
@@ -33,9 +33,12 @@ func tradePage(state game.GameState) deckPage {
 			deckLine{Value: vibe.Line("ui.overlay_trade.tradePage.04", "Lift your embargo with: diplomacy neutral <civ>")})
 	}
 
+	// With trade routes themselves still locked, no route can start: its
+	// card says why instead of offering a button the game would refuse.
+	refusal, routesLocked := featureRefusal(state, config.FeatureTradeRoutes)
 	open, locked := 0, 0
 	for _, r := range trade.AvailableRoutes {
-		if r.CanStart {
+		if r.CanStart && !routesLocked {
 			open++
 		} else {
 			locked++
@@ -85,14 +88,17 @@ func tradePage(state game.GameState) deckPage {
 				Title: route.Name, Desc: route.Description,
 				Lines: []deckLine{{vibe.Line("ui.overlay_trade.tradePage.18", "Export"), game.Amounts(route.Export), 0}, {vibe.Line("ui.overlay_trade.tradePage.19", "Import"), game.Amounts(route.Import), xGood}},
 			}
-			if route.CanStart {
+			if route.CanStart && !routesLocked {
 				c.Chip, c.ChipK = vibe.Line("ui.overlay_trade.tradePage.20", "ready"), xChipCivic
 				c.Action, c.Command = "start", "trade route start "+route.Key
 			} else {
 				c.Chip, c.ChipK, c.Quiet = vibe.Line("ui.overlay_trade.tradePage.22", "locked"), xKeyName, true
-				c.Why = vibe.Sprintf("ui.overlay_trade.tradePage.23", "needs %s (have %s)",
-					game.BuildingCount(route.MinCount, route.RequiredBld),
-					textfmt.Int(max(state.Buildings[route.RequiredBld].Count, state.Buildings[route.RequiredBld].HeldWithLater)))
+				c.Why = refusal
+				if !route.CanStart {
+					c.Why = vibe.Sprintf("ui.overlay_trade.tradePage.23", "needs %s (have %s)",
+						game.BuildingCount(route.MinCount, route.RequiredBld),
+						textfmt.Int(max(state.Buildings[route.RequiredBld].Count, state.Buildings[route.RequiredBld].HeldWithLater)))
+				}
 			}
 			sec.Cards = append(sec.Cards, c)
 		}
