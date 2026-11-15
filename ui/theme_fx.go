@@ -17,8 +17,8 @@ import (
 // An effect is drawn after the dashboard, over it, and only into cells
 // that hold nothing: a blank on the theme's own background, with blanks on
 // both sides of it, so text keeps clear air round it. Each frame is a pure
-// function of the frame number and the cell (the same hash as the
-// hand-drawn badges), so nothing is stored and no random number is drawn.
+// function of the frame number and the cell (a hash, see
+// theme_fx_art.go), so nothing is stored and no random number is drawn.
 // The motion setting turns it off: with motion off nothing here draws.
 
 // fxRoot is the dashboard's root: its layout, and over it the active

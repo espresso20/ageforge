@@ -20,7 +20,7 @@ import (
 // detail. Esc closes the detail, then the panel.
 //
 // What moves in the case (a platinum badge's glints, a legendary badge's
-// ring, the three hand-drawn badges) is drawn from a frame number the
+// ring, the signs of the specials) is drawn from a frame number the
 // panel reads off the clock: nothing is stored, and the game's motion
 // setting turns it off.
 

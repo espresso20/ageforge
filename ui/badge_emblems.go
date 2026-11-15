@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"hash/fnv"
 	"strconv"
 	"strings"
 
@@ -20,8 +19,8 @@ import (
 // the player has not met on the map, and whatever font shows the map shows
 // the badges. TestBadgeEmblemsAreMapGlyphs holds the table to that.
 
-// badgeEmblem is an emblem: its glyph in each tier, and the hand-drawn
-// sprite the badge wears at full size, if it has one.
+// badgeEmblem is an emblem: its glyph in each tier, and the sign the
+// badge's coin wears, if it has one.
 type badgeEmblem struct {
 	glyph   mapmodel.Glyph
 	special string
@@ -68,7 +67,7 @@ var badgeEmblems = map[string]badgeEmblem{
 	"cookie_jar": {glyph: mapmodel.G(mapmodel.SymStore), special: specialCookieJar},
 	"ledger":     {glyph: mapmodel.G(mapmodel.SymKnowledge), special: specialLedger},
 	"source":     {glyph: mapmodel.G(mapmodel.SymHacker), special: specialSource},
-	// The hand-drawn legendary badges (badge_art_legend.go). The glyph is
+	// The legendary badges' signs (medalIcons, medal_pix.go). The glyph is
 	// what the grid and the toast show.
 	"sprite.chains":    {glyph: emblemStar.glyph, special: specialChains},
 	"sprite.boxes":     {glyph: emblemStar.glyph, special: specialBoxes},
@@ -115,17 +114,32 @@ func emblemOf(name string) (e badgeEmblem, ok bool) {
 	return emblemStar, false
 }
 
-// badgePhase is a badge's own offset into the animations, from its key.
-func badgePhase(key string) int {
-	h := fnv.New32a()
-	h.Write([]byte(key))
-	return int(h.Sum32() % 24)
+// medalState is whether a badge is earned, in sight but not earned, or
+// withheld by the spoiler rules.
+type medalState uint8
+
+const (
+	medalEarned medalState = iota
+	medalLocked
+	medalHidden
+)
+
+// medal is what the renderer needs to know of a badge.
+type medal struct {
+	// tier is the badge's tier; BadgeNoTier is an integrity badge.
+	tier   config.BadgeTier
+	emblem rune
+	state  medalState
+	// crossed: earned in a modified game.
+	crossed bool
+	// special names a sign of medalIcons (medal_pix.go), "" for none.
+	special string
 }
 
 // medalOf is a badge as the renderer draws it, in a glyph tier.
 func medalOf(v game.BadgeView, tier mapmodel.GlyphTier) medal {
 	e, _ := emblemOf(v.Emblem)
-	m := medal{tier: v.Level, emblem: e.glyph.In(tier), crossed: v.Crossed, special: e.special, phase: badgePhase(v.Key)}
+	m := medal{tier: v.Level, emblem: e.glyph.In(tier), crossed: v.Crossed, special: e.special}
 	switch {
 	case v.Hidden:
 		m.state = medalHidden
@@ -135,9 +149,9 @@ func medalOf(v game.BadgeView, tier mapmodel.GlyphTier) medal {
 	return m
 }
 
-// animated reports whether a badge's full art moves: platinum glints, the
-// legendary ring turns and the hand-drawn sprites glitch. Bronze, silver
-// and gold hold still.
+// animated reports whether a badge's coin moves: platinum glints, the
+// legendary ring turns and the signs of the specials glitch. Bronze,
+// silver and gold hold still.
 func (m medal) animated() bool {
 	if m.state != medalEarned {
 		return false

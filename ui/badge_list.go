@@ -328,3 +328,7 @@ func badgeMark(v game.BadgeView, tier mapmodel.GlyphTier) string {
 	}
 	return hex(rim) + string(mark[0]) + hex(core) + lit(string(mark[1])) + hex(rim) + string(mark[2]) + "[-]"
 }
+
+// toastMark is a badge in three cells, for the one row of the header's notice:
+// the emblem between two half discs. The caller colours it.
+func toastMark(emblem rune) string { return "◖" + string(emblem) + "◗" }

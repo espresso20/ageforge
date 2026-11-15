@@ -325,201 +325,6 @@ func TestBadgeCaseSmallWindows(t *testing.T) {
 	}
 }
 
-// TestBadgeTiersDifferInShape: the five tiers, the locked frame, the
-// hidden slab and the integrity frame are told apart with no colour at
-// all, at both sizes and in the plain tier too, and a crossed badge
-// differs from the same badge earned clean.
-func TestBadgeTiersDifferInShape(t *testing.T) {
-	type look struct {
-		name string
-		md   medal
-	}
-	looks := []look{
-		{"bronze", medal{tier: config.BadgeBronze, emblem: 'x'}},
-		{"silver", medal{tier: config.BadgeSilver, emblem: 'x'}},
-		{"gold", medal{tier: config.BadgeGold, emblem: 'x'}},
-		{"platinum", medal{tier: config.BadgePlatinum, emblem: 'x'}},
-		{"legendary", medal{tier: config.BadgeLegendary, emblem: 'x'}},
-		{"integrity", medal{tier: config.BadgeNoTier, emblem: 'x'}},
-		{"locked", medal{tier: config.BadgeGold, emblem: 'x', state: medalLocked}},
-		{"hidden", medal{tier: config.BadgeGold, emblem: 'x', state: medalHidden}},
-		{"crossed bronze", medal{tier: config.BadgeBronze, emblem: 'x', crossed: true}},
-	}
-	for _, plain := range []bool{false, true} {
-		minis, fulls := map[string]string{}, map[string]string{}
-		for _, l := range looks {
-			g := newTGrid(miniW, miniH)
-			drawMini(g, 0, 0, l.md, atRest)
-			w, h := medalSize(l.md)
-			f := newTGrid(w, h)
-			drawMedal(f, 0, 0, l.md, atRest, plain)
-			if plain {
-				foldBadges(g)
-				foldBadges(f)
-			}
-			mini, full := g.String(), f.String()
-			if strings.TrimSpace(mini) == "" || strings.TrimSpace(full) == "" {
-				t.Fatalf("plain=%v: %s draws nothing", plain, l.name)
-			}
-			for other, s := range minis {
-				if s == mini {
-					t.Errorf("plain=%v: the %s and %s minis are the same shape:\n%s", plain, l.name, other, mini)
-				}
-			}
-			for other, s := range fulls {
-				// Locked takes the shape of its tier on purpose: only its
-				// emblem and its ornaments differ.
-				if s == full {
-					t.Errorf("plain=%v: %s and %s are the same shape at full size:\n%s", plain, l.name, other, full)
-				}
-			}
-			minis[l.name], fulls[l.name] = mini, full
-		}
-	}
-	// Sizes: the table of the design.
-	for tier, want := range map[config.BadgeTier][2]int{
-		config.BadgeBronze: {5, 3}, config.BadgeSilver: {9, 5}, config.BadgeGold: {13, 7},
-		config.BadgePlatinum: {13, 7}, config.BadgeLegendary: {17, 9},
-	} {
-		if w, h := medalSize(medal{tier: tier}); w != want[0] || h != want[1] {
-			t.Errorf("%s is %dx%d, want %dx%d", tier.Name(), w, h, want[0], want[1])
-		}
-		sp := tierSprite(tier)
-		for y, row := range sp.rows {
-			if len([]rune(row)) != want[0] || len(sp.roles[y]) != want[0] {
-				t.Errorf("%s: row %d of the sprite or its roles is not %d wide", tier.Name(), y, want[0])
-			}
-		}
-		ex, ey := sp.emblemCell()
-		if ex != want[0]/2 || ey != want[1]/2 {
-			t.Errorf("%s: the emblem is at %d,%d, not the middle", tier.Name(), ex, ey)
-		}
-	}
-}
-
-// TestBadgeFoldKeepsTheRim: the plain tier keeps what the map's own fold
-// would lose. The three stops of a rim fold to three marks, a round
-// corner to a point above and a tick below, a dashed edge and a solid one
-// stay apart, and nothing badge art draws is left unfolded.
-func TestBadgeFoldKeepsTheRim(t *testing.T) {
-	for _, set := range [][]rune{{'▓', '▒', '░'}, {'─', '┄', '═'}, {'│', '┆'}, {'╭', '╰'}, {'▄', '▀'}} {
-		seen := map[rune]rune{}
-		for _, r := range set {
-			f, ok := badgeFold[r]
-			if !ok {
-				t.Errorf("%q is not in the badge fold", r)
-				continue
-			}
-			if other, dup := seen[f]; dup {
-				t.Errorf("%q and %q both fold to %q", r, other, f)
-			}
-			seen[f] = r
-		}
-	}
-	for r, f := range badgeFold {
-		if f >= 0x80 || f < 0x20 {
-			t.Errorf("%q folds to %q, which is not plain", r, f)
-		}
-	}
-	// Everything the art draws, at every frame, folds to ASCII.
-	for _, md := range allMedals() {
-		for n := atRest; n < 80; n++ {
-			w, h := medalSize(md)
-			g := newTGrid(w, h)
-			drawMedal(g, 0, 0, md, n, true)
-			m := newTGrid(miniW, miniH)
-			drawMini(m, 0, 0, md, n)
-			for _, c := range append(g.c, m.c...) {
-				if c.r < 0x80 {
-					continue
-				}
-				if _, ok := badgeFold[c.r]; !ok {
-					t.Fatalf("%+v frame %d draws %q, which the badge fold does not know", md, n, c.r)
-				}
-			}
-		}
-	}
-}
-
-// allMedals is a badge of every tier and state, and the three hand-drawn
-// ones, as the plain tier and the others draw them.
-func allMedals() []medal {
-	var out []medal
-	for _, tier := range []config.BadgeTier{config.BadgeBronze, config.BadgeSilver, config.BadgeGold, config.BadgePlatinum, config.BadgeLegendary} {
-		for _, state := range []medalState{medalEarned, medalLocked, medalHidden} {
-			out = append(out, medal{tier: tier, emblem: 'x', state: state, phase: 5})
-		}
-		out = append(out, medal{tier: tier, emblem: 'x', crossed: true})
-	}
-	for _, sp := range []string{specialCookieJar, specialLedger, specialSource} {
-		out = append(out, medal{emblem: 'x', special: sp, phase: 3}, medal{emblem: 'x', special: sp, crossed: true})
-	}
-	return out
-}
-
-// TestBadgeFramesArePure: a frame is a function of the badge and the frame
-// number and nothing else. Drawing the same frame twice gives the same
-// cells; bronze, silver and gold never move; platinum, legendary and the
-// hand-drawn badges do; and at rest nothing moves at all. Every frame
-// stays inside the badge's own box and on the cell grid.
-func TestBadgeFramesArePure(t *testing.T) {
-	for _, md := range allMedals() {
-		w, h := medalSize(md)
-		draw := func(n int, plain bool) string {
-			// A margin all round: a frame that draws outside its box shows.
-			g := newTGrid(w+4, h+4)
-			drawMedal(g, 2, 2, md, n, plain)
-			for i, c := range g.c {
-				x, y := i%g.w, i/g.w
-				if c.r != ' ' && (x < 2 || x >= 2+w || y < 2 || y >= 2+h) {
-					t.Fatalf("%+v frame %d draws %q at %d,%d, outside its %dx%d box", md, n, c.r, x-2, y-2, w, h)
-				}
-				if c.r != ' ' && uniseg.StringWidth(string(c.r)) != 1 {
-					t.Fatalf("%+v frame %d draws %q, which is not one cell wide", md, n, c.r)
-				}
-			}
-			var sb strings.Builder
-			for _, c := range g.c {
-				fmt.Fprintf(&sb, "%c%d.%d.%d ", c.r, c.k, c.ink, c.fl)
-			}
-			return sb.String()
-		}
-		for _, plain := range []bool{false, true} {
-			rest := draw(atRest, plain)
-			if rest != draw(atRest, plain) {
-				t.Errorf("%+v: the frame at rest is not the same twice", md)
-			}
-			moved := false
-			for n := 0; n < 96; n++ {
-				f := draw(n, plain)
-				if f != draw(n, plain) {
-					t.Fatalf("%+v: frame %d is not the same twice", md, n)
-				}
-				moved = moved || f != rest
-			}
-			if want := md.animated(); moved != want {
-				t.Errorf("%+v plain=%v: moves=%v, want %v", md, plain, moved, want)
-			}
-		}
-	}
-	// The mini: only the legendary one moves.
-	for _, md := range allMedals() {
-		rest := newTGrid(miniW, miniH)
-		drawMini(rest, 0, 0, md, atRest)
-		moved := false
-		for n := 0; n < 96; n++ {
-			g := newTGrid(miniW, miniH)
-			drawMini(g, 0, 0, md, n)
-			for i := range g.c {
-				moved = moved || g.c[i] != rest.c[i]
-			}
-		}
-		if want := md.state == medalEarned && md.tier == config.BadgeLegendary && md.special == ""; moved != want {
-			t.Errorf("%+v: the mini moves=%v, want %v", md, moved, want)
-		}
-	}
-}
-
 // TestLegendaryShimmerShowsInThePlainTier: a legendary coin is a picture in
 // the plain tier too, and its picture changes with the clock while the
 // picture of a coin that is not earned does not.
@@ -549,9 +354,8 @@ func TestLegendaryShimmerShowsInThePlainTier(t *testing.T) {
 	}
 }
 
-// TestBadgeArtPaintsInEveryTheme paints the case, the detail and every
-// frame of the moving badges on a screen in every theme, and holds the
-// colours to the rules:
+// TestBadgeArtPaintsInEveryTheme paints the case and the detail on a screen
+// in every theme, and holds the colours to the rules:
 //
 //   - nothing is drawn in its own background colour;
 //   - art and text clear a contrast of 3.0 against what they sit on (a
@@ -601,15 +405,6 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 				}
 			}
 		}
-		for _, md := range allMedals() {
-			for n := atRest; n < 48; n++ {
-				w, h := medalSize(md)
-				g := newTGrid(w, h)
-				drawMedal(g, 0, 0, md, n, false)
-				check(fmt.Sprintf("%+v frame %d", md, n), g)
-			}
-		}
-
 		// The slab against bronze.
 		slab, _, _ := pal.styles[tsSlab].Decompose()
 		bronze := pal.inkOn(inkBronze, false)
@@ -732,7 +527,7 @@ func TestBadgeEmblemsAreMapGlyphs(t *testing.T) {
 			if def.Tier != config.BadgeLegendary {
 				t.Errorf("%s (%s) wears the sprite %q: the hand-drawn sprites are the legendary badges'", def.Key, def.Tier.Name(), e.special)
 			}
-			if _, ok := legendSprites[e.special]; !ok {
+			if _, ok := medalIcons[e.special]; !ok {
 				t.Errorf("%s names the sprite %q, which is not drawn", def.Key, e.special)
 			}
 		case def.Tier == config.BadgeLegendary && def.Family == "special":
@@ -742,8 +537,14 @@ func TestBadgeEmblemsAreMapGlyphs(t *testing.T) {
 	if integrity != 3 {
 		t.Errorf("the catalog has %d integrity badges with sprites, want 3", integrity)
 	}
-	if drawn != len(legendSprites) {
-		t.Errorf("%d badges wear a legendary sprite and %d are drawn: one each", drawn, len(legendSprites))
+	legend := 0
+	for key := range medalIcons {
+		if strings.HasPrefix(key, "legend.") {
+			legend++
+		}
+	}
+	if drawn != legend {
+		t.Errorf("%d badges wear a legendary sprite and %d are drawn: one each", drawn, legend)
 	}
 	for _, lin := range mapmodel.LineageOrder {
 		if _, ok := emblemOf(emblemLineage + lin); !ok {
