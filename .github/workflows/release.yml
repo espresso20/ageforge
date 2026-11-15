@@ -29,7 +29,8 @@ jobs:
           GOOS=linux   GOARCH=arm64 go build -ldflags "$LDFLAGS" -o dist/ageforge-linux-arm64   .
           GOOS=darwin  GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/ageforge-macos-amd64   .
           GOOS=darwin  GOARCH=arm64 go build -ldflags "$LDFLAGS" -o dist/ageforge-macos-arm64   .
-          GOOS=windows GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/ageforge-windows-amd64.exe .
+          # windowsgui: the game is its own window, so no console opens beside it.
+          GOOS=windows GOARCH=amd64 go build -ldflags "$LDFLAGS -H=windowsgui" -o dist/ageforge-windows-amd64.exe .
 
       - name: Generate checksums
         run: |

@@ -82,7 +82,7 @@ release:
 	@GOOS=darwin  GOARCH=amd64 go build -o ./bin/ageforge-darwin-amd64
 	@GOOS=darwin  GOARCH=arm64 go build -o ./bin/ageforge-darwin-arm64
 	@GOOS=linux   GOARCH=amd64 go build -o ./bin/ageforge-linux-amd64
-	@GOOS=windows GOARCH=amd64 go build -o ./bin/ageforge-windows-amd64.exe
+	@GOOS=windows GOARCH=amd64 go build -ldflags "-H=windowsgui" -o ./bin/ageforge-windows-amd64.exe
 	@echo "\033[0;32m[  OK  ]\033[0m Release builds complete"
 
 # Bump version, update CHANGELOG, commit, tag, and push to trigger CI release
