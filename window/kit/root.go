@@ -29,6 +29,9 @@ type Root struct {
 	size    image.Point
 	hover   Widget // the widget the pointer is over
 	capture Widget // the widget that took a press, until the button comes up
+	at      image.Point
+	in      bool    // the pointer is on the screen, at at
+	shape   Pointer // the shape it was last given
 	press   struct {
 		at time.Time
 		pt image.Point
@@ -160,6 +163,21 @@ func (r *Root) Paint(b *Buffer) {
 	for _, l := range r.layers {
 		l.w.Paint(p)
 	}
+	// What is under a still pointer may have changed with this paint.
+	r.shape = r.pointer()
+	b.Pointer = r.shape
+}
+
+// pointer is the shape the mouse pointer takes where it is now. While a
+// press is held it keeps the shape it had.
+func (r *Root) pointer() Pointer {
+	switch {
+	case !r.in:
+		return PointerArrow
+	case r.capture != nil:
+		return r.shape
+	}
+	return pointerAt(pathAt(r.Top(), r.at), r.at)
 }
 
 // Key gives the tree a key, and reports whether anything used it.
@@ -241,9 +259,20 @@ func (r *Root) dropPointer() {
 }
 
 // Mouse gives the tree a mouse event, and reports whether the screen may
-// look different for it (something used it, or the hover moved). A
-// MouseLeave says the pointer has left the screen.
+// look different for it (something used it, the hover moved, or the pointer
+// takes another shape). A MouseLeave says the pointer has left the screen.
 func (r *Root) Mouse(m Mouse) bool {
+	changed := r.mouse(m)
+	if r.in = m.Kind != MouseLeave; r.in {
+		r.at = m.Pt()
+	}
+	if s := r.pointer(); s != r.shape {
+		r.shape, changed = s, true
+	}
+	return changed
+}
+
+func (r *Root) mouse(m Mouse) bool {
 	if m.Kind == MouseLeave {
 		// A press that was still held ends here: its widget is told the
 		// button came up, away from it.

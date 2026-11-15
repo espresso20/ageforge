@@ -14,6 +14,14 @@ import (
 // container lays each child out, paints it into the page's one buffer and
 // sends it the mouse.
 
+// handIf is the hand where a click would act, and the arrow elsewhere.
+func handIf(acts bool) kit.Pointer {
+	if acts {
+		return kit.PointerHand
+	}
+	return kit.PointerArrow
+}
+
 // widgetOf is p as a kit container holds it: itself, or nothing for nil (a
 // gap). A nil of some pointer type is no primitive either.
 func widgetOf(p Primitive) kit.Widget {

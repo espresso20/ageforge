@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"os"
 	"path/filepath"
 	"strings"
@@ -435,6 +436,52 @@ func TestConstructionRowsFit(t *testing.T) {
 	}
 	if empty := untag(layoutConstruction(game.GameState{}, 27, 1)[0]); !strings.Contains(empty, "nothing") {
 		t.Errorf("an empty queue says so in 27 cells: %q", empty)
+	}
+}
+
+// A click on a panel's name in the dashboard's Panels list opens the panel,
+// as typing the name and Enter does, and leaves what is typed in the prompt
+// alone. The pointer is the hand over a name.
+func TestAClickOnThePanelsListOpensThePanel(t *testing.T) {
+	d, pages := newTestDashboard(game.NewGameEngine())
+	d.refresh()
+	d.runForTest("research")
+	want := d.overlayMgr.ActiveName()
+	d.overlayMgr.Hide()
+	if want == "" || d.overlayMgr.HasActive() {
+		t.Fatalf("staging: typing research opened %q, and Hide left a panel open: %v", want, d.overlayMgr.HasActive())
+	}
+	for _, size := range [][2]int{{160, 42}, {100, 30}, {90, 24}} { // the rich list, two columns, the packed list
+		st := newStage(pages, size[0], size[1])
+		x, y, w, h := d.sidebar.GetInnerRect()
+		at := image.Pt(-1, -1)
+		for j := y; j < y+h && at.X < 0; j++ {
+			row := make([]rune, w)
+			for i := range row {
+				row[i] = st.buf.At(x+i, j).R
+			}
+			if i := strings.Index(string(row), "research"); i >= 0 {
+				at = image.Pt(x+len([]rune(string(row)[:i]))+2, j)
+			}
+		}
+		if at.X < 0 {
+			t.Fatalf("%dx%d: the Panels list does not show research", size[0], size[1])
+		}
+		d.inputField.SetText("bui")
+		typed := len(d.cmdHistory)
+		st.mouse(kit.Mouse{Kind: kit.MouseMove, X: at.X, Y: at.Y})
+		if st.paint(); st.buf.Pointer != kit.PointerHand {
+			t.Errorf("%dx%d: over a panel's name the pointer's shape is %d, want the hand", size[0], size[1], st.buf.Pointer)
+		}
+		st.click(at.X, at.Y)
+		if got := d.overlayMgr.ActiveName(); got != want {
+			t.Errorf("%dx%d: a click on research opened %q, want %q", size[0], size[1], got, want)
+		}
+		if d.inputField.GetText() != "bui" || len(d.cmdHistory) != typed {
+			t.Errorf("%dx%d: the click changed the prompt (%q) or its history (%d lines, was %d)", size[0], size[1], d.inputField.GetText(), len(d.cmdHistory), typed)
+		}
+		d.inputField.SetText("")
+		d.overlayMgr.Hide()
 	}
 }
 

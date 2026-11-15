@@ -580,6 +580,9 @@ func TestAdvancePanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0), 1) {
 		t.Error("a click on the frame changed something")
 	}
+	if p.PointerAt(pillar(1)) != kit.PointerHand || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
+		t.Error("the hand should show over a pillar and not over the frame")
+	}
 	// A double click picks and nothing more, even on a gate that is met:
 	// advancing stays on Enter.
 	meetTheGate(t, eng)

@@ -212,23 +212,23 @@ func TestRegistryCommandsRun(t *testing.T) {
 }
 
 // TestDashboardCommandsHandled: a registry command marked Dashboard is one
-// submitInput handles itself.
+// runLine handles itself.
 func TestDashboardCommandsHandled(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "dashboard.go", nil, 0)
 	must(t, err)
 	var words map[string]bool
 	for _, d := range f.Decls {
-		if fd, ok := d.(*ast.FuncDecl); ok && fd.Name.Name == "submitInput" {
+		if fd, ok := d.(*ast.FuncDecl); ok && fd.Name.Name == "runLine" {
 			words = comparedWords(fd.Body)
 		}
 	}
 	if words == nil {
-		t.Fatal("Dashboard.submitInput not found")
+		t.Fatal("Dashboard.runLine not found")
 	}
 	for _, c := range registry() {
 		if c.Dashboard && !words[c.Name] {
-			t.Errorf("registry marks %q Dashboard, but submitInput doesn't handle it", c.Name)
+			t.Errorf("registry marks %q Dashboard, but runLine doesn't handle it", c.Name)
 		}
 	}
 }

@@ -294,6 +294,9 @@ func TestPeoplePanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0)) {
 		t.Error("a click on the frame changed something")
 	}
+	if p.PointerAt(centre(hitTab, tabArmy)) != kit.PointerHand || p.PointerAt(centre(hitRow, 0)) != kit.PointerHand || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
+		t.Error("the hand should show over a tab and a row, and not over the frame")
+	}
 	p.view.row = 0
 	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || (peopleRows(st, tabArmy) > 1 && p.view.row != 1) {
 		t.Errorf("the wheel left the pick on row %d", p.view.row)

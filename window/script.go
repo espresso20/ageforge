@@ -15,7 +15,8 @@ import (
 // script is a dev-only hook (AGEFORGE_WINDOW_SCRIPT=<file>) for checking the
 // window without a person: one step per line, "wait N" frames, "key enter|esc|
 // up|down|tab", "text abc", "shot <file.png>", "quit", and on the map's canvas (art pixels) "click x y", "focus x y", "wheel x y n", "drag x1 y1 x2 y2".
-// For the game's own screens, at a cell of the grid: "mouse move|press|release x y" and "mouse wheel x y rows".
+// For the game's own screens, at a cell of the grid: "mouse move|press|release x y" and "mouse wheel x y rows";
+// "pointer <file>" writes the shape the mouse pointer has there.
 type script struct {
 	steps []string
 	i     int
@@ -81,6 +82,8 @@ func (s *script) step(g *Game) bool {
 		}
 	case "shot":
 		s.shot = arg
+	case "pointer": // the pointer's shape, as the digit of its kit.Pointer
+		_ = os.WriteFile(arg, []byte{'0' + byte(g.pointing)}, 0o644)
 	case "quit":
 		return true
 	}

@@ -82,6 +82,16 @@ func TestADialogKeepsThePointerFromThePageBeneath(t *testing.T) {
 		t.Errorf("a press beside the dialog moved the list beneath to row %d (answers given: %d)", under.GetCurrentItem(), asked)
 	}
 	st.paint()
+	// The pointer is the hand on the dialog's button, and the arrow beside
+	// the dialog, though a row of the list is under it there.
+	st.mouse(kit.Mouse{Kind: kit.MouseMove, X: bx + 1, Y: by})
+	if st.paint(); st.buf.Pointer != kit.PointerHand {
+		t.Errorf("over the dialog's button the pointer's shape is %d, want the hand", st.buf.Pointer)
+	}
+	st.mouse(kit.Mouse{Kind: kit.MouseMove, X: 2, Y: 1})
+	if st.paint(); st.buf.Pointer != kit.PointerArrow {
+		t.Errorf("beside the dialog, over a row of the list beneath, the shape is %d, want the arrow", st.buf.Pointer)
+	}
 	st.click(bx+1, by)
 	if asked != 1 {
 		t.Errorf("a click on the dialog's button gave %d answers, want 1", asked)

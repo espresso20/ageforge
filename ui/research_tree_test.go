@@ -993,8 +993,14 @@ func TestResearchPanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0), 1) {
 		t.Error("a click on the title bar changed something")
 	}
+	if p.PointerAt(at(other)) != kit.PointerHand || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
+		t.Error("the hand should show over a tech and not over the title bar")
+	}
 	if !press(at(other), 2) || !p.view.card {
 		t.Error("a double click did not open the card")
+	}
+	if p.PointerAt(at(other)) != kit.PointerArrow {
+		t.Error("with the card open the hand still shows over the tech behind it")
 	}
 	drawPrimitive(t, p, 80, 21)
 	if press(image.Pt(ox+mw/2, oy+mh/2), 1) {

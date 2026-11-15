@@ -339,6 +339,8 @@ func (d *Dashboard) build() {
 	// Sidebar — command panel hints, laid out for the room it has: one
 	// column when the names fit that way, two when the screen is short.
 	d.sidebar = newFitView(func(w, h int) string { return sidebarText(d.sidebarActive, w, h) })
+	// A click on a panel's name opens it, as typing the name does.
+	d.sidebar.body.OnRegion = d.runLine
 	d.sidebar.SetBorder(true)
 	theme.Track(func() { d.sidebar.SetTitleColor(theme.Of(theme.RoleAccent)) })
 
@@ -655,6 +657,10 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 	}
 }
 
+// panelLink is a panel's name as the Panels list shows it, in a region named
+// for the panel: a click on it opens the panel.
+func panelLink(name, shown string) string { return `["` + name + `"]` + shown + `[""]` }
+
 // sidebarPanels is the Panels list, in order.
 var sidebarPanels = []string{"milestones", "badges", "research", "plan", "charter", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
 
@@ -665,9 +671,9 @@ func buildSidebarText(active string) string {
 	sb.WriteString("\n")
 	for _, cmd := range sidebarPanels {
 		if cmd == active {
-			sb.WriteString(" " + theme.Selected(fmt.Sprintf(" %-10s ", cmd)) + "\n")
+			sb.WriteString(" " + panelLink(cmd, theme.Selected(fmt.Sprintf(" %-10s ", cmd))) + "\n")
 		} else {
-			sb.WriteString(fmt.Sprintf(" [white]%-10s[-]\n", cmd))
+			sb.WriteString(" " + panelLink(cmd, fmt.Sprintf("[white]%-10s[-]", cmd)) + "\n")
 		}
 	}
 	return sb.String()
@@ -695,9 +701,9 @@ func sidebarText(active string, w, h int) string {
 	cell := func(cmd string, width int) string {
 		padded := cmd + strings.Repeat(" ", max(width-len(cmd), 0))
 		if cmd == active {
-			return theme.Selected(padded)
+			return panelLink(cmd, theme.Selected(padded))
 		}
-		return "[white]" + padded + "[-]"
+		return panelLink(cmd, "[white]"+padded+"[-]")
 	}
 	// pack writes names as rows of at most room cells, a space between two.
 	pack := func(names []string, room int) [][]string {
@@ -1490,6 +1496,13 @@ func (d *Dashboard) submitInput() {
 		}
 		d.cmdHistory = append(d.cmdHistory, cmd)
 	}
+	d.runLine(text)
+}
+
+// runLine does what a command line asks, as Enter on it does. It leaves the
+// prompt and its history alone: they are the typist's.
+func (d *Dashboard) runLine(text string) {
+	cmd := strings.TrimSpace(text)
 	if strings.ToLower(cmd) == "quit" {
 		// The same way out as Ctrl+C and a signal: the game in play is
 		// stopped and saved to its own save. (A failure has nowhere to be

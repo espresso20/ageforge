@@ -7,6 +7,8 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, a click on a name in the dashboard's Panels list opens that panel, as typing the name does. What is typed in the prompt stays as it is.
+- In the window, the mouse pointer turns into a hand over anything a click acts on (menu entries, buttons, rows, badges, techs, tabs, pillars, expedition pins) and into a text bar over a line you can type in.
 - In the window, the mouse wheel over the dashboard's Buildings list moves it one building at a time.
 - In the window, the Badges tab row takes clicks: a click on a tab opens it, and a click on the arrow at an end of the row opens the nearest tab out of sight that way.
 - In the window, the game's dialogs take the mouse: a click presses a button on a confirmation (deleting a save, wiping an account's saves, the save choice), a notice, or the update check. Keys work as before: Tab and the arrows move between buttons, Enter presses, Esc cancels.

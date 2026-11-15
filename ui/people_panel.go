@@ -98,6 +98,17 @@ func (p *peoplePanel) Mouse(m kit.Mouse) bool {
 	return false
 }
 
+// PointerAt: the hand over a tab and over a row a click would pick.
+func (p *peoplePanel) PointerAt(at image.Point) kit.Pointer {
+	if p.grid == nil {
+		return kit.PointerArrow
+	}
+	pt := at.Sub(p.Bounds().Min)
+	_, tab := p.grid.hitAt(hitTab, pt)
+	_, row := p.grid.hitAt(hitRow, pt)
+	return handIf(tab || row)
+}
+
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt every key belongs to the prompt.
 func (p *peoplePanel) routeKey(ev *kit.Key, prompt string) bool {

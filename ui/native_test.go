@@ -33,6 +33,9 @@ func TestMenuMouseSelectsAndOpens(t *testing.T) {
 	if r.m.Mouse(kit.Mouse{Kind: kit.MouseMove, X: 0, Y: 0}) || r.m.view.items[r.m.view.sel].id != miSettings {
 		t.Error("off the entries the selection stays where it was")
 	}
+	if r.m.PointerAt(at) != kit.PointerHand || r.m.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
+		t.Error("the hand should show over an entry and not off the list")
+	}
 	r.m.Mouse(kit.Mouse{Kind: kit.MousePress, X: at.X, Y: at.Y})
 	if !r.m.settings {
 		t.Fatal("a click on Settings should open the Settings page")
