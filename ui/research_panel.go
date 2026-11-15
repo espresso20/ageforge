@@ -148,9 +148,9 @@ func (p *researchPanel) Paint(p2 *kit.Painter) {
 	paintGridKit(p2, grid, r.Min, newGridPalette(len(lanes), func(i int) string { return lanes[i].Hue }))
 }
 
-// Mouse: a click selects the tech under the pointer and a double click
-// opens its card, as Enter does; a click outside an open card closes it, as
-// Esc does; the wheel moves the selection a tech a notch, as the arrows do.
+// Mouse: a click picks the tech under the pointer and opens its card, as
+// Enter on it does; a click outside an open card closes it, as Esc does;
+// the wheel moves the selection a tech a notch, as the arrows do.
 func (p *researchPanel) Mouse(m kit.Mouse) bool {
 	if p.model == nil {
 		return false
@@ -174,11 +174,11 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 	if key == "" {
 		return false
 	}
+	// A click picks the tech and opens its card, as Enter on it does: a
+	// click that only moved the pick looked like nothing had happened.
 	p.view.sel = key
 	p.layout()
-	if m.Clicks == 2 {
-		p.handleKey(kit.KeyEnter)
-	}
+	p.handleKey(kit.KeyEnter)
 	return true
 }
 

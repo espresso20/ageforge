@@ -33,6 +33,17 @@ const (
 	richDetailMinRows    = 42
 )
 
+// miniMapMinCols and miniMapMinRows are the smallest terminal the mini map
+// shows on in the classic layout (under richMinCols columns; from 100
+// columns it takes one more row, 37): the Panels list in its shortest form,
+// a box of miniShortestInnerH picture rows under it, and the People box
+// under that. The rich layout shows the mini map at every size it is drawn
+// on. The wiki and the minimap command quote them (TestMiniMapAppearsWhereTheDocsSay).
+const (
+	miniMapMinCols = 80
+	miniMapMinRows = 36
+)
+
 // dashRich says whether a w by h terminal gets the rich layout.
 func dashRich(w, h int) bool { return w >= richMinCols && h >= richMinRows }
 
@@ -51,6 +62,14 @@ func richPeopleHeight(termH int) int {
 type dashBody struct {
 	*nativeGroup
 	econ, panels, people Primitive
+	// mini is the mini map, a square box under the Panels list; miniOff is
+	// the minimap setting turned off. miniShown reports whether the last
+	// layout gave it room (miniFits: the size has room, whatever the model
+	// and the setting say), miniDrawn that there was a layout at all (before
+	// it, there is no real size).
+	mini                           Primitive
+	miniOff                        bool
+	miniShown, miniFits, miniDrawn bool
 	// screen is the terminal's size.
 	screen func() (w, h int)
 	// classicPeople is the People box's height, border included, in the
@@ -62,10 +81,12 @@ type dashBody struct {
 	// the same size.
 	switched func()
 	rich     bool
+	// modelReady reports whether the mini map has a model to draw.
+	modelReady func() bool
 }
 
-func newDashBody(econ, panels, people Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
-	b := &dashBody{econ: econ, panels: panels, people: people, screen: screen, classicPeople: classicPeople}
+func newDashBody(econ, panels, people, mini Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
+	b := &dashBody{econ: econ, panels: panels, people: people, mini: mini, screen: screen, classicPeople: classicPeople}
 	b.nativeGroup = newNativeGroup(b.arrange)
 	return b
 }
@@ -88,12 +109,79 @@ func (b *dashBody) arrange(x, y, w, h int) {
 	}
 	side = min(side, w)
 	b.put(b.econ, x, y, w-side, h)
-	if rich {
-		// The People box is in the economy tab's Under construction row.
-		b.put(b.panels, x+w-side, y, side, h)
-		return
+	// The right column: the Panels list, then the mini map, then (in the
+	// classic layout) the People box. In the rich layout the People box is
+	// in the economy tab's Under construction row.
+	ph := 0
+	if !rich {
+		ph = min(b.classicPeople(), h)
 	}
-	ph := min(b.classicPeople(), h)
-	b.put(b.panels, x+w-side, y, side, h-ph)
-	b.put(b.people, x+w-side, y+h-ph, side, ph)
+	region := h - ph
+	mh := miniBoxHeight(side, region)
+	b.miniFits = mh > 0
+	if b.miniOff || b.mini == nil || !b.miniReady() {
+		mh = 0
+	}
+	b.miniShown, b.miniDrawn = mh > 0, true
+	b.put(b.panels, x+w-side, y, side, region-mh)
+	if mh > 0 {
+		b.put(b.mini, x+w-side, y+region-mh, side, mh)
+	}
+	if ph > 0 {
+		b.put(b.people, x+w-side, y+h-ph, side, ph)
+	}
+}
+
+// miniReady is set by the dashboard: false until a refresh has built the
+// mini map's model.
+func (b *dashBody) miniReady() bool { return b.modelReady != nil && b.modelReady() }
+
+// wantsModel reports whether the mini map needs a model: it is on and
+// room, or nothing has been laid out yet.
+func (b *dashBody) wantsModel() bool { return !b.miniOff && (!b.miniDrawn || b.miniFits) }
+
+// miniShortestInnerH is the fewest picture rows a mini map shorter than
+// square is shown with.
+const miniShortestInnerH = 8
+
+// miniBoxHeight is the mini map's height, border included, in a right
+// column w wide with h rows for the Panels list and the mini map together,
+// or 0 (hidden). The Panels list always lists every panel. The forms of the
+// list are tried in turn, from the form it has by itself (the rows
+// sidebarText picks a form from) to the shortest, twice: first for a box
+// about square on screen (a cell is about 2.1 times taller than wide; a
+// row short of square counts), then for a shorter box of at least
+// miniShortestInnerH picture rows. So the list gives up its groups, then
+// its single column, before the map gives up its shape. When no form
+// leaves room there is no mini map.
+func miniBoxHeight(w, h int) int {
+	square := int(float64(w)/2.1 + 0.5)
+	if square < miniMinInnerH {
+		return 0
+	}
+	forms := panelsFormRows(w - 2)
+	own := 0
+	for own < len(forms)-1 && h-2 < forms[own] {
+		own++
+	}
+	for _, least := range [2]int{square - 1, miniShortestInnerH} {
+		for f := own; f < len(forms); f++ {
+			if picture := h - (forms[f] + 2) - 2; picture >= least {
+				return min(picture, square) + 2
+			}
+		}
+	}
+	return 0
+}
+
+// panelsFormRows is the fewest rows inside the box each form of the Panels
+// list needs, in w cells, longest form first: the grouped list (when w has
+// room for it), a name a row, and two columns.
+func panelsFormRows(w int) []int {
+	n := len(sidebarPanels)
+	forms := []int{n, (n + 1) / 2}
+	if w >= panelsRichWidth() {
+		forms = append([]int{panelsRichRows()}, forms...)
+	}
+	return forms
 }

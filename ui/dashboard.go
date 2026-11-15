@@ -154,7 +154,7 @@ type Dashboard struct {
 	barOverlays map[string]barOverlay
 
 	miniMap  *miniMap
-	mapDock  *mapDock
+	body     *dashBody
 	mapLocal *mapSettings
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
@@ -217,6 +217,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.settings = d.mapSettings
 	d.expPanel.prompt = d.researchPanel.prompt
 	d.expPanel.toPrompt = d.handToPrompt
+	d.expPanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
 	d.overlayMgr.Register("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradeProvider)
 	// The Factions panel, under two names pointing at one provider (the
@@ -245,6 +246,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// the command bar as well.
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.handToPrompt
+	d.peoplePanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
@@ -538,13 +540,6 @@ func (d *Dashboard) build() {
 	// Under construction (econColumn shares the height out).
 	d.economyTab.AddToLeftColumn(d.logTV)
 
-	// The mini map docks above the Buildings list and hides itself when the
-	// terminal is too small for it (mapDock).
-	d.economyTab.WrapBuildings(func(list Primitive) Primitive {
-		d.mapDock = newMapDock(d.miniMap, list)
-		return d.mapDock
-	})
-
 	// People box: the population and its four kinds. In the classic layout it
 	// is below the Panels list in the right column, as tall as its lines; in
 	// the rich layout it is the right half of the Under construction row
@@ -572,7 +567,9 @@ func (d *Dashboard) build() {
 	// Main horizontal: the economy tab (the full height) and the Panels
 	// column, with the People box under the list unless the layout is rich.
 	d.peopleH = workerMiniBaseRows + 2
-	mainHoriz := newDashBody(d.economyTab.Root(), d.sidebar, d.workerMiniTV, d.screenSize, func() int { return d.peopleH })
+	mainHoriz := newDashBody(d.economyTab.Root(), d.sidebar, d.workerMiniTV, d.miniMap, d.screenSize, func() int { return d.peopleH })
+	mainHoriz.modelReady = func() bool { return d.miniMap.model != nil }
+	d.body = mainHoriz
 	mainHoriz.switched = func() { d.workerMiniTV.stale = true }
 
 	// Content area is just mainHoriz: no bottom strip
@@ -994,8 +991,8 @@ func (d *Dashboard) refresh() {
 	// (before the first layout the dock has no size yet, so build it
 	// anyway).
 	set := d.mapSettings()
-	d.mapDock.off = !set.Minimap
-	if d.mapDock.wantsModel() {
+	d.body.miniOff = !set.Minimap
+	if d.body.wantsModel() {
 		d.miniMap.update(set, &state)
 		d.miniMap.pointAt(d.mapPanel)
 	}
@@ -1589,7 +1586,7 @@ func (d *Dashboard) runLine(text string) {
 	}
 	if result.MapPref.Key != "" {
 		d.applyMapPref(result.MapPref)
-		d.mapDock.off = !d.mapSettings().Minimap
+		d.body.miniOff = !d.mapSettings().Minimap
 	}
 	if result.MapFlows != "" {
 		result.Message = flowsReply(d.mapPanel.setFlows(result.MapFlows))

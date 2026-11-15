@@ -360,6 +360,7 @@ func renderExpedition(state game.GameState, v expView, w, h int) *xgrid {
 	}
 	v.frame = max(v.frame, 0)
 	g.box(0, 0, w, h, xBorder, vibe.Line("ui.expedition_view.renderExpedition.01", "Expeditions · ")+state.AgeName, xTitle, false)
+	g.closeButton(w)
 	if l.small {
 		g.put(2, 2, fitText(vibe.Line("ui.expedition_view.renderExpedition.02", "The window is too small for the expeditions panel. Esc closes it."), w-4), xBad)
 		return g
@@ -401,7 +402,7 @@ func header(g *xgrid, state game.GameState, v expView, l expLayout) {
 		g.put(x+1, 1, vibe.Sprintf("ui.expedition_view.header.03", "● %d new", mil.ReturnsMade-mil.ReturnsSeen), xLegend)
 	}
 	rank := " " + rankLine(state) + " "
-	g.put(l.w-3-len([]rune(rank)), 0, rank, xText)
+	g.put(l.w-closeButtonCols-len([]rune(rank)), 0, rank, xText)
 	home := textfmt.Number(float64(state.Military.SoldierCount))
 	posted := textfmt.Number(float64(state.Military.SoldierCount + state.Military.SoldiersAway))
 	soldiers, of, atHome := vibe.Line("ui.expedition_view.header.07", "Soldiers "), txtOf.String(), vibe.Line("ui.expedition_view.header.09", " at home")
@@ -576,24 +577,29 @@ func boolRank(b bool) int {
 	return 0
 }
 
-// expKeyBar writes the key hints along the foot, as many as fit. Each is a
-// key and what it does; hint is a last note, dropped first.
+// expKeyBar writes the keys along the foot as buttons. Each is a key and
+// what it does. The last one (how to close the panel) is there whenever it
+// fits; the others are those that fit before it, in order; hint is a last
+// note, dropped first.
 func expKeyBar(g *xgrid, l expLayout, keys [][2]string, hint string) {
 	x := 2
 	room := l.w - 2
+	last, closeW := len(keys)-1, 0
+	if last >= 0 {
+		closeW = keyButtonW(keys[last][0], keys[last][1])
+	}
 	for i, kv := range keys {
-		need := len([]rune(kv[0])) + 1 + len([]rune(kv[1]))
-		if i > 0 {
-			need += 3
+		at := x
+		if x > 2 {
+			at++
 		}
-		if x+need > room {
-			return
+		end := at + keyButtonW(kv[0], kv[1])
+		if i < last {
+			end += 1 + closeW
 		}
-		if i > 0 {
-			x = g.put(x, l.footY, " · ", xFaint)
+		if end <= room {
+			x = g.keyButton(at, l.footY, kv[0], kv[1])
 		}
-		x = g.put(x, l.footY, kv[0], xAccent)
-		x = g.put(x, l.footY, " "+kv[1], xDim)
 	}
 	if hint != "" {
 		lead := vibe.Line("ui.expedition_view.expKeyBar.01", " · or type ")

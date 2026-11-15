@@ -59,7 +59,14 @@ func TestPeopleBoxBesideUnderConstruction(t *testing.T) {
 				t.Errorf("%s: the People box is %d rows, want %d", where, ppl[3], want)
 			}
 			_, bodyY, _, bodyH := d.contentArea.GetRect()
-			if pan[1] != bodyY || pan[3] != bodyH {
+			// The Panels list and, under it when it shows, the mini map are the
+			// whole column.
+			panH := pan[3]
+			if d.body.miniShown {
+				_, _, _, mh := d.miniMap.GetRect()
+				panH += mh
+			}
+			if pan[1] != bodyY || panH != bodyH {
 				t.Errorf("%s: the Panels list %v is not the whole column (rows %d to %d)", where, pan, bodyY, bodyY+bodyH)
 			}
 			if pan[2] != richSidebarW {
@@ -298,7 +305,11 @@ func TestPanelsListOnTheDashboard(t *testing.T) {
 		panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
 		wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
 		described := strings.Contains(panels, "the tech tree") && strings.Contains(panels, "TOWN") && strings.Contains(panels, "YOU")
-		if rich := dashRich(w, h); described != rich {
+		// The mini map may take the list a shorter form (the grouped list
+		// needs panelsRichRows inside its box).
+		_, _, _, listH := d.sidebar.GetRect()
+		rich := dashRich(w, h) && listH-2 >= panelsRichRows()
+		if described != rich {
 			t.Errorf("%s: the Panels list has descriptions = %v, want %v:\n%s", where, described, rich, panels)
 		}
 		if described {

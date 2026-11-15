@@ -3,7 +3,6 @@ package mapstyle
 import (
 	"testing"
 
-	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -21,8 +20,8 @@ func checkCursor(t *testing.T, where string, p *Palette) float64 {
 	}
 	_, fill, _ := p.Cursor.Decompose()
 	glyph, ground, over, text := p.CursorMargins()
-	if glyph < CursorGlyphMargin() {
-		t.Errorf("%s: the cursor's fill #%06x is %.3f from a colour the map draws a glyph in, want at least %.2f", where, fill.Hex(), glyph, CursorGlyphMargin())
+	if glyph < CursorFromGlyph {
+		t.Errorf("%s: the cursor's fill #%06x is %.3f from a colour the map draws a glyph in, want at least %.2f", where, fill.Hex(), glyph, CursorFromGlyph)
 	}
 	if ground < CursorFromGround || over < CursorOverGround {
 		t.Errorf("%s: the cursor (fill #%06x) over the map's backgrounds: distance %.3f and contrast %.2f, want %.2f and %.1f", where, fill.Hex(), ground, over, CursorFromGround, CursorOverGround)
@@ -33,45 +32,36 @@ func checkCursor(t *testing.T, where string, p *Palette) float64 {
 	return glyph
 }
 
-// TestCursorStandsOutInEveryTheme: in each of the themes and each era, the
-// cursor is a highlighted cell whose fill is no colour the palette draws:
-// clearly apart from every glyph colour and from every background under a
-// cell, with the glyph on it readable. The blink's other half is a shade of
-// the fill: it is held to the backgrounds and to the glyph on it. On the
-// dark themes the fill is warm (an orange); it is always made from the
-// theme's own roles.
-func TestCursorStandsOutInEveryTheme(t *testing.T) {
-	if n := len(theme.All()); n != 16 {
-		t.Fatalf("%d themes, want the 16 the game ships", n)
-	}
-	for th := range fixture.Themes(t) {
-		least := 9.0
-		var fill theme.Color
-		for epoch := 0; epoch < 7; epoch++ {
-			p := NewPalette(epoch)
-			least = min(least, checkCursor(t, th.Key, p))
-			_, fill, _ = p.Cursor.Decompose()
-			if _, alt, _ := p.CursorAlt.Decompose(); theme.Distance(alt, fill) < 0.03 {
-				t.Errorf("%s: the two halves of the blink, #%06x and #%06x, are too close to see it blink", th.Key, fill.Hex(), alt.Hex())
-			}
-			// The fill is one of the candidates: made from the theme's roles.
-			made := false
-			for _, c := range cursorCandidates() {
-				made = made || c == fill
-			}
-			if !made {
-				t.Errorf("%s: the fill #%06x is not one of the colours made from the theme's roles", th.Key, fill.Hex())
-			}
+// TestCursorStandsOut: in each era, the cursor is a highlighted cell whose
+// fill is no colour the palette draws: clearly apart from every glyph colour
+// and from every background under a cell, with the glyph on it readable. The
+// blink's other half is a shade of the fill: it is held to the backgrounds
+// and to the glyph on it. The fill is warm (an orange) and made from Forge's
+// own roles, whatever theme is worn: the picture is drawn in Forge's colours.
+func TestCursorStandsOut(t *testing.T) {
+	forge, _ := theme.ByKey(theme.DefaultKey)
+	least := 9.0
+	var fill theme.Color
+	for epoch := 0; epoch < 7; epoch++ {
+		p := NewMapPalette(epoch)
+		least = min(least, checkCursor(t, "forge", p))
+		_, fill, _ = p.Cursor.Decompose()
+		if _, alt, _ := p.CursorAlt.Decompose(); theme.Distance(alt, fill) < 0.03 {
+			t.Errorf("the two halves of the blink, #%06x and #%06x, are too close to see it blink", fill.Hex(), alt.Hex())
 		}
-		r, g, b := fill.RGB()
-		// A warm fill on a dark theme that has colour to make one from:
-		// red leads, blue trails. (Monochrome has only greys; the two
-		// neon themes' warning and negative are pinks.)
-		if warn := theme.Of(theme.RoleWarning); !theme.IsLight() && isWarm(warn) && !(r > g && g > b) {
-			t.Errorf("%s: the fill #%06x is not an orange, and the theme's warning colour #%06x could make one", th.Key, fill.Hex(), warn.Hex())
+		made := false
+		for _, c := range cursorCandidates(forge.Color) {
+			made = made || c == fill
 		}
-		t.Logf("%-20s fill #%06x, at least %.3f from every glyph colour", th.Key, fill.Hex(), least)
+		if !made {
+			t.Errorf("the fill #%06x is not one of the colours made from Forge's roles", fill.Hex())
+		}
 	}
+	r, g, b := fill.RGB()
+	if warn := forge.Color(theme.RoleWarning); isWarm(warn) && !(r > g && g > b) {
+		t.Errorf("the fill #%06x is not an orange, and Forge's warning colour #%06x could make one", fill.Hex(), warn.Hex())
+	}
+	t.Logf("fill #%06x, at least %.3f from every glyph colour", fill.Hex(), least)
 }
 
 // isWarm reports whether c is a yellow, an orange or a red with some
@@ -86,7 +76,7 @@ func isWarm(c theme.Color) bool {
 // for the next. Frame 0 is the fill, and frame 0 is every frame while the
 // motion setting is off.
 func TestCursorBlinksSlowlyAndHoldsStill(t *testing.T) {
-	p := NewPalette(0)
+	p := NewMapPalette(0)
 	if p.CursorStyle(0) != p.Cursor {
 		t.Error("with motion off (frame 0) the cursor is not the fill")
 	}
@@ -105,23 +95,21 @@ func TestCursorBlinksSlowlyAndHoldsStill(t *testing.T) {
 	}
 }
 
-// TestCursorOverAnyGround: over a ground the palette never drew, in every
-// theme, the cursor's fill (either half of its blink) stands clear of that
-// ground, and the glyph on it is readable.
+// TestCursorOverAnyGround: over a ground the palette never drew, the cursor's
+// fill (either half of its blink) stands clear of that ground, and the glyph
+// on it is readable.
 func TestCursorOverAnyGround(t *testing.T) {
-	for th := range fixture.Themes(t) {
-		p := NewPalette(0)
-		for level := 0; level <= 255; level += 15 {
-			for _, tint := range [][3]int32{{0, 0, 0}, {40, 0, 0}, {0, 40, 0}, {0, 0, 40}} {
-				ground := theme.NewRGBColor(int32(level)/2+tint[0], int32(level)/2+tint[1], int32(level)/2+tint[2])
-				for _, anim := range []int{0, CursorBlinkFrames} {
-					fg, fill, _ := p.CursorOver(ground, anim).Decompose()
-					if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < CursorFromGround || cr < CursorOverGround {
-						t.Errorf("%s, ground #%06x, frame %d: the cursor #%06x has distance %.3f and contrast %.2f", th.Key, ground.Hex(), anim, fill.Hex(), d, cr)
-					}
-					if cr := theme.ContrastRatio(fg, fill); cr < CursorGlyphContrast {
-						t.Errorf("%s, ground #%06x, frame %d: the glyph on the cursor has contrast %.2f", th.Key, ground.Hex(), anim, cr)
-					}
+	p := NewMapPalette(0)
+	for level := 0; level <= 255; level += 15 {
+		for _, tint := range [][3]int32{{0, 0, 0}, {40, 0, 0}, {0, 40, 0}, {0, 0, 40}} {
+			ground := theme.NewRGBColor(int32(level)/2+tint[0], int32(level)/2+tint[1], int32(level)/2+tint[2])
+			for _, anim := range []int{0, CursorBlinkFrames} {
+				fg, fill, _ := p.CursorOver(ground, anim).Decompose()
+				if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < CursorFromGround || cr < CursorOverGround {
+					t.Errorf("ground #%06x, frame %d: the cursor #%06x has distance %.3f and contrast %.2f", ground.Hex(), anim, fill.Hex(), d, cr)
+				}
+				if cr := theme.ContrastRatio(fg, fill); cr < CursorGlyphContrast {
+					t.Errorf("ground #%06x, frame %d: the glyph on the cursor has contrast %.2f", ground.Hex(), anim, cr)
 				}
 			}
 		}

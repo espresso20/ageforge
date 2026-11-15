@@ -27,7 +27,7 @@ func TestTheCommandBarTakesAClickUnderAPanel(t *testing.T) {
 	pages.SwitchToPage("dashboard")
 	d.runForTest("charter")
 	d.inputField.SetText("build hut")
-	st := stageOf(d, pages, 150, 48)
+	st := stageOf(d, pages, 200, 60)
 	x, y, _, _ := d.inputField.GetInnerRect()
 	st.click(x+kit.Width(d.inputField.GetLabel())+1, y) // on the "u" of "build"
 	keyTo(d.inputField, tk(kit.KeyRune, 'X', 0))
@@ -49,7 +49,7 @@ func TestAPanelOverTheDashboardTakesTheMouse(t *testing.T) {
 	if d.overlayMgr.ActiveName() != "charter" {
 		t.Fatalf("the Advance panel did not open (%q is open)", d.overlayMgr.ActiveName())
 	}
-	st := stageOf(d, pages, 150, 48)
+	st := stageOf(d, pages, 200, 60)
 	p := d.advancePanel
 	for _, hit := range p.grid.hits {
 		if hit.id != hitPillar || hit.n != 1 {
@@ -71,19 +71,19 @@ func TestTheMapsArePaintedWithThePage(t *testing.T) {
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "bronze_age")
 	pages.SwitchToPage("dashboard")
-	st := stageOf(d, pages, 150, 48)
-	if !d.mapDock.shown {
-		t.Fatal("staging: the mini map is not showing at 150x48")
+	st := stageOf(d, pages, 200, 60)
+	if !d.body.miniShown {
+		t.Fatal("staging: the mini map is not showing at 200x60")
 	}
 	x, y, w, h := d.miniMap.GetRect()
 	if c := st.buf.At(x, y); c.R != '┌' || w < 3 || h < 3 {
 		t.Errorf("the mini map's corner at %d,%d holds %q", x, y, c.R)
 	}
 	d.runForTest("map")
-	st = stageOf(d, pages, 150, 48)
+	st = stageOf(d, pages, 200, 60)
 	x, y, w, h = d.mapPanel.GetRect()
 	if w < 100 || h < 30 {
-		t.Fatalf("the Map panel is %dx%d on a 150x48 screen", w, h)
+		t.Fatalf("the Map panel is %dx%d on a 200x60 screen", w, h)
 	}
 	blank := 0
 	for cx := x; cx < x+w; cx++ {

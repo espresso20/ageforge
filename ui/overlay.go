@@ -115,6 +115,7 @@ func (om *OverlayManager) Register(name string, title vibe.Entry, provide Overla
 	frame := newPanelFrame(title, tv)
 	frame.plain = func() bool { return om.plain != nil && om.plain() }
 	entry := &overlayEntry{title: title, tv: tv, frame: frame, provide: provide}
+	frame.buttons.press = om.app.Key
 	frame.keys = func() [][2]string { return om.footerKeys(entry) }
 	frame.hint = func() string { return om.typeHint(entry) }
 	frame.notice = func() string {

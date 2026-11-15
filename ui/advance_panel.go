@@ -60,6 +60,7 @@ func (d *Dashboard) registerAdvancePanel() {
 	d.advancePanel.settings = d.mapSettings
 	d.advancePanel.prompt = d.researchPanel.prompt
 	d.advancePanel.toPrompt = d.handToPrompt
+	d.advancePanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget(advancePanelName, vibe.E("ui.advance_panel.registerAdvancePanel.01", "Advance"), d.advancePanel.open, d.advancePanel.update)
 }
 
@@ -103,17 +104,15 @@ func (p *advancePanel) Layout(r image.Rectangle) {
 }
 
 // Paint puts the panel on the kit's painter in theme colors.
-func (p *advancePanel) Paint(p2 *kit.Painter) {
-	if r := p.Bounds(); !r.Empty() && p.grid != nil {
-		paintExpeditionKit(p2, p.grid, r.Min, newExpPalette())
-	}
-}
+func (p *advancePanel) Paint(p2 *kit.Painter) { p.paintGrid(p2, p.grid, p.Bounds()) }
 
 // Mouse: a click on a pillar picks it and a double click advances when all
 // four stand, as Enter does; the wheel picks a pillar a notch, as Up and Down
 // do.
 func (p *advancePanel) Mouse(m kit.Mouse) bool {
 	switch {
+	case p.buttons.mouse(p.grid, p.Bounds().Min, m):
+		return true
 	case m.Kind == kit.MouseWheel:
 		key := kit.KeyDown
 		if m.Wheel < 0 {
@@ -141,8 +140,10 @@ func (p *advancePanel) PointerAt(at image.Point) kit.Pointer {
 	if p.grid == nil {
 		return kit.PointerArrow
 	}
-	_, ok := p.grid.hitAt(hitPillar, at.Sub(p.Bounds().Min))
-	return handIf(ok)
+	pt := at.Sub(p.Bounds().Min)
+	_, pillar := p.grid.hitAt(hitPillar, pt)
+	_, key := p.grid.keyAt(pt)
+	return handIf(pillar || key)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

@@ -35,7 +35,7 @@ The top row names your town, its age and era, the weather and the time of day, y
 
 ### The inspect cursor
 
-A cursor picks out one thing at a time: a building, a wonder, a road, the town square or the open ground. The cursor is a highlighted cell: a solid block in a color the map does not use in your theme (an orange on the dark themes), with the glyph beneath it still showing. Over a ground that color would melt into, it takes another that stands out. The cursor blinks slowly, and holds steady when `motion` is off.
+A cursor picks out one thing at a time: a building, a wonder, a road, the town square or the open ground. The cursor is a highlighted cell: a solid block in a color the map does not use (an orange), with the glyph beneath it still showing. Over a ground that color would melt into, it takes another that stands out. The cursor blinks slowly, and holds steady when `motion` is off.
 
 The Map reports the cursor's name, a few details (how many you own, how many workers staff it, what it makes, what changed) and the whole command to type for it, for example `build hut`. Press `Enter` to put that command into the prompt, edit it if you like, and press `Enter` again to run it. The command depends on what the cursor is on:
 
@@ -157,7 +157,7 @@ The Interstellar Age pulls back to the open expanse of the full solar system acr
 
 At the cosmic, region and inner zooms the Sun, the planets, the orbit rings, the asteroid belt and the comets are drawn in quadrant blocks (`▘ ▀ ▚ ▟ █` and kin): each cell holds a 2 by 2 block of pixels in up to two colors, so a planet is a small shaded disc in its own color and an orbit a thin line. The cursor finds a body from any of its pixels. The glyphs need a font that has them (Cascadia Mono does; some older Windows console fonts do not).
 
-The last three ages, the Galactic, the Quantum and the Transcendent, open on Sol's neighborhood: the real stars nearby at their true distances from Sol, with faint rings to read the distance by. Your colonies mark the stars they hold with a warm bracket and join them to Sol and each other with steady warp lanes, brighter where more traffic runs. Put the cursor on a star for its name and its distance in light-years, and zoom in on Sol for the solar system. Zoom out once and the map shows the Orion Arm: blue-white stars, dark dust lanes, pink star-forming knots, a warm tint for the territory you hold, and named nebulae and star clusters such as Orion, the Horsehead, the Pleiades and the Crab, each with its distance from Sol (real direction, compressed distance). Zoom out again to the void between galaxies: a face-on Milky Way with Sol in one arm, the Large and Small Magellanic Clouds, Andromeda and Triangulum, each named with its distance. In the window the galaxies are dithered pixel art: spiral arms with dark dust lanes, pink star-forming knots and a glowing bulge, and ragged clouds for the dwarfs, tinted by the theme; the labels and cursor stay on top. In the window the near stars are small glowing discs sized and colored by class (binaries as a close pair), lanes are dithered lines that dim with length, rings are dotted, and the Orion Arm is a soft dithered band of faint stars and dust where each named object has its own art: clusters are scatters of bright points, nebulae are noise clouds with dark filaments, and dark nebulae are silhouettes. The terminal draws it in cells. The two views are the same in the Quantum and Transcendent ages.
+The last three ages, the Galactic, the Quantum and the Transcendent, open on Sol's neighborhood: the real stars nearby at their true distances from Sol, with faint rings to read the distance by. Your colonies mark the stars they hold with a warm bracket and join them to Sol and each other with steady warp lanes, brighter where more traffic runs. Put the cursor on a star for its name and its distance in light-years, and zoom in on Sol for the solar system. Zoom out once and the map shows the Orion Arm: blue-white stars, dark dust lanes, pink star-forming knots, a warm tint for the territory you hold, and named nebulae and star clusters such as Orion, the Horsehead, the Pleiades and the Crab, each with its distance from Sol (real direction, compressed distance). Zoom out again to the void between galaxies: a face-on Milky Way with Sol in one arm, the Large and Small Magellanic Clouds, Andromeda and Triangulum, each named with its distance. In the window the galaxies are dithered pixel art: spiral arms with dark dust lanes, pink star-forming knots and a glowing bulge, and ragged clouds for the dwarfs; the labels and cursor stay on top. In the window the near stars are small glowing discs sized and colored by class (binaries as a close pair), lanes are dithered lines that dim with length, rings are dotted, and the Orion Arm is a soft dithered band of faint stars and dust where each named object has its own art: clusters are scatters of bright points, nebulae are noise clouds with dark filaments, and dark nebulae are silhouettes. The terminal draws it in cells. The two views are the same in the Quantum and Transcendent ages.
 
 The Transcendent Age opens one level above the Local Group: the cosmic web. In the window it is a scatter of galaxy clusters joined by filaments, with the Local Group near the middle, and it is the picture of your own civilization. Every building line owns at least one strand, and a strand glows brighter the more of that line you have built and the higher its tier; a line you have not built is a faint thread. Put the cursor on a strand for its line, or on a cluster for its name and whether it is uncertain or settled (a click settles it, and the save keeps it). The Local Group is the one cluster you can enter; the rest are too far. In the Quantum Age the web is drawn grayed and locked above the Local Group, and before that it is not drawn.
 
@@ -177,8 +177,8 @@ Two settings shape the Map: the glyph set and the mini map. They are saved per a
 | `map glyphs ascii` | Plain ASCII, for fonts with poor symbol coverage |
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |
 | `minimap` | Show whether the dashboard's mini map is on |
-| `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
-| `minimap on` | Show the mini map above the Buildings list (the default) |
+| `minimap off` | Hide the mini map |
+| `minimap on` | Show the mini map under the Panels list (the default) |
 | `map flows` | The flows overlay: where your economy is stuck (see [The flows overlay](#the-flows-overlay)). `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
 All of them work while the Map is open, so you see the change at once. The `motion` setting (`motion on` and `motion off`) holds the maps, the badge case and a theme's ambient effect still when it is off.
@@ -191,17 +191,17 @@ All of them work while the Map is open, so you see the change at once. The `moti
 
 ## The mini map
 
-The mini map is on by default. The dashboard shows a compact view of the Map above the Buildings list, in a border titled "Map". The setting is remembered with your account. It follows your `map glyphs` setting, and its last row is the since-last-visit news.
+The mini map is on by default. The dashboard shows a compact view of the Map under the Panels list, in a border titled "Map". The setting is remembered with your account. It follows your `map glyphs` setting, and its last row is the since-last-visit news.
 
-It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back. It shows the whole town, and it marks the cell the Map panel's cursor is on with the same highlighted cell.
+It is a box about square on screen, as wide as the Panels column. The Buildings list has the whole middle column. `minimap off` hides it; `minimap on` brings it back. It shows the whole town, and it marks the cell the Map panel's cursor is on with the same highlighted cell.
 
-The mini map needs room: it appears on windows of 105 columns by 34 rows and larger. On smaller windows (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
+The mini map needs room: every panel stays listed, and the mini map shows only when the column has room left for it. To keep the map square the Panels list drops its groups first (a name a row, then two columns); only when that is not enough is the box shorter than square. It shows from 80 columns by 36 rows (37 rows from 100 columns wide), and on every window of 120 columns by 36 rows or more. On smaller windows (80x24, 100x30) it is not shown. Type `map` to open the full panel at any size.
 
 ---
 
 ## Themes
 
-The Map draws its colors from your active [theme](themes.md), so switching themes recolors the Map and the mini map at once, light themes included. In the one-ink themes, Monochrome and Parchment, it is drawn in one ink on one paper.
+The map keeps its own colors in every [theme](themes.md): the same full-color dark picture, light themes and the one-ink themes (Monochrome and Parchment) included. Your theme still sets the words and the frame round it, so switching themes recolors the Map's header, status lines, legend and borders and the mini map's title at once.
 
 ---
 
