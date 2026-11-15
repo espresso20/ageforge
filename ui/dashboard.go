@@ -340,7 +340,11 @@ func (d *Dashboard) build() {
 	// column when the names fit that way, two when the screen is short.
 	d.sidebar = newFitView(func(w, h int) string { return sidebarText(d.sidebarActive, w, h) })
 	// A click on a panel's name opens it, as typing the name does.
-	d.sidebar.body.OnRegion = d.runLine
+	d.sidebar.body.OnRegion = func(name string, _ int) { d.runLine(name) }
+	// A click on a building writes its build command in the prompt, and a
+	// double click runs it; a click on the mini map opens the Map panel.
+	d.economyTab.buildingTV.body.OnRegion = d.clickLine
+	d.miniMap.onClick = func() { d.runLine("map") }
 	d.sidebar.SetBorder(true)
 	theme.Track(func() { d.sidebar.SetTitleColor(theme.Of(theme.RoleAccent)) })
 
@@ -375,6 +379,8 @@ func (d *Dashboard) build() {
 		tw, th := d.screenSize()
 		return ledgerLines(&d.ledger.data, ledgerTierFor(tw, th), w, h, d.mapSettings().Tier)
 	})
+	// A click on the Ledger opens the Advance panel, the Ledger in full.
+	d.ledgerTV.onClick = func() { d.runLine("charter") }
 
 	// Toast notification
 	d.toastMgr = NewToastManager()
@@ -1497,6 +1503,17 @@ func (d *Dashboard) submitInput() {
 		d.cmdHistory = append(d.cmdHistory, cmd)
 	}
 	d.runLine(text)
+}
+
+// clickLine writes a command line in the prompt and gives the prompt the
+// keyboard, for a click on something that stands for the line; the second
+// click of a double click runs it, as Enter would.
+func (d *Dashboard) clickLine(line string, clicks int) {
+	d.inputField.SetText(line)
+	d.app.SetFocus(d.inputField)
+	if clicks >= 2 {
+		d.submitInput()
+	}
 }
 
 // runLine does what a command line asks, as Enter on it does. It leaves the

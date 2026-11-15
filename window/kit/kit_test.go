@@ -659,7 +659,7 @@ func TestHoleClearsItsCellsAndSaysWhere(t *testing.T) {
 func TestTextRegionsCanBeClicked(t *testing.T) {
 	var got []string
 	tx := Label(`go ["north"]north[""] or ["south"]south[""]`)
-	tx.OnRegion = func(name string) { got = append(got, name) }
+	tx.OnRegion = func(name string, _ int) { got = append(got, name) }
 	r, b := screen(tx, 30, 1)
 	if s := b.Line(0); s != "go north or south" {
 		t.Fatalf("painted %q", s)

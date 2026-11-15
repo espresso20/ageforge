@@ -12,8 +12,9 @@ type Text struct {
 	// filled with it first.
 	Style Style
 	// OnRegion is called with a region's name when the player clicks text
-	// inside one (see the ["name"] tag).
-	OnRegion func(name string)
+	// inside one (see the ["name"] tag), and with 2 for the second click of
+	// a double click.
+	OnRegion func(name string, clicks int)
 
 	text    string
 	lines   []Line
@@ -118,7 +119,7 @@ func (t *Text) Mouse(m Mouse) bool {
 		return false
 	}
 	if name := t.regionAt(m.Pt()); name != "" {
-		t.OnRegion(name)
+		t.OnRegion(name, max(m.Clicks, 1))
 		return true
 	}
 	return false

@@ -529,6 +529,14 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 				sb.WriteString(hangingRow("   ", vibe.Sprintf("ui.tab_economy.buildingEntries.05", "[gold]↑ Upgrade available: %s. Type: upgrade %s[-]", newName, key), w))
 			}
 			entry(sb.String())
+			if !bs.AtMaxCount {
+				// The entry stands for its build command: a click on any of
+				// its lines writes the command in the prompt.
+				lines := entries[len(entries)-1]
+				for i := range lines {
+					lines[i] = `["build ` + key + `"]` + lines[i] + `[""]`
+				}
+			}
 		}
 	}
 
