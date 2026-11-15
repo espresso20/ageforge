@@ -48,6 +48,7 @@ func renderAdvance(v game.AdvanceView, u advanceUI, w, h int) *xgrid {
 		title += vibe.Line("ui.advance_view.renderAdvance.02", " to ") + v.NextName
 	}
 	g.box(0, 0, w, h, xBorder, title, xTitle, false)
+	g.closeButton(w)
 	if w < advMinW || h < advMinH {
 		g.put(2, 2, fitText(vibe.Line("ui.advance_view.renderAdvance.03", "The window is too small for the Advance panel. Esc closes it."), w-4), xBad)
 		return g

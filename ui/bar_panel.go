@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -23,6 +25,8 @@ type barPanel struct {
 	// route is the panel's routeKey: it takes a key if it is one of the
 	// panel's, given the command bar's text, and reports whether it did.
 	route func(ev *kit.Key, prompt string) bool
+	// buttons makes the keys the panel draws pressable (key_bar.go).
+	buttons keyPresser
 }
 
 // newBarPanel is a barPanel whose keys are decided by route.
@@ -42,6 +46,16 @@ func (b *barPanel) Key(k kit.Key) bool {
 		b.toPrompt(&k)
 	}
 	return true
+}
+
+// paintGrid puts the grid a panel drew on the kit's painter at r in theme
+// colours, with the key under the pointer lit.
+func (b *barPanel) paintGrid(p *kit.Painter, g *xgrid, r image.Rectangle) {
+	if !r.Empty() && g != nil {
+		pal := newExpPalette()
+		paintExpeditionKit(p, g, r.Min, pal)
+		b.buttons.paintLit(p, g, r.Min, pal)
+	}
 }
 
 // overBar is an overlay's build result: the panel over the whole screen but
@@ -76,7 +90,7 @@ type barOverlay struct {
 // by overlay name. Only the Map has a key bar of its own to say what a command
 // typed over it did, because the log is behind it.
 func (d *Dashboard) newBarOverlays() map[string]barOverlay {
-	return map[string]barOverlay{
+	overlays := map[string]barOverlay{
 		"map": {
 			routeKey: d.mapPanel.routeKey,
 			reply:    d.mapPanel.reply,
@@ -106,6 +120,10 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 			update:   d.advancePanel.update,
 		},
 	}
+	for name, p := range d.decks {
+		overlays[name] = barOverlay{routeKey: p.routeKey, reply: p.reply, update: p.update}
+	}
+	return overlays
 }
 
 // handToPrompt gives the keyboard back to the command bar, starting with ev:

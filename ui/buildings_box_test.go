@@ -20,9 +20,8 @@ import (
 // middle columns and that.
 const (
 	playtestCols = 2*60 + richSidebarW
-	// The rows over the boxes there are the badge line, the status ribbon and
-	// the toast line, and the full Ledger.
-	playtestRows = 45 + (dashHeaderRows - ledgerCompactRows) + ledgerFullHeight + promptRows
+	// The row over the boxes there is the header, at its full height.
+	playtestRows = 45 + headerStdRows + promptRows
 )
 
 // playtestTown is a dashboard on a town like the playtest's.
@@ -106,7 +105,7 @@ func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 	d.runForTest("minimap off")
 	d.refresh()
 	txt := drawDashboard(t, d, pages, playtestCols, playtestRows)
-	if d.mapDock.shown || strings.Contains(txt, "┌ Map ─") {
+	if d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
 		t.Fatalf("the mini map shows with minimap off:\n%s", txt)
 	}
 	rows := buildingsBox(t, d, pages, playtestCols, playtestRows)
@@ -173,7 +172,7 @@ func TestBuildingsBoxUnderTheMiniMap(t *testing.T) {
 	d, pages := playtestTown(t)
 	miniOn(t, d)
 	txt := drawDashboard(t, d, pages, playtestCols, playtestRows)
-	if !d.mapDock.shown || !strings.Contains(txt, "┌ Map ─") {
+	if !d.body.miniShown || !strings.Contains(txt, "┌ Map ─") {
 		t.Fatalf("minimap on did not show the mini map at %dx%d", playtestCols, playtestRows)
 	}
 	rows := buildingsBox(t, d, pages, playtestCols, playtestRows)

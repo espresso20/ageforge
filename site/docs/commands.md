@@ -38,7 +38,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 
 Commands that can't be undone are never run from a completion. `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
 
-Most panels leave the prompt working while they are open, and take only the keys that print nothing. The Wonders, Harbinger and Plan panels use letter keys, so press `Esc` to close one before you type a command. In a panel that is longer than the screen, `↑`, `↓`, `PgUp`, `PgDn`, `Home` and `End` scroll it while the prompt is empty. In the window the mouse wheel scrolls it as well.
+Most panels leave the prompt working while they are open, and take only the keys that print nothing. The Wonders, Harbinger and Plan panels use letter keys, so press `Esc` to close one before you type a command. In the window a click closes a panel too: on `Esc close` at its foot, or on the `×` in its top right corner. In a panel that is longer than the screen, `↑`, `↓`, `PgUp`, `PgDn`, `Home` and `End` scroll it while the prompt is empty. In the window the mouse wheel scrolls it as well.
 
 With no panel open, `PgUp` and `PgDn` turn the Buildings list a page of whole entries (the box says how many are above and below). `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. `Esc` saves your game to its own save and returns to the main menu. The Help panel lists every key.
 
@@ -276,6 +276,8 @@ blackmarket gold
 
 A run costs the larger of 5K culture or a number of hours of your own culture income, up to 200 hours. After a run the smugglers lie low for 624 ticks (about 21 minutes). They deal in gold, iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux.
 
+The Trade, Army and Milestones panels leave the prompt working. `←` `↑` `↓` `→` move the pick (from road to road on Trade, from order to order on Army, along a road and between roads on Milestones), `Enter` runs the picked thing's command (its button shows it), `PgUp` and `PgDn` scroll when there is more than fits, and `Esc` closes the panel. A click picks, and a click on the button runs the command. With something typed in the prompt, the keys go to the prompt. Milestones has no commands.
+
 A route whose imports include a resource that a civilization you are at war with or have embargoed specializes in earns nothing until the conflict ends. Harbors raise the income of every active route. See [Trade](trade.md).
 
 ---
@@ -351,7 +353,7 @@ The Map draws your empire from your real game state: your buildings and the work
 | `worldmap` | Same as `map`, opened on the whole town (the region zoom). |
 | `map flows [on\|off]` | The Map's flows overlay (stocks running dry, understaffed buildings, idle workers): on, off, or bare to switch it. It lasts for the session. |
 | `map glyphs [ascii\|unicode]` | Bare, show the current glyph set. With a name, switch to it (default unicode). Saved per account. |
-| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list. `off` hides it so the list gets the whole column (default on). Saved per account. |
+| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it, a square box under the Panels list. `off` hides it (default on). Saved per account. |
 
 ```
 map
@@ -361,7 +363,7 @@ minimap off
 worldmap
 ```
 
-`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list. On smaller windows it hides, and `minimap off` hides it anywhere.
+`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows from 80 columns by 36 rows (37 rows from 100 columns wide; every window of 120 columns by 36 rows or more) the dashboard shows a mini map under the Panels list, square when there is room. On smaller windows it is not shown, and `minimap off` hides it anywhere.
 
 The prompt keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing:
 
@@ -410,7 +412,7 @@ A festival costs the larger of 2K culture or a number of hours of your own cultu
 
 | Command | Description |
 |---|---|
-| `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts. |
+| `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts, drawn as roads of stones. |
 | `epoch` | Open the Epoch screen: a banner, your highlights, ages, top badges and feats on the front page, and on `Tab` the details (current epoch and its event, catastrophe outlook, epoch history, harbingers, legacy bonuses, Era Mastery and the civilization log). |
 | `epoch card` | Copy a picture of your epoch screen to the clipboard, to paste into Discord. It is also saved as `epoch-card.png` next to your saves, and the reply says which worked. Press `c` on the Epoch screen to do the same. |
 
@@ -434,7 +436,7 @@ The History panel shows 7 graphs: Population, Food rate, Research rate, Faith, M
 |---|---|
 | `catastrophe` (or `cat`) | Reopen the Endure or Succumb choice for a pending catastrophe or Last Passage. With nothing pending, show the outlook as you can know it: the doom a harbinger present foretells, or that no harbinger has come and the era is quiet, for now (in the Cosmic Era, the odds of the Last Passage at your next prestige take that line's place). |
 
-A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `E` endures, `S` succumbs and `Esc` closes it without choosing. The status bar shows a pending badge until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
+A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `E` endures, `S` succumbs and `Esc` closes it without choosing. The header shows a pending chip until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
 
 ---
 

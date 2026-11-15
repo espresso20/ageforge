@@ -56,6 +56,10 @@ const (
 	xChipCivicHi
 	xChipLegendHi
 	xChipGoalHi
+	xKeycap    // a key bar's key, as a cap
+	xKeyName   // what the key does, on the button beside its cap
+	xKeycapLit // the same two under the pointer
+	xKeyNameLit
 	xCount
 )
 
@@ -88,6 +92,8 @@ type xgrid struct {
 	glyphGrid[xk]
 	// hits are the things a click can pick, recorded as they are drawn.
 	hits []xhit
+	// keys are the keys a click can press (key_bar.go).
+	keys []xkey
 }
 
 // xhit is a thing a click can pick: what kind (the panel's own numbering),
@@ -211,7 +217,10 @@ func (g *xgrid) segsFit(x, y, room int, parts ...xseg) int {
 var foldExpedition = map[rune]rune{
 	'○': 'o', '◇': 'd', '▲': '^', '■': '#', '◈': '*', '◆': '+', '▣': 'T', '†': '+',
 	'▰': '#', '▱': '-', '█': '#', '░': '-', '·': '.', '•': '*', '≈': '~', '∩': 'n', '●': '*',
-	'←': '<', '→': '>', '↑': '^', '↓': 'v', '…': '~', '▸': '>',
+	'←': '<', '→': '>', '↑': '^', '↓': 'v', '…': '~', '▸': '>', '×': 'x',
+	// the header's: a pillar that stands (the Ledger's choice), a catastrophe,
+	// a harbinger
+	'✓': '+', '☄': '!', '⚑': '^',
 }
 
 func (g *xgrid) fold() { g.foldWith(foldExpedition) }
@@ -258,6 +267,14 @@ func newExpPalette() *expPalette {
 	s[xRoute] = role(theme.RoleAccent, 4.5)
 	s[xDust] = on(theme.Mix(bg, theme.Of(theme.RoleDim), 0.55), mapstyle.TerrainFloor)
 	s[xPlace] = role(theme.RoleDim, 4.5)
+	// The key buttons: the cap is the accent, the name sits on a chip, and
+	// under the pointer the cap lifts and the name takes the accent.
+	accent, onAccent := theme.Of(theme.RoleAccent), theme.Of(theme.RoleOnAccent)
+	lift := theme.Mix(accent, theme.Of(theme.RoleBright), 0.4)
+	s[xKeycap] = kit.Style{}.Background(accent).Foreground(onAccent).Bold(true)
+	s[xKeyName] = kit.Style{}.Background(chip).Foreground(theme.Legible(theme.Of(theme.RoleText), chip, 4.5)).Bold(true)
+	s[xKeycapLit] = kit.Style{}.Background(lift).Foreground(theme.BestOn(lift)).Bold(true)
+	s[xKeyNameLit] = s[xKeycap]
 	// The pins: each tone is a chip, its glyph in the ink that reads on it.
 	// A chip's bright phase is the same chip lifted toward the bright role.
 	tones := [6]struct {

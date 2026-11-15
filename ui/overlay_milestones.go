@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -11,19 +10,15 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// milestonesProvider generates the milestones overlay text from the current game state.
-// This is lifted from StatsTab.refreshMilestones — identical logic, returning a string
-// instead of calling SetText on a text view.
-func milestonesProvider(state game.GameState, _ int) string {
-	var sb strings.Builder
+// milestonesPage is the Milestones panel: the progress and title, and a
+// section for each chain, a card for each milestone you can see.
+func milestonesPage(state game.GameState) deckPage {
 	ms := state.Milestones
-
-	// Header: progress + title
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_milestones.milestonesProvider.01", " [gold]Progress:[-] %d/%d", ms.CompletedCount, ms.TotalCount))
+	pg := deckPage{Title: vibe.Line("ui.overlay_milestones.milestonesPage.01", "Milestones")}
+	pg.Head = []xseg{{vibe.Sprintf("ui.overlay_milestones.milestonesPage.02", "Progress: %d/%d", ms.CompletedCount, ms.TotalCount), xBright}}
 	if ms.CurrentTitle != "" {
-		fmt.Fprintf(&sb, "  [yellow]\"%s\"[-]", ms.CurrentTitle)
+		pg.Head = append(pg.Head, xseg{"  \"" + ms.CurrentTitle + "\"", xTitle})
 	}
-	sb.WriteString("\n\n")
 
 	// Build chain lookup by category
 	chainByCategory := make(map[string]game.ChainInfo)
@@ -46,26 +41,16 @@ func milestonesProvider(state game.GameState, _ int) string {
 		if len(milestones) == 0 {
 			continue
 		}
-
-		catName := catNames[cat]
-
-		// Category header with chain progress
+		sec := deckSection{Title: catNames[cat], MinW: 34}
 		if chain, ok := chainByCategory[cat]; ok {
-			chainBar := ProgressBar(float64(chain.CompletedCount), float64(chain.TotalCount), 8)
+			sec.Meta = vibe.Sprintf("ui.overlay_milestones.milestonesPage.03", "%d of %d", chain.CompletedCount, chain.TotalCount)
 			if chain.Complete {
-				fmt.Fprintf(&sb, " [green]★ %s[-] [%d/%d %s] [green]✓ %s[-]",
-					catName, chain.CompletedCount, chain.TotalCount, chainBar, chain.Title)
+				sec.Notes = append(sec.Notes, deckLine{Value: "✓ " + chain.Title, K: xGood})
 				if chain.BoostActive {
-					sb.WriteString(vibe.Line("ui.overlay_milestones.milestonesProvider.02", " [cyan]⚡ boost active[-]"))
+					sec.Notes = append(sec.Notes, deckLine{Value: vibe.Line("ui.overlay_milestones.milestonesPage.04", "⚡ boost active"), K: xGood})
 				}
-			} else {
-				fmt.Fprintf(&sb, " [gold]◆ %s[-] [%d/%d %s]",
-					catName, chain.CompletedCount, chain.TotalCount, chainBar)
 			}
-		} else {
-			fmt.Fprintf(&sb, " [gold]◆ %s[-]", catName)
 		}
-		sb.WriteString("\n")
 
 		// Sort: completed first, then by name
 		sort.Slice(milestones, func(i, j int) bool {
@@ -75,54 +60,67 @@ func milestonesProvider(state game.GameState, _ int) string {
 			return milestones[i].Name < milestones[j].Name
 		})
 
-		hiddenCount := 0
+		hiddenCount, now, nowShare := 0, -1, 0.0
 		for _, m := range milestones {
 			if !m.Visible {
 				hiddenCount++
 				continue
 			}
-
+			c := deckCard{Title: m.Name}
+			reward := m.RewardText + rewardCapNotes(state, m.Rewards, m.Completed)
 			if m.Completed {
-				fmt.Fprintf(&sb, "   [green]✓ %s[-]", m.Name)
-				if m.RewardText != "" {
-					fmt.Fprintf(&sb, "  [cyan]%s[-]%s", m.RewardText, rewardCapTags(state, m.Rewards, true))
-				}
-				sb.WriteString("\n")
+				c.Chip, c.ChipK, c.Quiet = vibe.Line("ui.overlay_milestones.milestonesPage.05", "✓ done"), xChipShort, true
 			} else {
-				fmt.Fprintf(&sb, "   [gray]○[-] [white]%s[-]\n", m.Name)
-				fmt.Fprintf(&sb, "     [gray]%s[-]\n", m.Description)
-				// Per-condition progress bars
+				c.Desc = m.Description
+				// The first condition not yet met is the meter; the rest are lines.
+				share, n := 0.0, 0
 				for _, p := range m.Progress {
-					if p.Met {
-						fmt.Fprintf(&sb, "     [green]✓ %s[-]\n", p.Label)
-					} else {
-						bar := ProgressBar(p.Current, p.Target, 10)
-						fmt.Fprintf(&sb, "     [yellow]%s/%s %s %s[-]\n",
-							textfmt.Number(p.Current), textfmt.Number(p.Target), bar, p.Label)
+					n++
+					f := 1.0
+					if !p.Met && p.Target > 0 {
+						f = max(0, min(1, p.Current/p.Target))
+					}
+					share += f
+					switch {
+					case p.Met:
+						c.Lines = append(c.Lines, deckLine{Value: "✓ " + p.Label, K: xGood})
+					case !c.Meter:
+						c.Meter, c.Share = true, f
+						c.MeterText = textfmt.Number(p.Current) + "/" + textfmt.Number(p.Target) + " " + p.Label
+					default:
+						c.Lines = append(c.Lines, deckLine{Value: textfmt.Number(p.Current) + "/" + textfmt.Number(p.Target) + " " + p.Label})
 					}
 				}
-				if m.RewardText != "" {
-					fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_milestones.milestonesProvider.03", "     [gray]Reward: %s[-]%s\n", m.RewardText, rewardCapTags(state, m.Rewards, false)))
+				// The card closest to done, with some progress, is the one in hand.
+				if n > 0 && share/float64(n) > nowShare {
+					now, nowShare = len(sec.Cards), share/float64(n)
 				}
 			}
+			if m.RewardText != "" {
+				c.Lines = append(c.Lines, deckLine{vibe.Line("ui.overlay_milestones.milestonesPage.06", "Reward"), reward, xGood})
+			}
+			sec.Cards = append(sec.Cards, c)
 		}
-
+		if now >= 0 {
+			sec.Cards[now].Chip, sec.Cards[now].ChipK = vibe.Line("ui.overlay_milestones.milestonesPage.07", "now"), xChipCivic
+		}
 		if hiddenCount > 0 {
-			fmt.Fprintf(&sb, "   [gray]+ %s[-]\n", textfmt.Count(hiddenCount, vibe.Line("ui.overlay_milestones.milestonesProvider.04", "hidden milestone"), vibe.Line("ui.overlay_milestones.milestonesProvider.05", "hidden milestones")))
+			sec.Notes = append(sec.Notes, deckLine{Value: "+ " + textfmt.Count(hiddenCount, vibe.Line("ui.overlay_milestones.milestonesPage.08", "hidden milestone"), vibe.Line("ui.overlay_milestones.milestonesPage.09", "hidden milestones")), K: xDim})
 		}
-		sb.WriteString("\n")
+		pg.Sections = append(pg.Sections, sec)
 	}
-
-	return sb.String()
+	return pg
 }
 
-// rewardCapTags is the "capped" notes for a milestone's rewards, one per
-// reward a limit holds back, to append to the line that lists them: ""
+// rewardCapNotes is the "capped" notes for a milestone's rewards, one per
+// reward a limit holds back, to follow the line that lists them: ""
 // when every reward counts in full.
-func rewardCapTags(state game.GameState, rewards []config.Effect, held bool) string {
+func rewardCapNotes(state game.GameState, rewards []config.Effect, held bool) string {
 	var sb strings.Builder
 	for _, eff := range rewards {
-		sb.WriteString(capTag(state, eff, held, "-"))
+		if note := capNote(state, eff, held); note != "" {
+			sb.WriteString(" (" + note + ")")
+		}
 	}
 	return sb.String()
 }

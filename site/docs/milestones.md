@@ -8,15 +8,15 @@ Every milestone and every chain can be completed. See [Can every milestone be do
 
 > When a milestone or chain completes, the log shows the achievement and its reward, then a short flavor quip on a dim line below ("You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter."). The quip is only there for character and changes nothing.
 
-Type `milestones` (or `ms`) to open the Milestones panel. It opens full screen. Scroll with the arrow keys or PgUp and PgDn, and `Esc` closes it.
+Type `milestones` (or `ms`) to open the Milestones panel. It opens full screen as roads: a road for each category, with its count, and a stone for each milestone you can see. Along a road the stones you have reached come first, then the one you are closest to, then the ones ahead; the road between two stones is drawn as far as you have walked it. `←` and `→` move along a road, `↑` and `↓` go from road to road, and the stone you pick is shown in full under the roads: what it asks, how far along you are, what it waits for and what it pays. PgUp and PgDn scroll when there are more roads than fit, and `Esc` closes the panel. A window too small for the roads shows the milestones as a list of cards.
 
-<figure class="screen" data-screen="milestones"><figcaption>The Milestones panel: each chain with its progress, and every open milestone with what it asks for and what it pays.</figcaption></figure>
+<figure class="screen" data-screen="milestones"><figcaption>The Milestones panel: a road for each category, a stone for each milestone, and the picked stone in full below.</figcaption></figure>
 
 ---
 
 ## Civilization titles
 
-A civilization title belongs to the run you are playing. It shows next to your progress count at the top of the Milestones panel, and in quotes on the status ribbon when the window is wide enough. It is not the title your account wears, which comes from your badges (see [Titles](badges.md#titles)).
+A civilization title belongs to the run you are playing. It shows next to your progress count at the top of the Milestones panel, and in quotes on the header's top edge when the window is wide enough. It is not the title your account wears, which comes from your badges (see [Titles](badges.md#titles)).
 
 When a chain is completed, its title overrides any count-based fallback. If you finish more than one chain, the title of the one lower in this table shows. The boost adds to game speed, so +300% runs the game four times as fast for its duration:
 
@@ -272,7 +272,7 @@ Some milestones count buildings you can only build in their own age: Stone Pits,
 ## Tips
 
 - The Scholar and Settlement chains carry the biggest boosts (+300% game speed for 180 ticks). Builder, Military, Trade and Ancient Ages each grant +250% for 150 ticks.
-- The Milestones panel groups every milestone by category: Settlement, Builder, Scholar, Military, Trade, Faith, Epoch and Ages. A chain's progress sits on its group's heading. Each open milestone lists what it asks for, with a bar for each condition, and what it pays.
+- The Milestones panel groups every milestone by category: Settlement, Builder, Scholar, Military, Trade, Faith, Epoch and Ages. A chain's progress (for example "1 of 3") sits on its section's heading, and a finished chain shows its title and any active boost under it. A done milestone is a dim card marked done, with its reward. An open milestone is a card with its description, a bar and the figures for the condition it has furthest to go on, a line for each other condition, and what it pays. The card closest to done, once it has any progress, is marked now.
 - A hidden milestone shows up once your overall progress toward it passes 50% (the average of its conditions). A hidden milestone that names an age also shows up as soon as you are in the age before it.
 - A milestone that names an age past your next one stays hidden, whatever your progress. The section counts it in "+ N hidden milestones" until that age is your next one, or until you have reached it before on your account. The panel names an age only once it is your next one or you have reached it.
 - Chain boosts add to any other game speed bonuses you hold, so two chains finishing close together overlap.

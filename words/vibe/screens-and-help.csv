@@ -506,20 +506,14 @@ ui.dashboard.peopleBoxText.02,"[gray]Pop vibes[white] [%s]%s[white]/[green]%s[-]
 "
 ui.dashboard.statusLine.01,"  [cyan]Glow-ups %d[-]"
 ui.dashboard.statusLine.02,"  [red]DEV cheats[-]"
-ui.dashboard.statusLine.03,☄ A catastrophe is left on read. Type catastrophe to answer it.
 ui.dashboard.statusLine.04,☄ Doom arc: type catastrophe
 ui.dashboard.statusLine.05,☄ Doom arc
-ui.dashboard.statusLine.06,☄ The Last Passage boss fight is here. Type catastrophe to pick.
 ui.dashboard.statusLine.07,☄ Last Passage boss: type catastrophe
 ui.dashboard.statusLine.08,☄ Last Passage boss fight
-ui.dashboard.statusLine.09,⚑ New tea from the harbinger. Type harbinger and read it.
 ui.dashboard.statusLine.10,⚑ Omen tea: type harbinger
 ui.dashboard.statusLine.11,⚑ Harbinger tea
 ui.dashboard.statusLine.12," (output drip [%s]%s[-])"
 ui.dashboard.statusLine.13,"  Vibes [%s]%.0f%%[-]%s"
-ui.dashboard.statusLine.14,"  |  [gray]type a panel name to summon it · Esc: dip or menu[-]"
-ui.dashboard.statusLine.15,"  |  [gray]Esc: bounce or menu[-]"
-ui.dashboard.charterStripHint.01,type charter for the tea
 ui.dashboard.showDevUnlockModal.01,"[red]Dev mode unlocked, cheat codes on.[-] Start commands with / (for example /god, /fill, /give wood 9999)."
 ui.dashboard.leaveToMenu.02,Say less
 ui.dashboard.showWindow.01," Respawn code "
@@ -1568,76 +1562,6 @@ ui.overlay_logs.logsProvider.13,"
 "
 ui.overlay_logs.logsProvider.14,"  [cyan]%s[-] ×%d (bench: %d)
 "
-ui.overlay_milestones.milestonesProvider.01," [gold]Grind progress:[-] %d/%d"
-ui.overlay_milestones.milestonesProvider.02," [cyan]⚡ buff active[-]"
-ui.overlay_milestones.milestonesProvider.03,"     [gray]Loot: %s[-]%s
-"
-ui.overlay_milestones.milestonesProvider.04,gatekept milestone
-ui.overlay_milestones.milestonesProvider.05,gatekept milestones
-ui.overlay_military.militaryProvider.01," [gold]═══ Squad Overview ═══[-]
-
-"
-ui.overlay_military.militaryProvider.02," [gold]Squad:[-]     %s posted of %s
-"
-ui.overlay_military.militaryProvider.03," [gold]Posts:[-]     %s
-"
-ui.overlay_military.militaryProvider.04,none yet. Every military building spawns with its own soldiers.
-ui.overlay_military.militaryProvider.05," [gold]Posts:[-]     %s x%d: %s/%s
-"
-ui.overlay_military.militaryProvider.06," [gold]Shield:[-]    %s
-"
-ui.overlay_military.militaryProvider.07," [green]Military Buff: +%.0f%%[-]
-"
-ui.overlay_military.militaryProvider.08," [green]Expedition Buff: +%.0f%%[-]
-"
-ui.overlay_military.militaryProvider.09,"
- [gold]═══ Active Campaign Arc ═══[-]
-
-"
-ui.overlay_military.militaryProvider.10," [gray]No campaign running, quiet era[-]
-"
-ui.overlay_military.militaryProvider.11,Main quest
-ui.overlay_military.militaryProvider.12,"
- [gray]Side quests cleared: %d (expeditions and campaigns)[-]
-"
-ui.overlay_military.militaryProvider.13,"
- [gold]═══ Main Quests (Campaigns) ═══[-]
-
-"
-ui.overlay_military.militaryProvider.14," [gray]No campaigns unlocked yet, so early.[-]
-"
-ui.overlay_military.militaryProvider.15," Campaigns are the main quests, and they cost soldiers,"
-ui.overlay_military.militaryProvider.16," who spawn with military buildings. They unlock as your civilization levels up."
-ui.overlay_military.militaryProvider.17,Main quests
-ui.overlay_military.militaryProvider.18,"
- [gray]Cheat codes: expedition opens the Expeditions panel; expedition <name> sends an offer[-]
-"
-ui.overlay_military.writeActiveExpedition.01,", %d soldiers out on tour"
-ui.overlay_military.writeActiveExpedition.02," (%s till they pull up)
-"
-ui.overlay_military.writeExpeditionGroup.01,Squad: %d  
-ui.overlay_military.writeExpeditionGroup.02,(fail chance before buffs)
-ui.overlay_military.writeExpeditionGroup.03,(fail chance; %.0f%% with your army carrying)
-ui.overlay_military.writeExpeditionGroup.04,"   %sRuntime: %s  Sweat level: [%s]%.0f%%[-] %s
-"
-ui.overlay_military.writeExpeditionGroup.05,"   Damage: %s
-"
-ui.overlay_military.writeExpeditionGroup.06,"   [green]Squad ready: fire it off from the Expeditions panel[-]
-"
-ui.overlay_military.writeGarrison.01," [gold]Opps:[-]      %s (raids in the %s)
-"
-ui.overlay_military.writeGarrison.02," [yellow]No garrison, so raids hit you raw, zero plot armor.[-]
-"
-ui.overlay_military.writeGarrison.03,"   [gray]Soldiers tank raids, war raids and what an Endure takes (up to %.0f%%).[-]
-"
-ui.overlay_military.writeGarrison.04," [green]Your garrison would tank about %.0f%% of a raid.[-]
-"
-ui.overlay_military.writeGarrison.05,"   [gray]Raids, war raids and an Endure's losses all hit that much softer, hard carry.[-]
-"
-ui.overlay_military.writeGarrison.06,"   [gray]Double the garrison: about %.0f%%. No army tanks more than %.0f%%, hard cap.[-]
-"
-ui.overlay_military.writeGarrison.07," [gold]Clutch saves this run:[-] %s
-"
 ui.overlay_military.garrisonSavedSummary.01,building
 ui.overlay_military.garrisonSavedSummary.03," [gray](%d %s tanked)[-]"
 ui.overlay_military.garrisonSavedSummary.04,raid
@@ -1817,47 +1741,6 @@ ui.overlay_stats.multiplierSourceLabel.07,Plot twist
 ui.overlay_stats.multiplierSourceLabel.08,Civ besties
 ui.overlay_stats.multiplierSourceLabel.09,Legacy buff
 ui.overlay_stats.multiplierSourceLabel.10,Cosmic aura
-ui.overlay_trade.tradeProvider.01," [gold]═══ Bread Routes ═══[-]
-
-"
-ui.overlay_trade.tradeProvider.02," [red]⚠ Routes importing %s are on pause (a war, or your embargo), the bread is blocked.[-]
-"
-ui.overlay_trade.tradeProvider.03," [gray]End your embargo beef with: diplomacy neutral <civ>[-]
-
-"
-ui.overlay_trade.tradeProvider.04," [gold]Routes live rn:[-]
-
-"
-ui.overlay_trade.tradeProvider.05,"   Outbound drip: %s
-"
-ui.overlay_trade.tradeProvider.06,"   Inbound drip: %s
-"
-ui.overlay_trade.tradeProvider.07,"   [red]Paused: %s imports are blockaded, the opps cut the line[-]
-
-"
-ui.overlay_trade.tradeProvider.08,"   %s left in this cycle  [gray](%s secured)[-]
-
-"
-ui.overlay_trade.tradeProvider.11," [gold]Routes up for grabs:[-]
-
-"
-ui.overlay_trade.tradeProvider.12,"   Out: %s → In: %s, a trade situationship
-"
-ui.overlay_trade.tradeProvider.13,"   [green]send it: trade route start %s[-]
-"
-ui.overlay_trade.tradeProvider.14,"   [red]needs %s (pockets: %s)[-]
-"
-ui.overlay_trade.tradeProvider.15," [gray]No trade routes this age yet, so early.[-]
-"
-ui.overlay_trade.tradeProvider.16," [gray]Cheat codes: trade route start/stop <key>[-]
-"
-ui.overlay_trade.tradeProvider.17,"
- [gray]Civ tea, opinion and deals: type factions[-]
-"
-ui.overlay_trade.writeAllyTradeBonuses.01," [gold]Ride or die perks:[-]
-"
-ui.overlay_trade.writeAllyTradeBonuses.02,"   %s: [green]%s %s[-] [gray](buffs route imports and production)[-]
-"
 ui.overlay_wonders.renderCurrentWonderSummary.01,"[gold]═══ This Age's Flex ═══[-]
 "
 ui.overlay_wonders.renderCurrentWonderSummary.02," %s [gold]★ %s[-]  [green]Built, it ate[-]  [gray]%s[-]
@@ -2249,11 +2132,9 @@ ui.dash_ledger.readyText.01,"Every pillar ate, no notes. Type advance, it's go t
 ui.dash_ledger.readyText.02,"Every pillar's up, but the catastrophe is sitting in your DMs. Answer it first (type catastrophe)."
 ui.dash_ledger.waitText.01,then the %s boss
 ui.dash_ledger.waitText.02,Manifesting: 
-ui.dash_ledger.waitText.03,Pls: 
 ui.dash_ledger.shortText.01,Broke on: 
 ui.dashboard.statusLine.19,%s rn
 ui.dashboard.statusLine.17,Squad %s
-ui.dashboard.statusLine.18,[gray]Next arc: %s[-]
 ui.badge_case.drawKeys.10,doomscroll
 ui.overlay_plan.planStatusText.01,on deck
 ui.research_tree.renderTree.15,4K zoom

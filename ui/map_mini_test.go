@@ -61,8 +61,8 @@ func miniOn(t testing.TB, d *Dashboard) {
 }
 
 // TestMiniMapFitsAndHides: the mini map shows on a roomy terminal, with the
-// news line, and hides at 80x24 and 100x30, where the Buildings list gets
-// the whole column back.
+// news line, and hides where even the Panels list's shortest form leaves it under 8
+// picture rows (100x30, 80x24).
 func TestMiniMapFitsAndHides(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	restoreForge(t)
@@ -70,12 +70,12 @@ func TestMiniMapFitsAndHides(t *testing.T) {
 	for _, sz := range []struct {
 		w, h int
 		show bool
-	}{{160, 48, true}, {120, 40, true}, {100, 30, false}, {80, 24, false}} {
+	}{{200, 60, true}, {153, 41, true}, {120, 36, true}, {80, 36, true}, {100, 30, false}, {80, 24, false}} {
 		txt := drawDashboard(t, d, pages, sz.w, sz.h)
 		d.refresh()
 		txt = drawDashboard(t, d, pages, sz.w, sz.h)
-		if d.mapDock.shown != sz.show {
-			t.Errorf("%dx%d: mini map shown = %v, want %v\n%s", sz.w, sz.h, d.mapDock.shown, sz.show, txt)
+		if d.body.miniShown != sz.show {
+			t.Errorf("%dx%d: mini map shown = %v, want %v\n%s", sz.w, sz.h, d.body.miniShown, sz.show, txt)
 		}
 		if strings.Contains(txt, "┌ Map ─") != sz.show {
 			t.Errorf("%dx%d: map title on screen = %v, want %v", sz.w, sz.h, !sz.show, sz.show)
@@ -89,32 +89,98 @@ func TestMiniMapFitsAndHides(t *testing.T) {
 	}
 }
 
-// TestMiniMapSize: the mini map is short enough to leave the Buildings list
-// most of the column: at most 9 rows inside its border and about a quarter
-// of the column, hidden where it would leave the list under dockMinBody
-// rows. Adam found the old 17-row mini map crowding Buildings off a 160x48
-// screen.
-func TestMiniMapSize(t *testing.T) {
+// TestMiniMapIsASquareUnderPanels: the mini map is in the right column under
+// the Panels list, about square on screen (columns to rows 2.1 to 1), and the
+// Buildings list keeps the whole middle column. On a small window the mini
+// map is not shown and the Panels list is whole; minimap off hides it.
+func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	restoreForge(t)
 	d, pages := newMiniDashboard(t)
-	for _, sz := range [][2]int{{160, 48}, {120, 40}, {200, 60}} {
-		drawDashboard(t, d, pages, sz[0], sz[1])
+	draw := func(w, h int) string {
+		drawDashboard(t, d, pages, w, h)
 		d.refresh()
-		drawDashboard(t, d, pages, sz[0], sz[1])
-		_, _, _, dh := d.mapDock.GetRect()
-		_, _, _, mh := d.miniMap.GetRect()
-		if !d.mapDock.shown {
+		return drawDashboard(t, d, pages, w, h)
+	}
+	for _, sz := range [][2]int{{275, 54}, {200, 60}} {
+		draw(sz[0], sz[1])
+		if !d.body.miniShown {
 			t.Fatalf("%dx%d: no mini map", sz[0], sz[1])
 		}
-		if mh > miniMaxInnerH+2 || (mh-2)*4 > dh-2 || dh-mh < dockMinBody {
-			t.Errorf("%dx%d: mini map %d rows of a %d-row column", sz[0], sz[1], mh, dh)
+		px, py, pw, ph := d.sidebar.GetRect()
+		mx, my, mw, mh := d.miniMap.GetRect()
+		bx, by, bw, bh := d.economyTab.buildingTV.GetRect()
+		if mx != px || mw != pw || my != py+ph {
+			t.Errorf("%v: mini map %d,%d %dx%d is not under the Panels list %d,%d %dx%d", sz, mx, my, mw, mh, px, py, pw, ph)
+		}
+		if inner, want := mh-2, float64(mw)/2.1; float64(inner) < want-1 || float64(inner) > want+1 {
+			t.Errorf("%v: mini map picture is %d rows for %d columns, want about %.1f", sz, inner, mw, want)
+		}
+		if by != py || bx+bw > mx || bh != ph+mh {
+			t.Errorf("%v: Buildings at %d,%d %dx%d is not the whole middle column (Panels %d,%d, %d rows with the map)", sz, bx, by, bw, bh, px, py, ph+mh)
 		}
 	}
-	for _, c := range []struct{ w, h, want int }{{69, 39, 11}, {49, 32, 9}, {49, 26, 8}, {49, 25, 0}, {41, 39, 0}} {
-		if got := miniHeight(c.w, c.h); got != c.want {
-			t.Errorf("miniHeight(%d, %d) = %d, want %d", c.w, c.h, got, c.want)
+	// 153x41 and 120x37, the default windows of a 1080p monitor and a
+	// 14-inch laptop: the map keeps its square (the list goes to two
+	// columns for it), and every panel is listed.
+	for _, sz := range [][2]int{{153, 41}, {120, 37}} {
+		txt := draw(sz[0], sz[1])
+		_, _, mw, mh := d.miniMap.GetRect()
+		if want := float64(mw) / 2.1; !d.body.miniShown || float64(mh-2) < want-1.5 || strings.Contains(txt, "PROGRESS") {
+			t.Errorf("%v: shown = %v with %d picture rows for %d columns; want a square map\n%s", sz, d.body.miniShown, mh-2, mw, txt)
 		}
+		for _, name := range sidebarPanels {
+			if !strings.Contains(txt, name) {
+				t.Errorf("%v: the Panels list has lost %q", sz, name)
+			}
+		}
+	}
+	// 192x49: the list keeps its own form and the box is shorter than
+	// square, with at least ten picture rows (case B). (The header is two
+	// rows shorter than the top it replaced on a tall window, so the rows
+	// the case had at 51 are these at 49.)
+	draw(192, 49)
+	if _, _, _, mh := d.miniMap.GetRect(); !d.body.miniShown || mh-2 < 10 || mh >= 18 {
+		t.Errorf("192x49: mini map shown = %v, %d rows; want a box under square with 10 picture rows or more", d.body.miniShown, mh)
+	}
+	if txt := draw(192, 49); !strings.Contains(txt, "PROGRESS") {
+		t.Errorf("192x49: the Panels list lost its grouped form\n%s", txt)
+	}
+	// 160x42: the list steps down a form (a name a row, no groups) so the
+	// map can show, and every panel is still listed (case D).
+	txt := draw(160, 42)
+	if !d.body.miniShown || strings.Contains(txt, "PROGRESS") {
+		t.Errorf("160x42: shown = %v, or the list kept its grouped form\n%s", d.body.miniShown, txt)
+	}
+	for _, name := range sidebarPanels {
+		if !strings.Contains(txt, name) {
+			t.Errorf("160x42: the Panels list has lost %q\n%s", name, txt)
+		}
+	}
+	// With the map off, the list gets its own form back.
+	d.runForTest("minimap off")
+	if txt := draw(160, 42); d.body.miniShown || !strings.Contains(txt, "PROGRESS") {
+		t.Errorf("160x42 with minimap off: shown = %v, or the list is not in its grouped form\n%s", d.body.miniShown, txt)
+	}
+	d.runForTest("minimap on")
+	// Too small: not shown, and the Panels list is whole.
+	txt = draw(100, 30)
+	if d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
+		t.Errorf("100x30: the mini map shows\n%s", txt)
+	}
+	for _, name := range sidebarPanels {
+		if !strings.Contains(txt, name) {
+			t.Errorf("100x30: the Panels list has lost %q\n%s", name, txt)
+		}
+	}
+	// Back to a big window: it comes back.
+	if draw(200, 60); !d.body.miniShown {
+		t.Error("200x60 after 100x30: the mini map did not come back")
+	}
+	// Off.
+	d.runForTest("minimap off")
+	if txt := draw(200, 60); d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
+		t.Errorf("minimap off: the mini map still shows at 200x60")
 	}
 }
 
@@ -126,13 +192,13 @@ func TestMinimapSetting(t *testing.T) {
 	pages := newNativePages()
 	pages.AddPage("dashboard", d.Root(), true, true)
 	show := func() bool {
-		drawDashboard(t, d, pages, 160, 48)
+		drawDashboard(t, d, pages, 200, 60)
 		d.refresh()
-		txt := drawDashboard(t, d, pages, 160, 48)
-		if strings.Contains(txt, "┌ Map ─") != d.mapDock.shown {
-			t.Errorf("the map title on screen disagrees with shown=%v", d.mapDock.shown)
+		txt := drawDashboard(t, d, pages, 200, 60)
+		if strings.Contains(txt, "┌ Map ─") != d.body.miniShown {
+			t.Errorf("the map title on screen disagrees with shown=%v", d.body.miniShown)
 		}
-		return d.mapDock.shown
+		return d.body.miniShown
 	}
 	// On until turned off, with nothing chosen.
 	if !show() {
@@ -153,7 +219,7 @@ func TestMinimapSetting(t *testing.T) {
 	if eng.Account().MinimapOn() {
 		t.Error("minimap off was not saved to the account")
 	}
-	if d.mapDock.wantsModel() {
+	if d.body.wantsModel() {
 		t.Error("the mini map still builds models while off")
 	}
 	if res := HandleCommand("minimap", eng); !strings.Contains(res.Message, "Mini map: off") {
@@ -186,7 +252,7 @@ func BenchmarkMiniMapDraw(b *testing.B) {
 	sim := newSimScreen(b, 160, 48)
 	st := d.engine.GetState()
 	d.miniMap.update(d.mapSettings(), &st)
-	d.miniMap.SetRect(0, 0, 69, miniMaxInnerH+2)
+	d.miniMap.SetRect(0, 0, 69, 18)
 	for i := 0; i < b.N; i++ {
 		drawOn(sim, d.miniMap)
 	}
@@ -219,7 +285,7 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 func TestMiniMapNotShownBeforeFirstRefresh(t *testing.T) {
 	d, pages := newTestDashboard(nil)
 	txt := drawDashboard(t, d, pages, 180, 56)
-	if d.mapDock.shown || strings.Contains(txt, "┌ Map ─") {
+	if d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
 		t.Fatalf("the mini map shows before the first refresh:\n%s", txt)
 	}
 }

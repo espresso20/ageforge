@@ -21,9 +21,13 @@ const sideWidth = 26
 // The first epoch whose map is drawn at night.
 const firstNightEpoch = 5
 
-// inks are the colours the chrome is drawn in for one theme and epoch.
+// inks are the colours the chrome is drawn in for one theme and epoch. The
+// embedded Palette is the active theme's (the words, the borders, the legend);
+// pic is the picture's own (Forge's), which the cursor on the picture is
+// fitted to.
 type inks struct {
 	*Palette
+	pic    *Palette
 	theme  string
 	border kit.Style
 }
@@ -36,15 +40,17 @@ func inksFor(in *inks, epoch int) *inks {
 	if in != nil && in.theme == key && in.Epoch == epoch {
 		return in
 	}
-	pal := NewPalette(epoch)
+	pal, pic := NewPalette(epoch), NewMapPalette(epoch)
 	if epoch >= firstNightEpoch {
-		for _, c := range []mapmodel.Class{mapmodel.CGround, mapmodel.CFlora, mapmodel.CRock, mapmodel.CHill, mapmodel.CWater} {
-			pal.Fg[c] = theme.Legible(theme.Mix(pal.Fg[c], pal.Bg, 0.35), pal.Bg, TerrainFloor)
+		for _, p := range []*Palette{pal, pic} {
+			for _, c := range []mapmodel.Class{mapmodel.CGround, mapmodel.CFlora, mapmodel.CRock, mapmodel.CHill, mapmodel.CWater} {
+				p.Fg[c] = theme.Legible(theme.Mix(p.Fg[c], p.Bg, 0.35), p.Bg, TerrainFloor)
+			}
 		}
+		pic.FitCursor()
 	}
-	pal.FitCursor()
 	border := kit.Style{}.Foreground(theme.Legible(theme.Of(theme.RoleBorder), pal.Bg, 1.8)).Background(pal.Bg)
-	return &inks{Palette: pal, theme: key, border: border}
+	return &inks{Palette: pal, pic: pic, theme: key, border: border}
 }
 
 // begin readies the chrome for a frame and returns its inks, or nil when there
@@ -318,7 +324,7 @@ func (v *view) drawLegend(cv *Canvas, mp *Palette, x, y, w, h int, m *mapmodel.M
 		if skyOf(m) >= 2 { // on the star map a line is a sector, whose hub is a ring
 			sign = '◉'
 		}
-		cv.Put(x, y+1+i, sign, kit.Style{}.Foreground(v.pal.colour(mapgen.LineHue(l.Key))).Background(bg))
+		cv.Put(x, y+1+i, sign, kit.Style{}.Foreground(theme.Legible(v.pal.colour(mapgen.LineHue(l.Key)), bg, 3)).Background(bg))
 		cv.Text(x+2, y+1+i, w-2, l.Name, st)
 	}
 }

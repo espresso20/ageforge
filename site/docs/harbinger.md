@@ -26,7 +26,7 @@ A fated doom strikes at a random moment anywhere in the era, in any of its ages,
 
 The fate is saved with your game, so reloading can't re-roll it.
 
-Until a harbinger arrives, nothing in the game tells a fated era from a quiet one: not the panels, the Epoch panel, the `catastrophe` command, the status ribbon, the log or the map. A quiet era is safe, for now.
+Until a harbinger arrives, nothing in the game tells a fated era from a quiet one: not the panels, the Epoch panel, the `catastrophe` command, the header, the log or the map. A quiet era is safe, for now.
 
 The harbinger's lead is measured on the same age length that the Appease and Brace prices are set from: the age's expected length, stretched by a factor of 1.4 for each age after the Modern Age (see [Ages](ages.md)). Up to the Modern Age the two lengths are the same, and in every age after it the lead is longer. On known ground each age's expected length is first divided by its [Era Mastery](prestige.md#era-mastery) speed, so a mastered era is shorter and its doom and its warning both fall inside it. At 4x every window here is a quarter as long. Mastery is fixed for a run, so a fate rolled when you enter an era never shifts.
 
@@ -49,7 +49,7 @@ When a harbinger arrives, or a new figure takes up the warning, you get:
 
 - a log entry naming the figure and what it warns of, for example "⚑ The Oracle has come, warning of impending doom before this age is out. Type 'harbinger' to answer.", followed by its arrival and warning lines,
 - a toast naming the figure (a new arrival, or a figure taking up the warning),
-- a **⚑ Harbinger** badge on the status ribbon for as long as the thread lasts.
+- a **⚑ Harbinger** chip in the header for as long as the thread lasts (a click on it opens the panel).
 
 Type `harbinger` (or `harb`) to open the Harbinger panel. It opens full screen and shows the current figure and, after a handoff, who it took up the warning from.
 

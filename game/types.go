@@ -830,6 +830,7 @@ type ActiveRouteInfo struct {
 	Name        string
 	Key         string
 	TicksLeft   int
+	CycleTicks  int // the whole cycle, for a meter of TicksLeft
 	CyclesDone  int
 	Export      map[string]float64
 	Import      map[string]float64

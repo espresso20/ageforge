@@ -62,11 +62,7 @@ func (p *peoplePanel) Layout(r image.Rectangle) {
 }
 
 // Paint puts the panel on the kit's painter in theme colors.
-func (p *peoplePanel) Paint(p2 *kit.Painter) {
-	if r := p.Bounds(); !r.Empty() && p.grid != nil {
-		paintExpeditionKit(p2, p.grid, r.Min, newExpPalette())
-	}
-}
+func (p *peoplePanel) Paint(p2 *kit.Painter) { p.paintGrid(p2, p.grid, p.Bounds()) }
 
 // Mouse: a click on a tab switches to it, as Left and Right do; a click on a
 // card, a work area or a building picks it, as Up and Down do; the wheel
@@ -74,6 +70,8 @@ func (p *peoplePanel) Paint(p2 *kit.Painter) {
 // this panel, so a double click is a click.)
 func (p *peoplePanel) Mouse(m kit.Mouse) bool {
 	switch {
+	case p.buttons.mouse(p.grid, p.Bounds().Min, m):
+		return true
 	case m.Kind == kit.MouseWheel:
 		key := kit.KeyDown
 		if m.Wheel < 0 {
@@ -106,7 +104,8 @@ func (p *peoplePanel) PointerAt(at image.Point) kit.Pointer {
 	pt := at.Sub(p.Bounds().Min)
 	_, tab := p.grid.hitAt(hitTab, pt)
 	_, row := p.grid.hitAt(hitRow, pt)
-	return handIf(tab || row)
+	_, key := p.grid.keyAt(pt)
+	return handIf(tab || row || key)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

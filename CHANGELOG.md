@@ -11,7 +11,7 @@ All notable changes to AgeForge are documented here.
 - In the window, a building in the Buildings list and a name in the Panels list light up while the pointer is on them.
 - In the window, the mouse wheel over the dashboard's Resources box turns its page, when it has more than one.
 - In the window, the key buttons along the foot of the Load game, Accounts and Themes pages take clicks: a click on one presses its key.
-- In the window, a click on a building in the dashboard's Buildings list writes its `build` command in the prompt, and a double click builds one. A click on a box of the dashboard opens the panel that is that box in full: the mini map opens the Map, the Ledger opens Advance, the People box People, the Log the full record and Under construction the build plan.
+- In the window, a click on a building in the dashboard's Buildings list writes its `build` command in the prompt, and a double click builds one. A click on a box of the dashboard opens the panel that is that box in full: the mini map opens the Map, the header's bar opens Advance, the People box People, the Log the full record and Under construction the build plan.
 - In the window, a click on a name in the dashboard's Panels list opens that panel, as typing the name does. What is typed in the prompt stays as it is.
 - In the window, the mouse pointer turns into a hand over anything a click acts on (menu entries, buttons, rows, badges, techs, tabs, pillars, expedition pins) and into a text bar over a line you can type in.
 - In the window, the mouse wheel over the dashboard's Buildings list moves it one building at a time.
@@ -60,6 +60,11 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- The Trade, Army and Milestones panels each have a look of their own. Trade is a map: a road runs from your town to the end of every route, a running route has a caravan on its road carrying what it sells and then what it bought, and a box at the side lists what goes out, what comes in and what bears on trade. Army sets your defense against the threat on one bar, musters your soldiers post by post (a mark for so many soldiers, grey for a post not filled), and lists the campaigns as orders. Milestones is a road for each category with a stone for each milestone: the ones reached first, then the one you are walking to, then the ones ahead, and the picked stone in full under the roads. In all three the arrows move the pick, Enter runs the picked thing's command (its button shows the command), a click picks and a click on the button runs it, and what the command did shows on the panel. A window too small for a panel's picture shows the same things as a list of cards.
+- The top of the dashboard is one framed header. Its top edge has your name and titles, a notice when there is one, and an Esc menu button. Inside: the age, the year, People and Morale, any alert as a chip, then the way to the next age (one bar and the four pillars), then what it waits on and what you are short of. Every part takes a click: People and Morale open People, the bar and the pillars open the Advance panel, an alert opens its panel. The header is one or two rows shorter than the old top, and the rows go to the boxes below.
+- The keys along the foot of a panel are buttons. A click on one presses its key, each key of a shared cap (`↑↓`, `PgUp PgDn`) is its own button, and a button lights up under the pointer. Panels also have a close button (`×`) in the top right corner. On a narrow window the foot keeps `Esc close` and drops other keys first. This covers every text panel and People, Advance and Expeditions; Research, Badges and Map keep their own key bars for now.
+- The dashboard's mini map is a square box under the Panels list. It is no longer a strip above the Buildings list, which now has the whole middle column. In a window too small for it, the mini map is not shown.
+- The map keeps its own colours in every theme. A light theme or a one-ink theme no longer redraws it; the words and the frame around it still follow the theme.
 - In the Research panel, one click on a tech opens its card. It used to take a double click, and a single click looked like nothing had happened.
 - The Windows download no longer opens an empty console window beside the game. `ageforge.exe --version` prints nothing there as a result.
 - Inside: the game no longer uses a terminal library at all. Its screen, keys, mouse and event loop are its own code, and two libraries (tview and tcell) are out of the build. What it shows and how it plays are the same.
@@ -141,6 +146,7 @@ All notable changes to AgeForge are documented here.
 - The `icons` command, the Nerd Font installer and the `nerd` map glyph set are gone, and the Font Snob badge with them. The window draws with its own fonts, which have no such icons. Option+B and Option+F no longer act as Home and End on an empty prompt.
 
 ### Fixed
+- The History panel's charts show again. In the window every dot of them was a question mark, because no font the game ships has the braille dots they are drawn with. The window now draws those dots itself.
 - A right click followed quickly by a left click on the same spot no longer counts as a double click. It could build a building from one left click.
 - On Windows, a failure to start, or to save on the way out, is shown in a message box. The Windows build has no console, so the message used to go nowhere.
 - With a dialog or a floating window open, a click or the wheel beside it no longer reaches the page behind it. A click beside the account confirmation could change the main menu's page.

@@ -44,7 +44,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]simCell {
 		d.overlayMgr.Hide()
 	}
 	out["dashboard"] = draw()
-	if !d.mapDock.shown {
+	if !d.body.miniShown {
 		t.Fatalf("no mini map on the %dx%d dashboard", w, h)
 	}
 
@@ -174,7 +174,7 @@ func pixelGlyph(r rune) bool { return r == '▄' || r == '▀' }
 //     terminal default and no late-bound sentinel escapes the screen wrapper.
 func TestThemeRender_NoInvisibleText(t *testing.T) {
 	restoreForge(t)
-	const w, h = 160, 48
+	const w, h = 200, 60
 	for _, th := range theme.All() {
 		t.Run(th.Key, func(t *testing.T) {
 			must(t, theme.SetActive(th.Key))
@@ -267,7 +267,7 @@ func TestThemeRender_DumpANSI(t *testing.T) {
 		t.Skip("set THEME_RENDER_DUMP=<dir> to dump ANSI renders")
 	}
 	restoreForge(t)
-	const w, h = 160, 48
+	const w, h = 200, 60
 	for _, key := range []string{"forge", "daylight", "high_contrast_light", "parchment"} {
 		_ = theme.SetActive(key)
 		for name, cells := range renderScreens(t, w, h) {

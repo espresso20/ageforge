@@ -293,8 +293,9 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 	})
 }
 
-// TestBadgeToastOnTheLiveScreen: an earned badge's toast is on the toast
-// bar at every size, whole, in one row.
+// TestBadgeToastOnTheLiveScreen: an earned badge's toast is the notice in the
+// header's top edge at every size, whole, in one row: the badge and its name
+// always, its description once the edge has the room.
 func TestBadgeToastOnTheLiveScreen(t *testing.T) {
 	for _, size := range treeSizes {
 		w, h := size[0], size[1]
@@ -304,10 +305,13 @@ func TestBadgeToastOnTheLiveScreen(t *testing.T) {
 		// over the bar.
 		eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
 		cells := drawnDashboard(t, d, pages, w, h)
-		x, y, tw, _ := d.toastTV.GetRect()
-		row := rectText(cells, w, x, y, tw, 1)[0]
-		if strings.TrimSpace(row) != "◖*◗ Badge earned: Rock Solid (bronze). Reach the Stone Age." {
-			t.Errorf("%dx%d: the toast bar shows %q", w, h, row)
+		row := rectText(cells, w, 0, 0, w, 1)[0]
+		whole := "◖*◗ Badge earned: Rock Solid (bronze)."
+		if w >= 100 {
+			whole += " Reach the Stone Age."
+		}
+		if !strings.Contains(row, " "+whole+" ") {
+			t.Errorf("%dx%d: the header's top edge shows %q, want %q in it", w, h, row, whole)
 		}
 	}
 }
@@ -570,21 +574,23 @@ func TestHackerThemesBelongToTheirBadges(t *testing.T) {
 }
 
 // TestStatusBarWearsTheTitle: once an account's badge score holds a title
-// past the first, the widest status bar shows it beside the account's
-// name. The first title, and a bar with no room, show the name alone.
+// past the first, the header shows it beside the account's name in its top
+// edge. The first title shows the name alone.
 func TestStatusBarWearsTheTitle(t *testing.T) {
 	st := game.NewGameEngine().GetState()
 	st.AccountStats = &game.AccountStatsView{DisplayName: "Ada", BadgeSummary: game.BadgeSummary{Title: "Settler"}}
-	if line := untag(statusLine(st, ribbonFacts{}, 200)); !strings.Contains(line, "Ada · ") || strings.Contains(line, "Settler") {
-		t.Errorf("the first title: %q", line)
+	top := func(v headerView, w int) string { return renderHeader(v, w, 2).Lines()[0] }
+	if v := statusLine(st, ""); v.Name != "Ada" || v.Worn != "" || !strings.Contains(top(v, 100), " Ada ") || strings.Contains(top(v, 100), "Settler") {
+		t.Errorf("the first title: %q", top(v, 100))
 	}
 	st.AccountStats.BadgeSummary = game.BadgeSummary{Title: "Magistrate", TitleRank: 2}
-	if line := untag(statusLine(st, ribbonFacts{}, 200)); !strings.Contains(line, "Ada Magistrate · ") {
-		t.Errorf("a wide bar: %q", line)
+	v := statusLine(st, "")
+	if line := top(v, 100); !strings.Contains(line, " Ada · Magistrate ") {
+		t.Errorf("a wide header: %q", line)
 	}
 	for w := 40; w <= 200; w += 7 {
-		if line := untag(statusLine(st, ribbonFacts{}, w)); runeLen(line) > w {
-			t.Errorf("%d columns: the status bar is %d cells: %q", w, runeLen(line), line)
+		if line := top(v, w); runeLen(line) != w || !strings.Contains(line, " Ada") {
+			t.Errorf("%d columns: the top edge is %d cells: %q", w, runeLen(line), line)
 		}
 	}
 }

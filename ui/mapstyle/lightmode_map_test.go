@@ -9,12 +9,12 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// TestSpaceMapsAreDarkAcrossAllThemes verifies that outer space scales (Scale >= Orbit)
-// render on a pitch-black / dark void across all themes (both dark and light),
-// that white celestial bodies (Sol core, polar ice caps, cloud belts, spaceship hulls)
-// keep their pure white color rather than inverting to black, and that block runes
-// are never inverted by text legibility rules.
-func TestSpaceMapsAreDarkAcrossAllThemes(t *testing.T) {
+// TestSpaceMapIsDark verifies that outer space scales (Scale >= Orbit) render
+// on a pitch-black void, that white celestial bodies (Sol core, polar ice caps,
+// cloud belts, spaceship hulls) keep their pure white rather than inverting to
+// black, and that block runes are never inverted by text legibility rules. The
+// palette is the same in every theme (see TestPictureIgnoresTheTheme).
+func TestSpaceMapIsDark(t *testing.T) {
 	spaceGrid := &mapgen.Grid{
 		W:     80,
 		H:     24,
@@ -22,84 +22,49 @@ func TestSpaceMapsAreDarkAcrossAllThemes(t *testing.T) {
 		Tint:  mapgen.HNone,
 		Space: true,
 	}
+	p := cellPaletteFor(nil, spaceGrid)
+	white := theme.SpaceWhiteColor()
 
-	for th := range fixture.Themes(t) {
-		p := cellPaletteFor(nil, spaceGrid)
+	if wantVoid := theme.SpaceColor(theme.SpaceVoid); p.bg != wantVoid {
+		t.Errorf("space background = %06x, want SpaceVoid %06x", p.bg.Hex(), wantVoid.Hex())
+	}
+	if voidCol := p.over(mapgen.P(mapgen.HVoid, 255)); voidCol != theme.SpaceColor(theme.SpaceVoid) {
+		t.Errorf("over(HVoid) = %06x, want %06x", voidCol.Hex(), theme.SpaceColor(theme.SpaceVoid).Hex())
+	}
+	if whiteHue := p.hue[mapgen.HWhite]; whiteHue != white {
+		t.Errorf("hue[HWhite] = %06x, want %06x (SpaceWhiteColor)", whiteHue.Hex(), white.Hex())
+	}
 
-		// 1. Space background must always be dark space void (not off-white/grey in light themes).
-		if th.Duotone {
-			if lum := theme.RelativeLuminance(p.bg); lum > 0.3 {
-				t.Errorf("%s (duotone): space background luminance = %.3f, want <= 0.3", th.Key, lum)
-			}
-		} else {
-			wantVoid := theme.SpaceColor(theme.SpaceVoid)
-			if p.bg != wantVoid {
-				t.Errorf("%s: space background = %06x, want SpaceVoid %06x", th.Key, p.bg.Hex(), wantVoid.Hex())
-			}
+	// Sol core (HWhite foreground on HSun yellow background with block runes) must stay white.
+	for _, r := range []rune{'█', '▘', '▀', '▄'} {
+		cell := mapgen.Cell{R: r, Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HSun, 255)}
+		if fg, _, _ := p.style(cell).Decompose(); fg != white {
+			t.Errorf("Sol core rune %q fg = %06x, want white %06x (inverted to black!)", r, fg.Hex(), white.Hex())
 		}
+	}
 
-		// 2. HVoid at weight 255 must be dark space void.
-		voidCol := p.over(mapgen.P(mapgen.HVoid, 255))
-		if !th.Duotone && voidCol != theme.SpaceColor(theme.SpaceVoid) {
-			t.Errorf("%s: over(HVoid) = %06x, want %06x", th.Key, voidCol.Hex(), theme.SpaceColor(theme.SpaceVoid).Hex())
-		}
+	// Mars polar ice cap (HWhite on HRock with quadrant runes) must stay bright white.
+	marsCap := mapgen.Cell{R: '▙', Fg: mapgen.P(mapgen.HWhite, 235), Bg: mapgen.P(mapgen.HRock, 245)}
+	if fg, _, _ := p.style(marsCap).Decompose(); theme.RelativeLuminance(fg) < 0.7 {
+		t.Errorf("Mars polar cap fg = %06x, luminance = %.2f, want bright white (>= 0.7)", fg.Hex(), theme.RelativeLuminance(fg))
+	}
 
-		// 3. HWhite hue must be white across all non-duotone themes (not near-black RoleBright).
-		if !th.Duotone {
-			whiteHue := p.hue[mapgen.HWhite]
-			if whiteHue != theme.SpaceWhiteColor() {
-				t.Errorf("%s: hue[HWhite] = %06x, want %06x (SpaceWhiteColor)", th.Key, whiteHue.Hex(), theme.SpaceWhiteColor().Hex())
-			}
-		}
-
-		// 4. Sol core (HWhite foreground on HSun yellow background with block runes) must stay white.
-		solCoreCells := []mapgen.Cell{
-			{R: '█', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HSun, 255)},
-			{R: '▘', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HSun, 255)},
-			{R: '▀', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HSun, 255)},
-			{R: '▄', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HSun, 255)},
-		}
-		for _, cell := range solCoreCells {
-			st := p.style(cell)
-			fg, _, _ := st.Decompose()
-			if !th.Duotone && fg != theme.SpaceWhiteColor() {
-				t.Errorf("%s: Sol core rune %q fg = %06x, want white %06x (inverted to black!)",
-					th.Key, cell.R, fg.Hex(), theme.SpaceWhiteColor().Hex())
-			}
-		}
-
-		// 5. Mars polar ice cap (HWhite on HRock with quadrant runes) must stay bright white.
-		marsCap := mapgen.Cell{R: '▙', Fg: mapgen.P(mapgen.HWhite, 235), Bg: mapgen.P(mapgen.HRock, 245)}
-		stCap := p.style(marsCap)
-		fgCap, _, _ := stCap.Decompose()
-		if !th.Duotone && theme.RelativeLuminance(fgCap) < 0.7 {
-			t.Errorf("%s: Mars polar cap fg = %06x, luminance = %.2f, want bright white (>= 0.7)",
-				th.Key, fgCap.Hex(), theme.RelativeLuminance(fgCap))
-		}
-
-		// 6. Jupiter cloud belt (HWhite on HCloud with '█') must stay bright white.
-		jupCloud := mapgen.Cell{R: '█', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HCloud, 220)}
-		stJup := p.style(jupCloud)
-		fgJup, _, _ := stJup.Decompose()
-		if !th.Duotone && fgJup != theme.SpaceWhiteColor() {
-			t.Errorf("%s: Jupiter cloud belt fg = %06x, want white %06x", th.Key, fgJup.Hex(), theme.SpaceWhiteColor().Hex())
-		}
-
-		// 7. Spaceship hull (HWhite on HSteel with '█') must stay bright white.
-		shipHull := mapgen.Cell{R: '█', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HSteel, 180)}
-		stShip := p.style(shipHull)
-		fgShip, _, _ := stShip.Decompose()
-		if !th.Duotone && fgShip != theme.SpaceWhiteColor() {
-			t.Errorf("%s: Spaceship hull fg = %06x, want white %06x", th.Key, fgShip.Hex(), theme.SpaceWhiteColor().Hex())
+	// Jupiter cloud belt (HWhite on HCloud with '█') and a spaceship hull (HWhite on HSteel) stay white.
+	for name, cell := range map[string]mapgen.Cell{
+		"Jupiter cloud belt": {R: '█', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HCloud, 220)},
+		"Spaceship hull":     {R: '█', Fg: mapgen.P(mapgen.HWhite, 255), Bg: mapgen.P(mapgen.HSteel, 180)},
+	} {
+		if fg, _, _ := p.style(cell).Decompose(); fg != white {
+			t.Errorf("%s fg = %06x, want white %06x", name, fg.Hex(), white.Hex())
 		}
 	}
 }
 
-// TestGroundMapsInLightThemes verifies that ground scales in light themes render
-// on paper-like backgrounds, that material colors of buildings and wonders
-// using block characters are preserved, and that night dimming darkens naturally
-// with contrast remaining >= 1.5.
-func TestGroundMapsInLightThemes(t *testing.T) {
+// TestGroundMapKeepsItsDarkGround verifies that the ground scale renders on
+// Forge's dark background, that material colors of buildings and wonders
+// using block characters are preserved, and that night dimming keeps contrast
+// >= 1.5.
+func TestGroundMapKeepsItsDarkGround(t *testing.T) {
 	groundGrid := &mapgen.Grid{
 		W:     80,
 		H:     24,
@@ -107,78 +72,52 @@ func TestGroundMapsInLightThemes(t *testing.T) {
 		Tint:  mapgen.HNone,
 		Space: false,
 	}
+	p := cellPaletteFor(nil, groundGrid)
 
-	lightThemes := []string{"daylight", "high_contrast_light"}
-	for _, thKey := range lightThemes {
-		fixture.WithTheme(t, thKey)
-		p := cellPaletteFor(nil, groundGrid)
+	if want := pictureRole(theme.RoleBackground); p.bg != want {
+		t.Errorf("ground background = %06x, want Forge's %06x", p.bg.Hex(), want.Hex())
+	}
+	if lum := theme.RelativeLuminance(p.bg); lum > 0.1 {
+		t.Errorf("ground background luminance = %.2f, want dark (<= 0.1)", lum)
+	}
 
-		// 1. Background must be light paper.
-		if lum := theme.RelativeLuminance(p.bg); lum < 0.8 {
-			t.Errorf("%s: ground background luminance = %.2f, want >= 0.8", thKey, lum)
+	// Building block runes keep their material colors and are not inverted to RoleText ink.
+	textInk := pictureRole(theme.RoleText)
+	materials := []struct {
+		name string
+		hue  mapgen.Hue
+		bg   mapgen.Hue
+	}{
+		{"thatch", mapgen.HThatch, mapgen.HEarth},
+		{"stone", mapgen.HStone, mapgen.HGrass},
+		{"gold", mapgen.HGold, mapgen.HLawn},
+		{"brick", mapgen.HBrick, mapgen.HPath},
+		{"timber", mapgen.HTimber, mapgen.HEarth},
+	}
+	for _, mat := range materials {
+		cell := mapgen.Cell{R: '█', Fg: mapgen.P(mat.hue, 255), Bg: mapgen.P(mat.bg, 36)}
+		fg, bg, _ := p.style(cell).Decompose()
+		if fg == textInk {
+			t.Errorf("%s building block was inverted to RoleText ink (%06x)", mat.name, textInk.Hex())
 		}
-
-		// 2. Building block runes should keep material colors and NOT invert to black ink (RoleText).
-		textInk := theme.Of(theme.RoleText)
-		materials := []struct {
-			name string
-			hue  mapgen.Hue
-			bg   mapgen.Hue
-		}{
-			{"thatch", mapgen.HThatch, mapgen.HEarth},
-			{"stone", mapgen.HStone, mapgen.HGrass},
-			{"gold", mapgen.HGold, mapgen.HLawn},
-			{"brick", mapgen.HBrick, mapgen.HPath},
-			{"timber", mapgen.HTimber, mapgen.HEarth},
+		if cr := theme.ContrastRatio(fg, bg); cr < 1.5 {
+			t.Errorf("%s building has contrast %.2f, want >= 1.5", mat.name, cr)
 		}
+	}
 
-		for _, mat := range materials {
-			cell := mapgen.Cell{
-				R:  '█',
-				Fg: mapgen.P(mat.hue, 255),
-				Bg: mapgen.P(mat.bg, 36),
-			}
-			st := p.style(cell)
-			fg, bg, _ := st.Decompose()
-
-			// The material must not be pulled to RoleText (near-black ink).
-			if fg == textInk {
-				t.Errorf("%s: %s building block was inverted to RoleText ink (%06x)", thKey, mat.name, textInk.Hex())
-			}
-
-			// Contrast must be at least 1.5.
-			if cr := theme.ContrastRatio(fg, bg); cr < 1.5 {
-				t.Errorf("%s: %s building has contrast %.2f, want >= 1.5", thKey, mat.name, cr)
-			}
-		}
-
-		// 3. Test night dimming across various Dim levels.
-		for _, dim := range []uint8{50, 120, 165, 200, 255} {
-			cell := mapgen.Cell{
-				R:   '█',
-				Fg:  mapgen.P(mapgen.HStone, 235),
-				Bg:  mapgen.P(mapgen.HGrass, 36),
-				Dim: dim,
-			}
-			st := p.style(cell)
-			fg, bg, _ := st.Decompose()
-
-			// Night dimming must darken both fg and bg.
-			if theme.RelativeLuminance(bg) >= theme.RelativeLuminance(p.bg) {
-				t.Errorf("%s dim %d: bg luminance did not darken", thKey, dim)
-			}
-
-			// Contrast must clear the 1.5 floor at night so glyphs do not sink into the ground.
-			if cr := theme.ContrastRatio(fg, bg); cr < 1.5 {
-				t.Errorf("%s dim %d: contrast = %.2f, want >= 1.5", thKey, dim, cr)
-			}
+	// The glyph stays clear of its ground across the Dim levels of the night.
+	for _, dim := range []uint8{50, 120, 165, 200, 255} {
+		cell := mapgen.Cell{R: '█', Fg: mapgen.P(mapgen.HStone, 235), Bg: mapgen.P(mapgen.HGrass, 36), Dim: dim}
+		fg, bg, _ := p.style(cell).Decompose()
+		if cr := theme.ContrastRatio(fg, bg); cr < 1.5 {
+			t.Errorf("dim %d: contrast = %.2f, want >= 1.5", dim, cr)
 		}
 	}
 }
 
 // TestRenderedAgesLightAndDarkThemes tests end-to-end rendering of ground and space
 // maps across standard, accessibility, and flavor themes to ensure space maps are
-// dark with glowing stars/sun, and ground maps are clean ink-on-paper with legible glyphs.
+// dark with glowing stars/sun, and ground maps keep legible glyphs, in every theme.
 func TestRenderedAgesLightAndDarkThemes(t *testing.T) {
 	testThemes := []string{
 		"forge",               // Dark standard
@@ -201,7 +140,6 @@ func TestRenderedAgesLightAndDarkThemes(t *testing.T) {
 
 	for _, thKey := range testThemes {
 		fixture.WithTheme(t, thKey)
-		th := theme.Active()
 
 		for _, ta := range testAges {
 			for _, tick := range []int{noon, midnight} {
@@ -225,19 +163,17 @@ func TestRenderedAgesLightAndDarkThemes(t *testing.T) {
 								r = c.Runes[0]
 							}
 
-							// Void cells in space must be dark (not washed out off-white in light themes).
+							// Void cells in space must be dark in every theme (not washed out off-white in light themes).
 							if r == ' ' || r == '·' || r == '∙' || r == '*' || r == '•' || r == '✦' {
-								if !th.Duotone && th.IsLight() {
-									if lum := theme.RelativeLuminance(bg); lum > 0.15 {
-										t.Errorf("%s %s tick %d at (%d,%d): space cell bg luminance = %.2f (%06x), want dark (<= 0.15)",
-											thKey, ta.age, tick, x, y, lum, bg.Hex())
-										break
-									}
+								if lum := theme.RelativeLuminance(bg); lum > 0.15 {
+									t.Errorf("%s %s tick %d at (%d,%d): space cell bg luminance = %.2f (%06x), want dark (<= 0.15)",
+										thKey, ta.age, tick, x, y, lum, bg.Hex())
+									break
 								}
 							}
 
 							// Verify Sol core cells with HSun background stay white (never inverted to black).
-							if !th.Duotone && bg == theme.SpaceColor(theme.SpaceSun) && isBlockRune(r) {
+							if bg == theme.SpaceColor(theme.SpaceSun) && isBlockRune(r) {
 								if fg != theme.SpaceWhiteColor() {
 									t.Errorf("%s %s tick %d at (%d,%d): Sol core rune %q on SpaceSun (%06x) has fg=%06x, want SpaceWhiteColor (inverted to black!)",
 										thKey, ta.age, tick, x, y, r, bg.Hex(), fg.Hex())

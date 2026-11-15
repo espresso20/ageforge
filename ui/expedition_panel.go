@@ -184,11 +184,7 @@ func (p *expeditionPanel) Layout(r image.Rectangle) {
 }
 
 // Paint puts the panel on the kit's painter in theme colors.
-func (p *expeditionPanel) Paint(p2 *kit.Painter) {
-	if r := p.Bounds(); !r.Empty() && p.grid != nil {
-		paintExpeditionKit(p2, p.grid, r.Min, newExpPalette())
-	}
-}
+func (p *expeditionPanel) Paint(p2 *kit.Painter) { p.paintGrid(p2, p.grid, p.Bounds()) }
 
 // Mouse: a click on an offer's pin highlights it, as the arrows do, and a
 // double click asks to send it, as Enter does; on the Report a click on a
@@ -197,6 +193,8 @@ func (p *expeditionPanel) Paint(p2 *kit.Painter) {
 // do.
 func (p *expeditionPanel) Mouse(m kit.Mouse) bool {
 	switch {
+	case !p.view.confirm && p.buttons.mouse(p.grid, p.Bounds().Min, m):
+		return true
 	case m.Kind == kit.MouseWheel:
 		key := kit.KeyDown
 		if m.Wheel < 0 {
@@ -245,8 +243,10 @@ func (p *expeditionPanel) PointerAt(at image.Point) kit.Pointer {
 	if p.view.report {
 		kind = hitParty
 	}
-	_, ok := p.grid.hitAt(kind, at.Sub(p.Bounds().Min))
-	return handIf(ok)
+	pt := at.Sub(p.Bounds().Min)
+	_, ok := p.grid.hitAt(kind, pt)
+	_, key := p.grid.keyAt(pt)
+	return handIf(ok || key)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it
