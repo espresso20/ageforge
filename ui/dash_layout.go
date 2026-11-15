@@ -34,13 +34,13 @@ const (
 )
 
 // miniMapMinCols and miniMapMinRows are the smallest terminal the mini map
-// shows on: it needs the Panels list whole and a square under it, and the
-// classic layout's People box under that. (The rich layout, from
-// richMinCols by richMinRows, needs 52 rows.) The wiki and the minimap
+// shows on in the classic layout: the Panels list whole, a box with at least
+// miniShortestInnerH picture rows under it, and the People box under that.
+// (The rich layout, from richMinCols by richMinRows, needs 42 rows.) The wiki and the minimap
 // command quote them (TestMiniMapAppearsWhereTheDocsSay).
 const (
 	miniMapMinCols = 80
-	miniMapMinRows = 48
+	miniMapMinRows = 38
 )
 
 // dashRich says whether a w by h terminal gets the rich layout.
@@ -139,27 +139,48 @@ func (b *dashBody) miniReady() bool { return b.modelReady != nil && b.modelReady
 // room, or nothing has been laid out yet.
 func (b *dashBody) wantsModel() bool { return !b.miniOff && (!b.miniDrawn || b.miniFits) }
 
+// miniShortestInnerH is the fewest picture rows a mini map shorter than
+// square is shown with.
+const miniShortestInnerH = 10
+
 // miniBoxHeight is the mini map's height, border included, in a right
-// column w wide with h rows for the Panels list and the mini map together:
-// about square on screen (a cell is about 2.1 times taller than wide), and
-// 0 (hidden) unless the Panels list keeps the rows of its form first and
-// the picture still gets miniMinInnerH rows.
+// column w wide with h rows for the Panels list and the mini map together,
+// or 0 (hidden). The Panels list always lists every panel, and the first of
+// these that fits wins: the list in the form it has by itself (the rows
+// sidebarText picks a form from) with a box about square on screen (a cell
+// is about 2.1 times taller than wide); that form with a shorter box of at
+// least miniShortestInnerH picture rows; the next shorter form with a square
+// box; that form with a shorter box.
 func miniBoxHeight(w, h int) int {
-	inner := int(float64(w)/2.1 + 0.5)
-	if inner < miniMinInnerH || h-panelsListRows(w-2, h-2)-2 < inner+2 {
+	square := int(float64(w)/2.1 + 0.5)
+	if square < miniMinInnerH {
 		return 0
 	}
-	return inner + 2
+	forms := panelsFormRows(w - 2)
+	own := 0
+	for own < len(forms)-1 && h-2 < forms[own] {
+		own++
+	}
+	for f := own; f < min(own+2, len(forms)); f++ {
+		picture := h - (forms[f] + 2) - 2
+		if picture >= square {
+			return square + 2
+		}
+		if picture >= miniShortestInnerH {
+			return picture + 2
+		}
+	}
+	return 0
 }
 
-// panelsListRows is the rows the Panels list takes inside its box, w by h
-// inside, in the form sidebarText picks at that size.
-func panelsListRows(w, h int) int {
-	switch {
-	case w >= panelsRichWidth() && h >= panelsRichRows():
-		return panelsRichRows()
-	case h > len(sidebarPanels):
-		return len(sidebarPanels) + 1
+// panelsFormRows is the fewest rows inside the box each form of the Panels
+// list needs, in w cells, longest form first: the grouped list (when w has
+// room for it), a name a row, and two columns.
+func panelsFormRows(w int) []int {
+	n := len(sidebarPanels)
+	forms := []int{n, (n + 1) / 2}
+	if w >= panelsRichWidth() {
+		forms = append([]int{panelsRichRows()}, forms...)
 	}
-	return h
+	return forms
 }

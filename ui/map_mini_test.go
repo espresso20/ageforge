@@ -61,7 +61,7 @@ func miniOn(t testing.TB, d *Dashboard) {
 }
 
 // TestMiniMapFitsAndHides: the mini map shows on a roomy terminal, with the
-// news line, and hides where the Panels list would lose rows to it (160x42,
+// news line, and hides where the Panels list would lose rows to it (153x41,
 // 100x30, 80x24).
 func TestMiniMapFitsAndHides(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
@@ -70,7 +70,7 @@ func TestMiniMapFitsAndHides(t *testing.T) {
 	for _, sz := range []struct {
 		w, h int
 		show bool
-	}{{200, 60, true}, {120, 52, true}, {80, 48, true}, {160, 42, false}, {100, 30, false}, {80, 24, false}} {
+	}{{200, 60, true}, {120, 42, true}, {80, 38, true}, {153, 41, false}, {100, 30, false}, {80, 24, false}} {
 		txt := drawDashboard(t, d, pages, sz.w, sz.h)
 		d.refresh()
 		txt = drawDashboard(t, d, pages, sz.w, sz.h)
@@ -120,8 +120,34 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 			t.Errorf("%v: Buildings at %d,%d %dx%d is not the whole middle column (Panels %d,%d, %d rows with the map)", sz, bx, by, bw, bh, px, py, ph+mh)
 		}
 	}
+	// 192x51: the list keeps its own form and the box is shorter than
+	// square, with at least ten picture rows (case B).
+	draw(192, 51)
+	if _, _, _, mh := d.miniMap.GetRect(); !d.body.miniShown || mh-2 < 10 || mh >= 18 {
+		t.Errorf("192x51: mini map shown = %v, %d rows; want a box under square with 10 picture rows or more", d.body.miniShown, mh)
+	}
+	if txt := draw(192, 51); !strings.Contains(txt, "PROGRESS") {
+		t.Errorf("192x51: the Panels list lost its grouped form\n%s", txt)
+	}
+	// 160x42: the list steps down a form (a name a row, no groups) so the
+	// map can show, and every panel is still listed (case D).
+	txt := draw(160, 42)
+	if !d.body.miniShown || strings.Contains(txt, "PROGRESS") {
+		t.Errorf("160x42: shown = %v, or the list kept its grouped form\n%s", d.body.miniShown, txt)
+	}
+	for _, name := range sidebarPanels {
+		if !strings.Contains(txt, name) {
+			t.Errorf("160x42: the Panels list has lost %q\n%s", name, txt)
+		}
+	}
+	// With the map off, the list gets its own form back.
+	d.runForTest("minimap off")
+	if txt := draw(160, 42); d.body.miniShown || !strings.Contains(txt, "PROGRESS") {
+		t.Errorf("160x42 with minimap off: shown = %v, or the list is not in its grouped form\n%s", d.body.miniShown, txt)
+	}
+	d.runForTest("minimap on")
 	// Too small: not shown, and the Panels list is whole.
-	txt := draw(100, 30)
+	txt = draw(100, 30)
 	if d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
 		t.Errorf("100x30: the mini map shows\n%s", txt)
 	}

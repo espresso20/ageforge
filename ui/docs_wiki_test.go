@@ -10,7 +10,7 @@ import (
 )
 
 // TestMiniMapAppearsWhereTheDocsSay: the mini map shows from one terminal
-// size up (at 80 columns; the rich layout from 120 columns wants 52 rows),
+// size up (at 80 columns; the rich layout from 120 columns wants 42 rows),
 // and the wiki and the minimap command quote it. A change to the layout
 // that moves the size fails here until the docs say the new one.
 func TestMiniMapAppearsWhereTheDocsSay(t *testing.T) {
