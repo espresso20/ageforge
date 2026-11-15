@@ -149,6 +149,20 @@ func TestPanelFrameKeysLightUp(t *testing.T) {
 	}
 }
 
+// TestKeyPressLeavesOtherClicksAlone: a press off the keys is never taken,
+// even when it moves the light off a key (the pointer was last seen on one).
+func TestKeyPressLeavesOtherClicksAlone(t *testing.T) {
+	f, _, pressed := keyFrame(t)
+	esc := keyCell(t, f, kit.KeyEsc, true)
+	f.Mouse(kit.Mouse{Kind: kit.MouseMove, X: esc.X, Y: esc.Y})
+	if f.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: 40, Y: 10}) || len(*pressed) != 0 {
+		t.Errorf("a press off the keys was taken (pressed %v)", *pressed)
+	}
+	if f.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonRight, X: esc.X, Y: esc.Y}) || len(*pressed) != 0 {
+		t.Errorf("a right press on a key was taken (pressed %v)", *pressed)
+	}
+}
+
 // TestPanelFrameAloneHasNoButtons: a frame nobody gave a way to press keys
 // (a picture of the screen) takes no click and shows no hand.
 func TestPanelFrameAloneHasNoButtons(t *testing.T) {
