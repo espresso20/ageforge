@@ -8,10 +8,14 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// Palette resolves the model's colour classes against the active theme for
-// one epoch. Build one per frame (it is a few dozen colour mixes) or cache
-// it by (theme key, epoch).
+// Palette resolves the model's colour classes against one theme for one
+// epoch: the active theme's for the words and frame round the map
+// (NewPalette), Forge's for the picture and its cursor (NewMapPalette).
+// Build one per frame (it is a few dozen colour mixes) or cache it by
+// (theme key, epoch).
 type Palette struct {
+	role func(theme.Role) theme.Color
+
 	Bg      theme.Color
 	Fg      [mapmodel.NumClasses]theme.Color
 	Light   bool
@@ -26,16 +30,27 @@ type Palette struct {
 	Epoch             int
 }
 
-// NewPalette derives the class colours from theme roles: each class starts
-// from its role, leans toward its identity hue and is clamped legible
-// against the background, so light themes darken and dark themes brighten
-// on their own.
-func NewPalette(epoch int) *Palette {
-	bg := theme.Of(theme.RoleBackground)
-	p := &Palette{Bg: bg, Light: theme.IsLight(), Epoch: epoch}
+// NewPalette is the class colours in the active theme, for the chrome: each
+// class starts from its role, leans toward its identity hue and is clamped
+// legible against the background, so light themes darken and dark themes
+// brighten on their own. It has no cursor; the picture's is NewMapPalette's.
+func NewPalette(epoch int) *Palette { return newPalette(epoch, theme.Active()) }
+
+// NewMapPalette is the class colours in the picture's theme (Forge, whatever
+// theme is active) with the inspect cursor fitted to them.
+func NewMapPalette(epoch int) *Palette {
+	p := newPalette(epoch, pictureTheme())
+	p.FitCursor()
+	return p
+}
+
+func newPalette(epoch int, th theme.Theme) *Palette {
+	role := th.Color
+	bg := role(theme.RoleBackground)
+	p := &Palette{role: role, Bg: bg, Light: th.IsLight(), Epoch: epoch}
 	for c := mapmodel.Class(0); c < mapmodel.NumClasses; c++ {
 		s := mapmodel.ClassSpecs[c]
-		base := theme.Of(s.Role)
+		base := role(s.Role)
 		hue := s.Hue
 		if s.EpochHue {
 			hue = theme.EpochHue(epoch)
@@ -46,9 +61,9 @@ func NewPalette(epoch int) *Palette {
 		}
 		switch c {
 		case mapmodel.CMemory:
-			col = theme.Mix(bg, theme.Of(theme.RoleDim), 0.5)
+			col = theme.Mix(bg, role(theme.RoleDim), 0.5)
 		case mapmodel.CStar:
-			col = theme.Mix(bg, theme.Of(theme.RoleText), 0.55)
+			col = theme.Mix(bg, role(theme.RoleText), 0.55)
 		case mapmodel.CGround, mapmodel.CHill:
 			col = theme.Mix(bg, col, 0.7)
 		case mapmodel.CLegacy:
@@ -60,10 +75,9 @@ func NewPalette(epoch int) *Palette {
 		p.Fg[c] = theme.Legible(col, bg, MinContrast(c))
 	}
 	p.WaterBg = theme.Mix(bg, theme.MapHueColor(theme.HueWaterDeep), 0.10)
-	p.FreshBg = theme.Mix(bg, theme.Of(theme.RolePositive), 0.25)
-	p.FlowBg = theme.Mix(bg, theme.Of(theme.RoleWarning), 0.22)
-	p.FitCursor()
-	p.Chrome = kit.Style{}.Foreground(theme.Of(theme.RoleText)).Background(theme.Of(theme.RoleSurface))
+	p.FreshBg = theme.Mix(bg, role(theme.RolePositive), 0.25)
+	p.FlowBg = theme.Mix(bg, role(theme.RoleWarning), 0.22)
+	p.Chrome = kit.Style{}.Foreground(role(theme.RoleText)).Background(role(theme.RoleSurface))
 	return p
 }
 
@@ -109,5 +123,5 @@ func (p *Palette) On(c mapmodel.Class, bg theme.Color) kit.Style {
 
 // Role is a theme role on the palette background.
 func (p *Palette) Role(r theme.Role) kit.Style {
-	return kit.Style{}.Foreground(theme.Legible(theme.Of(r), p.Bg, 3)).Background(p.Bg)
+	return kit.Style{}.Foreground(theme.Legible(p.role(r), p.Bg, 3)).Background(p.Bg)
 }

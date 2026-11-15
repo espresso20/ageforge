@@ -121,7 +121,7 @@ All 16 themes pass a contrast check for text on their background (WCAG AA). The 
 
 ## 🗺️ The Map and your theme
 
-The [Map](map.md) follows your theme too, including light ones. The Map takes its colors from the theme, so switching themes recolors the Map and the dashboard's mini map at once. In the **Monochrome** and **Parchment** themes the Map is drawn as a two-tone (duotone) picture: one ink on one paper.
+The [Map](map.md) keeps its own colors in every theme: a light theme or a one-ink theme (Monochrome, Parchment) does not redraw it. The picture stays the full-color dark one, and the words and the frame round it, and the dashboard's mini map title, follow your theme.
 
 ---
 

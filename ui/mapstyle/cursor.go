@@ -11,11 +11,10 @@ import (
 // The cursor is a highlighted cell: a solid fill, with the glyph of the
 // cell beneath it drawn on top in the theme's black or white, whichever
 // reads better, so it is readable over every kind of cell. The fill is a
-// colour the map does not draw in the theme. On the dark themes that is an
-// orange. It is never a colour typed here: the candidates are made from the
-// theme's own roles (its warning colour pulled toward its negative, plain
-// and lifted toward the brightest text, then the roles a theme without such
-// a hue falls back on), and of those that stand out from the map's
+// colour the map does not draw: an orange. It is never a colour typed here:
+// the candidates are made from the picture theme's own roles (its warning
+// colour pulled toward its negative, plain and lifted toward the brightest
+// text, then the roles a theme without such a hue falls back on), and of those that stand out from the map's
 // background the fill is the one furthest (theme.Distance) from every
 // colour of the palette, glyphs and backgrounds alike.
 //
@@ -40,10 +39,10 @@ const (
 const cursorBlinkStep = 0.3
 
 // cursorCandidates lists the colours a fill is chosen from, all made from
-// the active theme's roles: first the warm ones (an orange where the theme
+// the picture theme's roles: first the warm ones (an orange where the theme
 // has one), then the roles that stand in for it elsewhere.
-func cursorCandidates() []theme.Color {
-	warn, neg, bright := theme.Of(theme.RoleWarning), theme.Of(theme.RoleNegative), theme.Of(theme.RoleBright)
+func cursorCandidates(role func(theme.Role) theme.Color) []theme.Color {
+	warn, neg, bright := role(theme.RoleWarning), role(theme.RoleNegative), role(theme.RoleBright)
 	var out []theme.Color
 	for _, t := range []float64{0.5, 0.6, 0.75, 0.4, 0.25} {
 		base := theme.Mix(warn, neg, t)
@@ -52,7 +51,7 @@ func cursorCandidates() []theme.Color {
 		}
 	}
 	for _, r := range []theme.Role{theme.RoleHighlight, theme.RoleAccent, theme.RoleWarning, theme.RoleNegative, theme.RoleBright, theme.RoleText} {
-		out = append(out, theme.Of(r))
+		out = append(out, role(r))
 	}
 	return out
 }
@@ -76,12 +75,12 @@ func (p *Palette) Backgrounds() []theme.Color {
 // style that changes the palette's colours after NewPalette (a night city)
 // calls it again.
 func (p *Palette) FitCursor() {
-	p.Cursor, p.CursorAlt = fitCursor(p.Paints(), p.Bg, cursorCandidates())
+	p.Cursor, p.CursorAlt = fitCursor(p.Paints(), p.Bg, cursorCandidates(p.role), p.role(theme.RoleText))
 }
 
 // fitCursor chooses the cursor's two styles from the candidate fills, against
 // the colours a map is drawn in and the background it stands on.
-func fitCursor(paints []theme.Color, bg theme.Color, candidates []theme.Color) (cursor, alt kit.Style) {
+func fitCursor(paints []theme.Color, bg theme.Color, candidates []theme.Color, fallback theme.Color) (cursor, alt kit.Style) {
 	apart := func(c theme.Color) float64 {
 		least := -1.0
 		for _, m := range paints {
@@ -91,7 +90,7 @@ func fitCursor(paints []theme.Color, bg theme.Color, candidates []theme.Color) (
 		}
 		return least
 	}
-	fill, best, found := theme.Of(theme.RoleText), -1.0, false
+	fill, best, found := fallback, -1.0, false
 	for _, c := range candidates {
 		stands := theme.ContrastRatio(c, bg) >= cursorMinContrast
 		// The first candidate that stands out is taken; a later one must
@@ -129,7 +128,7 @@ func (p *Palette) CursorOver(ground theme.Color, anim int) kit.Style {
 	if theme.Distance(fill, ground) >= CursorFromGround && theme.ContrastRatio(fill, ground) >= CursorOverGround {
 		return p.CursorStyle(anim)
 	}
-	cursor, alt := fitCursor([]theme.Color{ground}, ground, append(cursorCandidates(), theme.BestOn(ground)))
+	cursor, alt := fitCursor([]theme.Color{ground}, ground, append(cursorCandidates(p.role), theme.BestOn(ground)), p.role(theme.RoleText))
 	return (&Palette{Cursor: cursor, CursorAlt: alt}).CursorStyle(anim)
 }
 
@@ -161,12 +160,8 @@ func (p *Palette) CursorMargins() (glyph, ground, over, text float64) {
 // map's tests hold it to.
 const (
 	// CursorFromGlyph: five times what is just noticeable side by side.
-	// No glyph is the cursor's colour. CursorFromGlyphGrey is the margin
-	// on a theme with no hue in its roles (Monochrome), where a palette of
-	// greys has only lightness to tell colours apart by and the fill is
-	// what marks the cursor (CursorGlyphMargin picks between them).
-	CursorFromGlyph     = 0.05
-	CursorFromGlyphGrey = 0.03
+	// No glyph is the cursor's colour.
+	CursorFromGlyph = 0.05
 	// CursorFromGround and CursorOverGround: the highlight never melts
 	// into what it covers.
 	CursorFromGround = 0.25
@@ -174,18 +169,3 @@ const (
 	// CursorGlyphContrast: the glyph on the highlight is readable.
 	CursorGlyphContrast = 4.5
 )
-
-// CursorGlyphMargin is the least distance the cursor's fill keeps from the
-// colours glyphs are drawn in, on the active theme: CursorFromGlyph, or
-// CursorFromGlyphGrey on a theme whose roles are all greys.
-func CursorGlyphMargin() float64 {
-	for r := theme.Role(0); int(r) < theme.NumRoles; r++ {
-		if r == theme.RoleComment || r == theme.RoleEffect {
-			continue // text only, never a color the map draws
-		}
-		if red, green, blue := theme.Of(r).RGB(); red != green || green != blue {
-			return CursorFromGlyph
-		}
-	}
-	return CursorFromGlyphGrey
-}
