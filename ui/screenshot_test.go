@@ -161,3 +161,32 @@ func TestEpochPictureIsStillAndNotFlat(t *testing.T) {
 		t.Error("the picture is all one colour")
 	}
 }
+
+func TestScreenImageDrawsPictures(t *testing.T) {
+	b := shotCells(10, 6, func(x, y int) (rune, kit.Style, bool) { return 0, kit.Style{}, false })
+	red := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	for i := 0; i < len(red.Pix); i += 4 {
+		red.Pix[i], red.Pix[i+3] = 255, 255
+	}
+	p := kit.NewPainter(b)
+	p.Picture(image.Rect(2, 1, 6, 3), red)
+	isRed := func(img *image.RGBA, cx, cy int) bool {
+		c := img.RGBAAt(shotPad+cx*shotCellW+shotCellW/2, shotPad+cy*shotCellH+shotCellH/2)
+		return c.R == 255 && c.G == 0 && c.B == 0
+	}
+	img := ScreenImage(b, shotCellW, shotCellH)
+	if !isRed(img, 3, 1) || !isRed(img, 5, 2) {
+		t.Fatal("the picture's cells are not red")
+	}
+	if isRed(img, 1, 1) || isRed(img, 6, 1) || isRed(img, 3, 3) {
+		t.Fatal("a cell outside the picture is red")
+	}
+	p.Put(3, 1, 'x', kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0)))
+	img = ScreenImage(b, shotCellW, shotCellH)
+	if isRed(img, 3, 1) {
+		t.Fatal("an inked cell still shows the picture")
+	}
+	if !isRed(img, 4, 1) {
+		t.Fatal("the picture's other cells lost it")
+	}
+}
