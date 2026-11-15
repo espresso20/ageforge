@@ -303,7 +303,7 @@ func (s *sweeper) expeditionTour(where string) {
 // miniMapShown reports whether the dashboard's last draw showed the mini map.
 func (s *sweeper) miniMapShown() bool {
 	var ok bool
-	s.ui(func() { ok = s.a.dashboard.mapDock.shown })
+	s.ui(func() { ok = s.a.dashboard.body.miniShown })
 	return ok
 }
 

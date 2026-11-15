@@ -193,13 +193,6 @@ func (t *EconomyTab) AddPeopleBox(people Primitive, rich func() bool, height fun
 	t.leftCol.people, t.leftCol.rich, t.leftCol.peopleHeight = people, rich, height
 }
 
-// WrapBuildings replaces the Buildings list in the layout with wrap(list),
-// so the Dashboard can dock the mini map above it (mapDock).
-func (t *EconomyTab) WrapBuildings(wrap func(list Primitive) Primitive) {
-	t.root.RemoveItem(t.buildingTV)
-	t.root.AddItem(wrap(t.buildingTV), 0, 1, false)
-}
-
 // Root returns the root primitive
 func (t *EconomyTab) Root() Primitive {
 	return t.root
