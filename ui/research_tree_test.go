@@ -680,7 +680,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	}
 	ge.SetGarrisonForTest("bronze_age", 1000) // an army at home to make up a party
 	st := ge.GetState()
-	for what, out := range map[string]string{"the Army panel": militaryProvider(st, 120), "the mission board": cmdMissionBoard(ge).Message} {
+	for what, out := range map[string]string{"the Army panel": deckText(armyPage(st)), "the mission board": cmdMissionBoard(ge).Message} {
 		if strings.Contains(out, "first. Research it to send one") {
 			t.Errorf("%s says a mission waits for a tech:\n%s", what, out)
 		}

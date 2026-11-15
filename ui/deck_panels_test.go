@@ -12,7 +12,15 @@ import (
 // deckText is every word a page shows, one per line, for a test to look in.
 func deckText(pg deckPage) string {
 	var sb strings.Builder
-	line := func(parts ...string) { sb.WriteString(strings.Join(parts, " ") + "\n") }
+	line := func(parts ...string) {
+		var kept []string
+		for _, p := range parts {
+			if p = strings.TrimSpace(p); p != "" {
+				kept = append(kept, p)
+			}
+		}
+		sb.WriteString(strings.Join(kept, " ") + "\n")
+	}
 	line(pg.Title, pg.Hint)
 	for _, s := range pg.Head {
 		sb.WriteString(s.s)

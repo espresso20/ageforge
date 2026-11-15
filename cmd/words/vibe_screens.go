@@ -45,8 +45,9 @@ func init() {
 		"ui.input.cmdTradeRoute.01",                                            // Usage: trade route start|stop <route>
 		"ui.overlay_plan.planPanelText.04", "ui.overlay_plan.planPanelText.05", // plan build <building> [count], and an example of it
 		"ui.people_tabs.work.05", "ui.people_tabs.work.15", "ui.people_tabs.work.16", "ui.people_tabs.work.20", // roster <area> <%|auto>
-		"ui.overlay_help.helpProvider.09", // the key name Tab in the help page (the word help beside it is not a row)
-		"ui.dashboard.buildLine.01",       // "build " before a building's key: the command a click on the building writes in the prompt
+		"ui.overlay_help.helpProvider.09",     // the key name Tab in the help page (the word help beside it is not a row)
+		"ui.dashboard.buildLine.01",           // "build " before a building's key: the command a click on the building writes in the prompt
+		"ui.overlay_military.campaignCard.06", // "expedition " before a campaign's name: the command the card's button runs
 	)
 	leftAloneFor(leftKey,
 		"ui.research_tree.laneLabel.01", // AEIOU: the vowels a letter is tested against

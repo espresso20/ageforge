@@ -54,7 +54,7 @@ func tradePage(state game.GameState) deckPage {
 		// not reshuffle on every refresh.
 		active := append([]game.ActiveRouteInfo(nil), trade.ActiveRoutes...)
 		sort.Slice(active, func(i, j int) bool { return active[i].Key < active[j].Key })
-		sec := deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.09", "Running")}
+		sec := deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.09", "Running"), MinW: 50}
 		for _, route := range active {
 			c := deckCard{
 				Title: route.Name, Chip: vibe.Line("ui.overlay_trade.tradePage.10", "running"), ChipK: xChipShort,
@@ -79,7 +79,7 @@ func tradePage(state game.GameState) deckPage {
 	}
 
 	if len(trade.AvailableRoutes) > 0 {
-		sec := deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.17", "Open routes")}
+		sec := deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.17", "Open routes"), MinW: 46}
 		for _, route := range trade.AvailableRoutes {
 			c := deckCard{
 				Title: route.Name, Desc: route.Description,

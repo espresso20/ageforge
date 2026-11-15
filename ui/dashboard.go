@@ -216,7 +216,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
-	d.overlayMgr.Register("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), militaryProvider)
+	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage)
 	// The Expeditions panel leaves the keyboard with the command bar too.
 	d.expPanel.engine = d.engine
 	d.expPanel.settings = d.mapSettings
