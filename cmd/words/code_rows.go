@@ -81,7 +81,7 @@ var (
 	// and time layouts) take patterns throughout.
 	opPkgs     = map[string]bool{"strings": true, "bytes": true, "regexp": true, "strconv": true, "utf8": true, "unicode": true}
 	opAllArgs  = map[string]bool{"strings.NewReplacer": true, "fmt.Sscanf": true, "fmt.Sscan": true, "fmt.Fscanf": true, "regexp.MustCompile": true, "regexp.Compile": true, "time.Parse": true}
-	pathPkgs   = map[string]bool{"filepath": true, "path": true, "os": true, "exec": true, "http": true, "url": true, "json": true, "hex": true, "base64": true, "ioutil": true, "io": true, "runtime": true, "nerdfont": true}
+	pathPkgs   = map[string]bool{"filepath": true, "path": true, "os": true, "exec": true, "http": true, "url": true, "json": true, "hex": true, "base64": true, "ioutil": true, "io": true, "runtime": true}
 	devCalls   = map[string]bool{"panic": true, "log.Printf": true, "log.Println": true, "log.Fatalf": true, "log.Fatal": true, "debugf": true}
 	syntaxArgs = map[string]bool{"sub#0": true, "sub#1": true, "panel#0": true, "confirmYes#0": true, "usageFor#0": true, "subUsage#0": true, "helpRow#0": true}
 	// Calls that take a noun and put it in a sentence ("Unknown %s '%s'.").

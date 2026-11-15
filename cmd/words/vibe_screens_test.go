@@ -88,7 +88,6 @@ func TestFixedWidthLabelsCarryTheirWidth(t *testing.T) {
 		"ui.overlay_help.helpProvider.29":           12, // padRight(label, 12)
 		"ui.expedition_view.briefing.01":            7,  // padRight(label, 7)
 		"ui.expedition_view.drawConfirm.06":         6,  // a column of labels
-		"ui.icons.view.03":                          19, // the pair of lines in the icons check
 		"ui.overlay_stats.statsProvider.21":         20, // Fprintf(" %-20s ", label)
 		"ui.overlay_stats.statsProvider.30":         16, // %-16s
 		"ui.panels_table.panelGroups.02":            18, // panelJobMax

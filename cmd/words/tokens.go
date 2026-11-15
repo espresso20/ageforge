@@ -124,9 +124,6 @@ func isGlyph(r rune) bool {
 	case '…', '–', '—', '‘', '’', '“', '”', '′', '″', '°':
 		return false
 	}
-	if r >= 0xE000 && r <= 0xF8FF { // private use: Nerd Font icons
-		return true
-	}
 	return unicode.IsSymbol(r) || unicode.Is(unicode.Braille, r)
 }
 
