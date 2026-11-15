@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, a right click means Back: it does what `Esc` does on a panel, a dialog or a page. It does nothing on the dashboard with no panel open or on the main menu's first page, so it never takes you out of a game.
 - In the window, the key buttons along the foot of the Load game, Accounts and Themes pages take clicks: a click on one presses its key.
 - In the window, a click on a building in the dashboard's Buildings list writes its `build` command in the prompt, and a double click builds one. A click on a box of the dashboard opens the panel that is that box in full: the mini map opens the Map, the Ledger opens Advance, the People box People, the Log the full record and Under construction the build plan.
 - In the window, a click on a name in the dashboard's Panels list opens that panel, as typing the name does. What is typed in the prompt stays as it is.

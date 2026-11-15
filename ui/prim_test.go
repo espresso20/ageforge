@@ -145,3 +145,39 @@ func TestTheLoopTakesTheMouse(t *testing.T) {
 		t.Errorf("a click on the third row left the list on row %d", at)
 	}
 }
+
+// A right click presses Esc where the app says Esc goes back, and does
+// nothing where it says no or says nothing; a left click is never Esc.
+func TestARightClickIsEscWhereTheAppSaysSo(t *testing.T) {
+	keepTheme(t)
+	a, frame := runLoop(t, newNativeBox(), 20, 4)
+	var keys []kit.KeyCode
+	a.SetInputCapture(func(k *kit.Key) *kit.Key {
+		keys = append(keys, k.Code)
+		return nil
+	})
+	press := func(b kit.MouseButton) []kit.KeyCode {
+		a.QueueUpdate(func() { keys = nil })
+		a.Mouse(kit.Mouse{Kind: kit.MousePress, Button: b, X: 3, Y: 1})
+		a.Mouse(kit.Mouse{Kind: kit.MouseRelease, Button: b, X: 3, Y: 1})
+		frame()
+		var got []kit.KeyCode
+		a.QueueUpdate(func() { got = append(got, keys...) })
+		return got
+	}
+	if got := press(kit.ButtonRight); len(got) != 0 {
+		t.Errorf("with nothing said, a right click sent the keys %v", got)
+	}
+	allow := false
+	a.SetBack(func() bool { return allow })
+	if got := press(kit.ButtonRight); len(got) != 0 {
+		t.Errorf("where Esc must not be pressed, a right click sent the keys %v", got)
+	}
+	allow = true
+	if got := press(kit.ButtonRight); len(got) != 1 || got[0] != kit.KeyEsc {
+		t.Errorf("where Esc goes back, a right click sent the keys %v, want one Esc", got)
+	}
+	if got := press(kit.ButtonLeft); len(got) != 0 {
+		t.Errorf("a left click sent the keys %v", got)
+	}
+}

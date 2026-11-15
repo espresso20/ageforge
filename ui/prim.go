@@ -124,6 +124,7 @@ type appLoop struct {
 	focus   Primitive
 	capture func(*kit.Key) *kit.Key
 	before  func(w, h int)
+	goBack  func() bool // whether a right click may be taken for Esc now
 
 	events chan func()   // what the loop has to do, in order
 	done   chan struct{} // closed by Stop
@@ -174,6 +175,16 @@ func (a *appLoop) SetRoot(root Primitive, _ bool) *appLoop {
 func (a *appLoop) SetInputCapture(fn func(*kit.Key) *kit.Key) *appLoop {
 	a.mu.Lock()
 	a.capture = fn
+	a.mu.Unlock()
+	return a
+}
+
+// SetBack sets what says whether a right click means Back now. Where it
+// does, the click presses Esc, so it does whatever Esc does there; with
+// nothing set a right click does nothing.
+func (a *appLoop) SetBack(fn func() bool) *appLoop {
+	a.mu.Lock()
+	a.goBack = fn
 	a.mu.Unlock()
 	return a
 }
@@ -258,7 +269,22 @@ func (a *appLoop) Key(k kit.Key) {
 
 func (a *appLoop) Mouse(m kit.Mouse) {
 	a.offer(func() {
-		if tree := a.rootTree(); tree != nil && tree.Mouse(m) {
+		tree := a.rootTree()
+		if tree == nil {
+			return
+		}
+		changed := tree.Mouse(m)
+		// A right click is Back: Esc, where the app says Esc goes back.
+		if m.Kind == kit.MousePress && m.Button == kit.ButtonRight {
+			a.mu.Lock()
+			goBack := a.goBack
+			a.mu.Unlock()
+			if goBack != nil && goBack() {
+				a.key(kit.Key{Code: kit.KeyEsc})
+				changed = true
+			}
+		}
+		if changed {
 			a.draw()
 		}
 	})
