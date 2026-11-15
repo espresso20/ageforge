@@ -83,6 +83,27 @@
     return pre;
   }
 
+  // pictures puts a screen's pictures over its grid: one image per picture,
+  // on the cells it covers. Their sizes come from --cw and --ch, which fit
+  // sets from the measured cell, so a refit moves them with the text.
+  function pictures(pre, s) {
+    s.pics.forEach(function (p) {
+      var data = s.images && s.images[p.i];
+      if (!data) return;
+      var img = document.createElement("img");
+      img.src = "data:image/png;base64," + data;
+      img.alt = "";
+      img.style.position = "absolute";
+      img.style.left = "calc(var(--cw) * " + p.x + ")";
+      img.style.top = "calc(var(--ch) * " + p.y + ")";
+      img.style.width = "calc(var(--cw) * " + p.w + ")";
+      img.style.height = "calc(var(--ch) * " + p.h + ")";
+      img.style.imageRendering = "pixelated";
+      img.style.pointerEvents = "none";
+      pre.appendChild(img);
+    });
+  }
+
   // fit sizes a drawn figure's font so its screen fills the plate, within the
   // limits. A cell's width is measured, not assumed: the font may still be on
   // its way.
@@ -97,6 +118,10 @@
     var px = Math.floor(room / (d.cols * cell) * 100) / 100;
     px = Math.max(min, Math.min(MAX_PX, px));
     d.pre.style.fontSize = px + "px";
+    // A cell's size in pixels, measured at this font size: its width from the
+    // probe, its height from a row.
+    d.pre.style.setProperty("--cw", d.probe.getBoundingClientRect().width / 10 + "px");
+    d.pre.style.setProperty("--ch", d.pre.querySelector(".screen-row").getBoundingClientRect().height + "px");
     // A plate that scrolls takes the keyboard, so the arrow keys can reach the rest of it.
     var wide = d.scroll.scrollWidth > d.scroll.clientWidth + 1;
     fig.classList.toggle("screen-scrolls", wide);
@@ -128,6 +153,7 @@
     probe.className = "screen-probe";
     probe.textContent = "0000000000";
     pre.appendChild(probe);
+    if (s.pics) pictures(pre, s);
     scroll.appendChild(pre);
     plate.appendChild(scroll);
     fig.insertBefore(plate, caption || null);
