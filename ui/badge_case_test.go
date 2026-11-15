@@ -106,8 +106,28 @@ func TestBadgeCaseAtEverySize(t *testing.T) {
 					if !strings.Contains(lines[1], "["+tab.title+"]") {
 						t.Errorf("%s: the open tab is not marked: %q", where, lines[1])
 					}
-					if !strings.Contains(lines[h-1], "Esc") {
-						t.Errorf("%s: the key bar is missing: %q", where, lines[h-1])
+					// The key bar is the chrome grid's foot row: buttons, whole
+					// and inside the panel, with Esc among them.
+					foot := m.chrome.Lines()[h-1]
+					if !strings.Contains(foot, "Esc") {
+						t.Errorf("%s: the key bar is missing: %q", where, foot)
+					}
+					if tier == mapmodel.TierASCII {
+						for i, c := range m.chrome.c {
+							if c.r >= 0x80 {
+								t.Fatalf("%s: the plain tier draws %q at %d,%d of the buttons", where, c.r, i%w, i/w)
+							}
+						}
+					}
+					escKey := false
+					for _, k := range m.chrome.keys {
+						if k.r.Min.X < 0 || k.r.Max.X > w || k.r.Min.Y < 0 || k.r.Max.Y > h {
+							t.Errorf("%s: a key button at %v is outside the panel", where, k.r)
+						}
+						escKey = escKey || (k.key.Code == kit.KeyEsc && k.r.Min.Y == h-1)
+					}
+					if !escKey {
+						t.Errorf("%s: no key button of the key bar presses Esc", where)
 					}
 					if strings.TrimSpace(lines[h-2]) == "" {
 						t.Errorf("%s: the status line is empty", where)
