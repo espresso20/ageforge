@@ -11,6 +11,7 @@ import (
 	"math"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -70,6 +71,7 @@ type Game struct {
 	ptr        cellPointer
 	pointing   kit.Pointer                   // the shape the mouse pointer was last given
 	pics       map[*image.RGBA]*ebiten.Image // the pictures on show, as the graphics card holds them
+	cellPx     atomic.Uint64                 // the cell's width and height in pixels, for CellSize
 	prevPics   []kit.Pic                     // the pictures of the frame before
 }
 
@@ -176,6 +178,7 @@ func (g *Game) relayout() {
 		return
 	}
 	g.cw, g.ch = cw, ch
+	g.cellPx.Store(uint64(cw)<<32 | uint64(ch))
 	grew := cols != g.cols || rows != g.rows
 	g.cols, g.rows = cols, rows
 	if g.buf != nil {
@@ -301,6 +304,13 @@ func (g *Game) FontChoice() string {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	return string(g.set.Font)
+}
+
+// CellSize is a cell of the grid in pixels, so a picture can be drawn pixel
+// for pixel; 0, 0 before the window has been laid out.
+func (g *Game) CellSize() (w, h int) {
+	v := g.cellPx.Load()
+	return int(v >> 32), int(v & 0xffffffff)
 }
 
 // NextFont switches to the other font and keeps the choice for the next run.

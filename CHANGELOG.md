@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- The Badges panel draws the selected badge's medal in real pixels: a coin struck in the badge's metal, lit from the upper left, with its family's sign in the middle. The game can now show pictures finer than a character cell; this is the first.
 - In the window, a building in the Buildings list and a name in the Panels list light up while the pointer is on them.
 - In the window, the mouse wheel over the dashboard's Resources box turns its page, when it has more than one.
 - In the window, the key buttons along the foot of the Load game, Accounts and Themes pages take clicks: a click on one presses its key.

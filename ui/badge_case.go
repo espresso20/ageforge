@@ -60,6 +60,9 @@ type caseView struct {
 	tier   mapmodel.GlyphTier
 	prompt bool   // something is typed in the command bar
 	note   string // a line for the status row: what a command found
+	// pix: the pane's medal is drawn as a picture, in real pixels, and the
+	// case only leaves room for it.
+	pix bool
 }
 
 func (v caseView) plain() bool { return v.tier == mapmodel.TierASCII }
@@ -166,7 +169,11 @@ type caseModel struct {
 	lay     caseLayout
 	// rarity is the earned badges by rarity, common first.
 	cardAt image.Rectangle // where the detail was drawn last, for the mouse
-	rarity [5]int
+	// medalAt is the room left in the pane for the selected badge's medal
+	// as a picture, and medalOf the badge it is for; empty when there is none.
+	medalAt  image.Rectangle
+	medalFor *caseItem
+	rarity   [5]int
 	// closest is the badge nearest its count, of those not earned.
 	closest *game.BadgeView
 }
@@ -699,7 +706,7 @@ func drawItemMini(g *tGrid, x, y int, it *caseItem, v caseView, n int) {
 func renderCase(m *caseModel, v caseView, n int) *tGrid {
 	w, h := m.lay.w, m.lay.h
 	out := newTGrid(w, h)
-	m.cardAt = image.Rectangle{}
+	m.cardAt, m.medalAt, m.medalFor = image.Rectangle{}, image.Rectangle{}, nil
 	if w < caseMinW || h < caseMinH {
 		out.text(0, 0, clipRunes(vibe.Line("ui.badge_case.renderCase.01", "Badges: make the window larger."), w), tsText, -1)
 		return out
@@ -1044,6 +1051,11 @@ func (m *caseModel) drawRow(out *tGrid, it *caseItem, y int, selected bool, v ca
 	}
 }
 
+// medalPixCols and medalPixRows are the room the pane leaves for the medal
+// as a picture: about square on the screen (a cell is about twice as tall
+// as it is wide).
+const medalPixCols, medalPixRows = 18, 9
+
 // drawPane draws the selected badge beside the grid: its full art, then
 // what the case says of it. Under the grid (a narrow window) there is no
 // room for the art: the lines alone.
@@ -1060,10 +1072,17 @@ func (m *caseModel) drawPane(out *tGrid, it *caseItem, v caseView, n int) {
 	}
 	md := medalOf(it.v, v.tier)
 	aw, ah := medalSize(md)
+	if v.pix {
+		aw, ah = medalPixCols, medalPixRows
+	}
 	y := lay.py
 	bar := min(14, lay.pw/3)
 	if ah+3 <= lay.ph && aw <= lay.pw {
-		drawMedal(out, lay.px+(lay.pw-aw)/2, y, md, caseFrame(n, md.animated()), v.plain())
+		if v.pix {
+			m.medalAt, m.medalFor = image.Rect(lay.px+(lay.pw-aw)/2, y, lay.px+(lay.pw-aw)/2+aw, y+ah), it
+		} else {
+			drawMedal(out, lay.px+(lay.pw-aw)/2, y, md, caseFrame(n, md.animated()), v.plain())
+		}
 		y += ah
 		if len(detailLines(it, lay.pw, 1<<20, bar)) < lay.ph-ah {
 			y++ // a row of air under the art when there is one to spare

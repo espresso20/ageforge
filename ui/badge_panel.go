@@ -51,8 +51,12 @@ type badgePanel struct {
 	kit.Base
 	// host paints the case's kit cells and takes the mouse; the keys stay
 	// with barPanel.
-	views   []game.BadgeView
-	sum     game.BadgeSummary
+	views []game.BadgeView
+	sum   game.BadgeSummary
+	// medal is the selected badge's medal as a picture, and medalIs what
+	// it was drawn for (see medalImage).
+	medal   *image.RGBA
+	medalIs medalKey
 	account bool
 	view    caseView
 	model   *caseModel
@@ -174,12 +178,37 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 		return
 	}
 	p.view.prompt = p.prompt != nil && p.prompt() != ""
+	p.view.pix = pictureCell != nil && !p.view.plain()
 	grid := renderCase(p.model, p.view, p.frame())
 	if p.view.plain() {
 		foldBadges(grid)
 	}
 	paintGridKit(p2, grid, r.Min, newGridPalette(0, nil))
+	if at := p.model.medalAt; !at.Empty() {
+		p2.Picture(at.Add(r.Min), p.medalImage(p.model.medalFor, at.Size()))
+	}
 	p.moving.Store(p.moves())
+}
+
+// medalImage is the selected badge's medal as a picture the size of its
+// room in the pane. The picture is kept while the badge, its state and the
+// size stay the same: an image that has been painted is never drawn on.
+func (p *badgePanel) medalImage(it *caseItem, cells image.Point) *image.RGBA {
+	cw, ch := pictureCell()
+	md := medalOf(it.v, p.view.tier)
+	key := medalKey{it.v.Key, md.tier, md.state, cells.X * cw, cells.Y * ch}
+	if p.medal == nil || p.medalIs != key {
+		p.medal, p.medalIs = medalPicture(md, it.v.Family, key.w, key.h), key
+	}
+	return p.medal
+}
+
+// medalKey is what a medal's picture was drawn for.
+type medalKey struct {
+	badge string
+	tier  config.BadgeTier
+	state medalState
+	w, h  int
 }
 
 // Mouse: a click selects the badge under the pointer and a double click
