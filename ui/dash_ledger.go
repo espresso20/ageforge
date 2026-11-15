@@ -208,17 +208,44 @@ func (m *ledgerData) readyText() (good bool, text string) {
 
 // waitText is the line of what the gate waits on, in at most room cells: as
 // many of the requirements as fit, then how many more there are, or all of
-// them and the wonder that comes after.
+// them and the wonder that comes after. A row too short for its label and
+// one requirement drops the label; one too short even for that cuts the
+// first requirement, so the line never says only how many there are.
 func (m *ledgerData) waitText(room int) []xseg {
 	if len(m.Waits) == 0 {
 		return nil
 	}
+	lead := vibe.Line("ui.dash_ledger.waitText.02", "Waiting on: ")
+	parts, shown := m.waitParts(lead, room)
+	if shown == 0 {
+		parts, shown = m.waitParts("", room)
+	}
+	if shown == 0 {
+		more := m.waitMore(1)
+		if cut := room - runeLen(more) - 3; len(m.Waits) > 1 && cut >= 8 {
+			return []xseg{{fitText(m.Waits[0], cut), xText}, {" · ", xFaint}, {more, xDim}}
+		}
+		return []xseg{{fitText(m.Waits[0], max(room, 1)), xText}}
+	}
+	return parts
+}
+
+// waitMore says how many requirements a line leaves out after the first i.
+func (m *ledgerData) waitMore(i int) string {
+	return vibe.Sprintf("ui.dash_ledger.waitText.04", "+%d more", len(m.Waits)-i)
+}
+
+// waitParts is the waiting line after lead in room cells, and how many
+// requirements it lists whole.
+func (m *ledgerData) waitParts(lead string, room int) (parts []xseg, shown int) {
 	const sep = " · "
 	sepW := runeLen(sep)
-	parts := []xseg{{vibe.Line("ui.dash_ledger.waitText.02", "Waiting on: "), xDim}}
-	x := runeLen(parts[0].s)
+	if lead != "" {
+		parts = append(parts, xseg{lead, xDim})
+	}
+	x := runeLen(lead)
 	for i, it := range m.Waits {
-		more := vibe.Sprintf("ui.dash_ledger.waitText.04", "+%d more", len(m.Waits)-i)
+		more := m.waitMore(i)
 		need := runeLen(it)
 		if i > 0 {
 			need += sepW
@@ -230,7 +257,7 @@ func (m *ledgerData) waitText(room int) []xseg {
 			if i > 0 {
 				parts = append(parts, xseg{sep, xFaint})
 			}
-			return append(parts, xseg{more, xDim})
+			return append(parts, xseg{more, xDim}), i
 		}
 		if i > 0 {
 			parts = append(parts, xseg{sep, xFaint})
@@ -244,7 +271,7 @@ func (m *ledgerData) waitText(room int) []xseg {
 			parts = append(parts, xseg{sep, xFaint}, xseg{then, xDim})
 		}
 	}
-	return parts
+	return parts, len(m.Waits)
 }
 
 // shortText is the label of the resources a blocker is short of.

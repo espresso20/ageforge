@@ -93,7 +93,9 @@ func TestLedgerAtThreeSizes(t *testing.T) {
 			if !strings.Contains(rows[2], "To the "+next) || !strings.Contains(rows[2], "%") || !strings.ContainsAny(rows[2], "█░") {
 				t.Errorf("%s: no long bar to the %s:\n%s", where, next, text)
 			}
-			if !strings.Contains(text, "Waiting on: ") {
+			first := []rune(d.ledger.data.Waits[0])
+			first = first[:min(len(first), 8)]
+			if !strings.Contains(text, string(first)) {
 				t.Errorf("%s: the header does not say what it waits on:\n%s", where, text)
 			}
 			pillars := 0
@@ -103,8 +105,9 @@ func TestLedgerAtThreeSizes(t *testing.T) {
 				}
 			}
 			if headerHeight(w, h) == headerSmallRows {
-				// Two rows inside: the bar with what it waits on, and no pillars.
-				if len(rows) != 4 || strings.Contains(text, "Knowledge") || !strings.Contains(rows[2], "Waiting on: ") {
+				// Two rows inside: the bar with what it waits on (named,
+				// under its label when there is room for both), and no pillars.
+				if len(rows) != 4 || strings.Contains(text, "Knowledge") || !strings.Contains(rows[2], string(first)) {
 					t.Errorf("%s: the small header is not the bar with what it waits on:\n%s", where, text)
 				}
 			} else if pillars != 4 || len(rows) != 5 || !strings.Contains(rows[3], "Waiting on: ") {
@@ -252,7 +255,9 @@ func TestLedgerCalendarDoesNotRunBack(t *testing.T) {
 }
 
 // TestLedgerWaitingOnKeepsItemsWhole: what the gate waits on is listed whole
-// or counted, never cut, at every width, for every real gate.
+// or counted, at every width, for every real gate. The line always names
+// something: it drops its label before it lists nothing, and only when the
+// first requirement cannot fit even then is that one cut.
 func TestLedgerWaitingOnKeepsItemsWhole(t *testing.T) {
 	ages := config.Ages()
 	longest := 0
@@ -276,7 +281,14 @@ func TestLedgerWaitingOnKeepsItemsWhole(t *testing.T) {
 				t.Errorf("%s at %d: the text is %d cells: %q", ages[i].Key, avail, runeLen(text), text)
 				continue
 			}
-			parts := strings.Split(text[strings.Index(text, ": ")+2:], " · ")
+			parts := strings.Split(strings.TrimPrefix(text, "Waiting on: "), " · ")
+			if cut := strings.TrimSuffix(parts[0], "…"); cut != parts[0] {
+				// The first requirement cut: only when it cannot fit whole.
+				if !strings.HasPrefix(items[0], cut) || runeLen(items[0])+runeLen(" · +99 more") <= avail {
+					t.Errorf("%s at %d: the first item is cut to %q though %q fits", ages[i].Key, avail, parts[0], items[0])
+				}
+				continue
+			}
 			then := false
 			if last := parts[len(parts)-1]; strings.HasPrefix(last, "then ") {
 				then = true
