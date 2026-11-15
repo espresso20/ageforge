@@ -3,148 +3,121 @@ package ui
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
-// militaryProvider generates the military overlay text from the current game state.
-// It mirrors the logic from MilitaryTab.Refresh — same data, formatted as plain text.
-func militaryProvider(state game.GameState, _ int) string {
-	var sb strings.Builder
+// armyPage is the Army panel: the soldiers, posts, defense and threat, the
+// campaign under way, and the campaigns that could be sent.
+func armyPage(state game.GameState) deckPage {
 	mil := state.Military
+	ageName := state.AgeName
+	if ageName == "" {
+		ageName = state.Age
+	}
+	pg := deckPage{
+		Title: vibe.Line("ui.overlay_military.armyPage.01", "Army"),
+		Hint:  "expedition <name>",
+	}
+	pg.Notes = append(garrisonNotes(state), deckLine{Value: vibe.Line("ui.overlay_military.armyPage.02", "Commands: expedition opens the Expeditions panel; expedition <name> sends an offer")})
 
-	// === Army Overview ===
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.01", " [gold]═══ Army Overview ═══[-]\n\n"))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.02", " [gold]Soldiers:[-]  %s posted of %s\n", textfmt.Number(float64(mil.SoldierCount)), textfmt.Number(float64(mil.SoldierCap))))
+	soldiers := deckCard{Title: vibe.Line("ui.overlay_military.armyPage.03", "Soldiers"), Lines: []deckLine{
+		{Value: vibe.Sprintf("ui.overlay_military.armyPage.04", "%s posted of %s", textfmt.Number(float64(mil.SoldierCount)), textfmt.Number(float64(mil.SoldierCap))), K: xBright}}}
+	if mil.MilitaryBonus > 0 {
+		soldiers.Lines = append(soldiers.Lines, deckLine{Value: vibe.Line("ui.overlay_military.armyPage.05", "Military Bonus") + fmt.Sprintf(" +%.0f%%", mil.MilitaryBonus*100), K: xGood})
+	}
+	if mil.ExpeditionBonus > 0 {
+		soldiers.Lines = append(soldiers.Lines, deckLine{Value: vibe.Line("ui.overlay_military.armyPage.07", "Expedition Bonus") + fmt.Sprintf(" +%.0f%%", mil.ExpeditionBonus*100), K: xGood})
+	}
+	posts := deckCard{Title: vibe.Line("ui.overlay_military.armyPage.09", "Posts")}
 	if len(mil.Posts) == 0 {
 		// Soldiers begin with the first military building: until one is built
 		// there is nobody at a post, and the panel says so.
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.03", " [gold]Posts:[-]     %s\n", theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_military.militaryProvider.04", "none yet. A military building comes with its soldiers."))))
-	} else {
-		for _, p := range mil.Posts {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.05", " [gold]Posts:[-]     %s x%d: %s/%s\n", p.Name, p.Count, textfmt.Number(float64(p.Posted)), textfmt.Number(float64(p.Posts))))
-		}
+		posts.Desc = vibe.Line("ui.overlay_military.armyPage.10", "none yet. A military building comes with its soldiers.")
 	}
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.06", " [gold]Defense:[-]   %s\n", textfmt.Number(mil.DefenseRating)))
-	writeGarrison(&sb, state)
+	for _, p := range mil.Posts {
+		posts.Lines = append(posts.Lines, deckLine{fmt.Sprintf("%s x%d", p.Name, p.Count) + " ", fmt.Sprintf("%s/%s", textfmt.Number(float64(p.Posted)), textfmt.Number(float64(p.Posts))), xBright})
+	}
+	pg.Sections = append(pg.Sections, deckSection{Title: vibe.Line("ui.overlay_military.armyPage.13", "Overview"), MinW: 30, Cards: []deckCard{
+		soldiers, posts,
+		{Title: vibe.Line("ui.overlay_military.armyPage.14", "Defense"), Lines: []deckLine{{Value: textfmt.Number(mil.DefenseRating), K: xBright}}},
+		{Title: vibe.Line("ui.overlay_military.armyPage.15", "Threat"), Lines: []deckLine{
+			{Value: textfmt.Number(mil.Threat), K: xBright}, {Value: vibe.Sprintf("ui.overlay_military.armyPage.16", "raids in the %s", ageName), K: xDim}}},
+	}})
 
-	if mil.MilitaryBonus > 0 {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.07", " [green]Military Bonus: +%.0f%%[-]\n", mil.MilitaryBonus*100))
-	}
-	if mil.ExpeditionBonus > 0 {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.08", " [green]Expedition Bonus: +%.0f%%[-]\n", mil.ExpeditionBonus*100))
-	}
-
-	// === Active Campaign ===
 	// Only the military campaign lives here; the active scout shows in the
 	// Expeditions panel (the two run concurrently, one per category).
-	sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.09", "\n [gold]═══ Active Campaign ═══[-]\n\n"))
-	if mil.ActiveMilitary == nil {
-		sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.10", " [gray]No active campaign[-]\n"))
-	} else {
-		writeActiveExpedition(&sb, vibe.Line("ui.overlay_military.militaryProvider.11", "Campaign"), mil.ActiveMilitary, state)
+	if a := mil.ActiveMilitary; a != nil {
+		c := deckCard{Title: a.Name, Chip: vibe.Line("ui.overlay_military.armyPage.17", "Campaign"), ChipK: xChipMil, Meter: true,
+			MeterText: vibe.Sprintf("ui.overlay_military.armyPage.18", "%s left", formatTicks(a.TicksLeft, state))}
+		if a.TotalTicks > 0 {
+			c.Share = max(0, min(1, 1-float64(a.TicksLeft)/float64(a.TotalTicks)))
+		}
+		if a.Soldiers > 0 {
+			c.Lines = []deckLine{{Value: vibe.Sprintf("ui.overlay_military.armyPage.19", "%d soldiers deployed", a.Soldiers)}}
+		}
+		pg.Sections = append(pg.Sections, deckSection{Title: vibe.Line("ui.overlay_military.armyPage.20", "Active Campaign"), Cards: []deckCard{c}})
 	}
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.12", "\n [gray]Completed: %d (expeditions and campaigns)[-]\n", mil.CompletedCount))
 
-	// === Campaigns ===
 	// The Army panel lists only military campaigns (they cost soldiers).
-	sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.13", "\n [gold]═══ Campaigns ═══[-]\n\n"))
-	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
-		sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.14", " [gray]No campaigns available yet.[-]\n"))
-		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_military.militaryProvider.15", " Campaigns are grand missions and cost soldiers,")) + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_military.militaryProvider.16", " which come with military buildings. They open as your civilization grows.")) + "\n")
+	camps := deckSection{Title: vibe.Line("ui.overlay_military.armyPage.21", "Campaigns"), MinW: 46}
+	if mil.ActiveMilitary == nil {
+		camps.Notes = append(camps.Notes, deckLine{Value: vibe.Line("ui.overlay_military.armyPage.22", "No active campaign")})
+	}
+	camps.Notes = append(camps.Notes, deckLine{Value: vibe.Sprintf("ui.overlay_military.armyPage.23", "Completed: %d (expeditions and campaigns)", mil.CompletedCount)})
+	for _, exp := range mil.Expeditions {
+		if exp.Category == game.ExpeditionMilitary {
+			camps.Cards = append(camps.Cards, campaignCard(exp, state))
+		}
+	}
+	if len(camps.Cards) == 0 {
+		camps.Notes = append(camps.Notes,
+			deckLine{Value: vibe.Line("ui.overlay_military.armyPage.24", "No campaigns available yet.")},
+			deckLine{Value: vibe.Line("ui.overlay_military.armyPage.25", "Campaigns are grand missions and cost soldiers,")},
+			deckLine{Value: vibe.Line("ui.overlay_military.armyPage.26", "which come with military buildings. They open as your civilization grows.")})
+	}
+	pg.Sections = append(pg.Sections, camps)
+	return pg
+}
+
+// campaignCard is one military campaign on the board.
+func campaignCard(exp game.ExpeditionInfo, state game.GameState) deckCard {
+	c := deckCard{Title: exp.Name, Desc: exp.Description}
+	if exp.SoldiersNeeded > 0 {
+		c.Lines = append(c.Lines, deckLine{vibe.Line("ui.overlay_military.campaignCard.01", "Soldiers"), strconv.Itoa(exp.SoldiersNeeded), 0})
+	}
+	// Duration is rolled per launch, so preview the def's range rather than a
+	// single number.
+	c.Lines = append(c.Lines, deckLine{vibe.Line("ui.overlay_military.campaignCard.02", "Duration"), formatTickRange(exp.DurationMin, exp.DurationMax, state), 0})
+	diff := xGood
+	if exp.Difficulty > 0.5 {
+		diff = xBad
+	} else if exp.Difficulty > 0.3 {
+		diff = xGold
+	}
+	// The listed difficulty, and what the army leaves of it today.
+	note := vibe.Line("ui.overlay_military.campaignCard.03", "(chance of failure before bonuses)")
+	if exp.Chance > 0 && exp.Chance < exp.Difficulty-0.0005 {
+		note = vibe.Sprintf("ui.overlay_military.campaignCard.04", "(chance of failure; %.0f%% with your army)", exp.Chance*100)
+	}
+	c.Lines = append(c.Lines, deckLine{vibe.Line("ui.overlay_military.campaignCard.05", "Difficulty"), fmt.Sprintf("%.0f%%", exp.Difficulty*100), diff}, deckLine{Value: note, K: xDim})
+	if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
+		c.Lines = append(c.Lines, deckLine{vibe.Line("ui.overlay_military.campaignCard.07", "Cost"), cost, 0})
+	}
+	if exp.CanLaunch {
+		c.Chip, c.ChipK = vibe.Line("ui.overlay_military.campaignCard.08", "ready"), xChipCivic
+		c.Action, c.Command = vibe.Line("ui.overlay_military.campaignCard.09", "send"), "expedition "+exp.Name
 	} else {
-		writeExpeditionGroup(&sb, vibe.Line("ui.overlay_military.militaryProvider.17", "Campaigns"), mil.Expeditions, game.ExpeditionMilitary, state)
+		c.Chip, c.ChipK, c.Quiet = vibe.Line("ui.overlay_military.campaignCard.10", "locked"), xKeyName, true
+		c.Why = exp.LaunchBlockReason
 	}
-
-	sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.18", "\n [gray]Commands: expedition opens the Expeditions panel; expedition <name> sends an offer[-]\n"))
-
-	return sb.String()
-}
-
-// hasCategory reports whether any offer in exps matches the given category.
-func hasCategory(exps []game.ExpeditionInfo, category string) bool {
-	for _, exp := range exps {
-		if exp.Category == category {
-			return true
-		}
-	}
-	return false
-}
-
-// writeActiveExpedition renders one active expedition under a kind label
-// (e.g. "Scouting"). Nothing is written when exp is nil, so the section only
-// lists kinds that are actually running.
-// (state is threaded through only to convert the countdown to wall-clock.)
-func writeActiveExpedition(sb *strings.Builder, label string, exp *game.ExpeditionSnapshot, state game.GameState) {
-	if exp == nil {
-		return
-	}
-	fmt.Fprintf(sb, " [yellow]%s:[-] %s", label, exp.Name)
-	if exp.Soldiers > 0 {
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeActiveExpedition.01", ", %d soldiers deployed", exp.Soldiers))
-	}
-	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeActiveExpedition.02", " (%s left)\n", formatTicks(exp.TicksLeft, state)))
-}
-
-// writeExpeditionGroup renders the subset of exps matching category under a
-// labeled header (e.g. "Scouting"). If no expedition matches, nothing is
-// written — the header is omitted for empty subsections.
-func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.ExpeditionInfo, category string, state game.GameState) {
-	first := true
-	for _, exp := range exps {
-		if exp.Category != category {
-			continue
-		}
-		if first {
-			fmt.Fprintf(sb, " [yellow]── %s ──[-]\n\n", label)
-			first = false
-		}
-
-		statusIcon := "[red]▸[-]"
-		if exp.CanLaunch {
-			statusIcon = "[green]▸[-]"
-		}
-
-		diffColor := "green"
-		if exp.Difficulty > 0.5 {
-			diffColor = "red"
-		} else if exp.Difficulty > 0.3 {
-			diffColor = "yellow"
-		}
-
-		fmt.Fprintf(sb, " %s [cyan]%s[-]\n", statusIcon, exp.Name)
-		fmt.Fprintf(sb, "   [gray]%s[-]\n", exp.Description)
-		// Duration is rolled per launch, so preview the def's range rather than a
-		// single number.
-		durationStr := formatTickRange(exp.DurationMin, exp.DurationMax, state)
-		soldiers := ""
-		if exp.SoldiersNeeded > 0 {
-			soldiers = vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.01", "Soldiers: %d  ", exp.SoldiersNeeded)
-		}
-		// The listed difficulty, and what the army leaves of it today.
-		note := vibe.Line("ui.overlay_military.writeExpeditionGroup.02", "(chance of failure before bonuses)")
-		if exp.Chance > 0 && exp.Chance < exp.Difficulty-0.0005 {
-			note = vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.03", "(chance of failure; %.0f%% with your army)", exp.Chance*100)
-		}
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.04", "   %sDuration: %s  Difficulty: [%s]%.0f%%[-] %s\n",
-			soldiers, durationStr, diffColor, exp.Difficulty*100, note))
-		if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
-			fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.05", "   Cost: %s\n", cost))
-		}
-
-		if exp.CanLaunch {
-			sb.WriteString(vibe.Line("ui.overlay_military.writeExpeditionGroup.06", "   [green]Ready: send it from the Expeditions panel[-]\n"))
-		} else {
-			fmt.Fprintf(sb, "   [red]%s[-]\n", exp.LaunchBlockReason)
-		}
-		sb.WriteString("\n")
-	}
+	return c
 }
 
 // formatExpeditionCost renders an expedition's resource cost in a readable,
@@ -181,29 +154,28 @@ func expeditionOfferCost(exp game.ExpeditionInfo, state game.GameState) string {
 	return "free"
 }
 
-// writeGarrison renders what the army does for the player: how much of a raid
+// garrisonNotes says what the army does for the player: how much of a raid
 // the garrison would blunt against the current age's threat, and what it has
 // saved this run. Worded from the player's side.
-func writeGarrison(sb *strings.Builder, state game.GameState) {
+func garrisonNotes(state game.GameState) []deckLine {
 	mil := state.Military
 	capPct := config.DefenseMitigationCap * 100
-	ageName := state.AgeName
-	if ageName == "" {
-		ageName = state.Age
-	}
-	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.01", " [gold]Threat:[-]    %s (raids in the %s)\n", textfmt.Number(mil.Threat), ageName))
+	var out []deckLine
 	if mil.Mitigation <= 0 {
-		sb.WriteString(vibe.Line("ui.overlay_military.writeGarrison.02", " [yellow]You have no garrison: raids hit you with full force.[-]\n"))
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.03", "   [gray]Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%).[-]\n", capPct))
+		out = append(out,
+			deckLine{Value: vibe.Line("ui.overlay_military.garrisonNotes.01", "You have no garrison: raids hit you with full force."), K: xBad},
+			deckLine{Value: vibe.Sprintf("ui.overlay_military.garrisonNotes.02", "Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%).", capPct)})
 	} else {
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.04", " [green]Your garrison would blunt about %.0f%% of a raid.[-]\n", mil.Mitigation*100))
-		sb.WriteString(vibe.Line("ui.overlay_military.writeGarrison.05", "   [gray]Raids, war raids and an Endure's losses all hit you that much softer.[-]\n"))
 		twice := config.DefenseMitigation(mil.DefenseRating*2, mil.Threat)
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.06", "   [gray]Twice the garrison: about %.0f%%. No army blunts more than %.0f%%.[-]\n", twice*100, capPct))
+		out = append(out,
+			deckLine{Value: vibe.Sprintf("ui.overlay_military.garrisonNotes.03", "Your garrison would blunt about %.0f%% of a raid.", mil.Mitigation*100), K: xGood},
+			deckLine{Value: vibe.Line("ui.overlay_military.garrisonNotes.04", "Raids, war raids and an Endure's losses all hit you that much softer.")},
+			deckLine{Value: vibe.Sprintf("ui.overlay_military.garrisonNotes.05", "Twice the garrison: about %.0f%%. No army blunts more than %.0f%%.", twice*100, capPct)})
 	}
 	if line := garrisonSavedSummary(mil.Saved); line != "" {
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.07", " [gold]Saved this run:[-] %s\n", line))
+		out = append(out, deckLine{Label: vibe.Line("ui.overlay_military.garrisonNotes.06", "Saved this run: "), Value: kit.Strip(line), K: xText})
 	}
+	return out
 }
 
 // garrisonSavedSummary is a one-line summary of what the army has saved this

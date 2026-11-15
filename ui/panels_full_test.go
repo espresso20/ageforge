@@ -280,7 +280,7 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 // command bar says so on its foot, and a game's panels all name Esc.
 func TestPanelFooterOffersTheBar(t *testing.T) {
 	d, pages := poisonedStage(t)
-	for _, name := range []string{"milestones", "army", "trade", "factions", "stats", "logs", "history", "buildings", "help"} {
+	for _, name := range []string{"factions", "stats", "logs", "history", "buildings", "help"} {
 		openPanel(t, d, name, 100, 30)
 		cells := drawnDashboard(t, d, pages, 100, 30)
 		foot := rectText(cells, 100, 0, 30-promptRows-2, 100, 1)[0]

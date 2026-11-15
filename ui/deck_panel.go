@@ -1,0 +1,211 @@
+package ui
+
+import (
+	"image"
+	"strings"
+
+	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
+)
+
+// deck_panel.go is the overlay primitive of a deck (deck.go): the whole
+// screen but the command bar. Like the People panel it leaves the keyboard
+// with the command bar and takes only the keys that print nothing, and only
+// while the bar is empty: the arrows move the pick from card to card, Enter
+// runs the picked card's command, PgUp and PgDn turn a page. Esc closes it.
+// A click picks a card; a click on a card's button, or a double click on the
+// card, runs its command. Every command goes through the command bar's own
+// path, so it is echoed and answered like one that was typed.
+
+type deckPanel struct {
+	barPanel
+	kit.Base
+	// page works the panel's content out from a snapshot.
+	page func(game.GameState) deckPage
+	// draw draws the page; nil draws it as a deck of cards. A panel with a
+	// scene of its own (the Trade panel's map of roads) sets it.
+	draw func(pg *deckPage, st game.GameState, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout)
+	// run types a command and runs it, as the command bar does.
+	run func(cmd string)
+	// settings reads the glyph tier.
+	settings func() mapSettings
+
+	state  game.GameState
+	pg     deckPage
+	grid   *xgrid
+	lay    deckLayout
+	sel    int
+	scroll int
+	// said is the last command run over the panel and what came of it,
+	// shown over the keys: the log is behind the panel.
+	said []xseg
+}
+
+func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
+	p := &deckPanel{page: page}
+	p.barPanel = newBarPanel(p.routeKey)
+	return p
+}
+
+// registerDeck makes a panel of cards from page and registers it as the
+// overlay name, with its keyboard left to the command bar and its commands
+// run as the command bar runs them.
+func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.GameState) deckPage) *deckPanel {
+	p := newDeckPanel(page)
+	p.settings = d.mapSettings
+	p.run = d.runLine
+	p.prompt = func() string { return d.inputField.GetText() }
+	p.toPrompt = d.handToPrompt
+	p.buttons.press = d.app.Key
+	d.decks[name] = p
+	d.overlayMgr.RegisterWidget(name, title, p.open, p.update)
+	return p
+}
+
+// open is the overlay's build: it runs on every Show, with the first card
+// that can do something picked.
+func (p *deckPanel) open(state game.GameState) Primitive {
+	p.state, p.sel, p.scroll, p.said = state, 0, 0, nil
+	pg := p.page(state)
+	for n := 0; n < pg.count(); n++ {
+		if c, _ := pg.card(n); c.Command != "" {
+			p.sel = n
+			break
+		}
+	}
+	return overBar(p)
+}
+
+// update takes a new snapshot.
+func (p *deckPanel) update(state game.GameState) { p.state = state }
+
+// reply shows what a command run over the panel did: the command, then the
+// first line of its answer, in the bad colour when it failed.
+func (p *deckPanel) reply(cmd string, res CommandResult) {
+	msg, _, _ := strings.Cut(res.Message, "\n")
+	k := xGood
+	if res.Type == "error" || res.Type == "warning" {
+		k = xBad
+	}
+	msg = strings.TrimSpace(barTags.ReplaceAllString(msg, ""))
+	if msg == "" {
+		msg = "✓" // the command's answer went to the log, behind the panel
+	}
+	p.said = []xseg{{"› " + cmd + "  ", xDim}, {msg, k}}
+}
+
+// Layout takes the panel's rectangle and works the panel out in it.
+func (p *deckPanel) Layout(r image.Rectangle) {
+	p.Place(r)
+	if r.Empty() {
+		return
+	}
+	p.pg = p.page(p.state)
+	p.sel = clamp(p.sel, 0, max(0, p.pg.count()-1))
+	if p.draw != nil {
+		p.grid, p.lay = p.draw(&p.pg, p.state, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
+	} else {
+		p.grid, p.lay = renderDeck(&p.pg, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
+	}
+	p.scroll = clamp(p.scroll, 0, max(0, p.lay.total-p.lay.viewH))
+	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
+		p.grid.fold()
+	}
+}
+
+// Paint puts the panel on the kit's painter in theme colors.
+func (p *deckPanel) Paint(p2 *kit.Painter) { p.paintGrid(p2, p.grid, p.Bounds()) }
+
+// pick moves the pick to card n and scrolls it into view.
+func (p *deckPanel) pick(n int) {
+	p.sel = clamp(n, 0, max(0, len(p.lay.cards)-1))
+	p.scroll = p.lay.reveal(p.sel, p.scroll)
+}
+
+// act runs the picked card's command and reports whether it has one.
+func (p *deckPanel) act() bool {
+	c, ok := p.pg.card(p.sel)
+	if !ok || c.Command == "" || p.run == nil {
+		return false
+	}
+	p.run(c.Command)
+	return true
+}
+
+// Mouse: the foot's buttons first; the wheel scrolls; a click picks a card,
+// and on its button, or twice on the card, runs its command.
+func (p *deckPanel) Mouse(m kit.Mouse) bool {
+	switch {
+	case p.grid == nil:
+		return false
+	case p.buttons.mouse(p.grid, p.Bounds().Min, m):
+		return true
+	case m.Kind == kit.MouseWheel:
+		was := p.scroll
+		p.scroll = clamp(p.scroll+3*m.Wheel, 0, max(0, p.lay.total-p.lay.viewH))
+		return p.scroll != was
+	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft:
+		return false
+	}
+	pt := m.Pt().Sub(p.Bounds().Min)
+	if n, ok := p.grid.hitAt(hitDeckAct, pt); ok {
+		p.pick(n)
+		p.act()
+		return true
+	}
+	n, ok := p.grid.hitAt(hitDeckCard, pt)
+	if !ok {
+		return false
+	}
+	p.pick(n)
+	if m.Clicks == 2 {
+		p.act()
+	}
+	return true
+}
+
+// PointerAt: the hand over a card, its button and the foot's keys.
+func (p *deckPanel) PointerAt(at image.Point) kit.Pointer {
+	if p.grid == nil {
+		return kit.PointerArrow
+	}
+	pt := at.Sub(p.Bounds().Min)
+	_, card := p.grid.hitAt(hitDeckCard, pt)
+	_, key := p.grid.keyAt(pt)
+	return handIf(card || key)
+}
+
+// routeKey takes a key if it is one of the panel's and reports whether it
+// did. With something typed in the prompt every key belongs to the prompt,
+// and Enter is the panel's only when the picked card has a command.
+func (p *deckPanel) routeKey(ev *kit.Key, prompt string) bool {
+	if prompt != "" {
+		return false
+	}
+	page := max(1, p.lay.viewH-2)
+	switch ev.Code {
+	case kit.KeyLeft:
+		p.pick(p.lay.step(p.sel, -1, 0))
+	case kit.KeyRight:
+		p.pick(p.lay.step(p.sel, 1, 0))
+	case kit.KeyUp:
+		p.pick(p.lay.step(p.sel, 0, -1))
+	case kit.KeyDown:
+		p.pick(p.lay.step(p.sel, 0, 1))
+	case kit.KeyPgUp:
+		p.scroll = max(0, p.scroll-page)
+	case kit.KeyPgDn:
+		p.scroll = clamp(p.scroll+page, 0, max(0, p.lay.total-p.lay.viewH))
+	case kit.KeyHome:
+		p.pick(0)
+	case kit.KeyEnd:
+		p.pick(len(p.lay.cards) - 1)
+	case kit.KeyEnter:
+		return p.act()
+	default:
+		return false
+	}
+	return true
+}

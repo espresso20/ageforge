@@ -142,6 +142,10 @@ type Dashboard struct {
 	// peoplePanel is the People panel: Overview, Work, Army and Scholars.
 	peoplePanel *peoplePanel
 
+	// decks are the panels drawn as decks of cards (deck_panel.go), by
+	// overlay name.
+	decks map[string]*deckPanel
+
 	// advancePanel is the Advance panel: the gate into the next age as four
 	// pillars (advance_panel.go).
 	advancePanel *advancePanel
@@ -180,6 +184,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		badgePanel:    newBadgePanel(),
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
+		decks:         map[string]*deckPanel{},
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
 		pages:         pages,
@@ -194,7 +199,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	// The text panels' frames fold to ASCII with the map glyphs.
 	d.overlayMgr.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
-	d.overlayMgr.Register("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesProvider)
+	d.registerDeck("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesPage).draw = renderMileRoads
 	// The Research panel: the tech tree as a map. Like the Map it leaves
 	// the keyboard with the command bar.
 	d.researchPanel.engine = d.engine
@@ -208,7 +213,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
-	d.overlayMgr.Register("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), militaryProvider)
+	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
 	d.expPanel.engine = d.engine
 	d.expPanel.settings = d.mapSettings
@@ -216,7 +221,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.toPrompt = d.handToPrompt
 	d.expPanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
-	d.overlayMgr.Register("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradeProvider)
+	d.registerDeck("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeRoads
 	// The Factions panel, under two names pointing at one provider (the
 	// citymap/map precedent below). "factions" is the primary — it is what the
 	// sidebar lists, and the sidebar highlight matches on the registered name, so
