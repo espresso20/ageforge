@@ -61,8 +61,8 @@ func miniOn(t testing.TB, d *Dashboard) {
 }
 
 // TestMiniMapFitsAndHides: the mini map shows on a roomy terminal, with the
-// news line, and hides where the Panels list would lose rows to it (153x41,
-// 100x30, 80x24).
+// news line, and hides where even the Panels list's shortest form leaves it under 8
+// picture rows (100x30, 80x24).
 func TestMiniMapFitsAndHides(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	restoreForge(t)
@@ -70,7 +70,7 @@ func TestMiniMapFitsAndHides(t *testing.T) {
 	for _, sz := range []struct {
 		w, h int
 		show bool
-	}{{200, 60, true}, {120, 42, true}, {80, 38, true}, {153, 41, false}, {100, 30, false}, {80, 24, false}} {
+	}{{200, 60, true}, {153, 41, true}, {120, 36, true}, {80, 36, true}, {100, 30, false}, {80, 24, false}} {
 		txt := drawDashboard(t, d, pages, sz.w, sz.h)
 		d.refresh()
 		txt = drawDashboard(t, d, pages, sz.w, sz.h)
@@ -118,6 +118,21 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 		}
 		if by != py || bx+bw > mx || bh != ph+mh {
 			t.Errorf("%v: Buildings at %d,%d %dx%d is not the whole middle column (Panels %d,%d, %d rows with the map)", sz, bx, by, bw, bh, px, py, ph+mh)
+		}
+	}
+	// 153x41 and 120x37, the default windows of a 1080p monitor and a
+	// 14-inch laptop: the map shows with 8 picture rows or more, and every
+	// panel is listed.
+	for _, sz := range [][2]int{{153, 41}, {120, 37}} {
+		txt := draw(sz[0], sz[1])
+		_, _, _, mh := d.miniMap.GetRect()
+		if !d.body.miniShown || mh-2 < 8 || strings.Contains(txt, "PROGRESS") {
+			t.Errorf("%v: shown = %v with %d picture rows; want a map of 8 or more, the list a name a row\n%s", sz, d.body.miniShown, mh-2, txt)
+		}
+		for _, name := range sidebarPanels {
+			if !strings.Contains(txt, name) {
+				t.Errorf("%v: the Panels list has lost %q", sz, name)
+			}
 		}
 	}
 	// 192x51: the list keeps its own form and the box is shorter than

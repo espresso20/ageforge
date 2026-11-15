@@ -15,7 +15,7 @@ You are in the Primitive Age. The screen shows:
 - The Buildings list in the middle, with the Getting started guide at the end of it while it shows
 - The Panels list on the right, which names each panel (and, on a big window, what it is for)
 
-Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. A square mini map sits under the Panels list on a tall window, from 80 columns by 38 rows (`minimap off` hides it).
+Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. A mini map sits under the Panels list from 80 columns by 36 rows (`minimap off` hides it).
 
 <figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: almost nothing in stock, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 

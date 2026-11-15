@@ -305,7 +305,7 @@ func TestPanelsListOnTheDashboard(t *testing.T) {
 		panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
 		wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
 		described := strings.Contains(panels, "the tech tree") && strings.Contains(panels, "TOWN") && strings.Contains(panels, "YOU")
-		// The mini map may take the list a form shorter (the grouped list
+		// The mini map may take the list a shorter form (the grouped list
 		// needs panelsRichRows inside its box).
 		_, _, _, listH := d.sidebar.GetRect()
 		rich := dashRich(w, h) && listH-2 >= panelsRichRows()

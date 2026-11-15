@@ -34,13 +34,14 @@ const (
 )
 
 // miniMapMinCols and miniMapMinRows are the smallest terminal the mini map
-// shows on in the classic layout: the Panels list whole, a box with at least
-// miniShortestInnerH picture rows under it, and the People box under that.
-// (The rich layout, from richMinCols by richMinRows, needs 42 rows.) The wiki and the minimap
-// command quote them (TestMiniMapAppearsWhereTheDocsSay).
+// shows on in the classic layout (under richMinCols columns; from 100
+// columns it takes one more row, 37): the Panels list in its shortest form,
+// a box of miniShortestInnerH picture rows under it, and the People box
+// under that. The rich layout shows the mini map at every size it is drawn
+// on. The wiki and the minimap command quote them (TestMiniMapAppearsWhereTheDocsSay).
 const (
 	miniMapMinCols = 80
-	miniMapMinRows = 38
+	miniMapMinRows = 36
 )
 
 // dashRich says whether a w by h terminal gets the rich layout.
@@ -141,16 +142,16 @@ func (b *dashBody) wantsModel() bool { return !b.miniOff && (!b.miniDrawn || b.m
 
 // miniShortestInnerH is the fewest picture rows a mini map shorter than
 // square is shown with.
-const miniShortestInnerH = 10
+const miniShortestInnerH = 8
 
 // miniBoxHeight is the mini map's height, border included, in a right
 // column w wide with h rows for the Panels list and the mini map together,
-// or 0 (hidden). The Panels list always lists every panel, and the first of
-// these that fits wins: the list in the form it has by itself (the rows
-// sidebarText picks a form from) with a box about square on screen (a cell
-// is about 2.1 times taller than wide); that form with a shorter box of at
-// least miniShortestInnerH picture rows; the next shorter form with a square
-// box; that form with a shorter box.
+// or 0 (hidden). The Panels list always lists every panel. Each form of the
+// list is tried in turn, from the form it has by itself (the rows
+// sidebarText picks a form from) to the shortest: with a box about square
+// on screen (a cell is about 2.1 times taller than wide), else with a
+// shorter box of at least miniShortestInnerH picture rows. The first that
+// fits wins, and when none does there is no mini map.
 func miniBoxHeight(w, h int) int {
 	square := int(float64(w)/2.1 + 0.5)
 	if square < miniMinInnerH {
@@ -161,7 +162,7 @@ func miniBoxHeight(w, h int) int {
 	for own < len(forms)-1 && h-2 < forms[own] {
 		own++
 	}
-	for f := own; f < min(own+2, len(forms)); f++ {
+	for f := own; f < len(forms); f++ {
 		picture := h - (forms[f] + 2) - 2
 		if picture >= square {
 			return square + 2
