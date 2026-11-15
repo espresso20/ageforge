@@ -29,6 +29,8 @@ func TestCapPartsNameTheKeys(t *testing.T) {
 		"Home End":         {kit.KeyHome, kit.KeyEnd},
 		"PgUp PgDn (⌥↑↓)":  {kit.KeyPgUp, kit.KeyPgDn},
 		"A":                {kit.KeyRune},
+		"+/−":              {kit.KeyRune, kit.KeyRune},
+		"U/D":              {kit.KeyRune, kit.KeyRune},
 		"1-9":              nil,
 		"theme <key>":      nil,
 		"PgUp PgDn (\\/↓)": {kit.KeyPgUp, kit.KeyPgDn},
@@ -36,6 +38,9 @@ func TestCapPartsNameTheKeys(t *testing.T) {
 		if got := codes(label); !reflect.DeepEqual(got, want) {
 			t.Errorf("capParts(%q) = %v, want %v", label, got, want)
 		}
+	}
+	if p := capParts("+/−"); len(p) != 2 || p[0].key.Rune != '+' || p[1].key.Rune != '-' {
+		t.Errorf("capParts(+/−) = %+v, want plus then the minus the keyboard types", p)
 	}
 	if p := capParts("A"); len(p) != 1 || p[0].key.Rune != 'a' {
 		t.Errorf("capParts(A) = %+v, want the letter as typed without Shift", p)

@@ -575,8 +575,9 @@ func footerButton(key, label string) string {
 	return clickRegion(key, chip)
 }
 
-// capKey is the key a keycap names, when it names one press: Enter, Esc, Tab
-// or a letter or digit (as pressed without Shift).
+// capKey is the key a keycap names, when it names one press: Enter, Esc, Tab,
+// a paging key, an arrow, plus or minus, or a letter or digit (as pressed
+// without Shift).
 func capKey(name string) (kit.Key, bool) {
 	switch name {
 	case "Enter":
@@ -593,6 +594,10 @@ func capKey(name string) (kit.Key, bool) {
 		return kit.Key{Code: kit.KeyHome}, true
 	case "End":
 		return kit.Key{Code: kit.KeyEnd}, true
+	case "+":
+		return kit.Key{Code: kit.KeyRune, Rune: '+'}, true
+	case "-", "−":
+		return kit.Key{Code: kit.KeyRune, Rune: '-'}, true
 	}
 	if r := []rune(name); len(r) == 1 {
 		if k, ok := arrowKey(r[0]); ok {
