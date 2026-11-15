@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
-	"github.com/gdamore/tcell/v2"
 )
 
 // OverlayProvider is a function that generates the full text content for a
@@ -20,11 +19,11 @@ type OverlayProvider func(state game.GameState, w int) string
 type overlayEntry struct {
 	title   vibe.Entry
 	tv      *nativeText
-	frame   *panelFrame // the box, name and keys the TextView is drawn in
+	frame   *panelFrame // the box, name and keys the text is drawn in
 	root    Primitive   // the frame over the command bar — added/removed from pages.Pages
 	provide OverlayProvider
 	// keys, when set, sees every key but Esc while the overlay has focus and
-	// returns nil to consume it (SetKeyHandler). Runs on the tview goroutine,
+	// returns nil to consume it (SetKeyHandler). Runs on the UI goroutine,
 	// never under the engine lock.
 	keys func(event *kit.Key) *kit.Key
 	// back, when set, is offered Esc before it closes the overlay: it returns
@@ -58,7 +57,7 @@ type OverlayManager struct {
 	widgetEntries map[string]*widgetEntry
 	active        string // name of currently visible overlay; "" if none
 	// focus is what holds the keyboard while the active overlay shows (its
-	// TextView, or a widget overlay's root); nil with none.
+	// text view, or a widget overlay's root); nil with none.
 	focus   Primitive
 	pages   *nativePages
 	app     *appLoop
@@ -96,16 +95,13 @@ func NewOverlayManager(pages *nativePages, app *appLoop, onClose func()) *Overla
 		screenW:       120, // sensible default before first draw
 		screenH:       40,
 	}
-	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
-		om.screenW, om.screenH = screen.Size()
-		return false
-	})
+	app.SetBeforeDrawFunc(func(w, h int) { om.screenW, om.screenH = w, h })
 	return om
 }
 
-// Register adds a named text overlay backed by a TextView. Must be called before Show.
+// Register adds a named text overlay backed by a text view. Must be called before Show.
 // The overlay is the whole screen but the command bar: a framed panel (panel_frame.go)
-// with the TextView inside it, over the rows the bar keeps.
+// with the text view inside it, over the rows the bar keeps.
 func (om *OverlayManager) Register(name string, title vibe.Entry, provide OverlayProvider) {
 	tv := newNativeText().
 		SetDynamicColors(true).
@@ -188,9 +184,7 @@ func (om *OverlayManager) scrollKey(ev *kit.Key, prompt string) bool {
 	}
 	switch ev.Code {
 	case kit.KeyUp, kit.KeyDown, kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome, kit.KeyEnd:
-		if h := e.tv.InputHandler(); h != nil {
-			h(tcellKey(*ev), func(Primitive) {})
-		}
+		keyTo(e.tv, *ev)
 		return true
 	}
 	return false
@@ -246,7 +240,7 @@ func (om *OverlayManager) seenState() *game.GameState {
 	return om.seen
 }
 
-// RegisterWidget registers an overlay backed by any Primitive instead of a TextView.
+// RegisterWidget registers an overlay backed by any Primitive instead of a text view.
 // The build function receives the current GameState and returns a ready-to-display primitive,
 // which fills the entire screen (the panel leaves the command bar's rows to the dashboard).
 func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) Primitive, refresh func(state game.GameState)) {

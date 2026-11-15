@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/rivo/uniseg"
 
@@ -563,7 +562,7 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 		must(t, theme.SetActive(th.Key))
 		pal := newGridPalette(0, nil)
 		check := func(where string, g *tGrid) {
-			scr := tcell.NewSimulationScreen("UTF-8")
+			scr := newSim()
 			must(t, scr.Init())
 			defer scr.Fini()
 			scr.SetSize(g.w, g.h)
@@ -853,11 +852,11 @@ func TestBadgePanelKeysAndMotion(t *testing.T) {
 	p.start = clock
 	p.SetRect(0, 0, 100, 27)
 	draw := func() string {
-		scr := tcell.NewSimulationScreen("UTF-8")
+		scr := newSim()
 		must(t, scr.Init())
 		defer scr.Fini()
 		scr.SetSize(100, 27)
-		p.Draw(scr)
+		drawOn(scr, p)
 		scr.Show()
 		var sb strings.Builder
 		cells, _, _ := scr.GetContents()
@@ -999,11 +998,11 @@ func TestBadgePanelMouse(t *testing.T) {
 }
 
 // paintGrid puts a rendered grid on the screen in theme colours.
-func paintGrid(scr tcell.Screen, g *tGrid, x0, y0 int, p *gridPalette) {
+func paintGrid(scr *simScreen, g *tGrid, x0, y0 int, p *gridPalette) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			c := g.c[y*g.w+x]
-			scr.SetContent(x0+x, y0+y, c.r, nil, tcellStyle(p.style(c)))
+			scr.SetContent(x0+x, y0+y, c.r, nil, p.style(c))
 		}
 	}
 }

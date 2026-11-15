@@ -101,7 +101,7 @@ Every item also reports when it starts: the amount it needs, what you hold, what
 
 Type `plan` to open the Build Plan panel. It takes the whole screen but the command bar, and its keys are letters, so press `Esc` before you type a command.
 
-The header says when the whole plan finishes, and, when [optimizing](#optimizing-the-order) would save a minute or more, how much. The queue lists one line for each item with its number, a short title, its status and when it starts. The detail beside it (under the queue on a narrow terminal) is for the item you picked:
+The header says when the whole plan finishes, and, when [optimizing](#optimizing-the-order) would save a minute or more, how much. The queue lists one line for each item with its number, a short title, its status and when it starts. The detail beside it (under the queue on a narrow window) is for the item you picked:
 
 - **Resources.** What the item needs, what you hold, what the items above it hold back, your income and how long until each is ready. The slowest one is marked. `never` means there is no income of it, and a wonder reads `needs you`, since you deposit its bank by hand.
 - **Holding back.** What the item keeps from the items below it, and which of them.

@@ -33,7 +33,6 @@ type fxRoot struct {
 // root from here on, so the effect is part of what it paints.
 func newFxRoot(layout *nativeFlex, after func(scr mapstyle.Cells, x, y, w, h int)) *fxRoot {
 	r := &fxRoot{nativeFlex: layout, after: after}
-	r.showWidget(r)
 	return r
 }
 

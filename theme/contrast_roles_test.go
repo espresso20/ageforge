@@ -1,10 +1,7 @@
 package theme
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // contrastPair is one "text role drawn on surface role" combination the UI
@@ -201,47 +198,6 @@ func TestRefResolve(t *testing.T) {
 			t.Errorf("%v parses as a sentinel", c)
 		}
 	}
-}
-
-// TestThemedScreen_ResolvesStyles draws sentinels and defaults through the wrapper
-// and checks the cells hold the active theme's concrete colors.
-func TestThemedScreen_ResolvesStyles(t *testing.T) {
-	t.Cleanup(func() { _ = SetActive(DefaultKey) })
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(4, 1)
-	ts := WrapScreen(sim)
-
-	for _, key := range []string{"forge", "daylight"} {
-		_ = SetActive(key)
-		th, _ := ByKey(key)
-		ts.Clear()
-		ts.SetContent(0, 0, 'a', nil, tcell.StyleDefault)
-		ts.SetContent(1, 0, 'b', nil, tcell.StyleDefault.Foreground(tcellRef(RoleAccent)).Background(tcellRef(RoleSurface)))
-		ts.SetContent(2, 0, 'c', nil, tcell.StyleDefault.Foreground(tcell.NewRGBColor(1, 2, 3)).Bold(true))
-		ts.Show()
-		check := func(x int, wantFg, wantBg tcell.Color) {
-			_, _, st, _ := sim.GetContent(x, 0)
-			fg, bg, _ := st.Decompose()
-			if fg != wantFg || bg != wantBg {
-				t.Errorf("%s cell %d: fg/bg = %06x/%06x, want %06x/%06x", key, x, fg.Hex(), bg.Hex(), wantFg.Hex(), wantBg.Hex())
-			}
-		}
-		check(0, Tcell(th.Color(RoleText)), Tcell(th.Color(RoleBackground)))
-		check(1, Tcell(th.Color(RoleAccent)), Tcell(th.Color(RoleSurface)))
-		check(2, tcell.NewRGBColor(1, 2, 3), Tcell(th.Color(RoleBackground)))
-		// A cell nobody wrote is the theme canvas, not the terminal default.
-		check(3, Tcell(th.Color(RoleText)), Tcell(th.Color(RoleBackground)))
-	}
-}
-
-// ExampleKeycap documents the keycap helper's output.
-func ExampleKeycap() {
-	fmt.Println(Keycap("Esc"))
-	// Output: [onaccent:accent:b] Esc [-:-:-]
 }
 
 // TestCommentColorIsOnlyTheComments: in every theme the comment color is a

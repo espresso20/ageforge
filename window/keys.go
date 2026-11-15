@@ -3,31 +3,16 @@ package window
 import (
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// keys.go turns what Ebitengine reports into the key events the game already
-// understands. The table is plain data so a test can read it.
+// keys.go turns what Ebitengine reports into the UI kit's keys. The table is
+// plain data so a test can read it.
 
 // mods are the modifier keys held at the moment.
 type mods struct{ ctrl, alt, shift, meta bool }
-
-func (m mods) mask() tcell.ModMask {
-	var out tcell.ModMask
-	if m.ctrl {
-		out |= tcell.ModCtrl
-	}
-	if m.alt {
-		out |= tcell.ModAlt
-	}
-	if m.shift {
-		out |= tcell.ModShift
-	}
-	return out
-}
 
 // kit is the modifiers as the UI kit names them.
 func (m mods) kit() kit.Mod {
@@ -44,43 +29,41 @@ func (m mods) kit() kit.Mod {
 	return out
 }
 
-// press is one key event to inject into the simulation screen.
+// press is one key event for the game.
 type press struct {
-	key  tcell.Key
-	r    rune
-	mod  tcell.ModMask
+	key  kit.Key
 	hold bool // repeats while the key is held
 }
 
 // specialKeys are the keys that are not text.
-var specialKeys = map[ebiten.Key]tcell.Key{
-	ebiten.KeyEnter:       tcell.KeyEnter,
-	ebiten.KeyNumpadEnter: tcell.KeyEnter,
-	ebiten.KeyEscape:      tcell.KeyEsc,
-	ebiten.KeyTab:         tcell.KeyTab,
-	ebiten.KeyBackspace:   tcell.KeyBackspace2,
-	ebiten.KeyDelete:      tcell.KeyDelete,
-	ebiten.KeyInsert:      tcell.KeyInsert,
-	ebiten.KeyArrowUp:     tcell.KeyUp,
-	ebiten.KeyArrowDown:   tcell.KeyDown,
-	ebiten.KeyArrowLeft:   tcell.KeyLeft,
-	ebiten.KeyArrowRight:  tcell.KeyRight,
-	ebiten.KeyHome:        tcell.KeyHome,
-	ebiten.KeyEnd:         tcell.KeyEnd,
-	ebiten.KeyPageUp:      tcell.KeyPgUp,
-	ebiten.KeyPageDown:    tcell.KeyPgDn,
-	ebiten.KeyF1:          tcell.KeyF1,
-	ebiten.KeyF2:          tcell.KeyF2,
-	ebiten.KeyF3:          tcell.KeyF3,
-	ebiten.KeyF4:          tcell.KeyF4,
-	ebiten.KeyF5:          tcell.KeyF5,
-	ebiten.KeyF6:          tcell.KeyF6,
-	ebiten.KeyF7:          tcell.KeyF7,
-	ebiten.KeyF8:          tcell.KeyF8,
-	ebiten.KeyF9:          tcell.KeyF9,
-	ebiten.KeyF10:         tcell.KeyF10,
-	ebiten.KeyF11:         tcell.KeyF11,
-	ebiten.KeyF12:         tcell.KeyF12,
+var specialKeys = map[ebiten.Key]kit.KeyCode{
+	ebiten.KeyEnter:       kit.KeyEnter,
+	ebiten.KeyNumpadEnter: kit.KeyEnter,
+	ebiten.KeyEscape:      kit.KeyEsc,
+	ebiten.KeyTab:         kit.KeyTab,
+	ebiten.KeyBackspace:   kit.KeyBackspace,
+	ebiten.KeyDelete:      kit.KeyDelete,
+	ebiten.KeyInsert:      kit.KeyInsert,
+	ebiten.KeyArrowUp:     kit.KeyUp,
+	ebiten.KeyArrowDown:   kit.KeyDown,
+	ebiten.KeyArrowLeft:   kit.KeyLeft,
+	ebiten.KeyArrowRight:  kit.KeyRight,
+	ebiten.KeyHome:        kit.KeyHome,
+	ebiten.KeyEnd:         kit.KeyEnd,
+	ebiten.KeyPageUp:      kit.KeyPgUp,
+	ebiten.KeyPageDown:    kit.KeyPgDn,
+	ebiten.KeyF1:          kit.KeyF1,
+	ebiten.KeyF2:          kit.KeyF2,
+	ebiten.KeyF3:          kit.KeyF3,
+	ebiten.KeyF4:          kit.KeyF4,
+	ebiten.KeyF5:          kit.KeyF5,
+	ebiten.KeyF6:          kit.KeyF6,
+	ebiten.KeyF7:          kit.KeyF7,
+	ebiten.KeyF8:          kit.KeyF8,
+	ebiten.KeyF9:          kit.KeyF9,
+	ebiten.KeyF10:         kit.KeyF10,
+	ebiten.KeyF11:         kit.KeyF11,
+	ebiten.KeyF12:         kit.KeyF12,
 }
 
 // pressedKeys lists the keys the loop asks about each frame.
@@ -112,19 +95,17 @@ func mapKey(k ebiten.Key, m mods) (press, bool) {
 	if m.meta {
 		return press{}, false // Cmd and the Windows key are the window's, never the game's
 	}
-	if tk, ok := specialKeys[k]; ok {
-		if tk == tcell.KeyTab && m.shift {
-			return press{key: tcell.KeyBacktab, hold: true}, true
+	if code, ok := specialKeys[k]; ok {
+		if code == kit.KeyTab && m.shift {
+			return press{key: kit.Key{Code: kit.KeyBacktab}, hold: true}, true
 		}
-		mod := m.mask()
-		return press{key: tk, mod: mod, hold: true}, true
+		return press{key: kit.Key{Code: code, Mod: m.kit()}, hold: true}, true
 	}
 	if l, ok := letter(k); ok && m.ctrl != m.alt { // both at once is AltGr, which types text
-		mod := m.mask()
 		if m.shift {
 			l = unicode.ToUpper(l)
 		}
-		return press{key: tcell.KeyRune, r: l, mod: mod, hold: true}, true
+		return press{key: kit.Key{Code: kit.KeyChord, Rune: l, Mod: m.kit()}, hold: true}, true
 	}
 	return press{}, false
 }
@@ -137,7 +118,7 @@ func mapChars(chars []rune) []press {
 		if r < ' ' || r == 0x7f || !unicode.IsPrint(r) || (r >= 0xE000 && r <= 0xF8FF) {
 			continue
 		}
-		out = append(out, press{key: tcell.KeyRune, r: r})
+		out = append(out, press{key: kit.Key{Code: kit.KeyRune, Rune: r}})
 	}
 	return out
 }

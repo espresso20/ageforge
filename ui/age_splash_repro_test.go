@@ -19,8 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
@@ -30,7 +28,7 @@ type reproHarness struct {
 	t      *testing.T
 	eng    *game.GameEngine
 	a      *App
-	sim    tcell.SimulationScreen
+	sim    *simScreen
 	runErr chan error
 	// built is the high-water building count per key. An endured catastrophe
 	// destroys a random 20% of buildings (Buildings.DestroyRandom; seeded, but
@@ -80,7 +78,7 @@ func newReproHarness(t *testing.T) *reproHarness {
 	eng := game.NewGameEngine()
 	eng.SetAccount(acct)
 	a := NewApp(eng, "dev") // "dev" skips the network update check
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	a.SetScreen(sim) // theme-wrapped; calls sim.Init()
 	sim.SetSize(200, 60)
 
@@ -154,7 +152,7 @@ func (h *reproHarness) onUI(f func()) {
 	h.t.Helper()
 	done := make(chan struct{})
 	go func() {
-		h.a.tviewApp.QueueUpdate(f)
+		h.a.loop.QueueUpdate(f)
 		close(done)
 	}()
 	select {
@@ -177,8 +175,7 @@ func (h *reproHarness) key(k kit.KeyCode, r rune) {
 	h.t.Helper()
 	done := make(chan struct{})
 	go func() {
-		ev := tev(k, r, 0)
-		h.sim.InjectKey(ev.Key(), ev.Rune(), ev.Modifiers())
+		h.sim.InjectKey(k, r, 0)
 		close(done)
 	}()
 	select {
@@ -211,7 +208,7 @@ func (h *reproHarness) hasPage(name string) bool {
 
 func (h *reproHarness) inputHasFocus() bool {
 	var ok bool
-	h.onUI(func() { ok = h.a.tviewApp.GetFocus() == h.a.dashboard.inputField })
+	h.onUI(func() { ok = h.a.loop.GetFocus() == h.a.dashboard.inputField })
 	return ok
 }
 
@@ -227,7 +224,7 @@ func (h *reproHarness) describeUI() string {
 	h.onUI(func() {
 		fmt.Fprintf(&sb, "visible pages (front→back): %v\n", h.a.pages.GetPageNames(true))
 		fmt.Fprintf(&sb, "all pages (front→back):     %v\n", h.a.pages.GetPageNames(false))
-		f := h.a.tviewApp.GetFocus()
+		f := h.a.loop.GetFocus()
 		fmt.Fprintf(&sb, "focused primitive: %T (%p)\n", f, f)
 		fmt.Fprintf(&sb, "root(pages).HasFocus(): %v  (false ⇒ tview drops ALL key events)\n", h.a.pages.HasFocus())
 		for _, n := range h.a.pages.GetPageNames(false) {
@@ -623,7 +620,7 @@ func (h *reproHarness) advanceIntoIronWithCatastrophe() {
 
 // screenText renders the simulation screen to plain text (post-draw).
 func (h *reproHarness) screenText() string {
-	h.onUI(func() { h.a.tviewApp.ForceDraw() })
+	h.onUI(func() { h.a.loop.ForceDraw() })
 	return simCells(h.sim).Text()
 }
 
@@ -652,12 +649,12 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	t.Cleanup(release)
 	h.onUI(func() {
 		h.a.dashboard.overlayMgr.after = func(d time.Duration, fn func()) func() {
-			run := func() { h.a.tviewApp.QueueUpdateDraw(fn) }
+			run := func() { h.a.loop.QueueUpdateDraw(fn) }
 			if d == arrivalHold {
 				d = 300 * time.Millisecond
 				run = func() {
 					<-underSplash
-					h.a.tviewApp.QueueUpdateDraw(fn)
+					h.a.loop.QueueUpdateDraw(fn)
 				}
 			}
 			tm := time.AfterFunc(d, run)

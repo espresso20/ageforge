@@ -26,11 +26,11 @@ func BenchmarkDashboardFrame(b *testing.B) {
 			vibe.Set(false)
 			d, pages := newMiniDashboard(b)
 			sim := newSimScreen(b, 160, 48)
-			scr := theme.WrapScreen(sim)
+			scr := sim
 			pages.SetRect(0, 0, 160, 48)
 			frame := func() {
 				d.refresh()
-				pages.Draw(scr)
+				drawOn(scr, pages)
 				scr.Show()
 			}
 			frame()

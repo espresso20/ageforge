@@ -161,7 +161,7 @@ const hallBadgeCount = 5
 // hallView is the facts of the screen, shared by the front page and the
 // card so that the two say the same.
 type hallView struct {
-	// name is the epoch's name, icon its mark and color its tview color name.
+	// name is the epoch's name, icon its mark and color its color name.
 	name, icon, color string
 	town, age, year   string
 	stats             []hallStat
@@ -178,7 +178,7 @@ type hallView struct {
 	unseen       int
 	totalAges    int
 	badges       []game.BadgeView
-	// feats are the run's feats as tview text with color tags, featKinds the
+	// feats are the run's feats as text with color tags, featKinds the
 	// kind of each (featCatastrophe and so on).
 	feats     []string
 	featKinds []int
@@ -320,7 +320,7 @@ func rarestBadges(state game.GameState, n int) []game.BadgeView {
 
 // hallFeats are the run's feats, from what the game already keeps: the
 // catastrophes met, how each harbinger ended, the milestones and the
-// fastest age. Each is a line of tview text; none is a doom not yet foretold.
+// fastest age. Each is a line of tagged text; none is a doom not yet foretold.
 func hallFeats(state game.GameState) []hallFeat {
 	var feats []hallFeat
 	if n := state.CatastrophesEndured + state.CatastrophesSuccumbed; n > 0 {
@@ -339,7 +339,7 @@ func hallFeats(state game.GameState) []hallFeat {
 	return feats
 }
 
-// hallFeat is one feat: its kind and its text (tview, with color tags).
+// hallFeat is one feat: its kind and its text (with color tags).
 type hallFeat struct {
 	kind int
 	text string

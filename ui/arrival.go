@@ -125,7 +125,7 @@ func newArrival(om *OverlayManager, oldAge, newAge string, summary game.AgeAdvan
 		}
 	}
 	a.say(nil)
-	a.nativeHost = newNativeHost(a)
+	a.nativeHost = newNativeHost()
 	return a
 }
 

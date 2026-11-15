@@ -13,7 +13,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// catastrophePage is the tview page name for the catastrophe choice overlay.
+// catastrophePage is the page name for the catastrophe choice overlay.
 const catastrophePage = "catastrophe"
 
 // catastropheModalWidth is the outer width of the catastrophe box, border

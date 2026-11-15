@@ -45,11 +45,11 @@ func TestTakeKeysRunsAndSwallowsOnlyItsKeys(t *testing.T) {
 	window := newNativeFlex()
 	ran := 0
 	takeKeys(window, map[kit.KeyCode]func(){kit.KeyEsc: func() { ran++ }})
-	esc, tab := tev(kit.KeyEsc, 0, 0), tev(kit.KeyTab, 0, 0)
-	if got := window.GetInputCapture()(esc); got != nil || ran != 1 {
+	esc, tab := tk(kit.KeyEsc, 0, 0), tk(kit.KeyTab, 0, 0)
+	if got := captured(window, esc); got != nil || ran != 1 {
 		t.Errorf("Esc: returned %v, ran %d times; want it taken and run once", got, ran)
 	}
-	if got := window.GetInputCapture()(tab); got != tab || ran != 1 {
+	if got := captured(window, tab); got == nil || *got != tab || ran != 1 {
 		t.Errorf("Tab: returned %v, ran %d times; want it passed on", got, ran)
 	}
 }

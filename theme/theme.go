@@ -1,7 +1,6 @@
 // Package theme is AgeForge's single source of truth for UI color.
 //
-// It is a leaf package: it depends only on gdamore/tcell/v2 and go-colorful (plus
-// rivo/tview in remap.go, solely to push chrome defaults into tview.Styles). It
+// It is a leaf package: it depends on go-colorful and nothing of the game's. It
 // must NOT import game/ or ui/ — themes are pure presentation and an import cycle
 // here would be a design smell (the theming design §3).
 //
@@ -11,10 +10,10 @@
 // the good/warn/bad semantics — so a light theme paints correctly on a dark
 // terminal and vice versa. Colors reach the screen three ways, all owned here:
 //
-//   - inline tview tags ([accent], or the legacy aliases [gold]/[green]/…) are
-//     retinted through the tcell.ColorNames remap (remap.go);
-//   - widget chrome uses Ref(role) sentinels that WrapScreen resolves to the
-//     active theme on every SetContent (screen.go), so no widget can go stale;
+//   - inline tags ([accent], or the legacy aliases [gold]/[green]/…) name a
+//     role (TagRole), which the UI kit looks up each time it paints the text;
+//   - widget chrome holds Ref(role), a color that is looked up when a cell is
+//     painted, so no widget can go stale;
 //   - code that needs a concrete color calls Of(role) / the derive helpers.
 package theme
 
@@ -91,7 +90,7 @@ func (r Role) String() string {
 }
 
 // Theme is a complete, code-defined palette plus picker metadata. Colors carry
-// true RGB via tcell.NewRGBColor so themes are not at the mercy of a terminal's
+// true RGB (NewRGBColor) so themes are not at the mercy of a terminal's
 // 16-color palette on truecolor terminals (the theming design §3.1).
 type Theme struct {
 	Key        string     // "forge", "deuteranopia", ... — stable identifier

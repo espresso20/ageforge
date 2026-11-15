@@ -5,28 +5,27 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // TestMacKeysTranslation: Option+arrows are PgUp, PgDn, Home and End for
 // every panel, and nothing else is touched.
 func TestMacKeysTranslation(t *testing.T) {
-	ev := func(k tcell.Key, r rune, m tcell.ModMask) *tcell.EventKey { return tcell.NewEventKey(k, r, m) }
-	for _, c := range []struct {
-		from tcell.Key
-		to   tcell.Key
-	}{{tcell.KeyUp, tcell.KeyPgUp}, {tcell.KeyDown, tcell.KeyPgDn}, {tcell.KeyLeft, tcell.KeyHome}, {tcell.KeyRight, tcell.KeyEnd}} {
-		got := macKeys(ev(c.from, 0, tcell.ModAlt), nil)
-		if got.Key() != c.to || got.Modifiers() != tcell.ModNone {
-			t.Errorf("Alt+%s became %s with modifiers %v, want %s", tcell.KeyNames[c.from], tcell.KeyNames[got.Key()], got.Modifiers(), tcell.KeyNames[c.to])
+	ev := func(code kit.KeyCode, r rune, m kit.Mod) *kit.Key { return &kit.Key{Code: code, Rune: r, Mod: m} }
+	for _, c := range []struct{ from, to kit.KeyCode }{
+		{kit.KeyUp, kit.KeyPgUp}, {kit.KeyDown, kit.KeyPgDn}, {kit.KeyLeft, kit.KeyHome}, {kit.KeyRight, kit.KeyEnd},
+	} {
+		got := macKeys(ev(c.from, 0, kit.ModAlt), nil)
+		if got.Code != c.to || got.Mod != 0 {
+			t.Errorf("Alt with key %v became %v with modifiers %v, want %v", c.from, got.Code, got.Mod, c.to)
 		}
-		for _, m := range []tcell.ModMask{tcell.ModNone, tcell.ModShift, tcell.ModCtrl, tcell.ModAlt | tcell.ModShift, tcell.ModAlt | tcell.ModCtrl} {
+		for _, m := range []kit.Mod{0, kit.ModShift, kit.ModCtrl, kit.ModAlt | kit.ModShift, kit.ModAlt | kit.ModCtrl} {
 			if in := ev(c.from, 0, m); macKeys(in, nil) != in {
-				t.Errorf("%s with modifiers %v was changed", tcell.KeyNames[c.from], m)
+				t.Errorf("key %v with modifiers %v was changed", c.from, m)
 			}
 		}
 	}
-	other := ev(tcell.KeyRune, 'x', tcell.ModAlt)
+	other := ev(kit.KeyChord, 'x', kit.ModAlt)
 	if macKeys(other, nil) != other {
 		t.Error("Alt+x was changed")
 	}
@@ -39,19 +38,19 @@ func TestMacKeysTranslation(t *testing.T) {
 	empty, typed := newNativeInput(), newNativeInput().SetText("build hut")
 	for _, f := range []struct {
 		r        rune
-		to       tcell.Key
+		to       kit.KeyCode
 		focus    Primitive
 		wantMove bool
 	}{
-		{'b', tcell.KeyHome, nil, true}, {'f', tcell.KeyEnd, nil, true},
-		{'b', tcell.KeyHome, empty, true}, {'f', tcell.KeyEnd, empty, true},
-		{'b', tcell.KeyHome, newNativeBox(), true},
-		{'b', tcell.KeyHome, typed, false}, {'f', tcell.KeyEnd, typed, false},
+		{'b', kit.KeyHome, nil, true}, {'f', kit.KeyEnd, nil, true},
+		{'b', kit.KeyHome, empty, true}, {'f', kit.KeyEnd, empty, true},
+		{'b', kit.KeyHome, newNativeBox(), true},
+		{'b', kit.KeyHome, typed, false}, {'f', kit.KeyEnd, typed, false},
 	} {
-		in := ev(tcell.KeyRune, f.r, tcell.ModAlt)
+		in := ev(kit.KeyChord, f.r, kit.ModAlt)
 		got := macKeys(in, f.focus)
-		if f.wantMove && got.Key() != f.to || !f.wantMove && got != in {
-			t.Errorf("Alt+%c with focus %T (text %v): got %s", f.r, f.focus, f.focus == Primitive(typed), tcell.KeyNames[got.Key()])
+		if f.wantMove && got.Code != f.to || !f.wantMove && got != in {
+			t.Errorf("Alt+%c with focus %T (text %v): got key %v", f.r, f.focus, f.focus == Primitive(typed), got.Code)
 		}
 	}
 }
@@ -62,7 +61,7 @@ func TestMacKeysTranslation(t *testing.T) {
 // zooms on - and = when it is.
 func TestOptionKeysReachThePanels(t *testing.T) {
 	h := newReproHarness(t)
-	press := func(k tcell.Key, r rune, m tcell.ModMask) {
+	press := func(k kit.KeyCode, r rune, m kit.Mod) {
 		t.Helper()
 		done := make(chan struct{})
 		go func() { h.sim.InjectKey(k, r, m); close(done) }()
@@ -97,55 +96,55 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 	if first == last {
 		t.Fatal("the badge case holds one badge")
 	}
-	alt := tcell.ModAlt
+	alt := kit.ModAlt
 
-	press(tcell.KeyHome, 0, tcell.ModNone)
+	press(kit.KeyHome, 0, 0)
 	if sel() != first {
 		t.Fatalf("Home selects %q, want %q", sel(), first)
 	}
-	press(tcell.KeyDown, 0, alt)
+	press(kit.KeyDown, 0, alt)
 	pgdn := sel()
 	if pgdn == first {
 		t.Error("Alt+Down did not move a page")
 	}
-	press(tcell.KeyHome, 0, tcell.ModNone)
-	press(tcell.KeyPgDn, 0, tcell.ModNone)
+	press(kit.KeyHome, 0, 0)
+	press(kit.KeyPgDn, 0, 0)
 	if sel() != pgdn {
 		t.Errorf("Alt+Down selected %q, PgDn %q", pgdn, sel())
 	}
-	press(tcell.KeyUp, 0, alt)
+	press(kit.KeyUp, 0, alt)
 	pgup := sel()
-	press(tcell.KeyHome, 0, tcell.ModNone)
-	press(tcell.KeyPgDn, 0, tcell.ModNone)
-	press(tcell.KeyPgUp, 0, tcell.ModNone)
+	press(kit.KeyHome, 0, 0)
+	press(kit.KeyPgDn, 0, 0)
+	press(kit.KeyPgUp, 0, 0)
 	if sel() != pgup {
 		t.Errorf("Alt+Up selected %q, PgUp %q", pgup, sel())
 	}
 
-	press(tcell.KeyRight, 0, alt)
+	press(kit.KeyRight, 0, alt)
 	if sel() != last {
 		t.Errorf("Alt+Right selected %q, want the last badge %q", sel(), last)
 	}
-	press(tcell.KeyLeft, 0, alt)
+	press(kit.KeyLeft, 0, alt)
 	if sel() != first {
 		t.Errorf("Alt+Left selected %q, want the first badge %q", sel(), first)
 	}
-	press(tcell.KeyRune, 'f', alt) // ESC f
+	press(kit.KeyChord, 'f', alt) // ESC f
 	if sel() != last {
 		t.Errorf("ESC f selected %q, want the last badge %q", sel(), last)
 	}
-	press(tcell.KeyRune, 'b', alt) // ESC b
+	press(kit.KeyChord, 'b', alt) // ESC b
 	if sel() != first {
 		t.Errorf("ESC b selected %q, want the first badge %q", sel(), first)
 	}
 	// With a word in the prompt ESC f is the prompt's own (a word jump), so
 	// the badge case does not move.
-	press(tcell.KeyRune, 'x', tcell.ModNone)
-	press(tcell.KeyRune, 'f', alt)
+	press(kit.KeyRune, 'x', 0)
+	press(kit.KeyChord, 'f', alt)
 	if sel() != first || h.inputText() != "x" {
 		t.Errorf("ESC f with text in the prompt: selection %q, prompt %q", sel(), h.inputText())
 	}
-	press(tcell.KeyBackspace2, 0, tcell.ModNone)
+	press(kit.KeyBackspace, 0, 0)
 
 	// The map: Option+arrows and - = zoom it, the prompt having the rest.
 	h.submit("map")
@@ -159,22 +158,22 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 		t.Fatalf("the map does not open at the settlement zoom:\n%s", h.screenText())
 	}
 	for _, s := range []struct {
-		k    tcell.Key
+		k    kit.KeyCode
 		r    rune
-		m    tcell.ModMask
+		m    kit.Mod
 		want string
 	}{
-		{tcell.KeyUp, 0, alt, "REGION"}, {tcell.KeyDown, 0, alt, "SETTLEMENT"},
-		{tcell.KeyRune, '-', tcell.ModNone, "REGION"}, {tcell.KeyRune, '=', tcell.ModNone, "SETTLEMENT"},
-		{tcell.KeyRune, '+', tcell.ModNone, "SETTLEMENT"},
+		{kit.KeyUp, 0, alt, "REGION"}, {kit.KeyDown, 0, alt, "SETTLEMENT"},
+		{kit.KeyRune, '-', 0, "REGION"}, {kit.KeyRune, '=', 0, "SETTLEMENT"},
+		{kit.KeyRune, '+', 0, "SETTLEMENT"},
 	} {
 		press(s.k, s.r, s.m)
 		if !shows(s.want) {
-			t.Fatalf("after %s %c (modifiers %v) the map does not show %s:\n%s", tcell.KeyNames[s.k], s.r, s.m, s.want, h.screenText())
+			t.Fatalf("after key %v %c (modifiers %v) the map does not show %s:\n%s", s.k, s.r, s.m, s.want, h.screenText())
 		}
 	}
-	press(tcell.KeyRune, 'x', tcell.ModNone)
-	press(tcell.KeyRune, '-', tcell.ModNone)
+	press(kit.KeyRune, 'x', 0)
+	press(kit.KeyRune, '-', 0)
 	if got := h.inputText(); got != "x-" || !shows("SETTLEMENT") {
 		t.Errorf("with text in the prompt - went to %q, not the prompt, or zoomed the map", got)
 	}

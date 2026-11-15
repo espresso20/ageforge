@@ -16,10 +16,10 @@ import (
 
 // The Harbinger panel: who came, what they said, how worried to be, and the
 // three answers (A / B / I). A text overlay with a key handler; the handler
-// runs on the tview goroutine and never under the engine lock, so calling the
+// runs on the UI goroutine and never under the engine lock, so calling the
 // engine's action methods (write lock) and GetState (read lock) from it is safe.
 
-// harbingerPanel holds the panel's UI-only state. Owned by the tview
+// harbingerPanel holds the panel's UI-only state. Owned by the UI
 // goroutine: touched only from the key handler, the provider (called by
 // OverlayManager.Show/Refresh) and the command path that opens the panel.
 type harbingerPanel struct {

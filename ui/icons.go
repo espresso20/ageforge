@@ -39,7 +39,7 @@ import (
 // nerdFontsPage is where a player gets the font by hand.
 const nerdFontsPage = "https://www.nerdfonts.com/font-downloads"
 
-// iconsPage is the tview page name of the icons window.
+// iconsPage is the page name of the icons window.
 const iconsPage = "icons"
 
 type iconsStage int

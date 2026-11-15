@@ -3,8 +3,6 @@ package ui
 import (
 	"image"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/vibe"
@@ -37,7 +35,6 @@ type researchPanel struct {
 	kit.Base
 	// host paints the panel's kit cells and takes the mouse; the keys stay
 	// with barPanel.
-	host  *nativeHost
 	state game.GameState
 	view  treeView
 	model *treeModel
@@ -52,7 +49,6 @@ type researchPanel struct {
 func newResearchPanel() *researchPanel {
 	p := &researchPanel{w: 120, h: 37}
 	p.barPanel = newBarPanel(p.routeKey)
-	p.host = newNativeHost(p)
 	return p
 }
 
@@ -121,12 +117,6 @@ func (m *treeModel) home() string {
 		return m.nodes[0].key
 	}
 	return ""
-}
-
-// Draw paints the panel: the host shows it, in the panel's rectangle.
-func (p *researchPanel) Draw(scr tcell.Screen) {
-	p.host.SetRect(p.GetRect())
-	p.host.Draw(scr)
 }
 
 // Layout takes the panel's rectangle and lays the tree out again when its

@@ -186,7 +186,7 @@ func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEn
 		AddItem(footer, 1, 0, false)
 
 	// Live preview: highlighting a theme applies it for real and retints the whole
-	// UI. This callback runs on the tview MAIN goroutine, where tview redraws
+	// UI. This callback runs on the UI goroutine, where the loop redraws
 	// automatically after the input event — so the live retint shows without an
 	// explicit redraw. We must NOT call QueueUpdateDraw here: it blocks until the
 	// main loop drains its update queue, but we ARE the main loop mid-callback, so
@@ -219,7 +219,7 @@ func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEn
 }
 
 // skipHeading moves the selection off a group heading at index, continuing in
-// the direction of travel (and wrapping like tview.List does).
+// the direction of travel (and wrapping like the list does).
 func (p *themePicker) skipHeading(index int) {
 	n := len(p.rows)
 	step := 1
@@ -269,7 +269,7 @@ func (p *themePicker) themeAt(index int) (theme.Theme, bool) {
 // applyAndDetail applies the theme at index for real (remap + restyle) and
 // refreshes the detail pane and sample. It deliberately does NOT redraw: both
 // callers run on the main goroutine (the construction-time seed before the loop,
-// and the SetChangedFunc live preview during it), and tview redraws automatically
+// and the SetChangedFunc live preview during it), and the loop redraws automatically
 // after the input event — so an explicit QueueUpdateDraw here would be redundant
 // at best and a whole-app deadlock at worst (Trello TCGiSWYX). Headings and
 // out-of-range indices are a no-op.
@@ -285,7 +285,7 @@ func (p *themePicker) applyAndDetail(index int) {
 	p.detail.SetText(themeDetailText(th, themeAvailable(p.account(), th), p.state()))
 }
 
-// handleKey routes the picker's action keys. tview.List handles ↑/↓ natively; we
+// handleKey routes the picker's action keys. the list handles ↑/↓ natively; we
 // intercept Enter (confirm) and Esc/q (cancel/revert). No lock acquisition here.
 func (p *themePicker) handleKey(event *kit.Key) *kit.Key {
 	switch event.Code {
@@ -354,7 +354,7 @@ func (p *themePicker) cancel() {
 		_ = theme.SetActive(p.originalKey)
 		// No QueueUpdateDraw: cancel() runs from the key handler on the main
 		// goroutine, where QueueUpdateDraw deadlocks (see SetChangedFunc above /
-		// Trello TCGiSWYX). close() switches pages and tview redraws after the event,
+		// Trello TCGiSWYX). close() switches pages and the loop redraws after the event,
 		// so the reverted theme paints automatically.
 	}
 	p.close()

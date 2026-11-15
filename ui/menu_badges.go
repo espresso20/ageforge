@@ -3,8 +3,6 @@ package ui
 import (
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -23,12 +21,7 @@ type menuBadges struct {
 	close func()
 }
 
-// InputHandler: the case's own keys, and Esc (or q) to close.
-func (b *menuBadges) InputHandler() func(*tcell.EventKey, func(Primitive)) {
-	return keysIn(func(ev *kit.Key) { b.Key(*ev) })
-}
-
-// Key is the same, where the page stands in a kit tree.
+// Key: the case's own keys, and Esc (or q) to close.
 func (b *menuBadges) Key(k kit.Key) bool {
 	switch {
 	case k.Code == kit.KeyEsc, k.Code == kit.KeyRune && (k.Rune == 'q' || k.Rune == 'Q'):

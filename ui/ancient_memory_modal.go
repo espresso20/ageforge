@@ -9,7 +9,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// ancientMemoryPage is the tview page name for the Ancient Memory offer overlay.
+// ancientMemoryPage is the page name for the Ancient Memory offer overlay.
 const ancientMemoryPage = "ancient_memory"
 
 // showAncientMemoryModal presents the Ancient Civilization Memory offer (Trello

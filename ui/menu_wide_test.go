@@ -3,8 +3,6 @@ package ui
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
@@ -42,13 +40,13 @@ func TestDashboardMapFillsWideScreen(t *testing.T) {
 	_, town := stagedMenuView("primitive", false, 0)
 	for _, sz := range [][2]int{{80, 24}, {420, 110}} {
 		w, h := sz[0], sz[1]
-		sim := tcell.NewSimulationScreen("UTF-8")
+		sim := newSim()
 		if err := sim.Init(); err != nil {
 			t.Fatal(err)
 		}
 		sim.SetSize(w, h)
 		st := mapstyle.New()
-		st.Draw(tcells{theme.WrapScreen(sim)}, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: town.model, Tier: mapmodel.TierUnicode})
+		st.Draw(sim, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: town.model, Tier: mapmodel.TierUnicode})
 		picW := w - 40 // the legend sits at the right
 		for x := 0; x < picW; x++ {
 			live := false

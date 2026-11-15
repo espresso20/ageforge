@@ -5,8 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -165,10 +163,8 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	if !d.overlayMgr.Show("harbinger", engine.GetState()) {
 		t.Fatal("harbinger overlay not registered")
 	}
-	capture := d.overlayMgr.entries["harbinger"].tv.GetInputCapture()
-	press := func(r rune) *tcell.EventKey {
-		return capture(tev(kit.KeyRune, r, 0))
-	}
+	capture := func(k kit.Key) *kit.Key { return captured(d.overlayMgr.entries["harbinger"].tv, k) }
+	press := func(r rune) *kit.Key { return capture(tk(kit.KeyRune, r, 0)) }
 
 	// Brace with empty stores: refused, reported, nothing changes.
 	if press('b') != nil {
@@ -217,7 +213,7 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	if ev := press('x'); ev == nil {
 		t.Error("an unrelated key was swallowed")
 	}
-	capture(tev(kit.KeyEsc, 0, 0))
+	capture(tk(kit.KeyEsc, 0, 0))
 	if d.overlayMgr.HasActive() {
 		t.Error("Esc did not close the panel")
 	}

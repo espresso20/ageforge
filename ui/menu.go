@@ -69,7 +69,7 @@ const menuStrikeHold = 90 * time.Millisecond
 const menuCatchUp = 4
 
 // mainMenu is the main menu's page. It is drawn by the kit: the menu is the
-// widget, and the host it embeds is the primitive tview's pages hold.
+// widget, and the host it embeds is the primitive the page stack holds.
 type mainMenu struct {
 	*nativeHost
 	kit.Base
@@ -161,7 +161,7 @@ func newMainMenu(app *appLoop, pages *nativePages, engine *game.GameEngine, curr
 		}
 	}
 	m.refresh(true)
-	m.nativeHost = newNativeHost(m)
+	m.nativeHost = newNativeHost()
 	return m
 }
 
@@ -350,7 +350,7 @@ func menuEdition(version string) string {
 
 // ---- the page's life ----
 
-// Focus is how the menu learns it is the page in use again: tview focuses
+// Focus is how the menu learns it is the page in use again: the page stack focuses
 // it when a page it opened closes and when the game returns to it.
 func (m *mainMenu) Focus(delegate func(p Primitive)) {
 	m.nativeHost.Focus(delegate)

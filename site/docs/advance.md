@@ -6,7 +6,7 @@ The Advance panel is one screen for the question "what is left before the age tu
 
 It is a view of the same gate the `advance` command checks: the buildings the next age lists and the wonder of the age you are in. The panel adds no requirement and takes none away. `advance` works from the prompt too, and when the gate is not met it points you at `charter`.
 
-The top of the dashboard shows the same figures at a glance: a long bar to the next age with the percent, the four pillars as small meters, and a line naming what is still missing (see [The screen layout](how-to-play.md#the-screen-layout)). On a small terminal the top keeps the long bar and the line, and the pillars appear as the terminal grows. All of them are read from the same gate, so the percents match.
+The top of the dashboard shows the same figures at a glance: a long bar to the next age with the percent, the four pillars as small meters, and a line naming what is still missing (see [The screen layout](how-to-play.md#the-screen-layout)). On a small window the top keeps the long bar and the line, and the pillars appear as the window grows. All of them are read from the same gate, so the percents match.
 
 ---
 
@@ -61,7 +61,7 @@ When all four pillars stand and nothing else is in the way, the foot of the pane
 | `Enter` | Advance, when all four pillars stand |
 | `Esc` | Close the panel |
 
-Like the other panels, it reads in every theme and on the plain glyph set, and it fits an 80 by 24 terminal.
+Like the other panels, it reads in every theme and on the plain glyph set, and it fits an 80 by 24 window.
 
 ---
 

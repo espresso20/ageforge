@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -32,7 +30,7 @@ func bootMenuApp(t *testing.T, w, h int, games ...string) (*reproHarness, *game.
 	eng := game.NewGameEngine()
 	eng.SetAccount(acct)
 	a := NewApp(eng, "dev") // "dev" skips the network update check
-	sim := tcell.NewSimulationScreen("UTF-8")
+	sim := newSim()
 	a.SetScreen(sim)
 	sim.SetSize(w, h)
 	hr := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}
@@ -132,7 +130,6 @@ func TestMenuInTheRunningApp(t *testing.T) {
 
 	// The smallest terminal, live.
 	h.sim.SetSize(80, 24)
-	must(t, h.sim.PostEvent(tcell.NewEventResize(80, 24)))
 	h.waitFor("the menu at 80x24", 5*time.Second, func() bool {
 		s := screen()
 		return strings.Contains(s, "▸ Continue") && strings.Contains(s, "Quit") && strings.Contains(s, "choose")

@@ -5,12 +5,12 @@ import (
 	"image/color"
 	"math"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 type advKey struct {
@@ -19,35 +19,25 @@ type advKey struct {
 	r    rune
 }
 
-func toRGBA(c tcell.Color, def color.RGBA) color.RGBA {
-	if !c.Valid() {
-		return def
-	}
-	r, g, b := c.RGB()
-	if r < 0 {
-		return def
-	}
-	return color.RGBA{uint8(r), uint8(g), uint8(b), 255}
-}
-
 func mix(fg, bg color.RGBA, cover float64) color.RGBA {
 	m := func(a, b uint8) uint8 { return uint8(math.Round(float64(b) + (float64(a)-float64(b))*cover)) }
 	return color.RGBA{m(fg.R, bg.R), m(fg.G, bg.G), m(fg.B, bg.B), 255}
 }
 
-// colors resolves a style to the colors to paint with, reverse and dim applied.
-func (g *Game) colors(st tcell.Style) (fg, bg color.RGBA, attr tcell.AttrMask) {
-	th := theme.Active()
-	f, b, a := st.Decompose()
-	fg = toRGBA(f, toRGBA(theme.Tcell(th.Color(theme.RoleText)), color.RGBA{255, 255, 255, 255}))
-	bg = toRGBA(b, toRGBA(theme.Tcell(th.Color(theme.RoleBackground)), color.RGBA{A: 255}))
-	if a&tcell.AttrReverse != 0 {
+// cellColors is the colors to paint a cell with, reverse and dim applied. A
+// cell with no ground (an image shows through it) counts as the page's.
+func cellColors(c kit.Cell) (fg, bg color.RGBA) {
+	fg, bg = c.Fg, c.Bg
+	if c.Clear() {
+		bg = theme.RGBA(theme.RoleBackground)
+	}
+	if c.Attr&kit.Reverse != 0 {
 		fg, bg = bg, fg
 	}
-	if a&tcell.AttrDim != 0 {
+	if c.Attr&kit.Dim != 0 {
 		fg = mix(fg, bg, 0.6)
 	}
-	return fg, bg, a
+	return fg, bg
 }
 
 func (g *Game) advance(f *fontFile, r rune) float64 {
@@ -61,26 +51,26 @@ func (g *Game) advance(f *fontFile, r rune) float64 {
 }
 
 // drawCell paints one cell, or the two cells of a wide rune, onto the buffer.
-func (g *Game) drawCell(x, y int, k cellKey) {
+func (g *Game) drawCell(x, y int, c kit.Cell) {
 	cw := g.cw
-	if k.wide {
+	if c.Wide {
 		cw *= 2
 	}
 	px, py := float32(x*g.cw), float32(y*g.ch)
-	fg, bg, attr := g.colors(k.st)
-	if _, b, _ := k.st.Decompose(); b == theme.TcellTransparent {
+	fg, bg := cellColors(c)
+	if c.Clear() {
 		g.buf.SubImage(image.Rect(int(px), int(py), int(px)+cw, int(py)+g.ch)).(*ebiten.Image).Clear() // an image shows through
 	} else {
 		vector.FillRect(g.buf, px, py, float32(cw), float32(g.ch), bg, false)
 	}
-	if !k.covered && k.r != ' ' && k.r != 0 {
-		if sh, ok := procedural(k.r, g.cw, g.ch); ok {
+	if c.R != ' ' && c.R != 0 {
+		if sh, ok := procedural(c.R, g.cw, g.ch); ok {
 			g.drawShape(sh, px, py, fg, bg)
 		} else {
-			g.drawText(k, px, py, cw, fg, attr)
+			g.drawText(c, px, py, cw, fg)
 		}
 	}
-	if attr&tcell.AttrUnderline != 0 {
+	if c.Attr&kit.Underline != 0 {
 		t := float32(max(1, g.ch/16))
 		vector.FillRect(g.buf, px, py+float32(g.ch)-2*t, float32(cw), t, fg, false)
 	}
@@ -107,19 +97,19 @@ func (g *Game) drawShape(sh shape, px, py float32, fg, bg color.RGBA) {
 	}
 }
 
-func (g *Game) drawText(k cellKey, px, py float32, cw int, fg color.RGBA, attr tcell.AttrMask) {
+func (g *Game) drawText(k kit.Cell, px, py float32, cw int, fg color.RGBA) {
 	g.mu.Lock()
 	s := g.set.Font
 	g.mu.Unlock()
-	f := g.faces.pick(s, attr&tcell.AttrBold != 0, k.r)
+	f := g.faces.pick(s, k.Attr&kit.Bold != 0, k.R)
 	if f == nil {
 		if f = g.faces.pick(s, false, '?'); f == nil {
 			return
 		}
-		k.r, k.comb = '?', ""
+		k.R, k.Comb = '?', ""
 	}
 	face := g.goFace(f, g.size)
-	adv := g.advance(f, k.r)
+	adv := g.advance(f, k.R)
 	op := &text.DrawOptions{}
 	sx := 1.0
 	if adv > float64(cw) && adv > 0 {
@@ -132,5 +122,5 @@ func (g *Game) drawText(k cellKey, px, py float32, cw int, fg color.RGBA, attr t
 	if s == FontPixel {
 		op.Filter = ebiten.FilterNearest
 	}
-	text.Draw(g.buf, string(k.r)+k.comb, face, op)
+	text.Draw(g.buf, string(k.R)+k.Comb, face, op)
 }

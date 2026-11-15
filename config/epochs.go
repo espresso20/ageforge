@@ -15,7 +15,7 @@ type EpochDef struct {
 	Order           int      // 0-indexed position in the epoch sequence
 	Ages            []string // age keys that belong to this epoch (3 per epoch; Cosmic has 4)
 	Icon            string   // single Unicode character shown in the UI (e.g. "◈", "⚡")
-	Color           string   // tview dynamic color name used for epoch labels (e.g. "gold", "cyan")
+	Color           string   // tag color name used for epoch labels (e.g. "gold", "cyan")
 	PrimaryResource string   // dominant structural/construction resource for this era
 	EnergyResource  string   // dominant energy/fuel resource for this era
 	CatastropheKey  string   // key used to look up the catastrophe event definition for this epoch

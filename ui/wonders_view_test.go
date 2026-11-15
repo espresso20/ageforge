@@ -108,8 +108,7 @@ func TestGalleryKeysAndEsc(t *testing.T) {
 	}
 	open()
 	tv := om.entries["wonders"].tv
-	handler := tv.InputHandler()
-	press := func(ev *kit.Key) { handler(tcellKey(*ev), func(Primitive) {}) }
+	press := func(ev *kit.Key) { keyTo(tv, *ev) }
 	list := untag(tv.GetText(false))
 	if !strings.Contains(list, "Press G for a gallery") {
 		t.Errorf("the list does not say how to open the gallery:\n%s", list)

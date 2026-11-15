@@ -3,8 +3,6 @@ package ui
 import (
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -14,8 +12,8 @@ import (
 // close them, the ring of buttons the keyboard moves around, and the plain
 // button dialog. It holds no player text; every string comes from the caller.
 
-// solidBox is an opaque filler in a role's colour. tview only paints cells a
-// primitive draws, so every row and column inside a window must belong to a
+// solidBox is an opaque filler in a role's colour. Only cells a
+// primitive paints are drawn, so every row and column inside a window must belong to a
 // primitive that clears it, or the page beneath shows through.
 func solidBox(role theme.Role) *nativeBox {
 	return newNativeBox().SetBackgroundColor(theme.Of(role))
@@ -148,7 +146,7 @@ func (r *buttonRing) focus(i int) {
 func (r *buttonRing) press(letter rune) bool {
 	for i, l := range r.letters {
 		if l != 0 && l == unicode.ToLower(letter) {
-			r.buttons[i].InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
+			keyTo(r.buttons[i], kit.Key{Code: kit.KeyEnter})
 			return true
 		}
 	}

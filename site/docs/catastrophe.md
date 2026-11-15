@@ -10,7 +10,7 @@ A window opens with two buttons, Endure and Succumb. Press `E` or `S`, or move b
 
 <figure class="screen" data-screen="catastrophe"><figcaption>The choice a catastrophe brings, here the Great Plague in the Iron Era: what Endure would cost with this garrison, and what Succumb would keep.</figcaption></figure>
 
-While a catastrophe is pending, the status ribbon shows a **☄ Catastrophe** badge (on a wide terminal it reads "☄ Catastrophe pending. Type catastrophe to choose."). The game refuses to advance to the next age or to prestige until you choose. Type `catastrophe` to reopen the choice. The pending catastrophe is saved with your game, so if you close the game and come back, the window opens again when the save loads.
+While a catastrophe is pending, the status ribbon shows a **☄ Catastrophe** badge (on a wide window it reads "☄ Catastrophe pending. Type catastrophe to choose."). The game refuses to advance to the next age or to prestige until you choose. Type `catastrophe` to reopen the choice. The pending catastrophe is saved with your game, so if you close the game and come back, the window opens again when the save loads.
 
 If a catastrophe strikes while the arrival screen of an age advance is up, the arrival comes first. The catastrophe window opens once you close that screen (any key moves on to what the age opens, and a second key closes it), or when it closes by itself after 20 seconds.
 

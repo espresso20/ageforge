@@ -42,7 +42,7 @@ Most panels leave the prompt working while they are open, and take only the keys
 
 With no panel open, `PgUp` and `PgDn` turn the Buildings list a page of whole entries (the box says how many are above and below). `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. `Esc` saves your game to its own save and returns to the main menu. The Help panel lists every key.
 
-A keyboard with no Page Up, Page Down, Home or End (a Mac's, for one) is covered too. `Option+↑` and `Option+↓` work as `PgUp` and `PgDn`, and `Option+←` and `Option+→` as `Home` and `End`, on the dashboard and in every panel. Other keyboards can use `Alt` for the same chords. Some terminals, Apple Terminal by default, send Option+← and Option+→ as `Esc b` and `Esc f`. The game reads those as `Home` and `End` while the prompt is empty, and with something typed they jump a word, as the prompt always does. If your terminal does not pass Option+arrows through, set it to send Option as Meta (`Esc+`). In the Map, `-` and `=` zoom with no modifier at all.
+A keyboard with no Page Up, Page Down, Home or End (a Mac's, for one) is covered too. `Option+↑` and `Option+↓` work as `PgUp` and `PgDn`, and `Option+←` and `Option+→` as `Home` and `End`, on the dashboard and in every panel. Other keyboards can use `Alt` for the same chords. In the Map, `-` and `=` zoom with no modifier at all.
 
 ## The log
 
@@ -363,7 +363,7 @@ worldmap
 icons
 ```
 
-`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On terminals of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list. On smaller terminals it hides, and `minimap off` hides it anywhere.
+`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list. On smaller windows it hides, and `minimap off` hides it anywhere.
 
 The prompt keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing:
 
@@ -573,7 +573,7 @@ The game keeps several local accounts, one active at a time, each with its own s
 
 ## The window
 
-When AgeForge runs in its own window (not `--terminal`), the window has a few keys of its own. They never reach the game, and the game keeps every other key.
+AgeForge runs in its own window, and the window has a few keys of its own. They never reach the game, and the game keeps every other key.
 
 | Key | Description |
 |---|---|

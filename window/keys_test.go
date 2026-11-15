@@ -3,7 +3,7 @@ package window
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/espresso20/ageforge/window/kit"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -15,21 +15,21 @@ func TestMapKey(t *testing.T) {
 		want press
 		ok   bool
 	}{
-		{"enter", ebiten.KeyEnter, mods{}, press{key: tcell.KeyEnter, hold: true}, true},
-		{"esc", ebiten.KeyEscape, mods{}, press{key: tcell.KeyEsc, hold: true}, true},
-		{"tab", ebiten.KeyTab, mods{}, press{key: tcell.KeyTab, hold: true}, true},
-		{"backtab", ebiten.KeyTab, mods{shift: true}, press{key: tcell.KeyBacktab, hold: true}, true},
-		{"backspace", ebiten.KeyBackspace, mods{}, press{key: tcell.KeyBackspace2, hold: true}, true},
-		{"delete", ebiten.KeyDelete, mods{}, press{key: tcell.KeyDelete, hold: true}, true},
-		{"up", ebiten.KeyArrowUp, mods{}, press{key: tcell.KeyUp, hold: true}, true},
-		{"home", ebiten.KeyHome, mods{}, press{key: tcell.KeyHome, hold: true}, true},
-		{"pgdn", ebiten.KeyPageDown, mods{}, press{key: tcell.KeyPgDn, hold: true}, true},
-		{"f5", ebiten.KeyF5, mods{}, press{key: tcell.KeyF5, hold: true}, true},
-		{"f12", ebiten.KeyF12, mods{}, press{key: tcell.KeyF12, hold: true}, true},
-		{"option+up keeps alt for mac_keys", ebiten.KeyArrowUp, mods{alt: true}, press{key: tcell.KeyUp, mod: tcell.ModAlt, hold: true}, true},
-		{"shift+left", ebiten.KeyArrowLeft, mods{shift: true}, press{key: tcell.KeyLeft, mod: tcell.ModShift, hold: true}, true},
-		{"ctrl+c", ebiten.KeyC, mods{ctrl: true}, press{key: tcell.KeyRune, r: 'c', mod: tcell.ModCtrl, hold: true}, true},
-		{"alt+b", ebiten.KeyB, mods{alt: true}, press{key: tcell.KeyRune, r: 'b', mod: tcell.ModAlt, hold: true}, true},
+		{"enter", ebiten.KeyEnter, mods{}, press{key: kit.Key{Code: kit.KeyEnter}, hold: true}, true},
+		{"esc", ebiten.KeyEscape, mods{}, press{key: kit.Key{Code: kit.KeyEsc}, hold: true}, true},
+		{"tab", ebiten.KeyTab, mods{}, press{key: kit.Key{Code: kit.KeyTab}, hold: true}, true},
+		{"backtab", ebiten.KeyTab, mods{shift: true}, press{key: kit.Key{Code: kit.KeyBacktab}, hold: true}, true},
+		{"backspace", ebiten.KeyBackspace, mods{}, press{key: kit.Key{Code: kit.KeyBackspace}, hold: true}, true},
+		{"delete", ebiten.KeyDelete, mods{}, press{key: kit.Key{Code: kit.KeyDelete}, hold: true}, true},
+		{"up", ebiten.KeyArrowUp, mods{}, press{key: kit.Key{Code: kit.KeyUp}, hold: true}, true},
+		{"home", ebiten.KeyHome, mods{}, press{key: kit.Key{Code: kit.KeyHome}, hold: true}, true},
+		{"pgdn", ebiten.KeyPageDown, mods{}, press{key: kit.Key{Code: kit.KeyPgDn}, hold: true}, true},
+		{"f5", ebiten.KeyF5, mods{}, press{key: kit.Key{Code: kit.KeyF5}, hold: true}, true},
+		{"f12", ebiten.KeyF12, mods{}, press{key: kit.Key{Code: kit.KeyF12}, hold: true}, true},
+		{"option+up keeps alt for mac_keys", ebiten.KeyArrowUp, mods{alt: true}, press{key: kit.Key{Code: kit.KeyUp, Mod: kit.ModAlt}, hold: true}, true},
+		{"shift+left", ebiten.KeyArrowLeft, mods{shift: true}, press{key: kit.Key{Code: kit.KeyLeft, Mod: kit.ModShift}, hold: true}, true},
+		{"ctrl+c", ebiten.KeyC, mods{ctrl: true}, press{key: kit.Key{Code: kit.KeyChord, Rune: 'c', Mod: kit.ModCtrl}, hold: true}, true},
+		{"alt+b", ebiten.KeyB, mods{alt: true}, press{key: kit.Key{Code: kit.KeyChord, Rune: 'b', Mod: kit.ModAlt}, hold: true}, true},
 		{"plain letter is text", ebiten.KeyA, mods{}, press{}, false},
 		{"cmd is never the game's", ebiten.KeyC, mods{meta: true}, press{}, false},
 		{"cmd+enter", ebiten.KeyEnter, mods{meta: true}, press{}, false},
@@ -42,12 +42,11 @@ func TestMapKey(t *testing.T) {
 	}
 }
 
-// Ctrl+C must arrive as tcell's KeyCtrlC once the simulation screen has built the event.
-func TestCtrlCBecomesKeyCtrlC(t *testing.T) {
+// Ctrl+C arrives as the chord the game leaves on, never as the letter.
+func TestCtrlCIsAChord(t *testing.T) {
 	p, _ := mapKey(ebiten.KeyC, mods{ctrl: true})
-	ev := tcell.NewEventKey(p.key, p.r, p.mod)
-	if ev.Key() != tcell.KeyCtrlC {
-		t.Fatalf("got key %v, want KeyCtrlC", ev.Key())
+	if !p.key.Ctrl('c') || p.key.Code == kit.KeyRune {
+		t.Fatalf("Ctrl+C is %+v, want the chord", p.key)
 	}
 }
 
@@ -58,7 +57,7 @@ func TestMapChars(t *testing.T) {
 		t.Fatalf("got %d presses, want %d: %+v", len(got), len(want), got)
 	}
 	for i, r := range want {
-		if got[i].key != tcell.KeyRune || got[i].r != r {
+		if got[i].key != (kit.Key{Code: kit.KeyRune, Rune: r}) {
 			t.Errorf("press %d: %+v, want rune %q", i, got[i], r)
 		}
 	}

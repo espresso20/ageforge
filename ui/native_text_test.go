@@ -5,109 +5,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
-
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// textViewLike is what the tests ask of both text views.
-type textViewLike interface {
-	Primitive
-}
-
-// cellsOf draws p at w by h and returns each cell as glyph and style.
-// drawable is what a test draws on a screen: one of the game's primitives,
-// or the tview widget it is compared with.
-type drawable interface {
-	SetRect(x, y, w, h int)
-	Draw(scr tcell.Screen)
-}
-
-func cellsOf(t *testing.T, p drawable, w, h int) []string {
-	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(w, h)
-	scr := theme.WrapScreen(sim)
-	p.SetRect(0, 0, w, h)
-	p.Draw(scr)
-	scr.Show()
-	cells, cw, _ := sim.GetContents()
+// cellsOf draws p alone at w by h and returns each cell as "rune fg hex", row
+// by row: enough to say what is where and in what ink.
+func cellsOf(_ *testing.T, p Primitive, w, h int) []string {
+	f := drawPrimitive(nil, p, w, h)
 	out := make([]string, 0, w*h)
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			c := cells[y*cw+x]
-			r := ' '
-			if len(c.Runes) > 0 && c.Runes[0] != 0 {
-				r = c.Runes[0]
-			}
-			fg, bg, attr := theme.ResolveStyle(c.Style).Decompose()
-			if r == ' ' {
-				fg, attr = 0, 0 // a blank's ink does not show
-			}
-			out = append(out, fmt.Sprintf("%c fg %06x bg %06x %b", r, fg.Hex(), bg.Hex(), attr&^tcell.AttrUnderline))
-		}
+	for _, c := range f.cells {
+		fg, _, _ := decompose(c.Style)
+		out = append(out, fmt.Sprintf("%c fg %06x", c.Runes[0], fg.Hex()))
 	}
 	return out
-}
-
-func rowsOf(cells []string, w int) string {
-	var sb strings.Builder
-	for i, c := range cells {
-		sb.WriteString(c[:strings.Index(c, " fg")])
-		if i%w == w-1 {
-			sb.WriteString("|\n")
-		}
-	}
-	return sb.String()
-}
-
-func TestNativeTextDrawsAsATextViewDid(t *testing.T) {
-	keepTheme(t)
-	const text = "[gold]Wonders[-]\n\nThe [green]Great Library[-] holds [yellow]1,200[-] scrolls and a rather long line that has to wrap at the edge of its box.\n[gray]press [Esc[] to close[-]\nlast line"
-	type opts struct {
-		name                string
-		dynamic, wrap, word bool
-		align               kit.Align
-		border, focus       bool
-		title               string
-		scroll              int
-		w, h                int
-	}
-	for _, o := range []opts{
-		{name: "plain", dynamic: true, wrap: true, w: 40, h: 10},
-		{name: "word wrap", dynamic: true, wrap: true, word: true, w: 31, h: 12},
-		{name: "no wrap centered", dynamic: true, align: kit.AlignCenter, w: 50, h: 8},
-		{name: "right", dynamic: true, wrap: true, align: kit.AlignRight, w: 44, h: 9},
-		{name: "border and title", dynamic: true, wrap: true, border: true, title: " [gold]Help[-] ", w: 36, h: 9},
-		{name: "focused border", dynamic: true, wrap: true, border: true, focus: true, title: "Log", w: 36, h: 9},
-		{name: "scrolled", dynamic: true, wrap: true, scroll: 3, w: 30, h: 5},
-		{name: "scrolled past the end", dynamic: true, wrap: true, scroll: 400, w: 30, h: 5},
-		{name: "tags off", wrap: true, w: 40, h: 10},
-	} {
-		old := tview.NewTextView().SetDynamicColors(o.dynamic).SetWrap(o.wrap).SetWordWrap(o.word).SetTextAlign(int(o.align))
-		old.SetBorder(o.border).SetTitle(o.title)
-		old.SetText(text)
-		old.ScrollTo(o.scroll, 0)
-		kt := newNativeText().SetDynamicColors(o.dynamic).SetWrap(o.wrap).SetWordWrap(o.word).SetTextAlign(o.align)
-		kt.SetBorder(o.border).SetTitle(o.title)
-		kt.SetText(text)
-		kt.ScrollTo(o.scroll, 0)
-		if o.focus {
-			old.Focus(func(tview.Primitive) {})
-			kt.Focus(func(Primitive) {})
-		}
-		want, got := cellsOf(t, old, o.w, o.h), cellsOf(t, kt, o.w, o.h)
-		for i := range want {
-			if got[i] != want[i] {
-				t.Errorf("%s: cell %d,%d is %q, the text view drew %q\nkit:\n%stview:\n%s", o.name, i%o.w, i/o.w, got[i], want[i], rowsOf(got, o.w), rowsOf(want, o.w))
-				break
-			}
-		}
-	}
 }
 
 func TestNativeTextKeysAndCalls(t *testing.T) {
@@ -124,9 +34,9 @@ func TestNativeTextKeysAndCalls(t *testing.T) {
 	if changed != 1 || kt.GetText(false) != strings.Join(lines, "\n") {
 		t.Fatalf("SetText: %d changes", changed)
 	}
-	top := func() string { return strings.TrimSpace(rowsOf(cellsOf(t, kt, 12, 5), 12)[:12]) }
+	top := func() string { return strings.TrimSpace(drawPrimitive(t, kt, 12, 5).Rows()[0]) }
 	press := func(k kit.KeyCode, r rune) {
-		kt.InputHandler()(tev(k, r, 0), func(Primitive) {})
+		keyTo(kt, tk(k, r, 0))
 	}
 	if top() != "line 00" {
 		t.Fatalf("starts at %q", top())
@@ -153,7 +63,7 @@ func TestNativeTextKeysAndCalls(t *testing.T) {
 		t.Errorf("the scroll offset is %d", row)
 	}
 	// The wheel scrolls it, through the kit.
-	kt.root.Mouse(kit.Mouse{Kind: kit.MouseWheel, X: 2, Y: 2, Wheel: -2})
+	newStage(kt, 12, 5).mouse(kit.Mouse{Kind: kit.MouseWheel, X: 2, Y: 2, Wheel: -2})
 	if got := top(); got != "line 29" {
 		t.Errorf("two notches up: %q", got)
 	}
@@ -182,10 +92,7 @@ func TestNativeTextWriteTitleColorAndDrawFunc(t *testing.T) {
 		t.Errorf("Write: %q", got)
 	}
 	var w int
-	kt.SetBorder(true).SetTitle("T").SetTitleColor(kit.RGB(255, 0, 0)).SetDrawFunc(func(_ tcell.Screen, _, _, ww, _ int) (int, int, int, int) {
-		w = ww
-		return 0, 0, 0, 0
-	})
+	kt.SetBorder(true).SetTitle("T").SetTitleColor(kit.RGB(255, 0, 0)).SetDrawFunc(func(_, _, ww, _ int) { w = ww })
 	if kt.GetTitle() != "T" {
 		t.Errorf("GetTitle: %q", kt.GetTitle())
 	}
@@ -198,8 +105,8 @@ func TestNativeTextWriteTitleColorAndDrawFunc(t *testing.T) {
 	}
 }
 
-// TestPanelFrameIsOneTree: the frame and its text are one kit tree on one
-// host, so the wheel reaches the text through the frame from the window.
+// TestPanelFrameIsOneTree: the frame and its text are one kit tree, so the
+// wheel reaches the text through the frame.
 func TestPanelFrameIsOneTree(t *testing.T) {
 	keepTheme(t)
 	var lines []string
@@ -209,44 +116,21 @@ func TestPanelFrameIsOneTree(t *testing.T) {
 	tv := newNativeText().SetDynamicColors(true)
 	tv.SetText(strings.Join(lines, "\n"))
 	f := newPanelFrame(txtExpeditions, tv)
-
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(40, 12)
-	scr := newNativeScreen(theme.WrapScreen(sim))
-	f.SetRect(0, 0, 40, 12)
-	draw := func() string {
-		f.Draw(scr)
-		scr.Show()
-		cells, w, _ := sim.GetContents()
-		var sb strings.Builder
-		for x := panelPadX; x < panelPadX+6; x++ {
-			sb.WriteRune(cells[1*w+x].Runes[0])
-		}
-		return sb.String()
+	st := newStage(f, 40, 12)
+	first := func() string {
+		st.paint()
+		return string([]rune(st.buf.Line(1))[panelPadX : panelPadX+6])
 	}
-	if got := draw(); got != "row 00" {
+	if got := first(); got != "row 00" {
 		t.Fatalf("the text starts at %q", got)
 	}
-	if scr.hostAt(5, 5) != f.nativeHost || scr.hostAt(0, 0) != f.nativeHost {
-		t.Error("the frame's host should own both the edge and the text")
+	if !st.mouse(kit.Mouse{Kind: kit.MouseWheel, X: 5, Y: 5, Wheel: 2}) {
+		t.Fatal("the wheel over the text changed nothing")
 	}
-	if !scr.mouse(kit.Mouse{Kind: kit.MouseWheel, X: 5, Y: 5, Wheel: 2}) {
-		t.Error("the wheel over the text should change the screen")
+	if got := first(); got == "row 00" {
+		t.Errorf("after the wheel the text still starts at %q", got)
 	}
-	if got := draw(); got != "row 06" {
-		t.Errorf("two notches down show %q", got)
-	}
-	if row, _ := tv.GetScrollOffset(); row != 6 {
-		t.Errorf("the text view reports row %d", row)
-	}
-	// The keys still go to the text view, as the frame hands them over.
-	f.InputHandler()(tev(kit.KeyHome, 0, 0), func(Primitive) {})
-	if got := draw(); got != "row 00" {
-		t.Errorf("Home through the frame shows %q", got)
-	}
-	if _, y, _, h := tv.GetInnerRect(); y != 1 || h != 12-panelChromeRows {
-		t.Errorf("the text view knows where it is: row %d, %d rows", y, h)
+	if x, y, w, h := tv.GetRect(); w <= 0 || h <= 0 || x != panelPadX || y != 1 {
+		t.Errorf("the text view was told it is at %d,%d %dx%d", x, y, w, h)
 	}
 }

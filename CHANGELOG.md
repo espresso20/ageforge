@@ -51,6 +51,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Inside: the game no longer uses a terminal library at all. Its screen, keys, mouse and event loop are its own code, and two libraries (tview and tcell) are out of the build. What it shows and how it plays are the same.
 - Inside: colours and text styles are the game's own types everywhere, themes included. The terminal library's are left only where the screen is still copied to it.
 - Inside: who has the keyboard, and what a page is made of, are the game's own code now. The terminal library still runs the event loop and nothing else.
 - Inside: the stack of pages itself (menu, dashboard, panels, popups) is the UI kit's now, so the whole screen is one picture painted in one pass. A panel or popup still leaves the command bar and the page around it usable, by eye and by mouse.
@@ -122,6 +123,7 @@ All notable changes to AgeForge are documented here.
 - **Saves from before 4.0 are no longer loaded.** The game no longer repairs or converts old saves, accounts or exports, and refuses them with a plain line.
 
 ### Removed
+- Terminal mode. `ageforge --terminal` is gone: AgeForge runs in its own window only. Nothing else a player could do is removed. Saves, accounts and settings are untouched.
 - **The Primitive Age dinosaurs and the asteroid.** The sauropod, raptor and pterodactyl no longer roam the Primitive town, and the asteroid no longer streaks across the sky near the end of the Late Cretaceous.
 - **The old map renderer.** The symbol-chart map, with its district zoom, region plates and city scenes, is gone with its code; the engine draws every age.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.

@@ -371,7 +371,7 @@ func catastropheOutcomeLabel(outcome string) string {
 	return ""
 }
 
-// epochEventColor returns a tview color tag name for an epoch event type.
+// epochEventColor returns a color tag name for an epoch event type.
 func epochEventColor(eventType string) string {
 	switch eventType {
 	case "good_legendary":

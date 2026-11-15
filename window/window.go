@@ -1,36 +1,43 @@
 // Package window shows the game in its own window. It is a thin host: the game
-// is still drawn by tview into a simulation screen, and this package paints
-// that screen's cells with Ebitengine and turns the window's keys into key
+// is drawn by the kit into a buffer of cells, and this package paints
+// those cells with Ebitengine and turns the window's keys into key
 // events for it.
 package window
 
 import (
-	"image/color"
 	"log"
 	"math"
 	"runtime"
 	"sync"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
+// A Screen is the game as the window drives it: it is told the grid's size
+// in cells, the keys and the pointer, and it hands back the cells to show.
+// None of its methods may wait for the game.
+type Screen interface {
+	Resize(cols, rows int)
+	Key(k kit.Key)
+	Mouse(m kit.Mouse) // the pointer, at a cell of the grid
+	// Frame copies the cells the game shows now into dst.
+	Frame(dst *kit.Buffer)
+}
+
 // Options are what the window needs from main.
 type Options struct {
-	Host    *Host
+	Screen  Screen
 	Dir     string          // where the window's settings are kept
 	Done    <-chan struct{} // closed when the game has ended; the window then closes
 	OnClose func()          // the player closed the window: leave the game as Ctrl+C does
-	Mouse   func(kit.Mouse) // the pointer, at a cell of the grid, for the game's own screens; nil for none
 	Script  string          // dev only: a file of steps for a run nobody is watching (see script.go)
 }
 
@@ -51,8 +58,8 @@ type Game struct {
 	asc        float64 // top of the line box to the baseline
 	cols, rows int
 	buf        *ebiten.Image
-	fr         frame
-	prev, cur  []cellKey
+	fr         kit.Buffer // the game's cells this frame
+	prev       []kit.Cell // what is on the buffer image now
 	closing    bool
 	frame      int
 	script     *script
@@ -166,7 +173,7 @@ func (g *Game) relayout() {
 	g.buf = ebiten.NewImage(cols*cw, rows*ch)
 	g.prev = nil // paint every cell again
 	if grew || g.frame == 0 {
-		g.o.Host.SetGrid(cols, rows)
+		g.o.Screen.Resize(cols, rows)
 	}
 }
 
@@ -236,23 +243,23 @@ func (g *Game) keys() {
 		g.zoomReset()
 		return
 	}
-	host := g.o.Host
+	game := g.o.Screen
 	if (zoom && inpututil.IsKeyJustPressed(ebiten.KeyV)) || (m.shift && inpututil.IsKeyJustPressed(ebiten.KeyInsert)) {
 		for _, p := range mapChars([]rune(clipboardText())) {
-			host.InjectKey(p.key, p.r, p.mod)
+			game.Key(p.key)
 		}
 		return
 	}
 	for _, k := range pressedKeys {
 		if g.holdFires(k) {
 			if p, ok := mapKey(k, m); ok {
-				host.InjectKey(p.key, p.r, p.mod)
+				game.Key(p.key)
 			}
 		}
 	}
 	if takesText(m) {
 		for _, p := range mapChars(ebiten.AppendInputChars(nil)) {
-			host.InjectKey(p.key, p.r, p.mod)
+			game.Key(p.key)
 		}
 	}
 }
@@ -299,9 +306,7 @@ func (g *Game) NextFont() {
 
 // Draw paints the cells that changed, then the buffer.
 func (g *Game) Draw(screen *ebiten.Image) {
-	th := theme.Active()
-	bg := toRGBA(theme.Tcell(th.Color(theme.RoleBackground)), color.RGBA{A: 255})
-	screen.Fill(bg)
+	screen.Fill(theme.RGBA(theme.RoleBackground))
 	if g.buf == nil {
 		return
 	}
@@ -317,74 +322,40 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-// cursor draws the text cursor tview asks for, as a bar at the left of its
-// cell, blinking.
+// cursor draws the text cursor the game asks for, as a bar at the left of
+// its cell, blinking.
 func (g *Game) cursor(screen *ebiten.Image, ox, oy float64) {
 	f := &g.fr
-	if !f.cursorShowing || f.curX < 0 || f.curY < 0 || f.curX >= g.cols || f.curY >= g.rows || (g.frame/30)%2 == 1 {
+	at := f.Cursor
+	if !f.CursorOn || at.X < 0 || at.Y < 0 || at.X >= g.cols || at.Y >= g.rows || f.W != g.cols || (g.frame/30)%2 == 1 {
 		return
 	}
 	w := float32(max(2, g.cw/8))
-	fg, _, _ := g.colors(f.cells[f.curY*f.cols+f.curX].Style)
-	vector.FillRect(screen, float32(ox)+float32(f.curX*g.cw), float32(oy)+float32(f.curY*g.ch), w, float32(g.ch), fg, false)
+	fg, _ := cellColors(f.At(at.X, at.Y))
+	vector.FillRect(screen, float32(ox)+float32(at.X*g.cw), float32(oy)+float32(at.Y*g.ch), w, float32(g.ch), fg, false)
 }
 
-// A cellKey is everything that decides how a cell looks, so two equal keys
-// need no repaint.
-type cellKey struct {
-	r       rune
-	comb    string
-	st      tcell.Style
-	wide    bool
-	covered bool // the right half of a wide rune
-}
-
-func (g *Game) keyAt(i int, wasWide bool) cellKey {
-	c := g.fr.cells[i]
-	if wasWide {
-		return cellKey{covered: true, st: c.Style}
-	}
-	k := cellKey{r: ' ', st: c.Style}
-	if len(c.Runes) > 0 && c.Runes[0] != 0 {
-		k.r = c.Runes[0]
-		if len(c.Runes) > 1 {
-			k.comb = string(c.Runes[1:])
-		}
-		if k.r >= 0x1100 && k.comb == "" && uniseg.StringWidth(string(k.r)) == 2 {
-			k.wide = true
-		}
-	}
-	return k
-}
-
+// paint takes the game's cells and draws the ones that changed onto the
+// buffer image. Two equal cells look the same, so an unchanged cell needs no
+// repaint.
 func (g *Game) paint() {
-	g.o.Host.snapshot(&g.fr)
-	if g.fr.cols != g.cols || g.fr.rows != g.rows {
+	g.o.Screen.Frame(&g.fr)
+	if g.fr.W != g.cols || g.fr.H != g.rows {
 		return // the game has not drawn at the new size yet
 	}
 	n := g.cols * g.rows
 	if len(g.prev) != n {
-		g.prev = make([]cellKey, n)
+		g.prev = make([]kit.Cell, n)
 		for i := range g.prev {
-			g.prev[i].r = -1 // matches nothing
+			g.prev[i].R = -1 // matches nothing
 		}
 	}
-	g.cur = append(g.cur[:0], make([]cellKey, n)...)
-	for y := 0; y < g.rows; y++ {
-		wasWide := false
-		for x := 0; x < g.cols; x++ {
-			i := y*g.cols + x
-			k := g.keyAt(i, wasWide)
-			g.cur[i] = k
-			wasWide = k.wide
-		}
-	}
-	for i, k := range g.cur {
+	for i, c := range g.fr.Cells {
 		// The right half of a wide rune is painted with it, never on its own:
 		// a fill there would wipe half the glyph.
-		if k != g.prev[i] && !k.covered {
-			g.drawCell(i%g.cols, i/g.cols, k)
+		if c != g.prev[i] && !c.Cont {
+			g.drawCell(i%g.cols, i/g.cols, c)
 		}
 	}
-	g.prev, g.cur = g.cur, g.prev
+	copy(g.prev, g.fr.Cells)
 }

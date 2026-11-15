@@ -3,7 +3,7 @@
 // one pixel canvas with one continuous zoom. It is pure Go over an
 // *image.RGBA (the window uploads and scales the result), so it is
 // deterministic and testable. It imports world and nothing else of ours: no
-// ui, no theme, no tview.
+// ui, no theme.
 //
 // The camera is a log zoom plus a centre. Each frame of the world's tree is
 // drawn while the view width is inside its band; where two bands meet the

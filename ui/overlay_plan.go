@@ -15,7 +15,7 @@ import (
 
 // The Plan panel (the Workbench): the build plan as a queue on the left and
 // the selected item's detail on the right, with an optimize preview and an
-// add box. A text overlay with a key handler; the handler runs on the tview
+// add box. A text overlay with a key handler; the handler runs on the UI
 // goroutine and never under the engine lock, so it may call the engine's plan
 // methods (write lock) and GetState (read lock). The drawing is plan_screen.go,
 // the add box plan_add.go and the preview popup plan_optimize.go.
@@ -28,7 +28,7 @@ const (
 	planModeOptimize
 )
 
-// planPanel holds the panel's UI-only state. Owned by the tview goroutine.
+// planPanel holds the panel's UI-only state. Owned by the UI goroutine.
 type planPanel struct {
 	// sel is the selected item, 0-based; clamped to the plan on every render.
 	sel int

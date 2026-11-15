@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -80,7 +78,6 @@ func (mv *mapViews) model(state *game.GameState) *mapmodel.Model {
 type mapPanel struct {
 	barPanel
 	kit.Base
-	host  *nativeHost
 	mv    *mapViews
 	view  mapstyle.Style
 	set   mapSettings
@@ -115,7 +112,6 @@ func newMapPanel(mv *mapViews) *mapPanel {
 	p.barPanel = newBarPanel(p.routeKey)
 	p.start = p.now()
 	p.set = defaultMapSettings()
-	p.host = newNativeHost(p)
 	return p
 }
 
@@ -200,16 +196,10 @@ func (p *mapPanel) hide() {
 	}
 }
 
-// Draw paints the panel: the host shows it, in the panel's rectangle.
-func (p *mapPanel) Draw(scr tcell.Screen) {
-	p.host.SetRect(p.GetRect())
-	p.host.Draw(scr)
-}
-
 func (p *mapPanel) Layout(r image.Rectangle) { p.Place(r) }
 
 // Paint draws the map over all but the last row, and the key bar on it. The
-// map still writes tcell's cells, at the panel's place on the screen: scr
+// map still writes cells through mapstyle.Cells, at the panel's place on the screen: scr
 // puts them on the painter.
 func (p *mapPanel) Paint(kp *kit.Painter) {
 	x, y, w, h := p.GetRect()

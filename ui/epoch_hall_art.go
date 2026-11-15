@@ -17,7 +17,7 @@ import (
 
 // epoch_hall_art.go draws the Epoch screen's front page: a canvas of cells
 // (the main menu's mGrid) that the blocks are drawn onto, each centred as a
-// unit, and one pass that turns the canvas into tview text. The look is
+// unit, and one pass that turns the canvas into tagged text. The look is
 // the menu's: a banner painted cell by cell over a strip of stars, boxed
 // tiles, badge cards in their rarity's colour.
 
@@ -672,7 +672,7 @@ const (
 	featFastest
 )
 
-// hallTagRe matches a tview colour tag, which a feat carries and the page
+// hallTagRe matches a colour tag, which a feat carries and the page
 // strips to measure it.
 var hallTagRe = regexp.MustCompile(`\[[a-zA-Z0-9#:\-]*\]`)
 
@@ -748,7 +748,7 @@ func hallFold(r rune) rune {
 	return mapmodel.Fold(r, mapmodel.TierASCII)
 }
 
-// render turns the canvas into tview text, one line to a row, the unused
+// render turns the canvas into tagged text, one line to a row, the unused
 // rows at the foot dropped.
 func (c *hallCtx) render() string {
 	g := c.g

@@ -16,7 +16,7 @@ import (
 // multiplier the engine's continuous curve produced (state.MoraleMultiplier),
 // so the UI never re-derives the curve formula itself.
 type moraleBand struct {
-	Color      string // tview color for morale text + bar fill
+	Color      string // tag color for morale text + bar fill
 	Status     string // short player-facing status line, e.g. "production +18%"
 	Bonus      bool   // multiplier > 1.0 (above pivot)
 	Penalty    bool   // multiplier < 1.0 (below pivot)

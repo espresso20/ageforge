@@ -1,33 +1,26 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// App manages the tview application and page routing
+// App is the running game's UI: the loop, the pages and the dashboard.
 type App struct {
-	tviewApp  *appLoop
+	loop      *appLoop
 	pages     *nativePages
 	engine    *game.GameEngine
 	dashboard *Dashboard
 	version   string
 	menu      *mainMenu
-	screenSet bool // a (theme-wrapped) screen is installed; Run won't open the terminal
-	// native is the window's screen, which knows the kit screens drawn on
-	// it (native.go); nil in the terminal.
-	native *nativeScreen
-	mouseQ chan kit.Mouse // the window's mouse events on their way to the UI goroutine; nil in the terminal
 }
 
 // NewApp creates the UI application
 func NewApp(engine *game.GameEngine, version string) *App {
 	// Assert the active theme before any widget is built so the name-remap and
-	// tview.Styles chrome defaults are in place for the first Draw, and every
+	// chrome defaults are in place for the first Draw, and every
 	// theme.Track closure in setup() applies against a known palette. The theme
 	// package init() already seeds Forge defensively; this makes the boot explicit
 	// and survives a future import reshuffle. Phase 2 swaps DefaultKey for the
@@ -36,10 +29,10 @@ func NewApp(engine *game.GameEngine, version string) *App {
 	_ = theme.SetActive(theme.DefaultKey)
 
 	a := &App{
-		tviewApp: newAppLoop(),
-		pages:    newNativePages(),
-		engine:   engine,
-		version:  version,
+		loop:    newAppLoop(),
+		pages:   newNativePages(),
+		engine:  engine,
+		version: version,
 	}
 	a.setup()
 	return a
@@ -54,7 +47,7 @@ func (a *App) setup() {
 	// floor; this layers the account's choice on top once the engine is in place.
 	applyAccountTheme(a.engine)
 
-	a.dashboard = NewDashboard(a.tviewApp, a.engine, a.pages)
+	a.dashboard = NewDashboard(a.loop, a.engine, a.pages)
 	// The arrival screen draws the player's town in their glyph set and theme: it
 	// reads the game and the account's settings through the engine.
 	a.dashboard.overlayMgr.engine = a.engine
@@ -64,21 +57,21 @@ func (a *App) setup() {
 	// opens, the next closes), so that screen is offered it first. Before
 	// either, Option+arrows become PgUp, PgDn, Home and End (mac_keys.go), so
 	// every screen and panel sees keys a MacBook does not have.
-	a.tviewApp.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		ev = macKeys(ev, a.tviewApp.GetFocus())
-		if ev.Key() == tcell.KeyEsc && a.dashboard.overlayMgr.arrivalKey() {
+	a.loop.SetInputCapture(func(k *kit.Key) *kit.Key {
+		k = macKeys(k, a.loop.GetFocus())
+		if k.Code == kit.KeyEsc && a.dashboard.overlayMgr.arrivalKey() {
 			return nil
 		}
-		return ev
+		return k
 	})
 
-	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.version)
+	splash := CreateSplashPage(a.loop, a.pages, a.engine, a.version)
 	a.menu, _ = splash.(*mainMenu)
 
 	a.pages.AddPage("splash", splash, true, true)
 	a.pages.AddPage("dashboard", a.dashboard.Root(), true, false)
 
-	a.tviewApp.SetRoot(a.pages, true)
+	a.loop.SetRoot(a.pages, true)
 
 	// First run: if no established (named) account is wired, prompt for the account
 	// name as the very first thing the player sees — over the splash menu. The name
@@ -86,12 +79,12 @@ func (a *App) setup() {
 	// guarantees we always come away with an account. Once confirmed, install it and
 	// reveal the splash beneath.
 	if acct := a.engine.Account(); acct == nil || !acct.Established() {
-		showAccountNameModal(a.tviewApp, a.pages, splash, func(name string) {
+		showAccountNameModal(a.loop, a.pages, splash, func(name string) {
 			newAcct, err := game.CreateAccount(name)
 			if err != nil {
 				// Account is non-critical: say why and fall through to the splash
 				// accountless rather than block play.
-				showUpdateMsg(a.tviewApp, a.pages, err.Error())
+				showUpdateMsg(a.loop, a.pages, err.Error())
 				return
 			}
 			a.engine.SetAccount(newAcct)
@@ -118,38 +111,15 @@ type WindowHost interface {
 	NextFont()          // switch to the other font
 }
 
-// SetScreen installs s as the app's screen, wrapped by theme.WrapScreen so theme
-// sentinels resolve, instead of opening the terminal. Call it before Run.
-func (a *App) SetScreen(s tcell.Screen) {
-	a.native = newNativeScreen(theme.WrapScreen(s))
-	a.tviewApp.SetScreen(a.native)
-	a.screenSet = true
-	a.mouseQ = make(chan kit.Mouse, 256)
-	go a.pumpMouse()
-}
+// Resize, Key and Mouse are the window's events: the grid's size in cells,
+// a key press, and the pointer at a cell. They are safe to call from the
+// window's thread and never wait for the UI.
+func (a *App) Resize(cols, rows int) { a.loop.Resize(cols, rows) }
+func (a *App) Key(k kit.Key)         { a.loop.Key(k) }
+func (a *App) Mouse(m kit.Mouse)     { a.loop.Mouse(m) }
 
-// Mouse gives the game a mouse event from the window, at a screen cell. It
-// goes to the kit screen under the pointer; a screen still drawn by tview
-// takes no mouse. It is safe to call from the window's thread and never
-// waits: if the UI is not keeping up, the event is dropped.
-func (a *App) Mouse(m kit.Mouse) {
-	select {
-	case a.mouseQ <- m:
-	default:
-	}
-}
-
-// pumpMouse hands the window's mouse events to the UI goroutine, in order.
-// It is its own goroutine so that a busy UI holds it up and not the window.
-func (a *App) pumpMouse() {
-	for m := range a.mouseQ {
-		a.tviewApp.QueueUpdate(func() {
-			if a.native.mouse(m) {
-				a.tviewApp.ForceDraw()
-			}
-		})
-	}
-}
+// Frame copies the cells the game shows now into dst, for the window to draw.
+func (a *App) Frame(dst *kit.Buffer) { a.loop.Frame(dst) }
 
 // SetWindowHost tells the app it runs in a window (see WindowHost).
 func (a *App) SetWindowHost(h WindowHost) {
@@ -164,32 +134,12 @@ func (a *App) SetSpaceHost(h mapstyle.SpaceHost) {
 	a.dashboard.mapPanel.space = h
 }
 
-// Run starts the tview application (blocks until exit)
+// Run runs the UI until Stop (it blocks).
 func (a *App) Run() error {
-	// Every theme paints its own canvas (the theming design §3.7): the terminal screen is
-	// wrapped so theme sentinels in widget chrome and tcell.ColorDefault resolve
-	// to the ACTIVE theme on every cell. Without this, tview.Styles' Ref colors
-	// would reach the terminal unresolved. A screen installed via SetScreen is
-	// already wrapped and is left alone.
-	if !a.screenSet {
-		screen, err := tcell.NewScreen()
-		if err != nil {
-			return err
-		}
-		themed := theme.WrapScreen(screen)
-		if err := themed.Init(); err != nil {
-			return err
-		}
-		a.tviewApp.SetScreen(themed)
-		a.screenSet = true
-	}
-
 	a.dashboard.StartUpdates()
 	defer a.dashboard.StopUpdates()
-	return a.tviewApp.Run()
+	return a.loop.Run()
 }
 
-// Stop halts the tview application
-func (a *App) Stop() {
-	a.tviewApp.Stop()
-}
+// Stop ends Run.
+func (a *App) Stop() { a.loop.Stop() }

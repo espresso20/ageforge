@@ -65,7 +65,7 @@ type ending struct {
 // the new run's state: what the manager last saw is the run that ended.
 func ShowRunEnding(om *OverlayManager, end game.RunEnding) {
 	e := &ending{om: om, now: time.Now}
-	e.nativeHost = newNativeHost(e)
+	e.nativeHost = newNativeHost()
 	e.set = defaultMapSettings()
 	e.pal = newMenuPalette(theme.Active())
 	e.view = endViewFor(end, e.pal)

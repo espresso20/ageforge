@@ -4,8 +4,6 @@ import (
 	"image"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -30,7 +28,6 @@ type advancePanel struct {
 	kit.Base
 	// host paints the panel's kit cells and takes the mouse; the keys stay
 	// with barPanel.
-	host   *nativeHost
 	grid   *xgrid // what the panel last laid out, and where its pillars are
 	engine *game.GameEngine
 	view   game.AdvanceView
@@ -47,7 +44,6 @@ type advancePanel struct {
 func newAdvancePanel() *advancePanel {
 	p := &advancePanel{now: time.Now}
 	p.barPanel = newBarPanel(p.routeKey)
-	p.host = newNativeHost(p)
 	return p
 }
 
@@ -88,12 +84,6 @@ func (p *advancePanel) update(state game.GameState) {
 	}
 	p.view = v
 	p.ui.sel = clamp(p.ui.sel, 0, max(0, len(v.Pillars)-1))
-}
-
-// Draw paints the panel: the host shows it, in the panel's rectangle.
-func (p *advancePanel) Draw(scr tcell.Screen) {
-	p.host.SetRect(p.GetRect())
-	p.host.Draw(scr)
 }
 
 // Layout takes the panel's rectangle and works the panel out in it.

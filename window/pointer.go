@@ -40,10 +40,7 @@ func (g *Game) cellAt(px, py int) (x, y int, in bool) {
 
 // pointer reads the mouse for this frame and sends what happened.
 func (g *Game) pointer() {
-	send := g.o.Mouse
-	if send == nil {
-		return
-	}
+	send := g.o.Screen.Mouse
 	p := &g.ptr
 	x, y, in := g.cellAt(ebiten.CursorPosition())
 	if !in || !ebiten.IsFocused() {

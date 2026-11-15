@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// A nativeList stands where a tview.List with one line per item stood: the
+// A nativeList is a list with one line per item: the
 // same calls and keys, drawn by the kit. A click selects a row and chooses it,
 // as Enter does. Not carried over: the secondary line, the "(x)" shortcut
 // labels and the sideways scroll of Left and Right.
@@ -31,7 +31,7 @@ type nativeListItem struct {
 	selected        func()
 }
 
-// newNativeList is a list as tview makes one: text on the page's ground, the
+// newNativeList is a list: text on the page's ground, the
 // selection inverted, and a move past either end coming round.
 func newNativeList() *nativeList {
 	l := &nativeList{list: kit.NewList(), wrap: true}
@@ -41,7 +41,7 @@ func newNativeList() *nativeList {
 	l.list.OnMove = func(i int) { l.fire(l.changed, i) }
 	l.list.OnChoose = l.choose
 	l.box = &kit.Panel{Child: l.list, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
-	l.nativeHost = newNativeHost(l)
+	l.nativeHost = newNativeHost()
 	return l
 }
 
@@ -187,7 +187,7 @@ func (l *nativeList) GetInnerRect() (x, y, w, h int) {
 
 func (l *nativeList) Paint(p *kit.Painter) { l.box.Paint(p) }
 
-// Key takes a list's keys as tview's does: Up and Down (and Shift+Tab and
+// Key takes a list's keys: Up and Down (and Shift+Tab and
 // Tab) move, coming round at the ends, Home, End, PgUp and PgDn jump, Enter
 // chooses, and a row's shortcut selects and chooses it. Space chooses the
 // selected row.

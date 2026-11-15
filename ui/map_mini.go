@@ -71,7 +71,7 @@ func newMiniMap(mv *mapViews) *miniMap {
 	m := &miniMap{mv: mv, view: mapstyle.New(), now: time.Now}
 	m.start = m.now()
 	m.set = defaultMapSettings()
-	m.nativeHost = newNativeHost(m)
+	m.nativeHost = newNativeHost()
 	return m
 }
 
@@ -114,7 +114,7 @@ func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 func (m *miniMap) Layout(r image.Rectangle) { m.Place(r) }
 
 // Paint draws the border and the compact view inside it. The map still
-// writes tcell's cells, at the box's place on the screen: scr puts them on
+// writes cells through mapstyle.Cells, at the box's place on the screen: scr puts them on
 // the painter.
 func (m *miniMap) Paint(p *kit.Painter) {
 	if m.nativeHost == nil {

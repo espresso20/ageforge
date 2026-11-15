@@ -3,14 +3,12 @@ package theme
 import (
 	"fmt"
 	"strings"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // tags.go is the inline-tag half of the theme API. Every helper here emits a
 // NAMED role tag ([accent], [onaccent:accent:b], …), never a hex literal, because
-// named tags are late-bound: tview resolves them through tcell.ColorNames on every
-// Draw, so text set once at construction still retints on a live theme switch.
+// named tags are late-bound: the UI kit looks the name up each time it paints,
+// so text set once at construction still retints on a live theme switch.
 // A hex tag computed at format time would freeze the color of whatever theme was
 // active then. HexTag (derive.go) exists only for colors that are deliberately
 // not the active theme's (the picker's swatches of other themes).
@@ -34,7 +32,7 @@ func TagFgBg(fg, bg Role) string {
 }
 
 // TagFgBgAttr returns a late-bound fg+bg+attributes tag, e.g.
-// "[onaccent:accent:b]". attrs uses tview's attribute letters ("b", "u", "i", …).
+// "[onaccent:accent:b]". attrs uses the tag syntax's attribute letters ("b", "u", "i", …).
 func TagFgBgAttr(fg, bg Role, attrs string) string {
 	return "[" + TagName(fg) + ":" + TagName(bg) + ":" + attrs + "]"
 }
@@ -73,29 +71,19 @@ func LegibleTag(c Color) string {
 
 // NameTag returns a tag for a data-supplied color name (e.g. config/epochs.go's
 // "magenta"). Theme-owned names (role names and legacy aliases) pass through as
-// late-bound named tags; any other tcell color name is resolved to its literal
+// late-bound named tags; any other CSS color name is resolved to its literal
 // hue and legibility-corrected via LegibleTag. Unknown names fall back to Text.
 func NameTag(name string) string {
 	n := strings.ToLower(strings.TrimSpace(name))
 	if _, owned := TagNames()[n]; owned {
 		return "[" + n + "]"
 	}
-	if c, ok := cssColors[n]; ok {
+	if v, ok := cssNames[n]; ok {
+		c := NewHexColor(v)
 		return LegibleTag(c)
 	}
 	return Tag(RoleText)
 }
-
-// cssColors snapshots tcell's named colors at package init, BEFORE applyRemap
-// overwrites the theme-owned keys, so NameTag resolves e.g. "blue" to the real
-// CSS blue rather than whatever a later remap stored.
-var cssColors = func() map[string]Color {
-	m := make(map[string]Color, len(tcell.ColorNames))
-	for k, v := range tcell.ColorNames {
-		m[k] = fromTcell(v)
-	}
-	return m
-}()
 
 // Sprintf-style convenience: Paint wraps s in role's tag and a fg reset.
 func Paint(role Role, s string) string {

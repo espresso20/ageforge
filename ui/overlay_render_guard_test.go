@@ -7,10 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // overlay_render_guard_test.go renders every text panel the dashboard
@@ -206,16 +205,14 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 // guardTagWordRe finds [word] spans tview could read as a style tag.
 var guardTagWordRe = regexp.MustCompile(`\[([A-Za-z][A-Za-z0-9#:\-]*)\]`)
 
-// guardEscapedWordRe finds tview-escaped "[word[]" spans, which print as
+// guardEscapedWordRe finds escaped "[word[]" spans, which print as
 // "[word]".
 var guardEscapedWordRe = regexp.MustCompile(`\[([A-Za-z][A-Za-z0-9#:\-]*)\[\]`)
 
-// guardRendered is what a panel's TextView shows: the provider output after
+// guardRendered is what a panel's text shows: the provider output after
 // the OverlayManager's safeTags pass, with every tag stripped.
 func guardRendered(raw string) string {
-	tv := tview.NewTextView().SetDynamicColors(true)
-	tv.SetText(safeTags(raw))
-	return tv.GetText(true)
+	return kit.Strip(safeTags(raw))
 }
 
 // TestPanelsKeepBracketedWords: every [word] a panel writes that is not a

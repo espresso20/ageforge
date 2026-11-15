@@ -38,8 +38,8 @@ func onFill(fill theme.Role) kit.Color {
 	}
 }
 
-// styleDangerModal turns a tview.Modal into a solid danger panel: Negative fill,
-// OnNegative text. Buttons keep tview's defaults (Selection fill / Text), which
+// styleDangerModal turns a dialog into a solid danger panel: Negative fill,
+// OnNegative text. Buttons keep their defaults (Selection fill / Text), which
 // the contrast test guarantees read on every theme.
 func styleDangerModal(m *nativeDialog) *nativeDialog {
 	m.SetBackgroundColor(theme.Of(theme.RoleNegative))

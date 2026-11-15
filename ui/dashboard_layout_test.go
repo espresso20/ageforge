@@ -7,8 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
@@ -98,17 +96,17 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *nativePages, *game.
 
 // drawnDashboard draws the dashboard at w x h, as the app does, and returns
 // the screen's cells.
-func drawnDashboard(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []tcell.SimCell {
+func drawnDashboard(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []simCell {
 	t.Helper()
 	sim := newSimScreen(t, w, h)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 	// Twice: the first draw gives every box its size, and the refresh after
 	// it writes what depends on the sizes (the status bar, the mini map).
 	for i := 0; i < 2; i++ {
 		d.refresh()
 		screen.Clear()
 		pages.SetRect(0, 0, w, h)
-		pages.Draw(screen)
+		drawOn(screen, pages)
 		screen.Show()
 	}
 	return simCells(sim).Cells()
@@ -116,14 +114,14 @@ func drawnDashboard(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []
 
 // rectText is the text drawn in a rectangle of the screen, a line per row,
 // trailing blanks trimmed.
-func rectText(cells []tcell.SimCell, screenW, x, y, w, h int) []string {
+func rectText(cells []simCell, screenW, x, y, w, h int) []string {
 	return frame{w: screenW, cells: cells}.Region(x, y, w, h)
 }
 
 // checkFitted holds a box to what it wrote: every line of its text fits its
 // inner width (so none was wrapped or cut), and the rows on screen are those
 // lines, one row each, from the line it is scrolled to.
-func checkFitted(t *testing.T, where string, v *fitView, cells []tcell.SimCell, screenW int) []string {
+func checkFitted(t *testing.T, where string, v *fitView, cells []simCell, screenW int) []string {
 	t.Helper()
 	x, y, w, h := v.GetInnerRect()
 	if w <= 0 || h <= 0 {
@@ -253,7 +251,7 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 		t.Fatalf("the Quantum Age has %d active resources besides the soldiers, want 9", len(names))
 	}
 	press := func() {
-		if ev := d.root.GetInputCapture()(tev(kit.KeyChord, resourcePageKey, kit.ModCtrl)); ev != nil {
+		if ev := captured(d.root, tk(kit.KeyChord, resourcePageKey, kit.ModCtrl)); ev != nil {
 			t.Fatalf("%s was not taken by the dashboard", resourcePageKeyName)
 		}
 	}
@@ -299,7 +297,7 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 	}
 	// With a panel open the box is behind it, and the key is the panel's.
 	d.overlayMgr.Show("help", eng.GetState())
-	if ev := d.root.GetInputCapture()(tev(kit.KeyChord, resourcePageKey, kit.ModCtrl)); ev == nil {
+	if ev := captured(d.root, tk(kit.KeyChord, resourcePageKey, kit.ModCtrl)); ev == nil {
 		t.Errorf("%s turned the Resources box's page behind an open panel", resourcePageKeyName)
 	}
 	d.overlayMgr.Hide()

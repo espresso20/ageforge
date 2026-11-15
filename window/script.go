@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"github.com/espresso20/ageforge/window/kit"
@@ -29,7 +28,7 @@ func loadScript(path string) *script {
 	return &script{steps: strings.Split(strings.TrimSpace(string(b)), "\n")}
 }
 
-var scriptKeys = map[string]tcell.Key{"enter": tcell.KeyEnter, "esc": tcell.KeyEscape, "up": tcell.KeyUp, "down": tcell.KeyDown, "tab": tcell.KeyTab, "left": tcell.KeyLeft, "right": tcell.KeyRight, "home": tcell.KeyHome, "pgup": tcell.KeyPgUp, "pgdn": tcell.KeyPgDn}
+var scriptKeys = map[string]kit.KeyCode{"enter": kit.KeyEnter, "esc": kit.KeyEsc, "up": kit.KeyUp, "down": kit.KeyDown, "tab": kit.KeyTab, "left": kit.KeyLeft, "right": kit.KeyRight, "home": kit.KeyHome, "pgup": kit.KeyPgUp, "pgdn": kit.KeyPgDn}
 
 var scriptMouse = map[string]kit.MouseKind{"move": kit.MouseMove, "press": kit.MousePress, "release": kit.MouseRelease, "wheel": kit.MouseWheel}
 
@@ -48,10 +47,10 @@ func (s *script) step(g *Game) bool {
 	case "wait":
 		s.wait, _ = strconv.Atoi(arg)
 	case "key":
-		g.o.Host.InjectKey(scriptKeys[arg], 0, tcell.ModNone)
+		g.o.Screen.Key(kit.Key{Code: scriptKeys[arg]})
 	case "text":
 		for _, r := range arg {
-			g.o.Host.InjectKey(tcell.KeyRune, r, tcell.ModNone)
+			g.o.Screen.Key(kit.Key{Code: kit.KeyRune, Rune: r})
 		}
 	case "click", "focus", "wheel", "drag": // in art pixels of the map's canvas
 		var v [4]int
@@ -77,8 +76,8 @@ func (s *script) step(g *Game) bool {
 		x, _ := strconv.Atoi(f[1])
 		y, _ := strconv.Atoi(f[2])
 		rows, _ := strconv.Atoi(f[3])
-		if kind, ok := scriptMouse[f[0]]; ok && g.o.Mouse != nil {
-			g.o.Mouse(kit.Mouse{Kind: kind, X: x, Y: y, Wheel: rows})
+		if kind, ok := scriptMouse[f[0]]; ok {
+			g.o.Screen.Mouse(kit.Mouse{Kind: kind, X: x, Y: y, Wheel: rows})
 		}
 	case "shot":
 		s.shot = arg

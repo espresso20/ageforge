@@ -7,21 +7,21 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// A nativeButton stands where a tview.Button stood: the same calls, drawn by
-// the kit, and a click presses it. Like tview's, it is pressed by Enter only.
+// A nativeButton is a button drawn by the kit, and a click presses it. The
+// keyboard presses it with Enter only.
 type nativeButton struct {
 	*nativeHost
 	kit.Base
 	btn *kit.Button
 }
 
-// newNativeButton is a button as tview makes one: the label on the contrast
+// newNativeButton is a button: the label on the contrast
 // ground, inverted while it has the focus.
 func newNativeButton(label string) *nativeButton {
 	b := &nativeButton{btn: kit.NewButton(label, nil)}
 	b.btn.Style = kit.Style{Fg: kit.Role(theme.RoleText), Bg: kit.Role(theme.RoleSelection)}
 	b.btn.FocusStyle = kit.Style{Fg: kit.Role(theme.RoleBackground), Bg: kit.Role(theme.RoleText)}
-	b.nativeHost = newNativeHost(b)
+	b.nativeHost = newNativeHost()
 	b.SetRect(0, 0, kit.Width(label)+4, 1)
 	return b
 }
@@ -45,7 +45,7 @@ func (b *nativeButton) SetLabelColor(c kit.Color) *nativeButton {
 	return b
 }
 
-// SetBackgroundColor is accepted and does nothing, as on a tview.Button: its
+// SetBackgroundColor is accepted and does nothing: its
 // draw overwrites the box ground with the style's, so the fill styleFilledButton
 // asks for has never shown at rest. The screens look as they did.
 func (b *nativeButton) SetBackgroundColor(kit.Color) *nativeButton { return b }
@@ -57,7 +57,7 @@ func (b *nativeButton) Layout(r image.Rectangle) {
 	b.btn.Layout(r)
 }
 
-// Paint shows the button as it is now: with the focus tview's primitive holds.
+// Paint shows the button as it is now: with the focus the primitive holds.
 func (b *nativeButton) Paint(p *kit.Painter) {
 	b.btn.SetFocus(b.HasFocus())
 	b.btn.Paint(p)

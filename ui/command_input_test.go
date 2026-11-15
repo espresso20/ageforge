@@ -20,9 +20,9 @@ func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) frame {
 	in.SetText(text)
 	in.Focus(func(Primitive) {})
 	sim := newSimScreen(t, w, 1)
-	screen := theme.WrapScreen(sim)
+	screen := sim
 	in.SetRect(0, 0, w, 1)
-	in.Draw(screen)
+	drawOn(screen, in)
 	screen.Show()
 	return simCells(sim)
 }

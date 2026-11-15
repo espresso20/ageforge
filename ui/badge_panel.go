@@ -6,8 +6,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
@@ -53,7 +51,6 @@ type badgePanel struct {
 	kit.Base
 	// host paints the case's kit cells and takes the mouse; the keys stay
 	// with barPanel.
-	host    *nativeHost
 	views   []game.BadgeView
 	sum     game.BadgeSummary
 	account bool
@@ -77,7 +74,6 @@ type badgePanel struct {
 func newBadgePanel() *badgePanel {
 	p := &badgePanel{w: 120, h: 37, now: time.Now, start: time.Now(), motion: true}
 	p.barPanel = newBarPanel(p.routeKey)
-	p.host = newNativeHost(p)
 	return p
 }
 
@@ -159,12 +155,6 @@ func (p *badgePanel) moves() bool {
 		}
 	}
 	return false
-}
-
-// Draw paints the panel: the host shows it, in the panel's rectangle.
-func (p *badgePanel) Draw(scr tcell.Screen) {
-	p.host.SetRect(p.GetRect())
-	p.host.Draw(scr)
 }
 
 // Layout takes the panel's rectangle and lays the case out again when its
