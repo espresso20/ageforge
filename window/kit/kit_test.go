@@ -324,6 +324,62 @@ func TestThePointerTakesTheShapeOfWhatItIsOver(t *testing.T) {
 	}
 }
 
+// The click region under the pointer is marked with the chip's ground: just
+// its own text where the line holds another region, the whole width of the
+// box where it holds none, and never a cell that has a ground of its own.
+// Text that takes no clicks marks nothing.
+func TestTheRegionUnderThePointerIsMarked(t *testing.T) {
+	const text = `["a"]one[""] ["b"]two[""]` + "\n" + `["c"]three[""]` + "\n" + `["c"]four [#000000:#ff0000]hot[-:-][""]` + "\nplain"
+	tx := NewText(text)
+	tx.OnRegion = func(string, int) {}
+	r, b := screen(tx, 12, 4)
+	chip := theme.RGBA(theme.RoleChip)
+	marks := func() string {
+		r.Paint(b)
+		var sb strings.Builder
+		for y := 0; y < 4; y++ {
+			for x := 0; x < 12; x++ {
+				if b.At(x, y).Bg == chip {
+					sb.WriteByte('#')
+				} else {
+					sb.WriteByte('.')
+				}
+			}
+			sb.WriteByte('\n')
+		}
+		return sb.String()
+	}
+	const none = "............\n............\n............\n............\n"
+	for _, c := range []struct {
+		what string
+		x, y int
+		want string
+	}{
+		{"before the pointer arrives", -1, -1, none},
+		{"the first region of a line of two", 1, 0, "###.........\n............\n............\n............\n"},
+		{"the second region of that line", 5, 0, "....###.....\n............\n............\n............\n"},
+		{"a region of two whole lines", 1, 1, "............\n############\n#####...####\n............\n"},
+		{"plain text", 1, 3, none},
+	} {
+		if c.x >= 0 {
+			r.Mouse(Mouse{Kind: MouseMove, X: c.x, Y: c.y})
+		}
+		if got := marks(); got != c.want {
+			t.Errorf("%s: marked\n%swant\n%s", c.what, got, c.want)
+		}
+	}
+	r.Mouse(Mouse{Kind: MouseMove, X: 1, Y: 1})
+	r.Mouse(Mouse{Kind: MouseLeave})
+	if got := marks(); got != none {
+		t.Errorf("after the pointer left the mark stayed:\n%s", got)
+	}
+	tx.OnRegion = nil
+	r.Mouse(Mouse{Kind: MouseMove, X: 1, Y: 1})
+	if got := marks(); got != none {
+		t.Errorf("text that takes no clicks marked a region:\n%s", got)
+	}
+}
+
 func lines(n int) string {
 	var s []string
 	for i := 0; i < n; i++ {

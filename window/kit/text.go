@@ -1,6 +1,10 @@
 package kit
 
-import "image"
+import (
+	"image"
+
+	"github.com/espresso20/ageforge/theme"
+)
 
 // Text is tagged text in a box: one string, broken into lines.
 type Text struct {
@@ -16,6 +20,7 @@ type Text struct {
 	// a double click.
 	OnRegion func(name string, clicks int)
 
+	hover   string // the region under the pointer, where a click acts on regions
 	text    string
 	lines   []Line
 	longest int // the widest line
@@ -88,6 +93,57 @@ func (t *Text) Paint(p *Painter) {
 		l := &ls[y-r.Min.Y]
 		x, skip := t.place(l)
 		p.line(x, y, l, skip, r.Max.X-x)
+		if t.hover != "" {
+			t.light(p, l, x, skip, y)
+		}
+	}
+}
+
+// light marks the region under the pointer on one line: its cells that have
+// no ground of their own take the chip's, as a list's row under the pointer
+// does. A line that holds no other region is marked across the whole box, so
+// a region of whole lines reads as one block.
+func (t *Text) light(p *Painter, l *Line, x, skip, y int) {
+	chip := theme.RGBA(theme.RoleChip)
+	in, alone := false, true
+	for i := range l.g {
+		switch l.g[i].region {
+		case t.hover:
+			in = true
+		case "":
+		default:
+			alone = false
+		}
+	}
+	if !in {
+		return
+	}
+	if alone {
+		for cx := t.rect.Min.X; cx < t.rect.Max.X; cx++ {
+			if c := p.cell(cx, y); c != nil {
+				c.Bg = chip
+			}
+		}
+	}
+	// The cells of the text: the region's take the chip (they may be all
+	// that is marked), and one with a ground of its own gets it back.
+	for i := range l.g {
+		g := &l.g[i]
+		if skip > 0 {
+			skip -= g.w
+			continue
+		}
+		for k := 0; k < g.w; k++ {
+			c := p.cell(x+k, y)
+			switch {
+			case c == nil:
+			case g.st.Bg.IsSet():
+				ink(c, g.st)
+			case g.region == t.hover:
+				c.Bg = chip
+			}
+		}
+		x += g.w
 	}
 }
 
@@ -114,13 +170,24 @@ func (t *Text) regionAt(pt image.Point) string {
 	return ""
 }
 
+// Mouse: a click on a region tells OnRegion, and the region under the
+// pointer is marked while the pointer is on it.
 func (t *Text) Mouse(m Mouse) bool {
-	if t.OnRegion == nil || m.Kind != MousePress || m.Button != ButtonLeft {
+	if t.OnRegion == nil {
 		return false
 	}
-	if name := t.regionAt(m.Pt()); name != "" {
-		t.OnRegion(name, max(m.Clicks, 1))
-		return true
+	switch m.Kind {
+	case MouseLeave, MouseMove:
+		was := t.hover
+		if t.hover = ""; m.Kind == MouseMove {
+			t.hover = t.regionAt(m.Pt())
+		}
+		return t.hover != was
+	case MousePress:
+		if name := t.regionAt(m.Pt()); name != "" && m.Button == ButtonLeft {
+			t.OnRegion(name, max(m.Clicks, 1))
+			return true
+		}
 	}
 	return false
 }
