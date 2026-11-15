@@ -324,6 +324,28 @@ func TestThePointerTakesTheShapeOfWhatItIsOver(t *testing.T) {
 	}
 }
 
+// Took says whether a widget took the last mouse event: a move onto a
+// list's row is taken (the list marks the row) and so is a left press on
+// it; a press of the right button on it is not, nor a press under the last
+// row.
+func TestTheRootSaysWhetherAWidgetTookTheMouse(t *testing.T) {
+	l := NewList("zero", "one")
+	r, _ := screen(l, 8, 3)
+	if !r.Mouse(Mouse{Kind: MouseMove, X: 2, Y: 0}) || r.Took() != true {
+		t.Errorf("a move onto a row: took %v, want the list to have taken it (it marks the row)", r.Took())
+	}
+	if r.Mouse(Mouse{Kind: MousePress, Button: ButtonRight, X: 2, Y: 0}); r.Took() {
+		t.Error("a right press on a row was taken")
+	}
+	if r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 1}); !r.Took() {
+		t.Error("a left press on a row was not taken")
+	}
+	r.Mouse(Mouse{Kind: MouseRelease, Button: ButtonLeft, X: 2, Y: 1})
+	if r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 2}); r.Took() {
+		t.Error("a press under the last row was taken")
+	}
+}
+
 func lines(n int) string {
 	var s []string
 	for i := 0; i < n; i++ {

@@ -274,8 +274,9 @@ func (a *appLoop) Mouse(m kit.Mouse) {
 			return
 		}
 		changed := tree.Mouse(m)
-		// A right click is Back: Esc, where the app says Esc goes back.
-		if m.Kind == kit.MousePress && m.Button == kit.ButtonRight {
+		// A right click that nothing on the screen took is Back: Esc, where
+		// the app says Esc goes back.
+		if m.Kind == kit.MousePress && m.Button == kit.ButtonRight && !tree.Took() {
 			a.mu.Lock()
 			goBack := a.goBack
 			a.mu.Unlock()

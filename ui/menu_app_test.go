@@ -235,8 +235,7 @@ func TestARightClickGoesBackInTheRunningApp(t *testing.T) {
 	h.key(kit.KeyHome, 0)
 	h.key(kit.KeyEnter, 0)
 	h.waitFor("the dashboard in front", 10*time.Second, func() bool { return h.frontPage() == "dashboard" })
-	rightClick()
-	time.Sleep(100 * time.Millisecond)
+	rightClick() // returns once the click, and any key it pressed, have run
 	if h.frontPage() != "dashboard" {
 		t.Fatalf("a right click on the dashboard with no panel open left it for %q", h.frontPage())
 	}

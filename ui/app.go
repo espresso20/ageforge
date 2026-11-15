@@ -99,16 +99,18 @@ func (a *App) setup() {
 	}
 }
 
-// rightClickIsBack says whether a right click may press Esc now: on any
-// panel, dialog, floating window or page it may. On the dashboard with no
-// panel open Esc saves and leaves the game, and on the main menu's first
-// page there is nothing to go back to, so there a right click does nothing.
+// rightClickIsBack says whether a right click may press Esc now: where Esc
+// closes or leaves a panel, a dialog, a floating window or a page. It may
+// not where Esc means something else: on the dashboard with no panel open
+// Esc saves and leaves the game, and on the first-run name page Esc accepts
+// the name on offer. (On the main menu's first page Esc does nothing, so a
+// right click does nothing there either.)
 func (a *App) rightClickIsBack() bool {
 	switch name, _ := a.pages.GetFrontPage(); name {
 	case "dashboard":
 		return a.dashboard.overlayMgr.HasActive()
-	case "splash":
-		return a.menu != nil && a.menu.settings
+	case accountNamePage:
+		return false
 	}
 	return true
 }
