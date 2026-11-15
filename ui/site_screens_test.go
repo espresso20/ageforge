@@ -735,7 +735,7 @@ func TestWriteSiteScreens(t *testing.T) {
 		{"rates", "stats", "Resource rates"},
 		{"people", "people", ""},
 		{"advance", "charter", ""},
-		{"trade", "trade", "Trade routes"},
+		{"trade", "trade", ""},
 		{"wonders", "wonders", ""},
 		{"milestones", "milestones", ""},
 		{"expeditions", "expedition", ""},

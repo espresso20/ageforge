@@ -12,7 +12,7 @@ The other civilizations (meeting them, opinion, deals, alliances, war) have thei
 
 Every few ticks a route takes a set of resources from you and gives you others in return. A route needs its required building and enough in stock of what it takes.
 
-<figure class="screen" data-screen="trade"><figcaption>The Trade routes panel, with Local Barter part way through a cycle.</figcaption></figure>
+<figure class="screen" data-screen="trade"><figcaption>The Trade routes panel: a card for each route, with Local Barter part way through a cycle.</figcaption></figure>
 
 ### Commands
 
@@ -23,7 +23,7 @@ trade route start <route>
 trade route stop <route>
 ```
 
-`trade` on its own opens the Trade routes panel, which fills the screen. It shows your active routes, the routes you could start, and any allied bonuses. `t` works in place of `trade`.
+`trade` on its own opens the Trade routes panel, which fills the screen. It is a deck of cards. The Running section has a card for each active route and the Open routes section a card for each route you could start, ready or locked, with a last section that points to the Factions panel. The top shows how many routes are running, open and locked, and any allied bonuses. A card that can do something has a button showing its command: `stop` on a running route, `start` on a ready one. The arrow keys move from card to card, `Enter` runs the picked card's command, and a click picks a card, with a click on its button running the command. What the command did shows on the panel. `t` works in place of `trade`.
 
 `trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route. It fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle. There's no limit on how many routes can run at once.
 
@@ -37,11 +37,11 @@ Every completed cycle also raises opinion by +1 with every civilization you have
 
 If you are at war with a civilization, or you have put it under embargo, every route that brings in that civilization's specialty resource is disrupted. It takes nothing and gives nothing while the conflict lasts. The route isn't stopped and its timer keeps running, so it resumes by itself once the conflict is over. End a war with tribute or by waiting it out, and lift an embargo with `diplomacy neutral`. See [War & Peace](factions.md#war-amp-peace).
 
-On the Trade routes panel a disrupted route has a red ✖ and a note naming the blockaded resource, and a banner above the routes lists every blockaded resource. The log also notes each cycle a disrupted route misses.
+On the Trade routes panel a disrupted route's card is marked suspended, with a note naming the blockaded resource, and a warning above the cards lists every blockaded resource. The log also notes each cycle a disrupted route misses.
 
 Disruption follows the war and embargo state directly, so there's nothing separate to track. Before you embargo or provoke a civilization, check which of your routes bring in its specialty.
 
-The panel doesn't list civilizations. The one diplomacy effect it shows is an Allied bonuses block under the routes while an ally is boosting a resource (see [Allied Bonuses](factions.md#allied-bonuses)). Its last line points you to the Factions panel (`factions`) for opinion and deals.
+The panel doesn't list civilizations. The one diplomacy effect it shows is an Allied bonuses note at the top while an ally is boosting a resource (see [Allied Bonuses](factions.md#allied-bonuses)). Its last card points you to the Factions panel (`factions`) for opinion and deals.
 
 ### Full trade routes reference
 

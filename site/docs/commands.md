@@ -276,6 +276,8 @@ blackmarket gold
 
 A run costs the larger of 5K culture or a number of hours of your own culture income, up to 200 hours. After a run the smugglers lie low for 624 ticks (about 21 minutes). They deal in gold, iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux.
 
+The Trade, Army and Milestones panels are decks of cards, and they leave the prompt working. `←` `↑` `↓` `→` move from card to card, `Enter` runs the picked card's command (its button shows it), `PgUp` and `PgDn` scroll, and `Esc` closes the panel. A click picks a card, and a click on a card's button runs its command. With something typed in the prompt, the keys go to the prompt. Milestones cards have no commands.
+
 A route whose imports include a resource that a civilization you are at war with or have embargoed specializes in earns nothing until the conflict ends. Harbors raise the income of every active route. See [Trade](trade.md).
 
 ---
@@ -410,7 +412,7 @@ A festival costs the larger of 2K culture or a number of hours of your own cultu
 
 | Command | Description |
 |---|---|
-| `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts. |
+| `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts, as a deck of cards. |
 | `epoch` | Open the Epoch screen: a banner, your highlights, ages, top badges and feats on the front page, and on `Tab` the details (current epoch and its event, catastrophe outlook, epoch history, harbingers, legacy bonuses, Era Mastery and the civilization log). |
 | `epoch card` | Copy a picture of your epoch screen to the clipboard, to paste into Discord. It is also saved as `epoch-card.png` next to your saves, and the reply says which worked. Press `c` on the Epoch screen to do the same. |
 

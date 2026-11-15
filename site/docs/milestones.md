@@ -8,9 +8,9 @@ Every milestone and every chain can be completed. See [Can every milestone be do
 
 > When a milestone or chain completes, the log shows the achievement and its reward, then a short flavor quip on a dim line below ("You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter."). The quip is only there for character and changes nothing.
 
-Type `milestones` (or `ms`) to open the Milestones panel. It opens full screen. Scroll with the arrow keys or PgUp and PgDn, and `Esc` closes it.
+Type `milestones` (or `ms`) to open the Milestones panel. It opens full screen as a deck of cards: a section for each chain and a card for each milestone you can see. The arrow keys move from card to card, PgUp and PgDn scroll, and `Esc` closes it. The cards have no commands.
 
-<figure class="screen" data-screen="milestones"><figcaption>The Milestones panel: each chain with its progress, and every open milestone with what it asks for and what it pays.</figcaption></figure>
+<figure class="screen" data-screen="milestones"><figcaption>The Milestones panel: a section for each chain with its progress, and a card for every milestone with what it asks for and what it pays.</figcaption></figure>
 
 ---
 
@@ -272,7 +272,7 @@ Some milestones count buildings you can only build in their own age: Stone Pits,
 ## Tips
 
 - The Scholar and Settlement chains carry the biggest boosts (+300% game speed for 180 ticks). Builder, Military, Trade and Ancient Ages each grant +250% for 150 ticks.
-- The Milestones panel groups every milestone by category: Settlement, Builder, Scholar, Military, Trade, Faith, Epoch and Ages. A chain's progress sits on its group's heading. Each open milestone lists what it asks for, with a bar for each condition, and what it pays.
+- The Milestones panel groups every milestone by category: Settlement, Builder, Scholar, Military, Trade, Faith, Epoch and Ages. A chain's progress (for example "1 of 3") sits on its section's heading, and a finished chain shows its title and any active boost under it. A done milestone is a dim card marked done, with its reward. An open milestone is a card with its description, a bar and the figures for the condition it has furthest to go on, a line for each other condition, and what it pays. The card closest to done, once it has any progress, is marked now.
 - A hidden milestone shows up once your overall progress toward it passes 50% (the average of its conditions). A hidden milestone that names an age also shows up as soon as you are in the age before it.
 - A milestone that names an age past your next one stays hidden, whatever your progress. The section counts it in "+ N hidden milestones" until that age is your next one, or until you have reached it before on your account. The panel names an age only once it is your next one or you have reached it.
 - Chain boosts add to any other game speed bonuses you hold, so two chains finishing close together overlap.
