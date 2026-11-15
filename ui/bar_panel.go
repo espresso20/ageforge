@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"image"
+
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -23,6 +25,8 @@ type barPanel struct {
 	// route is the panel's routeKey: it takes a key if it is one of the
 	// panel's, given the command bar's text, and reports whether it did.
 	route func(ev *kit.Key, prompt string) bool
+	// buttons makes the keys the panel draws pressable (key_bar.go).
+	buttons keyPresser
 }
 
 // newBarPanel is a barPanel whose keys are decided by route.
@@ -42,6 +46,16 @@ func (b *barPanel) Key(k kit.Key) bool {
 		b.toPrompt(&k)
 	}
 	return true
+}
+
+// paintGrid puts the grid a panel drew on the kit's painter at r in theme
+// colours, with the key under the pointer lit.
+func (b *barPanel) paintGrid(p *kit.Painter, g *xgrid, r image.Rectangle) {
+	if !r.Empty() && g != nil {
+		pal := newExpPalette()
+		paintExpeditionKit(p, g, r.Min, pal)
+		b.buttons.paintLit(p, g, r.Min, pal)
+	}
 }
 
 // overBar is an overlay's build result: the panel over the whole screen but

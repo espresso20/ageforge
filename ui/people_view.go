@@ -99,6 +99,7 @@ func knowledgeBuildings(st game.GameState) []peopleBuilding {
 func renderPeople(st game.GameState, v peopleView, w, h int) *xgrid {
 	g := newXGrid(w, h)
 	g.box(0, 0, w, h, xBorder, vibe.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, xTitle, false)
+	g.closeButton(w)
 	if w < 60 || h < 14 {
 		g.put(2, 2, fitText(vibe.Line("ui.people_view.renderPeople.02", "The window is too small for the People panel. Esc closes it."), w-4), xBad)
 		return g

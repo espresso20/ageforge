@@ -217,6 +217,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.settings = d.mapSettings
 	d.expPanel.prompt = d.researchPanel.prompt
 	d.expPanel.toPrompt = d.handToPrompt
+	d.expPanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
 	d.overlayMgr.Register("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradeProvider)
 	// The Factions panel, under two names pointing at one provider (the
@@ -245,6 +246,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// the command bar as well.
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.handToPrompt
+	d.peoplePanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)

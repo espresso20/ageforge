@@ -50,6 +50,10 @@ type panelFrame struct {
 	plain func() bool
 	// iw and ih are the text area's size as last drawn (0 before the first).
 	iw, ih int
+	// buttons makes the foot's keys and the close button pressable, on the
+	// frame as last drawn (grid).
+	buttons keyPresser
+	grid    *xgrid
 }
 
 func newPanelFrame(title vibe.Entry, tv *nativeText) *panelFrame {
@@ -63,6 +67,7 @@ func newPanelFrame(title vibe.Entry, tv *nativeText) *panelFrame {
 func renderPanelFrame(w, h int, title string, keys [][2]string, hint, notice string) *xgrid {
 	g := newXGrid(w, h)
 	g.box(0, 0, w, h, xBorder, title, xTitle, false)
+	g.closeButton(w)
 	if h >= panelMinRows && notice != "" {
 		g.segsFit(2, h-2, w-4, xseg{notice, xGood})
 	} else if h >= panelMinRows {
@@ -119,8 +124,22 @@ func (f *panelFrame) Paint(p *kit.Painter) {
 	if f.plain != nil && f.plain() {
 		g.fold()
 	}
-	paintExpeditionKit(p, g, r.Min, newExpPalette())
+	pal := newExpPalette()
+	paintExpeditionKit(p, g, r.Min, pal)
+	f.buttons.paintLit(p, g, r.Min, pal)
+	f.grid = g
 	f.tv.Paint(p)
+}
+
+// Mouse: a click on a key along the foot, or on the close button, presses
+// that key.
+func (f *panelFrame) Mouse(m kit.Mouse) bool {
+	return f.buttons.mouse(f.grid, f.Bounds().Min, m)
+}
+
+// PointerAt: the hand over a key a click would press.
+func (f *panelFrame) PointerAt(at image.Point) kit.Pointer {
+	return f.buttons.pointer(f.grid, f.Bounds().Min, at)
 }
 
 // Focus gives the keyboard to the text.
