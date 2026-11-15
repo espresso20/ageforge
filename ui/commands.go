@@ -348,8 +348,8 @@ func registry() []*Command {
 				{"map", vibe.Line("ui.help.commands.map", "Open the Map panel (worldmap opens it on the known world); the prompt keeps working while it is open")},
 			},
 			Subs: []*Command{
-				sub("glyphs", "map glyphs [ascii|unicode|nerd]", vibe.Line("ui.help.commands.map.glyphs", "Show or set the map's glyphs (default unicode; nerd needs a Nerd Font)"),
-					Arg{Kind: ArgWord, Words: []string{"ascii", "unicode", "nerd"}, Optional: true}),
+				sub("glyphs", "map glyphs [ascii|unicode]", vibe.Line("ui.help.commands.map.glyphs", "Show or set the map's glyphs (default unicode)"),
+					Arg{Kind: ArgWord, Words: []string{"ascii", "unicode"}, Optional: true}),
 				sub("flows", "map flows [on|off]", vibe.Line("ui.help.commands.map.flows", "Turn the Map's flows overlay on or off (bare: switch it)"),
 					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
 			}},

@@ -224,7 +224,7 @@ func TestGlyphWidths(t *testing.T) {
 	for _, age := range []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "atomic_age",
 		"digital_age", "cyberpunk_age", "galactic_age"} {
 		m := grown(t, fixture.Options{Age: age, Seed: 2, Harbinger: true, Wars: 1, Catastrophe: true, Ruins: true})
-		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
+		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode} {
 			for _, world := range []bool{false, true} {
 				v := New()
 				v.SetOption(OptWorld, world)

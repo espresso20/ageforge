@@ -29,7 +29,7 @@ type badgeEmblem struct {
 
 // emblemStar is the emblem of a badge that names none, and of the ladders
 // that belong to no table: the wonders' star.
-var emblemStar = badgeEmblem{glyph: mapmodel.Glyph{ASCII: '*', Unicode: mapmodel.G(mapmodel.SymWonder).Unicode, Nerd: mapmodel.G(mapmodel.SymStarBig).Nerd}}
+var emblemStar = badgeEmblem{glyph: mapmodel.Glyph{ASCII: '*', Unicode: mapmodel.G(mapmodel.SymWonder).Unicode}}
 
 // badgeEmblems are the named emblems.
 var badgeEmblems = map[string]badgeEmblem{

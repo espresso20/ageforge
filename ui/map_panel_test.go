@@ -180,7 +180,7 @@ func TestMapSettingsPersist(t *testing.T) {
 	if s := d.mapSettings(); s.Tier != mapmodel.TierUnicode || s.Minimap {
 		t.Errorf("a load changed the account's map settings: %s, mini map %v", s.Tier, s.Minimap)
 	}
-	d.runForTest("map glyphs nerd")
+	d.runForTest("map glyphs ascii")
 
 	second, err := game.CreateAccount("Second")
 	must(t, err)
@@ -191,8 +191,18 @@ func TestMapSettingsPersist(t *testing.T) {
 	back, err := game.SwitchAccount(first.AccountID)
 	must(t, err)
 	eng.SetAccount(back)
-	if s := d.mapSettings(); s.Tier != mapmodel.TierNerd || s.Minimap {
-		t.Errorf("switching back (read from disk): %s, mini map %v, want nerd, off", s.Tier, s.Minimap)
+	if s := d.mapSettings(); s.Tier != mapmodel.TierASCII || s.Minimap {
+		t.Errorf("switching back (read from disk): %s, mini map %v, want ascii, off", s.Tier, s.Minimap)
+	}
+}
+
+// TestMapGlyphsNerdLoadsAsUnicode: an account saved with the retired nerd
+// glyph set reads as unicode.
+func TestMapGlyphsNerdLoadsAsUnicode(t *testing.T) {
+	_, eng := mapTestDashboard(t, true)
+	must(t, eng.Account().SetMapGlyphs("nerd"))
+	if s := resolveMapSettings(eng.Account()); s.Tier != mapmodel.TierUnicode {
+		t.Errorf("a saved nerd setting reads as %s, want unicode", s.Tier)
 	}
 }
 

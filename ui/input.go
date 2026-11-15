@@ -2676,7 +2676,7 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
 	cur := resolveMapSettings(acct)
 	if len(args) == 0 {
-		return infoReply(vibe.Sprintf("ui.input.cmdMapGlyphs.01", "Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch (icons checks your font for nerd).",
+		return infoReply(vibe.Sprintf("ui.input.cmdMapGlyphs.01", "Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch.",
 			cur.Tier, strings.Join(mapmodel.TierNames, ", ")))
 	}
 	if len(args) > 1 {
@@ -2684,16 +2684,12 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	}
 	name := strings.ToLower(args[0])
 	switch name {
-	case "ascii", "unicode", "nerd":
+	case "ascii", "unicode":
 	default:
 		return usageError(usageFor("map glyphs"), vibe.Errorf("ui.input.cmdMapGlyphs.03", "there is no glyph tier %q", args[0]))
 	}
 	res := CommandResult{Type: game.LogRoutine, Message: vibe.Sprintf("ui.input.cmdMapGlyphs.04", "Map glyphs set to %s.", name),
 		MapPref: mapPref{Key: "glyphs", Value: name}}
-	if name == "nerd" {
-		res.Type = "info" // advice, not a plain confirmation
-		res.Message += vibe.Line("ui.input.cmdMapGlyphs.05", " If the map shows boxes or question marks, type icons.")
-	}
 	if acct == nil {
 		res.Type, res.Message = "info", res.Message+mapSessionOnly.String()
 		return res

@@ -47,14 +47,13 @@ func TestMenuSettingsRowsSave(t *testing.T) {
 	}
 	// Glyphs: right steps forward from unicode, left steps back.
 	r.press('g')
-	if g := r.acct.MapPrefs(); g != "nerd" {
+	if g := r.acct.MapPrefs(); g != "ascii" {
 		t.Errorf("glyphs after one step: %q", g)
 	}
 	r.key(kit.KeyLeft, 0)
 	if g := r.acct.MapPrefs(); g != "unicode" {
 		t.Errorf("glyphs after left: %q", g)
 	}
-	r.key(kit.KeyRight, 0)
 	r.key(kit.KeyRight, 0)
 	if g := r.acct.MapPrefs(); g != "ascii" || r.m.set.Tier != mapmodel.TierASCII {
 		t.Errorf("glyphs after wrapping: %q", g)

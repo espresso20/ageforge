@@ -144,7 +144,7 @@ func TestTextPanelsShareOneFrame(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "medieval_age")
 	st := eng.GetState()
-	tiers := []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd}
+	tiers := []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode}
 	var cur mapmodel.GlyphTier
 	// a dashboard whose pages hold only the panel: the frame is judged on its own
 	pages := newNativePages()
