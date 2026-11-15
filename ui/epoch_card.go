@@ -38,6 +38,13 @@ const epochCardFile = "epoch-card.png"
 
 // epochPicture draws the front page of the epoch screen for a state.
 func epochPicture(state game.GameState) *image.RGBA {
+	frame, _, picRows := epochCardFrame(state)
+	return ScreenImage(paintAlone(frame, epochPicCols, picRows), shotCellW, shotCellH)
+}
+
+// epochCardFrame is the card's panel for a state, the text view inside it,
+// and the rows the picture takes.
+func epochCardFrame(state game.GameState) (*panelFrame, *nativeText, int) {
 	// The page says how tall it is; the frame adds its edges (3 rows) and a
 	// blank row under the text.
 	page := hallFrontPage(state, epochPicCols, epochLayoutRows, mapmodel.TierUnicode, hallMotion{}, false)
@@ -51,8 +58,7 @@ func epochPicture(state game.GameState) *image.RGBA {
 	// The coins stand still, struck for the picture's own cell size.
 	pics := &hallCoins{list: page.coins, cache: &coinCache{px: image.Pt(shotCellW, shotCellH)}}
 	tv.over = func(p *kit.Painter, text image.Rectangle, top int) { pics.paint(p, text, top, atRest) }
-	frame := newPanelFrame(vibe.E("ui.epoch_card.epochPicture.01", "Epoch"), tv)
-	return ScreenImage(paintAlone(frame, epochPicCols, picRows), shotCellW, shotCellH)
+	return newPanelFrame(vibe.E("ui.epoch_card.epochPicture.01", "Epoch"), tv), tv, picRows
 }
 
 // epochCardResult is what making the card did: the file it was saved to
