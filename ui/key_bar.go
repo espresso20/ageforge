@@ -103,6 +103,9 @@ func (g *xgrid) keyButton(x, y int, key, name string) int {
 	return end
 }
 
+// escClose is the key that closes a panel, for a foot that ends with it.
+func escClose() [2]string { return [2]string{"Esc", "close"} }
+
 // keyButtonW is the cells keyButton takes.
 func keyButtonW(key, name string) int { return len([]rune(key)) + len([]rune(name)) + 4 }
 
