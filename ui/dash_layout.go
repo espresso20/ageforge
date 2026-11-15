@@ -146,12 +146,14 @@ const miniShortestInnerH = 8
 
 // miniBoxHeight is the mini map's height, border included, in a right
 // column w wide with h rows for the Panels list and the mini map together,
-// or 0 (hidden). The Panels list always lists every panel. Each form of the
-// list is tried in turn, from the form it has by itself (the rows
-// sidebarText picks a form from) to the shortest: with a box about square
-// on screen (a cell is about 2.1 times taller than wide), else with a
-// shorter box of at least miniShortestInnerH picture rows. The first that
-// fits wins, and when none does there is no mini map.
+// or 0 (hidden). The Panels list always lists every panel. The forms of the
+// list are tried in turn, from the form it has by itself (the rows
+// sidebarText picks a form from) to the shortest, twice: first for a box
+// about square on screen (a cell is about 2.1 times taller than wide; a
+// row short of square counts), then for a shorter box of at least
+// miniShortestInnerH picture rows. So the list gives up its groups, then
+// its single column, before the map gives up its shape. When no form
+// leaves room there is no mini map.
 func miniBoxHeight(w, h int) int {
 	square := int(float64(w)/2.1 + 0.5)
 	if square < miniMinInnerH {
@@ -162,13 +164,11 @@ func miniBoxHeight(w, h int) int {
 	for own < len(forms)-1 && h-2 < forms[own] {
 		own++
 	}
-	for f := own; f < len(forms); f++ {
-		picture := h - (forms[f] + 2) - 2
-		if picture >= square {
-			return square + 2
-		}
-		if picture >= miniShortestInnerH {
-			return picture + 2
+	for _, least := range [2]int{square - 1, miniShortestInnerH} {
+		for f := own; f < len(forms); f++ {
+			if picture := h - (forms[f] + 2) - 2; picture >= least {
+				return min(picture, square) + 2
+			}
 		}
 	}
 	return 0

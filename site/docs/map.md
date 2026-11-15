@@ -195,7 +195,7 @@ The mini map is on by default. The dashboard shows a compact view of the Map und
 
 It is a box about square on screen, as wide as the Panels column. The Buildings list has the whole middle column. `minimap off` hides it; `minimap on` brings it back. It shows the whole town, and it marks the cell the Map panel's cursor is on with the same highlighted cell.
 
-The mini map needs room: every panel stays listed, and the mini map shows only when the column has room left for it. With less room the box is shorter than square, and on a window a little shorter the Panels list drops its groups (a name a row, then two columns) to make room. It shows from 80 columns by 36 rows (37 rows from 100 columns wide), and on every window of 120 columns by 36 rows or more. On smaller windows (80x24, 100x30) it is not shown. Type `map` to open the full panel at any size.
+The mini map needs room: every panel stays listed, and the mini map shows only when the column has room left for it. To keep the map square the Panels list drops its groups first (a name a row, then two columns); only when that is not enough is the box shorter than square. It shows from 80 columns by 36 rows (37 rows from 100 columns wide), and on every window of 120 columns by 36 rows or more. On smaller windows (80x24, 100x30) it is not shown. Type `map` to open the full panel at any size.
 
 ---
 

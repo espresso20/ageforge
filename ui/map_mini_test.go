@@ -121,13 +121,13 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 		}
 	}
 	// 153x41 and 120x37, the default windows of a 1080p monitor and a
-	// 14-inch laptop: the map shows with 8 picture rows or more, and every
-	// panel is listed.
+	// 14-inch laptop: the map keeps its square (the list goes to two
+	// columns for it), and every panel is listed.
 	for _, sz := range [][2]int{{153, 41}, {120, 37}} {
 		txt := draw(sz[0], sz[1])
-		_, _, _, mh := d.miniMap.GetRect()
-		if !d.body.miniShown || mh-2 < 8 || strings.Contains(txt, "PROGRESS") {
-			t.Errorf("%v: shown = %v with %d picture rows; want a map of 8 or more, the list a name a row\n%s", sz, d.body.miniShown, mh-2, txt)
+		_, _, mw, mh := d.miniMap.GetRect()
+		if want := float64(mw) / 2.1; !d.body.miniShown || float64(mh-2) < want-1.5 || strings.Contains(txt, "PROGRESS") {
+			t.Errorf("%v: shown = %v with %d picture rows for %d columns; want a square map\n%s", sz, d.body.miniShown, mh-2, mw, txt)
 		}
 		for _, name := range sidebarPanels {
 			if !strings.Contains(txt, name) {
