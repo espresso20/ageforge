@@ -177,8 +177,8 @@ Two settings shape the Map: the glyph set and the mini map. They are saved per a
 | `map glyphs ascii` | Plain ASCII, for fonts with poor symbol coverage |
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |
 | `minimap` | Show whether the dashboard's mini map is on |
-| `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
-| `minimap on` | Show the mini map above the Buildings list (the default) |
+| `minimap off` | Hide the mini map |
+| `minimap on` | Show the mini map under the Panels list (the default) |
 | `map flows` | The flows overlay: where your economy is stuck (see [The flows overlay](#the-flows-overlay)). `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
 All of them work while the Map is open, so you see the change at once. The `motion` setting (`motion on` and `motion off`) holds the maps, the badge case and a theme's ambient effect still when it is off.
@@ -191,11 +191,11 @@ All of them work while the Map is open, so you see the change at once. The `moti
 
 ## The mini map
 
-The mini map is on by default. The dashboard shows a compact view of the Map above the Buildings list, in a border titled "Map". The setting is remembered with your account. It follows your `map glyphs` setting, and its last row is the since-last-visit news.
+The mini map is on by default. The dashboard shows a compact view of the Map under the Panels list, in a border titled "Map". The setting is remembered with your account. It follows your `map glyphs` setting, and its last row is the since-last-visit news.
 
-It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back. It shows the whole town, and it marks the cell the Map panel's cursor is on with the same highlighted cell.
+It is a box about square on screen, as wide as the Panels column. The Buildings list has the whole middle column. `minimap off` hides it; `minimap on` brings it back. It shows the whole town, and it marks the cell the Map panel's cursor is on with the same highlighted cell.
 
-The mini map needs room: it appears on windows of 105 columns by 34 rows and larger. On smaller windows (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
+The mini map needs room: the Panels list stays whole first, and the mini map shows only when the column has room left for it. That takes a tall window: from 80 columns by 48 rows, or 52 rows once the window is 120 columns wide or more. On smaller windows (80x24, 100x30, 160x42) it is not shown. Type `map` to open the full panel at any size.
 
 ---
 

@@ -13,47 +13,16 @@ import (
 )
 
 // map_mini.go is the dashboard's mini map: the map's compact view in a
-// border, docked above the Buildings list. It is short (at most
-// miniMaxInnerH rows inside the border, and never more than a quarter of
-// the column) so the list keeps most of the room, and the minimap setting
-// turns it off. It keeps its own view of the map (separate from the Map
+// border, a box about square on screen under the Panels list in the right
+// column (dash_layout.go), shown only when the column has room for it after
+// the list, and the minimap setting turns it off. It keeps its own view of the map (separate from the Map
 // panel's camera) and draws from the model the last refresh built, so a
 // redraw between refreshes (typing at the prompt) costs only the compact
 // draw. The compact view ends with the since-last-visit news.
 
-const (
-	miniMaxInnerH = 9
-	miniMinInnerH = 6
-	// miniMinW is the narrowest column the mini map shows in, border
-	// included.
-	miniMinW = 42
-	// dockMinBody is the rows the Buildings list keeps under the mini map;
-	// with less room the mini map hides and the list gets it all.
-	dockMinBody = 18
-
-	// miniMapMinCols and miniMapMinRows are the smallest terminal the
-	// dashboard shows the mini map on: 105 by 34. Beside the right column
-	// the screen is split in two, the odd column going to the right half,
-	// where the mini map is, and that half must be miniMinW wide. Under the
-	// rows the dashboard keeps for itself (the Ledger is its standard size
-	// by then, ledgerExtraRows taller than the smallest) the dock needs the
-	// shortest map, its border and dockMinBody rows of list. The wiki and
-	// the minimap command quote them (TestMiniMapAppearsWhereTheDocsSay).
-	miniMapMinCols = 2*miniMinW - 1 + sidebarW
-	miniMapMinRows = dashHeaderRows + ledgerExtraRows + promptRows + miniMinInnerH + 2 + dockMinBody
-)
-
-// miniHeight is the mini map's height, border included, in a w x h dock:
-// a quarter of the column at most, capped at miniMaxInnerH rows inside,
-// and 0 (hidden) when that leaves it under miniMinInnerH rows or the
-// Buildings list under dockMinBody.
-func miniHeight(w, h int) int {
-	inner := min(miniMaxInnerH, (h-2)/4)
-	if w < miniMinW || inner < miniMinInnerH || h-inner-2 < dockMinBody {
-		return 0
-	}
-	return inner + 2
-}
+// miniMinInnerH is the fewest rows of picture inside the border the mini
+// map is worth showing with.
+const miniMinInnerH = 6
 
 // miniMap is the mini map primitive (border included).
 type miniMap struct {
@@ -146,50 +115,3 @@ func (m *miniMap) Paint(p *kit.Painter) {
 	f := mapFrame(m.model, m.set, m.now().Sub(m.start))
 	m.view.DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)
 }
-
-// mapDock stacks the mini map above a body (the Buildings list) and lays
-// them out itself on every draw: the mini map shows only when it is on and
-// the dock has room for it and dockMinBody rows of body, so on a small
-// terminal (80x24) it hides and the body gets the whole column, with no
-// flicker between refreshes.
-type mapDock struct {
-	*nativeGroup
-	mini *miniMap
-	body Primitive
-	// off is the minimap setting turned off: the body gets the column. The
-	// dashboard sets this from the account's setting on every refresh.
-	off bool
-	// shown reports whether the last draw showed the mini map; drawn that
-	// there was a draw at all (before it, the dock has no real size).
-	shown, drawn bool
-}
-
-func newMapDock(mini *miniMap, body Primitive) *mapDock {
-	d := &mapDock{mini: mini, body: body}
-	d.nativeGroup = newNativeGroup(d.arrange)
-	return d
-}
-
-// wantsModel reports whether the mini map needs a model: it is on and
-// showing, or nothing has been laid out yet.
-func (d *mapDock) wantsModel() bool {
-	_, _, w, h := d.GetRect()
-	return !d.off && (!d.drawn || miniHeight(w, h) > 0)
-}
-
-func (d *mapDock) arrange(x, y, w, h int) {
-	mh := miniHeight(w, h)
-	if d.off || d.mini.model == nil {
-		mh = 0 // off, or no refresh has built the map yet
-	}
-	d.shown, d.drawn = mh > 0, true
-	if d.shown {
-		d.put(d.mini, x, y, w, mh)
-	}
-	d.put(d.body, x, y+mh, w, h-mh)
-}
-
-// Focus and input go to the body; the mini map takes no keys.
-func (d *mapDock) Focus(delegate func(p Primitive)) { delegate(d.body) }
-
-func (d *mapDock) HasFocus() bool { return d.body.HasFocus() }

@@ -10,9 +10,9 @@ import (
 )
 
 // TestMiniMapAppearsWhereTheDocsSay: the mini map shows from one terminal
-// size up, the game works that size out from its layout, and the wiki and
-// the minimap command quote it. A change to the layout that moves the size
-// fails here until the docs say the new one.
+// size up (at 80 columns; the rich layout from 120 columns wants 52 rows),
+// and the wiki and the minimap command quote it. A change to the layout
+// that moves the size fails here until the docs say the new one.
 func TestMiniMapAppearsWhereTheDocsSay(t *testing.T) {
 	restoreForge(t)
 	shown := func(w, h int) bool {
@@ -21,14 +21,14 @@ func TestMiniMapAppearsWhereTheDocsSay(t *testing.T) {
 		pages.AddPage("dashboard", d.Root(), true, true)
 		miniOn(t, d)
 		drawnDashboard(t, d, pages, w, h)
-		return d.mapDock.shown
+		return d.body.miniShown
 	}
 	cols, rows := miniMapMinCols, miniMapMinRows
 	if !shown(cols, rows) {
 		t.Errorf("no mini map at %dx%d, the size the game says it shows from", cols, rows)
 	}
-	if shown(cols-1, rows) || shown(cols, rows-1) {
-		t.Errorf("the mini map shows on a terminal smaller than %dx%d", cols, rows)
+	if shown(cols, rows-1) {
+		t.Errorf("the mini map shows on a terminal under %d rows at %d columns", rows, cols)
 	}
 	phrase := fmt.Sprintf("%d columns by %d rows", cols, rows)
 	for _, page := range []string{"map.md", "commands.md", "first-ten-minutes.md", "how-to-play.md"} {

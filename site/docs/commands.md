@@ -351,7 +351,7 @@ The Map draws your empire from your real game state: your buildings and the work
 | `worldmap` | Same as `map`, opened on the whole town (the region zoom). |
 | `map flows [on\|off]` | The Map's flows overlay (stocks running dry, understaffed buildings, idle workers): on, off, or bare to switch it. It lasts for the session. |
 | `map glyphs [ascii\|unicode]` | Bare, show the current glyph set. With a name, switch to it (default unicode). Saved per account. |
-| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list. `off` hides it so the list gets the whole column (default on). Saved per account. |
+| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it, a square box under the Panels list. `off` hides it (default on). Saved per account. |
 
 ```
 map
@@ -361,7 +361,7 @@ minimap off
 worldmap
 ```
 
-`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list. On smaller windows it hides, and `minimap off` hides it anywhere.
+`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On tall windows (from 80 columns by 48 rows, or 120 columns by 52 rows from 120 columns wide) the dashboard shows a square mini map under the Panels list. On smaller windows it is not shown, and `minimap off` hides it anywhere.
 
 The prompt keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing:
 

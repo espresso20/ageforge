@@ -59,6 +59,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- The dashboard's mini map is a square box under the Panels list. It is no longer a strip above the Buildings list, which now has the whole middle column. In a window too small for it, the mini map is not shown.
 - The Windows download no longer opens an empty console window beside the game. `ageforge.exe --version` prints nothing there as a result.
 - Inside: the game no longer uses a terminal library at all. Its screen, keys, mouse and event loop are its own code, and two libraries (tview and tcell) are out of the build. What it shows and how it plays are the same.
 - Inside: colours and text styles are the game's own types everywhere, themes included. The terminal library's are left only where the screen is still copied to it.

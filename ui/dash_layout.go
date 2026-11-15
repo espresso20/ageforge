@@ -33,6 +33,16 @@ const (
 	richDetailMinRows    = 42
 )
 
+// miniMapMinCols and miniMapMinRows are the smallest terminal the mini map
+// shows on: it needs the Panels list whole and a square under it, and the
+// classic layout's People box under that. (The rich layout, from
+// richMinCols by richMinRows, needs 52 rows.) The wiki and the minimap
+// command quote them (TestMiniMapAppearsWhereTheDocsSay).
+const (
+	miniMapMinCols = 80
+	miniMapMinRows = 48
+)
+
 // dashRich says whether a w by h terminal gets the rich layout.
 func dashRich(w, h int) bool { return w >= richMinCols && h >= richMinRows }
 
@@ -51,6 +61,14 @@ func richPeopleHeight(termH int) int {
 type dashBody struct {
 	*nativeGroup
 	econ, panels, people Primitive
+	// mini is the mini map, a square box under the Panels list; miniOff is
+	// the minimap setting turned off. miniShown reports whether the last
+	// layout gave it room (miniFits: the size has room, whatever the model
+	// and the setting say), miniDrawn that there was a layout at all (before
+	// it, there is no real size).
+	mini                           Primitive
+	miniOff                        bool
+	miniShown, miniFits, miniDrawn bool
 	// screen is the terminal's size.
 	screen func() (w, h int)
 	// classicPeople is the People box's height, border included, in the
@@ -62,10 +80,12 @@ type dashBody struct {
 	// the same size.
 	switched func()
 	rich     bool
+	// modelReady reports whether the mini map has a model to draw.
+	modelReady func() bool
 }
 
-func newDashBody(econ, panels, people Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
-	b := &dashBody{econ: econ, panels: panels, people: people, screen: screen, classicPeople: classicPeople}
+func newDashBody(econ, panels, people, mini Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
+	b := &dashBody{econ: econ, panels: panels, people: people, mini: mini, screen: screen, classicPeople: classicPeople}
 	b.nativeGroup = newNativeGroup(b.arrange)
 	return b
 }
@@ -88,12 +108,58 @@ func (b *dashBody) arrange(x, y, w, h int) {
 	}
 	side = min(side, w)
 	b.put(b.econ, x, y, w-side, h)
-	if rich {
-		// The People box is in the economy tab's Under construction row.
-		b.put(b.panels, x+w-side, y, side, h)
-		return
+	// The right column: the Panels list, then the mini map, then (in the
+	// classic layout) the People box. In the rich layout the People box is
+	// in the economy tab's Under construction row.
+	ph := 0
+	if !rich {
+		ph = min(b.classicPeople(), h)
 	}
-	ph := min(b.classicPeople(), h)
-	b.put(b.panels, x+w-side, y, side, h-ph)
-	b.put(b.people, x+w-side, y+h-ph, side, ph)
+	region := h - ph
+	mh := miniBoxHeight(side, region)
+	b.miniFits = mh > 0
+	if b.miniOff || b.mini == nil || !b.miniReady() {
+		mh = 0
+	}
+	b.miniShown, b.miniDrawn = mh > 0, true
+	b.put(b.panels, x+w-side, y, side, region-mh)
+	if mh > 0 {
+		b.put(b.mini, x+w-side, y+region-mh, side, mh)
+	}
+	if ph > 0 {
+		b.put(b.people, x+w-side, y+h-ph, side, ph)
+	}
+}
+
+// miniReady is set by the dashboard: false until a refresh has built the
+// mini map's model.
+func (b *dashBody) miniReady() bool { return b.modelReady != nil && b.modelReady() }
+
+// wantsModel reports whether the mini map needs a model: it is on and
+// room, or nothing has been laid out yet.
+func (b *dashBody) wantsModel() bool { return !b.miniOff && (!b.miniDrawn || b.miniFits) }
+
+// miniBoxHeight is the mini map's height, border included, in a right
+// column w wide with h rows for the Panels list and the mini map together:
+// about square on screen (a cell is about 2.1 times taller than wide), and
+// 0 (hidden) unless the Panels list keeps the rows of its form first and
+// the picture still gets miniMinInnerH rows.
+func miniBoxHeight(w, h int) int {
+	inner := int(float64(w)/2.1 + 0.5)
+	if inner < miniMinInnerH || h-panelsListRows(w-2, h-2)-2 < inner+2 {
+		return 0
+	}
+	return inner + 2
+}
+
+// panelsListRows is the rows the Panels list takes inside its box, w by h
+// inside, in the form sidebarText picks at that size.
+func panelsListRows(w, h int) int {
+	switch {
+	case w >= panelsRichWidth() && h >= panelsRichRows():
+		return panelsRichRows()
+	case h > len(sidebarPanels):
+		return len(sidebarPanels) + 1
+	}
+	return h
 }
