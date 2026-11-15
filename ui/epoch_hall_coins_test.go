@@ -92,13 +92,35 @@ func TestEpochPictureShowsCoins(t *testing.T) {
 	}
 }
 
-// With a window to draw pictures in, the Badges panel draws coins in the
-// plain glyph tier as it does in the others.
+// In the plain glyph tier the Badges panel draws coins as it does in the
+// others: each coin is a picture that owns its cells and is not one flat
+// colour.
 func TestBadgePanelDrawsCoinsInThePlainTier(t *testing.T) {
 	p, paint, _ := picturePanel(t)
 	p.view.tier = mapmodel.TierASCII
 	b := paint()
-	if !p.pix() || len(b.Pics) == 0 || !p.model.lay.pix {
-		t.Fatalf("the plain tier painted %d pictures (pix %v)", len(b.Pics), p.model.lay.pix)
+	if len(b.Pics) == 0 {
+		t.Fatal("the plain tier painted no pictures")
 	}
+	for i, pic := range b.Pics {
+		if c := b.At(pic.Rect.Min.X, pic.Rect.Min.Y); int(c.Pic) != i+1 {
+			t.Errorf("picture %d does not own its first cell (%d)", i, c.Pic)
+		}
+		if oneColour(pic.Img) {
+			t.Errorf("picture %d is one flat colour", i)
+		}
+	}
+}
+
+// oneColour reports whether every pixel of img is the same.
+func oneColour(img *image.RGBA) bool {
+	first := img.RGBAAt(img.Rect.Min.X, img.Rect.Min.Y)
+	for y := img.Rect.Min.Y; y < img.Rect.Max.Y; y++ {
+		for x := img.Rect.Min.X; x < img.Rect.Max.X; x++ {
+			if img.RGBAAt(x, y) != first {
+				return false
+			}
+		}
+	}
+	return true
 }

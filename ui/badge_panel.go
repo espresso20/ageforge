@@ -185,7 +185,7 @@ func (p *badgePanel) paintCoins(p2 *kit.Painter, org image.Point) bool {
 		p2.Picture(c.r.Add(org), p.coins.image(l, c.r.Size(), coinPoseAt(l, at)))
 		moving = moving || l.earned()
 	}
-	at, it := p.model.medalAt, p.model.medalFor
+	at, it := p.model.medalRoom, p.model.medalFor
 	if at.Empty() || it == nil {
 		return moving && n != atRest
 	}

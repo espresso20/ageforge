@@ -133,8 +133,8 @@ func TestBadgesCommandOpensTheCase(t *testing.T) {
 	if res := HandleCommand("badges", bare); res.OverlayName != "badges" {
 		t.Errorf("badges with no account: %+v", res)
 	}
-	m := buildCase(nil, game.BadgeSummary{}, false, caseTabAll, caseLayoutFor(80, 21, caseTabAll, false))
-	if text := renderCase(m, caseView{}, atRest).String(); !strings.Contains(text, "No account is loaded") {
+	m := buildCase(nil, game.BadgeSummary{}, false, caseTabAll, caseLayoutFor(80, 21, caseTabAll))
+	if text := renderCase(m, caseView{}).String(); !strings.Contains(text, "No account is loaded") {
 		t.Errorf("the case with no account:\n%s", text)
 	}
 }
@@ -164,23 +164,20 @@ func TestBadgeCaseOnTheLiveScreen(t *testing.T) {
 		}
 		text := strings.Join(lines, "\n")
 		wantAll(t, fmt.Sprintf("%s: the detail", where), text, "Serial Reincarnator", "Gold · Rare · 25 pts", "Prestige 10 times.", "Rung 3 of 4 · Prestiges")
-		// The gold ring, whole, somewhere on the screen.
-		g := newTGrid(13, 7)
-		drawMedal(g, 0, 0, medal{tier: config.BadgeGold, emblem: '★'}, atRest, false)
-		want := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
+		// The gold medal is a picture in the detail's room, owning its cells.
+		bp := d.badgePanel
+		buf := kit.NewBuffer(w, h)
+		bp.Layout(bp.Bounds())
+		bp.Paint(kit.NewPainter(buf))
+		room := bp.model.medalRoom.Add(bp.Bounds().Min)
 		found := false
-		for y := 0; y+7 <= h && !found; y++ {
-			for x := 0; x+13 <= w && !found; x++ {
-				ok := true
-				for dy := 0; dy < 7 && ok; dy++ {
-					row := []rune(lines[y+dy] + strings.Repeat(" ", w))
-					ok = string(row[x:x+13]) == want[dy]
-				}
-				found = ok
+		for i, pic := range buf.Pics {
+			if pic.Rect == room && int(buf.At(room.Min.X, room.Min.Y).Pic) == i+1 && !oneColour(pic.Img) {
+				found = true
 			}
 		}
-		if !found {
-			t.Errorf("%s: the gold badge's art is not whole on screen:\n%s", where, text)
+		if !found || bp.model.medalFor == nil || bp.model.medalFor.id != "ladder.prestiges.3" {
+			t.Errorf("%s: the gold badge's medal is not painted in %v (%d pictures, for %v)", where, room, len(buf.Pics), bp.model.medalFor)
 		}
 		for i, c := range cells {
 			if len(c.Runes) > 0 && c.Runes[0] != ' ' && i/w < h-promptRows && uniseg.StringWidth(string(c.Runes[0])) != 1 {

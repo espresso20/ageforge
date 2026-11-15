@@ -186,7 +186,7 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 	if got := titles(caseTabs(views, false)); got != "All Ages Specials Next" {
 		t.Errorf("tabs for a new account: %q", got)
 	}
-	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode}, atRest)
+	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode})
 	text := g.String()
 	for _, leak := range []string{"Civilizations", "Catastrophes"} {
 		if strings.Contains(text, leak) {
@@ -220,7 +220,7 @@ func TestPayrollLadderNamesItsNextRung(t *testing.T) {
 			Level: config.BadgeSilver, Tier: "silver", Emblem: "lineage.food", Ladder: "Food", Rung: n, Rungs: 2}
 	}
 	views := []game.BadgeView{rung(1, "Food Payroll"), rung(2, "Food Payroll II")}
-	_, _, g := drawCase(views, game.BadgeSummary{Shown: 2, Title: "Settler"}, 120, 40, caseView{tab: "domain", tier: mapmodel.TierUnicode}, atRest)
+	_, _, g := drawCase(views, game.BadgeSummary{Shown: 2, Title: "Settler"}, 120, 40, caseView{tab: "domain", tier: mapmodel.TierUnicode})
 	text := g.String()
 	if !strings.Contains(text, "next: Food Payroll") {
 		t.Errorf("the payroll ladder does not name its next rung:\n%s", text)
@@ -269,7 +269,7 @@ func TestTitleCommand(t *testing.T) {
 	if wornTitle(sum) != "Survivor" {
 		t.Errorf("the summary wears %q", wornTitle(sum))
 	}
-	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode}, atRest)
+	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode})
 	if !strings.Contains(strings.Split(g.String(), "\n")[0], "Survivor") {
 		t.Errorf("the badge case's title bar does not wear it: %q", strings.Split(g.String(), "\n")[0])
 	}

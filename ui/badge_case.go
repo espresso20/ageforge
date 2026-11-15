@@ -37,12 +37,10 @@ const (
 
 // The case's geometry.
 const (
-	caseTop    = 3         // the body's first row: under the title bar, the tabs and the count line
-	caseFoot   = 2         // the status line and the key bar
-	casePitchX = miniW + 1 // a mini and the gap after it
-	casePitchY = miniH + 1
-	caseMinW   = 30
-	caseMinH   = 10
+	caseTop  = 3 // the body's first row: under the title bar, the tabs and the count line
+	caseFoot = 2 // the status line and the key bar
+	caseMinW = 30
+	caseMinH = 10
 	// caseSideW is the least width that puts the selected badge beside the
 	// grid; under it the badge goes below. caseListW is the least width
 	// that draws a grid at all; under it the badges are a list of names.
@@ -179,10 +177,10 @@ type caseModel struct {
 	lay     caseLayout
 	// rarity is the earned badges by rarity, common first.
 	cardAt image.Rectangle // where the detail was drawn last, for the mouse
-	// medalAt is the room left in the pane for the selected badge's medal
+	// medalRoom is the room left in the pane for the selected badge's medal
 	// as a picture, and medalOf the badge it is for; empty when there is none.
-	medalAt  image.Rectangle
-	medalFor *caseItem
+	medalRoom image.Rectangle
+	medalFor  *caseItem
 	// chrome holds the panel's buttons, drawn over the case: the close
 	// button at the right of the title bar and the keys of the key bar.
 	chrome *xgrid
@@ -710,7 +708,7 @@ type caseCoin struct {
 func renderCase(m *caseModel, v caseView) *tGrid {
 	w, h := m.lay.w, m.lay.h
 	out := newTGrid(w, h)
-	m.cardAt, m.medalAt, m.medalFor, m.coins = image.Rectangle{}, image.Rectangle{}, nil, m.coins[:0]
+	m.cardAt, m.medalRoom, m.medalFor, m.coins = image.Rectangle{}, image.Rectangle{}, nil, m.coins[:0]
 	if w < caseMinW || h < caseMinH {
 		out.text(0, 0, clipRunes(vibe.Line("ui.badge_case.renderCase.01", "Badges: make the window larger."), w), tsText, -1)
 		return out
@@ -795,7 +793,7 @@ func renderCase(m *caseModel, v caseView) *tGrid {
 				out.put(x, y, ' ', tsText, -1)
 			}
 		}
-		m.coins, m.medalAt, m.medalFor = m.coins[:0], image.Rectangle{}, nil
+		m.coins, m.medalRoom, m.medalFor = m.coins[:0], image.Rectangle{}, nil
 		m.drawCard(out, sel, v)
 	}
 	return out
@@ -1138,7 +1136,7 @@ func (m *caseModel) drawPane(out *tGrid, it *caseItem, v caseView) {
 	y := lay.py
 	bar := min(14, lay.pw/3)
 	if ah+3 <= lay.ph && aw <= lay.pw {
-		m.medalAt, m.medalFor = image.Rect(lay.px+(lay.pw-aw)/2, y, lay.px+(lay.pw-aw)/2+aw, y+ah), it
+		m.medalRoom, m.medalFor = image.Rect(lay.px+(lay.pw-aw)/2, y, lay.px+(lay.pw-aw)/2+aw, y+ah), it
 		y += ah
 		if len(detailLines(it, lay.pw, 1<<20, bar)) < lay.ph-ah {
 			y++ // a row of air under the art when there is one to spare
@@ -1267,7 +1265,7 @@ func (m *caseModel) drawCard(out *tGrid, it *caseItem, v caseView) {
 	out.card(x0, y0, cw, ch, it.v.Name, txtEscCloses.String())
 	if art {
 		ax, ay := x0+3, y0+2+(ch-4-ah)/2
-		m.medalAt, m.medalFor = image.Rect(ax, ay, ax+aw, ay+ah), it
+		m.medalRoom, m.medalFor = image.Rect(ax, ay, ax+aw, ay+ah), it
 	}
 	for i, l := range lines {
 		if 2+i >= ch-1 {
