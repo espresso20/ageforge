@@ -203,7 +203,9 @@ func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		g.hit(hitDeckCard, i, labelX-2, dy, labelW+2, per)
 	}
 
-	drawRoadBooks(g, pg, cards, routes, sel, booksX, y0, booksW, avail, &lay)
+	if !drawRoadBooks(g, pg, cards, routes, sel, booksX, y0, booksW, avail, &lay) {
+		return renderDeck(pg, sel, scroll, w, h, said...) // the box cannot hold all it has to say
+	}
 	g.segsFit(2, h-3, w-4, said...)
 	expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, deckKeys(pg, sel, false), pg.Hint)
 	return g, lay
@@ -245,15 +247,15 @@ func drawRoadTown(g *xgrid, ty int, name string) {
 
 // drawRoadBooks draws the box at the right of the map: what the running
 // routes take out and bring in, the page's notes, and the cards that are
-// not routes, each with its button.
-func drawRoadBooks(g *xgrid, pg *deckPage, cards []*deckCard, routes, sel, x, y, w, h int, lay *deckLayout) {
+// not routes, each with its button. It reports whether all of it fitted.
+func drawRoadBooks(g *xgrid, pg *deckPage, cards []*deckCard, routes, sel, x, y, w, h int, lay *deckLayout) bool {
 	g.box(x, y, w, h, xFaint, "", xTitle, false)
 	inner, row, end := w-4, y+1, y+h-1
 	put := func(k xk, s string) {
 		if row < end {
 			g.putFit(x+2, row, inner, s, k)
-			row++
 		}
+		row++
 	}
 	// What goes out and what comes in, a line a running route.
 	for side := 0; side < 2; side++ {
@@ -270,8 +272,8 @@ func drawRoadBooks(g *xgrid, pg *deckPage, cards []*deckCard, routes, sel, x, y,
 				k := max(c.Lines[side].K, xText)
 				nx := g.putFit(x+3, row, inner-1, c.Lines[side].Value, k)
 				g.putFit(nx+2, row, x+2+inner-nx-2, c.Title, xDim)
-				row++
 			}
+			row++
 		}
 		if head {
 			row++
@@ -296,19 +298,25 @@ func drawRoadBooks(g *xgrid, pg *deckPage, cards []*deckCard, routes, sel, x, y,
 		for _, l := range wrapCells(c.Desc, inner) {
 			put(xDim, l)
 		}
-		if c.Command != "" && row < end {
-			bx := x + 2
-			if i == sel {
-				bx = g.keyButton(x+2, row, "Enter", c.Action)
-			} else {
-				bx = g.put(x+2, row, " "+c.Action+" ", xKeyName)
+		if c.Command != "" {
+			if row < end {
+				bx := x + 2
+				if i == sel {
+					bx = g.keyButton(x+2, row, "Enter", c.Action)
+				} else {
+					bx = g.put(x+2, row, " "+c.Action+" ", xKeyName)
+				}
+				g.hit(hitDeckAct, i, x+2, row, bx-x-2, 1)
+				g.putFit(bx+1, row, x+2+inner-bx-1, c.Command, xDim)
 			}
-			g.hit(hitDeckAct, i, x+2, row, bx-x-2, 1)
-			g.putFit(bx+1, row, x+2+inner-bx-1, c.Command, xDim)
 			row++
+		}
+		if row > end {
+			return false
 		}
 		lay.cards[i] = image.Rect(x+1, top, x+w-1, row)
 		g.hit(hitDeckCard, i, x+1, top, w-2, row-top)
 		row++
 	}
+	return row <= end+1
 }

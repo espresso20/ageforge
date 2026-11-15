@@ -8,9 +8,9 @@ Every milestone and every chain can be completed. See [Can every milestone be do
 
 > When a milestone or chain completes, the log shows the achievement and its reward, then a short flavor quip on a dim line below ("You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter."). The quip is only there for character and changes nothing.
 
-Type `milestones` (or `ms`) to open the Milestones panel. It opens full screen as a deck of cards: a section for each chain and a card for each milestone you can see. The arrow keys move from card to card, PgUp and PgDn scroll, and `Esc` closes it. The cards have no commands.
+Type `milestones` (or `ms`) to open the Milestones panel. It opens full screen as roads: a road for each category, with its count, and a stone for each milestone you can see. Along a road the stones you have reached come first, then the one you are closest to, then the ones ahead; the road between two stones is drawn as far as you have walked it. `←` and `→` move along a road, `↑` and `↓` go from road to road, and the stone you pick is shown in full under the roads: what it asks, how far along you are, what it waits for and what it pays. PgUp and PgDn scroll when there are more roads than fit, and `Esc` closes the panel. A window too small for the roads shows the milestones as a list of cards.
 
-<figure class="screen" data-screen="milestones"><figcaption>The Milestones panel: a section for each chain with its progress, and a card for every milestone with what it asks for and what it pays.</figcaption></figure>
+<figure class="screen" data-screen="milestones"><figcaption>The Milestones panel: a road for each category, a stone for each milestone, and the picked stone in full below.</figcaption></figure>
 
 ---
 

@@ -202,7 +202,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	// The text panels' frames fold to ASCII with the map glyphs.
 	d.overlayMgr.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
-	d.registerDeck("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesPage)
+	d.registerDeck("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesPage).draw = renderMileRoads
 	// The Research panel: the tech tree as a map. Like the Map it leaves
 	// the keyboard with the command bar.
 	d.researchPanel.engine = d.engine
@@ -216,7 +216,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
-	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage)
+	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
 	d.expPanel.engine = d.engine
 	d.expPanel.settings = d.mapSettings

@@ -81,7 +81,7 @@ The returns log and the mission's message say how many fell, for example "36 of 
 army
 ```
 
-This opens the **Army** panel, full screen like every panel. It is a deck of cards: four cards under Overview, a card for the running campaign, and a card for each campaign on the board. The arrow keys move from card to card, `Enter` runs the picked card's command, and a click picks a card, with a click on its button running the command. It shows:
+This opens the **Army** panel, full screen like every panel. At the top one bar sets your defense against the threat: the green part is yours, the red part the raiders'. Under it the soldiers are mustered post by post, a mark for so many soldiers (the panel says how many), red for a soldier at the post and grey for a place not filled. Then come the orders: the running campaign with its march, and each campaign on the board. `↑` and `↓` move from order to order, `Enter` runs the picked order's command, and a click picks an order, with a click on its button running the command. A window too small for this shows the same things as a list of cards. It shows:
 
 - Soldiers: the soldiers at home over all your posts.
 - Posts: the soldiers at their posts building by building. Before your first military building it reads "none yet. A military building comes with its soldiers."

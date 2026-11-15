@@ -372,29 +372,54 @@ func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) 
 	g.putFit(end+1, y, x+cw-3-end, c.Command, ck)
 }
 
-// deckStep is the card a key moves the pick to from sel: Left and Right by
-// number, Up and Down to the nearest card in the row above or below.
+// step is the card a key moves the pick to from sel: Left and Right to the
+// next card on the same row, and past the row's end to the next by number;
+// Up and Down to the nearest card in the row above or below. A card with no
+// place (one a scene draws as something that is not picked) is passed over.
 func (l *deckLayout) step(sel, dx, dy int) int {
 	if len(l.cards) == 0 {
 		return 0
 	}
 	sel = clamp(sel, 0, len(l.cards)-1)
-	if dx != 0 {
-		return clamp(sel+dx, 0, len(l.cards)-1)
-	}
 	here := l.cards[sel]
 	best, bestRow, bestOff := sel, 0, 0
 	for i, r := range l.cards {
-		row := (r.Min.Y - here.Min.Y) * dy
-		if row <= 0 {
+		if r.Empty() || i == sel {
 			continue
 		}
-		off := r.Min.X - here.Min.X
-		if off < 0 {
-			off = -off
+		var row, off int
+		if dx != 0 {
+			if r.Min.Y != here.Min.Y {
+				continue
+			}
+			row, off = 1, (r.Min.X-here.Min.X)*dx
+			if off <= 0 {
+				continue
+			}
+		} else {
+			row, off = (r.Min.Y-here.Min.Y)*dy, r.Min.X-here.Min.X
+			if row <= 0 {
+				continue
+			}
+			if off < 0 {
+				off = -off
+			}
 		}
 		if best == sel || row < bestRow || row == bestRow && off < bestOff {
 			best, bestRow, bestOff = i, row, off
+		}
+	}
+	if best == sel && dx != 0 {
+		// Past the end of the row: the first card of the next row, or the
+		// last card of the row before.
+		for i, r := range l.cards {
+			row := (r.Min.Y - here.Min.Y) * dx
+			if r.Empty() || row <= 0 {
+				continue
+			}
+			if off := r.Min.X * dx; best == sel || row < bestRow || row == bestRow && off < bestOff {
+				best, bestRow, bestOff = i, row, off
+			}
 		}
 	}
 	return best
