@@ -572,7 +572,7 @@ func footerButton(key, label string) string {
 	if _, ok := capKey(key); !ok {
 		return chip // a pair of keys, like ↑↓: nothing one click could mean
 	}
-	return `["key ` + key + `"]` + chip + `[""]`
+	return clickRegion(key, chip)
 }
 
 // capKey is the key a keycap names, when it names one press: Enter, Esc, Tab
@@ -596,7 +596,7 @@ func capKey(name string) (kit.Key, bool) {
 // keyboard would: the key goes to whatever has the keyboard.
 func pressesKeys(app *appLoop, t *nativeText) {
 	t.body.OnRegion = func(name string, _ int) {
-		if k, ok := capKey(strings.TrimPrefix(name, "key ")); ok {
+		if k, ok := capKey(name); ok {
 			app.Key(k)
 		}
 	}

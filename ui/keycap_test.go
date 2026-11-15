@@ -23,11 +23,11 @@ func TestWhatAKeycapStandsFor(t *testing.T) {
 			t.Errorf("the keycap %q should stand for no single press", name)
 		}
 	}
-	if strings.Contains(footerButton("↑↓", "Move"), `["`) || !strings.HasPrefix(footerButton("Esc", "Back"), `["key Esc"]`) {
+	if strings.Contains(footerButton("↑↓", "Move"), `["`) || !strings.HasPrefix(footerButton("Esc", "Back"), `["Esc"]`) {
 		t.Errorf("a button is a click region when its key is one press and only then: %q, %q", footerButton("↑↓", "Move"), footerButton("Esc", "Back"))
 	}
 	if got, want := visibleLen(footerButton("Esc", "Back")), visibleLen(footerButton("↑↓", "Back")); got != want+1 {
-		t.Errorf("the region takes room on the bar: %d cells for Esc Back, %d for ↑↓ Back", got, want)
+		t.Errorf("a region must take no room on the bar: Esc Back is %d cells and ↑↓ Back %d, want one apart (the key's own letters)", got, want)
 	}
 }
 
