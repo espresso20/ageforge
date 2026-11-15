@@ -359,8 +359,6 @@ func registry() []*Command {
 			Help: []Usage{{"motion [on|off]", vibe.Line("ui.help.commands.motion", "Show or set motion: whether the maps, the badge case and theme effects move (default on)")}}},
 		{Name: "vibemode", Run: cmdVibemode, Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"vibemode [on|off]", vibe.Line("ui.help.commands.vibemode", "Show or set VibeMode: the game's words in a second, GenZ script (default off)")}}},
-		{Name: "icons", Run: cmdIcons, Section: secGame,
-			Help: []Usage{{"icons", vibe.Line("ui.help.commands.icons", "Check whether your font shows Nerd Font icons, and install one if it doesn't")}}},
 		{Name: "save", Run: cmdSave, Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{{"save [name]", vibe.Line("ui.help.commands.save", "Save (no name: overwrite or branch; a name: branch a new save)")}},
 			Subs: []*Command{sub("list", "save list", vibe.Line("ui.help.commands.save.list", "Same as saves"))}},

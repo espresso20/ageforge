@@ -49,8 +49,6 @@ type CommandResult struct {
 	// tab, or on a badge with its detail open. The zero value leaves the
 	// case as it was.
 	Badges badgeRequest
-	// Icons asks the dashboard to start the guided icons check.
-	Icons bool
 	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
 	// the account; with no account loaded the dashboard keeps it for the
@@ -107,14 +105,6 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 // runPanel is the Run of a command that only opens the panel of that name.
 func runPanel(name string) func(args []string, engine *game.GameEngine) CommandResult {
 	return func([]string, *game.GameEngine) CommandResult { return panelReply(name) }
-}
-
-// cmdIcons is `icons`: start the guided icons check.
-func cmdIcons(args []string, _ *game.GameEngine) CommandResult {
-	if len(args) > 0 {
-		return errorReply(usageFor("icons"))
-	}
-	return CommandResult{Icons: true}
 }
 
 // unknownCommandText is the refusal for a first word that is no command:

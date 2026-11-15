@@ -16,27 +16,20 @@ func TestApplyExport_PrefsAndStatsMerge(t *testing.T) {
 	}
 	exp := &progressExport{
 		BadgeStore: &badgeFile{},
-		Prefs:      AccountPrefs{ActiveTheme: "frost", MapGlyphs: "ascii", Minimap: "on", MapIconsHint: true},
+		Prefs:      AccountPrefs{ActiveTheme: "frost", MapGlyphs: "ascii", Minimap: "on"},
 		Stats: AccountStats{TotalPrestiges: 4, CivilizationsStarted: 7, SavesCompleted: 9,
 			PrestigesByAge: map[string]int{"stone_age": 1, "bronze_age": 2}},
 	}
 
 	a := local()
 	a.applyExportLocked(exp, true)
-	want := AccountPrefs{ActiveTheme: "ember", MapGlyphs: "ascii", Minimap: "on", MapIconsHint: true}
+	want := AccountPrefs{ActiveTheme: "ember", MapGlyphs: "ascii", Minimap: "on"}
 	if a.Prefs != want {
 		t.Errorf("merged prefs = %+v, want %+v", a.Prefs, want)
 	}
 	if a.Stats.TotalPrestiges != 5 || a.Stats.CivilizationsStarted != 7 || a.Stats.SavesCompleted != 9 ||
 		a.Stats.PrestigesByAge["stone_age"] != 3 || a.Stats.PrestigesByAge["bronze_age"] != 2 {
 		t.Errorf("merged stats = %+v, want each the larger of the two", a.Stats)
-	}
-
-	b := local()
-	b.Prefs.MapIconsHint = true
-	b.applyExportLocked(&progressExport{BadgeStore: &badgeFile{}}, true)
-	if !b.Prefs.MapIconsHint {
-		t.Error("an import without the hint flag cleared the account's")
 	}
 
 	r := local()

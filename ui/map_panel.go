@@ -46,9 +46,6 @@ func mapFrame(m *mapmodel.Model, set mapSettings, since time.Duration) mapstyle.
 	return mapstyle.Frame{Model: m, Anim: animFrame(set.Motion, since), Clock: worldFrame(since), Tier: set.Tier}
 }
 
-// mapIconsHint is the one-time hint the first Map panel open shows.
-var mapIconsHint = vibe.E("ui.map_panel.mapIconsHint.01", "Want real icons on your map? Type icons.")
-
 // mapViews is shared by the Map panel and the mini map: one model builder
 // (the UI goroutine owns it) and the since-last-visit baseline.
 type mapViews struct {
@@ -87,13 +84,10 @@ type mapPanel struct {
 
 	world bool // the next open starts on the known world
 	flows bool // the flows overlay (map flows)
-	hint  bool // show the icons hint in the key bar while open
 	note  string
 
 	// settings reads the current settings.
 	settings func() mapSettings
-	// hintShown records that the icons hint was shown.
-	hintShown func()
 	// space is the window's own sky, when there is a window: the panel hands
 	// it the world instead of drawing space in cells.
 	space mapstyle.SpaceHost
@@ -116,8 +110,7 @@ func newMapPanel(mv *mapViews) *mapPanel {
 }
 
 // open is the overlay's build: it runs on every Show. It picks up the
-// settings, points the map at the settlement or the world, and decides
-// whether this is the open that shows the icons hint.
+// settings and points the map at the settlement or the world.
 func (p *mapPanel) open(state game.GameState) Primitive {
 	if p.settings != nil {
 		p.set = p.settings()
@@ -125,11 +118,6 @@ func (p *mapPanel) open(state game.GameState) Primitive {
 	p.note = ""
 	p.current().SetOption(mapstyle.OptWorld, p.world)
 	p.world = false
-	p.hint = !p.set.HintShown && p.set.Tier != mapmodel.TierNerd
-	if p.hint && p.hintShown != nil {
-		p.hintShown()
-		p.set.HintShown = true
-	}
 	p.update(state)
 	return overBar(p)
 }
@@ -137,9 +125,7 @@ func (p *mapPanel) open(state game.GameState) Primitive {
 // update is the overlay's refresh (every UI tick while open).
 func (p *mapPanel) update(state game.GameState) {
 	if p.settings != nil {
-		s := p.settings()
-		s.HintShown = s.HintShown || p.set.HintShown
-		p.set = s
+		p.set = p.settings()
 	}
 	p.model = p.mv.model(&state)
 	p.lookForVisitor()
@@ -234,9 +220,7 @@ func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Styl
 		base.Foreground(theme.Legible(theme.Of(theme.RoleDim), bg, 3)),
 	}
 	var lead, cmd []barPart
-	if p.hint {
-		lead = []barPart{{mapIconsHint.String(), 1}, {"  ", 0}}
-	} else if p.note != "" {
+	if p.note != "" {
 		lead = []barPart{{p.note, 1}, {"  ", 0}}
 	}
 	if p.prompt != nil && p.prompt() != "" {
@@ -349,5 +333,5 @@ func (p *mapPanel) reply(cmd string, res CommandResult) {
 	if msg == "" {
 		msg = vibe.Line("ui.map_panel.reply.01", "Ran ") + cmd + "."
 	}
-	p.hint, p.note = false, msg
+	p.note = msg
 }

@@ -86,7 +86,7 @@ func TestMapPanelLettersAreThePrompts(t *testing.T) {
 	if p.set.Tier != mapmodel.TierASCII {
 		t.Errorf("after the command the open panel is %s", p.set.Tier)
 	}
-	if glyphs, _ := eng.Account().MapPrefs(); glyphs != "ascii" {
+	if glyphs := eng.Account().MapPrefs(); glyphs != "ascii" {
 		t.Errorf("account glyphs %s", glyphs)
 	}
 	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "map glyphs ascii") {
@@ -160,24 +160,6 @@ func TestMapInspectStagesCommand(t *testing.T) {
 		if p.routeKey(newKey(k, 0, 0), cmd) {
 			t.Errorf("%v went to the map with %q in the prompt", k, cmd)
 		}
-	}
-}
-
-// TestMapIconsHintOnce: the first open shows the icons hint and records it
-// on the account; the next open does not.
-func TestMapIconsHintOnce(t *testing.T) {
-	d, eng := mapTestDashboard(t, true)
-	d.runForTest("map")
-	if txt := drawMapPanel(t, d, 120, 40); !strings.Contains(txt, mapIconsHint.String()) {
-		t.Errorf("first open: no icons hint in\n%s", txt)
-	}
-	if _, shown := eng.Account().MapPrefs(); !shown {
-		t.Error("the hint was not recorded on the account")
-	}
-	d.overlayMgr.Hide()
-	d.runForTest("map")
-	if txt := drawMapPanel(t, d, 120, 40); strings.Contains(txt, mapIconsHint.String()) {
-		t.Errorf("second open shows the hint again")
 	}
 }
 
