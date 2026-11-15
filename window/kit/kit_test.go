@@ -380,6 +380,40 @@ func TestTheRegionUnderThePointerIsMarked(t *testing.T) {
 	}
 }
 
+// A double click is two presses of the left button. A press of another
+// button on the same cell just before does not make the next left press the
+// second of a pair.
+func TestARightPressDoesNotBeginADoubleClick(t *testing.T) {
+	var chose []int
+	l := NewList("zero", "one", "two")
+	l.OnChoose = func(i int) { chose = append(chose, i) }
+	r, _ := screen(l, 8, 3)
+	now := time.Unix(100, 0)
+	r.Now = func() time.Time { return now }
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonRight, X: 2, Y: 1})
+	r.Mouse(Mouse{Kind: MouseRelease, Button: ButtonRight, X: 2, Y: 1})
+	now = now.Add(50 * time.Millisecond)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 1})
+	r.Mouse(Mouse{Kind: MouseRelease, Button: ButtonLeft, X: 2, Y: 1})
+	if len(chose) != 0 || l.Selected() != 1 {
+		t.Errorf("a right press then a left press chose %v (row %d selected), want the row selected and nothing chosen", chose, l.Selected())
+	}
+	// And a right press between the two halves of a double click breaks it.
+	now = now.Add(time.Minute)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 2})
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonRight, X: 2, Y: 2})
+	now = now.Add(50 * time.Millisecond)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 2})
+	if len(chose) != 0 {
+		t.Errorf("left, right, left on one cell chose %v, want nothing chosen", chose)
+	}
+	now = now.Add(50 * time.Millisecond)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 2})
+	if !reflect.DeepEqual(chose, []int{2}) {
+		t.Errorf("two left presses after that chose %v, want row 2", chose)
+	}
+}
+
 func lines(n int) string {
 	var s []string
 	for i := 0; i < n; i++ {
