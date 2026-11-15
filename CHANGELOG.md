@@ -136,6 +136,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 
 ### Fixed
+- On Windows, a failure to start, or to save on the way out, is shown in a message box. The Windows build has no console, so the message used to go nowhere.
 - With a dialog or a floating window open, a click or the wheel beside it no longer reaches the page behind it. A click beside the account confirmation could change the main menu's page.
 - Starting the game with no display to open a window on (every screen asleep, say) reports an error. It used to crash.
 - A popup's border is drawn on the popup's own colour again (the red of a danger dialog, the surface of the others). For a day it was drawn on the page's background.

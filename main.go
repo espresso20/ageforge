@@ -75,7 +75,7 @@ func main() {
 	status.Close()
 	leave(engine)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		tell(fmt.Sprintf("Error: %v\n", err))
 		os.Exit(1)
 	}
 }
@@ -94,7 +94,7 @@ func exitOnSignal(sigs <-chan os.Signal, engine *game.GameEngine, closeUI func()
 // nothing.
 func leave(engine *game.GameEngine) {
 	if name, err := engine.SaveOnExit(); err != nil {
-		fmt.Fprintf(os.Stderr, "The game could not be saved to '%s': %v\n", name, err)
+		tell(fmt.Sprintf("The game could not be saved to '%s': %v\n", name, err))
 	}
 	engine.Stop()
 }
