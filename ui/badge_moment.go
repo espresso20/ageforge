@@ -65,7 +65,7 @@ func (m *badgeMoment) paint(p *kit.Painter, area image.Rectangle, now time.Time,
 		m.coins = &coinCache{}
 	}
 	card := image.Rect(area.Max.X-momentW-1, area.Min.Y, area.Max.X-1, area.Min.Y+rows)
-	m.draw(p, card, v, tier, steps, motion, steps >= momentOpen, steps < momentLife-momentOpen)
+	m.draw(p, card, v, tier, steps, motion, steps >= momentOpen, steps >= momentOpen && steps < momentLife-momentOpen)
 	return motion
 }
 
