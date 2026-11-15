@@ -154,6 +154,7 @@ func NewEconomyTab() *EconomyTab {
 	})
 	t.buildingTV.SetScrollable(false)
 	t.buildingTV.wheel = t.wheelBuildings
+	t.resourceTV.wheel = t.wheelResources
 	t.buildingTV.SetBorder(true)
 
 	t.constructionTV = newFitView(func(w, h int) string {
@@ -702,6 +703,25 @@ func (t *EconomyTab) ScrollDown() {
 	}
 	t.bldFirst += max(t.bldShown, 1)
 	t.buildingTV.changed()
+}
+
+// wheelResources turns the Resources box a page for a turn of the wheel: on
+// for a turn toward the player, back for one away, stopping at the first and
+// the last page. It reports whether the page changed.
+func (t *EconomyTab) wheelResources(rows int) bool {
+	page := t.resPage
+	switch {
+	case rows > 0 && page < t.resPages-1:
+		page++
+	case rows < 0 && page > 0:
+		page--
+	}
+	if page == t.resPage {
+		return false
+	}
+	t.resPage = page
+	t.resourceTV.changed()
+	return true
 }
 
 // wheelBuildings moves the Buildings list one entry for a turn of the wheel,
