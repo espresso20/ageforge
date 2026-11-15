@@ -421,7 +421,7 @@ ui.help.commands.theme.2,Switch fits: pick a theme by key
 ui.help.commands.theme.list,Raid the closet: every theme fit and whether it is unlocked
 ui.help.panels.map,"The map: your settlement plus the known world, the whole canon in one view (aliases: citymap, worldmap)"
 ui.help.commands.map,Open the Map panel (worldmap opens it on the known world); the prompt stays locked in while it is open
-ui.help.commands.map.glyphs,Show or set the map's glyph drip (default unicode; nerd needs a Nerd Font)
+ui.help.commands.map.glyphs,Show or set the map's glyph drip (default unicode)
 ui.help.commands.map.flows,"The Map's flows overlay, on or off (bare: just flip it), it lowkey slaps"
 ui.help.commands.minimap,Show or set the smol map perched above the Buildings list (default on)
 ui.help.commands.motion,"Show or set motion: do the maps, the badge case and theme effects move, or freeze like an NPC (default on)"
@@ -922,7 +922,7 @@ ui.input.cmdMapFlows.03,map flows only takes on or off; %q is not it
 ui.input.flowsReply.01,"Flows overlay on: the Map now snitches on stocks running dry, understaffed buildings and idle workers."
 ui.input.flowsReply.02,"Flows overlay gone, the snitching stops."
 ui.input.mapSessionOnly.01," No account is loaded, so this is a situationship: it lasts for this session only."
-ui.input.cmdMapGlyphs.01,Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch up the drip (icons checks your font for nerd).
+ui.input.cmdMapGlyphs.01,Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch up the drip.
 ui.input.cmdMapGlyphs.02,"one glyph tier, not a whole playlist"
 ui.input.cmdMapGlyphs.03,"glyph tier %q is not real, sus"
 ui.input.cmdMapGlyphs.04,Map glyphs now serving %s.
