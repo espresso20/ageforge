@@ -158,7 +158,7 @@ func TestHeaderFoldsToASCII(t *testing.T) {
 		g.fold()
 		for y, line := range strings.Split(g.String(), "\n") {
 			for _, r := range line {
-				if r > 0x7e {
+				if r > 0x7e || r == '?' {
 					t.Errorf("row %d has %q after the fold: %q", y, string(r), line)
 					break
 				}
@@ -351,5 +351,17 @@ func TestHeaderNotice(t *testing.T) {
 func TestHeaderPlainTier(t *testing.T) {
 	if !headerPlain(mapSettings{Tier: mapmodel.TierASCII}) || headerPlain(mapSettings{Tier: mapmodel.TierUnicode}) {
 		t.Error("headerPlain does not follow the glyph tier")
+	}
+}
+
+// TestHeaderTitleWithoutAName: with no account the top edge holds the
+// civilization title alone, with no dot before it.
+func TestHeaderTitleWithoutAName(t *testing.T) {
+	top := renderHeader(headerView{Age: "Bronze Age", Honour: "Aspiring"}, 100, 2).Lines()[0]
+	if !strings.HasPrefix(top, "┌─ \"Aspiring\" ") {
+		t.Errorf("the top edge reads %q", top)
+	}
+	if top := renderHeader(headerView{Age: "Bronze Age"}, 100, 2).Lines()[0]; strings.Contains(top, "·") || strings.Contains(top, "  ") && !strings.Contains(top, "Esc") {
+		t.Errorf("an empty title leaves marks: %q", top)
 	}
 }

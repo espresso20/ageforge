@@ -115,13 +115,16 @@ type headerView struct {
 func renderHeader(v headerView, w, rows int) *xgrid {
 	h := rows + 2
 	g := newXGrid(w, h)
-	title := v.Name
-	if v.Worn != "" {
-		title += " · " + v.Worn
+	var names []string
+	for _, t := range []string{v.Name, v.Worn} {
+		if t != "" {
+			names = append(names, t)
+		}
 	}
 	if v.Honour != "" {
-		title += " · \"" + v.Honour + "\""
+		names = append(names, "\""+v.Honour+"\"")
 	}
+	title := strings.Join(names, " · ")
 	// The top edge, from the right: the menu button, then the notice; the
 	// name takes what is left.
 	bx := w - 2 - keyButtonW(headerEsc, headerMenu.String())

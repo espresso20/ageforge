@@ -46,7 +46,7 @@ The Wonders panel (`wonders`) opens on this age's wonder: its effects, its keyst
 - This age's wonder shows the share of its price that is banked, and says when the bank is full and the wonder is ready to build or waiting for its keystone.
 - A wonder of your next age is listed as locked, with the age but not the wonder's name. Wonders of ages beyond that are counted in one line, so the panel never names an age you have not reached.
 
-The share is weighted by what each resource is worth in the age's prices, so a resource named in huge amounts does not count for more than a dear one. The Ledger, the Advance panel and the [Map](map.md) show the same share. `↑` `↓` scroll the panel, `PgUp` `PgDn` page through it, and `Esc` closes it. The panel has letter keys of its own, so it keeps the keyboard: press `Esc` before you type a command. Once you have built a wonder, the panel's first lines say that `G` opens the gallery.
+The share is weighted by what each resource is worth in the age's prices, so a resource named in huge amounts does not count for more than a dear one. The header, the Advance panel and the [Map](map.md) show the same share. `↑` `↓` scroll the panel, `PgUp` `PgDn` page through it, and `Esc` closes it. The panel has letter keys of its own, so it keeps the keyboard: press `Esc` before you type a command. Once you have built a wonder, the panel's first lines say that `G` opens the gallery.
 
 ### The gallery
 
@@ -74,7 +74,7 @@ You need the wonder of your age to advance to the next one. Each age unlocks one
 Build the Great Monolith wonder before advancing: research Stoneworking, its keystone, bank its cost with 'wonder collect', then type 'build great_monolith'. Type 'charter' to see everything the advance needs.
 ```
 
-The Ledger at the top of the dashboard lists the wonder among what the advance is still waiting on: the keystone tech, the wonder's bank with its percent, and the wonder itself. The [Advance panel](advance.md) (`charter`) sorts the same rows into its pillars: the keystone leads Knowledge, and the bank and the wonder are the Monument's.
+The header at the top of the dashboard lists the wonder among what the advance is still waiting on: the keystone tech, the wonder's bank with its percent, and the wonder itself. The [Advance panel](advance.md) (`charter`) sorts the same rows into its pillars: the keystone leads Knowledge, and the bank and the wonder are the Monument's.
 
 ---
 

@@ -514,13 +514,13 @@ func TestLedgerRowsFitAtEveryWidth(t *testing.T) {
 						if len(r) != w {
 							t.Fatalf("width %d, %d rows: row %d is %d cells", w, rows, y, len(r))
 						}
-						if glyphs == mapmodel.TierASCII && string(r) != strings.Map(func(c rune) rune {
-							if c > 0x7e {
-								return '?'
+						for _, c := range lines[y] {
+							if glyphs == mapmodel.TierASCII && c > 0x7e {
+								t.Fatalf("width %d: the plain tier has a mark that is not ASCII: %q", w, lines[y])
 							}
-							return c
-						}, string(r)) {
-							t.Fatalf("width %d: the plain tier has a mark that is not ASCII: %q", w, lines[y])
+						}
+						if glyphs == mapmodel.TierASCII && strings.ContainsRune(lines[y], '?') {
+							t.Fatalf("width %d: a mark has no plain form: %q", w, lines[y])
 						}
 						if r[1] != ' ' || r[w-2] != ' ' {
 							t.Fatalf("width %d, %d rows, glyphs %v: row %d runs into the frame: %q", w, rows, glyphs, y, lines[y])
