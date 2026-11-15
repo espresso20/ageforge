@@ -355,6 +355,8 @@ func (d *Dashboard) build() {
 		SetWordWrap(true).
 		SetMaxLines(100)
 	d.logTV.SetBorder(true)
+	// A click on the Log opens the full record.
+	d.logTV.click = func() { d.runLine("logs") }
 	theme.Track(func() { d.logTV.SetTitleColor(theme.Of(theme.RoleDim)) })
 
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
@@ -569,6 +571,10 @@ func (d *Dashboard) build() {
 		}
 		return peopleBoxText(*d.lastState, w, d.workerDetail)
 	})
+	// A click on the People box opens the People panel, and one on Under
+	// construction the build plan.
+	d.workerMiniTV.click = func() { d.runLine("people") }
+	d.economyTab.constructionTV.click = func() { d.runLine("plan") }
 	d.workerMiniTV.SetBorder(true)
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Of(theme.RoleAccent)) })
 	d.economyTab.AddPeopleBox(d.workerMiniTV, d.richLayout, func() int {

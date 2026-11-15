@@ -72,10 +72,11 @@ func TestAClickOnABuildingWritesItsCommand(t *testing.T) {
 	}
 }
 
-// A click on the mini map opens the Map panel and a click on the Ledger the
-// Advance panel, as typing map and charter does. The pointer is the hand
-// over both.
-func TestClicksOnTheMiniMapAndTheLedger(t *testing.T) {
+// A click on a box of the dashboard opens the panel that is the box in full,
+// as typing the panel's name does: the mini map opens the Map, the Ledger
+// Advance, the People box People, the Log the full record and Under
+// construction the build plan. The pointer is the hand over each.
+func TestClicksOnTheDashboardsBoxes(t *testing.T) {
 	d, pages := playtestTown(t)
 	d.refresh()
 	opens := func(line string) string {
@@ -88,7 +89,6 @@ func TestClicksOnTheMiniMapAndTheLedger(t *testing.T) {
 		}
 		return name
 	}
-	wantMap, wantAdvance := opens("map"), opens("charter")
 	st := newStage(pages, playtestCols, playtestRows)
 	if !d.mapDock.shown {
 		t.Fatal("staging: the mini map does not show on the playtest's screen")
@@ -97,7 +97,11 @@ func TestClicksOnTheMiniMapAndTheLedger(t *testing.T) {
 		what string
 		box  Primitive
 		want string
-	}{{"the mini map", d.miniMap, wantMap}, {"the Ledger", d.ledgerTV, wantAdvance}} {
+	}{
+		{"the mini map", d.miniMap, opens("map")}, {"the Ledger", d.ledgerTV, opens("charter")},
+		{"the People box", d.workerMiniTV, opens("people")}, {"the Log", d.logTV, opens("logs")},
+		{"Under construction", d.economyTab.constructionTV, opens("plan")},
+	} {
 		st.paint()
 		x, y, w, h := c.box.GetRect()
 		at := image.Pt(x+w/2, y+h/2)
