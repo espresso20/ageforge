@@ -697,8 +697,8 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	}
 }
 
-// statusRibbon returns the status ribbon's line on the screen: the one with
-// the people and morale, which the ribbon never gives up (statusLine).
+// statusRibbon returns the header's first row on the screen: the one with
+// the people and morale, which it never gives up (statusLine).
 func statusRibbon(t *testing.T, screen string) string {
 	t.Helper()
 	for _, line := range strings.Split(screen, "\n") {
@@ -706,13 +706,13 @@ func statusRibbon(t *testing.T, screen string) string {
 			return line
 		}
 	}
-	t.Fatalf("no status ribbon on the screen:\n%s", screen)
+	t.Fatalf("no header row with the people and morale on the screen:\n%s", screen)
 	return ""
 }
 
-// catastropheBadgeShown reports whether the status ribbon carries the pending-
-// catastrophe badge. The ribbon gives up the badge's words when the line does
-// not fit (dashboard_layout_test.go pins the order), and whether it fits
+// catastropheBadgeShown reports whether the header carries the pending-
+// catastrophe badge. The header gives up the badge's words when the row does
+// not fit (dash_header_test.go pins the order), and whether it fits
 // depends on what else the run has put on the line: a harbinger the era's fate
 // roll brought, a title, a longer count. So the badge is told by its mark and
 // name, which every wording keeps.
@@ -722,7 +722,7 @@ func catastropheBadgeShown(t *testing.T, screen string) bool {
 }
 
 // TestReproCatastropheEscBadgeBlockReopen: Esc closes the modal without
-// deciding; the status bar shows the pending badge; `advance` is refused while
+// deciding; the header shows the pending badge; `advance` is refused while
 // pending; the bare `catastrophe` command reopens the modal; refresh() does
 // not re-pop it on its own in between; Endure clears everything.
 func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {

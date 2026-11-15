@@ -621,7 +621,7 @@ func drawMini(g *tGrid, x, y int, m medal, n int) {
 	}
 }
 
-// toastMark is a badge in three cells, for the one row of the toast bar:
+// toastMark is a badge in three cells, for the one row of the header's notice:
 // the emblem between two half discs. The caller colours it.
 func toastMark(emblem rune) string { return "◖" + string(emblem) + "◗" }
 

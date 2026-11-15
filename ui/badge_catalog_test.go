@@ -262,8 +262,8 @@ func TestTitleCommand(t *testing.T) {
 		t.Fatalf("title surv: %+v", res)
 	}
 	st := eng.GetState()
-	if line := untag(statusLine(st, ribbonFacts{}, 200)); !strings.Contains(line, "Map Tester Survivor · ") {
-		t.Errorf("the status bar does not wear the chosen title: %q", line)
+	if v := statusLine(st, ""); v.Name != "Map Tester" || v.Worn != "Survivor" {
+		t.Errorf("the header does not wear the chosen title: %q %q", v.Name, v.Worn)
 	}
 	views, sum := eng.Badges()
 	if wornTitle(sum) != "Survivor" {

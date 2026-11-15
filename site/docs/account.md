@@ -248,9 +248,9 @@ A badge is a permanent mark on your account for something you did in a game: rea
 
 Badges are separate from [milestones](milestones.md). A milestone belongs to one run, pays a reward inside that run and starts over with the next. A badge belongs to the account and gives nothing inside a run, so the same game plays the same way whatever the account has earned.
 
-When you earn a badge, the game shows a toast for a few seconds and writes one line to the log, such as `Badge earned: Rock Solid (bronze). Reach the Stone Age.` The toast shows the badge in small, in its tier's colors, then its name, its tier and what it was for. A badge that gives a theme adds a second log line.
+When you earn a badge, the game shows a toast for a few seconds and writes one line to the log, such as `Badge earned: Rock Solid (bronze). Reach the Stone Age.` The toast, which shows as the notice in the header's top edge, shows the badge in small, in its tier's colors, then its name, its tier and what it was for. A badge that gives a theme adds a second log line.
 
-<figure class="screen" data-screen="badge-toast"><figcaption>A badge earned: the toast sits in the bar under the status line, and the log keeps the same words.</figcaption></figure>
+<figure class="screen" data-screen="badge-toast"><figcaption>A badge earned: the notice sits in the header's top edge, and the log keeps the same words.</figcaption></figure>
 
 To see your badges, open the badge case:
 
@@ -296,7 +296,7 @@ The keys are listed under [Badges](commands.md#badges) on the commands page and 
 
 #### Titles
 
-Your badge points add up to a score, and the score holds a title. The badge case shows it in its top bar, with the next title and what it asks for when the window is wide enough. Some badges give a title of their own. `title` lists the ones you hold, `title <name>` wears one, and `title default` goes back to the score's. Once you wear anything but Settler, the status bar shows the title beside your account's name when the window has room for it. A title changes nothing in a game. [Titles](badges.md#titles) lists them all with the scores they ask for.
+Your badge points add up to a score, and the score holds a title. The badge case shows it in its top bar, with the next title and what it asks for when the window is wide enough. Some badges give a title of their own. `title` lists the ones you hold, `title <name>` wears one, and `title default` goes back to the score's. Once you wear anything but Settler, the header's top edge shows the title beside your account's name when the window has room for it. A title changes nothing in a game. [Titles](badges.md#titles) lists them all with the scores they ask for.
 
 #### The plain list
 
