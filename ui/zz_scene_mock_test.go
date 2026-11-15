@@ -449,3 +449,26 @@ func TestZZSceneMock(t *testing.T) {
 		}
 	}
 }
+
+func TestZZRealScenes(t *testing.T) {
+	out := os.Getenv("SCENE_MOCK_DIR")
+	if out == "" {
+		t.Skip("set SCENE_MOCK_DIR")
+	}
+	keepTheme(t)
+	st := tradeState()
+	pg := tradePage(st)
+	for _, sz := range [][3]int{{153, 38, 2}, {120, 34, 0}, {153, 38, 4}} {
+		g, _ := renderTradeRoads(&pg, st, sz[2], 0, sz[0], sz[1], xseg{"› trade route start stone_trade  ", xDim}, xseg{"✓", xGood})
+		b := kit.NewBuffer(g.w, g.h)
+		paintExpeditionKit(kit.NewPainter(b), g, image.Point{}, newExpPalette())
+		f, err := os.Create(filepath.Join(out, fmt.Sprintf("RL-trade-%d-sel%d.png", sz[0], sz[2])))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := png.Encode(f, ScreenImage(b, shotCellW, shotCellH)); err != nil {
+			t.Fatal(err)
+		}
+		f.Close()
+	}
+}

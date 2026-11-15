@@ -24,6 +24,9 @@ type deckPanel struct {
 	kit.Base
 	// page works the panel's content out from a snapshot.
 	page func(game.GameState) deckPage
+	// draw draws the page; nil draws it as a deck of cards. A panel with a
+	// scene of its own (the Trade panel's map of roads) sets it.
+	draw func(pg *deckPage, st game.GameState, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout)
 	// run types a command and runs it, as the command bar does.
 	run func(cmd string)
 	// settings reads the glyph tier.
@@ -49,7 +52,7 @@ func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
 // registerDeck makes a panel of cards from page and registers it as the
 // overlay name, with its keyboard left to the command bar and its commands
 // run as the command bar runs them.
-func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.GameState) deckPage) {
+func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.GameState) deckPage) *deckPanel {
 	p := newDeckPanel(page)
 	p.settings = d.mapSettings
 	p.run = d.runLine
@@ -58,6 +61,7 @@ func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.G
 	p.buttons.press = d.app.Key
 	d.decks[name] = p
 	d.overlayMgr.RegisterWidget(name, title, p.open, p.update)
+	return p
 }
 
 // open is the overlay's build: it runs on every Show, with the first card
@@ -100,7 +104,11 @@ func (p *deckPanel) Layout(r image.Rectangle) {
 	}
 	p.pg = p.page(p.state)
 	p.sel = clamp(p.sel, 0, max(0, p.pg.count()-1))
-	p.grid, p.lay = renderDeck(&p.pg, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
+	if p.draw != nil {
+		p.grid, p.lay = p.draw(&p.pg, p.state, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
+	} else {
+		p.grid, p.lay = renderDeck(&p.pg, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
+	}
 	p.scroll = clamp(p.scroll, 0, max(0, p.lay.total-p.lay.viewH))
 	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
 		p.grid.fold()
