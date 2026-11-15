@@ -49,7 +49,6 @@ func Badges() []BadgeDef {
 		// ----- F14, the map's looks -----
 		mapLook("map.glyphs.ascii", "Plain Speaker", "Advance an age with the plain (ascii) map glyphs.", BadgeEvAdvancedGlyphs, "ascii"),
 		mapLook("map.glyphs.unicode", "Box Drawer", "Advance an age with the unicode map glyphs.", BadgeEvAdvancedGlyphs, "unicode"),
-		mapLook("map.glyphs.nerd", "Font Snob", "Advance an age with the Nerd Font map glyphs.", BadgeEvAdvancedGlyphs, "nerd"),
 
 		// ----- flex -----
 		{

@@ -379,7 +379,7 @@ func TestLooksWornAtAnAdvance(t *testing.T) {
 	advanceTo(ge, "stone_age")
 	wantBadges(t, acct, "an advance in Daylight, plain glyphs",
 		[]string{"theme.daylight", "map.glyphs.ascii"},
-		"theme.forge", "map.glyphs.unicode", "map.glyphs.nerd")
+		"theme.forge", "map.glyphs.unicode")
 	for _, kind := range []string{config.BadgeEvAdvancedTheme, config.BadgeEvAdvancedGlyphs} {
 		if n := runTally(ge, kind) + runTally(ge, kind+".daylight") + runTally(ge, kind+".ascii"); n != 0 {
 			t.Errorf("the looks are tallied in the run's facts (%s: %v): they are the account's settings", kind, n)

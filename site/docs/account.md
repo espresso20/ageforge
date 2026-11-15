@@ -337,7 +337,7 @@ Some settings belong to the account, not to a save. Switching accounts swaps the
 | Setting | Command | Default | Kept in |
 |---|---|---|---|
 | Theme | `theme <key>` | Forge | `account.json` |
-| Map glyphs | `map glyphs ascii`, `unicode` or `nerd` | unicode | `account.json` |
+| Map glyphs | `map glyphs ascii` or `unicode` | unicode | `account.json` |
 | Mini map | `minimap on` or `minimap off` | on | `account.json` |
 | Discord status | The Settings page, row **Discord status** | on | `account.json` |
 | Motion | `motion on` or `motion off` | on | `settings.json` |

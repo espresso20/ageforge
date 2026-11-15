@@ -350,9 +350,8 @@ The Map draws your empire from your real game state: your buildings and the work
 | `map` (or `citymap`) | Open the Map panel. The prompt keeps working while it is open. |
 | `worldmap` | Same as `map`, opened on the whole town (the region zoom). |
 | `map flows [on\|off]` | The Map's flows overlay (stocks running dry, understaffed buildings, idle workers): on, off, or bare to switch it. It lasts for the session. |
-| `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal. Saved per account. |
+| `map glyphs [ascii\|unicode]` | Bare, show the current glyph set. With a name, switch to it (default unicode). Saved per account. |
 | `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list. `off` hides it so the list gets the whole column (default on). Saved per account. |
-| `icons` | A guided check: do you see Nerd Font icons? If yes it sets `map glyphs nerd`. If not it offers to install JetBrains Mono Nerd Font for your user (pinned v3.5.1, checksum-verified, no admin rights) and tells you how to select it in your terminal. |
 
 ```
 map
@@ -360,7 +359,6 @@ map glyphs ascii
 map flows on
 minimap off
 worldmap
-icons
 ```
 
 `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list. On smaller windows it hides, and `minimap off` hides it anywhere.
