@@ -1817,47 +1817,6 @@ ui.overlay_stats.multiplierSourceLabel.07,Plot twist
 ui.overlay_stats.multiplierSourceLabel.08,Civ besties
 ui.overlay_stats.multiplierSourceLabel.09,Legacy buff
 ui.overlay_stats.multiplierSourceLabel.10,Cosmic aura
-ui.overlay_trade.tradeProvider.01," [gold]═══ Bread Routes ═══[-]
-
-"
-ui.overlay_trade.tradeProvider.02," [red]⚠ Routes importing %s are on pause (a war, or your embargo), the bread is blocked.[-]
-"
-ui.overlay_trade.tradeProvider.03," [gray]End your embargo beef with: diplomacy neutral <civ>[-]
-
-"
-ui.overlay_trade.tradeProvider.04," [gold]Routes live rn:[-]
-
-"
-ui.overlay_trade.tradeProvider.05,"   Outbound drip: %s
-"
-ui.overlay_trade.tradeProvider.06,"   Inbound drip: %s
-"
-ui.overlay_trade.tradeProvider.07,"   [red]Paused: %s imports are blockaded, the opps cut the line[-]
-
-"
-ui.overlay_trade.tradeProvider.08,"   %s left in this cycle  [gray](%s secured)[-]
-
-"
-ui.overlay_trade.tradeProvider.11," [gold]Routes up for grabs:[-]
-
-"
-ui.overlay_trade.tradeProvider.12,"   Out: %s → In: %s, a trade situationship
-"
-ui.overlay_trade.tradeProvider.13,"   [green]send it: trade route start %s[-]
-"
-ui.overlay_trade.tradeProvider.14,"   [red]needs %s (pockets: %s)[-]
-"
-ui.overlay_trade.tradeProvider.15," [gray]No trade routes this age yet, so early.[-]
-"
-ui.overlay_trade.tradeProvider.16," [gray]Cheat codes: trade route start/stop <key>[-]
-"
-ui.overlay_trade.tradeProvider.17,"
- [gray]Civ tea, opinion and deals: type factions[-]
-"
-ui.overlay_trade.writeAllyTradeBonuses.01," [gold]Ride or die perks:[-]
-"
-ui.overlay_trade.writeAllyTradeBonuses.02,"   %s: [green]%s %s[-] [gray](buffs route imports and production)[-]
-"
 ui.overlay_wonders.renderCurrentWonderSummary.01,"[gold]═══ This Age's Flex ═══[-]
 "
 ui.overlay_wonders.renderCurrentWonderSummary.02," %s [gold]★ %s[-]  [green]Built, it ate[-]  [gray]%s[-]

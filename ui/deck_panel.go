@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -43,6 +44,20 @@ func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
 	p := &deckPanel{page: page}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
+}
+
+// registerDeck makes a panel of cards from page and registers it as the
+// overlay name, with its keyboard left to the command bar and its commands
+// run as the command bar runs them.
+func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.GameState) deckPage) {
+	p := newDeckPanel(page)
+	p.settings = d.mapSettings
+	p.run = d.runLine
+	p.prompt = func() string { return d.inputField.GetText() }
+	p.toPrompt = d.handToPrompt
+	p.buttons.press = d.app.Key
+	d.decks[name] = p
+	d.overlayMgr.RegisterWidget(name, title, p.open, p.update)
 }
 
 // open is the overlay's build: it runs on every Show, with the first card

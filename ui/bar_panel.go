@@ -90,7 +90,7 @@ type barOverlay struct {
 // by overlay name. Only the Map has a key bar of its own to say what a command
 // typed over it did, because the log is behind it.
 func (d *Dashboard) newBarOverlays() map[string]barOverlay {
-	return map[string]barOverlay{
+	overlays := map[string]barOverlay{
 		"map": {
 			routeKey: d.mapPanel.routeKey,
 			reply:    d.mapPanel.reply,
@@ -120,6 +120,10 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 			update:   d.advancePanel.update,
 		},
 	}
+	for name, p := range d.decks {
+		overlays[name] = barOverlay{routeKey: p.routeKey, reply: p.reply, update: p.update}
+	}
+	return overlays
 }
 
 // handToPrompt gives the keyboard back to the command bar, starting with ev:

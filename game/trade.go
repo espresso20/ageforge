@@ -305,6 +305,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			Name:        def.Name,
 			Key:         key,
 			TicksLeft:   route.TicksLeft,
+			CycleTicks:  tm.RunTicks(def.TicksPerRun),
 			CyclesDone:  route.CyclesDone,
 			Export:      maps.Clone(def.Export),
 			Import:      tm.routeImports(def),
