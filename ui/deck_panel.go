@@ -85,7 +85,11 @@ func (p *deckPanel) reply(cmd string, res CommandResult) {
 	if res.Type == "error" || res.Type == "warning" {
 		k = xBad
 	}
-	p.said = []xseg{{"› " + cmd + "  ", xDim}, {strings.TrimSpace(barTags.ReplaceAllString(msg, "")), k}}
+	msg = strings.TrimSpace(barTags.ReplaceAllString(msg, ""))
+	if msg == "" {
+		msg = "✓" // the command's answer went to the log, behind the panel
+	}
+	p.said = []xseg{{"› " + cmd + "  ", xDim}, {msg, k}}
 }
 
 // Layout takes the panel's rectangle and works the panel out in it.

@@ -21,7 +21,8 @@ func sampleDeck() deckPage {
 			Action: "start", Command: "trade route start " + name,
 		})
 	}
-	open.Cards = append(open.Cards, deckCard{Title: "Silk Road", Chip: "locked", ChipK: xKeyName, Why: "needs 2 Markets (have 0)", Quiet: true})
+	open.Cards = append(open.Cards, deckCard{Title: "Silk Road", Chip: "locked", ChipK: xKeyName, Why: "needs 2 Markets (have 0)", Quiet: true},
+		deckCard{Title: "Sea Lane", Chip: "locked", ChipK: xKeyName, Why: "Trade routes need The Wheel first. Research it to start one, then come back.", Quiet: true})
 	return deckPage{
 		Title: "Trade",
 		Head:  []xseg{{"Routes ", xDim}, {"7 open", xText}},
@@ -79,13 +80,13 @@ func TestDeckShowsWhatACardDoes(t *testing.T) {
 	pg := sampleDeck()
 	g, lay := renderDeck(&pg, 1, 0, 153, 40)
 	text := g.String()
-	for _, want := range []string{"Trade", "Routes 7 open", "Routes importing iron are suspended.", "Open routes", "7 open", "Route alpha", " ready ", "Export 15 wood", " Enter  start  trade route start alpha", " start  trade route start bravo", "needs 2 Markets (have 0)", " locked ", "1 of 2 out", "or type trade route start <key>", " Esc  close "} {
+	for _, want := range []string{"Trade", "Routes 7 open", "Routes importing iron are suspended.", "Open routes", "7 open", "Route alpha", " ready ", "Export 15 wood", " Enter  start  trade route start alpha", " start  trade route start bravo", "needs 2 Markets (have 0)", "Trade routes need The Wheel first.", "then come back.", " locked ", "1 of 2 out", "or type trade route start <key>", " Esc  close "} {
 		if !strings.Contains(text, want) {
 			t.Errorf("the deck does not show %q:\n%s", want, text)
 		}
 	}
-	if len(lay.cards) != 9 || lay.total > lay.viewH {
-		t.Errorf("%d cards in %d rows of %d in view; want 9 that all fit", len(lay.cards), lay.total, lay.viewH)
+	if len(lay.cards) != 10 || lay.total > lay.viewH {
+		t.Errorf("%d cards in %d rows of %d in view; want 10 that all fit", len(lay.cards), lay.total, lay.viewH)
 	}
 	if strings.Contains(text, "PgUp") {
 		t.Errorf("a deck that fits offers to page:\n%s", text)
@@ -167,6 +168,11 @@ func TestDeckPanelKeysAndClicks(t *testing.T) {
 	relay()
 	if text := p.grid.String(); !strings.Contains(text, "› trade route start echo  Route started.") || strings.Contains(text, "more\n") {
 		t.Errorf("the panel does not say what the command did:\n%s", text)
+	}
+	p.reply("trade route stop echo", CommandResult{})
+	relay()
+	if text := p.grid.String(); !strings.Contains(text, "› trade route stop echo  ✓") {
+		t.Errorf("a command with no answer of its own is not ticked:\n%s", text)
 	}
 	// A card with no command: picked by a click, and Enter is not the panel's.
 	relay()

@@ -146,10 +146,13 @@ func (c *deckCard) height(cw int) int {
 	if c.Desc != "" {
 		h += len(deckWrap(c.Desc, cw-4))
 	}
-	for _, on := range []bool{c.Meter, c.Why != "", c.Command != ""} {
+	for _, on := range []bool{c.Meter, c.Command != ""} {
 		if on {
 			h++
 		}
+	}
+	if c.Why != "" {
+		h += len(deckWrap(c.Why, cw-4))
 	}
 	return h
 }
@@ -351,8 +354,10 @@ func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) 
 		y++
 	}
 	if c.Why != "" {
-		g.putFit(x+2, y, cw-4, c.Why, xBad)
-		y++
+		for _, l := range deckWrap(c.Why, cw-4) {
+			g.put(x+2, y, l, xBad)
+			y++
+		}
 	}
 	if c.Command == "" {
 		return
