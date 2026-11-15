@@ -679,6 +679,9 @@ func TestExpeditionPanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0), 1) {
 		t.Error("a click on the frame changed something")
 	}
+	if p.PointerAt(pin(hitOffer, other)) != kit.PointerHand || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
+		t.Error("the hand should show over an offer's pin and not over the frame")
+	}
 	if !press(pin(hitOffer, other), 2) || (sc.offers[other].offer.CanLaunch && !p.view.confirm) {
 		t.Errorf("a double click did not do what Enter does (confirm %v)", p.view.confirm)
 	}

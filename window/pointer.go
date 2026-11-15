@@ -27,6 +27,13 @@ var buttons = [...]struct {
 	k kit.MouseButton
 }{{ebiten.MouseButtonLeft, kit.ButtonLeft}, {ebiten.MouseButtonRight, kit.ButtonRight}, {ebiten.MouseButtonMiddle, kit.ButtonMiddle}}
 
+// pointerShapes are the system's pointers for the shapes the kit names.
+var pointerShapes = [...]ebiten.CursorShapeType{
+	kit.PointerArrow: ebiten.CursorShapeDefault,
+	kit.PointerHand:  ebiten.CursorShapePointer,
+	kit.PointerText:  ebiten.CursorShapeText,
+}
+
 // cellAt is the cell under device pixel px, py and whether it is in the grid.
 func (g *Game) cellAt(px, py int) (x, y int, in bool) {
 	if g.cw == 0 || g.ch == 0 {

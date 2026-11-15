@@ -235,6 +235,20 @@ func (p *expeditionPanel) Mouse(m kit.Mouse) bool {
 	return true
 }
 
+// PointerAt: the hand over an offer's pin on the board and over a party on
+// the report; with the confirm up, nothing behind it takes a click.
+func (p *expeditionPanel) PointerAt(at image.Point) kit.Pointer {
+	if p.grid == nil || p.view.confirm {
+		return kit.PointerArrow
+	}
+	kind := hitOffer
+	if p.view.report {
+		kind = hitParty
+	}
+	_, ok := p.grid.hitAt(kind, at.Sub(p.Bounds().Min))
+	return handIf(ok)
+}
+
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt every key belongs to the prompt.
 func (p *expeditionPanel) routeKey(ev *kit.Key, prompt string) bool {

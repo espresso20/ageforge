@@ -99,6 +99,8 @@ type Buffer struct {
 	// Cursor is where the text cursor shows, when CursorOn.
 	Cursor   image.Point
 	CursorOn bool
+	// Pointer is the shape the mouse pointer takes where it is.
+	Pointer Pointer
 }
 
 // NewBuffer is a blank buffer of w by h cells.

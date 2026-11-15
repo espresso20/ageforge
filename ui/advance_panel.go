@@ -136,6 +136,15 @@ func (p *advancePanel) Mouse(m kit.Mouse) bool {
 	return true
 }
 
+// PointerAt: the hand over a pillar.
+func (p *advancePanel) PointerAt(at image.Point) kit.Pointer {
+	if p.grid == nil {
+		return kit.PointerArrow
+	}
+	_, ok := p.grid.hitAt(hitPillar, at.Sub(p.Bounds().Min))
+	return handIf(ok)
+}
+
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt every key belongs to the prompt.
 func (p *advancePanel) routeKey(ev *kit.Key, prompt string) bool {

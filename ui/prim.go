@@ -322,7 +322,8 @@ func (a *appLoop) draw() {
 	a.frameMu.Unlock()
 }
 
-// Frame copies the last frame painted into dst, cursor and all. The window
+// Frame copies the last frame painted into dst, with its text cursor and
+// the shape of the mouse pointer. The window
 // calls it from its own thread.
 func (a *appLoop) Frame(dst *kit.Buffer) {
 	a.frameMu.Lock()
@@ -330,6 +331,7 @@ func (a *appLoop) Frame(dst *kit.Buffer) {
 	dst.W, dst.H = a.front.W, a.front.H
 	dst.Cells = append(dst.Cells[:0], a.front.Cells...)
 	dst.Cursor, dst.CursorOn = a.front.Cursor, a.front.CursorOn
+	dst.Pointer = a.front.Pointer
 }
 
 // Size is the screen in cells, as the last frame was painted.

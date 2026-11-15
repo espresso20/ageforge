@@ -184,11 +184,17 @@ func (l *List) Key(k Key) bool {
 	return true
 }
 
-func (l *List) Mouse(m Mouse) bool {
-	row := l.top + m.Y - l.rect.Min.Y
-	if row < 0 || row >= len(l.items) || m.X >= l.rect.Min.X+l.textWidth() {
-		row = -1
+// rowAt is the row whose text is at pt, or -1.
+func (l *List) rowAt(pt image.Point) int {
+	row := l.top + pt.Y - l.rect.Min.Y
+	if row < 0 || row >= len(l.items) || pt.X >= l.rect.Min.X+l.textWidth() {
+		return -1
 	}
+	return row
+}
+
+func (l *List) Mouse(m Mouse) bool {
+	row := l.rowAt(m.Pt())
 	switch m.Kind {
 	case MouseLeave:
 		l.hover = 0

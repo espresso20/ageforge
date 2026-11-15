@@ -228,6 +228,19 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	return true
 }
 
+// PointerAt: the hand over a badge, and over a tab a click would open.
+func (p *badgePanel) PointerAt(at image.Point) kit.Pointer {
+	if p.model == nil || p.view.card {
+		return kit.PointerArrow
+	}
+	pt := at.Sub(p.Bounds().Min)
+	if pt.Y == 1 {
+		key, ok := p.model.tabAt(pt.X, p.view)
+		return handIf(ok && key != p.view.tab)
+	}
+	return handIf(p.model.badgeAt(pt, p.view.vy) != "")
+}
+
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt, Tab and Enter belong to the
 // prompt.

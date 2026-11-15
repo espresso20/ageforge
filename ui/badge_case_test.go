@@ -982,8 +982,16 @@ func TestBadgePanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0), 1) {
 		t.Error("a click on the title bar changed something")
 	}
+	tabs, _, _, _ := p.model.tabRow(p.view)
+	if p.PointerAt(at("age.iron_age")) != kit.PointerHand || p.PointerAt(image.Pt(tabs[1]+2, 1)) != kit.PointerHand ||
+		p.PointerAt(image.Pt(tabs[0]+1, 1)) != kit.PointerArrow || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
+		t.Error("the hand should show over a badge and a closed tab, and not over the open tab or the title bar")
+	}
 	if !press(at("age.iron_age"), 2) || !p.view.card {
 		t.Error("a double click did not open the detail")
+	}
+	if p.PointerAt(at("age.iron_age")) != kit.PointerArrow {
+		t.Error("with the detail open the hand still shows over the badge behind it")
 	}
 	drawPrimitive(t, p, 100, 27)
 	if c := p.model.cardAt; press(c.Min.Add(image.Pt(c.Dx()/2, c.Dy()/2)), 1) {

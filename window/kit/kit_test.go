@@ -257,6 +257,73 @@ func TestButtonPressesByKeyAndMouse(t *testing.T) {
 	}
 }
 
+// The pointer takes the shape of what it is over: the hand on a button and
+// on a row of a list, the text bar on an input line, the arrow elsewhere and
+// once it has left. A move that changes the shape is a change to the screen,
+// and the frame carries the shape. While a press is held the shape stays.
+func TestThePointerTakesTheShapeOfWhatItIsOver(t *testing.T) {
+	bt := NewButton("Go", func() {})
+	list := NewList("one", "two")
+	in := NewInput("> ")
+	r, b := screen(Col().Add(Row().Add(bt, 0, 0).Add(nil, 0, 1), 1, 0).Add(list, 3, 0).Add(in, 1, 0).Add(nil, 0, 1), 20, 6)
+	at := func(x, y int) Pointer {
+		t.Helper()
+		r.Mouse(Mouse{Kind: MouseMove, X: x, Y: y})
+		r.Paint(b)
+		return b.Pointer
+	}
+	if b.Pointer != PointerArrow {
+		t.Errorf("before the pointer arrives the shape is %d, want the arrow", b.Pointer)
+	}
+	for _, c := range []struct {
+		what string
+		x, y int
+		want Pointer
+	}{
+		{"the button", 1, 0, PointerHand},
+		{"the gap beside the button", 12, 0, PointerArrow},
+		{"a row of the list", 2, 2, PointerHand},
+		{"the list under its last row", 2, 3, PointerArrow},
+		{"the input line", 5, 4, PointerText},
+		{"the empty rows", 5, 5, PointerArrow},
+	} {
+		if got := at(c.x, c.y); got != c.want {
+			t.Errorf("over %s the shape is %d, want %d", c.what, got, c.want)
+		}
+	}
+	// A move inside the input line changes nothing; a move onto the gap
+	// beside it changes only the shape, and that counts as a change.
+	at(5, 4)
+	if r.Mouse(Mouse{Kind: MouseMove, X: 6, Y: 4}) {
+		t.Error("a move along the input line reported a change")
+	}
+	if !r.Mouse(Mouse{Kind: MouseMove, X: 6, Y: 5}) {
+		t.Error("a move off the input line, which changes the shape, reported no change")
+	}
+	bt.Disabled = true
+	if got := at(1, 0); got != PointerArrow {
+		t.Errorf("over a disabled button the shape is %d, want the arrow", got)
+	}
+	bt.Disabled = false
+	// A press held on the button keeps the hand while it is dragged off.
+	at(1, 0)
+	r.Mouse(Mouse{Kind: MousePress, X: 1, Y: 0})
+	if got := at(12, 5); got != PointerHand {
+		t.Errorf("with a press held, dragged off the button, the shape is %d, want the hand still", got)
+	}
+	r.Mouse(Mouse{Kind: MouseRelease, X: 12, Y: 5})
+	r.Paint(b)
+	if b.Pointer != PointerArrow {
+		t.Errorf("after the button came up away from it the shape is %d, want the arrow", b.Pointer)
+	}
+	at(1, 0)
+	r.Mouse(Mouse{Kind: MouseLeave})
+	r.Paint(b)
+	if b.Pointer != PointerArrow {
+		t.Errorf("after the pointer left the shape is %d, want the arrow", b.Pointer)
+	}
+}
+
 func lines(n int) string {
 	var s []string
 	for i := 0; i < n; i++ {

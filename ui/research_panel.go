@@ -182,6 +182,11 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 	return true
 }
 
+// PointerAt: the hand over a tech.
+func (p *researchPanel) PointerAt(at image.Point) kit.Pointer {
+	return handIf(p.model != nil && !p.view.card && p.model.techAt(at.Sub(p.Bounds().Min), p.view, p.w, p.h) != "")
+}
+
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt, Tab and Enter belong to the
 // prompt.

@@ -565,6 +565,15 @@ func (m *mainMenu) Mouse(ev kit.Mouse) bool {
 	return moved
 }
 
+// PointerAt: the hand over an entry.
+func (m *mainMenu) PointerAt(at image.Point) kit.Pointer {
+	if m.pending || m.scene == nil {
+		return kit.PointerArrow
+	}
+	i := m.scene.entryAt(at.Sub(m.Bounds().Min))
+	return handIf(i >= 0 && i < len(m.view.items))
+}
+
 // choose opens entry i. With motion on the title is struck first and the
 // entry opens a moment later, once the flare has been drawn; with motion
 // off it opens at once and nothing flares.
