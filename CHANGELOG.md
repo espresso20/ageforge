@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, a building in the Buildings list and a name in the Panels list light up while the pointer is on them.
 - In the window, the mouse wheel over the dashboard's Resources box turns its page, when it has more than one.
 - In the window, the key buttons along the foot of the Load game, Accounts and Themes pages take clicks: a click on one presses its key.
 - In the window, a click on a building in the dashboard's Buildings list writes its `build` command in the prompt, and a double click builds one. A click on a box of the dashboard opens the panel that is that box in full: the mini map opens the Map, the Ledger opens Advance, the People box People, the Log the full record and Under construction the build plan.
