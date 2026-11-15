@@ -6,9 +6,10 @@ import (
 )
 
 // glyph.go decides how one cell is painted. The block elements (U+2580 to
-// U+259F) and box drawing (U+2500 to U+257F) are filled rectangles, so frames
-// and the map meet cell to cell with no seams whatever the font; every other
-// rune goes to a font.
+// U+259F), box drawing (U+2500 to U+257F) and the braille dots (U+2800 to
+// U+28FF) are filled rectangles, so frames, the map and a chart drawn in
+// dots meet cell to cell with no seams whatever the font; every other rune
+// goes to a font.
 
 // tint is a rectangle to fill and how much of the foreground it takes
 // (1 is solid, less is a shade over the background).
@@ -33,7 +34,9 @@ type arc struct{ cx, cy, rad, from, to, width float64 }
 type diag struct{ x0, y0, x1, y1, width float64 }
 
 // isProcedural reports whether r is drawn by the window itself.
-func isProcedural(r rune) bool { return r >= 0x2500 && r <= 0x259F }
+func isProcedural(r rune) bool {
+	return r >= 0x2500 && r <= 0x259F || r >= 0x2800 && r <= 0x28FF
+}
 
 // procedural returns the shape of r in a cw by ch cell, or false when r is not
 // one of the runes the window draws itself.
@@ -43,8 +46,26 @@ func procedural(r rune, cw, ch int) (shape, bool) {
 		return blockShape(r, cw, ch), true
 	case r >= 0x2500 && r <= 0x257F:
 		return boxShape(r, cw, ch), true
+	case r >= 0x2800 && r <= 0x28FF:
+		return brailleShape(r, cw, ch), true
 	}
 	return shape{}, false
+}
+
+// brailleShape draws U+2800 to U+28FF. The cell is cut in two columns and
+// four rows and each dot is its whole part of the cell, so a line drawn in
+// dots (the History panel's charts) runs unbroken from cell to cell. No font
+// the game ships has these runes.
+func brailleShape(r rune, cw, ch int) shape {
+	var sh shape
+	// A dot's bit, by column then row.
+	for i, bit := range [8]rune{0x01, 0x02, 0x04, 0x40, 0x08, 0x10, 0x20, 0x80} {
+		if (r-0x2800)&bit != 0 {
+			col, row := i/4, i%4
+			sh.tints = append(sh.tints, tint{rect(col*cw/2, row*ch/4, (col+1)*cw/2, (row+1)*ch/4), 1})
+		}
+	}
+	return sh
 }
 
 func rect(x0, y0, x1, y1 int) image.Rectangle { return image.Rect(x0, y0, x1, y1) }
