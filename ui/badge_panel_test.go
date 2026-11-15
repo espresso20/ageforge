@@ -133,7 +133,7 @@ func TestBadgesCommandOpensTheCase(t *testing.T) {
 	if res := HandleCommand("badges", bare); res.OverlayName != "badges" {
 		t.Errorf("badges with no account: %+v", res)
 	}
-	m := buildCase(nil, game.BadgeSummary{}, false, caseTabAll, caseLayoutFor(80, 21, caseTabAll))
+	m := buildCase(nil, game.BadgeSummary{}, false, caseTabAll, caseLayoutFor(80, 21, caseTabAll, false))
 	if text := renderCase(m, caseView{}, atRest).String(); !strings.Contains(text, "No account is loaded") {
 		t.Errorf("the case with no account:\n%s", text)
 	}

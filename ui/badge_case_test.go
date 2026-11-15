@@ -76,7 +76,7 @@ func TestBadgeCaseAtEverySize(t *testing.T) {
 		for _, tier := range caseTiers {
 			tabs := caseTabs(views, false)
 			for _, tab := range tabs {
-				m0 := buildCase(views, sum, true, tab.key, caseLayoutFor(w, h, tab.key))
+				m0 := buildCase(views, sum, true, tab.key, caseLayoutFor(w, h, tab.key, false))
 				if len(m0.items) == 0 {
 					t.Fatalf("%dx%d: the %s tab lists nothing", w, h, tab.title)
 				}

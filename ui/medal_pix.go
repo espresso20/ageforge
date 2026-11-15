@@ -4,7 +4,6 @@ import (
 	"image"
 	"image/color"
 	"math"
-	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/theme"
@@ -79,12 +78,28 @@ func (m metal) tone(lit float64, x, y int) color.RGBA {
 	return steps[i]
 }
 
-// medalPicture is a medal w by h pixels, on a clear ground.
+// medalPicture is a medal w by h pixels, on a clear ground, at the large
+// size: the picked badge's.
 func medalPicture(md medal, family string, w, h int) *image.RGBA {
+	return coinPicture(md, family, w, h, medalArt)
+}
+
+// coinArt is the side of a small coin's art, in art pixels: the size the
+// coins of the case are struck at. It is half the large medal's, so the
+// family's sign is drawn at its own size on it.
+const coinArt = 28
+
+// coinPicture is a medal w by h pixels, on a clear ground, drawn art art
+// pixels across (medalArt or coinArt) and scaled up by whole pixels to fit.
+// The rim, the teeth and the sign keep their proportions at either size.
+func coinPicture(md medal, family string, w, h, art int) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	k := max(1, min(w, h)/medalArt)
-	ox, oy := (w-medalArt*k)/2, (h-medalArt*k)/2
+	k := max(1, min(w, h)/art)
+	ox, oy := (w-art*k)/2, (h-art*k)/2
 	block := func(x, y int, c color.RGBA) {
+		if x < 0 || y < 0 || x >= art || y >= art {
+			return
+		}
 		for j := 0; j < k; j++ {
 			for i := 0; i < k; i++ {
 				img.SetRGBA(ox+x*k+i, oy+y*k+j, c)
@@ -92,28 +107,36 @@ func medalPicture(md medal, family string, w, h int) *image.RGBA {
 		}
 	}
 	m := metalOf(md)
-	const c, r = float64(medalArt-1) / 2, float64(medalArt)/2 - 1
-	for y := 0; y < medalArt; y++ {
-		for x := 0; x < medalArt; x++ {
+	// The parts of the coin, from the edge in: the lip, the raised rim and
+	// the groove under it, sized for the art.
+	scale := max(1, art/coinArt) // 1 on a small coin, 2 on the large medal
+	lip, rim := float64(scale), float64(3*scale)
+	teeth, bite := 20.0, 0.6
+	if scale > 1 {
+		teeth, bite = 32, 0.9
+	}
+	c, r := float64(art-1)/2, float64(art)/2-1
+	for y := 0; y < art; y++ {
+		for x := 0; x < art; x++ {
 			dx, dy := float64(x)-c, float64(y)-c
 			d := math.Hypot(dx, dy)
-			// The milled edge: thirty-two small teeth round the coin.
-			if d > r-0.9*(1+math.Cos(math.Atan2(dy, dx)*32))/2 {
+			// The milled edge: small teeth round the coin.
+			if d > r-bite*(1+math.Cos(math.Atan2(dy, dx)*teeth))/2 {
 				continue
 			}
 			lit := -(dx*0.6 + dy*0.8) / r // the light comes from the upper left
 			var col color.RGBA
 			switch {
-			case d > r-2: // the lip
+			case d > r-lip: // the lip
 				col = m.tone(lit*0.8-0.1, x, y)
-			case d > r-6: // the raised rim
+			case d > r-rim: // the raised rim
 				col = m.tone(lit*1.3+0.25, x, y)
-			case d > r-7: // the groove under it
+			case d > r-rim-float64(scale)/2-0.5: // the groove under it
 				col = m.deep
 			default: // the field, a shallow hollow: its far side catches the light
 				col = m.tone(-lit*0.55-0.35+0.25*(1-d/r), x, y)
 			}
-			if md.tier == config.BadgeLegendary && md.state == medalEarned && d > r-6 && d <= r-2 {
+			if md.tier == config.BadgeLegendary && md.state == medalEarned && d > r-rim && d <= r-lip {
 				// A legendary rim runs through the colours round the coin.
 				hue := math.Mod(math.Atan2(dy, dx)/(2*math.Pi)+1, 1)
 				col = toward(col, rgbOf(theme.PrismColor(hue, 1, false)), 0.55)
@@ -124,8 +147,22 @@ func medalPicture(md medal, family string, w, h int) *image.RGBA {
 	// The family's sign, raised in the middle: its shadow first, down and
 	// to the right, then the sign in the pale tone with a lit upper edge.
 	icon := medalIcon(md, family)
-	const scale = 2
-	at := (medalArt - len(icon)*scale) / 2
+	at := (art - len(icon)*scale) / 2
+	if md.crossed {
+		// Earned in a modified game: a strike is cut across the coin, from
+		// the lower left to the upper right, when the sign is done.
+		defer func() {
+			for i := 0; i < art; i++ {
+				x, y := i, art-1-i
+				if math.Hypot(float64(x)-c, float64(y)-c) > r-lip {
+					continue
+				}
+				for t := -scale; t < scale; t++ {
+					block(x+t, y, m.deep)
+				}
+			}
+		}()
+	}
 	on := func(ix, iy int) bool {
 		return iy >= 0 && iy < len(icon) && ix >= 0 && ix < len(icon[iy]) && icon[iy][ix] != '.'
 	}
@@ -166,19 +203,27 @@ func medalIcon(md medal, family string) []string {
 	case medalLocked:
 		return medalIcons["locked"]
 	}
-	f := strings.ToLower(family)
-	for _, k := range medalIconOrder {
-		if strings.Contains(f, k) {
-			return medalIcons[k]
-		}
-	}
-	return medalIcons["star"]
+	return medalIcons[medalSign(family)]
 }
 
-// medalIconOrder is the family words looked for, in order.
-var medalIconOrder = []string{"age", "swift", "wonder", "maxim", "research", "lineage", "payroll", "resource", "civil", "expedition", "ladder", "theme", "map"}
+// medalSign is the name of the sign a family's medals carry: every family
+// of the case has its own, and a family the table does not know gets a star.
+func medalSign(family string) string {
+	if sign, ok := medalSigns[family]; ok {
+		return sign
+	}
+	return "star"
+}
 
-// medalIcons are the signs, thirteen by thirteen.
+// medalSigns is each badge family's sign, by the family's key.
+var medalSigns = map[string]string{
+	"age": "age", "swift": "swift", "wonder": "wonder", "maximalist": "maxim", "techs": "research",
+	"lineage": "lineage", "domain": "payroll", "resource": "resource", "civ": "civil",
+	"harbinger": "harbinger", "doom": "doom", "expedition": "expedition", "awakening": "awakening",
+	"ladder": "ladder", "theme": "theme", "map": "map", "special": "star",
+}
+
+// medalIcons are the signs, 13 by 13: a # is struck, a . is the field.
 var medalIcons = map[string][]string{
 	"star": {
 		"......#......",
@@ -389,6 +434,51 @@ var medalIcons = map[string][]string{
 		".....###.....",
 		"......#......",
 		"......#......",
+	},
+	"harbinger": { // an eye
+		".............",
+		"....#####....",
+		"..#########..",
+		".###.....###.",
+		"###..###..###",
+		"##..#####..##",
+		"##..#####..##",
+		"###..###..###",
+		".###.....###.",
+		"..#########..",
+		"....#####....",
+		".............",
+		".............",
+	},
+	"doom": { // a falling star
+		"..........###",
+		".........####",
+		".......#####.",
+		"......####...",
+		"....#####....",
+		"...####......",
+		"..#######....",
+		".#########...",
+		".#########...",
+		".#########...",
+		".#########...",
+		"..#######....",
+		"...#####.....",
+	},
+	"awakening": { // a rising sun
+		"......#......",
+		"......#......",
+		".#....#....#.",
+		"..#.......#..",
+		"....#####....",
+		"...#######...",
+		"..#########..",
+		"..#########..",
+		".###########.",
+		".............",
+		"#############",
+		".............",
+		".###########.",
 	},
 	"locked": { // a keyhole
 		"....#####....",

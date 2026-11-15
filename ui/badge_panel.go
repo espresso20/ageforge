@@ -53,14 +53,14 @@ type badgePanel struct {
 	// with barPanel.
 	views []game.BadgeView
 	sum   game.BadgeSummary
-	// medal is the selected badge's medal as a picture, and medalIs what
-	// it was drawn for (see medalImage).
-	medal   *image.RGBA
-	medalIs medalKey
-	account bool
-	view    caseView
-	model   *caseModel
-	w, h    int // the last size drawn at
+	// coinSet is the pictures of the coins, by look, for the cell size
+	// coinCell (coinImage).
+	coinSet  map[coinKey]*image.RGBA
+	coinCell [2]int
+	account  bool
+	view     caseView
+	model    *caseModel
+	w, h     int // the last size drawn at
 
 	// settings reads the glyph tier and the motion setting.
 	settings func() mapSettings
@@ -116,7 +116,7 @@ func (p *badgePanel) update(state game.GameState) {
 // layout rebuilds the model for the current size and tab, keeps the
 // selection on something the tab lists, and scrolls it into view.
 func (p *badgePanel) layout() {
-	p.model = buildCase(p.views, p.sum, p.account, p.view.tab, caseLayoutFor(p.w, p.h, p.view.tab))
+	p.model = buildCase(p.views, p.sum, p.account, p.view.tab, caseLayoutFor(p.w, p.h, p.view.tab, p.pix()))
 	known := false
 	for _, t := range p.model.tabs {
 		known = known || t.key == p.view.tab
@@ -142,8 +142,8 @@ func (p *badgePanel) frame() int {
 // moves reports whether the case as it stands draws anything that moves:
 // the selected badge's art, or a legendary badge on the page.
 func (p *badgePanel) moves() bool {
-	if !p.motion || p.model == nil || !p.account {
-		return false
+	if !p.motion || p.model == nil || !p.account || p.view.pix {
+		return false // a coin struck as a picture does not move
 	}
 	if it := p.model.selected(p.view); it != nil && medalOf(it.v, p.view.tier).animated() {
 		return true
@@ -178,37 +178,60 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 		return
 	}
 	p.view.prompt = p.prompt != nil && p.prompt() != ""
-	p.view.pix = pictureCell != nil && !p.view.plain()
+	p.view.pix = p.pix()
+	if p.model.lay.pix != p.view.pix {
+		p.layout() // the window gained or lost its pictures since the case was laid out
+	}
 	grid := renderCase(p.model, p.view, p.frame())
 	if p.view.plain() {
 		foldBadges(grid)
 	}
 	paintGridKit(p2, grid, r.Min, newGridPalette(0, nil))
+	for _, c := range p.model.coins {
+		p2.Picture(c.r.Add(r.Min), p.coinImage(c.it, c.r.Size(), coinArt))
+	}
 	if at := p.model.medalAt; !at.Empty() {
-		p2.Picture(at.Add(r.Min), p.medalImage(p.model.medalFor, at.Size()))
+		p2.Picture(at.Add(r.Min), p.coinImage(p.model.medalFor, at.Size(), medalArt))
 	}
 	p.moving.Store(p.moves())
 }
 
-// medalImage is the selected badge's medal as a picture the size of its
-// room in the pane. The picture is kept while the badge, its state and the
-// size stay the same: an image that has been painted is never drawn on.
-func (p *badgePanel) medalImage(it *caseItem, cells image.Point) *image.RGBA {
+// pix reports whether the case is drawn in pictures: the window says how
+// large a cell is, and the glyph tier is not the plain one.
+func (p *badgePanel) pix() bool { return pictureCell != nil && !p.view.plain() }
+
+// coinImage is a badge's medal as a picture for a room of cells, struck art
+// pixels across (coinArt for the case, medalArt for the picked badge). Coins
+// that look alike share one picture: it is kept by the look, not the badge,
+// so a case of hundreds of badges holds a few dozen pictures, and an image
+// that has been painted is never drawn on. A change of cell size starts the
+// set again.
+func (p *badgePanel) coinImage(it *caseItem, cells image.Point, art int) *image.RGBA {
 	cw, ch := pictureCell()
 	md := medalOf(it.v, p.view.tier)
-	key := medalKey{it.v.Key, md.tier, md.state, cells.X * cw, cells.Y * ch}
-	if p.medal == nil || p.medalIs != key {
-		p.medal, p.medalIs = medalPicture(md, it.v.Family, key.w, key.h), key
+	key := coinKey{md.tier, md.state, medalSign(it.v.Family), md.crossed, cells.X * cw, cells.Y * ch, art}
+	if p.coinCell != [2]int{cw, ch} {
+		p.coinSet, p.coinCell = nil, [2]int{cw, ch}
 	}
-	return p.medal
+	img, ok := p.coinSet[key]
+	if !ok {
+		if p.coinSet == nil {
+			p.coinSet = map[coinKey]*image.RGBA{}
+		}
+		img = coinPicture(md, it.v.Family, key.w, key.h, art)
+		p.coinSet[key] = img
+	}
+	return img
 }
 
-// medalKey is what a medal's picture was drawn for.
-type medalKey struct {
-	badge string
-	tier  config.BadgeTier
-	state medalState
-	w, h  int
+// coinKey is the look a coin's picture was struck for.
+type coinKey struct {
+	tier    config.BadgeTier
+	state   medalState
+	sign    string
+	crossed bool
+	w, h    int
+	art     int
 }
 
 // Mouse: a click selects the badge under the pointer and a double click
@@ -350,7 +373,7 @@ func (p *badgePanel) page(dir int) {
 	if p.model.lay.list {
 		lines = max(p.model.lay.gh-1, 1)
 	} else {
-		lines = max(p.model.lay.gh/casePitchY, 1)
+		lines = max(p.model.lay.gh/p.model.lay.pitchY(), 1)
 	}
 	p.jump(dir, lines)
 }

@@ -73,6 +73,10 @@ type caseLayout struct {
 	// list: the badges are a list of names, not a grid.
 	list bool
 	cols int // minis a line
+	// tw and th are a tile of the grid: a mini drawn in cells, or the room
+	// of a coin when the case is drawn in pictures (pix).
+	tw, th int
+	pix    bool
 	// The grid's box, and the selected badge's: beside the grid (side) or
 	// under it.
 	gx, gy, gw, gh int
@@ -80,8 +84,20 @@ type caseLayout struct {
 	px, py, pw, ph int
 }
 
-func caseLayoutFor(w, h int, tab string) caseLayout {
-	l := caseLayout{w: w, h: h, gx: 1, gy: caseTop}
+// coinCols and coinRows are the cells a coin of the case takes as a
+// picture: about square on the screen, and room for the small art at twice
+// its size in the usual font.
+const coinCols, coinRows = 7, 3
+
+// pitchX and pitchY are a tile and the gap after it.
+func (l caseLayout) pitchX() int { return l.tw + 1 }
+func (l caseLayout) pitchY() int { return l.th + 1 }
+
+func caseLayoutFor(w, h int, tab string, pix bool) caseLayout {
+	l := caseLayout{w: w, h: h, gx: 1, gy: caseTop, tw: miniW, th: miniH, pix: pix}
+	if pix {
+		l.tw, l.th = coinCols, coinRows
+	}
 	body := max(h-caseTop-caseFoot, 0)
 	l.list = w < caseListW || tab == caseTabNext
 	if w >= caseSideW {
@@ -92,11 +108,11 @@ func caseLayoutFor(w, h int, tab string) caseLayout {
 		l.px, l.py, l.ph = l.gx+l.gw+3, caseTop, body
 	} else {
 		l.gw = max(w-2, 0)
-		l.ph = min(4, max(body-casePitchY, 0))
+		l.ph = min(4, max(body-l.pitchY(), 0))
 		l.gh = body - l.ph
 		l.px, l.py, l.pw = 1, caseTop+l.gh, l.gw
 	}
-	l.cols = max((l.gw+1)/casePitchX, 1)
+	l.cols = max((l.gw+1)/l.pitchX(), 1)
 	return l
 }
 
@@ -132,18 +148,19 @@ type caseLine struct {
 	next   *game.BadgeView
 }
 
-func (l caseLine) height() int {
+// height is the rows the line takes in a grid whose tiles are th tall.
+func (l caseLine) height(th int) int {
 	if l.kind == lineBadges {
-		return casePitchY
+		return th + 1
 	}
 	return 1
 }
 
 // need is the rows of the line that must show for it to be drawn: a line
 // of minis can lose the gap under it.
-func (l caseLine) need() int {
+func (l caseLine) need(th int) int {
 	if l.kind == lineBadges {
-		return miniH
+		return th
 	}
 	return 1
 }
@@ -173,7 +190,10 @@ type caseModel struct {
 	// as a picture, and medalOf the badge it is for; empty when there is none.
 	medalAt  image.Rectangle
 	medalFor *caseItem
-	rarity   [5]int
+	// coins are the badges of the grid that are drawn as pictures: where
+	// each coin goes, as the last render left them.
+	coins  []caseCoin
+	rarity [5]int
 	// closest is the badge nearest its count, of those not earned.
 	closest *game.BadgeView
 }
@@ -275,7 +295,7 @@ func buildCase(views []game.BadgeView, sum game.BadgeSummary, account bool, tab 
 	y := 0
 	addLine := func(l caseLine) int {
 		l.y = y
-		y += l.height()
+		y += l.height(lay.th)
 		m.lines = append(m.lines, l)
 		return len(m.lines) - 1
 	}
@@ -412,13 +432,13 @@ func (m *caseModel) follow(v *caseView) {
 	if it := m.selected(*v); it != nil && gh > 0 {
 		ln := m.lines[it.line]
 		top := ln.y
-		if it.line > 0 && m.lines[it.line-1].kind == lineHeading && ln.need()+1 <= gh {
+		if it.line > 0 && m.lines[it.line-1].kind == lineHeading && ln.need(m.lay.th)+1 <= gh {
 			top--
 		}
 		if top < v.vy {
 			v.vy = top
 		}
-		if end := ln.y + ln.need(); end > v.vy+gh {
+		if end := ln.y + ln.need(m.lay.th); end > v.vy+gh {
 			v.vy = end - gh
 		}
 	}
@@ -452,7 +472,7 @@ func (m *caseModel) badgeAt(pt image.Point, vy int) string {
 			it := &m.items[j]
 			r := image.Rect(lay.gx, y, lay.gx+lay.gw, y+1)
 			if ln.kind == lineBadges {
-				r = image.Rect(lay.gx+it.col*casePitchX, y, lay.gx+it.col*casePitchX+miniW, y+miniH)
+				r = image.Rect(lay.gx+it.col*lay.pitchX(), y, lay.gx+it.col*lay.pitchX()+lay.tw, y+lay.th)
 			}
 			if pt.In(r) {
 				return it.id
@@ -463,7 +483,7 @@ func (m *caseModel) badgeAt(pt image.Point, vy int) string {
 }
 
 func (m *caseModel) visible(l caseLine, vy int) bool {
-	return l.y >= vy && l.y+l.need() <= vy+m.lay.gh
+	return l.y >= vy && l.y+l.need(m.lay.th) <= vy+m.lay.gh
 }
 
 // shows is visible for line i, and for a heading asks that the line under
@@ -691,6 +711,13 @@ func caseFrame(n int, moves bool) int {
 	return n
 }
 
+// caseCoin is a badge of the grid drawn as a picture: its room, in the
+// panel's cells, and the badge.
+type caseCoin struct {
+	r  image.Rectangle
+	it *caseItem
+}
+
 // drawItemMini draws an item's mini at (x, y).
 func drawItemMini(g *tGrid, x, y int, it *caseItem, v caseView, n int) {
 	md := medalOf(it.v, v.tier)
@@ -706,7 +733,7 @@ func drawItemMini(g *tGrid, x, y int, it *caseItem, v caseView, n int) {
 func renderCase(m *caseModel, v caseView, n int) *tGrid {
 	w, h := m.lay.w, m.lay.h
 	out := newTGrid(w, h)
-	m.cardAt, m.medalAt, m.medalFor = image.Rectangle{}, image.Rectangle{}, nil
+	m.cardAt, m.medalAt, m.medalFor, m.coins = image.Rectangle{}, image.Rectangle{}, nil, m.coins[:0]
 	if w < caseMinW || h < caseMinH {
 		out.text(0, 0, clipRunes(vibe.Line("ui.badge_case.renderCase.01", "Badges: make the window larger."), w), tsText, -1)
 		return out
@@ -734,15 +761,23 @@ func renderCase(m *caseModel, v caseView, n int) *tGrid {
 		y := lay.gy + ln.y - v.vy
 		switch ln.kind {
 		case lineHeading:
+			if lay.pix {
+				m.drawPlaque(out, ln, y)
+				break
+			}
 			x := out.text(lay.gx, y, clipRunes(ln.title, lay.gw), tsBright, -1)
 			x = out.text(x+2, y, clipRunes(ln.count, max(lay.gx+lay.gw-x-2, 0)), tsDim, -1)
 			for x++; x < lay.gx+lay.gw; x++ {
 				out.put(x, y, '─', tsDim, -1)
 			}
 		case lineBadges:
+			if lay.pix {
+				m.drawShelf(out, ln, y, sel)
+				break
+			}
 			for _, i := range ln.items {
 				it := &m.items[i]
-				x := lay.gx + it.col*casePitchX
+				x := lay.gx + it.col*lay.pitchX()
 				drawItemMini(out, x, y, it, v, n)
 				if sel != nil && it.id == sel.id {
 					for dy := 0; dy < miniH; dy++ {
@@ -756,7 +791,7 @@ func renderCase(m *caseModel, v caseView, n int) *tGrid {
 					out.flag(x+miniW, y+miniH/2, cfSel|cfBold)
 				}
 			}
-			m.drawLadderLabel(out, ln, lay.gx+len(ln.items)*casePitchX+1, y)
+			m.drawLadderLabel(out, ln, lay.gx+len(ln.items)*lay.pitchX()+1, y)
 		case lineRow:
 			if len(ln.items) > 0 {
 				it := &m.items[ln.items[0]]
@@ -806,9 +841,63 @@ func renderCase(m *caseModel, v caseView, n int) *tGrid {
 				out.put(x, y, ' ', tsText, -1)
 			}
 		}
+		m.coins, m.medalAt, m.medalFor = m.coins[:0], image.Rectangle{}, nil
 		m.drawCard(out, sel, v, n)
 	}
 	return out
+}
+
+// drawPlaque draws a family's heading in the case of coins: its name on a
+// plate, its count, and a rule to the edge.
+func (m *caseModel) drawPlaque(out *tGrid, ln caseLine, y int) {
+	lay := m.lay
+	title := " " + clipRunes(ln.title, max(lay.gw-4, 1)) + " "
+	for i, r := range []rune(title) {
+		out.put(lay.gx+i, y, r, tsHi, -1)
+		out.flag(lay.gx+i, y, cfSel|cfBold)
+	}
+	x := lay.gx + len([]rune(title)) + 1
+	x = out.text(x, y, clipRunes(ln.count, max(lay.gx+lay.gw-x, 0)), tsDim, -1)
+	for x++; x < lay.gx+lay.gw; x++ {
+		out.put(x, y, '─', tsDim, -1)
+	}
+}
+
+// drawShelf draws a line of the case of coins: a room for each badge's
+// coin (the panel paints the pictures), the board they stand on, and the
+// picked coin's plate. A family's withheld badges are one coin and a mark
+// that there are more.
+func (m *caseModel) drawShelf(out *tGrid, ln caseLine, y int, sel *caseItem) {
+	lay := m.lay
+	if board := y + lay.th; board < lay.gy+lay.gh {
+		for x := lay.gx; x < lay.gx+lay.gw; x++ {
+			out.put(x, board, '▔', tsDim, -1)
+		}
+	}
+	for _, i := range ln.items {
+		it := &m.items[i]
+		x := lay.gx + it.col*lay.pitchX()
+		if sel != nil && it.id == sel.id {
+			// The picked coin stands on a lit plate, and its part of the
+			// board is bright.
+			for dy := 0; dy < lay.th; dy++ {
+				for dx := 0; dx < lay.tw; dx++ {
+					out.flag(x+dx, y+dy, cfSel)
+				}
+			}
+			if board := y + lay.th; board < lay.gy+lay.gh {
+				for dx := 0; dx < lay.tw; dx++ {
+					out.put(x+dx, board, '▔', tsLane, -1)
+					out.flag(x+dx, board, cfBold)
+				}
+			}
+		}
+		if it.group {
+			out.put(x+lay.tw, y+lay.th/2, '…', tsDim, -1)
+		}
+		m.coins = append(m.coins, caseCoin{image.Rect(x, y, x+lay.tw, y+lay.th), it})
+	}
+	m.drawLadderLabel(out, ln, lay.gx+len(ln.items)*lay.pitchX()+1, y)
 }
 
 // txtCountOfTotal is said the same way on several screens, so it has one id.
@@ -964,6 +1053,26 @@ func (m *caseModel) drawCounts(out *tGrid, v caseView) {
 		}
 	}
 	out.segs(1, 2, w-2, line)
+	if m.lay.pix {
+		m.drawNextTitle(out, 1+segsLen(line)+3)
+	}
+}
+
+// drawNextTitle draws, at the right of the count line, how far the score is
+// toward the next title: the title, a bar and the two numbers. It is left
+// out when the line has no room for it after column from, and at the top
+// title.
+func (m *caseModel) drawNextTitle(out *tGrid, from int) {
+	s := m.sum
+	if s.NextTitle == "" || s.NextTitleAt <= 0 {
+		return
+	}
+	line := []seg{{text: s.NextTitle + " ", st: tsDim}}
+	line = append(line, barSegs(float64(s.Points), float64(s.NextTitleAt), 24, tierInk(config.BadgeGold))...)
+	line = append(line, seg{text: " " + countText(float64(s.Points), float64(s.NextTitleAt)), st: tsHi})
+	if x := m.lay.w - 1 - segsLen(line); x >= from {
+		out.segs(x, 2, segsLen(line), line)
+	}
 }
 
 // drawLadderLabel writes a ladder's name and how far its next rung is, to

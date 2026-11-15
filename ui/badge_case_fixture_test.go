@@ -117,7 +117,7 @@ func caseFixture() ([]game.BadgeView, game.BadgeSummary) {
 
 // drawCase lays the case out and renders it as the panel does.
 func drawCase(views []game.BadgeView, sum game.BadgeSummary, w, h int, v caseView, n int) (*caseModel, caseView, *tGrid) {
-	m := buildCase(views, sum, true, v.tab, caseLayoutFor(w, h, v.tab))
+	m := buildCase(views, sum, true, v.tab, caseLayoutFor(w, h, v.tab, false))
 	if m.selected(v) == nil {
 		v.sel, v.card = m.home(), false
 	}
