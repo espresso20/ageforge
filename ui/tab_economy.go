@@ -153,6 +153,7 @@ func NewEconomyTab() *EconomyTab {
 		return strings.Join(lines, "\n")
 	})
 	t.buildingTV.SetScrollable(false)
+	t.buildingTV.wheel = t.wheelBuildings
 	t.buildingTV.SetBorder(true)
 
 	t.constructionTV = newFitView(func(w, h int) string {
@@ -693,6 +694,27 @@ func (t *EconomyTab) ScrollDown() {
 	}
 	t.bldFirst += max(t.bldShown, 1)
 	t.buildingTV.changed()
+}
+
+// wheelBuildings moves the Buildings list one entry for a turn of the wheel,
+// down for a turn toward the player, and reports whether the list moved.
+func (t *EconomyTab) wheelBuildings(rows int) bool {
+	first := t.bldFirst
+	switch {
+	case rows < 0 && first > 0:
+		first--
+	case rows > 0:
+		_, _, w, _ := t.buildingTV.GetInnerRect()
+		if _, entries := buildingEntries(t.state, w); first+t.bldShown < len(entries) {
+			first++
+		}
+	}
+	if first == t.bldFirst {
+		return false
+	}
+	t.bldFirst = first
+	t.buildingTV.changed()
+	return true
 }
 
 // domainToLabel maps domain strings to friendly display labels.

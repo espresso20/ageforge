@@ -5,6 +5,7 @@
 package window
 
 import (
+	"errors"
 	"log"
 	"math"
 	"runtime"
@@ -85,8 +86,14 @@ func (g *Game) Run() error {
 	if err := steam.Start(); err != nil {
 		log.Printf("steam: %v", err)
 	}
-	mw, mh := ebiten.Monitor().Size()
-	scale := ebiten.Monitor().DeviceScaleFactor()
+	// No display at all (every screen asleep, or a session with none): say
+	// so, where asking a missing monitor for its size would crash.
+	mon := ebiten.Monitor()
+	if mon == nil {
+		return errors.New("no display found: AgeForge needs a screen to open its window")
+	}
+	mw, mh := mon.Size()
+	scale := mon.DeviceScaleFactor()
 	g.scale = scale
 	g.set = g.set.clean(scale)
 	if g.set.Width == 0 {
