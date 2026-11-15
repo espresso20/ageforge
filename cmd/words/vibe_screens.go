@@ -87,7 +87,9 @@ func screenReason(r *row) string {
 		return "" // the map's key hints are named like the screens' are
 	}
 	text := styleTagRe.ReplaceAllString(r.current, "")
-	words := keycapSplit.Split(strings.TrimSpace(text), -1)
+	// A cap may be followed by a note in brackets, "PgUp PgDn (Alt+Up/Dn)",
+	// written as pieces: the piece before the bracket is still a keycap.
+	words := keycapSplit.Split(strings.Trim(text, " \t\n()"), -1)
 	if len(words) > 0 && words[0] != "" {
 		key, ctrl := true, false
 		for _, w := range words {
