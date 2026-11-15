@@ -97,7 +97,7 @@ The Ledger comes in three sizes. Under 100 columns by 30 rows it is one row: the
 
 Every panel you open (`research`, `trade`, `map`, `help` and so on) takes the whole screen but the command bar. Its name is on the top edge, the keys it takes are on the line along its foot, and `Esc` closes it back to the dashboard. The prompt keeps working in most panels. On the panels that are text (Milestones, Army, Trade routes, Factions, Statistics, Logs, Epoch, Civilization History, Buildings and Help), `↑` `↓` `PgUp` `PgDn` `Home` and `End` scroll the panel while the prompt is empty, and anything else you type goes to the prompt. The Wonders, Harbinger and Build Plan panels have keys that are letters (`G`, `A` `B` `I`, `U` `D` `X` `C`), so they keep the keyboard: press `Esc` before you type a command.
 
-In the window, the mouse wheel scrolls a text panel too, whatever is in the prompt, and a click in the command bar puts the cursor at the character you clicked.
+In the window, the mouse wheel scrolls a text panel too, whatever is in the prompt, and a click in the command bar puts the cursor at the character you clicked. Over the dashboard's Buildings list the wheel moves the list one building at a time. While a dialog or a floating window is open, the mouse belongs to it: a click beside it does nothing.
 
 <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a window of 120 columns by 40 rows: the status ribbon and the Ledger across the top; resources at the top left with construction and the People box side by side under them, and the log below; the mini map and the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
 

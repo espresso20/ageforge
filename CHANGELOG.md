@@ -7,6 +7,8 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the mouse wheel over the dashboard's Buildings list moves it one building at a time.
+- In the window, the Badges tab row takes clicks: a click on a tab opens it, and a click on the arrow at an end of the row opens the nearest tab out of sight that way.
 - In the window, the game's dialogs take the mouse: a click presses a button on a confirmation (deleting a save, wiping an account's saves, the save choice), a notice, or the update check. Keys work as before: Tab and the arrows move between buttons, Enter presses, Esc cancels.
 - In the window, the People, Advance and Expeditions panels take the mouse: on People a click switches tabs or picks a card, a work area or a building; on Advance a click picks a pillar (advancing stays on `Enter`); on Expeditions a click on a pin or a party picks it, a double click asks to send an offer, and a click outside the question takes it back. The wheel moves the pick on all three.
 - In the window, the Research and Badges panels take the mouse: a click selects a tech or a badge, a double click opens it, and the wheel scrolls.
@@ -130,6 +132,8 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 
 ### Fixed
+- With a dialog or a floating window open, a click or the wheel beside it no longer reaches the page behind it. A click beside the account confirmation could change the main menu's page.
+- Starting the game with no display to open a window on (every screen asleep, say) reports an error. It used to crash.
 - A popup's border is drawn on the popup's own colour again (the red of a danger dialog, the surface of the others). For a day it was drawn on the page's background.
 - **Retire ended-resource buildings.** Buildings producing ended resources (such as Wood Camps in the Space Age) are now retired on age advancement, save loading, and devmode age jumps: their counts and ruins are zeroed, active build queue and plan items cleared, unlock status removed, and assigned workers returned to the idle pool.
 - **The epoch card reaches your clipboard.** Press `c` on the Epoch screen (or type `epoch card`) to copy the card for Discord. Before, the screen told you to type a command that never got the key. A line on the screen confirms it, and the file is still saved.

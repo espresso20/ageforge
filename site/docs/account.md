@@ -286,7 +286,7 @@ The frame is the tier, so two tiers differ in shape before they differ in color.
 - Tabs run along the top: All, one for each family you have something in sight of, and Next. Next lists the badges you are closest to, nearest first. `Tab` steps through the tabs, and the row scrolls when the window is too narrow for all of them. Once you have reached the last age, every family has a tab.
 - Ladders sit on a line of their own, lowest rung first, with the ladder's name and how far its next rung is beside them. A ladder with no running count (a payroll) names its next rung instead.
 - `Enter` opens the selected badge's detail: the badge at full size with everything the case knows about it. `badges <name>` opens a detail directly, and `badges <family>` opens a family's tab.
-- In the window, the mouse works too: a click selects the badge under the pointer, a double click opens its detail, a click outside the open detail closes it, and the wheel moves the selection up and down.
+- In the window, the mouse works too: a click selects the badge under the pointer, a double click opens its detail, a click outside the open detail closes it, and the wheel moves the selection up and down. A click on a tab opens it, and a click on the arrow at an end of the tab row opens the nearest tab that is out of sight that way.
 
 <figure class="screen" data-screen="badge-detail"><figcaption>One badge's detail: its tier, rarity and points, what it asked for, when it was earned and in which game, and its place on its ladder.</figcaption></figure>
 
