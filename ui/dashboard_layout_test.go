@@ -485,6 +485,44 @@ func TestAClickOnThePanelsListOpensThePanel(t *testing.T) {
 	}
 }
 
+// The wheel over the Resources box turns its page, on for a turn toward the
+// player and back for one away, and stops at the first and the last page.
+func TestTheWheelTurnsTheResourcesBoxPage(t *testing.T) {
+	restoreForge(t)
+	d, pages, _ := stagedDashboard(t, "quantum_age")
+	for _, sz := range layoutSizes {
+		drawnDashboard(t, d, pages, sz[0], sz[1]) // the boxes get their sizes and the state its rows
+		st := newStage(pages, sz[0], sz[1])
+		n := d.economyTab.resPages
+		if n < 2 {
+			continue
+		}
+		x, y, _, _ := d.economyTab.resourceTV.GetInnerRect()
+		st.mouse(kit.Mouse{Kind: kit.MouseMove, X: x + 2, Y: y + 1})
+		wheel := func(rows int) bool {
+			moved := st.mouse(kit.Mouse{Kind: kit.MouseWheel, X: x + 2, Y: y + 1, Wheel: rows})
+			st.paint()
+			return moved
+		}
+		if wheel(-1) || d.economyTab.resPage != 0 {
+			t.Errorf("%dx%d: a turn back on the first page went to page %d", sz[0], sz[1], d.economyTab.resPage)
+		}
+		for i := 1; i < n; i++ {
+			if !wheel(3) || d.economyTab.resPage != i {
+				t.Errorf("%dx%d: turn %d left the box on page %d, want %d", sz[0], sz[1], i, d.economyTab.resPage, i)
+			}
+		}
+		if wheel(1) || d.economyTab.resPage != n-1 {
+			t.Errorf("%dx%d: a turn on from the last page went to page %d", sz[0], sz[1], d.economyTab.resPage)
+		}
+		if !wheel(-1) || d.economyTab.resPage != n-2 {
+			t.Errorf("%dx%d: a turn back left the box on page %d, want %d", sz[0], sz[1], d.economyTab.resPage, n-2)
+		}
+		return
+	}
+	t.Fatal("staging: no size in layoutSizes gives the Resources box more than one page")
+}
+
 // TestPanelsListAlwaysWhole: the Panels list shows every panel at any
 // height the dashboard gives it, in one column when that fits and two when
 // the screen is short, the open panel marked either way.

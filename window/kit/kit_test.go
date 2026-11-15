@@ -346,6 +346,96 @@ func TestTheRootSaysWhetherAWidgetTookTheMouse(t *testing.T) {
 	}
 }
 
+// The click region under the pointer is marked with the chip's ground: just
+// its own text where the line holds another region, the whole width of the
+// box where it holds none, and never a cell that has a ground of its own.
+// Text that takes no clicks marks nothing.
+func TestTheRegionUnderThePointerIsMarked(t *testing.T) {
+	const text = `["a"]one[""] ["b"]two[""]` + "\n" + `["c"]three[""]` + "\n" + `["c"]four [#000000:#ff0000]hot[-:-][""]` + "\nplain"
+	tx := NewText(text)
+	tx.OnRegion = func(string, int) {}
+	r, b := screen(tx, 12, 4)
+	chip := theme.RGBA(theme.RoleChip)
+	marks := func() string {
+		r.Paint(b)
+		var sb strings.Builder
+		for y := 0; y < 4; y++ {
+			for x := 0; x < 12; x++ {
+				if b.At(x, y).Bg == chip {
+					sb.WriteByte('#')
+				} else {
+					sb.WriteByte('.')
+				}
+			}
+			sb.WriteByte('\n')
+		}
+		return sb.String()
+	}
+	const none = "............\n............\n............\n............\n"
+	for _, c := range []struct {
+		what string
+		x, y int
+		want string
+	}{
+		{"before the pointer arrives", -1, -1, none},
+		{"the first region of a line of two", 1, 0, "###.........\n............\n............\n............\n"},
+		{"the second region of that line", 5, 0, "....###.....\n............\n............\n............\n"},
+		{"a region of two whole lines", 1, 1, "............\n############\n#####...####\n............\n"},
+		{"plain text", 1, 3, none},
+	} {
+		if c.x >= 0 {
+			r.Mouse(Mouse{Kind: MouseMove, X: c.x, Y: c.y})
+		}
+		if got := marks(); got != c.want {
+			t.Errorf("%s: marked\n%swant\n%s", c.what, got, c.want)
+		}
+	}
+	r.Mouse(Mouse{Kind: MouseMove, X: 1, Y: 1})
+	r.Mouse(Mouse{Kind: MouseLeave})
+	if got := marks(); got != none {
+		t.Errorf("after the pointer left the mark stayed:\n%s", got)
+	}
+	tx.OnRegion = nil
+	r.Mouse(Mouse{Kind: MouseMove, X: 1, Y: 1})
+	if got := marks(); got != none {
+		t.Errorf("text that takes no clicks marked a region:\n%s", got)
+	}
+}
+
+// A double click is two presses of the left button. A press of another
+// button on the same cell just before does not make the next left press the
+// second of a pair.
+func TestARightPressDoesNotBeginADoubleClick(t *testing.T) {
+	var chose []int
+	l := NewList("zero", "one", "two")
+	l.OnChoose = func(i int) { chose = append(chose, i) }
+	r, _ := screen(l, 8, 3)
+	now := time.Unix(100, 0)
+	r.Now = func() time.Time { return now }
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonRight, X: 2, Y: 1})
+	r.Mouse(Mouse{Kind: MouseRelease, Button: ButtonRight, X: 2, Y: 1})
+	now = now.Add(50 * time.Millisecond)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 1})
+	r.Mouse(Mouse{Kind: MouseRelease, Button: ButtonLeft, X: 2, Y: 1})
+	if len(chose) != 0 || l.Selected() != 1 {
+		t.Errorf("a right press then a left press chose %v (row %d selected), want the row selected and nothing chosen", chose, l.Selected())
+	}
+	// And a right press between the two halves of a double click breaks it.
+	now = now.Add(time.Minute)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 2})
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonRight, X: 2, Y: 2})
+	now = now.Add(50 * time.Millisecond)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 2})
+	if len(chose) != 0 {
+		t.Errorf("left, right, left on one cell chose %v, want nothing chosen", chose)
+	}
+	now = now.Add(50 * time.Millisecond)
+	r.Mouse(Mouse{Kind: MousePress, Button: ButtonLeft, X: 2, Y: 2})
+	if !reflect.DeepEqual(chose, []int{2}) {
+		t.Errorf("two left presses after that chose %v, want row 2", chose)
+	}
+}
+
 func lines(n int) string {
 	var s []string
 	for i := 0; i < n; i++ {

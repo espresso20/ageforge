@@ -304,7 +304,11 @@ func (r *Root) mouse(m Mouse) bool {
 	if m.Kind == MousePress {
 		now := r.now()
 		m.Clicks = 1
-		if m.Button == ButtonLeft && m.Pt() == r.press.pt && now.Sub(r.press.at) < doubleClick {
+		// A double click is two presses of the left button: a press of
+		// another button neither is one nor begins one.
+		if m.Button != ButtonLeft {
+			now = time.Time{}
+		} else if m.Pt() == r.press.pt && now.Sub(r.press.at) < doubleClick {
 			m.Clicks = 2
 			now = time.Time{} // a third press starts again
 		}

@@ -8,6 +8,8 @@ All notable changes to AgeForge are documented here.
 
 ### Added
 - In the window, a right click means Back: it does what `Esc` does on a panel, a dialog or a page. It does nothing on the dashboard with no panel open, so it never takes you out of a game.
+- In the window, a building in the Buildings list and a name in the Panels list light up while the pointer is on them.
+- In the window, the mouse wheel over the dashboard's Resources box turns its page, when it has more than one.
 - In the window, the key buttons along the foot of the Load game, Accounts and Themes pages take clicks: a click on one presses its key.
 - In the window, a click on a building in the dashboard's Buildings list writes its `build` command in the prompt, and a double click builds one. A click on a box of the dashboard opens the panel that is that box in full: the mini map opens the Map, the Ledger opens Advance, the People box People, the Log the full record and Under construction the build plan.
 - In the window, a click on a name in the dashboard's Panels list opens that panel, as typing the name does. What is typed in the prompt stays as it is.
@@ -138,6 +140,7 @@ All notable changes to AgeForge are documented here.
 - The `icons` command, the Nerd Font installer and the `nerd` map glyph set are gone, and the Font Snob badge with them. The window draws with its own fonts, which have no such icons. Option+B and Option+F no longer act as Home and End on an empty prompt.
 
 ### Fixed
+- A right click followed quickly by a left click on the same spot no longer counts as a double click. It could build a building from one left click.
 - On Windows, a failure to start, or to save on the way out, is shown in a message box. The Windows build has no console, so the message used to go nowhere.
 - With a dialog or a floating window open, a click or the wheel beside it no longer reaches the page behind it. A click beside the account confirmation could change the main menu's page.
 - Starting the game with no display to open a window on (every screen asleep, say) reports an error. It used to crash.
