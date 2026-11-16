@@ -29,6 +29,8 @@ type harbingerPanel struct {
 	// inviteArmed is set by the first I press; the second one invites. Invite
 	// cannot be undone, so one stray key must not do it.
 	inviteArmed bool
+	// view holds the buttons laid over the text.
+	view harbingerView
 }
 
 // reset clears the feedback and the Invite confirmation, for a fresh open.
@@ -38,7 +40,9 @@ func (p *harbingerPanel) reset() {
 
 // provider renders the panel for OverlayManager.
 func (p *harbingerPanel) provider(state game.GameState, screenW int) string {
-	return harbingerPanelTextAt(state, screenW, p.note, p.noteGood, p.inviteArmed)
+	p.view.rec = &btnRec{}
+	p.view.text = harbingerPanelTextAt(state, screenW, p.note, p.noteGood, p.inviteArmed, p.view.rec)
+	return p.view.text
 }
 
 // harbingerAction is one of the panel's three answers.
@@ -126,7 +130,7 @@ func harbingerInviteRefusal(st game.GameState) error {
 
 // harbingerPanelTextAt renders the panel for a screen screenW cells wide, so
 // the lines that can run long (the prices) are broken to fit the box.
-func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGood, inviteArmed bool) string {
+func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGood, inviteArmed bool, rec ...*btnRec) string {
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, vibe.Line("ui.overlay_harbinger.harbingerPanelTextAt.01", "═══ Harbinger ═══")) + "\n\n")
 
@@ -134,7 +138,7 @@ func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGo
 	if h == nil {
 		harbingerAbsentText(&sb, state)
 	} else {
-		harbingerPresentText(&sb, state, h, overlayTextWidth(screenW), inviteArmed)
+		harbingerPresentText(&sb, state, h, overlayTextWidth(screenW), inviteArmed, append(rec, nil)[0])
 	}
 
 	if note != "" {
@@ -187,7 +191,7 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 var txtUnavailable = vibe.E("ui.overlay_harbinger.harbingerPresentText.29", "Unavailable: ")
 
 // harbingerPresentText is the panel with a harbinger present.
-func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, width int, inviteArmed bool) {
+func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, width int, inviteArmed bool, rec *btnRec) {
 	fmt.Fprintf(sb, " %s   %s\n", theme.Paint(theme.RoleBright, textfmt.Capitalize(h.Name)),
 		theme.Paint(theme.RoleDim, h.AgeName+vibe.Line("ui.overlay_harbinger.harbingerPresentText.01", " harbinger")))
 	sb.WriteString(" " + theme.Paint(theme.RoleLabel, h.Description) + "\n")
@@ -246,6 +250,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		harbingerLevelText(h.AppeaseLevel, game.HarbingerMaxAppease))
 	sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerPresentText.19", "     Each level multiplies the real chance it strikes by 0.6.")) + "\n")
 	harbingerCostLine(sb, state, width, h.AppeaseBlocked, h.AppeaseCost)
+	rec.reserve(sb, harbingerVerbIndent, width, harbingerPayBtn(state, txtVerbAppease.String(), "appease", h.AppeaseBlocked, h.AppeaseCost))
 	sb.WriteString("\n")
 
 	// Brace.
@@ -266,6 +271,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		sb.WriteString(harbingerGarrisonLine(h) + "\n")
 	}
 	harbingerCostLine(sb, state, width, h.BraceBlocked, h.BraceCost)
+	rec.reserve(sb, harbingerVerbIndent, width, harbingerPayBtn(state, txtVerbBrace.String(), "brace", h.BraceBlocked, h.BraceCost))
 	sb.WriteString("\n")
 
 	// Invite.
@@ -284,6 +290,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		sb.WriteString("     " + theme.Paint(theme.RoleNegative, vibe.Line("ui.overlay_harbinger.harbingerPresentText.30", "Press I again to confirm.")) + "\n")
 	}
 
+	rec.reserve(sb, harbingerVerbIndent, width, harbingerInviteBtn(h))
 	sb.WriteString("\n " + theme.KeycapButton("A", vibe.Line("ui.overlay_harbinger.harbingerPresentText.31", "Appease")) + "  " + theme.KeycapButton("B", vibe.Line("ui.overlay_harbinger.harbingerPresentText.32", "Brace")) + "  " +
 		theme.KeycapButton("I", vibe.Line("ui.overlay_harbinger.harbingerPresentText.33", "Invite (twice)")) + "  " + theme.KeycapButton("Esc", vibe.Line("ui.overlay_harbinger.harbingerPresentText.35", "Close")) + "\n")
 	sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerPresentText.36", " Nothing here expires. The price is the same in every age of the epoch.")) + "\n")

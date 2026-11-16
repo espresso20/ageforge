@@ -54,13 +54,6 @@ func wonderBankable(state game.GameState, cost map[string]float64, bs game.Build
 	return false
 }
 
-// textRow is the row the text at byte off starts on, in a view w cells wide.
-func textRow(text string, off, w int) int {
-	t := &kit.Text{Wrap: kit.WrapChar}
-	t.SetText(safeTags(text[:off]) + "X")
-	return len(t.Lines(w)) - 1
-}
-
 // wonderPad is the room the summary's lines leave before the buttons.
 const wonderPad = 2
 
@@ -83,44 +76,7 @@ func (wv *wondersView) layer(text image.Rectangle, top int) *xgrid {
 		g.actionButton(wonderPad, row, actionSpec{kind: keyPrimary, label: txtWonderBuild.String(), key: "B", cmd: b.buildCmd, off: b.buildOff})
 		g.keyset().keys[len(g.keyset().keys)-1].key = kit.Key{Code: kit.KeyRune, Rune: wonderBuildKey}
 	}
-	if wv.plain != nil && wv.plain() {
-		g.fold()
-	}
 	return g
-}
-
-// over paints the buttons on the text.
-func (wv *wondersView) over(p *kit.Painter, text image.Rectangle, top int) {
-	wv.grid, wv.org = wv.layer(text, top), text.Min
-	if wv.grid == nil {
-		return
-	}
-	pal := newExpPalette()
-	// Only the cells a button covers: the rest is the text underneath.
-	for _, k := range wv.grid.keys {
-		for y := k.r.Min.Y; y < k.r.Max.Y; y++ {
-			for x := k.r.Min.X; x < k.r.Max.X; x++ {
-				p.Put(text.Min.X+x, text.Min.Y+y, wv.grid.c[y*wv.grid.w+x].r, pal.style(wv.grid.c[y*wv.grid.w+x]))
-			}
-		}
-	}
-	wv.pr.paint(p, wv.grid, text.Min, pal)
-}
-
-// mouse gives a press or a move to the buttons.
-func (wv *wondersView) mouse(m kit.Mouse) bool {
-	if wv.grid == nil {
-		return false
-	}
-	return wv.pr.mouse(wv.grid, wv.org, m)
-}
-
-// pointer is the hand over a button a click would press.
-func (wv *wondersView) pointer(at image.Point) kit.Pointer {
-	if wv.grid == nil {
-		return kit.PointerArrow
-	}
-	return wv.pr.pointer(wv.grid, wv.org, at)
 }
 
 // press runs the command of the button that key stands for, as a typed key
@@ -149,10 +105,7 @@ func (wv *wondersView) press(ev *kit.Key) bool {
 // mouse and run their commands through the app. refresh redraws the panel
 // after a key.
 func (wv *wondersView) wire(om *OverlayManager, refresh func()) {
-	wv.pr.wire(om.app)
-	wv.plain = func() bool { return om.plain != nil && om.plain() }
-	om.SetOver("wonders", wv.over)
-	om.SetButtons("wonders", wv.mouse, wv.pointer)
+	wv.attach(om, "wonders", wv.layer)
 	om.SetKeyHandler("wonders", func(ev *kit.Key) *kit.Key {
 		// UI goroutine, no engine lock held (see the harbinger handler).
 		if !wv.handleKey(ev) {

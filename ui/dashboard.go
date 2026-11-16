@@ -130,6 +130,7 @@ type Dashboard struct {
 	mapViews  *mapViews
 	mapPanel  *mapPanel
 	wonders   *wondersView
+	factions  *factionsView
 	epochHall *epochHall
 	// researchPanel is the Research panel, the tech tree as a map
 	// (research_panel.go).
@@ -240,8 +241,10 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// the two strings have to agree exactly. Bare `diplomacy` is routed to the
 	// primary name in input.go so it highlights too; "diplomacy" stays registered
 	// so anything holding the old overlay name still resolves.
-	d.overlayMgr.Register("factions", vibe.E("ui.dashboard.NewDashboard.07", "Factions"), factionsProvider)
-	d.overlayMgr.Register("diplomacy", vibe.E("ui.dashboard.NewDashboard.08", "Factions"), factionsProvider)
+	d.factions = &factionsView{}
+	d.overlayMgr.Register("factions", vibe.E("ui.dashboard.NewDashboard.07", "Factions"), d.factions.provider)
+	d.overlayMgr.Register("diplomacy", vibe.E("ui.dashboard.NewDashboard.08", "Factions"), func(state game.GameState, w int) string { return factionsProvider(state, w) })
+	d.factions.wire(d.overlayMgr)
 	d.wonders = &wondersView{}
 	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)
 	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
@@ -286,6 +289,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		return nil
 	})
 	d.overlayMgr.Register("harbinger", vibe.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
+	d.harbPanel.view.attach(d.overlayMgr, "harbinger", d.harbPanel.view.layer)
 	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
 	d.overlayMgr.SetKeyHandler("harbinger", func(event *kit.Key) *kit.Key {
 		// UI goroutine, no engine lock held: the engine's action methods and

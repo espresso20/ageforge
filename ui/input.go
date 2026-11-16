@@ -2144,7 +2144,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		lines = append(lines, fmt.Sprintf("%s %s", theme.Paint(theme.RoleAccent, def.Name), theme.Paint(theme.RoleDim, "("+def.Key+")")))
 		var sb strings.Builder
-		writeFactionDeals(&sb, f, state, 100)
+		writeFactionDeals(&sb, f, state, 100, def.Key, nil)
 		lines = append(lines, strings.TrimRight(sb.String(), "\n"))
 	}
 	if len(lines) == 0 {

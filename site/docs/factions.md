@@ -312,3 +312,7 @@ An embargo or a raid hurts you more than it hurts them: you lose that civilizati
 - A full set of boons costs buffs, not goods. With five timed boons running, an encounter can still bring a lump of resources or a crew.
 - Gifts add up fast. Six gifts (1.2K gold) take a civilization from 0 to 90 opinion, and with Embassies five take it to the top.
 - Opinion drifts toward zero. Every 260 ticks each civilization not at war with you moves 1 point toward 0, so an alliance left without routes, gifts or embassies slowly cools (the status stays).
+
+## Buttons
+
+In the window each civilization's card carries its verbs as buttons: Gift, Ally, Rival, Embargo, Neutral, Tribute and Raid, and each trade offer has an Accept button. A button the game would refuse is drawn off. Raid asks first, naming the civilization. Each button runs the same `diplomacy` command you can type.
