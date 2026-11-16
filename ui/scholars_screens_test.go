@@ -401,7 +401,7 @@ func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 		"build list":      cmdBuild(nil, ge).Message,
 		"scholars":        HandleCommand("scholars", ge).Message,
 		"research cancel": usageFor("research cancel"),
-		"history labels":  historyProvider(st, 100),
+		"history labels":  historyProvider(ge)(st, 100),
 		"economy buildings": func() string {
 			_, e := buildingEntries(st, 60)
 			var sb strings.Builder

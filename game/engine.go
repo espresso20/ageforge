@@ -311,8 +311,8 @@ type GameEngine struct {
 	legacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus active
 	catastropheHistory []string        // narrative civilization log entries
 
-	// History collector — periodic metric samples for the history overlay.
-	History *HistoryCollector
+	// history is the run's recorder (history.go): its measures and marks.
+	history *RunHistory
 
 	// account is the per-player identity + meta-progression record, loaded once at
 	// boot (the accounts design §2/§8) and held here so the UI/dashboard — already sharing
@@ -470,7 +470,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		awakeningsFired:  make(map[string]bool),
 		survivedEpochs:   make(map[string]bool),
 		legacyBonuses:    make(map[string]bool),
-		History:          NewHistoryCollector(),
+		history:          NewRunHistory(),
 		badges:           newBadgeBook(set),
 	}
 	ge.newRunManagers()
@@ -482,11 +482,20 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	// Startup flavor — the step-by-step onboarding now lives in the Buildings panel
 	// (main-screen polish part 1), so the log stays clean for live events.
 	ge.addLog("event", vibe.Line("game.engine.NewGameEngineWith.01", "Welcome to AgeForge. You have nothing but your hands."))
-	// Subscribe to age advances to record markers in history.
+	// Subscribe to age advances and epoch events to file them as marks.
 	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().
 	ge.Bus.Subscribe(EventAgeAdvanced, func(e EventData) {
 		ageName, _ := e.Payload["new_age"].(string)
-		ge.History.MarkAge(ge.tick, ageName)
+		ge.history.Mark(ge.tick, MarkAge, ageName, 0)
+	})
+	ge.Bus.Subscribe(EventEpochEventFired, func(e EventData) {
+		if kind, _ := e.Payload["event_type"].(string); kind == "catastrophe" {
+			key, _ := e.Payload["epoch_key"].(string)
+			ge.history.Mark(ge.tick, MarkCatastrophe, key, 0)
+			return
+		}
+		key, _ := e.Payload["event_key"].(string)
+		ge.history.Mark(ge.tick, MarkEvent, key, 0)
 	})
 	// Generate this run's master seed once. LoadGame overrides it with the saved
 	// seed; Reset re-rolls a fresh one.
@@ -1532,10 +1541,7 @@ func (ge *GameEngine) doTick() {
 	// Recalculate tick speed from all sources
 	ge.recalculateTickSpeed()
 
-	// Record periodic history sample (every historySampleInterval ticks).
-	if ge.tick%historySampleInterval == 0 {
-		ge.recordHistorySample(ge.tick)
-	}
+	ge.recordHistoryTicks(ge.tick-1, ge.tick)
 }
 
 // finishResearch logs a completed tech and publishes EventResearchDone.
@@ -4861,8 +4867,8 @@ func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.buildQueue = nil
 	ge.plan = nil
 	ge.log = nil
-	// The history overlay is this run's: the ring starts over with the run.
-	ge.History = NewHistoryCollector()
+	// The history is this run's: the recorder starts over with the run.
+	ge.history = NewRunHistory()
 	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
@@ -5112,7 +5118,6 @@ func (ge *GameEngine) GetState() GameState {
 		CatastrophesSuccumbed: succumbed,
 		SuccumbResearchFactor: ge.succumbResearchFactor(),
 		LastPassage:           ge.lastPassageState(prestigeSnap.PendingPoints),
-		History:               ge.History.Clone(),
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
@@ -5242,7 +5247,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	planStartsBefore := ge.runFacts.Counts[config.BadgeEvPlanStarted]
 	ge.away = true
 
-	end := ge.tick + offlineTicks
+	awayFrom := ge.tick
 	gains := make(map[string]float64)
 	var starts planStarts
 	var staffed staffCounts
@@ -5300,9 +5305,10 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		// A fated doom keeps its hour offline: the harbinger comes and the doom
 		// strikes at its tick, and a struck doom waits, pending, for the player.
 		ge.harbingerTickCheck()
-		ge.sampleOfflineTicks(base, base+n, end)
+		ge.recordHistoryTicks(base, base+n)
 	}
 	ge.away = false
+	ge.history.Mark(awayFrom, MarkAway, "", offlineTicks)
 	// What the time away produced is counted as it is on a live tick
 	// (noteProduced, above); the last batch goes now. Then the return: how
 	// long, whether the allowance cut it short, what the build plan started

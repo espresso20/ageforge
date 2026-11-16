@@ -7,22 +7,22 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// historyState is a snapshot with n history samples: population flat at
-// 836, the food rate rising, and two age advances marked by key, as the
-// engine (and every save so far) stores them.
-func historyState(n int) game.GameState {
-	h := &game.HistoryCollector{}
+// historyRecorder holds n history samples: population flat at 836, the food
+// rate rising, and two age advances marked by key, as the engine stores them.
+func historyRecorder(n int) *game.RunHistory {
+	h := game.NewRunHistory()
 	for i := 0; i < n; i++ {
-		h.Samples = append(h.Samples, game.HistorySample{Tick: 10 * (i + 1), Population: 836, FoodRate: float64(i), KnowRate: 111 + float64(i)/float64(n)})
+		h.Record(10*(i+1), map[string]float64{"population": 836, "food_rate": float64(i), "know_rate": 111 + float64(i)/float64(n)})
 	}
-	h.AgeMarkers = []game.AgeMarker{{Tick: 40, AgeName: "stone_age"}, {Tick: 120, AgeName: "bronze_age"}}
-	return game.GameState{History: h}
+	h.Mark(40, game.MarkAge, "stone_age", 0)
+	h.Mark(120, game.MarkAge, "bronze_age", 0)
+	return h
 }
 
 // TestHistoryFooterNamesAges: the footer under the graphs names the ages
 // advanced into, not their keys.
 func TestHistoryFooterNamesAges(t *testing.T) {
-	out := untag(renderHistoryOverlay(historyState(30), 100))
+	out := untag(renderHistoryOverlay(game.GameState{}, historyRecorder(30), 100))
 	if !strings.Contains(out, "Ages: Stone Age → Bronze Age") {
 		t.Errorf("the footer should name the ages:\n%s", lineContaining(out, "Ages:"))
 	}
@@ -52,7 +52,7 @@ func TestHistoryAxisLabels(t *testing.T) {
 		}
 	}
 	// On the panel: the flat population graph carries its number once.
-	out := untag(renderHistoryOverlay(historyState(30), 100))
+	out := untag(renderHistoryOverlay(game.GameState{}, historyRecorder(30), 100))
 	lines := strings.Split(out, "\n")
 	for i, line := range lines {
 		if !strings.HasPrefix(line, "Population") {
@@ -67,5 +67,19 @@ func TestHistoryAxisLabels(t *testing.T) {
 		if n != 1 {
 			t.Errorf("the flat Population graph labels its axis %d times, want once:\n%s", n, strings.Join(lines[i:i+6], "\n"))
 		}
+	}
+}
+
+// TestHistoryNegativeRate: a series that dips below zero draws without
+// panicking and its header keeps the sign.
+func TestHistoryNegativeRate(t *testing.T) {
+	h := game.NewRunHistory()
+	for i, v := range []float64{1, -3.2, -1.5} {
+		h.Record(10*(i+1), map[string]float64{"population": 5, "food_rate": v})
+	}
+	h.Mark(20, game.MarkAge, "bronze_age", 0)
+	out := untag(renderHistoryOverlay(game.GameState{}, h, 100))
+	if !strings.Contains(out, "Food rate") || !strings.Contains(out, "-1.5") {
+		t.Errorf("the negative food rate is not shown:\n%s", out)
 	}
 }

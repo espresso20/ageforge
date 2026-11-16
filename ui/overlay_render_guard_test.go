@@ -181,15 +181,7 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 			Cost: map[string]float64{"knowledge": 1200}},
 	}
 
-	// History with a negative food rate, epochs, legacy and the log.
-	s.History = &game.HistoryCollector{
-		Samples: []game.HistorySample{
-			{Tick: 10, Population: 5, FoodRate: 1, KnowRate: 2, Faith: 3, ProdAll: 0.1, TickSpeed: 1, Morale: 0.5},
-			{Tick: 20, Population: 9, FoodRate: -3.2, KnowRate: 4, Faith: 5, ProdAll: 0.2, TickSpeed: 1.5, Morale: 0.6},
-			{Tick: 30, Population: 12, FoodRate: -1.5, KnowRate: 5, Faith: 8, ProdAll: 0.2, TickSpeed: 1.5, Morale: 0.7},
-		},
-		AgeMarkers: []game.AgeMarker{{Tick: 20, AgeName: "Bronze Age"}},
-	}
+	// Epochs, legacy and the log.
 	s.LegacyBonuses = map[string]bool{"stone_era": true, "iron_era": true}
 	s.CatastrophesEndured, s.CatastrophesSuccumbed = 1, 1
 	s.Stats.AgesReached = []string{"primitive_age", "stone_age", "bronze_age", "industrial_age"}

@@ -10,23 +10,26 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// historyProvider is the OverlayProvider for the history overlay.
-func historyProvider(state game.GameState, w int) string {
-	return renderHistoryOverlay(state, w)
+// historyProvider is the OverlayProvider for the history overlay. It fetches
+// the run's recorder from the engine each time the panel is drawn.
+func historyProvider(engine *game.GameEngine) OverlayProvider {
+	return func(state game.GameState, w int) string {
+		return renderHistoryOverlay(state, engine.History(), w)
+	}
 }
 
 // txtMorale is said the same way on several screens, so it has one id.
 var txtMorale = vibe.E("ui.overlay_history.renderHistoryOverlay.07", "Morale")
 
-func renderHistoryOverlay(state game.GameState, w int) string {
-	if state.History == nil || len(state.History.Samples) < 2 {
+func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) string {
+	if hist == nil || hist.Recent.Len() < 2 {
 		return vibe.Line("ui.overlay_history.renderHistoryOverlay.01", "\n[gray] No history yet. Play for a while and check back.[-]\n")
 	}
 
-	samples := state.History.Samples
-	n := len(samples)
-	firstTick := samples[0].Tick
-	lastTick := samples[n-1].Tick
+	recent := &hist.Recent
+	n := recent.Len()
+	firstTick := recent.TickAt(0)
+	lastTick := recent.TickAt(n - 1)
 
 	// collect age marker ticks and names
 	// A marker holds the age's key (and saves already written hold keys
@@ -34,9 +37,12 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	set := state.Ruleset()
 	var markerTicks []int
 	var markerNames []string
-	for _, m := range state.History.AgeMarkers {
+	for _, m := range hist.Marks {
+		if m.Kind != game.MarkAge || m.Tick < firstTick {
+			continue
+		}
 		markerTicks = append(markerTicks, m.Tick)
-		name := m.AgeName
+		name := m.Key
 		if def, ok := set.Age(name); ok {
 			name = def.Name
 		}
@@ -50,21 +56,22 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	ageCols := AgeMarkerCols(markerTicks, firstTick, lastTick, graphW)
 
 	type metricDef struct {
-		label  string
-		color  string
-		values func(game.HistorySample) float64
-		unit   string
-		rate   bool
+		label string
+		color string
+		key   string
+		scale float64
+		unit  string
+		rate  bool
 	}
 
 	metrics := []metricDef{
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.02", "Population"), "[cyan]", func(s game.HistorySample) float64 { return s.Population }, vibe.Line("ui.overlay_history.renderHistoryOverlay.03", " workers"), false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
-		{txtMorale.String(), "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.09", "Game speed"), "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.02", "Population"), "[cyan]", "population", 1, vibe.Line("ui.overlay_history.renderHistoryOverlay.03", " workers"), false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", "food_rate", 1, "/tick", true},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", "know_rate", 1, "/tick", true},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", "faith", 1, "", false},
+		{txtMorale.String(), "[yellow]", "morale", 100, "%", false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", "prod_all", 100, "%", false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.09", "Game speed"), "[gray]", "tick_speed", 1, "x", false},
 	}
 
 	var sb strings.Builder
@@ -75,8 +82,8 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 
 	for _, m := range metrics {
 		vals := make([]float64, n)
-		for i, s := range samples {
-			vals[i] = m.values(s)
+		for i, v := range recent.Cols[m.key] {
+			vals[i] = float64(v) * m.scale
 		}
 
 		minV, maxV := slices.Min(vals), slices.Max(vals)

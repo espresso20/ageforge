@@ -110,8 +110,6 @@ type GameState struct {
 	// LastPassage is the Cosmic Era's prestige passage: pending choice, the
 	// Endure share and the Cosmic Legacy flag (last_passage.go).
 	LastPassage LastPassageState
-	// History overlay
-	History *HistoryCollector
 	// Morale system
 	Morale    float64 // current morale 0.10–cap
 	MoraleCap float64 // current cap (1.0 + 0.05 per wonder, plus the techs' term)
