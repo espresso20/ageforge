@@ -175,8 +175,11 @@ type AccountStatsView struct {
 	TotalPrestiges       int
 	HighestAge           string
 	CivilizationsStarted int
-	Badges               []BadgeView
-	BadgeSummary         BadgeSummary
+	// FastestAge and BestRun are copies of the account's records.
+	FastestAge   map[string]AgeRecord
+	BestRun      map[string]RunBest
+	Badges       []BadgeView
+	BadgeSummary BadgeSummary
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.
