@@ -287,6 +287,13 @@ func TestRunArchiveFileRoundTripAndDamage(t *testing.T) {
 	if got := reloadAccount(t); recordsJSON(t, got.runs) != recordsJSON(t, acct.runs) || len(got.runs) != 2 {
 		t.Fatalf("the records changed in a save and load: %d", len(got.runs))
 	}
+	backup, err := BackupAccount(acct.AccountID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := os.ReadFile(filepath.Join(backup, runArchiveFileName)); err != nil || string(got) != string(good) {
+		t.Errorf("the backup's run file is not the slot's: %v", err)
+	}
 	var f runArchiveFile
 	if err := json.Unmarshal(good, &f); err != nil {
 		t.Fatal(err)
