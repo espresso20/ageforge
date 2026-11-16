@@ -48,7 +48,7 @@ Population      ↑ 198 workers  min:10       max:198
 
 ## How history is collected
 
-The game records one sample every 10 ticks and keeps the last 300 samples, which is the last 3,000 ticks of the run. A tick takes 2 seconds before any game speed bonus, so at the base speed the graphs cover the last 100 minutes. They show recent trends, not the whole run. When the history is full, each new sample replaces the oldest one. Age advances are stored as markers and drawn across all graphs. Markers from before the window are dropped the next time you advance.
+The game records one sample every 10 ticks and keeps the last 300 samples, which is the last 3,000 ticks of the run. A tick takes 2 seconds before any game speed bonus, so at the base speed the graphs cover the last 100 minutes. They show recent trends, not the whole run. When the history is full, each new sample replaces the oldest one. Age advances are stored as markers and drawn across all graphs. Only markers inside the window are drawn.
 
 Time you spend away from the game is sampled the same way, so the samples stay evenly spaced. The history is saved with your game, so it survives restarts. It starts over with each run: when you prestige, when you succumb to a catastrophe, and when you start a new game. The graphs appear once two samples exist. Until then the panel says there is no history yet.
 

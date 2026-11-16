@@ -1,121 +1,265 @@
 package game
 
-import "slices"
+import (
+	"encoding/base64"
+	"encoding/binary"
+	"encoding/json"
+	"math"
+	"slices"
+)
 
-const historyMaxSamples = 300
-const historySampleInterval = 10 // every 10 ticks (~20s at 1x, ~13s at 1.5x)
+const (
+	historyInterval  = 10  // ticks between samples (~20s at 1x, ~13s at 1.5x)
+	historyRecentLen = 300 // buckets in the recent ring
+	historyRunMax    = 512 // buckets the run tier may hold before it merges
+	historyMarksMax  = 512
+)
 
-// HistorySample is a point-in-time snapshot of key metrics.
-type HistorySample struct {
-	Tick       int     `json:"tick"`
-	Population float64 `json:"population"`
-	FoodRate   float64 `json:"food_rate"`
-	KnowRate   float64 `json:"know_rate"`
-	Faith      float64 `json:"faith"`
-	ProdAll    float64 `json:"prod_all"`
-	TickSpeed  float64 `json:"tick_speed"`
-	Morale     float64 `json:"morale"`
-	AgeOrder   int     `json:"age_order"`
+// The kinds of mark a run's history carries.
+const (
+	MarkAge         = "age"         // Key: the age's key
+	MarkWonder      = "wonder"      // Key: the building's key
+	MarkCatastrophe = "catastrophe" // Key: the epoch's key, or the Last Passage's own
+	MarkHarbinger   = "harbinger"   // Key: the epoch the thread pointed at
+	MarkEvent       = "event"       // Key: the epoch event's key
+	MarkAway        = "away"        // Tick: where the catch-up began; Ticks: the time credited
+)
+
+// historyCounts names the columns whose bucket value is the last sample, not
+// the mean: whole-number counts that only grow within a run.
+var historyCounts = map[string]bool{"buildings": true, "techs": true, "expeditions": true}
+
+// HistoryMark is a dated event of the run.
+type HistoryMark struct {
+	Tick  int    `json:"t"`
+	Kind  string `json:"k"`
+	Key   string `json:"key,omitempty"`
+	Ticks int    `json:"n,omitempty"`
 }
 
-// AgeMarker records when an age advance occurred.
-type AgeMarker struct {
-	Tick    int    `json:"tick"`
-	AgeName string `json:"age_name"`
+// HistoryTier is one resolution of the run's measures: N buckets of Span
+// ticks each, as columns keyed by measure. The last bucket holds Fill samples
+// so far (a full bucket holds Span/historyInterval). A column that starts late
+// reads zero before it.
+type HistoryTier struct {
+	Span int
+	N    int
+	Fill int
+	End  int // tick of the newest sample
+	Cols map[string][]float32
 }
 
-// HistoryCollector accumulates periodic metric samples and age-advance events.
-type HistoryCollector struct {
-	Samples    []HistorySample `json:"samples"`
-	AgeMarkers []AgeMarker     `json:"age_markers"`
+// Len is the number of buckets.
+func (t *HistoryTier) Len() int { return t.N }
+
+// TickAt is the tick bucket i ends at (the open bucket's nominal end).
+func (t *HistoryTier) TickAt(i int) int {
+	if t.N == 0 {
+		return 0
+	}
+	return t.End + t.Span - t.Fill*historyInterval - (t.N-1-i)*t.Span
 }
 
-// Clone returns a deep copy (nil for nil), for snapshots that must not move
-// as the collector keeps sampling.
-func (h *HistoryCollector) Clone() *HistoryCollector {
+// add folds one sample into the tier. A ring tier (limit buckets of one
+// sample each) drops its oldest bucket when full; the run tier merges
+// neighbours in pairs and doubles the span.
+func (t *HistoryTier) add(tick int, vals map[string]float64, limit int, ring bool) {
+	if t.N == 0 || t.Fill >= t.Span/historyInterval {
+		if t.N == limit {
+			t.shrink(ring)
+		}
+		for k, c := range t.Cols {
+			t.Cols[k] = append(c, 0)
+		}
+		t.N++
+		t.Fill = 0
+	}
+	for k, v := range vals {
+		c := t.Cols[k]
+		if c == nil {
+			c = make([]float32, t.N)
+		}
+		if last := &c[t.N-1]; historyCounts[k] {
+			*last = float32(v)
+		} else {
+			*last = float32(float64(*last) + (v-float64(*last))/float64(t.Fill+1))
+		}
+		t.Cols[k] = c
+	}
+	t.Fill++
+	t.End = tick
+}
+
+func (t *HistoryTier) shrink(ring bool) {
+	for k, c := range t.Cols {
+		if ring {
+			t.Cols[k] = c[:copy(c, c[1:])]
+			continue
+		}
+		for i := 0; i < t.N/2; i++ {
+			a, b := c[2*i], c[2*i+1]
+			if !historyCounts[k] {
+				b = float32((float64(a) + float64(b)) / 2)
+			}
+			c[i] = b
+		}
+		t.Cols[k] = c[:t.N/2]
+	}
+	if ring {
+		t.N--
+	} else {
+		t.N /= 2
+		t.Span *= 2
+	}
+}
+
+func (t *HistoryTier) clone() HistoryTier {
+	out := *t
+	out.Cols = make(map[string][]float32, len(t.Cols))
+	for k, c := range t.Cols {
+		out.Cols[k] = slices.Clone(c)
+	}
+	return out
+}
+
+// historyTierJSON is a tier as saved: each column is its float32 values packed
+// little-endian and base64-encoded, so large numbers do not print as decimals.
+type historyTierJSON struct {
+	Span int               `json:"span"`
+	N    int               `json:"n"`
+	Fill int               `json:"fill"`
+	End  int               `json:"end"`
+	Cols map[string]string `json:"cols,omitempty"`
+}
+
+func (t HistoryTier) MarshalJSON() ([]byte, error) {
+	out := historyTierJSON{Span: t.Span, N: t.N, Fill: t.Fill, End: t.End, Cols: make(map[string]string, len(t.Cols))}
+	for k, c := range t.Cols {
+		b := make([]byte, 4*len(c))
+		for i, v := range c {
+			binary.LittleEndian.PutUint32(b[4*i:], math.Float32bits(v))
+		}
+		out.Cols[k] = base64.StdEncoding.EncodeToString(b)
+	}
+	return json.Marshal(out)
+}
+
+// UnmarshalJSON reads a tier back. A tier that does not read (a column of the
+// wrong length, bad base64) comes back empty: the history is a record, and a
+// damaged one must not stop a save from loading.
+func (t *HistoryTier) UnmarshalJSON(data []byte) error {
+	var in historyTierJSON
+	*t = HistoryTier{Span: historyInterval, Cols: map[string][]float32{}}
+	if json.Unmarshal(data, &in) != nil || in.Span < historyInterval || in.N < 0 {
+		return nil
+	}
+	cols := make(map[string][]float32, len(in.Cols))
+	for k, s := range in.Cols {
+		b, err := base64.StdEncoding.DecodeString(s)
+		if err != nil || len(b) != 4*in.N {
+			return nil
+		}
+		c := make([]float32, in.N)
+		for i := range c {
+			c[i] = math.Float32frombits(binary.LittleEndian.Uint32(b[4*i:]))
+		}
+		cols[k] = c
+	}
+	*t = HistoryTier{Span: in.Span, N: in.N, Fill: in.Fill, End: in.End, Cols: cols}
+	return nil
+}
+
+// RunHistory is the recorder: the recent ring at the sampling cadence, the
+// whole run in at most historyRunMax buckets, and the run's marks.
+type RunHistory struct {
+	Recent HistoryTier   `json:"recent"`
+	Run    HistoryTier   `json:"run"`
+	Marks  []HistoryMark `json:"marks,omitempty"`
+}
+
+// NewRunHistory returns an empty recorder.
+func NewRunHistory() *RunHistory {
+	return &RunHistory{
+		Recent: HistoryTier{Span: historyInterval, Cols: map[string][]float32{}},
+		Run:    HistoryTier{Span: historyInterval, Cols: map[string][]float32{}},
+	}
+}
+
+// Record takes the sample for tick into both tiers.
+func (h *RunHistory) Record(tick int, vals map[string]float64) {
+	h.Recent.add(tick, vals, historyRecentLen, true)
+	h.Run.add(tick, vals, historyRunMax, false)
+}
+
+// Mark files a dated event. Past historyMarksMax the oldest event goes, then
+// the oldest away mark; ages, wonders, catastrophes and harbingers stay.
+func (h *RunHistory) Mark(tick int, kind, key string, ticks int) {
+	h.Marks = append(h.Marks, HistoryMark{Tick: tick, Kind: kind, Key: key, Ticks: ticks})
+	if len(h.Marks) <= historyMarksMax {
+		return
+	}
+	for _, kind := range []string{MarkEvent, MarkAway} {
+		if i := slices.IndexFunc(h.Marks, func(m HistoryMark) bool { return m.Kind == kind }); i >= 0 {
+			h.Marks = slices.Delete(h.Marks, i, i+1)
+			return
+		}
+	}
+}
+
+// Clone is a deep copy, nil for nil.
+func (h *RunHistory) Clone() *RunHistory {
 	if h == nil {
 		return nil
 	}
-	return &HistoryCollector{
-		Samples:    slices.Clone(h.Samples),
-		AgeMarkers: slices.Clone(h.AgeMarkers),
-	}
+	return &RunHistory{Recent: h.Recent.clone(), Run: h.Run.clone(), Marks: slices.Clone(h.Marks)}
 }
 
-// NewHistoryCollector returns an empty collector.
-func NewHistoryCollector() *HistoryCollector {
-	return &HistoryCollector{}
+// History returns a copy of the run's recorder. The panel fetches it while it
+// is open; the state snapshot does not carry it.
+func (ge *GameEngine) History() *RunHistory {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.history.Clone()
 }
 
-// Sample records a snapshot. Called from doTick() every historySampleInterval ticks.
-func (h *HistoryCollector) Sample(tick int, s HistorySample) {
-	if h == nil {
-		return
-	}
-	s.Tick = tick
-	if len(h.Samples) >= historyMaxSamples {
-		h.Samples = h.Samples[1:] // ring: drop oldest
-	}
-	h.Samples = append(h.Samples, s)
-}
-
-// MarkAge records an age advance event and prunes markers outside the sample window.
-func (h *HistoryCollector) MarkAge(tick int, ageName string) {
-	if h == nil {
-		return
-	}
-	h.AgeMarkers = append(h.AgeMarkers, AgeMarker{Tick: tick, AgeName: ageName})
-	// keep only markers that fall within the current sample window
-	if len(h.Samples) > 0 {
-		oldest := h.Samples[0].Tick
-		kept := h.AgeMarkers[:0]
-		for _, m := range h.AgeMarkers {
-			if m.Tick >= oldest {
-				kept = append(kept, m)
-			}
-		}
-		h.AgeMarkers = kept
-	}
-}
-
-// recordHistorySample takes the sample for tick from the engine's state now,
-// as live play does every historySampleInterval ticks. It reads engine fields
-// directly, with no GetState() call. Callers hold the write lock.
-func (ge *GameEngine) recordHistorySample(tick int) {
-	ageOrderMap := ge.progress.GetAgeOrder()
-	ageOrder := ageOrderMap[ge.age]
+// historyValues is every measure now. A resource's rate is a column once the
+// run has met it (the resource is unlocked). Callers hold the lock.
+func (ge *GameEngine) historyValues() map[string]float64 {
 	snap := ge.Resources.Snapshot()
-	foodRate := 0.0
-	knowRate := 0.0
-	if fr, ok := snap["food"]; ok {
-		foodRate = fr.Rate
+	owned := 0
+	for _, c := range ge.Buildings.counts {
+		owned += c
 	}
-	knowRate = ge.researchPerTick
-	faith := snap["faith"].Amount
-	ge.History.Sample(tick, HistorySample{
-		Population: float64(ge.popLocked()),
-		FoodRate:   foodRate,
-		KnowRate:   knowRate,
-		Faith:      faith,
-		ProdAll:    ge.bonusPoolLocked(ge.buildResolver(), "production_all").Applied,
-		TickSpeed:  ge.tickSpeedBonus,
-		Morale:     ge.morale,
-		AgeOrder:   ageOrder,
-	})
+	vals := map[string]float64{
+		"population":  float64(ge.popLocked()),
+		"food_rate":   snap["food"].Rate,
+		"know_rate":   ge.researchPerTick,
+		"faith":       snap["faith"].Amount,
+		"morale":      ge.morale,
+		"prod_all":    ge.bonusPoolLocked(ge.buildResolver(), "production_all").Applied,
+		"tick_speed":  ge.tickSpeedBonus,
+		"buildings":   float64(owned),
+		"techs":       float64(ge.Research.ResearchedCount()),
+		"expeditions": float64(ge.Military.returnsMade),
+	}
+	for key, r := range snap {
+		if r.Unlocked {
+			vals["rate."+key] = r.Rate
+		}
+	}
+	return vals
 }
 
-// sampleOfflineTicks takes the samples live play would have taken on the ticks
-// (from, to] that offline catch-up passed, so the samples stay evenly spaced in
-// ticks. The History panel draws samples by index and places age markers by
-// tick, and the two agree only over an even spacing. Each sample is taken at the
-// end of the step it falls in. Only the ticks the ring keeps are taken: the
-// last historyMaxSamples samples of the span, which ends at end. Earlier ones
-// would be dropped before anything reads them.
-func (ge *GameEngine) sampleOfflineTicks(from, to, end int) {
-	keep := end - historyMaxSamples*historySampleInterval
-	for t := max(from, keep) + 1; t <= to; t++ {
-		if t%historySampleInterval == 0 {
-			ge.recordHistorySample(t)
+// recordHistoryTicks takes the samples for the ticks (from, to] from the
+// engine's state now, one per historyInterval, as live play takes one on each
+// such tick. Offline catch-up calls it once a step, so the span holds the
+// step's end values. Callers hold the write lock.
+func (ge *GameEngine) recordHistoryTicks(from, to int) {
+	var vals map[string]float64
+	for t := from/historyInterval*historyInterval + historyInterval; t <= to; t += historyInterval {
+		if vals == nil {
+			vals = ge.historyValues()
 		}
+		ge.history.Record(t, vals)
 	}
 }
