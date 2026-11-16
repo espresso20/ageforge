@@ -109,6 +109,10 @@ func tradePage(state game.GameState) deckPage {
 		pg.Notes = append(pg.Notes, deckLine{Value: vibe.Line("ui.overlay_trade.tradePage.24", "No trade routes in this age yet.")})
 	}
 
+	if sec, ok := blackMarketSection(state); ok {
+		pg.Sections = append(pg.Sections, sec)
+	}
+
 	// Civilization opinion lives on the Factions panel only. This panel used
 	// to carry its own copy, which went stale.
 	pg.Sections = append(pg.Sections, deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.25", "Factions"), Cards: []deckCard{{

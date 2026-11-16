@@ -41,6 +41,18 @@ type deckCard struct {
 	Danger bool
 	// Quiet draws the title dim: a card that is done with, or out of reach.
 	Quiet bool
+	// Chips is a row of small buttons under the card's lines, wrapped to the
+	// card's width, each with a command of its own.
+	Chips []deckChip
+	// Stop marks a place a scene draws off its roads: not one of the routes.
+	Stop bool
+}
+
+// deckChip is a small button on a card: the word on it, the command a click
+// runs, and whether it is off (drawn, never run).
+type deckChip struct {
+	Word, Command string
+	Off           bool
 }
 
 // deckSection is a named run of cards.
@@ -159,7 +171,37 @@ func (c *deckCard) height(cw int, picked bool) int {
 	if c.Why != "" {
 		h += len(deckWrap(c.Why, cw-4))
 	}
-	return h
+	_, rows := layChips(c.Chips, cw-4)
+	return h + rows
+}
+
+// layChips is where each chip goes in a block w cells wide, as an offset
+// from its corner, and the rows the block takes: a chip is its word with a
+// space either side, one cell apart, wrapping to the next row at the edge.
+func layChips(chips []deckChip, w int) (at []image.Point, rows int) {
+	x, y := 0, 0
+	for _, c := range chips {
+		cw := min(runeLen(c.Word), max(w-2, 1)) + 2
+		if x > 0 && x+cw > w {
+			x, y = 0, y+1
+		}
+		at = append(at, image.Pt(x, y))
+		x += cw + 1
+	}
+	if len(chips) > 0 {
+		rows = y + 1
+	}
+	return at, rows
+}
+
+// deckChips draws chips in a block w cells wide with its corner at (x, y)
+// and returns the rows it took.
+func (g *xgrid) deckChips(x, y, w int, chips []deckChip) int {
+	at, rows := layChips(chips, w)
+	for i, c := range chips {
+		g.chip(x+at[i].X, y+at[i].Y, fitText(c.Word, max(w-2, 1)), keyAccent, c.Command, "", "", c.Off)
+	}
+	return rows
 }
 
 // deckColumns is how many cards go side by side in inner cells, and how wide
@@ -373,6 +415,7 @@ func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) 
 			y++
 		}
 	}
+	y += g.deckChips(x+2, y, cw-4, c.Chips)
 	if c.Command != "" {
 		g.deckAction(x+2, y, c, picked, y+actionRows < r.Max.Y)
 	}
