@@ -115,7 +115,6 @@ type buildBox struct {
 	// the layout
 	grid   *xgrid
 	w, h   int
-	sized  bool
 	dirty  bool
 	placed []placedCard
 	more   int // the grid row of the quiet row, -1 for none
@@ -228,7 +227,7 @@ func (b *buildBox) pickedLine() string {
 	return ""
 }
 
-// innerW and innerH are the cells inside the box's frame.
+// inner is the cells inside the box's frame.
 func (b *buildBox) inner() (w, h int) { return b.w - 2, b.h - 2 }
 
 // ===== Layout =====
@@ -241,7 +240,6 @@ func (b *buildBox) Layout(r image.Rectangle) {
 		b.grid = nil
 		return
 	}
-	b.sized = true
 	if b.grid == nil || w != b.w || h != b.h || b.dirty {
 		b.draw(w, h)
 	}
@@ -338,7 +336,11 @@ func (b *buildBox) draw(w, h int) {
 	top := 3
 	if b.st.CanGatherByHand() {
 		tall := ih >= gatherTallRows
-		gx := 2
+		rowH := 1
+		if tall {
+			rowH = actionRows
+		}
+		gx, gy := 2, top
 		for _, res := range []string{"food", "wood", "stone"} {
 			rs, ok := b.st.Resources[res]
 			if !ok || !rs.Unlocked {
@@ -346,21 +348,25 @@ func (b *buildBox) draw(w, h int) {
 			}
 			name := vibe.Sprintf("ui.dash_cards_box.draw.01", "Gather %s", rs.Name)
 			cmd := command("gather", res)
+			word := " " + name + " "
+			wide := runeLen(word)
 			if tall {
-				gx = g.actionButton(gx, top, actionSpec{kind: keyPlain, label: name, cmd: cmd}) + 1
+				wide = actionW(name, "", signNone)
+			}
+			if gx > 2 && gx+wide > w-1 {
+				gx, gy = 2, gy+rowH+min(1, rowH-1)
+			}
+			if tall {
+				gx = g.actionButton(gx, gy, actionSpec{kind: keyPlain, label: name, cmd: cmd}) + 1
 				continue
 			}
-			word := " " + name + " "
-			r := image.Rect(gx, top, gx+runeLen(word), top+1)
-			g.put(gx, top, word, xKeycap)
+			r := image.Rect(gx, gy, gx+wide, gy+1)
+			g.put(gx, gy, word, xKeycap)
 			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keySteel, cmd: cmd})
 			gx = r.Max.X + 1
 		}
-		if gx > 2 {
-			top += 1 + actionRows
-			if !tall {
-				top = 5
-			}
+		if gx > 2 || gy > top {
+			top = gy + rowH + 1
 		}
 	}
 	b.strip = &keySet{keys: append([]xkey(nil), set.keys[stripFrom:]...), plain: g.plain, glyph: set.glyph}

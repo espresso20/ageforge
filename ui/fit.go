@@ -2,7 +2,6 @@ package ui
 
 import (
 	"image"
-	"regexp"
 	"strings"
 
 	"github.com/espresso20/ageforge/window/kit"
@@ -30,20 +29,6 @@ func overlayTextWidth(screenW int) int {
 // glue stands for a space that must not break: wrapWords keeps the words on
 // either side of it together and prints it as a space.
 const glue = "\x1f"
-
-// rateInText finds a rate written in prose: a signed number, a space, then
-// what it is a rate of ("+0.008 faith/tick", "+13.1K gold/tick").
-var rateInText = regexp.MustCompile(`([+-][0-9][0-9.,]*\pL{0,2}) (\S+/tick)`)
-
-// crewInText finds the crew a building's rate is quoted for: "(3 workers)".
-var crewInText = regexp.MustCompile(`\((\d+) (workers?\))`)
-
-// glueRates keeps every rate in s whole when it is wrapped: the number
-// stays with its unit, and a crew's count with its word.
-func glueRates(s string) string {
-	s = rateInText.ReplaceAllString(s, "${1}"+glue+"${2}")
-	return crewInText.ReplaceAllString(s, "(${1}"+glue+"${2}")
-}
 
 // wrapLines packs words into lines at most width cells wide, one space
 // between words, as size measures them. A word wider than the width gets a

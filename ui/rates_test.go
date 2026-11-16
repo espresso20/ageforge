@@ -55,7 +55,7 @@ func TestResourceRowsWriteRatesPerSecond(t *testing.T) {
 		ms   int
 		want string
 	}{
-		{1, 2000, "+0.5/s"},
+		{1, 2000, "+0.50/s"},
 		{13.9, 1000, "+13.9/s"},
 		{-0.04, 1000, "-0.04/s"},
 		{0.0001, 1000, "+0.01/min"},

@@ -78,7 +78,7 @@ func (t *EconomyTab) retitle() {
 // NewEconomyTab constructs the economy tab widget tree: the left column
 // (econColumn: resources, construction and, once the Dashboard adds it, the
 // log) and the build cards, side by side (econLeftW shares the width).
-// app is what the cards' buttons press through; nil for a tab drawn alone.
+// app is what the cards' buttons press through.
 func NewEconomyTab(app *appLoop) *EconomyTab {
 	t := &EconomyTab{resPages: 1}
 
@@ -459,13 +459,4 @@ var domainToLabel = map[string]vibe.Entry{
 	"engineering": vibe.E("ui.tab_economy.domainToLabel.05", "Engineering"),
 	"hacker":      vibe.E("ui.tab_economy.domainToLabel.06", "Hacker"),
 	"astronaut":   vibe.E("ui.tab_economy.domainToLabel.07", "Astronaut"),
-}
-
-// workerAssignBar returns a ▓/░ bar width cells wide for assigned/capacity.
-// Filled portion uses BarFillColor (Accent role), empty uses BarEmptyColor (Dim role).
-func workerAssignBar(assigned, capacity, width int) string {
-	if capacity <= 0 {
-		return BarEmptyColor() + strings.Repeat("░", width) + "[-]"
-	}
-	return progressCells(float64(assigned)/float64(capacity), width)
 }

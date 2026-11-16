@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -660,5 +661,35 @@ func TestCardsDrawPictures(t *testing.T) {
 	// One picture a card, and one more for each button, the buy keys and the gather buttons.
 	if want := 2 * len(d.economyTab.buildBox.placed); pics < want {
 		t.Errorf("%d pictures for %d cards, want at least %d", pics, len(d.economyTab.buildBox.placed), want)
+	}
+}
+
+// In the plain glyph tier the box is ASCII, cards and all, with and without
+// pictures; with pictures the cells under a picture hold the text only.
+func TestCardsInThePlainTier(t *testing.T) {
+	for _, pix := range []bool{false, true} {
+		was := pictureCell
+		if pix {
+			pictureCell = func() (int, int) { return 10, 21 }
+		}
+		d, st, _ := medievalTown(t, 160, 45)
+		s := d.mapSettings()
+		s.Tier = mapmodel.TierASCII
+		d.mapLocal = &s
+		d.refresh()
+		st.paint()
+		bx, by, bw, bh := d.economyTab.buildBox.GetRect()
+		var left []string
+		for y := by; y < by+bh; y++ {
+			for x := bx; x < bx+bw; x++ {
+				if c := st.buf.At(x, y); c.R >= 0x80 {
+					left = append(left, string(c.R))
+				}
+			}
+		}
+		if len(left) > 0 {
+			t.Errorf("pictures %v: the plain tier left %d marks that are not ASCII: %v", pix, len(left), left[:min(len(left), 12)])
+		}
+		pictureCell = was
 	}
 }
