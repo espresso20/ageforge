@@ -3541,7 +3541,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 	if def.MaxCount == 1 {
 		for _, item := range ge.buildQueue {
 			if item.BuildingKey == key {
-				return vibe.Errorf("game.engine.startBuildPaid.02", "%s is already under construction (%s left).", def.Name, ge.durationLocked(item.TicksLeft))
+				return underConstructionErr(def.Name, ge.durationLocked(item.TicksLeft))
 			}
 		}
 	}
@@ -3979,47 +3979,20 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if ge.age == "primitive_age" {
-		return vibe.Errorf("game.engine.SellBuilding.02", "You cannot sell buildings in the %s.", ge.rules.Name(rules.KindAge, "primitive_age"))
+	if err := sellAgeErr(ge.rules, ge.age); err != nil {
+		return err
 	}
 
 	def, ok := ge.rules.Building(key)
 	if !ok {
 		return ge.unknownBuildingErr(key)
 	}
-
-	if def.Category == "wonder" {
-		return vibe.Errorf("game.engine.SellBuilding.03", "Wonders cannot be sold.")
-	}
-	// Storage is permanent, like wonders (see isDestroyable). Once its age has
-	// passed the age lock never lets it be rebuilt, and an age's first storage
-	// copy can cost more than the storage left after a sale, so a sold copy
-	// (even this age's, sold just before advancing) could leave no way to
-	// raise a cap ever again.
-	if def.Category == "storage" {
-		return vibe.Errorf("game.engine.SellBuilding.04", "Storage cannot be sold: once its age has passed, it can never be rebuilt.")
-	}
-	// Knowledge buildings are the knowledge store, spared the same way (see
-	// isDestroyable). Selling one shrinks that store for good, and a tech
-	// priced over the smaller store could never be started.
-	if def.Scholars > 0 {
-		return vibe.Errorf("game.engine.SellBuilding.05", "Knowledge buildings cannot be sold: once its age has passed, it can never be rebuilt.")
-	}
-
 	current := ge.Buildings.GetCount(key)
-	if current == 0 {
-		return vibe.Errorf("game.engine.SellBuilding.06", "You have no %s to sell.", def.Name)
+	if err := sellBlockErr(def, current, ge.Buildings.GetQueueCount(key, ge.buildQueue) > 0); err != nil {
+		return err
 	}
-
 	if n > current {
 		n = current
-	}
-
-	// Check build queue — reject if any copy of this building is queued
-	for _, item := range ge.buildQueue {
-		if item.BuildingKey == key {
-			return vibe.Errorf("game.engine.SellBuilding.07", "A %s is still under construction. Sell after it is finished.", def.Name)
-		}
 	}
 
 	// Compute refund before removing
@@ -5471,11 +5444,11 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 	}
 	target, older := ge.Buildings.UpgradeTarget(key)
 	if !older {
-		return vibe.Errorf("game.engine.upgradeBuildingLocked.01", "%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
+		return noUpgradeErr(oldDef.Name)
 	}
 	held := ge.Buildings.GetCount(key)
 	if held <= 0 {
-		return vibe.Errorf("game.engine.upgradeBuildingLocked.02", "You have no %s to upgrade.", oldDef.Name)
+		return noneToUpgradeErr(oldDef.Name)
 	}
 	limit := held
 	if !all && count > 0 {
@@ -5527,15 +5500,9 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 // payment, and the move. The copy keeps its workers; target is what the key's
 // line has for the age. It returns the price paid.
 func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.BuildingDef) (map[string]float64, error) {
-	if err := ge.upgradeTechErr(target); err != nil {
+	cost, err := ge.upgradeCheckLocked(key, oldDef, target)
+	if err != nil {
 		return nil, err
-	}
-	if ge.Buildings.UpgradeRoom(target.Key, 1, ge.buildQueue) <= 0 {
-		return nil, vibe.Errorf("game.engine.upgradeOneLocked.01", "%s is at its max count of %d.", target.Name, target.MaxCount)
-	}
-	cost := ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)
-	if !ge.Resources.CanAfford(cost) {
-		return nil, vibe.Errorf("game.engine.upgradeOneLocked.02", "Cannot afford to upgrade %s: need %s.", articleName(oldDef.Name), ge.shortfallText(cost))
 	}
 	ge.Resources.Pay(cost)
 
@@ -5544,6 +5511,23 @@ func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.Buildin
 	ge.Buildings.counts[target.Key]++
 	ge.Buildings.unlocked[target.Key] = true
 	ge.moveUpgradedWorkers(key, held, oldDef, target)
+	return cost, nil
+}
+
+// upgradeCheckLocked is the price of upgrading the next copy of key to target
+// and, when that cannot be done now, why: the tech, the target's limit, the
+// price. Nothing is paid or moved.
+func (ge *GameEngine) upgradeCheckLocked(key string, oldDef, target config.BuildingDef) (map[string]float64, error) {
+	if err := ge.upgradeTechErr(target); err != nil {
+		return nil, err
+	}
+	cost := ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)
+	if ge.Buildings.UpgradeRoom(target.Key, 1, ge.buildQueue) <= 0 {
+		return cost, vibe.Errorf("game.engine.upgradeOneLocked.01", "%s is at its max count of %d.", target.Name, target.MaxCount)
+	}
+	if !ge.Resources.CanAfford(cost) {
+		return cost, vibe.Errorf("game.engine.upgradeOneLocked.02", "Cannot afford to upgrade %s: need %s.", articleName(oldDef.Name), ge.shortfallText(cost))
+	}
 	return cost, nil
 }
 
