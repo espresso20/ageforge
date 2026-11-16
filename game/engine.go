@@ -2280,6 +2280,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		reached, _ := ge.rules.Age(newAge)
 		acct.RecordAgeReached(newAge, reached.Order)
+		acct.RecordAgeTime(newAge, ge.tick, badgeClock(), ge.activeSaveName)
+		ge.recordRunBestsLocked(acct)
 	}
 	// The reports the age badges are judged on (badge_hooks.go).
 	ge.reportAgeReached(oldAge, newAge)
@@ -4790,6 +4792,18 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.publishRunEnded(end, runStarted)
 }
 
+// recordRunBestsLocked offers the run's counts to the account's records. It runs under
+// the write lock, so it only reads the engine's own fields and calls the in-memory
+// account method.
+func (ge *GameEngine) recordRunBestsLocked(acct *Account) {
+	acct.RecordRunBests(map[string]int{
+		RunBestBuilt:       ge.Stats.TotalBuilt,
+		RunBestRecruited:   ge.Stats.TotalRecruited,
+		RunBestResearched:  len(ge.Research.researched),
+		RunBestExpeditions: ge.Military.completedCount,
+	}, badgeClock(), ge.activeSaveName)
+}
+
 // resetRunLocked is the fresh-run block a prestige (completePrestige) and a
 // Succumb share: every manager is built anew, in this order (the constructors
 // are order-sensitive, so a save written after a reset keeps its bytes), and the
@@ -4799,6 +4813,11 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 // bonus. Bus intentionally kept: dashboard subscriptions must survive across
 // resets. Caller holds the write lock.
 func (ge *GameEngine) resetRunLocked(morale float64) {
+	// Every run ends here (a prestige, a Succumb, a new game): its counts are offered
+	// to the account's records before they are cleared.
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		ge.recordRunBestsLocked(acct)
+	}
 	ge.tick = 0
 	ge.runFacts = RunFacts{}
 	ge.age = "primitive_age"
@@ -5097,6 +5116,8 @@ func (ge *GameEngine) GetState() GameState {
 				TotalPrestiges:       s.TotalPrestiges,
 				HighestAge:           s.HighestAge,
 				CivilizationsStarted: s.CivilizationsStarted,
+				FastestAge:           s.FastestAge,
+				BestRun:              s.BestRun,
 				Badges:               badges,
 				BadgeSummary:         summary,
 			}
