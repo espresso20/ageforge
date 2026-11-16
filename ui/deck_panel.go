@@ -58,7 +58,7 @@ func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.G
 	p.run = d.runLine
 	p.prompt = func() string { return d.inputField.GetText() }
 	p.toPrompt = d.handToPrompt
-	p.buttons.press = d.app.Key
+	p.buttons.wire(d.app)
 	d.decks[name] = p
 	d.overlayMgr.RegisterWidget(name, title, p.open, p.update)
 	return p

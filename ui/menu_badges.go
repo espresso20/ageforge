@@ -38,7 +38,7 @@ func (b *menuBadges) Key(k kit.Key) bool {
 // returnPage when it is closed.
 func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) {
 	p := newBadgePanel()
-	p.buttons.press = app.Key
+	p.buttons.wire(app)
 	p.settings = func() mapSettings { return resolveMapSettings(engine.Account()) }
 	// The case reads a snapshot's account part and nothing else of it.
 	st := game.GameState{}
@@ -60,22 +60,20 @@ func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, r
 		pages.RemovePage(menuBadgesPage)
 		pages.SwitchToPage(returnPage)
 	}
-	if p.motion {
-		go func() {
-			tk := time.NewTicker(coinStep)
-			defer tk.Stop()
-			for {
-				select {
-				case <-tk.C:
-					if p.moving.Load() {
-						app.QueueUpdateDraw(func() {})
-					}
-				case <-stop:
-					return
+	go func() {
+		tk := time.NewTicker(coinStep)
+		defer tk.Stop()
+		for {
+			select {
+			case <-tk.C:
+				if p.moving.Load() || app.feel.busy() {
+					app.QueueUpdateDraw(func() {})
 				}
+			case <-stop:
+				return
 			}
-		}()
-	}
+		}
+	}()
 	pages.AddPage(menuBadgesPage, b, true, true)
 	app.SetFocus(b)
 }

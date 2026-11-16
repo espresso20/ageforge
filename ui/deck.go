@@ -265,9 +265,15 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deck
 			g.hits = append(g.hits, xhit{ht.id, ht.n, r})
 		}
 	}
+	shift := image.Pt(2, 1-scroll)
 	for _, k := range tall.keys {
-		if r := k.r.Add(image.Pt(2, 1-scroll)).Intersect(view); !r.Empty() {
-			g.keys = append(g.keys, xkey{k.key, r})
+		if r := k.r.Add(shift).Intersect(view); !r.Empty() {
+			k.r = r
+			// A key cut by the view is only a hit; a whole one keeps its look.
+			if k.cap, k.word = k.cap.Add(shift), k.word.Add(shift); !k.cap.In(view) {
+				k.cap, k.word = image.Rectangle{}, image.Rectangle{}
+			}
+			g.keys = append(g.keys, k)
 		}
 	}
 	if total > viewH {

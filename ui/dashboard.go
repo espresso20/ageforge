@@ -212,7 +212,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.badgePanel.settings = d.mapSettings
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
-	d.badgePanel.buttons.press = d.app.Key
+	d.badgePanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
 	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
@@ -220,7 +220,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.settings = d.mapSettings
 	d.expPanel.prompt = d.researchPanel.prompt
 	d.expPanel.toPrompt = d.handToPrompt
-	d.expPanel.buttons.press = d.app.Key
+	d.expPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
 	d.registerDeck("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeRoads
 	// The Factions panel, under two names pointing at one provider (the
@@ -249,7 +249,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// the command bar as well.
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.handToPrompt
-	d.peoplePanel.buttons.press = d.app.Key
+	d.peoplePanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
@@ -354,7 +354,7 @@ func (d *Dashboard) build() {
 	// The header at the top: the account, the age, the people, the way to
 	// the next age (headerView).
 	d.toastMgr = NewToastManager()
-	d.headerTV = newHeaderBox(d.headerView, func() bool { return headerPlain(d.mapSettings()) }, d.runLine, d.app.Key)
+	d.headerTV = newHeaderBox(d.headerView, func() bool { return headerPlain(d.mapSettings()) }, d.runLine, d.app)
 
 	// Subscribe to events for toasts
 	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
@@ -801,9 +801,9 @@ func (d *Dashboard) StartUpdates() {
 				// The open Map panel animates between refreshes: a redraw
 				// is enough, since its frame counter runs on the clock.
 				// So does the badge case, while it shows a badge that moves,
-				// and a theme with an ambient effect.
+				// and a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.badgePanel.moving.Load() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.badgePanel.moving.Load() || d.app.feel.busy() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)

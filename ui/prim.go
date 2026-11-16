@@ -124,6 +124,8 @@ type appLoop struct {
 	focus   Primitive
 	capture func(*kit.Key) *kit.Key
 	before  func(w, h int)
+	// feel is what the keys pressed do to the key buttons on the screen.
+	feel keyFeel
 
 	events chan func()   // what the loop has to do, in order
 	done   chan struct{} // closed by Stop
@@ -281,6 +283,7 @@ func (a *appLoop) rootTree() *kit.Root {
 // key gives the screen a key: the app's capture first, then the root's tree,
 // which hands it to whatever has the keyboard.
 func (a *appLoop) key(k kit.Key) {
+	a.feel.typed(k)
 	a.mu.Lock()
 	capture, root, tree := a.capture, a.root, a.tree
 	a.mu.Unlock()

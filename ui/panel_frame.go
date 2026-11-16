@@ -126,7 +126,7 @@ func (f *panelFrame) Paint(p *kit.Painter) {
 	}
 	pal := newExpPalette()
 	paintExpeditionKit(p, g, r.Min, pal)
-	f.buttons.paintLit(p, g, r.Min, pal)
+	f.buttons.paint(p, g, r.Min, pal)
 	f.grid = g
 	f.tv.Paint(p)
 }

@@ -392,10 +392,10 @@ type headerBox struct {
 	lit  image.Rectangle
 }
 
-func newHeaderBox(view func(w int) headerView, plain func() bool, run func(string), press func(kit.Key)) *headerBox {
+func newHeaderBox(view func(w int) headerView, plain func() bool, run func(string), app *appLoop) *headerBox {
 	b := &headerBox{view: view, plain: plain, run: run}
 	b.nativeHost = newNativeHost()
-	b.esc.press = press
+	b.esc.wire(app)
 	return b
 }
 
@@ -513,9 +513,26 @@ func (b *headerBox) Paint(p *kit.Painter) {
 	pal := newExpPalette()
 	paintExpeditionKit(p, b.grid, r.Min, pal)
 	if b.in && !b.lit.Empty() {
-		paintLitRect(p, b.grid, r.Min, pal, b.lit)
+		paintHot(p, b.grid, r.Min, pal, b.lit)
 	}
-	b.esc.paintLit(p, b.grid, r.Min, pal)
+	b.esc.paint(p, b.grid, r.Min, pal)
+}
+
+// paintHot repaints the cells of r, a click target, as they look under the
+// pointer, over the grid already painted at org: a chip in its bright phase,
+// anything else on the chip ground under its ink.
+func paintHot(p *kit.Painter, g *xgrid, org image.Point, pal *expPalette, r image.Rectangle) {
+	r = r.Intersect(image.Rect(0, 0, g.w, g.h))
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		for x := r.Min.X; x < r.Max.X; x++ {
+			c := g.c[y*g.w+x]
+			st := pal.style(c).Background(pal.styles[xKeyName].Bg)
+			if c.k >= xChipShort && c.k <= xChipGoal {
+				st = pal.styles[c.k+xChipShortHi-xChipShort]
+			}
+			p.Put(org.X+x, org.Y+y, c.r, st)
+		}
+	}
 }
 
 // headerPlain says the glyph tier is the plain one.

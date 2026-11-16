@@ -98,8 +98,8 @@ func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 		p.Paint(kit.NewPainter(b))
 		return b
 	}
-	if b := paint(); len(b.Pics) != 0 || p.model.lay.tw != miniW {
-		t.Fatalf("with no window to draw pictures the case painted %d, on tiles %d wide", len(b.Pics), p.model.lay.tw)
+	if b := paint(); len(coinPics(b)) != 0 || p.model.lay.tw != miniW {
+		t.Fatalf("with no window to draw pictures the case painted %d, on tiles %d wide", len(coinPics(b)), p.model.lay.tw)
 	}
 	was := pictureCell
 	pictureCell = func() (int, int) { return 10, 21 }
@@ -116,11 +116,11 @@ func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 			coins += len(ln.items)
 		}
 	}
-	if coins == 0 || len(b.Pics) != coins+1 {
-		t.Fatalf("the case painted %d pictures for %d badges in view and the pane's medal", len(b.Pics), coins)
+	if coins == 0 || len(coinPics(b)) != coins+1 {
+		t.Fatalf("the case painted %d pictures for %d badges in view and the pane's medal", len(coinPics(b)), coins)
 	}
 	looks := map[*image.RGBA]bool{}
-	for _, pic := range b.Pics[:coins] {
+	for _, pic := range coinPics(b)[:coins] {
 		if pic.Rect.Dx() != coinCols || pic.Rect.Dy() != coinRows || pic.Rect.Max.X > lay.gx+lay.gw {
 			t.Errorf("a coin's room is %v, want %d by %d inside the grid", pic.Rect, coinCols, coinRows)
 		}
@@ -132,14 +132,14 @@ func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 	if len(looks) >= coins {
 		t.Errorf("%d coins are %d pictures: coins that look alike should share one", coins, len(looks))
 	}
-	pic := b.Pics[coins]
+	pic := coinPics(b)[coins]
 	if pic.Rect.Dx() != medalPixCols || pic.Rect.Dy() != medalPixRows || pic.Rect.Min.X < lay.px {
 		t.Errorf("the medal's room is %v, want %d by %d inside the pane (from column %d)", pic.Rect, medalPixCols, medalPixRows, lay.px)
 	}
 	if pic.Img.Bounds().Dx() != medalPixCols*10 || pic.Img.Bounds().Dy() != medalPixRows*21 {
 		t.Errorf("the medal's picture is %v pixels, want a pixel for a pixel of its room", pic.Img.Bounds())
 	}
-	if c := b.At(pic.Rect.Min.X+1, pic.Rect.Min.Y+1); int(c.Pic) != coins+1 {
+	if c := b.At(pic.Rect.Min.X+1, pic.Rect.Min.Y+1); c.Pic == 0 || b.Pics[c.Pic-1].Img != pic.Img {
 		t.Errorf("a cell of the medal's room shows picture %d", c.Pic)
 	}
 	// With the motion off the same case at the same size is the same images,
@@ -147,17 +147,17 @@ func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 	p.motion = false
 	b = paint()
 	again := paint()
-	if len(again.Pics) != len(b.Pics) {
-		t.Fatalf("a second frame painted %d pictures, the first %d", len(again.Pics), len(b.Pics))
+	if len(coinPics(again)) != len(coinPics(b)) {
+		t.Fatalf("a second frame painted %d pictures, the first %d", len(coinPics(again)), len(coinPics(b)))
 	}
-	for i := range b.Pics {
-		if again.Pics[i].Img != b.Pics[i].Img {
+	for i := range coinPics(b) {
+		if coinPics(again)[i].Img != coinPics(b)[i].Img {
 			t.Fatalf("a second frame struck picture %d again", i)
 		}
 	}
 	p.motion = true
 	// A click on a coin picks its badge, at the coin's own place.
-	second, want := b.Pics[1].Rect, p.model.coins[1].it.id
+	second, want := coinPics(b)[1].Rect, p.model.coins[1].it.id
 	p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: second.Min.X + 2, Y: second.Min.Y + 1, Clicks: 1})
 	if got := p.model.selected(p.view); got == nil || got.id != want {
 		t.Errorf("a click on the second coin picked %v", got)
@@ -166,10 +166,10 @@ func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 	// card's medal, lies inside the card.
 	p.view.card = true
 	over := paint()
-	if len(over.Pics) != 1 {
-		t.Fatalf("the open card has %d pictures painted over it, want its medal alone", len(over.Pics))
+	if len(coinPics(over)) != 1 {
+		t.Fatalf("the open card has %d pictures painted over it, want its medal alone", len(coinPics(over)))
 	}
-	if room := over.Pics[0].Rect; !room.In(p.model.cardAt) {
+	if room := coinPics(over)[0].Rect; !room.In(p.model.cardAt) {
 		t.Errorf("the card's medal is at %v, outside the card %v", room, p.model.cardAt)
 	}
 }
@@ -343,15 +343,15 @@ func TestBadgePanelMotion(t *testing.T) {
 	if !p.moving.Load() {
 		t.Error("with the motion on and an earned coin in view the panel says nothing moves")
 	}
-	big := len(first.Pics) - 1
+	big := len(coinPics(first)) - 1
 	tick(1)
 	second := paint()
-	if first.Pics[big].Img == second.Pics[big].Img {
+	if coinPics(first)[big].Img == coinPics(second)[big].Img {
 		t.Error("the large medal's picture is the same a pose after it was picked")
 	}
 	for range 40 {
 		tick(1)
-		if paint().Pics[loose].Img != first.Pics[loose].Img {
+		if coinPics(paint())[loose].Img != coinPics(first)[loose].Img {
 			t.Fatal("a coin not earned changed its picture")
 		}
 	}
@@ -362,8 +362,8 @@ func TestBadgePanelMotion(t *testing.T) {
 	}
 	tick(30)
 	later := paint()
-	for i := range still.Pics {
-		if still.Pics[i].Img != later.Pics[i].Img {
+	for i := range coinPics(still) {
+		if coinPics(still)[i].Img != coinPics(later)[i].Img {
 			t.Fatalf("with the motion off picture %d changed with the clock", i)
 		}
 	}
@@ -421,4 +421,15 @@ func TestBadgePanelKeyButtons(t *testing.T) {
 			}
 		}
 	}
+}
+
+// coinPics is the pictures b shows but the key plates, which are a row high.
+func coinPics(b *kit.Buffer) []kit.Pic {
+	var out []kit.Pic
+	for _, p := range b.Pics {
+		if p.Rect.Dy() > 1 {
+			out = append(out, p)
+		}
+	}
+	return out
 }

@@ -54,7 +54,7 @@ func (b *barPanel) paintGrid(p *kit.Painter, g *xgrid, r image.Rectangle) {
 	if !r.Empty() && g != nil {
 		pal := newExpPalette()
 		paintExpeditionKit(p, g, r.Min, pal)
-		b.buttons.paintLit(p, g, r.Min, pal)
+		b.buttons.paint(p, g, r.Min, pal)
 	}
 }
 

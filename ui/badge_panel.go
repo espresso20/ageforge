@@ -203,7 +203,7 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 				paintExpeditionKit(p2.Clip(k.r.Add(r.Min)), g, r.Min, pal)
 			}
 		}
-		p.buttons.paintLit(p2, g, r.Min, pal)
+		p.buttons.paint(p2, g, r.Min, pal)
 	}
 	p.moving.Store(p.paintCoins(p2, r.Min) || p.moves())
 }
