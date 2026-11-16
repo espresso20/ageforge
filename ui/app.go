@@ -112,6 +112,14 @@ type WindowHost interface {
 	// CellSize is a cell of the grid in pixels (0, 0 until the window is
 	// laid out), for pictures drawn pixel for pixel.
 	CellSize() (w, h int)
+	// TextSize is the size of the text now, and ZoomBy changes it by steps:
+	// the call the window's own keys make.
+	TextSize() int
+	ZoomBy(steps int)
+	// Fullscreen says whether the window fills the screen, and
+	// ToggleFullscreen is the call the window's own key makes.
+	Fullscreen() bool
+	ToggleFullscreen()
 }
 
 // pictureCell is the size in pixels of a cell of the grid, when the game is

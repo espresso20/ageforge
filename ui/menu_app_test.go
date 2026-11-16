@@ -80,7 +80,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 	}
 
 	moves("at launch")
-	if s := screen(); !strings.Contains(s, "▸ Continue") || !strings.Contains(s, "ashford") || !strings.Contains(s, "ages, one terminal") {
+	if s := screen(); !strings.Contains(s, "Continue") || !strings.Contains(s, "ashford") || !strings.Contains(s, "ages, one terminal") {
 		t.Fatalf("the menu with a game is not on the screen:\n%s", s)
 	}
 
@@ -132,7 +132,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 	h.sim.SetSize(80, 24)
 	h.waitFor("the menu at 80x24", 5*time.Second, func() bool {
 		s := screen()
-		return strings.Contains(s, "▸ Continue") && strings.Contains(s, "Quit") && strings.Contains(s, "choose")
+		return strings.Contains(s, "Continue") && strings.Contains(s, "Quit") && strings.Contains(s, "choose")
 	})
 	moves("at 80x24")
 

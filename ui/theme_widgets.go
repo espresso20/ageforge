@@ -38,14 +38,11 @@ func onFill(fill theme.Role) kit.Color {
 	}
 }
 
-// styleDangerModal turns a dialog into a solid danger panel: Negative fill,
-// OnNegative text. Buttons keep their defaults (Selection fill / Text), which
-// the contrast test guarantees read on every theme.
-func styleDangerModal(m *nativeDialog) *nativeDialog {
-	m.SetBackgroundColor(theme.Of(theme.RoleNegative))
-	m.SetTextColor(theme.Of(theme.RoleOnNegative))
-	return m
-}
+// styleDangerModal turns a dialog into one that asks about something that
+// cannot be undone: its buttons are action buttons, the last, which confirms,
+// the danger one and the others plain. The keyboard starts on the first, the
+// way out.
+func styleDangerModal(m *nativeDialog) *nativeDialog { return m.asActions() }
 
 // dangerTag is the inline tag for text inside a danger panel. Every color tag in
 // a Negative-filled panel must be this (optionally bold via dangerTagBold) — the

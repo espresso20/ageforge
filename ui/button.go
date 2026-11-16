@@ -221,6 +221,7 @@ type plateKey struct {
 type plateSet struct {
 	m     map[plateKey]*image.RGBA
 	acts  map[actionKey]*image.RGBA
+	sw    map[switchKey]*image.RGBA
 	bytes int
 	cell  [2]int
 }
@@ -229,7 +230,7 @@ type plateSet struct {
 // past its bound.
 func (s *plateSet) fit(cw, ch int) {
 	if s.cell != [2]int{cw, ch} || s.bytes > plateSetMax {
-		s.m, s.acts, s.cell, s.bytes = nil, nil, [2]int{cw, ch}, 0
+		s.m, s.acts, s.sw, s.cell, s.bytes = nil, nil, nil, [2]int{cw, ch}, 0
 	}
 }
 

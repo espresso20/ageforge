@@ -24,6 +24,10 @@ type nativeDialog struct {
 	ground  kit.Color
 	ink     kit.Color
 
+	// actions: the buttons are action buttons, three rows tall, the last the
+	// danger one (styleDangerModal).
+	actions bool
+
 	box   image.Rectangle // where the dialog is, in the page
 	lines []string        // the text, wrapped for it
 }
@@ -65,6 +69,20 @@ func (d *nativeDialog) SetDoneFunc(fn func(button int, label string)) *nativeDia
 	return d
 }
 
+// asActions draws the buttons as action buttons: the last one, which
+// confirms, in the danger colour, and the others plain.
+func (d *nativeDialog) asActions() *nativeDialog {
+	d.actions = true
+	for i, b := range d.buttons {
+		kind := keyPlain
+		if i == len(d.buttons)-1 {
+			kind = keyDanger
+		}
+		b.asAction(kind, d.ground)
+	}
+	return d
+}
+
 func (d *nativeDialog) SetBackgroundColor(c kit.Color) *nativeDialog {
 	d.ground = c
 	return d
@@ -98,7 +116,10 @@ func (d *nativeDialog) Layout(r image.Rectangle) {
 	}
 	width := max(r.Dx()/3, need)
 	d.lines = kit.WordWrap(d.text, width)
-	w, h := width+4, len(d.lines)+6
+	w, h, rows := width+4, len(d.lines)+6, 1
+	if d.actions {
+		h, rows = h+2, actionRows
+	}
 	x, y := r.Min.X+(r.Dx()-w)/2, r.Min.Y+(r.Dy()-h)/2
 	d.box = image.Rect(x, y, x+w, y+h)
 
@@ -111,7 +132,7 @@ func (d *nativeDialog) Layout(r image.Rectangle) {
 		if right-bx < 1 {
 			bw = 0 // no room for this one
 		}
-		placeAt(b, bx, by, bw, 1, off)
+		placeAt(b, bx, by, bw, rows, off)
 		bx += bw + 1
 	}
 }
