@@ -138,8 +138,8 @@ type GameSave struct {
 	CosmicLegacy       bool `json:"cosmic_legacy,omitempty"`
 	// Morale system
 	Morale float64 `json:"morale,omitempty"`
-	// History overlay samples
-	History *HistoryCollector `json:"history,omitempty"`
+	// RunHistory is the run's recorder: its measures and marks (history.go).
+	RunHistory *RunHistory `json:"run_history,omitempty"`
 	// Integrity fields
 	CheaterBadge bool `json:"cheater_badge,omitempty"`
 	EliteBadge   bool `json:"elite_badge,omitempty"`
@@ -649,7 +649,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		PendingLastPassage: ge.pendingLastPassage,
 		CosmicLegacy:       ge.cosmicLegacy,
 		Morale:             ge.morale,
-		History:            ge.History,
+		RunHistory:         ge.history,
 		AccountID:          ge.saveAccountIDLocked(),
 		Plan:               cloneSlice(ge.plan),
 		WorkerShares:       cloneMap(ge.workerShares),
@@ -929,11 +929,11 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.restoreFaithState(&save)
 	ge.restoreCultureState(&save)
 
-	// Restore history collector
-	if save.History != nil {
-		ge.History = save.History
+	// Restore the run's recorder
+	if h := save.RunHistory; h != nil && h.Recent.Span >= historyInterval && h.Run.Span >= historyInterval {
+		ge.history = save.RunHistory
 	} else {
-		ge.History = NewHistoryCollector()
+		ge.history = NewRunHistory()
 	}
 
 	ge.morale = save.Morale

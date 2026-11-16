@@ -315,7 +315,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		d.overlayMgr.Refresh(d.engine.GetState())
 		return nil
 	})
-	d.overlayMgr.Register("history", vibe.E("ui.dashboard.NewDashboard.16", "Civilization History"), historyProvider)
+	d.overlayMgr.Register("history", vibe.E("ui.dashboard.NewDashboard.16", "Civilization History"), historyProvider(d.engine))
 	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
 	d.vibeSeen = vibe.On()
 	d.overlayMgr.Register("help", vibe.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
