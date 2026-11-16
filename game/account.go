@@ -162,6 +162,35 @@ type AccountStats struct {
 	// Age) from a full run (the Modern Age or deeper, PrestigeRunAge).
 	// Prestiges recorded before it existed are only in TotalPrestiges.
 	PrestigesByAge map[string]int `json:"prestiges_by_age,omitempty"`
+	// FastestAge is the fewest run ticks it has taken, from the start of a run, to enter
+	// each age (RecordAgeTime). The first age is never in it.
+	FastestAge map[string]AgeRecord `json:"fastest_age,omitempty"`
+	// BestRun is the largest single-run value of each count named by the RunBest*
+	// constants (RecordRunBests).
+	BestRun map[string]RunBest `json:"best_run,omitempty"`
+}
+
+// The keys of AccountStats.BestRun: the counts a run is measured by.
+const (
+	RunBestBuilt       = "built"       // buildings built
+	RunBestRecruited   = "recruited"   // workers recruited
+	RunBestResearched  = "researched"  // techs researched
+	RunBestExpeditions = "expeditions" // expeditions and campaigns done
+)
+
+// AgeRecord is the fastest time to an age: run ticks, when it was set, and the save it was
+// set in (as the badges name a run).
+type AgeRecord struct {
+	Ticks int       `json:"ticks"`
+	At    time.Time `json:"at"`
+	Run   string    `json:"run,omitempty"`
+}
+
+// RunBest is the best single-run value of one count, with when and in which save.
+type RunBest struct {
+	Value int       `json:"value"`
+	At    time.Time `json:"at"`
+	Run   string    `json:"run,omitempty"`
 }
 
 // AccountPrefs holds preferences that travel with the account (the accounts design §3.3).
@@ -1389,6 +1418,17 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 		a.Stats.PrestigesByAge[age] = max(a.Stats.PrestigesByAge[age], exp.Stats.PrestigesByAge[age])
 	}
 	a.Stats.CivilizationsStarted = max(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
+	// Records: the lower time and the higher count win; one-sided records are kept.
+	for age, r := range exp.Stats.FastestAge {
+		if old, ok := a.Stats.FastestAge[age]; !ok || r.Ticks < old.Ticks {
+			a.Stats.FastestAge = setKey(a.Stats.FastestAge, age, r)
+		}
+	}
+	for k, r := range exp.Stats.BestRun {
+		if r.Value > a.Stats.BestRun[k].Value {
+			a.Stats.BestRun = setKey(a.Stats.BestRun, k, r)
+		}
+	}
 	a.Stats.SavesCompleted = max(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
 	// HighestAge is a key, not a number: the later age of the two wins.
 	if ageOrderOf(exp.Stats.HighestAge) > ageOrderOf(a.Stats.HighestAge) {
@@ -1514,6 +1554,41 @@ func (a *Account) RecordAgeReached(ageKey string, ageOrder int) {
 	}
 }
 
+// RecordAgeTime keeps the fastest run time to ageKey: it sets the record when there is
+// none or runTicks is lower, and ignores runTicks <= 0. IN-MEMORY ONLY (same discipline as
+// RecordPrestigeFrom).
+func (a *Account) RecordAgeTime(ageKey string, runTicks int, at time.Time, run string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if old, ok := a.Stats.FastestAge[ageKey]; runTicks <= 0 || (ok && runTicks >= old.Ticks) {
+		return
+	}
+	a.Stats.FastestAge = setKey(a.Stats.FastestAge, ageKey, AgeRecord{Ticks: runTicks, At: at, Run: run})
+	a.dirty = true
+}
+
+// RecordRunBests raises the record of each count (keyed by the RunBest* constants) the
+// run beats, and never lowers one. IN-MEMORY ONLY (same discipline as RecordPrestigeFrom).
+func (a *Account) RecordRunBests(counts map[string]int, at time.Time, run string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for k, v := range counts {
+		if v > a.Stats.BestRun[k].Value {
+			a.Stats.BestRun = setKey(a.Stats.BestRun, k, RunBest{Value: v, At: at, Run: run})
+			a.dirty = true
+		}
+	}
+}
+
+// setKey sets m[k] = v, making the map first when it is nil.
+func setKey[V any](m map[string]V, k string, v V) map[string]V {
+	if m == nil {
+		m = map[string]V{}
+	}
+	m[k] = v
+	return m
+}
+
 // highestOrderLocked returns the Order of the currently-stored HighestAge, or -1 if none
 // is set (or the stored key is unknown — treated as "below everything" so any real age
 // wins). Callers must hold a.mu. It consults the pure config age table (no locks).
@@ -1573,5 +1648,7 @@ func (a *Account) LifetimeStats() (AccountStats, []string) {
 	defer a.mu.Unlock()
 	st := a.Stats
 	st.PrestigesByAge = maps.Clone(a.Stats.PrestigesByAge) // no alias of the live map
+	st.FastestAge = maps.Clone(a.Stats.FastestAge)
+	st.BestRun = maps.Clone(a.Stats.BestRun)
 	return st, sortedKeys(a.Badges)
 }

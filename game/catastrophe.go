@@ -534,6 +534,9 @@ func (ge *GameEngine) Succumb() error {
 	end := RunEnding{Kind: RunEndFallen, Age: ge.age, Level: ge.Prestige.GetLevel(), Catastrophe: catName}
 	runStarted := ge.Stats.GameStarted
 
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		ge.recordRunBestsLocked(acct)
+	}
 	// Full reset, as at a prestige (resetRunLocked); morale starts lower.
 	// Prestige, the legacy flags and both histories carry over untouched.
 	ge.resetRunLocked(0.50)

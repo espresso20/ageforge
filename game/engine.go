@@ -2280,6 +2280,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		reached, _ := ge.rules.Age(newAge)
 		acct.RecordAgeReached(newAge, reached.Order)
+		acct.RecordAgeTime(newAge, ge.tick, badgeClock(), ge.activeSaveName)
+		ge.recordRunBestsLocked(acct)
 	}
 	// The reports the age badges are judged on (badge_hooks.go).
 	ge.reportAgeReached(oldAge, newAge)
@@ -4750,6 +4752,9 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	// Reset all game systems
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		ge.recordRunBestsLocked(acct)
+	}
 	ge.resetRunLocked(0.70)
 	// A prestige also forgets the harbinger outcomes and the epoch events
 	// (a Succumb keeps both).
@@ -4815,6 +4820,18 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.maybeOfferAncientMemory()
 
 	ge.publishRunEnded(end, runStarted)
+}
+
+// recordRunBestsLocked offers the run's counts to the account's records. It runs under
+// the write lock, so it only reads the engine's own fields and calls the in-memory
+// account method.
+func (ge *GameEngine) recordRunBestsLocked(acct *Account) {
+	acct.RecordRunBests(map[string]int{
+		RunBestBuilt:       ge.Stats.TotalBuilt,
+		RunBestRecruited:   ge.Stats.TotalRecruited,
+		RunBestResearched:  len(ge.Research.researched),
+		RunBestExpeditions: ge.Military.completedCount,
+	}, badgeClock(), ge.activeSaveName)
 }
 
 // resetRunLocked is the fresh-run block a prestige (completePrestige) and a
@@ -5122,6 +5139,8 @@ func (ge *GameEngine) GetState() GameState {
 				TotalPrestiges:       s.TotalPrestiges,
 				HighestAge:           s.HighestAge,
 				CivilizationsStarted: s.CivilizationsStarted,
+				FastestAge:           s.FastestAge,
+				BestRun:              s.BestRun,
 				Badges:               badges,
 				BadgeSummary:         summary,
 			}
