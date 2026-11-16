@@ -94,7 +94,7 @@ func (c peopleBody) festivalCard(x, y, w, h int) {
 		g.actionButton(rx, by, actionSpec{kind: keyPrimary, label: word, cmd: festivalCmd, ask: festivalAsk(st), yes: word, off: off})
 		return
 	}
-	g.chip(rx, by, word, keyAccent, festivalCmd, festivalAsk(st), word, off)
+	g.chip(rx, by, word, keyPrimary, festivalCmd, festivalAsk(st), word, off)
 }
 
 // festivalChip is the header's note on a running festival: the rise and the
