@@ -61,6 +61,7 @@ func (d *Dashboard) registerAdvancePanel() {
 	d.advancePanel.prompt = d.researchPanel.prompt
 	d.advancePanel.toPrompt = d.handToPrompt
 	d.advancePanel.buttons.wire(d.app)
+	d.wireMapPanel()
 	d.overlayMgr.RegisterWidget(advancePanelName, vibe.E("ui.advance_panel.registerAdvancePanel.01", "Advance"), d.advancePanel.open, d.advancePanel.update)
 }
 
