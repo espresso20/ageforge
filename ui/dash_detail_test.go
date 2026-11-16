@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/espresso20/ageforge/window/kit"
 	"image"
 	"strings"
 	"testing"
@@ -284,4 +285,34 @@ func TestAUniqueBuildingUnderConstructionIsBlocked(t *testing.T) {
 	if c.canBuild || !strings.Contains(c.reason, "under construction") {
 		t.Errorf("a queued unique building has canBuild %v and reason %q", c.canBuild, c.reason)
 	}
+}
+
+func TestTheResourceRowUnderThePointerIsLit(t *testing.T) {
+	d, st, _ := cardTown(t)
+	v := d.economyTab.resourceTV
+	x, y, w, _ := v.GetInnerRect()
+	st.paint()
+	row := -1
+	for i, l := range strings.Split(v.raw, "\n") {
+		if strings.TrimSpace(kit.Strip(l)) != "" {
+			row = i
+			break
+		}
+	}
+	if row < 0 {
+		t.Fatal("the Resources box has no text")
+	}
+	bg := func() any { return st.buf.At(x+1, y+row).Bg }
+	before := bg()
+	st.mouse(kit.Mouse{Kind: kit.MouseMove, X: x + 1, Y: y + row})
+	st.paint()
+	if bg() == before {
+		t.Error("the row under the pointer is not lit")
+	}
+	st.mouse(kit.Mouse{Kind: kit.MouseLeave})
+	st.paint()
+	if bg() != before {
+		t.Error("the row stays lit after the pointer leaves")
+	}
+	_ = w
 }

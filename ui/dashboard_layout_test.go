@@ -167,7 +167,7 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			cells := drawnDashboard(t, d, pages, w, h)
 
 			// The Resources box: one resource a row, never a rate split.
-			rows := checkFitted(t, where+", Resources", d.economyTab.resourceTV, cells, w)
+			rows := checkFitted(t, where+", Resources", d.economyTab.resourceTV.fitView, cells, w)
 			shown := 0
 			for _, row := range rows {
 				if strings.HasSuffix(row, "/") || strings.HasPrefix(strings.TrimSpace(row), "tick") {

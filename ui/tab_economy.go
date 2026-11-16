@@ -48,7 +48,7 @@ var cultureThresholdLabels = []vibe.Entry{
 type EconomyTab struct {
 	root           *nativeGroup
 	leftCol        *econColumn
-	resourceTV     *fitView
+	resourceTV     *resourceView
 	buildBox       *buildBox
 	constructionTV *fitView
 
@@ -82,12 +82,12 @@ func (t *EconomyTab) retitle() {
 func NewEconomyTab(app *appLoop) *EconomyTab {
 	t := &EconomyTab{resPages: 1}
 
-	t.resourceTV = newFitView(func(w, h int) string {
+	t.resourceTV = newResourceView(func(w, h int) string {
 		lines, pages := layoutResourceBox(t.rows(), w, h, t.resPage)
 		t.resPages = pages
 		t.resPage = ((t.resPage % pages) + pages) % pages
 		return strings.Join(lines, "\n")
-	})
+	}, func() bool { return t.plain != nil && t.plain() })
 	t.resourceTV.SetBorder(true)
 
 	t.resourceTV.wheel = t.wheelResources

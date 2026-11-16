@@ -234,7 +234,7 @@ func TestRenderResourceBarsOnScreen(t *testing.T) {
 		plain, name := c.plain, c.name
 		d.economyTab.plain = func() bool { return plain }
 		cells := drawnDashboard(t, d, pages, c.w, c.h)
-		rows := checkFitted(t, "render", d.economyTab.resourceTV, cells, c.w)
+		rows := checkFitted(t, "render", d.economyTab.resourceTV.fitView, cells, c.w)
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(strings.Join(rows, "\n")+"\n"), 0o644); err != nil {
 			t.Fatal(err)
 		}
