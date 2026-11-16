@@ -1868,11 +1868,12 @@ func cmdBlackMarket(args []string, engine *game.GameEngine) CommandResult {
 
 // cmdBlackMarketStatus renders the bare `blackmarket` status panel.
 func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
-	st := engine.BlackMarketStatus()
+	state := engine.GetState()
+	st := state.BlackMarket
 	var lines []string
 	lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.01", "[gold]Black Market[-]"))
 	if !st.Available {
-		lines = append(lines, "  "+theme.Paint(theme.RoleDim, vibe.Line("ui.input.cmdBlackMarketStatus.02", "Smuggling networks open in ")+ageRef(engine.GetState(), "colonial_age")+"."))
+		lines = append(lines, "  "+theme.Paint(theme.RoleDim, vibe.Line("ui.input.cmdBlackMarketStatus.02", "Smuggling networks open in ")+ageRef(state, "colonial_age")+"."))
 		return infoReply(strings.Join(lines, "\n"))
 	}
 	lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.09", "  Spend culture on a smuggling run: it pays back the minutes of income the culture cost you, as minutes of your income of the resource you pick."))
@@ -1885,7 +1886,7 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 			lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.07", "  Status: [yellow]not enough culture yet.[-]"))
 		}
 	} else {
-		lines = append(lines, vibe.Sprintf("ui.input.cmdBlackMarketStatus.08", "  Status: [yellow]lying low[-]. The next run is possible in %s.", formatTicks(st.CooldownLeft, engine.GetState())))
+		lines = append(lines, vibe.Sprintf("ui.input.cmdBlackMarketStatus.08", "  Status: [yellow]lying low[-]. The next run is possible in %s.", formatTicks(st.CooldownLeft, state)))
 	}
 	return infoReply(strings.Join(lines, "\n"))
 }

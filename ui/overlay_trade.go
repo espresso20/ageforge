@@ -19,7 +19,8 @@ func tradePage(state game.GameState) deckPage {
 		Title: vibe.Line("ui.overlay_trade.tradePage.01", "Trade routes"),
 		Hint:  vibe.Line("ui.overlay_trade.tradePage.02", "trade route start/stop <key>"),
 	}
-	pg.Notes = append(pg.Notes, noteLinesOf(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce, config.FeatureBlackMarket), xGold)...)
+	// The black market's lock is said on its own stop, not here.
+	pg.Notes = append(pg.Notes, noteLinesOf(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce), xGold)...)
 
 	// Disruption banner: a war or an embargo blockades these resources, and
 	// any route importing one is suspended until the conflict ends.
@@ -107,6 +108,10 @@ func tradePage(state game.GameState) deckPage {
 
 	if len(trade.ActiveRoutes) == 0 && len(trade.AvailableRoutes) == 0 {
 		pg.Notes = append(pg.Notes, deckLine{Value: vibe.Line("ui.overlay_trade.tradePage.24", "No trade routes in this age yet.")})
+	}
+
+	if sec, ok := blackMarketSection(state); ok {
+		pg.Sections = append(pg.Sections, sec)
 	}
 
 	// Civilization opinion lives on the Factions panel only. This panel used

@@ -3099,7 +3099,14 @@ func (ge *GameEngine) blackMarketReward(resource string, stake float64) float64 
 	return blackMarketPayoutOf(ge.rules, stake, ge.eventTown("culture", false), resource, ge.eventTown(resource, false))
 }
 
-// BlackMarketStatus is the snapshot the `blackmarket` command renders.
+// BlackMarketHaul is what a winning run pays in one resource.
+type BlackMarketHaul struct {
+	Resource string
+	Amount   float64
+}
+
+// BlackMarketStatus is the snapshot the `blackmarket` command and the Trade
+// panel render.
 type BlackMarketStatus struct {
 	Available     bool    // true when the colonial-age gate is met
 	Cost          float64 // culture required per deal right now
@@ -3109,20 +3116,17 @@ type BlackMarketStatus struct {
 	CooldownTicks int     // cooldown imposed after a deal
 	CooldownLeft  int     // ticks remaining on the current cooldown (0 if ready)
 	Ready         bool    // true when off cooldown AND gate met
+	// Payouts is what a winning run would pay now, a line for each resource
+	// the smugglers deal in, in the rules' resource order; empty until the
+	// black market is available.
+	Payouts []BlackMarketHaul
 }
 
-// BlackMarketStatus returns the live cost, odds, and cooldown for the
-// `blackmarket` command UI. Read-only.
-func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-
+// blackMarketStatusLocked builds the black-market snapshot. Under the lock.
+func (ge *GameEngine) blackMarketStatusLocked() BlackMarketStatus {
 	available := ge.progress.GetAgeOrder()[blackMarketMinAge] <= ge.progress.GetAgeOrder()[ge.age]
-	cd := ge.blackMarketReadyTick - ge.tick
-	if cd < 0 {
-		cd = 0
-	}
-	return BlackMarketStatus{
+	cd := max(ge.blackMarketReadyTick-ge.tick, 0)
+	st := BlackMarketStatus{
 		Available:     available,
 		Cost:          ge.blackMarketCost(),
 		Culture:       ge.Resources.Get("culture"),
@@ -3132,6 +3136,22 @@ func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
 		CooldownLeft:  cd,
 		Ready:         cd == 0 && available,
 	}
+	if available {
+		for _, def := range ge.rules.Resources() {
+			if amount := ge.blackMarketReward(def.Key, st.Cost); amount > 0 {
+				st.Payouts = append(st.Payouts, BlackMarketHaul{Resource: def.Key, Amount: amount})
+			}
+		}
+	}
+	return st
+}
+
+// BlackMarketStatus returns the live cost, odds, cooldown and payouts for the
+// `blackmarket` command UI. Read-only.
+func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.blackMarketStatusLocked()
 }
 
 // DoBlackMarket runs one black-market deal for the given resource: it spends a
@@ -5075,6 +5095,7 @@ func (ge *GameEngine) GetState() GameState {
 		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
 		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources()),
+		BlackMarket:           ge.blackMarketStatusLocked(),
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,
 		Stats:                 ge.Stats.Snapshot(),
