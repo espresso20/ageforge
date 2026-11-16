@@ -81,9 +81,8 @@ func TestMedalPicture(t *testing.T) {
 	}
 }
 
-// Where pictures can show, the case draws every badge of the grid as a small
-// coin and the selected badge's medal large in the pane; where they cannot,
-// the medals are drawn in cells as before and there is no picture.
+// The case draws every badge of the grid as a small coin and the selected
+// badge's medal large in the pane.
 func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 	views, sum := caseFixture()
 	st := game.GameState{AccountStats: &game.AccountStatsView{Badges: views, BadgeSummary: sum}}
@@ -98,16 +97,13 @@ func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 		p.Paint(kit.NewPainter(b))
 		return b
 	}
-	if b := paint(); len(coinPics(b)) != 0 || p.model.lay.tw != miniW {
-		t.Fatalf("with no window to draw pictures the case painted %d, on tiles %d wide", len(coinPics(b)), p.model.lay.tw)
-	}
 	was := pictureCell
 	pictureCell = func() (int, int) { return 10, 21 }
 	t.Cleanup(func() { pictureCell = was })
 	b := paint()
 	lay := p.model.lay
-	if !lay.pix || lay.tw != coinCols || lay.th != coinRows {
-		t.Fatalf("the case is laid out for tiles %d by %d (pix %v), want coins", lay.tw, lay.th, lay.pix)
+	if lay.tw != coinCols || lay.th != coinRows {
+		t.Fatalf("the case is laid out for tiles %d by %d, want coins", lay.tw, lay.th)
 	}
 	// The coins of the grid, then the medal of the pane.
 	coins := 0
@@ -382,12 +378,12 @@ func TestBadgePanelKeyButtons(t *testing.T) {
 	paint()
 	var got []kit.Key
 	p.buttons.press = func(k kit.Key) { got = append(got, k) }
-	chrome := p.model.chrome
-	if len(chrome.keys) < 2 {
-		t.Fatalf("the panel has %d key buttons", len(chrome.keys))
+	keys := p.model.keys.keys
+	if len(keys) < 2 {
+		t.Fatalf("the panel has %d key buttons", len(keys))
 	}
 	closed := false
-	for _, k := range chrome.keys {
+	for _, k := range keys {
 		got = nil
 		at := k.r.Min
 		if !pressAt(p, at.X, at.Y) || len(got) != 1 || got[0] != k.key {
@@ -406,16 +402,20 @@ func TestBadgePanelKeyButtons(t *testing.T) {
 	for _, w := range []int{60, 80, 120, 160} {
 		views, sum := caseFixture()
 		for _, tier := range caseTiers {
-			m, _, _ := drawCase(views, sum, w, 30, caseView{tier: tier}, atRest)
-			for _, k := range m.chrome.keys {
+			m, _, g := drawCase(views, sum, w, 30, caseView{tier: tier})
+			for _, k := range m.keys.keys {
 				if k.r.Min.X < 0 || k.r.Max.X > w {
 					t.Errorf("%d wide, %s: a key button spans columns %d to %d", w, tier, k.r.Min.X, k.r.Max.X)
 				}
 			}
 			if tier == mapmodel.TierASCII {
-				for i, c := range m.chrome.c {
-					if c.r >= 0x80 {
-						t.Fatalf("%d wide: the plain tier draws %q at %d,%d of the buttons", w, c.r, i%w, i/w)
+				for _, k := range m.keys.keys {
+					for y := k.r.Min.Y; y < k.r.Max.Y; y++ {
+						for x := k.r.Min.X; x < k.r.Max.X; x++ {
+							if c := g.c[y*g.w+x]; c.r >= 0x80 {
+								t.Fatalf("%d wide: the plain tier draws %q at %d,%d of the buttons", w, c.r, x, y)
+							}
+						}
 					}
 				}
 			}

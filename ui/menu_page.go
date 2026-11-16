@@ -44,6 +44,8 @@ const (
 	miSetMinimap = "set_minimap"
 	miSetDiscord = "set_discord"
 	miSetFont    = "set_font"
+	miSetSize    = "set_size"
+	miSetFull    = "set_full"
 	miSetBack    = "set_back"
 )
 
@@ -56,6 +58,12 @@ type menuItem struct {
 	// first that fits is drawn. details is the line under the row.
 	extras  []string
 	details []string
+	// sw: the row is a plain on/off, drawn as a slide switch (on is its
+	// state); size: the row is the text size, with a key each way. off: the
+	// row cannot be used, so it is dim and takes no hover. hint is a note at
+	// the right of the row, the window's own key for the same.
+	sw, on, size, off bool
+	hint              string
 }
 
 // menuView is what a page says.
@@ -79,6 +87,8 @@ type menuView struct {
 	elite [3]string
 	// plain: the plain glyph set, which has no blocks.
 	plain bool
+	// pix: the window shows pictures, so a switch is drawn as one.
+	pix bool
 }
 
 // menuLayout is where a page's parts sit at a size.
@@ -133,6 +143,15 @@ func menuRows(n, gap int, detail bool) int {
 // The land runs from under the sky to a little past the middle of the box,
 // so the town sits in the clear and its edge fades out under the menu.
 func townLayout(w, h, n int) menuLayout {
+	L := townLayoutAt(w, h, n, h >= 36)
+	if L.gap > 1 && L.py+L.ph > L.cap-1 {
+		L = townLayoutAt(w, h, n, false) // a longer list is set closer
+	}
+	return L
+}
+
+// townLayoutAt is townLayout with the rows spaced or not.
+func townLayoutAt(w, h, n int, spaced bool) menuLayout {
 	L := menuLayout{w: w, h: h, sx: 1, wy: 1, tag: 8, top: 9, pw: 40, gap: 1, cap: h - 2}
 	margin := 3
 	if w >= 114 {
@@ -141,7 +160,7 @@ func townLayout(w, h, n int) menuLayout {
 	if w >= 110 {
 		L.pw, margin = 50, 4
 	}
-	if h >= 36 {
+	if spaced {
 		L.gap = 2
 	}
 	L.wx = (w - menuWordW*L.sx) / 2
@@ -162,13 +181,18 @@ func townLayout(w, h, n int) menuLayout {
 // from 120 by 38 (the doubled wordmark inside two frames takes 120
 // columns) and the small under it, each centred in whatever room the
 // terminal has beyond its own size.
-func forgeLayout(w, h int) menuLayout {
+func forgeLayout(w, h, n int) menuLayout {
 	if w >= 120 && h >= 38 {
 		ox, oy := (w-120)/2, (h-40)/2
-		return menuLayout{w: w, h: h, forge: true, sx: 2, wx: (w - menuWordW*2) / 2, wy: 5 + oy,
+		L := menuLayout{w: w, h: h, forge: true, sx: 2, wx: (w - menuWordW*2) / 2, wy: 5 + oy,
 			line1: 3 + oy, tag: 13 + oy, rule: 15 + oy, foot: 36 + oy, inner: true,
 			mx: 8 + ox, my: 18 + oy, mw: 50, gap: 2,
 			px: 64 + ox, py: 17 + oy, pw: 50, ph: 17}
+		// A longer list is set closer, to stay clear of the foot.
+		if L.my+menuRows(n, 2, false) > L.foot {
+			L.gap = 1
+		}
+		return L
 	}
 	ox, oy := (w-menuMinW)/2, (h-menuMinH)/2
 	return menuLayout{w: w, h: h, forge: true, sx: 1, wx: (w - menuWordW) / 2, wy: 2 + oy,
@@ -183,7 +207,7 @@ func menuLayoutFor(w, h int, v *menuView) menuLayout {
 		return menuLayout{w: w, h: h, compact: true, forge: v.forge}
 	}
 	if v.forge {
-		return forgeLayout(w, h)
+		return forgeLayout(w, h, len(v.items))
 	}
 	return townLayout(w, h, len(v.items))
 }
@@ -208,6 +232,17 @@ type menuScene struct {
 	stars  []menuStar
 	// hits is where each entry was last drawn, for the mouse.
 	hits []image.Rectangle
+	// keys are the entries' keys and the buttons on them, as last drawn;
+	// switches the cells of each switch to be painted as a picture.
+	keys     keySet
+	switches []menuSwitch
+}
+
+// menuSwitch is where a switch is on the page, and the entry it is on.
+type menuSwitch struct {
+	r    image.Rectangle
+	item int
+	key  xkey
 }
 
 // newMenuScene makes the scene for a layout, at rest.
@@ -300,7 +335,8 @@ func spaced(s string) string {
 func (sc *menuScene) render(pal *menuPalette, v *menuView, town *menuTown, mf mapstyle.Frame) *mGrid {
 	L := sc.L
 	g := newMGrid(L.w, L.h)
-	sc.hits = sc.hits[:0]
+	sc.hits, sc.switches = sc.hits[:0], sc.switches[:0]
+	sc.keys = keySet{plain: v.plain, glyph: func(x, y int) rune { return g.c[y*g.w+x].r }}
 	switch {
 	case L.compact:
 		sc.renderCompact(g, pal, v)
@@ -310,16 +346,6 @@ func (sc *menuScene) render(pal *menuPalette, v *menuView, town *menuTown, mf ma
 		sc.renderTown(g, pal, v, town, mf)
 	}
 	return g
-}
-
-// entryAt is the entry drawn at a cell of the page; -1 for none.
-func (sc *menuScene) entryAt(pt image.Point) int {
-	for i, r := range sc.hits {
-		if pt.In(r) {
-			return i
-		}
-	}
-	return -1
 }
 
 // menuKeysHint is the line that says how the menu is driven.
@@ -473,68 +499,125 @@ func (sc *menuScene) drawElite(g *mGrid, pal *menuPalette, v *menuView, x, y, w 
 	g.textOn(at, y, " "+right+" ", pal.accent, ground, true)
 }
 
+// menuCapW is the cells of an entry's keycap, and menuTail the cells the
+// right end of a row keeps: the cap, a blank, the chevron a row shows under
+// the pointer and a blank.
+const (
+	menuCapW = 3
+	menuTail = menuCapW + 3
+)
+
+// entryTone is the colours an entry is drawn in: its ground, its inks at
+// rest and picked, and the dots that run from the name to the right end
+// (none when dotted is not set).
+type entryTone struct {
+	bg, ink, soft, dots, onInk, onSoft kit.Color
+	dotted                             bool
+	// brief leaves out the line under an entry.
+	brief bool
+}
+
 // drawMenu draws the entries from (L.mx, L.my). With leaders set it is a
-// table of contents: a row of dots runs from each name to its key, and the
-// selected entry is marked and lit. Without, each entry is a band across
-// the box and the selected one is filled.
+// table of contents: a row of dots runs from each name to its key. Without,
+// each entry is a band across the box. How a row is lit under the pointer or
+// when picked is rows.go's, laid on the page when it is painted.
 func (sc *menuScene) drawMenu(g *mGrid, pal *menuPalette, v *menuView, leaders bool) {
 	L := sc.L
-	x, w, row := L.mx, L.mw, L.my
-	for i, it := range v.items {
-		on := i == v.sel
-		first := row
-		left := "  " + it.label
-		if on {
-			left = "▸ " + it.label
-		}
-		llen := runeLen(left)
-		if leaders {
-			ink, soft, dots := pal.ink, pal.dim, pal.faint
-			if on {
-				ink, soft, dots = pal.accent, pal.ink, pal.dim
-			}
-			extra := fitOption(it.extras, w-llen-8)
-			rlen := 1
-			if extra != "" {
-				rlen += runeLen(extra) + 2
-			}
-			g.text(x, row, left, ink, on)
-			for d := x + llen + 1; d < x+w-rlen-1; d++ {
-				g.put(d, row, '.', dots)
-			}
-			if extra != "" {
-				g.text(x+w-rlen, row, extra, soft, false)
-			}
-			g.text(x+w-1, row, string(it.key), ternaryColor(on, pal.accent, pal.dim), on)
-		} else {
-			band, ink, soft := pal.ground, pal.groundInk, pal.groundDim
-			if on {
-				band, ink, soft = pal.band, pal.onBand, pal.onBand
-			}
-			g.fill(x, row, w, 1, ink, band)
-			g.textOn(x, row, left, ink, band, on)
-			if extra := fitOption(it.extras, w-llen-6); extra != "" {
-				g.textOn(x+w-3-runeLen(extra)-1, row, extra, soft, band, false)
-			}
-			g.textOn(x+w-2, row, string(it.key), soft, band, on)
-		}
-		row++
-		if len(it.details) > 0 {
-			if d := fitOption(it.details, w-4); d != "" {
-				g.text(x+4, row, d, ternaryColor(leaders, pal.dim, pal.groundDim), false)
-			}
-			row++
-		}
-		sc.hits = append(sc.hits, image.Rect(x, first, x+w, row))
-		row += L.gap - 1
+	tone := entryTone{bg: pal.ground, ink: pal.groundInk, soft: pal.groundDim, onInk: pal.groundInk, onSoft: pal.groundDim}
+	if leaders {
+		tone = entryTone{bg: pal.bg, ink: pal.ink, soft: pal.dim, dots: pal.faint, onInk: pal.accent, onSoft: pal.ink, dotted: true}
+	}
+	row := L.my
+	for i := range v.items {
+		end := sc.drawEntry(g, pal, v, i, L.mx, row, L.mw, tone)
+		row = end + L.gap - 1
 	}
 }
 
-func ternaryColor(cond bool, a, b kit.Color) kit.Color {
-	if cond {
-		return a
+// drawEntry draws entry i at (x, row), w wide, and returns the row after
+// it. It records the entry's keys: the entry's letter, which a click on the
+// row presses too, and the text size's own pair.
+func (sc *menuScene) drawEntry(g *mGrid, pal *menuPalette, v *menuView, i, x, row, w int, t entryTone) int {
+	it := v.items[i]
+	on := i == v.sel
+	ink, soft := t.ink, t.soft
+	switch {
+	case it.off:
+		ink, soft = pal.faint, pal.faint
+	case on:
+		ink, soft = t.onInk, t.onSoft
 	}
-	return b
+	first, swAt := row, len(sc.switches)
+	left := "  " + it.label
+	llen := runeLen(left)
+	capX := x + w - menuCapW
+	stop := x + w - menuTail // the controls end before this column
+	var sub []xkey
+	// What stands at the right of the row, from its right end to the left.
+	at := stop
+	switch {
+	case it.size && len(it.extras) > 0 && llen+runeLen(it.extras[0])+13 <= w-menuTail:
+		plus := image.Rect(at-3, row, at, row+1)
+		g.textOn(plus.Min.X, row, " + ", ink, t.bg, true)
+		at = plus.Min.X - 1
+		at -= runeLen(it.extras[0])
+		g.text(at, row, it.extras[0], soft, false)
+		minus := image.Rect(at-4, row, at-1, row+1)
+		g.textOn(minus.Min.X, row, " - ", ink, t.bg, true)
+		at = minus.Min.X
+		sub = append(sub,
+			xkey{key: kit.Key{Code: kit.KeyRune, Rune: '-'}, r: minus, cap: minus, kind: keySteel, off: it.off},
+			xkey{key: kit.Key{Code: kit.KeyRune, Rune: '+'}, r: plus, cap: plus, kind: keySteel, off: it.off})
+	case it.sw && len(it.extras) > 0:
+		if v.pix {
+			sw := image.Rect(at-switchCols, row, at, row+1)
+			sc.switches = append(sc.switches, menuSwitch{r: sw, item: i})
+			at = sw.Min.X
+		} else {
+			chip := " " + it.extras[0] + " "
+			at -= runeLen(chip)
+			bg, fg := pal.faint, pal.ink
+			if it.on {
+				bg, fg = pal.accent, pal.bg
+			}
+			g.textOn(at, row, chip, fg, bg, true)
+		}
+	default:
+		if extra := fitOption(it.extras, stop-x-llen-2); extra != "" {
+			at -= runeLen(extra)
+			g.text(at, row, extra, soft, false)
+		}
+	}
+	if it.hint != "" && at-x-llen-2 >= runeLen(it.hint) {
+		at -= runeLen(it.hint) + 2
+		g.text(at, row, it.hint, pal.faint, false)
+	}
+	g.textOn(x, row, left, ink, t.bg, on)
+	if t.dotted {
+		for d := x + llen + 1; d < at-1; d++ {
+			g.put(d, row, '.', t.dots)
+		}
+	}
+	cap := image.Rectangle{}
+	if capX >= x+llen+1 {
+		g.textOn(capX, row, " "+strings.ToUpper(string(it.key))+" ", soft, t.bg, true)
+		cap = image.Rect(capX, first, capX+menuCapW, first+1)
+	}
+	row++
+	if len(it.details) > 0 && !t.brief {
+		if d := fitOption(it.details, w-4); d != "" {
+			g.textOn(x+4, row, d, soft, t.bg, false)
+		}
+		row++
+	}
+	r := image.Rect(x, first, x+w, row)
+	sc.hits = append(sc.hits, r)
+	own := xkey{key: kit.Key{Code: kit.KeyRune, Rune: it.key}, r: r, cap: cap, kind: keyAccent, off: it.off}
+	sc.keys.keys = append(append(sc.keys.keys, sub...), own)
+	for j := swAt; j < len(sc.switches); j++ {
+		sc.switches[j].key = own
+	}
+	return row
 }
 
 // txtGameTitle is said the same way on several screens, so it has one id.
@@ -549,23 +632,15 @@ func (sc *menuScene) renderCompact(g *mGrid, pal *menuPalette, v *menuView) {
 	if runeLen(title) <= g.w {
 		g.text(centred(g.w, runeLen(title)), 0, title, pal.accent, true)
 	}
-	for i, it := range v.items {
-		y := 2 + i
-		if y >= g.h {
+	tone := entryTone{bg: pal.bg, ink: pal.ink, soft: pal.dim, onInk: pal.accent, onSoft: pal.dim, brief: true}
+	row := 2
+	for i := range v.items {
+		if row >= g.h {
 			break
 		}
-		on := i == v.sel
-		sc.hits = append(sc.hits, image.Rect(x, y, x+w, y+1))
-		left := truncate("  "+it.label, max(w-2, 0))
-		if on {
-			left = truncate("▸ "+it.label, max(w-2, 0))
-		}
-		g.text(x, y, left, ternaryColor(on, pal.accent, pal.ink), on)
-		if w >= runeLen(left)+2 {
-			g.text(x+w-1, y, string(it.key), pal.dim, false)
-		}
+		row = sc.drawEntry(g, pal, v, i, x, row, w, tone)
 	}
-	if y := 3 + len(v.items); y < g.h {
+	if y := row + 1; y < g.h {
 		if ver := fitOption(v.versions, w); ver != "" {
 			g.text(x, y, ver, pal.dim, false)
 		}

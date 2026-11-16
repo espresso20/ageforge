@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 func TestRelativeTime(t *testing.T) {
@@ -177,30 +178,45 @@ func TestDetailTextAccountAttribution(t *testing.T) {
 	}
 }
 
+// footText is a fitted key bar as it reads: each line's keys and words.
+func footText(lines []footLine) string {
+	var out []string
+	for _, l := range lines {
+		var parts []string
+		for _, k := range l {
+			parts = append(parts, k[0]+" "+k[1])
+		}
+		out = append(out, strings.Join(parts, " "))
+	}
+	return strings.Join(out, "\n")
+}
+
 func TestFooterBarShowsHotkeyButtons(t *testing.T) {
-	bar := footerBar()
+	lines, _ := fitKeys(loadGameKeys, 1<<16, 1)
+	bar := footText(lines)
 	// Every action label must be present.
 	for _, label := range []string{"Navigate", "Load", "Delete", "Rename", "Duplicate", "Main game", "Back"} {
 		if !strings.Contains(bar, label) {
-			t.Errorf("footerBar() missing action label %q", label)
+			t.Errorf("the foot is missing action label %q", label)
 		}
 	}
-	// Every hotkey must render as a keycap (between the gold cap tag and the label tag).
-	for _, cap := range []string{"] ↑↓ [", "] Enter [", "] D [", "] R [", "] C [", "] M [", "] Esc ["} {
+	for _, cap := range []string{"↑↓ ", "Enter ", "D ", "R ", "C ", "M ", "Esc "} {
 		if !strings.Contains(bar, cap) {
-			t.Errorf("footerBar() missing keycap %q", cap)
+			t.Errorf("the foot is missing keycap %q", cap)
 		}
 	}
-	// Buttons must be styled with a real color tag, not plain text.
-	if !strings.Contains(bar, "[onaccent:accent:b]") {
-		t.Errorf("footerBar() should style keycaps with a color tag, got %q", bar)
-	}
-	// Regression guard: the old footer used bare [Enter]/[d]/[r]/[c]/[Esc], which
-	// tview parses as color tags and SWALLOWS — the hotkeys vanished on screen.
-	for _, naked := range []string{"[Enter]", "[Esc]", "[d]", "[r]", "[c]"} {
-		if strings.Contains(bar, naked) {
-			t.Errorf("footerBar() contains swallowable tag %q — keys will vanish in tview", naked)
+	// Every key is a button that presses its key: the foot of the page, drawn.
+	f := newKeyFoot(nil, loadGameKeys)
+	g := f.render(120, 1)
+	pressable := 0
+	for _, k := range g.keys {
+		if k.key != (kit.Key{}) {
+			pressable++
 		}
+	}
+	// The arrows are two keys: seven actions, eight keys.
+	if pressable != len(loadGameKeys)+1 {
+		t.Errorf("the foot has %d pressable keys for %d actions", pressable, len(loadGameKeys))
 	}
 }
 
@@ -210,42 +226,32 @@ func TestFooterBarShowsHotkeyButtons(t *testing.T) {
 // key is on the bar at every width.
 func TestKeyBarsFitTheirWidth(t *testing.T) {
 	for w := 80; w <= 200; w++ {
-		bar := keyBar(loadGameKeys, w, 1)
-		if strings.Contains(bar, "\n") || visibleLen(bar) > w {
-			t.Fatalf("Load Game key bar at %d columns: %d cells: %q", w, visibleLen(bar), untag(bar))
+		lines, gap := fitKeys(loadGameKeys, w, 1)
+		if len(lines) != 1 || lines[0].footW(gap) > w {
+			t.Fatalf("Load Game key bar at %d columns: %d lines, %d cells: %q", w, len(lines), lines[0].footW(gap), footText(lines))
 		}
-		for _, k := range loadGameKeys {
-			if !strings.Contains(bar, " "+k.key+" ") {
-				t.Fatalf("Load Game key bar at %d columns lost the key %q", w, k.key)
+		if len(lines[0]) != len(loadGameKeys) {
+			t.Fatalf("Load Game key bar at %d columns lost a key: %q", w, footText(lines))
+		}
+		acc, agap := fitKeys(accountsKeys, w, 2)
+		if len(acc) > 2 {
+			t.Fatalf("Accounts key bar at %d columns takes %d lines", w, len(acc))
+		}
+		n := 0
+		for _, l := range acc {
+			if l.footW(agap) > w {
+				t.Fatalf("Accounts key bar at %d columns: a line of %d cells: %q", w, l.footW(agap), footText(acc))
 			}
+			n += len(l)
 		}
-		acc := keyBar(accountsKeys, w, 2)
-		lines := strings.Split(acc, "\n")
-		if len(lines) > 2 {
-			t.Fatalf("Accounts key bar at %d columns takes %d lines", w, len(lines))
-		}
-		for _, l := range lines {
-			if visibleLen(l) > w {
-				t.Fatalf("Accounts key bar at %d columns: a line of %d cells: %q", w, visibleLen(l), untag(l))
-			}
-		}
-		for _, k := range accountsKeys {
-			if !strings.Contains(acc, " "+k.key+" ") || !strings.Contains(acc, " "+k.label.String()+" ") {
-				t.Fatalf("Accounts key bar at %d columns lost %q %q", w, k.key, k.label.String())
-			}
+		if n != len(accountsKeys) {
+			t.Fatalf("Accounts key bar at %d columns shows %d of %d keys: %q", w, n, len(accountsKeys), footText(acc))
 		}
 	}
-	if bar := keyBar(loadGameKeys, 120, 1); !strings.Contains(bar, "Navigate") || !strings.Contains(bar, "Main game") {
-		t.Errorf("with room the Load Game bar names every key in full: %q", untag(bar))
+	if lines, _ := fitKeys(loadGameKeys, 120, 1); !strings.Contains(footText(lines), "Navigate") || !strings.Contains(footText(lines), "Main game") {
+		t.Errorf("with room the Load Game bar names every key in full: %q", footText(lines))
 	}
-	if strings.Contains(keyBar(accountsKeys, 130, 2), "\n") {
+	if lines, _ := fitKeys(accountsKeys, 130, 2); len(lines) != 1 {
 		t.Error("the Accounts bar fits on one line at 130 columns and took two")
 	}
-}
-
-// footerBar is the Load Game action bar with every name in full: a keycap
-// button per action, so the player can see at a glance which key triggers
-// what. The page fits it to its width (keyBar).
-func footerBar() string {
-	return keyBar(loadGameKeys, 1<<16, 1)
 }

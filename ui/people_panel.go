@@ -85,7 +85,7 @@ func (p *peoplePanel) Mouse(m kit.Mouse) bool {
 		return false
 	}
 	pt := m.Pt().Sub(p.Bounds().Min)
-	if t, ok := p.grid.hitAt(hitTab, pt); ok {
+	if t, ok := p.grid.tabAt(pt); ok {
 		p.setTab(t)
 		return true
 	}
@@ -102,7 +102,7 @@ func (p *peoplePanel) PointerAt(at image.Point) kit.Pointer {
 		return kit.PointerArrow
 	}
 	pt := at.Sub(p.Bounds().Min)
-	_, tab := p.grid.hitAt(hitTab, pt)
+	_, tab := p.grid.tabAt(pt)
 	_, row := p.grid.hitAt(hitRow, pt)
 	_, key := p.grid.keyAt(pt)
 	return handIf(tab || row || key)

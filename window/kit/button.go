@@ -26,6 +26,10 @@ type Button struct {
 // NewButton is a button that calls fn.
 func NewButton(label string, fn func()) *Button { return &Button{Label: label, OnPress: fn} }
 
+// State is whether the pointer is over the button and whether a mouse
+// button is held on it.
+func (b *Button) State() (hover, down bool) { return b.hover, b.down }
+
 func (b *Button) CanFocus() bool { return !b.Disabled }
 
 func (b *Button) Layout(r image.Rectangle) { b.Place(r) }

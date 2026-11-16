@@ -131,7 +131,7 @@ func (c peopleBody) overview() {
 		g.box(c.x, ly, c.w, lh, xBorder, vibe.Line("ui.people_tabs.overview.07", "Lately"), xTitle, false)
 		drawLog(g, 3, ly+1, c.w-4, lh-2, recentLog(st, peopleEvent, lh-2), vibe.Line("ui.people_tabs.overview.08", "Nothing yet. People move in as you build homes."))
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick"}, {"Esc", "close"}}, "people")
+	c.footer([][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
 }
 
 // txtFood is said the same way on several screens, so it has one id.
@@ -225,7 +225,7 @@ func (c peopleBody) work() {
 	g.box(c.x+lw, c.y, rw, c.h, xBorder, "", xTitle, false)
 	if len(rows) == 0 {
 		g.putFit(c.x+2, c.y+1, lw-4, vibe.Line("ui.people_tabs.work.02", "No worker buildings yet: every area is on auto."), xFaint)
-		c.footer([][2]string{{"←→", "tabs"}, {"Esc", "close"}}, "roster <area> <%|auto>")
+		c.footer([][2]string{escClose()}, vibe.Line("ui.people_tabs.work.03", "roster <area> <%|auto>"))
 		return
 	}
 	inner := lw - 4
@@ -297,7 +297,7 @@ func (c peopleBody) work() {
 	}
 	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.13", "Share  "), xDim}, xseg{share, xText})
 	y++
-	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.14", "Set it  "), xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <%|auto>", xText})
+	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.14", "Set it  "), xDim}, xseg{vibe.Line("ui.people_tabs.work.04", "roster ") + strings.ToLower(r.Name) + " <%|auto>", xText})
 	y += 2
 	lines := wrapText(recruitText(st), ri)
 	openAt := len(lines) // the first line of the note after it is gold
@@ -313,7 +313,7 @@ func (c peopleBody) work() {
 		g.put(rx, y, l, k)
 		y++
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.work.19", "pick an area")}, escClose()}, "roster <area> <%|auto>")
+	c.footer([][2]string{{"↑↓", vibe.Line("ui.people_tabs.work.19", "pick an area")}, escClose()}, "roster <area> <%|auto>")
 }
 
 // areaList is the built buildings of a work area that take workers.
@@ -403,7 +403,7 @@ func (c peopleBody) army() {
 		g.box(c.x, by, c.w, bh, xBorder, vibe.Line("ui.people_tabs.army.14", "Fallen and filled"), xTitle, false)
 		drawLog(g, 3, by+1, c.w-4, bh-2, recentLog(st, armyEvent, bh-2), vibe.Line("ui.people_tabs.army.15", "No news from the army."))
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.army.17", "pick a building")}, escClose()}, "army")
+	c.footer([][2]string{{"↑↓", vibe.Line("ui.people_tabs.army.17", "pick a building")}, escClose()}, "army")
 }
 
 // ===== Scholars =====
@@ -500,5 +500,5 @@ func (c peopleBody) scholars() {
 			g.putFit(3, by+1+i, c.w-4, "· "+t, xText)
 		}
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.scholars.22", "pick a building")}, escClose()}, "scholars")
+	c.footer([][2]string{{"↑↓", vibe.Line("ui.people_tabs.scholars.22", "pick a building")}, escClose()}, "scholars")
 }

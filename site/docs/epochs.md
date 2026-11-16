@@ -118,7 +118,7 @@ Type `epoch` to open the Epoch screen, a full-screen page to show off your run. 
 - The banner: your epoch's name in large iron lettering, painted in a gradient of the epoch's colors over a field of stars, with your town, current age and year centered under it.
 - Highlights: five boxed tiles in a centered row, each with big digits and its own accent color. They show population, buildings, techs researched out of the total (with a thin progress bar), wonders built and prestige count.
 - Ages: a centered track. Finished ages are filled blocks in the epoch's color, the one you are in is lit (and pulses when Motion is on), and the next is an outline. An age you have not seen is counted ("3 more to come"), not named.
-- Top badges: your five rarest earned badges as cards, each with its emblem, a border in its rarity color, its name and its rarity. With fewer than five it shows what you have, and with none it says so.
+- Top badges: your five rarest earned badges as cards, each with its coin, a border in its rarity color, its name and its rarity. With fewer than five it shows what you have, and with none it says so. The coins move as they do in the badge case.
 - Feats: catastrophes met, how each harbinger ended, milestones reached and your fastest age, each with a colored icon.
 - A centered hint closes the page: press `c` to copy a picture for Discord.
 

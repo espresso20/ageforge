@@ -248,7 +248,7 @@ type Account struct {
 	setAside string
 
 	// pendingEarned is the badges earned and not yet announced: the dashboard drains
-	// it (GameEngine.DrainEarnedBadges) and writes the toast and the log line. Not
+	// it (GameEngine.DrainEarnedBadges) and shows the card and writes the log line. Not
 	// saved: a badge earned just before the game closes is simply in the list.
 	pendingEarned []string
 

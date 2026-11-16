@@ -170,7 +170,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 		t.Errorf("the first visit selects entry %d, want New game", m.view.sel)
 	}
 	scr := r.draw(120, 40)
-	for _, want := range []string{"CONTENTS", "▸ New game", "Plate I. The forge", "0 of ", "dev"} {
+	for _, want := range []string{"CONTENTS", "New game", "Plate I. The forge", "0 of ", "dev"} {
 		if !scr.has(want) {
 			t.Errorf("the first visit's page has no %q", want)
 		}
@@ -193,7 +193,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 	}
 	for _, size := range [][2]int{{120, 40}, {80, 24}} {
 		scr = r.draw(size[0], size[1])
-		for _, want := range []string{"▸ Continue", "ashford", "Primitive Age", "0 people", "New game", "ages, one terminal", m.town.name + " · Primitive Age"} {
+		for _, want := range []string{"Continue", "ashford", "Primitive Age", "0 people", "New game", "ages, one terminal", m.town.name + " · Primitive Age"} {
 			if !scr.has(want) {
 				t.Errorf("at %dx%d the page with a game has no %q", size[0], size[1], want)
 			}
@@ -641,7 +641,7 @@ func TestMenuFallsBackWithoutAnError(t *testing.T) {
 	if !r.m.view.forge || r.m.view.items[0].id != miContinue {
 		t.Errorf("after the map failed: forge page %v, first entry %q", r.m.view.forge, r.m.view.items[0].id)
 	}
-	if !scr.has("CONTENTS") || !scr.has("▸ Continue") {
+	if !scr.has("CONTENTS") || !scr.has("Continue") {
 		t.Error("after the map failed the page is not the first page with Continue on it")
 	}
 	// And it stays the first page, without trying the map again.
@@ -729,7 +729,7 @@ func TestMenuTownFollowsTheSettings(t *testing.T) {
 				}
 			}
 		}
-		if !scr.has("> Continue") || !scr.has("#") {
+		if !scr.has("Continue") || !scr.has("#") {
 			t.Errorf("at %dx%d the plain page is missing its menu or its wordmark", size[0], size[1])
 		}
 	}

@@ -221,6 +221,8 @@ type plateKey struct {
 type plateSet struct {
 	m     map[plateKey]*image.RGBA
 	acts  map[actionKey]*image.RGBA
+	sw    map[switchKey]*image.RGBA
+	tabs  map[tabKey]*image.RGBA
 	bytes int
 	cell  [2]int
 }
@@ -229,7 +231,7 @@ type plateSet struct {
 // past its bound.
 func (s *plateSet) fit(cw, ch int) {
 	if s.cell != [2]int{cw, ch} || s.bytes > plateSetMax {
-		s.m, s.acts, s.cell, s.bytes = nil, nil, [2]int{cw, ch}, 0
+		s.m, s.acts, s.sw, s.tabs, s.cell, s.bytes = nil, nil, nil, nil, [2]int{cw, ch}, 0
 	}
 }
 
@@ -385,6 +387,7 @@ func (k *keyPresser) paint(p *kit.Painter, h keyHolder, org image.Point, pal *ex
 		}
 		k.paintKey(p, s, org, pal, key, st, pix)
 	}
+	k.paintTabs(p, s, org, pal)
 }
 
 // sunkButton reports whether b is sunk: its key was typed, or a mouse button

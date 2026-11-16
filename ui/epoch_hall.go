@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"sort"
 	"strings"
 	"time"
@@ -42,6 +43,8 @@ type epochHall struct {
 	// own). Either may be nil, and then c does nothing.
 	state func() game.GameState
 	card  func(game.GameState) (epochCardResult, error)
+	// pics are the coins on the page, painted over its text.
+	pics hallCoins
 	// note is the line the last card left on the foot, until noteUntil.
 	note      string
 	noteUntil time.Time
@@ -80,6 +83,13 @@ func (h *epochHall) makeCard() {
 		h.note = vibe.Sprintf("ui.epoch_hall.makeCard.02", "Picture saved to %s.", res.Path)
 	}
 	h.noteUntil = h.clock().Add(hallNoteFor)
+}
+
+// paintCoins is the screen's picture layer (see nativeText.over): the coins
+// of the page, in the pose of the clock when the motion setting is on.
+func (h *epochHall) paintCoins(p *kit.Painter, text image.Rectangle, top int) {
+	on := h.motion != nil && h.motion()
+	h.pics.paint(p, text, top, hallFrame(on, h.clock()))
 }
 
 // open starts the screen on the front page.
@@ -130,6 +140,7 @@ func (h *epochHall) rows() int {
 // provider is the screen's text: the front page, or the details.
 func (h *epochHall) provider(state game.GameState, screenW int) string {
 	if h.details {
+		h.pics.list = nil
 		return epochProvider(state, screenW)
 	}
 	mo := hallMotion{}
@@ -140,7 +151,9 @@ func (h *epochHall) provider(state game.GameState, screenW int) string {
 		}
 		mo = hallMotion{on: true, t: float64(now().UnixMilli()) / 1000}
 	}
-	return hallFront(state, screenW, h.rows(), h.glyphTier(), mo)
+	page := hallFrontPage(state, screenW, h.rows(), h.glyphTier(), mo, true)
+	h.pics.list = page.coins
+	return page.text
 }
 
 // ---- what the screen says ----
@@ -376,12 +389,18 @@ func hallFrontText(state game.GameState, screenW, rows int, tier mapmodel.GlyphT
 // hallFront is the front page at a moment of the clock. Every block is
 // centred as a unit on the width of the screen.
 func hallFront(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion) string {
-	return hallFrontPage(state, screenW, rows, tier, mo, true)
+	return hallFrontPage(state, screenW, rows, tier, mo, true).text
+}
+
+// hallPage is the front page: its text, and the coins to paint over it.
+type hallPage struct {
+	text  string
+	coins []hallCoin
 }
 
 // hallFrontPage is hallFront with or without the line that says which key
 // copies the picture (the picture itself leaves it out).
-func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, hint bool) string {
+func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, hint bool) hallPage {
 	v := newHallView(state)
 	c := hallCompose(v, screenW, rows, tier, mo, 1, hint)
 	// On a tall screen the page sits a little below the top, not hard
@@ -389,7 +408,7 @@ func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphT
 	if spare := rows - 4 - c.end; spare > 3 {
 		c = hallCompose(v, screenW, rows, tier, mo, 1+min(spare/3, 10), hint)
 	}
-	return c.render()
+	return hallPage{text: c.render(), coins: c.coins}
 }
 
 // hallCompose lays the page out with its banner starting at row top.

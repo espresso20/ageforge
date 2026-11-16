@@ -37,6 +37,10 @@ type nativeText struct {
 	// click, when set, is what a click on the box does when nothing in
 	// its text took the click.
 	click func()
+	// over, when set, paints on the text once the box has: pictures that go
+	// over the cells. It is given the rectangle the text shows in and the
+	// text's first row in view.
+	over func(p *kit.Painter, text image.Rectangle, top int)
 }
 
 // newNativeText is a text view: scrollable, wrapping at
@@ -249,6 +253,9 @@ func (t *nativeText) GetInnerRect() (x, y, w, h int) {
 // Paint draws the box.
 func (t *nativeText) Paint(p *kit.Painter) {
 	t.box.Paint(p)
+	if t.over != nil {
+		t.over(p, t.view.Bounds(), t.view.Top())
+	}
 	if t.maxLines > 0 {
 		if ls := strings.Split(t.raw, "\n"); len(ls) > t.maxLines {
 			t.raw = strings.Join(ls[len(ls)-t.maxLines:], "\n")

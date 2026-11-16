@@ -42,35 +42,31 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 			vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.04", "  [red]• It takes twice as long to research[-]\n") +
 			vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.05", "  [gray]Only one such memory surfaces per civilization.[-]"))
 
-	btnAccept := newNativeButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept")).
-		SetSelectedFunc(func() {
+	acceptKey, acceptLabel := splitKeyed(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept"))
+	declineKey, declineLabel := splitKeyed(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline"))
+	btnRow, btns := choiceRow([]choice{
+		{label: acceptLabel, key: acceptKey, kind: keyPrimary, sign: signTick, press: func() {
 			if err := d.engine.AcceptAncientMemory(); err != nil {
 				d.engine.AddLog("error", vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.07", "Could not recover the memory: ")+err.Error())
 			}
 			d.closeAncientMemoryModal()
-		})
-	styleFilledButton(btnAccept, theme.RolePositive)
-
-	btnDecline := newNativeButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline")).
-		SetSelectedFunc(func() {
+		}},
+		{label: declineLabel, key: declineKey, kind: keyPlain, sign: signCross, press: func() {
 			d.engine.DeclineAncientMemory()
 			d.closeAncientMemoryModal()
-		})
-
-	btnRow := newNativeFlex().SetDirection(flexColumn).
-		AddItem(btnAccept, 12, 0, true).
-		AddItem(newNativeBox(), 2, 0, false).
-		AddItem(btnDecline, 12, 0, false)
+		}},
+	}, 2, 0)
+	btnAccept, btnDecline := btns[0], btns[1]
 
 	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(header, 3, 0, false).
 		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(body, 7, 0, false).
 		AddItem(newNativeBox(), 1, 0, false).
-		AddItem(btnRow, 1, 0, true)
+		AddItem(btnRow, actionRows, 0, true)
 	framed(inner, vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.09", " ✦ Ancient Memory "), theme.RoleAccent)
 
-	modal := centeredModal(inner, 64, 17)
+	modal := centeredModal(inner, 64, 14+actionRows)
 
 	// Tab/arrows cycle the buttons; a/d are shortcuts for Accept/Decline.
 	ring := newButtonRing(d.app, func(p Primitive) { d.memFocus = p })

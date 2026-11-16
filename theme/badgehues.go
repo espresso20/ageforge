@@ -5,8 +5,8 @@ import (
 )
 
 // badgehues.go holds the badges' identity hues: the metals of the tiers and
-// the colours of the hand-drawn badges. Like the maps' hues (maphues.go)
-// they are never drawn as they are: the badge renderer picks the value for
+// the colours of the integrity badges and the code rain. Like the maps'
+// hues (maphues.go) they are never drawn as they are: the badge renderer picks the value for
 // a dark or a light theme, folds it onto the ramp of a one-ink theme and
 // holds it to the contrast rule for art against what it is drawn on
 // (ui/cell_grid.go). Keeping them here keeps the "no raw colours outside
@@ -38,29 +38,15 @@ const (
 	BadgePlatinumDark
 	BadgePlatinum
 	BadgePlatinumPale
-	// The hand-drawn badges: a cookie jar, a ledger and a rain of code.
-	BadgeCookie
-	BadgeCookieDark
-	BadgeLid
-	BadgeLidDark
-	BadgeJarLabel
-	BadgeGlass
+	// The colours of the specials: a cyan and a magenta, and a rain of code.
 	BadgeCyan
 	BadgeMagenta
-	BadgeStatic
-	BadgeLedgerRule
-	BadgeLedgerDigit
-	BadgeLedgerText
-	BadgeLedgerHead
 	BadgeRain0 // the head of a falling column, then its tail
 	BadgeRain1
 	BadgeRain2
 	BadgeRain3
 	BadgeRain4
 	BadgeRain5
-	BadgeSourceFrame
-	BadgeSourceLabel
-	BadgeSourceKey
 	// NumBadgeHues is how many hues there are.
 	NumBadgeHues
 )
@@ -81,28 +67,14 @@ var badgeHues = [NumBadgeHues][2]int32{
 	BadgePlatinum:     {0xe5e4e2, 0x566aa6},
 	BadgePlatinumPale: {0xf2f8ff, 0x33457d},
 
-	BadgeCookie:      {0xc68642, 0x9a5f22},
-	BadgeCookieDark:  {0x8b5a2b, 0x6b3f14},
-	BadgeLid:         {0xe0a95a, 0x8a5a12},
-	BadgeLidDark:     {0xc98a3a, 0x70470c},
-	BadgeJarLabel:    {0xf5f5f5, 0x1f2328},
-	BadgeGlass:       {0x8fd3ff, 0x1f6f9c},
-	BadgeCyan:        {0x39e6ff, 0x00758a},
-	BadgeMagenta:     {0xff3ea5, 0xb3166b},
-	BadgeStatic:      {0x39ff88, 0x0b7a3a},
-	BadgeLedgerRule:  {0x2f6f93, 0x6f97b0},
-	BadgeLedgerDigit: {0xffe066, 0x7a5a00},
-	BadgeLedgerText:  {0x9fe8ff, 0x1d5f77},
-	BadgeLedgerHead:  {0xe6f7ff, 0x0f3a4a},
-	BadgeRain0:       {0xeaffea, 0x06290f},
-	BadgeRain1:       {0x8dffa8, 0x0c4a1d},
-	BadgeRain2:       {0x3ddc6e, 0x13672b},
-	BadgeRain3:       {0x2fbf5c, 0x1b7f38},
-	BadgeRain4:       {0x1c8f43, 0x2a8f47},
-	BadgeRain5:       {0x126b31, 0x3b9954},
-	BadgeSourceFrame: {0x1f7a3a, 0x1f7a3a},
-	BadgeSourceLabel: {0x5dff8a, 0x0c5a24},
-	BadgeSourceKey:   {0xc9ffd6, 0x06290f},
+	BadgeCyan:    {0x39e6ff, 0x00758a},
+	BadgeMagenta: {0xff3ea5, 0xb3166b},
+	BadgeRain0:   {0xeaffea, 0x06290f},
+	BadgeRain1:   {0x8dffa8, 0x0c4a1d},
+	BadgeRain2:   {0x3ddc6e, 0x13672b},
+	BadgeRain3:   {0x2fbf5c, 0x1b7f38},
+	BadgeRain4:   {0x1c8f43, 0x2a8f47},
+	BadgeRain5:   {0x126b31, 0x3b9954},
 }
 
 // BadgeHueColor returns a badge identity hue for a dark or a light theme.

@@ -37,4 +37,4 @@ func (g *mGrid) row(y int) string {
 }
 
 // GetCurrent returns the current toast text or empty string if none active
-func (tm *ToastManager) GetCurrent() string { return tm.CurrentFor(0) }
+func (tm *ToastManager) GetCurrent() string { return tm.Current() }

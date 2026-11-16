@@ -206,7 +206,8 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 	p := newAccountsPanel(r.app, r.pages, r.eng, "splash")
 	r.pages.AddPage(accountsPage, p.root, true, true)
 	r.app.SetFocus(p.root)
-	if bar := untag(keyBar(accountsKeys, 200, 2)); !strings.Contains(bar, "x") || !strings.Contains(bar, "Delete saves") {
+	lines, _ := fitKeys(accountsKeys, 200, 2)
+	if bar := footText(lines); !strings.Contains(bar, "x") || !strings.Contains(bar, "Delete saves") {
 		t.Errorf("the panel's keys do not list deleting saves: %q", bar)
 	}
 
