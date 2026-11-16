@@ -18,15 +18,16 @@ import (
 // under the cap's cells and the cap's text written back over it.
 
 // keyKind is the colour of a key: the accent for a key that acts, steel for
-// one that moves, and the close button's own. The action buttons (three rows
-// tall, action_button.go) are primary in the accent, plain in steel and
-// danger in the alert colour.
+// one that moves, the close button's own, and the alert colour for a key that
+// removes something. The action buttons (three rows tall, action_button.go)
+// are primary in the accent, plain in steel and danger in the alert colour.
 type keyKind uint8
 
 const (
 	keyAccent keyKind = iota
 	keySteel
 	keyClose
+	keyAlert
 	keyPrimary
 	keyPlain
 	keyDanger
@@ -184,7 +185,7 @@ func (p *expPalette) look(kind keyKind, st keyState) keyLook {
 	case keySteel, keyPlain:
 		base = toward(chip, text, .42)
 		capBase = accent
-	case keyDanger:
+	case keyDanger, keyAlert:
 		base = p.tone(xBad, false)
 		capBase = toward(base, keyWhite, .78)
 	case keyClose:

@@ -80,6 +80,11 @@ func pickedBuilding(st game.GameState, v peopleView) (peopleBuilding, bool) {
 func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 	g := c.g
 	sub := clamp(c.v.sub, 0, len(bs)-1)
+	// The steppers share a column: the widest count sets it.
+	cw := 0
+	for _, b := range bs {
+		cw = max(cw, runeLen(fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))))
+	}
 	for i, b := range bs {
 		need := 1
 		if i == sub {
@@ -91,14 +96,14 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 		}
 		count := fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))
 		minus, plus := buildingStep(b.key, b.BuildingState, c.st.Workers.TotalIdle)
-		sx := rx + ri - runeLen(count) - 1 - stepperW
+		sx := rx + ri - cw - 1 - stepperW
 		pickName(g, rx, y, sx-rx-1, fmt.Sprintf("%s x%d", b.Name, b.Count), i == sub)
 		g.hit(hitSub, i, rx, y, sx-rx, 1)
 		g.stepper(sx, y, minus, plus)
 		g.rput(rx+ri-1, y, count, xGood)
 		y++
 		if i == sub {
-			g.chip(rx+2, y, txtDismiss.String(), keyDanger, command(verbDismiss, b.key), dismissAsk(b.Name), txtDismiss.String(), b.WorkersAssigned == 0)
+			g.chip(rx+2, y, txtDismiss.String(), keyAlert, command(verbDismiss, b.key), dismissAsk(b.Name), txtDismiss.String(), b.WorkersAssigned == 0)
 			y++
 		}
 	}
