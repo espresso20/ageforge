@@ -181,9 +181,9 @@ type caseModel struct {
 	// as a picture, and medalOf the badge it is for; empty when there is none.
 	medalRoom image.Rectangle
 	medalFor  *caseItem
-	// chrome holds the panel's buttons, drawn over the case: the close
-	// button at the right of the title bar and the keys of the key bar.
-	chrome *xgrid
+	// keys are the panel's buttons as last drawn: the close button at the
+	// right of the title bar and the keys of the key bar.
+	keys keySet
 	// coins are the badges of the grid that are drawn as pictures: where
 	// each coin goes, as the last render left them.
 	coins  []caseCoin
@@ -715,15 +715,11 @@ func renderCase(m *caseModel, v caseView) *tGrid {
 	}
 	for x := 0; x < w; x++ {
 		out.put(x, 0, ' ', tsChip, -1)
-		out.put(x, h-1, ' ', tsChip, -1)
 	}
 	m.drawTitle(out)
-	m.chrome = newXGrid(w, h)
-	m.chrome.closeButton(w)
-	m.drawKeys(m.chrome, v)
-	if v.plain() {
-		m.chrome.fold()
-	}
+	m.keys = keySet{plain: v.plain(), glyph: func(x, y int) rune { return out.c[y*out.w+x].r }}
+	m.keys.closeButton(w, func(x, y int, text string, _ bool) { out.text(x, y, text, tsChip, -1) })
+	m.drawKeys(out, v)
 	if !m.account {
 		out.text(1, caseTop, clipRunes(vibe.Line("ui.badge_case.renderCase.02", "No account is loaded, so there are no badges to show."), w-2), tsDim, -1)
 		return out
@@ -1192,7 +1188,7 @@ var txtRunsCommandBelow = vibe.E("ui.badge_case.drawKeys.15", "runs the command 
 
 // drawKeys draws the key bar on the panel's buttons: as many of the keys as
 // the bar holds, each a button a click presses, and Esc the last to go.
-func (m *caseModel) drawKeys(g *xgrid, v caseView) {
+func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	w, h := m.lay.w, m.lay.h
 	move := [2]string{"←↑↓→", "move"}
 	card := [2]string{"←→", vibe.Line("ui.badge_case.drawKeys.02", "the badge before, the next")}
@@ -1230,9 +1226,16 @@ func (m *caseModel) drawKeys(g *xgrid, v caseView) {
 			break
 		}
 	}
+	put := func(x, y int, text string, cap bool) {
+		st := tsText
+		if cap {
+			st = tsChip
+		}
+		out.text(x, y, text, st, -1)
+	}
 	x := 1
 	for _, k := range keys {
-		x = g.keyButton(x, h-1, k[0], k[1]) + 1
+		x = m.keys.keyButton(x, h-1, k[0], k[1], put) + 1
 	}
 }
 

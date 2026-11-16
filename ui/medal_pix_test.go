@@ -378,12 +378,12 @@ func TestBadgePanelKeyButtons(t *testing.T) {
 	paint()
 	var got []kit.Key
 	p.buttons.press = func(k kit.Key) { got = append(got, k) }
-	chrome := p.model.chrome
-	if len(chrome.keys) < 2 {
-		t.Fatalf("the panel has %d key buttons", len(chrome.keys))
+	keys := p.model.keys.keys
+	if len(keys) < 2 {
+		t.Fatalf("the panel has %d key buttons", len(keys))
 	}
 	closed := false
-	for _, k := range chrome.keys {
+	for _, k := range keys {
 		got = nil
 		at := k.r.Min
 		if !pressAt(p, at.X, at.Y) || len(got) != 1 || got[0] != k.key {
@@ -402,16 +402,20 @@ func TestBadgePanelKeyButtons(t *testing.T) {
 	for _, w := range []int{60, 80, 120, 160} {
 		views, sum := caseFixture()
 		for _, tier := range caseTiers {
-			m, _, _ := drawCase(views, sum, w, 30, caseView{tier: tier})
-			for _, k := range m.chrome.keys {
+			m, _, g := drawCase(views, sum, w, 30, caseView{tier: tier})
+			for _, k := range m.keys.keys {
 				if k.r.Min.X < 0 || k.r.Max.X > w {
 					t.Errorf("%d wide, %s: a key button spans columns %d to %d", w, tier, k.r.Min.X, k.r.Max.X)
 				}
 			}
 			if tier == mapmodel.TierASCII {
-				for i, c := range m.chrome.c {
-					if c.r >= 0x80 {
-						t.Fatalf("%d wide: the plain tier draws %q at %d,%d of the buttons", w, c.r, i%w, i/w)
+				for _, k := range m.keys.keys {
+					for y := k.r.Min.Y; y < k.r.Max.Y; y++ {
+						for x := k.r.Min.X; x < k.r.Max.X; x++ {
+							if c := g.c[y*g.w+x]; c.r >= 0x80 {
+								t.Fatalf("%d wide: the plain tier draws %q at %d,%d of the buttons", w, c.r, x, y)
+							}
+						}
 					}
 				}
 			}

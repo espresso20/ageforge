@@ -154,18 +154,7 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 		foldBadges(grid)
 	}
 	paintGridKit(p2, grid, r.Min, newGridPalette(0, nil))
-	if g := p.model.chrome; g != nil {
-		// The buttons, over the case: the key bar's row, and the close
-		// button's cells of the title bar.
-		pal := newExpPalette()
-		paintExpeditionKit(p2.Clip(image.Rect(r.Min.X, r.Max.Y-1, r.Max.X, r.Max.Y)), g, r.Min, pal)
-		for _, k := range g.keys {
-			if k.r.Min.Y == 0 {
-				paintExpeditionKit(p2.Clip(k.r.Add(r.Min)), g, r.Min, pal)
-			}
-		}
-		p.buttons.paint(p2, g, r.Min, pal)
-	}
+	p.buttons.paint(p2, &p.model.keys, r.Min, newExpPalette())
 	p.moving.Store(p.paintCoins(p2, r.Min))
 }
 
@@ -235,7 +224,7 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 		return false
 	}
 	switch {
-	case p.buttons.mouse(p.model.chrome, p.Bounds().Min, m):
+	case p.buttons.mouse(&p.model.keys, p.Bounds().Min, m):
 		return true
 	case m.Kind == kit.MouseWheel && !p.view.card:
 		key := kit.KeyDown
@@ -279,7 +268,7 @@ func (p *badgePanel) PointerAt(at image.Point) kit.Pointer {
 	if p.model == nil {
 		return kit.PointerArrow
 	}
-	if key := p.buttons.pointer(p.model.chrome, p.Bounds().Min, at); key != kit.PointerArrow || p.view.card {
+	if key := p.buttons.pointer(&p.model.keys, p.Bounds().Min, at); key != kit.PointerArrow || p.view.card {
 		return key
 	}
 	pt := at.Sub(p.Bounds().Min)

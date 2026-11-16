@@ -134,14 +134,31 @@ func arrowKey(r rune) (kit.Key, bool) {
 	return kit.Key{}, false
 }
 
+// keyPut writes text at (x, y) into a grid's own cells; cap says the text is
+// a key's cap and not its word.
+type keyPut func(x, y int, text string, cap bool)
+
 // keyButton draws a key and its word at (x, y) as a button, records what a
 // click on it presses, and returns the next x. A cap that names one key is
 // one button with its word. A cap that names several is a button a key, each
 // with its own cells of the cap; the word is then nobody's. The cells hold the
 // cap and the word as they read without pictures; paint restyles them.
 func (g *xgrid) keyButton(x, y int, key, name string) int {
-	capEnd := g.put(x, y, " "+key+" ", xKeycap)
-	end := g.put(capEnd, y, " "+name+" ", xText)
+	return g.keyset().keyButton(x, y, key, name, func(x, y int, text string, cap bool) {
+		k := xText
+		if cap {
+			k = xKeycap
+		}
+		g.put(x, y, text, k)
+	})
+}
+
+// keyButton is xgrid.keyButton for any grid: put writes its cells.
+func (s *keySet) keyButton(x, y int, key, name string, put keyPut) int {
+	put(x, y, " "+key+" ", true)
+	capEnd := x + len([]rune(key)) + 2
+	put(capEnd, y, " "+name+" ", false)
+	end := capEnd + len([]rune(name)) + 2
 	cap, word := image.Rect(x, y, capEnd, y+1), image.Rect(capEnd, y, end, y+1)
 	parts := capParts(key)
 	kind := keySteel
@@ -151,11 +168,11 @@ func (g *xgrid) keyButton(x, y int, key, name string) int {
 		}
 	}
 	if len(parts) == 0 {
-		g.keys = append(g.keys, xkey{r: cap, cap: cap, word: word, still: true})
+		s.keys = append(s.keys, xkey{r: cap, cap: cap, word: word, still: true})
 		return end
 	}
 	if len(parts) == 1 {
-		g.keys = append(g.keys, xkey{key: parts[0].key, r: image.Rect(x, y, end, y+1), cap: cap, word: word, kind: kind})
+		s.keys = append(s.keys, xkey{key: parts[0].key, r: image.Rect(x, y, end, y+1), cap: cap, word: word, kind: kind})
 		return end
 	}
 	for i, p := range parts {
@@ -166,7 +183,7 @@ func (g *xgrid) keyButton(x, y int, key, name string) int {
 		if i == len(parts)-1 {
 			x1 = capEnd
 		}
-		g.keys = append(g.keys, xkey{key: p.key, r: image.Rect(x0, y, x1, y+1), cap: cap, word: word, kind: kind})
+		s.keys = append(s.keys, xkey{key: p.key, r: image.Rect(x0, y, x1, y+1), cap: cap, word: word, kind: kind})
 	}
 	return end
 }
@@ -199,13 +216,18 @@ const (
 // closeButton draws the close button in the top edge of a box w wide, at its
 // right, and records that a click on it presses Esc.
 func (g *xgrid) closeButton(w int) {
+	g.keyset().closeButton(w, func(x, y int, text string, _ bool) { g.put(x, y, text, xKeycap) })
+}
+
+// closeButton is xgrid.closeButton for any grid: put writes its cells.
+func (s *keySet) closeButton(w int, put keyPut) {
 	if w < closeButtonMinW {
 		return
 	}
 	x := w - closeButtonCols
-	g.put(x, 0, " × ", xKeycap)
+	put(x, 0, " × ", true)
 	// The whole slot takes the click; the key itself rests on its first cells.
-	g.keys = append(g.keys, xkey{key: kit.Key{Code: kit.KeyEsc}, r: image.Rect(x, 0, x+closeButtonCols, 1), cap: image.Rect(x, 0, x+3, 1), kind: keyClose})
+	s.keys = append(s.keys, xkey{key: kit.Key{Code: kit.KeyEsc}, r: image.Rect(x, 0, x+closeButtonCols, 1), cap: image.Rect(x, 0, x+3, 1), kind: keyClose})
 }
 
 // keyPresser is what a panel keeps to make the keys it draws pressable: what
