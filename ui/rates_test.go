@@ -1,6 +1,10 @@
 package ui
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/espresso20/ageforge/game"
+)
 
 func TestPerSecond(t *testing.T) {
 	for _, c := range []struct {
@@ -40,5 +44,30 @@ func TestPerSecondText(t *testing.T) {
 		if got := perSecondText(c.in, c.ms); got != c.want {
 			t.Errorf("perSecondText(%q, %d) = %q, want %q", c.in, c.ms, got, c.want)
 		}
+	}
+}
+
+// The Resources box writes every rate per second, and per minute for one a
+// second would round away; the same helper writes the cards' outputs.
+func TestResourceRowsWriteRatesPerSecond(t *testing.T) {
+	for _, c := range []struct {
+		rate float64
+		ms   int
+		want string
+	}{
+		{1, 2000, "+0.5/s"},
+		{13.9, 1000, "+13.9/s"},
+		{-0.04, 1000, "-0.04/s"},
+		{0.0001, 1000, "+0.01/min"},
+		{0, 1000, "+0.0/s"},
+	} {
+		row := storeRow(game.ResourceState{Name: "Food", Amount: 5, Rate: c.rate}, c.ms)
+		if got, _ := (resFormat{}).rateText(row); got != c.want {
+			t.Errorf("a rate of %v a tick of %d ms reads %q, want %q", c.rate, c.ms, got, c.want)
+		}
+	}
+	row := storeRow(game.ResourceState{Name: "Food", Amount: 5, Rate: 0.0001}, 1000)
+	if got, _ := (resFormat{short: true}).rateText(row); got != "+0.01/m" {
+		t.Errorf("the short unit reads %q", got)
 	}
 }
