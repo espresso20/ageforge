@@ -43,6 +43,7 @@ type GameState struct {
 	PrestigeCue    PrestigeCue
 	Mastery        MasteryState
 	Trade          TradeState
+	BlackMarket    BlackMarketStatus
 	Diplomacy      DiplomacyState
 	Log            []LogEntry
 	Stats          StatsSnapshot
