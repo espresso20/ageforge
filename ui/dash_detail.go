@@ -161,17 +161,152 @@ func (b *buildBox) detailNote(hot xkey, isHot bool) (text string, bad bool) {
 	return "", false
 }
 
-// drawDetail draws the frame, the texts and the keys of the detail at the
-// bottom of the box and returns the cells of its note.
-func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h int) {
+// detailWidths is the inner width of the detail for a box w cells wide and
+// the width of its text where the buttons stand beside it.
+func detailWidths(w int) (iwid, tw int) {
+	iwid = w - 6
+	sellW, upW := actionW(txtSell.String(), "", signNone), actionW(txtUpgrade.String(), "", signNone)
+	return iwid, iwid - upW - 1 - sellW - 1
+}
+
+// detailWrap breaks s at its spaces into rows, the row at index i of the
+// detail's text rows holding at most widthAt(i) cells; from is the index of
+// the first row it fills.
+func detailWrap(s string, from int, widthAt func(int) int) []string {
+	var rows []string
+	line, n := "", 0
+	for _, word := range strings.Fields(s) {
+		word = strings.ReplaceAll(word, glue, " ")
+		wl := visibleLen(word)
+		if n > 0 && n+1+wl > max(widthAt(from+len(rows)), 1) {
+			rows = append(rows, line)
+			line, n = "", 0
+		}
+		if n > 0 {
+			line += " "
+			n++
+		}
+		line += word
+		n += wl
+	}
+	if n > 0 {
+		rows = append(rows, line)
+	}
+	return rows
+}
+
+// detailPlan is how the detail's text lies in its rows: the title on the
+// first, then the notice (on the title's row when it fits there), the
+// description, the workers and the flavour line. Rows beside the buttons are
+// tw cells wide, the rest iwid.
+type detailPlan struct {
+	iwid, tw int
+	beside   bool // the notice shares the title's row
+	noteN    int  // rows the notice keeps below the title
+	desc     []string
+	flav     []string
+	workers  bool
+}
+
+// widthAt is the cells free on the detail's text row i.
+func (p detailPlan) widthAt(i int) int {
+	if i >= 1 && i <= actionRows {
+		return p.tw
+	}
+	return p.iwid
+}
+
+// noteTexts are the lines the note can show: what an upgrade makes and costs,
+// and the reasons of the two buttons.
+func (d detailInfo) noteTexts() []string {
+	var out []string
+	for _, s := range []string{d.upLine, d.upWhy, d.sellWhy} {
+		if s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// planDetail lays the picked building's detail out for a box w cells wide.
+// The note keeps the rows its longest text needs, so that the layout does not
+// move when the pointer changes the text.
+func (b *buildBox) planDetail(w int) detailPlan {
 	d := b.detail
-	fy := h - 1 - detailRows
-	g.box(1, fy, w-2, detailRows, xAccent, "", xTitle, false)
-	ix, iy, iwid := 3, fy+1, w-6
+	p := detailPlan{workers: d.workers != ""}
+	p.iwid, p.tw = detailWidths(w)
+	title := runeLen(d.bs.Name + " x" + strconv.Itoa(d.bs.Count))
+	p.beside = true
+	for _, t := range d.noteTexts() {
+		if title+2+runeLen(t) > p.iwid {
+			p.beside = false
+		}
+	}
+	if !p.beside {
+		for _, t := range d.noteTexts() {
+			p.noteN = max(p.noteN, len(detailWrap(t, 1, p.widthAt)))
+		}
+	}
+	at := 1 + p.noteN
+	p.desc = detailWrap(buildingText(d.bs), at, p.widthAt)
+	at += len(p.desc)
+	if p.workers {
+		at++
+	}
+	if d.bs.Flavor != "" {
+		p.flav = detailWrap(d.bs.Flavor, at, p.widthAt)
+	}
+	return p
+}
+
+// rows is the text rows the plan wants.
+func (p detailPlan) rows() int {
+	n := 1 + p.noteN + len(p.desc) + len(p.flav)
+	if p.workers {
+		n++
+	}
+	return n
+}
+
+// fit gives way to rows text rows: the flavour line goes first, then the
+// description is held to two rows with an ellipsis on the second. The title,
+// the notice and the workers stay.
+func (p detailPlan) fit(rows int) detailPlan {
+	if p.rows() <= rows {
+		return p
+	}
+	p.flav = nil
+	if p.rows() <= rows {
+		return p
+	}
+	keep := max(min(rows-(p.rows()-len(p.desc)), 2), 0)
+	if keep < len(p.desc) {
+		if keep > 0 {
+			at := 1 + p.noteN + keep - 1
+			p.desc[keep-1] = fitText(strings.Join(p.desc[keep-1:], " "), p.widthAt(at))
+		}
+		p.desc = p.desc[:keep]
+	}
+	return p
+}
+
+// detailWant is the frame rows the detail would take to say everything.
+func (b *buildBox) detailWant(w int) int {
+	return max(detailRows, 2+b.planDetail(w).rows())
+}
+
+// drawDetail draws the frame, the texts and the keys of the detail at the
+// bottom of the box, d rows high, and notes the cells of its note.
+func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h, d int) {
+	det := b.detail
+	fy := h - 1 - d
+	g.box(1, fy, w-2, d, xAccent, "", xTitle, false)
+	ix, iy := 3, fy+1
+	p := b.planDetail(w).fit(d - 2)
+	iwid, tw := p.iwid, p.tw
 	sellW, upW := actionW(txtSell.String(), "", signNone), actionW(txtUpgrade.String(), "", signNone)
 	ux := ix + iwid - upW
 	sx := ux - 1 - sellW
-	tw := sx - 1 - ix
 	for _, a := range []struct {
 		x   int
 		txt string
@@ -179,38 +314,33 @@ func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h int) {
 		ask string
 		yes string
 		off bool
-	}{{sx, txtSell.String(), d.sellCmd, d.sellAsk, txtSell.String(), d.sellOff}, {ux, txtUpgrade.String(), d.upCmd, "", "", d.upOff}} {
+	}{{sx, txtSell.String(), det.sellCmd, det.sellAsk, txtSell.String(), det.sellOff}, {ux, txtUpgrade.String(), det.upCmd, "", "", det.upOff}} {
 		g.fill(a.x, iy+1, actionW(a.txt, "", signNone), actionRows)
 		set.action(a.x, iy+1, actionSpec{kind: keyPlain, label: a.txt, cmd: a.cmd, ask: a.ask, yes: a.yes, off: a.off}, func(x, y int, text string) { g.put(x, y, text, xText) })
 	}
-	x := g.put(ix, iy, fitText(d.bs.Name, max(tw-6, 1)), xTitle)
-	g.put(x, iy, " x"+strconv.Itoa(d.bs.Count), xDim)
-	b.note = image.Rect(ix, iy, ix+iwid, iy+1)
-
-	desc := wrapWords(buildingText(d.bs), tw)
-	rows := 3
-	if d.workers != "" {
-		rows--
+	x := g.put(ix, iy, fitText(det.bs.Name, max(tw-6, 1)), xTitle)
+	g.put(x, iy, " x"+strconv.Itoa(det.bs.Count), xDim)
+	b.noteRows = b.noteRows[:0]
+	if p.beside {
+		b.noteRows = append(b.noteRows, image.Rect(ix, iy, ix+iwid, iy+1))
 	}
-	if d.bs.Flavor != "" {
-		rows--
+	for i := 1; i <= p.noteN; i++ {
+		b.noteRows = append(b.noteRows, image.Rect(ix, iy+i, ix+p.widthAt(i), iy+i+1))
 	}
-	nd := max(min(len(desc), rows), 1)
-	if len(desc) > nd {
-		desc[nd-1] = fitText(strings.Join(desc[nd-1:], " "), tw)
+	b.noteBeside = p.beside
+	row := 1 + p.noteN
+	for _, s := range p.desc {
+		g.put(ix, iy+row, s, xText)
+		row++
 	}
-	y := iy + 1
-	for i := 0; i < nd && i < len(desc); i++ {
-		g.put(ix, y, desc[i], xText)
-		y++
+	if p.workers {
+		g.stepper(ix, iy+row, det.minus, det.plus)
+		g.putFit(ix+8, iy+row, p.widthAt(row)-8, det.workers, xText)
+		row++
 	}
-	if d.workers != "" && y < iy+4 {
-		g.stepper(ix, y, d.minus, d.plus)
-		g.putFit(ix+8, y, tw-8, d.workers, xText)
-		y++
-	}
-	if d.bs.Flavor != "" && y < iy+4 {
-		g.putFit(ix, y, tw, d.bs.Flavor, xDim)
+	for _, s := range p.flav {
+		g.put(ix, iy+row, s, xDim)
+		row++
 	}
 }
 
@@ -249,10 +379,17 @@ func (b *buildBox) paintDetail(p *kit.Painter, pal *expPalette, org image.Point,
 	if bad {
 		ink = inkOf(pal.tone(xBad, false), false)
 	}
-	room := b.note.Dx() - runeLen(b.detail.bs.Name+" x"+strconv.Itoa(b.detail.bs.Count)) - 2
-	text = fitText(text, max(room, 1))
 	if plain {
 		text = foldToASCII(text)
 	}
-	p.Label(org.X+b.note.Max.X-runeLen(text), org.Y+b.note.Min.Y, kit.Escape(text), ink)
+	if b.noteBeside {
+		r := b.noteRows[0]
+		text = fitText(text, max(r.Dx()-runeLen(b.detail.bs.Name+" x"+strconv.Itoa(b.detail.bs.Count))-2, 1))
+		p.Label(org.X+r.Max.X-runeLen(text), org.Y+r.Min.Y, kit.Escape(text), ink)
+		return
+	}
+	rows := detailWrap(text, 0, func(i int) int { return b.noteRows[min(i, len(b.noteRows)-1)].Dx() })
+	for i := 0; i < len(rows) && i < len(b.noteRows); i++ {
+		p.Label(org.X+b.noteRows[i].Min.X, org.Y+b.noteRows[i].Min.Y, kit.Escape(rows[i]), ink)
+	}
 }

@@ -427,3 +427,144 @@ func TestSellCountClampsToOwned(t *testing.T) {
 		}
 	}
 }
+
+// bufRows is the text of the buffer, a string a row with the blanks trimmed
+// off the end.
+func bufRows(b *kit.Buffer) []string {
+	rows := make([]string, b.H)
+	for y := range rows {
+		var sb strings.Builder
+		for x := 0; x < b.W; x++ {
+			sb.WriteRune(b.Cells[y*b.W+x].R)
+		}
+		rows[y] = strings.TrimRight(sb.String(), " ")
+	}
+	return rows
+}
+
+// detailTown is a first-age town on a w by h screen with the Gathering Camp
+// picked, the detail's rows as text from its title to its bottom edge, and
+// the box's detail keys.
+func detailTown(t *testing.T, w, h int) (*Dashboard, *stage, []string) {
+	t.Helper()
+	d, st, _ := cardTown(t)
+	st.p.SetRect(0, 0, w, h)
+	st.root.Resize(w, h)
+	d.refresh()
+	st.paint()
+	pickCard(t, d, st, "gathering_camp")
+	box := d.economyTab.buildBox
+	if box.det == nil {
+		t.Fatalf("%dx%d: no detail", w, h)
+	}
+	bx, by, bw, bh := box.GetRect()
+	var rows []string
+	for y := by; y < by+bh-1; y++ {
+		r := []rune(bufRows(&st.buf)[y])
+		if bx+bw > len(r) {
+			r = append(r, []rune(strings.Repeat(" ", bx+bw-len(r)))...)
+		}
+		rows = append(rows, string(r[bx:bx+bw]))
+	}
+	title := -1
+	for y, r := range rows {
+		if strings.Contains(r, box.detail.bs.Name+" x") {
+			title = y
+		}
+	}
+	if title < 0 {
+		t.Fatal("no title row")
+	}
+	return d, st, rows[title:]
+}
+
+// At a small size every word of the detail's notice and description is on
+// screen and no row of it ends in an ellipsis; the buttons are where they are
+// drawn.
+func TestTheDetailReadsInFullInASmallWindow(t *testing.T) {
+	d, st, rows := detailTown(t, 157, 46)
+	box := d.economyTab.buildBox
+	det := box.detail
+	text := strings.Join(rows, " ")
+	for _, r := range rows {
+		if strings.Contains(r, "…") {
+			t.Errorf("a row of the detail is cut: %q", r)
+		}
+	}
+	for _, s := range []string{det.upWhy, buildingText(det.bs), det.bs.Flavor} {
+		for _, word := range strings.Fields(s) {
+			if !strings.Contains(text, word) {
+				t.Errorf("the word %q of %q is not on screen", word, s)
+			}
+		}
+	}
+	// The buttons still hit where they are drawn: the pointer on Sell shows
+	// the reason of Sell in full.
+	for _, k := range box.det.keys {
+		if k.cmd != det.sellCmd {
+			continue
+		}
+		p := centre(d, k.r)
+		st.mouse(kit.Mouse{Kind: kit.MouseMove, X: p.X, Y: p.Y})
+		st.paint()
+		got := strings.Join(bufRows(&st.buf), " ")
+		for _, word := range strings.Fields(det.sellWhy) {
+			if !strings.Contains(got, word) {
+				t.Errorf("under the pointer the word %q of Sell's reason is not on screen", word)
+			}
+		}
+		return
+	}
+	t.Error("no Sell key")
+}
+
+// When the rows run out the flavour line goes first, then the description is
+// held to two rows with an ellipsis on the second; the title, the notice and
+// the workers stay.
+func TestTheDetailGivesUpLinesInOrder(t *testing.T) {
+	d, _, _ := detailTown(t, 157, 46)
+	box := d.economyTab.buildBox
+	_, _, bw, _ := box.GetRect()
+	p := box.planDetail(bw)
+	if len(p.desc) < 2 || len(p.flav) == 0 || p.noteN == 0 || !p.workers {
+		t.Fatalf("the test building has plan %+v", p)
+	}
+	base := 1 + p.noteN + 1
+	full := p.fit(p.rows())
+	if len(full.flav) == 0 || len(full.desc) != len(p.desc) {
+		t.Errorf("with room for all, the plan lost lines: %+v", full)
+	}
+	noFlav := p.fit(p.rows() - 1)
+	if len(noFlav.flav) != 0 || len(noFlav.desc) != len(p.desc) {
+		t.Errorf("one row short, the flavour goes first: %+v", noFlav)
+	}
+	for rows := p.rows() - 1 - len(p.desc); rows >= base; rows-- {
+		got := p.fit(rows)
+		want := min(rows-base, 2)
+		if len(got.flav) != 0 || len(got.desc) != want || got.noteN != p.noteN || !got.workers {
+			t.Errorf("%d rows: %d description rows, want %d", rows, len(got.desc), want)
+		}
+	}
+	if two := p.fit(base + 2); len(p.desc) > 2 && !strings.HasSuffix(two.desc[1], "…") {
+		t.Errorf("a description held to two rows ends %q, want an ellipsis", two.desc[1])
+	}
+}
+
+// In a wide window the detail is the four text rows in six frame rows.
+func TestTheDetailInAWideWindowIsFourRows(t *testing.T) {
+	d, _, rows := detailTown(t, 279, 74)
+	box := d.economyTab.buildBox
+	det := box.detail
+	if len(rows) != detailRows-1 {
+		t.Fatalf("the detail is %d rows from its title down, want %d: %q", len(rows), detailRows-1, rows)
+	}
+	want := []string{det.bs.Name + " x", buildingText(det.bs), "workers: up to 3 each", det.bs.Flavor}
+	for i, s := range want {
+		if !strings.Contains(rows[i], s) {
+			t.Errorf("row %d is %q, want it to hold %q", i, rows[i], s)
+		}
+	}
+	if !strings.Contains(rows[0], det.upWhy) {
+		t.Errorf("the title row %q lacks the note %q", rows[0], det.upWhy)
+	}
+}

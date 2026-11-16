@@ -129,11 +129,12 @@ type buildBox struct {
 	olderN int
 	// offer is the engine's upgrade offer for a building.
 	offer func(key string) game.UpgradeOffer
-	// detail is what the detail box says, det its keys and note the cells of
-	// its note line; det is nil when the box has no room for it.
-	detail detailInfo
-	det    *keySet
-	note   image.Rectangle
+	// detail is what the detail box says, det its keys and noteRows the cells of
+	// its note; det is nil when the box has no room for it.
+	detail     detailInfo
+	det        *keySet
+	noteRows   []image.Rectangle
+	noteBeside bool
 
 	// the layout
 	grid     *xgrid
@@ -400,6 +401,23 @@ func (b *buildBox) draw(w, h int) {
 	if (fits && b.shownItems < base) || b.shownItems < min(base, detailKeepCards) {
 		b.drawAt(w, h, 0)
 	}
+	if b.det != nil {
+		b.growDetail(w, h)
+	}
+}
+
+// growDetail gives the detail the rows it wants when the box has them to
+// spare: the most rows that leave every card, and every row the list uses,
+// where the detail's frame of detailRows left them.
+func (b *buildBox) growDetail(w, h int) {
+	first, shown, hidden, more, older := b.first, b.shownItems, b.hidden, b.more >= 0, b.olderRow >= 0
+	for n := b.detailWant(w); n > detailRows; n-- {
+		b.drawAt(w, h, n)
+		if b.first == first && b.shownItems == shown && b.hidden == hidden && (b.more >= 0) == more && (b.olderRow >= 0) == older {
+			return
+		}
+	}
+	b.drawAt(w, h, detailRows)
 }
 
 // drawAt lays the box out with d rows at the bottom kept for the detail
@@ -621,7 +639,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 	b.cardKeys = &keySet{keys: append([]xkey(nil), set.keys[cardFrom:]...), plain: g.plain, glyph: set.glyph}
 	if d > 0 {
 		detFrom := len(set.keys)
-		b.drawDetail(g, set, w, h)
+		b.drawDetail(g, set, w, h, d)
 		b.det = &keySet{keys: append([]xkey(nil), set.keys[detFrom:]...), plain: g.plain, glyph: set.glyph}
 	}
 	if b.plain != nil && b.plain() {
