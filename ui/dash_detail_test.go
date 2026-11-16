@@ -217,11 +217,13 @@ func TestTheDetailGivesWayBeforeCardsAreHidden(t *testing.T) {
 func TestOlderBuildingsRowListAndWayBack(t *testing.T) {
 	d, st, eng := cardTown(t)
 	box := d.economyTab.buildBox
-	eng.SetTownForTest(map[string]int{"hut": 3}, 0)
 	setStock(eng, 1e9)
 	if err := eng.EnterAgeForTest("medieval_age"); err != nil {
 		t.Fatal(err)
 	}
+	// After the advance: entering the era rolls an epoch event, and a great
+	// fire destroys up to eight buildings, which would take all three huts.
+	eng.SetTownForTest(map[string]int{"hut": 3}, 0)
 	d.refresh()
 	for d.overlayMgr != nil && d.overlayMgr.HasActive() {
 		d.overlayMgr.Hide()

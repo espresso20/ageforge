@@ -34,8 +34,9 @@ import (
 //
 // It takes under a minute and writes the same bytes every time: the seed is
 // fixed, the map's animation clock is pinned, toasts are held, and nothing
-// in frame depends on the wall clock (the Statistics panel's play time is
-// scrolled past). SITE_SCREENS_OUT picks another folder, and
+// in frame depends on the wall clock (the Statistics page's play time tile
+// shows the whole seconds of the short run, the same on each pass).
+// SITE_SCREENS_OUT picks another folder, and
 // SITE_SCREENS_TEXT a folder for plain-text copies to read in a terminal.
 //
 // The game behind the pictures is played, not painted: one seeded run from
