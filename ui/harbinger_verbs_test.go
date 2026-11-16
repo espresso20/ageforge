@@ -4,6 +4,7 @@ import (
 	"image"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
@@ -110,10 +111,83 @@ func TestHarbingerInviteAsksFirst(t *testing.T) {
 	}
 }
 
-func TestHarbingerTextStillShowsTheKeys(t *testing.T) {
+func TestHarbingerTextHasNoKeyRowAndButtonsShowTheirKeys(t *testing.T) {
 	s := stageHarbinger(t, true)
-	if txt := untag(s.d.harbPanel.view.text); !strings.Contains(txt, "Invite (twice)") {
-		t.Errorf("the key bar went:\n%s", txt)
+	txt := untag(s.d.harbPanel.view.text)
+	for _, gone := range []string{"Invite (twice)", "Press I again"} {
+		if strings.Contains(txt, gone) {
+			t.Errorf("the panel still says %q", gone)
+		}
+	}
+	for sub, key := range map[string]string{"appease": "A", "brace": "B", "invite": "I"} {
+		k := s.button(t, harbingerCmd+sub)
+		if k.cap.Empty() || unicode.ToUpper(k.key.Rune) != []rune(key)[0] {
+			t.Errorf("%s button shows key %q, want a cap for %s", sub, k.key.Rune, key)
+		}
+	}
+}
+
+// askedByKey stages the dashboard with the question counted: I pressed on the
+// panel, then the question on screen.
+func askedByKey(t *testing.T) (d *Dashboard, eng *game.GameEngine, pages *nativePages, ran *[]string, dlg *nativeDialog) {
+	t.Helper()
+	keepTheme(t)
+	s := stageHarbinger(t, false)
+	d, eng, pages = s.d, s.eng, s.pages
+	ran = &d.cmdHistory
+	d.harbPanel.view.pr.wire(d.overlayMgr.app)
+	d.overlayMgr.screenW = 100
+	d.overlayMgr.Show("harbinger", eng.GetState())
+	drawPrimitive(t, pages, 100, 60)
+	if captured(d.overlayMgr.entries["harbinger"].tv, tk(kit.KeyRune, 'i', 0)) != nil {
+		t.Fatal("the I key was not consumed")
+	}
+	_, item := pages.GetFrontPage()
+	dlg, ok := item.(*nativeDialog)
+	if !ok {
+		t.Fatalf("the front page is %T, not the question", item)
+	}
+	d.app.SetFocus(dlg)
+	return d, eng, pages, ran, dlg
+}
+
+// The I key opens the question the button opens and runs nothing; Cancel
+// still runs nothing.
+func TestHarbingerInviteKeyAsksAndCancelRunsNothing(t *testing.T) {
+	_, eng, _, ran, dlg := askedByKey(t)
+	if len(*ran) != 0 || eng.GetState().Harbinger.Invited {
+		t.Fatalf("the key ran %q before the answer", *ran)
+	}
+	keyTo(dlg, tk(kit.KeyEnter, 0, 0)) // the plain button, Cancel
+	if len(*ran) != 0 || eng.GetState().Harbinger.Invited {
+		t.Errorf("Cancel ran %q", *ran)
+	}
+}
+
+// The danger button invites exactly once.
+func TestHarbingerInviteKeyDangerButtonInvitesOnce(t *testing.T) {
+	_, eng, _, ran, dlg := askedByKey(t)
+	keyTo(dlg, tk(kit.KeyTab, 0, 0))
+	keyTo(dlg, tk(kit.KeyEnter, 0, 0))
+	if len(*ran) != 1 || (*ran)[0] != harbingerCmd+"invite" || !eng.GetState().Harbinger.Invited {
+		t.Errorf("the danger button ran %q, invited=%v", *ran, eng.GetState().Harbinger.Invited)
+	}
+}
+
+// A and B act at once, with no question.
+func TestHarbingerAppeaseAndBraceKeysActAtOnce(t *testing.T) {
+	s := stageHarbinger(t, true)
+	d, eng := s.d, s.eng
+	d.overlayMgr.Show("harbinger", eng.GetState())
+	h := eng.GetState().Harbinger
+	tv := d.overlayMgr.entries["harbinger"].tv
+	captured(tv, tk(kit.KeyRune, 'a', 0))
+	captured(tv, tk(kit.KeyRune, 'b', 0))
+	if got := eng.GetState().Harbinger; got.AppeaseLevel != h.AppeaseLevel+1 || got.BraceLevel != h.BraceLevel+1 {
+		t.Errorf("levels %d/%d -> %d/%d", h.AppeaseLevel, h.BraceLevel, got.AppeaseLevel, got.BraceLevel)
+	}
+	if name, _ := s.pages.GetFrontPage(); name == "ask_line" {
+		t.Error("A or B asked a question")
 	}
 }
 

@@ -459,7 +459,7 @@ The Harbinger panel uses letter keys, so it keeps the keyboard:
 |---|---|
 | `A` | Appease |
 | `B` | Brace |
-| `I` | Invite. Press `I` twice to confirm, since it can't be undone. |
+| `I` | Invite. Asks first, since it can't be undone. |
 | `↑` / `↓` | Scroll |
 | `Esc` | Close the panel |
 

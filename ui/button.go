@@ -428,6 +428,11 @@ func (k *keyPresser) paintKey(p *kit.Painter, g *keySet, org image.Point, pal *e
 			face = l.chip
 		}
 		cell := ink.Foreground(theme.RGB(fg.R, fg.G, fg.B)).Background(theme.RGB(face.R, face.G, face.B))
+		// A chip that runs a command is bracketed in its own padding, so
+		// chips on rows one above the other read as two.
+		if n := len(label); key.cmd != "" && key.cap == key.r && n >= 3 {
+			label[0], label[n-1] = '[', ']'
+		}
 		for i, r := range label {
 			p.Put(cap.Min.X+i, cap.Min.Y, r, cell)
 		}

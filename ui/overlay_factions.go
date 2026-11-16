@@ -27,9 +27,6 @@ import (
 //   - STRENGTH — FactionInfo.Strength has been on the snapshot since the civs
 //     were written and has never once been drawn.
 //
-// It is registered under two overlay names ("factions" and the historical
-// "diplomacy") pointing at this one provider, so both open the same view.
-//
 // Everything here is read-only over the snapshot and safe on a zero-value
 // GameState — indexing nil maps and ranging nil slices both behave.
 
@@ -41,12 +38,8 @@ import (
 // columns lay out at the capped panelUsableWidth, while prose wraps at the full
 // inner width (with colour re-applied per line, as a soft wrap does not
 // carry colour tags across a break).
-func factionsProvider(state game.GameState, w int, recs ...*btnRec) string {
+func factionsProvider(state game.GameState, w int, rec *btnRec) string {
 	var sb strings.Builder
-	var rec *btnRec
-	if len(recs) > 0 {
-		rec = recs[0]
-	}
 
 	factions := state.Diplomacy.Factions // may be nil; indexing nil maps is safe
 	defs := state.Ruleset().Factions()
@@ -551,7 +544,7 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 		room := usable - 4
 		if rec != nil {
 			btn := dealButton(state, key, d)
-			chip := runeLen(btn.word) + 2
+			chip := runeLen(btn.label) + 2
 			rec.mark(sb, usable-chip, btn)
 			room -= chip + 1
 		}

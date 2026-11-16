@@ -210,7 +210,7 @@ func checkCostBlock(t *testing.T, d *Dashboard, pages *nativePages, state game.G
 func TestHarbingerPanelLastPassage(t *testing.T) {
 	d, engine, pages := harbDashboard(t, "interstellar_age")
 	state := engine.GetState()
-	txt := untag(harbingerPanelText(state, "", false, false))
+	txt := untag(harbingerPanelText(state, "", false))
 	t.Logf("Cosmic Era harbinger panel:\n%s", txt)
 	// The prices are the thread's own, as the engine has them (the game's
 	// tests pin the figures): the panel prints them in full, with what is
@@ -246,7 +246,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	}
 
 	must(t, engine.ForceLastPassageForTest("interstellar_age"))
-	txt = untag(harbingerPanelText(engine.GetState(), "", false, false))
+	txt = untag(harbingerPanelText(engine.GetState(), "", false))
 	t.Logf("Cosmic Era harbinger panel, Last Passage pending:\n%s", txt)
 	if !strings.Contains(txt, "The Last Passage has come. Prestige waits") ||
 		!strings.Contains(txt, "Unavailable: the Last Passage has already come") {
@@ -363,8 +363,8 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 
 // harbingerPanelText renders the panel for the narrowest screen the game
 // draws. Pure: state in, text out.
-func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed bool) string {
-	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, inviteArmed)
+func harbingerPanelText(state game.GameState, note string, noteGood bool) string {
+	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, nil)
 }
 
 // narrowestScreenW is the narrowest terminal the game is laid out for.

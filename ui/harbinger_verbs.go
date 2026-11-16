@@ -39,15 +39,15 @@ func harbingerBuyable(state game.GameState, cost map[string]float64) bool {
 	return true
 }
 
-// harbingerPayBtn is the button for Appease or Brace.
-func harbingerPayBtn(state game.GameState, word, sub, blocked string, cost map[string]float64) []slotBtn {
-	return []slotBtn{{word: word, kind: keyPlain, cmd: harbingerCmd + sub,
+// harbingerPayBtn is the button for Appease or Brace, with its key.
+func harbingerPayBtn(state game.GameState, label, key, sub, blocked string, cost map[string]float64) []actionSpec {
+	return []actionSpec{{label: label, key: key, kind: keyPlain, cmd: harbingerCmd + sub,
 		off: blocked != "" || !harbingerBuyable(state, cost)}}
 }
 
 // harbingerInviteBtn is the button for Invite, which asks first.
-func harbingerInviteBtn(h *game.HarbingerView) []slotBtn {
-	return []slotBtn{{word: txtVerbInvite.String(), kind: keyDanger, cmd: harbingerCmd + "invite",
+func harbingerInviteBtn(h *game.HarbingerView) []actionSpec {
+	return []actionSpec{{label: txtVerbInvite.String(), key: "I", kind: keyDanger, cmd: harbingerCmd + "invite",
 		ask: vibe.Sprintf("ui.harbinger_verbs.inviteAsk.01", "Invite %s?\n\nThis cannot be undone.", h.Name),
 		yes: txtVerbInvite.String(), off: h.InviteBlocked != ""}}
 }
