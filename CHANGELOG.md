@@ -169,6 +169,7 @@ All notable changes to AgeForge are documented here.
 
 ### Fixed
 - The detail under the Buildings list wraps its notice, description and flavour line at word boundaries beside the Sell and Upgrade buttons instead of cutting them with an ellipsis, and takes the free rows between the list and its frame; when rows run out the flavour line goes first, then the description is held to two rows.
+- The People panel's Work tab wraps each area's list of buildings at building boundaries instead of cutting it with an ellipsis; an area takes the rows its list needs and a click on any of them picks the area.
 - The Sell question for a buy choice of x10 names the number of buildings owned when that is fewer than ten, and Sell sells that many.
 - The Wonders panel's Build button goes off while the wonder is under construction; it stayed on and looked unchanged after a click.
 - A picture beside text no longer covers the first characters of the text: the room a picture takes is worked out from its width in pixels and the cell's width in pixels, for the build cards, the picked building's pane and the action buttons, at every text size and pixel scale.

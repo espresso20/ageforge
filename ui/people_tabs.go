@@ -242,14 +242,29 @@ func (c peopleBody) work() {
 	g.segsFit(c.x+2, c.y+1, inner, xseg{vibe.Line("ui.people_tabs.work.06", "  Area"), xDim})
 	g.put(c.x+2+2+11+1, c.y+1, vibe.Line("ui.people_tabs.work.07", "Share"), xDim)
 	g.rput(rightOf(c.x, lw), c.y+1, vibe.Line("ui.people_tabs.work.08", "Filled"), xDim)
-	per := (c.h - 3) / 2
-	first := window(len(rows), per, c.v.row)
-	for n := 0; n < per && first+n < len(rows); n++ {
-		i := first + n
+	// An area takes a row and the rows its buildings need; the window
+	// starts where it would with two rows each, and moves on until the
+	// picked area is whole.
+	notes := make([][]string, len(rows))
+	for i, r := range rows {
+		notes[i] = c.areaBuildings(r.Domain, inner-2)
+	}
+	avail := c.h - 3
+	first := window(len(rows), avail/2, c.v.row)
+	for used := 0; first < c.v.row; first++ {
+		used = 0
+		for i := first; i <= c.v.row; i++ {
+			used += 1 + len(notes[i])
+		}
+		if used <= avail {
+			break
+		}
+	}
+	y := c.y + 2
+	for i := first; i < len(rows) && y+1+len(notes[i]) <= c.y+2+avail; i++ {
 		r := rows[i]
-		y := c.y + 2 + n*2
 		pickName(g, c.x+2, y, 13, r.Name, i == c.v.row)
-		g.hit(hitRow, i, c.x+1, y, lw-2, 2)
+		g.hit(hitRow, i, c.x+1, y, lw-2, 1+len(notes[i]))
 		share := "auto"
 		sk := xDim
 		if r.Set {
@@ -277,13 +292,16 @@ func (c peopleBody) work() {
 				}
 			}
 		}
-		g.putFit(c.x+4, y+1, inner-2, c.areaBuildings(r.Domain), xDim)
+		for j, l := range notes[i] {
+			g.put(c.x+4, y+1+j, l, xDim)
+		}
+		y += 1 + len(notes[i])
 	}
 	// The picked area.
 	r := rows[clamp(c.v.row, 0, len(rows)-1)]
 	g.put(c.x+lw+2, c.y, " "+fitText(r.Name, rw-6)+" ", xTitle)
 	rx, ri := c.x+lw+2, rw-4
-	y := c.y + 1
+	y = c.y + 1
 	bs := c.areaList(r.Domain)
 	recruitY := c.y + c.h - 1 - c.recruitRows()
 	y = c.workList(rx, y, ri, recruitY-6, bs)
@@ -317,14 +335,17 @@ func (c peopleBody) areaList(domain string) []peopleBuilding {
 	return builtWhere(c.st, func(b game.BuildingState) bool { return b.WorkerDomain == domain && b.WorkerCapacity > 0 })
 }
 
-// areaBuildings is a work area's buildings on one line: "Farm 10/10 · Smithy
-// 64/64".
-func (c peopleBody) areaBuildings(domain string) string {
+// areaBuildings is a work area's buildings in rows at most w cells wide,
+// broken between buildings: "Farm 10/10 · Smithy 64/64".
+func (c peopleBody) areaBuildings(domain string, w int) []string {
 	var parts []string
 	for _, b := range c.areaList(domain) {
 		parts = append(parts, fmt.Sprintf("%s %s/%s", b.Name, num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count)))
 	}
-	return strings.Join(parts, " · ")
+	for i := 0; i < len(parts)-1; i++ {
+		parts[i] += " ·"
+	}
+	return wrapLines(parts, w, runeLen)
 }
 
 // ===== Army =====
