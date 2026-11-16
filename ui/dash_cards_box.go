@@ -38,9 +38,9 @@ const (
 	hitMore  = 61 // the quiet row
 	hitOlder = 62 // the row that counts the older buildings
 
-	// cardSignCols is the cells at the left of a card the gauge and the sign
-	// take; the card's words start after them.
-	cardSignCols = 6
+	// cardGlyphCols is the cells at the left of a card the gauge and the kind's
+	// glyph take where there are no pictures; with them cardSignRoom says.
+	cardGlyphCols = 6
 	// buildColWide is the Build button's cells with its Enter key, and
 	// buildColNarrow without it: the key goes where the box has no room.
 	buildColWide, buildColNarrow = 16, 9
@@ -156,6 +156,8 @@ type buildBox struct {
 	imgs     map[cardPic]*image.RGBA
 	imgBytes int
 	imgCell  [2]int
+	// laidCell is the cell size the layout was made for.
+	laidCell [2]int
 }
 
 func newBuildBox(plain func() bool, app *appLoop) *buildBox {
@@ -305,6 +307,14 @@ func (b *buildBox) pickedLine() string {
 // inner is the cells inside the box's frame.
 func (b *buildBox) inner() (w, h int) { return b.w - 2, b.h - 2 }
 
+// picCells is the cell size the cards' pictures are drawn at, zero for none.
+func (b *buildBox) picCells() (cw, ch int) {
+	if b.plain != nil && b.plain() {
+		return 0, 0
+	}
+	return pictureCells()
+}
+
 // ===== Layout =====
 
 // Layout takes the box's rectangle and lays the cards out for it.
@@ -315,7 +325,7 @@ func (b *buildBox) Layout(r image.Rectangle) {
 		b.grid = nil
 		return
 	}
-	if b.grid == nil || w != b.w || h != b.h || b.dirty {
+	if cw, ch := b.picCells(); b.grid == nil || w != b.w || h != b.h || b.dirty || [2]int{cw, ch} != b.laidCell {
 		b.draw(w, h)
 	}
 }
@@ -373,6 +383,8 @@ func priceLines(parts []costPart, room int) [][]costPart {
 // both shows the cards.
 func (b *buildBox) draw(w, h int) {
 	b.w, b.h, b.dirty = w, h, false
+	cw, ch := b.picCells()
+	b.laidCell = [2]int{cw, ch}
 	b.drawAt(w, h, 0)
 	if !b.detail.ok || w-2 < detailMinW {
 		return
@@ -478,7 +490,8 @@ func (b *buildBox) drawAt(w, h, d int) {
 	b.first = min(max(b.first, 0), max(len(items)-1, 0))
 	bw := buildCol(iw)
 	compact := iw < compactBelow
-	tx := 1 + cardSignCols
+	scols := cardSignRoom(b.picCells())
+	tx := 1 + scols
 	room := (1 + iw) - bw - 2 - tx // the words' cells
 	if compact {
 		tx = 1 + compactWords
@@ -825,7 +838,7 @@ func drawCard(k cardPic) *image.RGBA {
 		tint = toward(tint, keyBlack, .28)
 	}
 	if !k.compact {
-		drawSign(a, 11, (H-36)/2, k.kind, tint, dull, k.ground)
+		drawSign(a, cardSignArtLeft, (H-cardSignArtW)/2, k.kind, tint, dull, k.ground)
 	}
 	return img
 }
@@ -887,7 +900,8 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 		return p.Label(rect.Min.X+x, rect.Min.Y+y, kit.Escape(s), st)
 	}
 	bw := buildCol(iw)
-	tx, room := cardSignCols, iw-bw-2-cardSignCols
+	scols := cardSignRoom(cw, ch)
+	tx, room := scols, iw-bw-2-scols
 	if pc.compact {
 		tx, room = compactWords, iw-compactWords-1
 	}

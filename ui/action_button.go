@@ -116,7 +116,7 @@ type actionSpec struct {
 func actionW(label, key string, sign signKind) int {
 	left := 2
 	if sign != signNone {
-		left = 4
+		left = actionSignRoom(pictureCells())
 	}
 	w := left + len([]rune(label))
 	if key == "" {
@@ -132,7 +132,7 @@ func actionW(label, key string, sign signKind) int {
 func (s *keySet) action(x, y int, a actionSpec, put func(x, y int, text string)) int {
 	left := 2
 	if a.sign != signNone {
-		left = 4
+		left = actionSignRoom(pictureCells())
 	}
 	w := actionW(a.label, a.key, a.sign)
 	mid := y + 1
@@ -224,7 +224,7 @@ func drawAction(pk actionKey, l keyLook) *image.RGBA {
 			return
 		}
 		rows := signArt[pk.sign]
-		sx, sy := pk.cw*7/5/k, (top+bot)/2-6
+		sx, sy := actionSignX(pk.cw, pk.ch), (top+bot)/2-6
 		for pass := 0; pass < 2; pass++ {
 			for y, row := range rows {
 				for x, c := range row {

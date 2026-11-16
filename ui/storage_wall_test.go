@@ -49,7 +49,7 @@ func panelPages(t *testing.T, d *Dashboard, pages *nativePages, w, h int) [][]st
 	for i := 0; i < 40; i++ {
 		cells := drawnDashboard(t, d, pages, w, h)
 		x, y, bw, bh := box.GetRect()
-		edge := cardSignCols
+		edge := cardGlyphCols
 		if bw-2 < compactBelow {
 			edge = compactWords
 		}
