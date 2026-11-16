@@ -308,6 +308,8 @@ func (k *keyPresser) mouse(h keyHolder, org image.Point, m kit.Mouse) bool {
 		if k.feel != nil && k.feel.release() {
 			return true
 		}
+	case kit.MouseWheel:
+		return false // the panel scrolls; the pointer's light follows on its own
 	}
 	return isLit != wasLit || now.r != was.r
 }

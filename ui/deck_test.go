@@ -80,10 +80,24 @@ func TestDeckShowsWhatACardDoes(t *testing.T) {
 	pg := sampleDeck()
 	g, lay := renderDeck(&pg, 1, 0, 153, 40)
 	text := g.String()
-	for _, want := range []string{"Trade", "Routes 7 open", "Routes importing iron are suspended.", "Open routes", "7 open", "Route alpha", " ready ", "Export 15 wood", " Enter  start  trade route start alpha", " start  trade route start bravo", "needs 2 Markets (have 0)", "Trade routes need The Wheel first.", "then come back.", " locked ", "1 of 2 out", "or type trade route start <key>", " Esc  close "} {
+	for _, want := range []string{"Trade", "Routes 7 open", "Routes importing iron are suspended.", "Open routes", "7 open", "Route alpha", " ready ", "Export 15 wood", " Enter ", " start ", "needs 2 Markets (have 0)", "Trade routes need The Wheel first.", "then come back.", " locked ", "1 of 2 out", "or type trade route start <key>", " Esc  close "} {
 		if !strings.Contains(text, want) {
 			t.Errorf("the deck does not show %q:\n%s", want, text)
 		}
+	}
+	// The buttons carry the commands the cards used to print.
+	cmds := map[string]xkey{}
+	for _, k := range g.keys {
+		cmds[k.cmd] = k
+	}
+	if k := cmds["trade route start alpha"]; k.kind != keyPrimary || k.r.Dy() != actionRows || k.key.Code != kit.KeyEnter {
+		t.Errorf("the picked card's button is %+v, want the primary action button on Enter", k)
+	}
+	if k := cmds["trade route start bravo"]; k.kind != keyPlain || k.r.Dy() != 1 {
+		t.Errorf("another card's button is %+v, want its chip", k)
+	}
+	if strings.Contains(text, "trade route start alpha") || strings.Contains(text, "trade route start bravo") {
+		t.Errorf("a card still prints the command its button carries:\n%s", text)
 	}
 	if len(lay.cards) != 10 || lay.total > lay.viewH {
 		t.Errorf("%d cards in %d rows of %d in view; want 10 that all fit", len(lay.cards), lay.total, lay.viewH)
@@ -157,7 +171,17 @@ func TestDeckPanelKeysAndClicks(t *testing.T) {
 		t.Errorf("a click on card 4: picked %d, ran %v; want it picked and nothing run", p.sel, *ran)
 	}
 	relay()
-	click(hitDeckAct, 5, 1)
+	press := func(cmd string) {
+		for _, k := range p.grid.keys {
+			if k.cmd == cmd {
+				p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: k.r.Min.X + 1, Y: k.r.Min.Y})
+				p.Mouse(kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonLeft, X: k.r.Min.X + 1, Y: k.r.Min.Y})
+				return
+			}
+		}
+		t.Fatalf("no button carries %q", cmd)
+	}
+	press("trade route start echo")
 	relay()
 	click(hitDeckCard, 6, 2)
 	if p.sel != 6 || len(*ran) != 2 || (*ran)[0] != "trade route start echo" || (*ran)[1] != "trade route start foxtrot" {

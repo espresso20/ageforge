@@ -15,8 +15,9 @@ import (
 // with the command bar and takes only the keys that print nothing, and only
 // while the bar is empty: the arrows move the pick from card to card, Enter
 // runs the picked card's command, PgUp and PgDn turn a page. Esc closes it.
-// A click picks a card; a click on a card's button, or a double click on the
-// card, runs its command. Every command goes through the command bar's own
+// A click picks a card; a click on a card's button (it carries the command, so
+// the buttons' own path runs it), or a double click on the card, runs its
+// command. Every command goes through the command bar's own
 // path, so it is echoed and answered like one that was typed.
 
 type deckPanel struct {
@@ -147,11 +148,6 @@ func (p *deckPanel) Mouse(m kit.Mouse) bool {
 		return false
 	}
 	pt := m.Pt().Sub(p.Bounds().Min)
-	if n, ok := p.grid.hitAt(hitDeckAct, pt); ok {
-		p.pick(n)
-		p.act()
-		return true
-	}
 	n, ok := p.grid.hitAt(hitDeckCard, pt)
 	if !ok {
 		return false

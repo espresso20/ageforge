@@ -62,7 +62,7 @@ func tradePage(state game.GameState) deckPage {
 			c := deckCard{
 				Title: route.Name, Chip: vibe.Line("ui.overlay_trade.tradePage.10", "running"), ChipK: xChipShort,
 				Lines:  []deckLine{{vibe.Line("ui.overlay_trade.tradePage.11", "Export"), game.Amounts(route.Export), 0}, {vibe.Line("ui.overlay_trade.tradePage.12", "Import"), game.Amounts(route.Import), xGood}},
-				Action: "stop", Command: "trade route stop " + route.Key,
+				Action: "stop", Command: "trade route stop " + route.Key, Danger: true,
 			}
 			if route.Disrupted {
 				c.Chip, c.ChipK = vibe.Line("ui.overlay_trade.tradePage.14", "suspended"), xChipMil
