@@ -1480,7 +1480,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		out.styledText(x0+tx, y0+1+i, l)
 	}
 	if button && ch >= btn+3 {
-		a := actionSpec{kind: keyPrimary, label: txtStartResearch.String(), key: "Enter", sign: signPlay}
+		a := actionSpec{kind: keyPrimary, label: startWord(), key: "Enter", sign: signPlay}
 		if act == actPlan {
 			a.off, a.key = true, "" // Enter adds it to the plan, which is what the text says
 		}
@@ -1494,9 +1494,9 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 	}
 }
 
-// txtStartResearch is the word of the button that starts the research a
-// tech's card is open on.
-var txtStartResearch = vibe.E("ui.research_tree.drawCard.01", "start")
+// startWord is the word of the button that starts the research a tech's card
+// is open on.
+func startWord() string { return "start" }
 
 // ----- the plain glyph tier -----
 
