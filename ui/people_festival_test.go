@@ -67,6 +67,20 @@ func TestFestivalButtonIsOffWhenItCannotRun(t *testing.T) {
 	}
 }
 
+func TestFestivalCardShowsTheCapNoteBeforeTheSpend(t *testing.T) {
+	const note = "capped: no effect now"
+	if s := festivalStage(t, nil); strings.Contains(s.p.grid.String(), "capped") {
+		t.Fatal("the card shows a cap note when the whole buff counts")
+	}
+	s := festivalStage(t, func(st *game.GameState) { st.Festival.CapNote = note })
+	if !strings.Contains(s.p.grid.String(), note) {
+		t.Errorf("the card does not show the cap note %q", note)
+	}
+	if k := s.key(t, festivalCmd); k.off {
+		t.Error("the button is off although the festival can be held")
+	}
+}
+
 func TestFestivalCardIsNotDrawnWhileLocked(t *testing.T) {
 	s := festivalStage(t, func(st *game.GameState) {
 		feats := map[string]game.FeatureState{}

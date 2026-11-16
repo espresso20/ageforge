@@ -134,7 +134,7 @@ func (c peopleBody) overview() {
 	if lh := c.y + c.h - ly; lh >= 4 {
 		// The Festival card takes the right of the box when there is room.
 		lw := c.w
-		if fw := c.festivalWidth(); fw > 0 && lh >= festivalRowsMin {
+		if fw := c.festivalWidth(); fw > 0 && lh >= festivalRows(st) {
 			lw -= fw
 			c.festivalCard(c.x+lw, ly, fw, lh)
 		}

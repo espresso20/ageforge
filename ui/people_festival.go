@@ -32,6 +32,15 @@ var (
 	txtFestivalAsk  = vibe.E("ui.people_festival.ask.01", "Hold a festival?")
 )
 
+// festivalRows is the fewest rows the card needs: one more when the buff is
+// capped and the card has to say so.
+func festivalRows(st game.GameState) int {
+	if st.Festival.CapNote != "" {
+		return festivalRowsMin + 1
+	}
+	return festivalRowsMin
+}
+
 // festivalRunning is the ticks a running festival has left, and whether one is.
 func festivalRunning(st game.GameState) (int, bool) {
 	for _, e := range st.ActiveEvents {
@@ -71,26 +80,34 @@ func (c peopleBody) festivalCard(x, y, w, h int) {
 	f := st.Festival
 	g.box(x, y, w, h, xBorder, txtFestival.String(), xTitle, false)
 	rx, ri := x+2, w-4
-	g.putFit(rx, y+1, ri, vibe.Sprintf("ui.people_festival.card.01", "+%.0f%% production for %s", f.BuffPercent*100, formatTicks(f.BuffTicks, st)), xBright)
+	row := y + 1
+	g.putFit(rx, row, ri, vibe.Sprintf("ui.people_festival.card.01", "+%.0f%% production for %s", f.BuffPercent*100, formatTicks(f.BuffTicks, st)), xBright)
+	row++
+	// How much of the buff would count sits under the claim, before the price.
+	if f.CapNote != "" {
+		g.putFit(rx, row, ri, f.CapNote, xGold)
+		row++
+	}
 	haveK := xGood
 	if f.Culture < f.Cost {
 		haveK = xBad
 	}
-	g.segsFit(rx, y+2, ri, xseg{vibe.Line("ui.people_festival.card.02", "Cost "), xDim}, xseg{textfmt.Number(f.Cost), xText},
+	g.segsFit(rx, row, ri, xseg{vibe.Line("ui.people_festival.card.02", "Cost "), xDim}, xseg{textfmt.Number(f.Cost), xText},
 		xseg{vibe.Line("ui.people_festival.card.03", "  have "), xDim}, xseg{textfmt.Number(f.Culture), haveK})
+	row++
 	left, running := festivalRunning(st)
 	switch {
 	case running:
-		g.segsFit(rx, y+3, ri, xseg{vibe.Line("ui.people_festival.card.04", "Running "), xGood}, xseg{formatTicks(left, st), xText})
+		g.segsFit(rx, row, ri, xseg{vibe.Line("ui.people_festival.card.04", "Running "), xGood}, xseg{formatTicks(left, st), xText})
 	case !f.Ready:
-		g.segsFit(rx, y+3, ri, xseg{vibe.Line("ui.people_festival.card.05", "Cooling down "), xGold}, xseg{formatTicks(f.CooldownLeft, st), xText})
+		g.segsFit(rx, row, ri, xseg{vibe.Line("ui.people_festival.card.05", "Cooling down "), xGold}, xseg{formatTicks(f.CooldownLeft, st), xText})
 	default:
-		g.putFit(rx, y+3, ri, vibe.Line("ui.people_festival.card.06", "Ready"), xGood)
+		g.putFit(rx, row, ri, vibe.Line("ui.people_festival.card.06", "Ready"), xGood)
 	}
 	word := txtFestivalHold.String()
 	off := running || !f.Ready || f.Culture < f.Cost
-	by := y + 4
-	if h-5 >= actionRows && actionW(word, "", signNone) <= ri {
+	by := row + 1
+	if y+h-1-by >= actionRows && actionW(word, "", signNone) <= ri {
 		g.actionButton(rx, by, actionSpec{kind: keyPrimary, label: word, cmd: festivalCmd, ask: festivalAsk(st), yes: word, off: off})
 		return
 	}
