@@ -313,6 +313,9 @@ type GameEngine struct {
 
 	// history is the run's recorder (history.go): its measures and marks.
 	history *RunHistory
+	// runID names the run in play: eight random bytes as hex, made when the run
+	// starts and kept in the save (run_archive.go).
+	runID string
 
 	// account is the per-player identity + meta-progression record, loaded once at
 	// boot (the accounts design §2/§8) and held here so the UI/dashboard — already sharing
@@ -471,6 +474,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		survivedEpochs:   make(map[string]bool),
 		legacyBonuses:    make(map[string]bool),
 		history:          NewRunHistory(),
+		runID:            newRunID(),
 		badges:           newBadgeBook(set),
 	}
 	ge.newRunManagers()
@@ -4683,6 +4687,7 @@ func countPrestigePoints(n int) string {
 func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// What the player may see named, before the reset takes the run's ages.
 	sight := ge.ageSightLocked()
+	played := ge.Prestige.GetLevel()
 	full := ge.Prestige.CalculatePoints(ge.age)
 	points := ge.lastPassagePoints(how, full)
 	ge.recordLastPassageOutcome(how, points, full)
@@ -4735,7 +4740,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	// Reset all game systems
-	ge.resetRunLocked(0.70)
+	ge.resetRunLocked(0.70, RunPrestige, played)
 	// A prestige also forgets the harbinger outcomes and the epoch events
 	// (a Succumb keeps both).
 	ge.harbingerHistory = nil
@@ -4822,9 +4827,11 @@ func (ge *GameEngine) recordRunBestsLocked(acct *Account) {
 // ruins, the legacy flags, the histories, the Last Passage and the tick speed
 // bonus. Bus intentionally kept: dashboard subscriptions must survive across
 // resets. Caller holds the write lock.
-func (ge *GameEngine) resetRunLocked(morale float64) {
-	// Every run ends here (a prestige, a Succumb, a new game): its counts are offered
-	// to the account's records before they are cleared.
+func (ge *GameEngine) resetRunLocked(morale float64, outcome string, level int) {
+	// Every run ends here (a prestige, a Succumb, a new game): it is filed on the
+	// account, and its counts are offered to the account's records, before they
+	// are cleared. level is the prestige level the run was played at.
+	ge.fileRunLocked(outcome, level)
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		ge.recordRunBestsLocked(acct)
 	}
@@ -4846,6 +4853,7 @@ func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.log = nil
 	// The history is this run's: the recorder starts over with the run.
 	ge.history = NewRunHistory()
+	ge.runID = newRunID()
 	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
@@ -4896,8 +4904,9 @@ func (ge *GameEngine) Reset() {
 	defer ge.mu.Unlock()
 
 	ge.sessionStart = nil
+	played := ge.Prestige.GetLevel()
 	ge.Prestige = NewPrestigeManagerWith(ge.rules)
-	ge.resetRunLocked(moraleNeutral)
+	ge.resetRunLocked(moraleNeutral, RunLeft, played)
 	ge.tickSpeedBonus = 0
 	ge.planLog = nil
 	ge.applyAgeUnlocks("primitive_age")
