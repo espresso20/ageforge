@@ -320,7 +320,7 @@ You meet civilizations by running scouting expeditions, not by building anything
 | `wonder` | Show the current wonder's bank: each resource, banked and needed, and its keystone tech with whether it is researched. |
 | `wonder collect <resource\|all> [amount\|all\|max]` (or `wonder bank`) | Bank a resource toward the current wonder. With an amount, bank that much (at most what the wonder still needs). With `all`, `max` or no amount, bank as much as it still needs, up to what you have. `wonder collect all` does this for every resource the wonder still needs. |
 | `build <wonder>` | Build the wonder once its bank is full and its [keystone tech](wonders.md#the-keystone-tech) is researched. |
-| `wonders` | Open the Wonders panel: a progress bar for each resource this age's wonder needs, and the list of wonders with the ones you have built. |
+| `wonders` | Open the Wonders panel: a progress bar for each resource this age's wonder needs, and the list of wonders with the ones you have built. It has a Collect button (`C`, runs `wonder collect all`) and a Build button (`B`, runs `build` for the wonder); the Stats panel's Prestige button asks, then runs `prestige confirm yes`. |
 
 ```
 wonder collect wood 1000
