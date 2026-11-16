@@ -186,6 +186,11 @@ func TestBlackMarketStop_QuietWithoutTech(t *testing.T) {
 	if !ok || !c.Quiet || c.Why != refusal || len(c.Chips) != 0 || c.Command != "" {
 		t.Errorf("locked stop = %+v, want quiet with %q and nothing to press", c, refusal)
 	}
+	for _, n := range p.pg.Notes {
+		if strings.Contains(n.Value, f.TechName) {
+			t.Errorf("the page's notes repeat the stop's reason: %q", n.Value)
+		}
+	}
 	pickStop(t, p, pages, 140, 40)
 	if len(stopChips(p)) != 0 {
 		t.Error("a locked stop has chips")

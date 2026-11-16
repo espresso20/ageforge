@@ -19,7 +19,8 @@ func tradePage(state game.GameState) deckPage {
 		Title: vibe.Line("ui.overlay_trade.tradePage.01", "Trade routes"),
 		Hint:  vibe.Line("ui.overlay_trade.tradePage.02", "trade route start/stop <key>"),
 	}
-	pg.Notes = append(pg.Notes, noteLinesOf(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce, config.FeatureBlackMarket), xGold)...)
+	// The black market's lock is said on its own stop, not here.
+	pg.Notes = append(pg.Notes, noteLinesOf(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce), xGold)...)
 
 	// Disruption banner: a war or an embargo blockades these resources, and
 	// any route importing one is suspended until the conflict ends.
