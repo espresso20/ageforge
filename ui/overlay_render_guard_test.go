@@ -40,6 +40,11 @@ func guardPanels(t *testing.T, engine *game.GameEngine) map[string]OverlayProvid
 	for name, e := range d.overlayMgr.entries {
 		out[name] = e.provide
 	}
+	// A deck is read as its page's words, a line to a card.
+	for name, p := range d.decks {
+		page := p.page
+		out[name] = func(st game.GameState, _ int) string { return deckText(page(st)) }
+	}
 	if len(out) < 14 {
 		t.Fatalf("only %d text panels registered; the dashboard registration list moved?", len(out))
 	}

@@ -45,8 +45,9 @@ func init() {
 		"ui.input.cmdTradeRoute.01",                                            // Usage: trade route start|stop <route>
 		"ui.overlay_plan.planPanelText.04", "ui.overlay_plan.planPanelText.05", // plan build <building> [count], and an example of it
 		"ui.people_tabs.work.05", "ui.people_tabs.work.15", "ui.people_tabs.work.16", "ui.people_tabs.work.20", // roster <area> <%|auto>
-		"ui.overlay_help.helpProvider.09", // the key name Tab in the help page (the word help beside it is not a row)
-		"ui.dashboard.buildLine.01",       // "build " before a building's key: the command a click on the building writes in the prompt
+		"ui.overlay_help.helpProvider.09",     // the key name Tab in the help page (the word help beside it is not a row)
+		"ui.dashboard.buildLine.01",           // "build " before a building's key: the command a click on the building writes in the prompt
+		"ui.overlay_military.campaignCard.06", // "expedition " before a campaign's name: the command the card's button runs
 	)
 	leftAloneFor(leftKey,
 		"ui.research_tree.laneLabel.01", // AEIOU: the vowels a letter is tested against
@@ -86,7 +87,9 @@ func screenReason(r *row) string {
 		return "" // the map's key hints are named like the screens' are
 	}
 	text := styleTagRe.ReplaceAllString(r.current, "")
-	words := keycapSplit.Split(strings.TrimSpace(text), -1)
+	// A cap may be followed by a note in brackets, "PgUp PgDn (Alt+Up/Dn)",
+	// written as pieces: the piece before the bracket is still a keycap.
+	words := keycapSplit.Split(strings.Trim(text, " \t\n()"), -1)
 	if len(words) > 0 && words[0] != "" {
 		key, ctrl := true, false
 		for _, w := range words {

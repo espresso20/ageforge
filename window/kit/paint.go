@@ -65,6 +65,28 @@ func ink(c *Cell, st Style) {
 		c.Bg = bg
 	}
 	c.Attr = st.Attr
+	c.Pic = 0 // what is written on a cell takes it back from a picture
+}
+
+// Picture shows img over the cells of r in real pixels, stretched to fill
+// the rectangle; the window draws it, on the ground the cells already have.
+// What is painted on any of those cells afterwards covers that cell of the
+// picture, so a window over it hides it cell by cell. The image must not be
+// written to after this call: to change the picture, paint another image.
+func (p *Painter) Picture(r image.Rectangle, img *image.RGBA) {
+	vis := r.Intersect(p.clip)
+	if img == nil || img.Rect.Empty() || vis.Empty() || len(p.buf.Pics) >= 1<<16-1 {
+		return
+	}
+	p.buf.Pics = append(p.buf.Pics, Pic{Rect: r, Img: img})
+	n := uint16(len(p.buf.Pics))
+	for y := vis.Min.Y; y < vis.Max.Y; y++ {
+		for x := vis.Min.X; x < vis.Max.X; x++ {
+			c := &p.buf.Cells[y*p.buf.W+x]
+			p.unpair(x, y, c)
+			c.R, c.Comb, c.Attr, c.Pic = ' ', "", 0, n
+		}
+	}
 }
 
 // Fill blanks r and gives it the ground bg (Clear makes a hole).
@@ -78,7 +100,7 @@ func (p *Painter) Fill(r image.Rectangle, bg Color) {
 		row := p.buf.Cells[y*p.buf.W+r.Min.X : y*p.buf.W+r.Max.X]
 		for x := range row {
 			p.unpair(r.Min.X+x, y, &row[x])
-			row[x].R, row[x].Comb, row[x].Bg, row[x].Attr = ' ', "", c, 0
+			row[x].R, row[x].Comb, row[x].Bg, row[x].Attr, row[x].Pic = ' ', "", c, 0, 0
 		}
 	}
 }

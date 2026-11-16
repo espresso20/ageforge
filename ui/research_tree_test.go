@@ -680,14 +680,14 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	}
 	ge.SetGarrisonForTest("bronze_age", 1000) // an army at home to make up a party
 	st := ge.GetState()
-	for what, out := range map[string]string{"the Army panel": militaryProvider(st, 120), "the mission board": cmdMissionBoard(ge).Message} {
+	for what, out := range map[string]string{"the Army panel": deckText(armyPage(st)), "the mission board": cmdMissionBoard(ge).Message} {
 		if strings.Contains(out, "first. Research it to send one") {
 			t.Errorf("%s says a mission waits for a tech:\n%s", what, out)
 		}
 	}
 	// Railroads and Mercantilism are techs of later ages: not a word yet.
 	// The Wheel is this age's, and trade routes wait for it.
-	if out := tradeProvider(st, 120); strings.Contains(out, "Railroads") || strings.Contains(out, "Mercantilism") ||
+	if out := deckText(tradePage(st)); strings.Contains(out, "Railroads") || strings.Contains(out, "Mercantilism") ||
 		!strings.Contains(out, "Trade routes need The Wheel first. Research it to start one.") {
 		t.Errorf("the Trade panel should name The Wheel and no tech of a later age:\n%s", out)
 	}
@@ -700,7 +700,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {
 		must(t, ge.EnterAgeForTest(a))
 	}
-	out := tradeProvider(ge.GetState(), 120)
+	out := deckText(tradePage(ge.GetState()))
 	wantAll(t, "the Trade panel", out, "The Rail Freight route needs Railroads first. Research it to start it.", "The black market needs Mercantilism first. Research it to deal there.")
 	// Their ages reached: each panel names the tech its command waits for,
 	// and stops once it is researched.
@@ -719,7 +719,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	}
 	ge.GrantTechsForTest("envoys", "drama", "the_wheel")
 	late = ge.GetState()
-	if out := factionsProvider(late, 120) + festival() + tradeProvider(late, 120); strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
+	if out := factionsProvider(late, 120) + festival() + deckText(tradePage(late)); strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
 		t.Errorf("with the techs researched a lock is still shown:\n%s", out)
 	}
 	if strings.Contains(out, "Interstellar Trade") || strings.Contains(out, "interstellar_trade") {

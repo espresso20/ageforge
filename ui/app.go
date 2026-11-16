@@ -128,6 +128,23 @@ func (a *App) OnDiscordChange(fn func()) {
 type WindowHost interface {
 	FontChoice() string // "mono" or "pixel"
 	NextFont()          // switch to the other font
+	// CellSize is a cell of the grid in pixels (0, 0 until the window is
+	// laid out), for pictures drawn pixel for pixel.
+	CellSize() (w, h int)
+}
+
+// pictureCell is the window's cell size in pixels; nil when no window is open.
+var pictureCell func() (w, h int)
+
+// cellPixels is the size in pixels of a cell of the grid: the window's, or
+// a screenshot's cell when no window is open (tests, recorded screens).
+func cellPixels() (w, h int) {
+	if pictureCell != nil {
+		if w, h := pictureCell(); w > 0 && h > 0 {
+			return w, h
+		}
+	}
+	return shotCellW, shotCellH
 }
 
 // Resize, Key and Mouse are the window's events: the grid's size in cells,
@@ -145,6 +162,7 @@ func (a *App) SetWindowHost(h WindowHost) {
 	if a.menu != nil {
 		a.menu.window = h
 	}
+	pictureCell = h.CellSize
 }
 
 // SetSpaceHost gives the Map panel the window's own sky (see mapstyle.SpaceHost).

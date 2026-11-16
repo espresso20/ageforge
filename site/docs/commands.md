@@ -276,6 +276,8 @@ blackmarket gold
 
 A run costs the larger of 5K culture or a number of hours of your own culture income, up to 200 hours. After a run the smugglers lie low for 624 ticks (about 21 minutes). They deal in gold, iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux.
 
+The Trade, Army and Milestones panels leave the prompt working. `←` `↑` `↓` `→` move the pick (from road to road on Trade, from order to order on Army, along a road and between roads on Milestones), `Enter` runs the picked thing's command (its button shows it), `PgUp` and `PgDn` scroll when there is more than fits, and `Esc` closes the panel. A click picks, and a click on the button runs the command. With something typed in the prompt, the keys go to the prompt. Milestones has no commands.
+
 A route whose imports include a resource that a civilization you are at war with or have embargoed specializes in earns nothing until the conflict ends. Harbors raise the income of every active route. See [Trade](trade.md).
 
 ---
@@ -410,7 +412,7 @@ A festival costs the larger of 2K culture or a number of hours of your own cultu
 
 | Command | Description |
 |---|---|
-| `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts. |
+| `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts, drawn as roads of stones. |
 | `epoch` | Open the Epoch screen: a banner, your highlights, ages, top badges and feats on the front page, and on `Tab` the details (current epoch and its event, catastrophe outlook, epoch history, harbingers, legacy bonuses, Era Mastery and the civilization log). |
 | `epoch card` | Copy a picture of your epoch screen to the clipboard, to paste into Discord. It is also saved as `epoch-card.png` next to your saves, and the reply says which worked. Press `c` on the Epoch screen to do the same. |
 
@@ -546,7 +548,7 @@ The badge case leaves the prompt working and takes only the keys that print noth
 | `Enter` | Open the selected badge's detail, and close it |
 | `Esc` | Close the detail, then the case |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. A few badges move, and `motion off` holds them still. See [Badges](badges.md) for the badges themselves, their ladders, titles and the themes they give, and [the badge case](account.md#the-badge-case) for what the case shows. The title you wear belongs to your account and needs one to be loaded.
+With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. Every earned badge's coin moves, and `motion off` holds them still. See [Badges](badges.md) for the badges themselves, their ladders, titles and the themes they give, and [the badge case](account.md#the-badge-case) for what the case shows. The title you wear belongs to your account and needs one to be loaded.
 
 ---
 

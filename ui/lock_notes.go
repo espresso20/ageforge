@@ -33,3 +33,15 @@ func lockNotes(state game.GameState, keys ...string) string {
 	}
 	return sb.String()
 }
+
+// featureRefusal is what the game says when a locked feature is asked for,
+// and whether the feature is locked: a card for something the feature
+// covers shows it in place of a button that would only be refused.
+func featureRefusal(state game.GameState, key string) (string, bool) {
+	f, ok := state.Features[key]
+	if !ok || f.Open {
+		return "", false
+	}
+	def, _ := state.Ruleset().FeatureLock(key)
+	return def.Refusal(f.TechName), true
+}

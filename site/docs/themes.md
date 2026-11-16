@@ -40,7 +40,7 @@ Themes use exact RGB colors, and the window shows them as designed.
 
 ### Motion
 
-A few things in the game move on their own: the [Map](map.md) and the mini map, the [main menu](how-to-play.md#the-main-menu), some badges in the [badge case](account.md#the-badge-case), and the ambient effect of the five themes that have one. One setting turns all of it off:
+A few things in the game move on their own: the [Map](map.md) and the mini map, the [main menu](how-to-play.md#the-main-menu), the coins of earned badges (in the [badge case](account.md#the-badge-case), on the Epoch screen and on the card for a badge just earned), and the ambient effect of the five themes that have one. One setting turns all of it off:
 
 | Command | What it does |
 |---|---|

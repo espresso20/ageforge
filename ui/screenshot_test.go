@@ -31,8 +31,8 @@ func shotCells(cols, rows int, set func(x, y int) (rune, kit.Style, bool)) *kit.
 	return b
 }
 
-// cellPixels counts the pixels of one cell that are white and that are black.
-func cellPixels(img *image.RGBA, x, y int) (white, black, other int) {
+// cellColors counts the pixels of one cell that are white and that are black.
+func cellColors(img *image.RGBA, x, y int) (white, black, other int) {
 	ox, oy := shotPad+x*shotCellW, shotPad+y*shotCellH
 	for py := oy; py < oy+shotCellH; py++ {
 		for px := ox; px < ox+shotCellW; px++ {
@@ -60,10 +60,10 @@ func TestScreenImageSizeAndLetters(t *testing.T) {
 	if b := img.Bounds(); b.Dx() != 4*shotCellW+2*shotPad || b.Dy() != 2*shotCellH+2*shotPad {
 		t.Fatalf("size = %v", b)
 	}
-	if w, _, _ := cellPixels(img, 1, 0); w == 0 {
+	if w, _, _ := cellColors(img, 1, 0); w == 0 {
 		t.Error("a cell holding W has no foreground pixels")
 	}
-	if w, b, o := cellPixels(img, 0, 0); w != 0 || o != 0 || b != shotCellW*shotCellH {
+	if w, b, o := cellColors(img, 0, 0); w != 0 || o != 0 || b != shotCellW*shotCellH {
 		t.Errorf("a blank cell is not one colour: %d %d %d", w, b, o)
 	}
 	again := ScreenImage(cells, shotCellW, shotCellH)
@@ -80,13 +80,13 @@ func TestScreenImageBlocksFillTheirCells(t *testing.T) {
 		'▘': area / 4, '▗': area / 4, '▚': area / 2, '▙': area * 3 / 4,
 	} {
 		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return r, st, true }), shotCellW, shotCellH)
-		if w, _, o := cellPixels(img, 0, 0); w != want || o != 0 {
+		if w, _, o := cellColors(img, 0, 0); w != want || o != 0 {
 			t.Errorf("%c: %d white pixels, %d other, want %d white", r, w, o, want)
 		}
 	}
 	// A shade is a mix: no pixel is pure foreground or pure background.
 	img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return '▒', st, true }), shotCellW, shotCellH)
-	if w, b, o := cellPixels(img, 0, 0); w != 0 || b != 0 || o != area {
+	if w, b, o := cellColors(img, 0, 0); w != 0 || b != 0 || o != area {
 		t.Errorf("shade: %d white, %d black, %d mixed", w, b, o)
 	}
 }
@@ -107,7 +107,7 @@ func TestScreenImageDrawsNoTofu(t *testing.T) {
 	// Marks Go Mono has no shape for stay blank, and so does a diagonal.
 	for _, r := range []rune{'🙂', '╱'} {
 		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return r, st, true }), shotCellW, shotCellH)
-		if _, b, _ := cellPixels(img, 0, 0); b != shotCellW*shotCellH {
+		if _, b, _ := cellColors(img, 0, 0); b != shotCellW*shotCellH {
 			t.Errorf("%c is not blank", r)
 		}
 	}
@@ -117,7 +117,7 @@ func TestScreenImageDrawsTheEpochIcons(t *testing.T) {
 	st := kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0))
 	for r := range symbolShapes {
 		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, kit.Style, bool) { return r, st, true }), shotCellW, shotCellH)
-		if _, b, _ := cellPixels(img, 0, 0); b == shotCellW*shotCellH {
+		if _, b, _ := cellColors(img, 0, 0); b == shotCellW*shotCellH {
 			t.Errorf("%c is blank", r)
 		}
 	}
@@ -159,5 +159,34 @@ func TestEpochPictureIsStillAndNotFlat(t *testing.T) {
 	}
 	if flat {
 		t.Error("the picture is all one colour")
+	}
+}
+
+func TestScreenImageDrawsPictures(t *testing.T) {
+	b := shotCells(10, 6, func(x, y int) (rune, kit.Style, bool) { return 0, kit.Style{}, false })
+	red := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	for i := 0; i < len(red.Pix); i += 4 {
+		red.Pix[i], red.Pix[i+3] = 255, 255
+	}
+	p := kit.NewPainter(b)
+	p.Picture(image.Rect(2, 1, 6, 3), red)
+	isRed := func(img *image.RGBA, cx, cy int) bool {
+		c := img.RGBAAt(shotPad+cx*shotCellW+shotCellW/2, shotPad+cy*shotCellH+shotCellH/2)
+		return c.R == 255 && c.G == 0 && c.B == 0
+	}
+	img := ScreenImage(b, shotCellW, shotCellH)
+	if !isRed(img, 3, 1) || !isRed(img, 5, 2) {
+		t.Fatal("the picture's cells are not red")
+	}
+	if isRed(img, 1, 1) || isRed(img, 6, 1) || isRed(img, 3, 3) {
+		t.Fatal("a cell outside the picture is red")
+	}
+	p.Put(3, 1, 'x', kit.Style{}.Foreground(kit.RGB(255, 255, 255)).Background(kit.RGB(0, 0, 0)))
+	img = ScreenImage(b, shotCellW, shotCellH)
+	if isRed(img, 3, 1) {
+		t.Fatal("an inked cell still shows the picture")
+	}
+	if !isRed(img, 4, 1) {
+		t.Fatal("the picture's other cells lost it")
 	}
 }

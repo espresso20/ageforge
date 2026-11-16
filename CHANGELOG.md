@@ -8,6 +8,11 @@ All notable changes to AgeForge are documented here.
 
 ### Added
 - In the window, a right click means Back: it does what `Esc` does on a panel, a dialog or a page. It does nothing on the dashboard with no panel open, so it never takes you out of a game.
+- The Badges panel is a cabinet of coins drawn in real pixels. Every badge of the grid is a small coin on a shelf under its family's name, and the selected badge's coin is shown large beside the grid. A coin is struck in the badge's metal and lit from the upper left, with its family's sign in the middle (each of the seventeen families has its own); one not earned yet is dull steel with a keyhole, a hidden one has a question mark, and one earned in a modified game has a strike across it. The selected coin sits on a lit plate, and the count line shows how far the score is toward the next title. The game can now show pictures finer than a character cell; this is the first use.
+- The coins of the Badges panel move, and a higher tier moves more. A band of light crosses a bronze coin now and then; silver adds a sparkle; on gold a light also runs round the rim; platinum does all of it more often, with a second band of light and four blue studs in its rim that flare as the light goes by; a legendary coin's rim turns through the colors without rest, and its large coin stands on turning rays. The lights set off one coin after another, so they cross the whole case, and the selected badge's large coin turns to face you when you pick it. `motion off` holds all of it still.
+- Platinum coins are a cold blue-white with blue studs in the rim, so they are no longer taken for silver. A legendary coin's rim shows all the colors (it was drawn in one).
+- The eleven badges with a sign of their own (eight legendary ones and the three outside the families) carry it on their coin.
+- The Badges panel's keys are buttons a click presses, as in the other panels, and it has a close button at the right of its title bar. An open badge's detail shows its coin.
 - In the window, a building in the Buildings list and a name in the Panels list light up while the pointer is on them.
 - In the window, the mouse wheel over the dashboard's Resources box turns its page, when it has more than one.
 - In the window, the key buttons along the foot of the Load game, Accounts and Themes pages take clicks: a click on one presses its key.
@@ -58,8 +63,12 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 - **An experimental gate.** Start the game with AGEFORGE_GATES=v2 to try pillars measured by population, industry income and key techs instead of building counts.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
+- The Epoch screen's top badges show their coins, moving as they do in the Badges panel, and the epoch card picture carries them too.
+- An earned badge opens a card at the top right of the dashboard: its coin turns in and plays its tier's show beside the badge's name, tier and what it was for. Badges earned together take the card in turn. It replaces the one-line notice in the header.
+- The wiki's pictures of the game show the badges' coins.
 
 ### Changed
+- The Trade, Army and Milestones panels each have a look of their own. Trade is a map: a road runs from your town to the end of every route, a running route has a caravan on its road carrying what it sells and then what it bought, and a box at the side lists what goes out, what comes in and what bears on trade. Army sets your defense against the threat on one bar, musters your soldiers post by post (a mark for so many soldiers, grey for a post not filled), and lists the campaigns as orders. Milestones is a road for each category with a stone for each milestone: the ones reached first, then the one you are walking to, then the ones ahead, and the picked stone in full under the roads. In all three the arrows move the pick, Enter runs the picked thing's command (its button shows the command), a click picks and a click on the button runs it, and what the command did shows on the panel. A window too small for a panel's picture shows the same things as a list of cards.
 - The top of the dashboard is one framed header. Its top edge has your name and titles, a notice when there is one, and an Esc menu button. Inside: the age, the year, People and Morale, any alert as a chip, then the way to the next age (one bar and the four pillars), then what it waits on and what you are short of. Every part takes a click: People and Morale open People, the bar and the pillars open the Advance panel, an alert opens its panel. The header is one or two rows shorter than the old top, and the rows go to the boxes below.
 - The keys along the foot of a panel are buttons. A click on one presses its key, each key of a shared cap (`↑↓`, `PgUp PgDn`) is its own button, and a button lights up under the pointer. Panels also have a close button (`×`) in the top right corner. On a narrow window the foot keeps `Esc close` and drops other keys first. This covers every text panel and People, Advance and Expeditions; Research, Badges and Map keep their own key bars for now.
 - The dashboard's mini map is a square box under the Panels list. It is no longer a strip above the Buildings list, which now has the whole middle column. In a window too small for it, the mini map is not shown.
@@ -136,6 +145,7 @@ All notable changes to AgeForge are documented here.
 - **The top bar no longer shows the era badge.** The age name is enough; the next age is in the Next Age bar.
 - **What a tech does stands out.** The effect of a tech is shown in its own colour in the research screens.
 - **Saves from before 4.0 are no longer loaded.** The game no longer repairs or converts old saves, accounts or exports, and refuses them with a plain line.
+- The plain glyph set (`map glyphs ascii`) shows the same coins; it changes only the text around them.
 
 ### Removed
 - Terminal mode. `ageforge --terminal` is gone: AgeForge runs in its own window only. Nothing else a player could do is removed. Saves, accounts and settings are untouched.
@@ -143,6 +153,7 @@ All notable changes to AgeForge are documented here.
 - **The old map renderer.** The symbol-chart map, with its district zoom, region plates and city scenes, is gone with its code; the engine draws every age.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 - The `icons` command, the Nerd Font installer and the `nerd` map glyph set are gone, and the Font Snob badge with them. The window draws with its own fonts, which have no such icons. Option+B and Option+F no longer act as Home and End on an empty prompt.
+- The badges drawn in characters (frames, rings and the eleven drawings) are gone, along with the one-line badge notice in the header.
 
 ### Fixed
 - The History panel's charts show again. In the window every dot of them was a question mark, because no font the game ships has the braille dots they are drawn with. The window now draws those dots itself.

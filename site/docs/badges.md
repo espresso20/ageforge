@@ -12,9 +12,9 @@ Open the badge case to look through them:
 badges
 ```
 
-<figure class="screen" data-screen="badge-families"><figcaption>The badge case as it opens: every family you have something in sight of, with the selected badge at full size beside the grid.</figcaption></figure>
+<figure class="screen" data-screen="badge-families"><figcaption>The badge case as it opens: every family you have something in sight of, with the selected badge's coin large beside the grid.</figcaption></figure>
 
-[Accounts & Recovery](account.md#the-badge-case) describes the case itself: what each shape means, the tabs, the detail card and the plain list. The Stats panel shows a short digest of your badges. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
+[Accounts & Recovery](account.md#the-badge-case) describes the case itself: what each coin shows, the tabs, the detail card and the plain list. The Stats panel shows a short digest of your badges. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
 
 VibeMode rewrites the names and descriptions of badges. The badges, their tiers and their points stay the same.
 
@@ -51,9 +51,9 @@ Each badge has a tier, and a tier is worth points. Your points add up to a score
 
 A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 12,865 points.
 
-Legendary badges are drawn as a ring. Eight of them have a drawing of their own that moves when motion is on.
+A legendary coin is gold, with a rim that runs through the colors and turning rays behind it when motion is on. Eight legendary badges carry a sign of their own instead of their family's.
 
-<figure class="screen" data-screen="badge-legend"><figcaption>A legendary special at full size. Eight badges have a drawing of their own: seven legendary specials and the badge for the last age.</figcaption></figure>
+<figure class="screen" data-screen="badge-legend"><figcaption>A legendary special at full size, with a sign of its own. Eight legendary badges have one: seven legendary specials and the badge for the last age.</figcaption></figure>
 
 ## The families
 
