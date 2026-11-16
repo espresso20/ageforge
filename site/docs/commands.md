@@ -147,7 +147,7 @@ In the Plan panel:
 | `assign <building> [count\|all]` | Assign idle workers to a building (the building sets their domain). |
 | `unassign <building> [count\|all]` | Take workers out of a building and back to idle. |
 | `dismiss <building> [count\|all]` | Remove workers from a building and from your population for good. |
-| `people` | Open the People panel: your homes and every kind of person in them, then tabs for your work areas, your army and your scholars. `workers` opens it too. |
+| `people` | Open the People panel: your homes and every kind of person in them, then tabs for your work areas, your army and your scholars. `workers` opens it too. In it `recruit`, `assign`, `unassign`, `dismiss` (after a question) and `scholars <percent>` are buttons, and each button carries the command it runs. |
 | `workers` | The same as `people`. |
 | `roster` | Print each domain's share of your workforce with its workers and slots (`Faith: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on. |
 | `roster <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce. Decimals and a `%` sign are allowed (`roster lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line. |
