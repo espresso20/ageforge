@@ -359,11 +359,11 @@ func TestEffectMagnitude(t *testing.T) {
 		{game.EventEffectInfo{Type: "gather_rate", Value: 0.20}, "+20% worker output", "green"},
 		{game.EventEffectInfo{Type: "production_all", Value: 0.08}, "+8% all production", "green"},
 		{game.EventEffectInfo{Type: "tick_speed", Value: 0.09}, "+9% game speed", "green"},
-		{game.EventEffectInfo{Type: "production", Target: "wood", Value: 2.5}, "+2.5 wood/tick", "green"},
+		{game.EventEffectInfo{Type: "production", Target: "wood", Value: 2.5}, "+2.5 wood/s", "green"},
 		{game.EventEffectInfo{Type: "something_else", Value: 1}, "", ""},
 	}
 	for _, c := range cases {
-		plain, colored := effectMagnitude(c.eff)
+		plain, colored := effectMagnitude(c.eff, 1000)
 		if plain != c.want {
 			t.Errorf("effectMagnitude(%+v) plain = %q, want %q", c.eff, plain, c.want)
 		}

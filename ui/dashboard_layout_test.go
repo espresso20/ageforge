@@ -348,7 +348,7 @@ func TestResourceRowsLineUp(t *testing.T) {
 	// At the width of a 120-column terminal's box the long name gives way
 	// to its initials, the rate keeps its unit and there is a bar.
 	f := fitResourceFormat(rows, 47)
-	if line := untag(f.line(rows[3])); !strings.Contains(line, "D. M. Crystals") || !strings.Contains(line, "-0.04/s") || f.bar < resBarMin {
+	if line := untag(f.line(rows[3])); !strings.Contains(line, "D. M. Crystals") || !strings.Contains(line, "-2.4/min") || f.bar < resBarMin {
 		t.Errorf("47 cells: want initials, the full unit and a bar: %q (bar %d)", line, f.bar)
 	}
 }
@@ -595,8 +595,8 @@ func TestDashboardLayoutDump(t *testing.T) {
 }
 
 // rateInRow matches a rate as the Resources box writes it: a sign, a number
-// and a per-second or per-minute unit.
-var rateInRow = regexp.MustCompile(`[+-][0-9][0-9.]*[A-Za-z]{0,2}/(s|min|m)\b`)
+// and a per-second, per-minute or per-hour unit.
+var rateInRow = regexp.MustCompile(`[+-][0-9][0-9.]*[A-Za-z]{0,2}/(s|min|m|h)\b`)
 
 // isRateRow reports whether a line of the Resources box is a resource's row.
 func isRateRow(row string) bool { return rateInRow.MatchString(row) }

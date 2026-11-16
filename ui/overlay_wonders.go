@@ -43,7 +43,7 @@ func wonderSummary(state game.GameState) wonderBlock {
 
 	// Effects
 	for _, eff := range current.def.Effects {
-		fmt.Fprintf(&sb, "   %s%s\n", formatEffect(eff), capTag(state, eff, built, "-"))
+		fmt.Fprintf(&sb, "   %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, built, "-"))
 	}
 
 	// Its keystone tech, and whether it is researched
@@ -153,12 +153,12 @@ func wondersProvider(state game.GameState, _ int) string {
 			fmt.Fprintf(&sb, " %s [gold]★ %s[-]   [gray]%s[-]\n", WonderSpriteIcon(w.key), w.name, w.ageName)
 			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.02", "   [green]Built[-]\n"))
 			if w.def.Description != "" {
-				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
+				fmt.Fprintf(&sb, "   [gray]%s[-]\n", perSecondText(w.def.Description, state.TickIntervalMs))
 			}
 			if len(w.def.Effects) > 0 {
 				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.03", "   [cyan]Effects:[-]\n"))
 				for _, eff := range w.def.Effects {
-					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff), capTag(state, eff, true, "-"))
+					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, true, "-"))
 				}
 			}
 		} else if unlocked {
@@ -188,12 +188,12 @@ func wondersProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "   %s\n", line)
 			}
 			if w.def.Description != "" {
-				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
+				fmt.Fprintf(&sb, "   [gray]%s[-]\n", perSecondText(w.def.Description, state.TickIntervalMs))
 			}
 			if len(w.def.Effects) > 0 {
 				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.08", "   [cyan]Effects when built:[-]\n"))
 				for _, eff := range w.def.Effects {
-					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff), capTag(state, eff, false, "-"))
+					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, false, "-"))
 				}
 			}
 		} else {

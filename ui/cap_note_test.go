@@ -113,7 +113,7 @@ func TestResearchPanelBonuses(t *testing.T) {
 		"-28%    Trade route time\n",
 		"+2      Hand gathering\n",
 		"+15%    Game speed\n",
-		"Output:  +1 data/tick, +0.25 steel/tick",
+		"Output:  +0.575 data/s, +0.144 steel/s",
 	)
 	if strings.Contains(out, "capped") || strings.Contains(out, "a quarter") {
 		t.Errorf("a tech's bonus carries a cap note:\n%s", out)
@@ -162,13 +162,13 @@ func TestMilestonesAndWondersTagOnlyLimitedRewards(t *testing.T) {
 	must(t, ge.EnterAgeForTest("information_age"))
 	wonders := wondersProvider(ge.GetState(), 120)
 	if want := "+30% scholar output[-]\n"; !strings.Contains(wonders, want) {
-		t.Errorf("the Wonders panel tags a scholar output effect that counts in full (want %q):\n%s", want, wonders)
+		t.Errorf("the Wonders panel tags a scholar output effect that counts in full (want %q)", want)
 	}
 	if strings.Contains(wonders, "a quarter") {
 		t.Errorf("the Wonders panel still talks of a quarter:\n%s", wonders)
 	}
-	if want := "+30 data/tick[-]\n"; !strings.Contains(wonders, want) {
-		t.Errorf("the Global Network's flat output carries a note, or is gone (want %q)", want)
+	if want := "+17.3 data/s[-]\n"; !strings.Contains(wonders, want) {
+		t.Errorf("the Global Network flat output carries a note, or is gone (want %q)", want)
 	}
 }
 

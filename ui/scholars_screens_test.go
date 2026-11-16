@@ -276,11 +276,11 @@ func TestKnowledgeBuildingShowsScholarsAndSoftCap(t *testing.T) {
 		t.Fatalf("staging: %+v", bs)
 	}
 	want := fmt.Sprintf("Past %d copies, each researches at half rate.", bs.FullRateCopies)
-	if got := buildingText(bs); !strings.HasSuffix(got, want) || !strings.Contains(got, "2 scholars") {
+	if got := buildingText(bs, 1000); !strings.HasSuffix(got, want) || !strings.Contains(got, "2 scholars") {
 		t.Errorf("buildingText = %q, want 2 scholars and it to end %q", got, want)
 	}
 	// A description that does not name the scholars gets them added.
-	if got := buildingText(game.BuildingState{Description: "A hall.", Scholars: 3, FullRateCopies: 5, Count: 1}); got != "A hall. 3 scholars a copy. Past 5 copies, each researches at half rate." {
+	if got := buildingText(game.BuildingState{Description: "A hall.", Scholars: 3, FullRateCopies: 5, Count: 1}, 1000); got != "A hall. 3 scholars a copy. Past 5 copies, each researches at half rate." {
 		t.Errorf("buildingText without the scholars in the description = %q", got)
 	}
 	if !strings.Contains(buildingsProvider(st, 120), want) {
@@ -304,7 +304,7 @@ func TestKnowledgeBuildingShowsScholarsAndSoftCap(t *testing.T) {
 		}
 	}
 	// A building that is not a knowledge building adds nothing.
-	if got := buildingText(game.BuildingState{Description: "A hut."}); got != "A hut." {
+	if got := buildingText(game.BuildingState{Description: "A hut."}, 1000); got != "A hut." {
 		t.Errorf("buildingText of a plain building = %q", got)
 	}
 }
@@ -467,7 +467,7 @@ func TestSuggestResearchGameAware(t *testing.T) {
 
 // A wonder's work for the scholars reads as what it is, not as a bare number.
 func TestWonderResearchEffectIsNotANumber(t *testing.T) {
-	if got := formatTechEffect(config.Effect{Type: "research", Value: 0.05}); got != "speeds research" {
+	if got := formatTechEffect(config.Effect{Type: "research", Value: 0.05}, 1000); got != "speeds research" {
 		t.Errorf("a wonder's research effect reads %q", got)
 	}
 	st := scholarGame(t).GetState()
@@ -481,7 +481,7 @@ func TestWonderResearchEffectIsNotANumber(t *testing.T) {
 // An active Enlightenment boon reads as the scholars' work, not as a bonus to
 // a resource that no longer exists.
 func TestEnlightenmentLineNamesScholarOutput(t *testing.T) {
-	plain, _ := effectMagnitude(game.EventEffectInfo{Type: "knowledge_rate", Target: "knowledge", Value: 0.2})
+	plain, _ := effectMagnitude(game.EventEffectInfo{Type: "knowledge_rate", Target: "knowledge", Value: 0.2}, 1000)
 	if plain != "+20% scholar output" {
 		t.Errorf("the active Enlightenment reads %q", plain)
 	}

@@ -21,7 +21,7 @@ import (
 //	Men-at-arms      428/430 · 12    posted/posts, and the soldiers out
 //	Monks                     53
 //	Held by: food                    what holds the population back
-//	+0.45 food a tick feeds 3 more
+//	+0.45 food/s feeds 3 more
 //
 // A box with fewer rows gives up the second Held-by line, then the bar, then
 // the headcount (which moves to the title, peopleRichTitle).
@@ -92,7 +92,7 @@ func peopleRichTitle(state game.GameState, rows int) string {
 // peopleRichHeld is the two lines on what holds the population back: what it
 // is, and a note on it. With nothing holding it back they say the homes have
 // room.
-func peopleRichHeld(ws game.WorkerState, w int) (first, second string) {
+func peopleRichHeld(ws game.WorkerState, tickMs, w int) (first, second string) {
 	gray := func(s string) string { return theme.Paint(theme.RoleDim, s) }
 	held := func(by string) string {
 		return gray(vibe.Line("ui.people_rich.peopleRichHeld.01", "Held by: ")) + theme.Paint(theme.RoleWarning, by)
@@ -101,7 +101,7 @@ func peopleRichHeld(ws game.WorkerState, w int) (first, second string) {
 	case game.HeldHousing:
 		return held("housing"), gray(fitText(vibe.Line("ui.people_rich.peopleRichHeld.02", "every home is full"), w))
 	case game.HeldFood:
-		lines := heldByLines(ws, w)
+		lines := heldByLines(ws, tickMs, w)
 		if len(lines) > 1 {
 			return held("food"), gray(lines[1])
 		}
@@ -148,7 +148,7 @@ func peopleRichText(state game.GameState, w, h int) string {
 		}
 	}
 
-	first, second := peopleRichHeld(ws, w)
+	first, second := peopleRichHeld(ws, state.TickIntervalMs, w)
 	switch {
 	case h >= 8:
 		lines = append(lines, popLine, peopleBarText(kinds, ws.MaxPop, w))

@@ -100,14 +100,13 @@ func buildCmd(key string, c buyChoice) string {
 }
 
 // cardOutput is what a building's description says after its first sentence,
-// what a copy makes, with its rates per second: "Roman engineering feats
-// improve iron output. +43.2 iron/tick (5 workers)." is "+43.2 iron/s (5
-// workers)".
-func cardOutput(desc string, tickMs int) string {
+// what a copy makes: "Roman engineering feats improve iron output. +21.6
+// iron/s (5 workers)." is "+21.6 iron/s (5 workers)".
+func cardOutput(desc string) string {
 	if i := strings.Index(desc, ". "); i >= 0 {
 		desc = desc[i+2:]
 	}
-	return textfmt.Capitalize(perSecondText(strings.TrimSuffix(strings.TrimSpace(desc), "."), tickMs))
+	return textfmt.Capitalize(strings.TrimSuffix(strings.TrimSpace(desc), "."))
 }
 
 // buildCards lists the buildings of the current age as cards, in no
@@ -126,7 +125,7 @@ func buildCards(state game.GameState, buy buyChoice) []buildCard {
 			continue
 		}
 		c := buildCard{key: key, name: bs.Name, kind: signKindOf(def), owned: bs.Count,
-			out: cardOutput(buildingText(bs), state.TickIntervalMs)}
+			out: cardOutput(buildingText(bs, state.TickIntervalMs))}
 		queued := 0
 		for _, q := range state.BuildQueue {
 			if q.Key == key {
@@ -192,7 +191,7 @@ func olderCards(state game.GameState) []buildCard {
 			continue
 		}
 		cards = append(cards, buildCard{key: key, name: bs.Name, kind: signKindOf(def), owned: bs.Count,
-			out: cardOutput(buildingText(bs), state.TickIntervalMs), older: true, group: groupBuild})
+			out: cardOutput(buildingText(bs, state.TickIntervalMs)), older: true, group: groupBuild})
 	}
 	return cards
 }
@@ -230,8 +229,8 @@ func shortOf(state game.GameState, cost map[string]float64) (reason, wait string
 			continue
 		}
 		w := math.Inf(1)
-		if perSec := secondly(state.Resources[res].Rate, state.TickIntervalMs); perSec > 0 {
-			w = deficit / perSec
+		if rate := state.Resources[res].Rate; rate > 0 {
+			w = deficit * tickSeconds(state.TickIntervalMs) / rate
 		}
 		// The furthest: the longest wait, and among those with no income the
 		// biggest part of the price missing.

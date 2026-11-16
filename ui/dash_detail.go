@@ -233,7 +233,7 @@ func (b *buildBox) planDetail(w int) detailPlan {
 		}
 	}
 	at := 1 + p.noteN
-	p.desc = detailWrap(buildingText(d.bs), at, p.widthAt)
+	p.desc = detailWrap(buildingText(d.bs, b.st.TickIntervalMs), at, p.widthAt)
 	at += len(p.desc)
 	if p.workers {
 		at++

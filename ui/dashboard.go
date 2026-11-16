@@ -1088,17 +1088,17 @@ const workerMiniBaseRows = 5
 // heldByLines says what holds the population back, for a box w cells wide (0:
 // any width), as "Held by: food" and, for food, a second line with the net
 // food and the villagers it feeds. Nothing when the population can grow.
-func heldByLines(ws game.WorkerState, w int) []string {
+func heldByLines(ws game.WorkerState, tickMs, w int) []string {
 	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
 	switch ws.HeldBy {
 	case game.HeldHousing:
 		return []string{vibe.Line("ui.dashboard.heldByLines.01", "Held by: housing")}
 	case game.HeldFood:
-		x := textfmt.RateValue(ws.FoodNet) // "+0.45"
+		x, unit := rateFigure(ws.FoodNet, tickMs) // "+0.45", "/s"
 		feeds := vibe.Sprintf("ui.dashboard.heldByLines.02", "feeds %d more", ws.FoodFeeds)
 		for _, line := range []string{
-			x + vibe.Line("ui.dashboard.heldByLines.03", " food a tick ") + feeds,
-			x + vibe.Line("ui.dashboard.heldByLines.04", "/tick ") + feeds,
+			x + vibe.Line("ui.dashboard.heldByLines.03", " food") + unit + " " + feeds,
+			x + unit + " " + feeds,
 			x + " " + feeds,
 			feeds,
 		} {
@@ -1112,10 +1112,10 @@ func heldByLines(ws game.WorkerState, w int) []string {
 }
 
 // heldByText is heldByLines for one line (the roster command and panel): the
-// food form joins its two parts, "Held by: food (+0.45 food a tick feeds 3
+// food form joins its two parts, "Held by: food (+0.45 food/s feeds 3
 // more)".
-func heldByText(ws game.WorkerState) string {
-	lines := heldByLines(ws, 0)
+func heldByText(ws game.WorkerState, tickMs int) string {
+	lines := heldByLines(ws, tickMs, 0)
 	switch len(lines) {
 	case 0:
 		return ""
@@ -1186,7 +1186,7 @@ func peopleBoxText(state game.GameState, w int, detail bool) string {
 		sb.WriteString(k.boxLine(w))
 		sb.WriteString("\n")
 	}
-	if lines := heldByLines(ws, w); len(lines) > 0 {
+	if lines := heldByLines(ws, state.TickIntervalMs, w); len(lines) > 0 {
 		fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[0])
 		if len(lines) > 1 && detail {
 			fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[1])

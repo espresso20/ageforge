@@ -491,7 +491,7 @@ func TestTheDetailReadsInFullInASmallWindow(t *testing.T) {
 			t.Errorf("a row of the detail is cut: %q", r)
 		}
 	}
-	for _, s := range []string{det.upWhy, buildingText(det.bs), det.bs.Flavor} {
+	for _, s := range []string{det.upWhy, buildingText(det.bs, d.engine.GetState().TickIntervalMs), det.bs.Flavor} {
 		for _, word := range strings.Fields(s) {
 			if !strings.Contains(text, word) {
 				t.Errorf("the word %q of %q is not on screen", word, s)
@@ -558,7 +558,7 @@ func TestTheDetailInAWideWindowIsFourRows(t *testing.T) {
 	if len(rows) != detailRows-1 {
 		t.Fatalf("the detail is %d rows from its title down, want %d: %q", len(rows), detailRows-1, rows)
 	}
-	want := []string{det.bs.Name + " x", buildingText(det.bs), "workers: up to 3 each", det.bs.Flavor}
+	want := []string{det.bs.Name + " x", buildingText(det.bs, d.engine.GetState().TickIntervalMs), "workers: up to 3 each", det.bs.Flavor}
 	for i, s := range want {
 		if !strings.Contains(rows[i], s) {
 			t.Errorf("row %d is %q, want it to hold %q", i, rows[i], s)

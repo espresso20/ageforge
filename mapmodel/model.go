@@ -328,7 +328,11 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 		}
 		if r, ok := st.Resources[d.Output]; ok && weight[d.Output] > 0 && bs.Count > 0 {
 			share := float64(d.BaseOutput*float64(bs.Count)) / weight[d.Output]
-			b.Rate = float64(r.Breakdown.BuildingRate*share) / game.BaseTickInterval.Seconds()
+			tick := game.BaseTickInterval.Seconds()
+			if st.TickIntervalMs > 0 {
+				tick = float64(st.TickIntervalMs) / 1000
+			}
+			b.Rate = float64(r.Breakdown.BuildingRate*share) / tick
 			b.RateName = r.Name
 		}
 		if since != nil {

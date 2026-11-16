@@ -180,7 +180,7 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 		// Specialty Windfall"), which the line has just said.
 		prefix := fmt.Sprintf("%s %s: ", icon, civ)
 		evName := truncate(strings.TrimPrefix(ev.Name, civ+": "), descCol-runeLen(prefix))
-		magPlain, magColored := effectsSummary(ev.Effects)
+		magPlain, magColored := effectsSummary(ev.Effects, state.TickIntervalMs)
 		remain := formatTicks(ev.TicksLeft, state)
 
 		fmt.Fprintf(sb, " [%s]%s[-] [cyan]%s[-]: %s%s%s%s%s[gray]%s[-]\n",
@@ -445,10 +445,10 @@ func strengthStars(n int) string {
 // magnitude string, returned twice: once plain (for width arithmetic) and once
 // with sign colouring (for display). Effects with no renderable magnitude are
 // skipped rather than printed as a bare name.
-func effectsSummary(effects []game.EventEffectInfo) (plain, colored string) {
+func effectsSummary(effects []game.EventEffectInfo, tickMs int) (plain, colored string) {
 	var plains, coloreds []string
 	for _, eff := range effects {
-		p, c := effectMagnitude(eff)
+		p, c := effectMagnitude(eff, tickMs)
 		if p == "" {
 			continue
 		}
@@ -459,16 +459,17 @@ func effectsSummary(effects []game.EventEffectInfo) (plain, colored string) {
 }
 
 // effectMagnitude renders one active-event effect as a short magnitude
-// ("+13% food production", "+8% all production", "+0.5 food/tick") in plain
+// ("+13% food production", "+8% all production", "+0.25 food/s") in plain
 // and colored form.
 //
 // The "<res>_rate" suffix case is the one that matters most here: it is the
 // shape every civilization specialty boon and setback arrives in, and without
 // it a boon renders as a name with no number attached.
-func effectMagnitude(eff game.EventEffectInfo) (plain, colored string) {
+func effectMagnitude(eff game.EventEffectInfo, tickMs int) (plain, colored string) {
 	switch {
 	case eff.Type == "production":
-		plain = rateNumber(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
+		num, unit := rateFigure(eff.Value, tickMs)
+		plain = num + " " + game.ResourceName(eff.Target) + unit
 	case eff.Type == "production_all":
 		plain = textfmt.SignedPercent(eff.Value) + vibe.Line("ui.overlay_factions.effectMagnitude.01", " all production")
 	case eff.Type == "tick_speed":

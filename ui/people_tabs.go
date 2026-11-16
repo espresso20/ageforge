@@ -77,7 +77,7 @@ func (c peopleBody) overview() {
 		held = "housing"
 	case game.HeldFood:
 		held = "food"
-		if t := heldByText(ws); strings.Contains(t, "(") {
+		if t := heldByText(ws, st.TickIntervalMs); strings.Contains(t, "(") {
 			held = vibe.Line("ui.people_tabs.overview.03", "food ") + t[strings.Index(t, "("):]
 		}
 	}
@@ -162,7 +162,7 @@ func (c peopleBody) foodLine(x, y, w int) {
 	if rs.Rate < 0 {
 		net = xBad
 	}
-	parts := []xseg{{txtFood.String(), xDim}, {textfmt.Rate(-ws.FoodDrain), xText}, {vibe.Line("ui.people_tabs.foodLine.02", " for everyone"), xDim}, {vibe.Line("ui.people_tabs.foodLine.03", "   net "), xDim}, {textfmt.Rate(rs.Rate), net}}
+	parts := []xseg{{txtFood.String(), xDim}, {rateText(-ws.FoodDrain, c.st.TickIntervalMs), xText}, {vibe.Line("ui.people_tabs.foodLine.02", " for everyone"), xDim}, {vibe.Line("ui.people_tabs.foodLine.03", "   net "), xDim}, {rateText(rs.Rate, c.st.TickIntervalMs), net}}
 	// Morale, which the old Workers panel showed, before the figure that goes
 	// first on a narrow panel.
 	mk := xText
@@ -488,7 +488,7 @@ func (c peopleBody) scholars() {
 	for i, row := range [][2]string{
 		{vibe.Line("ui.people_tabs.scholars.08", "Studying"), studying},
 		{vibe.Line("ui.people_tabs.scholars.09", "Progress"), progress},
-		{vibe.Line("ui.people_tabs.scholars.10", "Research"), textfmt.RateValue(s.PerTick) + vibe.Line("ui.people_tabs.scholars.11", " a tick")},
+		{vibe.Line("ui.people_tabs.scholars.10", "Research"), rateText(s.PerTick, st.TickIntervalMs)},
 		{sch.name, vibe.Sprintf("ui.people_tabs.scholars.12", "%s: %s research, %s teach", num(s.Total), num(s.Researching), num(s.Teaching))},
 		{vibe.Line("ui.people_tabs.scholars.13", "Teaching"), textfmt.SignedPercent(s.TeachingBonus) + vibe.Line("ui.people_tabs.scholars.14", " to what workers make")},
 		{txtNext.String(), next},

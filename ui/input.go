@@ -758,7 +758,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable = "[red]✗[-]"
 			}
 			lines = append(lines, vibe.Sprintf("ui.input.cmdBuild.02", "  %s [cyan]%s[-] (%d built) - Cost: %s %s",
-				affordable, state.Ruleset().Typed(rules.KindBuilding, key), b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
+				affordable, state.Ruleset().Typed(rules.KindBuilding, key), b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b, state.TickIntervalMs)))
 		}
 		return infoReply(strings.Join(lines, "\n"))
 	}
@@ -864,14 +864,14 @@ func cmdStatus(_ []string, engine *game.GameEngine) CommandResult {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  %-10s %s %s",
-			rs.Name, textfmt.Number(rs.Amount), FormatRateTick(rs.Rate)))
+			rs.Name, textfmt.Number(rs.Amount), rateTag(rs.Rate, state.TickIntervalMs)))
 	}
 	lines = append(lines, "")
 
 	// Population
 	v := state.Workers
-	lines = append(lines, vibe.Sprintf("ui.input.cmdStatus.03", "[gold]Population:[-] %d/%d (reserve: %d, food drain: %s/tick)",
-		v.TotalPop, v.MaxPop, v.TotalIdle, textfmt.Number(v.FoodDrain)))
+	lines = append(lines, vibe.Sprintf("ui.input.cmdStatus.03", "[gold]Population:[-] %d/%d (reserve: %d, food drain: %s)",
+		v.TotalPop, v.MaxPop, v.TotalIdle, rateAmount(v.FoodDrain, state.TickIntervalMs)))
 	for _, vt := range v.Types {
 		if !vt.Unlocked {
 			continue
@@ -1381,42 +1381,42 @@ func cmdRates(_ []string, engine *game.GameEngine) CommandResult {
 		if !rs.Unlocked || (rs.Rate == 0 && rs.Breakdown == (game.RateBreakdown{})) {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s", rs.Name, FormatRateTick(rs.Rate)))
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s", rs.Name, rateTag(rs.Rate, state.TickIntervalMs)))
 		b := rs.Breakdown
 		var parts []string
 		if b.BuildingRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.03", "Buildings: %s", textfmt.RateValue(b.BuildingRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.03", "Buildings: %s", rateText(b.BuildingRate, state.TickIntervalMs)))
 		}
 		if b.WorkerRate != 0 {
 			// What worker output bonuses add (game/engine.go, gather_rate).
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.04", "Worker bonus: %s", textfmt.RateValue(b.WorkerRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.04", "Worker bonus: %s", rateText(b.WorkerRate, state.TickIntervalMs)))
 		}
 		if b.ResearchRate != 0 {
 			// What the techs add: their bonus on what the resource's
 			// buildings make, counted after the pools, and the flat output
 			// of a tech that is its first source.
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.05", "Research: %s", textfmt.RateValue(b.ResearchRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.05", "Research: %s", rateText(b.ResearchRate, state.TickIntervalMs)))
 		}
 		if b.EventRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.06", "Events: %s", textfmt.RateValue(b.EventRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.06", "Events: %s", rateText(b.EventRate, state.TickIntervalMs)))
 		}
 		if b.TradeRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.07", "Trade: %s", textfmt.RateValue(b.TradeRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.07", "Trade: %s", rateText(b.TradeRate, state.TickIntervalMs)))
 		}
 		if b.BonusRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.08", "Bonuses: %s", textfmt.RateValue(b.BonusRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.08", "Bonuses: %s", rateText(b.BonusRate, state.TickIntervalMs)))
 		}
 		if b.LegacyRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.09", "Cosmic Legacy: %s", textfmt.RateValue(b.LegacyRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.09", "Cosmic Legacy: %s", rateText(b.LegacyRate, state.TickIntervalMs)))
 		}
 		if b.MasteryRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.10", "Era Mastery: %s", textfmt.RateValue(b.MasteryRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.10", "Era Mastery: %s", rateText(b.MasteryRate, state.TickIntervalMs)))
 		}
 		if b.PrestigeRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.11", "Prestige: %s", textfmt.RateValue(b.PrestigeRate)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.11", "Prestige: %s", rateText(b.PrestigeRate, state.TickIntervalMs)))
 		}
 		if b.FoodDrain != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.12", "Drain: %s", textfmt.RateValue(b.FoodDrain)))
+			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.12", "Drain: %s", rateText(b.FoodDrain, state.TickIntervalMs)))
 		}
 		if len(parts) > 0 {
 			lines = append(lines, fmt.Sprintf("    %s", strings.Join(parts, "  ")))

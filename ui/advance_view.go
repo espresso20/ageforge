@@ -30,6 +30,7 @@ type advanceUI struct {
 	sel       int    // the picked pillar
 	flash     string // a line for the foot, in place of the status
 	flashGood bool
+	tickMs    int // how long a tick lasts, for the income rows
 }
 
 // hitPillar is what a click on the panel can pick.
@@ -255,7 +256,7 @@ func advCharter(g *xgrid, v game.AdvanceView, u advanceUI, x, y, bw, bh int) {
 	if dy >= y+bh-1 || u.sel >= len(v.Pillars) {
 		return
 	}
-	advDetail(g, v.Pillars[u.sel], x+2, dy, iw, y+bh-1-dy)
+	advDetail(g, v.Pillars[u.sel], u.tickMs, x+2, dy, iw, y+bh-1-dy)
 }
 
 // pillarNote is the short line under a pillar's name: how many of its
@@ -339,7 +340,7 @@ func advPillar(g *xgrid, p game.GatePillar, picked bool, x, y, iw int, roomy boo
 // advDetail lists a pillar's requirements in rows rows from (x, y): a mark,
 // what it is, and where it stands. When they do not all fit, the ones still
 // to do come first and the rest are counted.
-func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
+func advDetail(g *xgrid, p game.GatePillar, tickMs, x, y, iw, rows int) {
 	if rows < 1 {
 		return
 	}
@@ -371,7 +372,7 @@ func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
 		}
 	}
 	for i, r := range show {
-		advRow(g, r, x, y+i, iw)
+		advRow(g, r, tickMs, x, y+i, iw)
 	}
 	y += len(show)
 	rows -= len(show)
@@ -391,7 +392,7 @@ func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
 
 // advRow draws one requirement: ✓ or ✗, its label, and its count or note at
 // the right edge. Green when met.
-func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
+func advRow(g *xgrid, r game.GateRow, tickMs, x, y, iw int) {
 	mark, mk, tk := "✗", xBad, xText
 	if r.Met {
 		mark, mk, tk = "✓", xGood, xGood
@@ -403,7 +404,7 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 	case game.GateRowShare:
 		val = fmt.Sprintf("%d%%", r.Have)
 	case game.GateRowAmount:
-		val = advAmount(r)
+		val = advAmount(r, tickMs)
 	default:
 		val = r.Note
 	}
@@ -414,8 +415,16 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 }
 
 // advAmount is a measured row's amounts at the right edge: "412 / 500", or
-// "210 / 300 a tick" for an income.
-func advAmount(r game.GateRow) string {
+// "2.1 / 3/s" for an income, which the game counts in ticks.
+func advAmount(r game.GateRow, tickMs int) string {
+	if r.Unit == "a tick" {
+		goal, unit := ratePer(r.Target, tickMs)
+		scale := 1.0
+		if r.Target != 0 {
+			scale = goal / r.Target
+		}
+		return textfmt.Number(r.Value*scale) + " / " + textfmt.Number(goal) + unit
+	}
 	val := textfmt.Number(r.Value) + " / " + textfmt.Number(r.Target)
 	if r.Unit != "" {
 		val += " " + r.Unit

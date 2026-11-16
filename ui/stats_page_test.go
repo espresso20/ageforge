@@ -255,7 +255,7 @@ func TestStatsRatesAndBars(t *testing.T) {
 		if v <= 0 {
 			continue
 		}
-		rv, unit := perSecond(st.Resources[k].Rate, st.TickIntervalMs)
+		rv, unit := ratePer(st.Resources[k].Rate, st.TickIntervalMs)
 		s := textfmtRate(rv, unit)
 		want[s]++
 	}

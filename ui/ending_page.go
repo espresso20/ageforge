@@ -150,7 +150,7 @@ func endViewFor(end game.RunEnding, pal *menuPalette) endView {
 	bare := func(text string) string {
 		return strings.TrimSpace(plainOf(parseSplashLine(text, pal, pal.bg)))
 	}
-	for _, l := range ageSplashLines(end.Age, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{}) {
+	for _, l := range ageSplashLines(end.Age, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{}, 0) {
 		if l.kind == skPrompt {
 			v.prompt = bare(l.text)
 		}

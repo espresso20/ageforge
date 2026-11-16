@@ -66,8 +66,8 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 
 	metrics := []metricDef{
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.02", "Population"), "[cyan]", "population", 1, vibe.Line("ui.overlay_history.renderHistoryOverlay.03", " workers"), false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", "food_rate", 1, "/tick", true},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", "know_rate", 1, "/tick", true},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", "food_rate", 1, "", true},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", "know_rate", 1, "", true},
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", "faith", 1, "", false},
 		{txtMorale.String(), "[yellow]", "morale", 100, "%", false},
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", "prod_all", 100, "%", false},
@@ -85,6 +85,19 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 		for i, v := range recent.Cols[m.key] {
 			vals[i] = float64(v) * m.scale
 		}
+		unit := m.unit
+		if m.rate {
+			// The recorder keeps a rate a tick; the graph reads it a second.
+			cur, u := ratePer(vals[n-1], state.TickIntervalMs)
+			k := tickSeconds(state.TickIntervalMs)
+			if vals[n-1] != 0 {
+				k = vals[n-1] / cur
+			}
+			unit = u
+			for i := range vals {
+				vals[i] /= k
+			}
+		}
 
 		minV, maxV := slices.Min(vals), slices.Max(vals)
 
@@ -99,13 +112,13 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 		}
 
 		curStr := textfmt.Number(cur)
-		if m.rate && cur >= 0 {
-			curStr = "+" + curStr
+		if m.rate {
+			curStr = signedRate(cur)
 		}
 
 		// header line
 		sb.WriteString(vibe.Sprintf("ui.overlay_history.renderHistoryOverlay.12", "%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
-			m.color, m.label, trend, curStr, m.unit,
+			m.color, m.label, trend, curStr, unit,
 			textfmt.Number(minV), textfmt.Number(maxV)))
 
 		// graph lines with y-axis labels

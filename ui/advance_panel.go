@@ -85,6 +85,7 @@ func (p *advancePanel) update(state game.GameState) {
 		p.ui.flash = ""
 	}
 	p.view = v
+	p.ui.tickMs = state.TickIntervalMs
 	p.ui.sel = clamp(p.ui.sel, 0, max(0, len(v.Pillars)-1))
 }
 

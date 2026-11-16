@@ -1,12 +1,9 @@
 package ui
 
 import (
-	"fmt"
-	"math"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // ProgressBar returns a text-based progress bar with colored segments.
@@ -25,44 +22,6 @@ func ProgressBar(current, max float64, width int) string {
 	filled := int(ratio * float64(width))
 	empty := width - filled
 	return BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
-}
-
-// FormatRateTick formats a rate with sign and suffix notation and the
-// "/tick" unit inside the color tag: "+3.25/tick". It uses higher precision
-// for small rates so values like 0.02 show as +0.02 rather than rounding to
-// +0.0. Use it wherever a rate stands on its own.
-func FormatRateTick(rate float64) string {
-	text, color := rateParts(rate, "/tick")
-	return "[" + color + "]" + text + "[-]"
-}
-
-// rateParts is a rate as it is printed (sign, suffix notation, unit) and
-// the color it is printed in, apart, for callers that lay the text out in a
-// column before they color it.
-func rateParts(rate float64, unit string) (text, color string) {
-	if rate == 0 {
-		return "+0.0" + unit, "gray"
-	}
-	abs := math.Abs(rate)
-	sign := "+"
-	color = "green"
-	if rate < 0 {
-		sign = ""
-		color = "red"
-	}
-	// For small rates (< 1), use enough decimal places to show a non-zero digit
-	if abs < 1 {
-		// Find how many decimals we need so it doesn't round to zero
-		prec := 2
-		for prec < 6 {
-			if math.Round(abs*math.Pow10(prec))/math.Pow10(prec) > 0 {
-				break
-			}
-			prec++
-		}
-		return fmt.Sprintf("%s%.*f%s", sign, prec, rate, unit), color
-	}
-	return sign + textfmt.Number(rate) + unit, color
 }
 
 // FormatCost formats a cost map as "50 food, 30 wood" (display names, sorted

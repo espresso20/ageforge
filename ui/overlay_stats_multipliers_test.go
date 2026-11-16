@@ -218,8 +218,8 @@ func TestPrestigeRows_ActiveEventEffects(t *testing.T) {
 		}
 		t.Errorf("no %q row of kind %v in %+v", text, k, rows)
 	}
-	find("-3 food/tick", xBad)
-	find("+1 gold/tick", xGood)
+	find("-3 food/s", xBad)
+	find("+1 gold/s", xGood)
 }
 
 // TestIsPanelMultiplier covers the rate/flat classification directly.

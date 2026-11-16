@@ -525,7 +525,7 @@ func (pg *statsPage) gathered(st game.GameState, y, w, view int) int {
 			b.frac = math.Log10(v) / float64(top)
 		}
 		b.readout = b.name + ": " + commas(v) + " " + txtGathered.String()
-		rv, unit := perSecond(st.Resources[k].Rate, st.TickIntervalMs)
+		rv, unit := ratePer(st.Resources[k].Rate, st.TickIntervalMs)
 		b.rate = textfmt.Number(math.Abs(rv)) + unit
 		rk := xDim
 		switch {
@@ -720,7 +720,7 @@ func prestigeRows(st game.GameState) []statsRow {
 	for _, evt := range st.ActiveEvents {
 		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.34", "%s (%s left)", evt.Name, formatTicks(evt.TicksLeft, st)), xGold})
 		for _, eff := range evt.Effects {
-			if plain, _ := effectMagnitude(eff); plain != "" {
+			if plain, _ := effectMagnitude(eff, st.TickIntervalMs); plain != "" {
 				k := xGood
 				if eff.Value < 0 {
 					k = xBad

@@ -114,7 +114,7 @@ func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRo
 // Stock has no ceiling, so there is no cap; its bar (set by resourceRowsFor)
 // shows magnitude, not fullness.
 func storeRow(rs game.ResourceState, tickMs int) resRow {
-	rate, unit := perSecond(rs.Rate, tickMs)
+	rate, unit := ratePer(rs.Rate, tickMs)
 	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rate, unit: unit}
 	switch {
 	case rs.Rate > 0:
@@ -130,7 +130,7 @@ func storeRow(rs game.ResourceState, tickMs int) resRow {
 // something at, the bar the way there, and what that step gives on the
 // detail line.
 func cultureRow(rs game.ResourceState, tickMs int) resRow {
-	rate, unit := perSecond(rs.Rate, tickMs)
+	rate, unit := ratePer(rs.Rate, tickMs)
 	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rate, unit: unit, progress: true}
 	for i, step := range cultureThresholds {
 		if rs.Amount < step {
@@ -181,7 +181,7 @@ func faithBandFor(held float64, o game.CatastropheOutlook) faithBand {
 // says it in full with the odds it gives.
 func faithRow(rs game.ResourceState, o game.CatastropheOutlook, tickMs int) resRow {
 	band := faithBandFor(rs.Amount, o)
-	rate, unit := perSecond(rs.Rate, tickMs)
+	rate, unit := ratePer(rs.Rate, tickMs)
 	return resRow{
 		name: rs.Name, amt: fmt.Sprintf("%.0f%%", o.FaithStrength*100), amtColor: "white",
 		status: []string{band.label, band.short, band.mark}, statusColor: band.color,
