@@ -66,7 +66,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		AddItem(btnRow, actionRows, 0, true)
 	framed(inner, vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.09", " ✦ Ancient Memory "), theme.RoleAccent)
 
-	modal := centeredModal(inner, 64, 17+actionRows-1)
+	modal := centeredModal(inner, 64, 14+actionRows)
 
 	// Tab/arrows cycle the buttons; a/d are shortcuts for Accept/Decline.
 	ring := newButtonRing(d.app, func(p Primitive) { d.memFocus = p })
