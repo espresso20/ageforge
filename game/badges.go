@@ -368,6 +368,7 @@ func (ge *GameEngine) noteBuilt(key string, n int) {
 		}
 	}
 	if def.Category == "wonder" {
+		ge.history.Mark(ge.tick, MarkWonder, key, 0)
 		ge.report(Event{Kind: config.BadgeEvWonderRaised, Subject: key, N: float64(n)})
 	}
 	ge.report(Event{Kind: config.BadgeEvBuildingBuilt, Subject: key, N: float64(n)})

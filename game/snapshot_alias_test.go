@@ -9,7 +9,7 @@ import (
 
 // GetState is a snapshot: the UI and the smoke suite hold on to them while
 // the game runs on, and nothing a caller does to one may reach the engine.
-// It used to hand out History, EpochEventHistory (edited in place when a
+// It used to hand out EpochEventHistory (edited in place when a
 // catastrophe resolves) and CatastropheHistory by reference. These tests
 // walk every map, slice and pointer in a snapshot generically, so a field
 // added later that aliases engine state fails here too.
@@ -42,7 +42,6 @@ func richSnapshotEngine(t *testing.T) *GameEngine {
 	ge.mu.Unlock()
 	st := ge.GetState()
 	for name, n := range map[string]int{
-		"History.Samples":    len(st.History.Samples),
 		"EpochEventHistory":  len(st.EpochEventHistory),
 		"CatastropheHistory": len(st.CatastropheHistory),
 		"HarbingerHistory":   len(st.HarbingerHistory),

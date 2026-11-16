@@ -1406,6 +1406,7 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 		rec.EntryTick, rec.Window, rec.StrikeTick, rec.AtAdvance = f.EntryTick, f.Window, f.StrikeTick, f.AtAdvance
 	}
 	ge.harbingerHistory = append(ge.harbingerHistory, rec)
+	ge.history.Mark(ge.tick, MarkHarbinger, epochKey, 0)
 	ge.report(Event{Kind: config.BadgeEvHarbingerResolved, Subject: outcome, Attrs: map[string]float64{
 		"appease": float64(h.AppeaseLevel), "brace": float64(h.BraceLevel),
 		"invited": boolFact(h.Invited), "false_prophet": boolFact(h.FalseProphet),
