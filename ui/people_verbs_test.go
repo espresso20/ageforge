@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
@@ -260,6 +261,103 @@ func TestPeopleOverviewLinksChangeTheTab(t *testing.T) {
 		}
 		if s.p.view.tab != tab {
 			t.Errorf("a click on the link to tab %d left the panel on tab %d", tab, s.p.view.tab)
+		}
+	}
+}
+
+func TestPeopleShareStepsByTenAndStopsAtTheEnds(t *testing.T) {
+	probe := stagePeople(t, tabWork, nil)
+	dom := game.ShareRows(probe.p.state)[0].Domain
+	for _, c := range []struct {
+		set               bool
+		pct               float64
+		minus, plus       string
+		minusOff, plusOff bool
+	}{
+		{true, 50, "roster " + dom + " 40", "roster " + dom + " 60", false, false},
+		{true, 0, "roster " + dom + " 0", "roster " + dom + " 10", true, false},
+		{true, 100, "roster " + dom + " 90", "roster " + dom + " 100", false, true},
+		{true, 5, "roster " + dom + " 0", "roster " + dom + " 15", false, false},
+	} {
+		s := stagePeople(t, tabWork, func(st *game.GameState) {
+			st.Workers.Shares = map[string]float64{dom: c.pct}
+		})
+		minus, plus := s.key(t, c.minus), s.key(t, c.plus)
+		if minus.off != c.minusOff || plus.off != c.plusOff {
+			t.Errorf("share %v: minus off %v, plus off %v", c.pct, minus.off, plus.off)
+		}
+		s.click(minus)
+		s.click(plus)
+		want := 0
+		for _, off := range []bool{c.minusOff, c.plusOff} {
+			if !off {
+				want++
+			}
+		}
+		if len(s.ran) != want {
+			t.Errorf("share %v ran %q, want %d lines", c.pct, s.ran, want)
+		}
+	}
+}
+
+func TestPeopleAutoChipRunsAutoAndIsAccentWhileAuto(t *testing.T) {
+	probe := stagePeople(t, tabWork, nil)
+	dom := game.ShareRows(probe.p.state)[0].Domain
+	s := stagePeople(t, tabWork, nil)
+	k := s.key(t, "roster "+dom+" auto")
+	if k.kind != keyAccent {
+		t.Errorf("auto chip kind %v while on auto", k.kind)
+	}
+	s.click(k)
+	if len(s.ran) != 1 || s.ran[0] != "roster "+dom+" auto" {
+		t.Errorf("ran %q", s.ran)
+	}
+	set := stagePeople(t, tabWork, func(st *game.GameState) { st.Workers.Shares = map[string]float64{dom: 40} })
+	if set.key(t, "roster "+dom+" auto").kind == keyAccent {
+		t.Errorf("auto chip is accent on a set share")
+	}
+}
+
+func TestPeopleWorkRowsStayPutWhateverIsPicked(t *testing.T) {
+	var base []xkey
+	var names [][]int
+	for sub := 0; sub < 3; sub++ {
+		s := stagePeople(t, tabWork, nil)
+		bs := peopleBody{st: s.p.state}.areaList(game.ShareRows(s.p.state)[s.p.view.row].Domain)
+		if len(bs) < 3 {
+			t.Skipf("only %d buildings in the first area", len(bs))
+		}
+		s.p.view.sub = sub
+		s.p.Layout(image.Rect(0, 0, 100, 30))
+		var ys []int
+		var steps []xkey
+		var dismiss *xkey
+		for _, k := range s.p.grid.keyset().keys {
+			if strings.HasPrefix(k.cmd, "assign ") || strings.HasPrefix(k.cmd, "unassign ") {
+				steps = append(steps, k)
+				ys = append(ys, k.r.Min.Y)
+			}
+			if strings.HasPrefix(k.cmd, "dismiss ") {
+				kk := k
+				dismiss = &kk
+			}
+		}
+		names = append(names, ys)
+		if sub == 0 {
+			base = steps
+		}
+		if dismiss == nil || dismiss.r.Min.Y != ys[2*sub] {
+			t.Errorf("pick %d: dismiss %v not on the picked row (%v)", sub, dismiss, ys)
+		}
+		if len(steps) != len(base) {
+			t.Fatalf("pick %d: %d steppers, want %d", sub, len(steps), len(base))
+		}
+	}
+	for i := 1; i < len(names); i++ {
+		for j := range names[0] {
+			if names[i][j] != names[0][j] {
+				t.Errorf("rows moved with the pick: %v vs %v", names[0], names[i])
+			}
 		}
 	}
 }

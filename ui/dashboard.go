@@ -1509,7 +1509,7 @@ func (d *Dashboard) pressLine(line string) {
 	d.runLine(line)
 }
 
-var txtCancel = vibe.E("ui.people_verbs.cancel.01", "Cancel")
+var txtCancel = vibe.E("ui.dashboard.askLine.01", "Cancel")
 
 // askLine puts a question over the dashboard with a plain button and a danger
 // button worded yes; the danger one runs the line as a click on a button does.

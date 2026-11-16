@@ -19,6 +19,7 @@ const (
 	verbRecruit  = "recruit"
 	verbDismiss  = "dismiss"
 	verbScholars = "scholars"
+	verbRoster   = "roster"
 
 	// goKeyBase is the first of the private runes the links to a tab press.
 	goKeyBase = 0xE100
@@ -42,6 +43,7 @@ var (
 	txtDismiss = vibe.E("ui.people_verbs.dismiss.01", "Dismiss")
 	txtRecruit = vibe.E("ui.people_verbs.recruit.01", "Recruit")
 	txtSplit   = vibe.E("ui.people_verbs.split.01", "Split")
+	txtAuto    = vibe.E("ui.people_verbs.auto.01", "Auto")
 )
 
 // dismissAsk is the question before a worker is dismissed from a building.
@@ -74,8 +76,9 @@ func pickedBuilding(st game.GameState, v peopleView) (peopleBuilding, bool) {
 	return bs[clamp(v.sub, 0, len(bs)-1)], true
 }
 
-// workList draws the picked area's buildings from y to end: each with its
-// stepper and its workers, the picked one marked and with Dismiss under it. It
+// workList draws the picked area's buildings from y to end, one row each
+// whichever is picked: the name, the stepper and the workers. The picked row
+// also holds Dismiss, left of the stepper, and its name gives up the room. It
 // returns the next y.
 func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 	g := c.g
@@ -86,26 +89,24 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 		cw = max(cw, runeLen(fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))))
 	}
 	for i, b := range bs {
-		need := 1
-		if i == sub {
-			need = 2
-		}
-		if y+need > end {
+		if y+1 > end {
 			g.putFit(rx, y, ri, vibe.Sprintf("ui.people_verbs.workList.01", "and %d more", len(bs)-i), xFaint)
 			return y + 1
 		}
 		count := fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))
 		minus, plus := buildingStep(b.key, b.BuildingState, c.st.Workers.TotalIdle)
 		sx := rx + ri - cw - 1 - stepperW
-		pickName(g, rx, y, sx-rx-1, fmt.Sprintf("%s x%d", b.Name, b.Count), i == sub)
-		g.hit(hitSub, i, rx, y, sx-rx, 1)
+		nameEnd := sx
+		if i == sub {
+			word := txtDismiss.String()
+			nameEnd = sx - 1 - (runeLen(word) + 2)
+			g.chip(nameEnd+1, y, word, keyAlert, command(verbDismiss, b.key), dismissAsk(b.Name), word, b.WorkersAssigned == 0)
+		}
+		pickName(g, rx, y, nameEnd-rx-1, fmt.Sprintf("%s x%d", b.Name, b.Count), i == sub)
+		g.hit(hitSub, i, rx, y, nameEnd-rx, 1)
 		g.stepper(sx, y, minus, plus)
 		g.rput(rx+ri-1, y, count, xGood)
 		y++
-		if i == sub {
-			g.chip(rx+2, y, txtDismiss.String(), keyAlert, command(verbDismiss, b.key), dismissAsk(b.Name), txtDismiss.String(), b.WorkersAssigned == 0)
-			y++
-		}
 	}
 	return y
 }
@@ -167,6 +168,38 @@ func (c peopleBody) splitRow(x, y, w int) {
 	plus.off = plus.off || s.Share >= 100
 	nx := g.stepper(x+10, y, minus, plus) + 1
 	g.putFit(nx, y, x+w-nx, vibe.Sprintf("ui.people_verbs.splitRow.01", "%d%% research", s.Share), xText)
+}
+
+// shareRow draws the picked area's Share line at (x, y): the stepper that
+// moves the share ten points at a time, what it is now, and the Auto chip,
+// accent while the area is on auto. From auto a step starts at the present
+// share rounded to ten.
+func (c peopleBody) shareRow(x, y, w int, r game.ShareRow) {
+	g := c.g
+	g.put(x, y, vibe.Line("ui.people_verbs.shareRow.01", "Share  "), xDim)
+	base := int(r.Percent + 0.5)
+	if !r.Set {
+		base = (base + 5) / 10 * 10
+	}
+	step := func(to int) stepSide {
+		return stepSide{command(verbRoster, r.Domain, fmt.Sprint(clamp(to, 0, 100))), false}
+	}
+	minus, plus := step(base-splitStep), step(base+splitStep)
+	minus.off = base <= 0
+	plus.off = base >= 100
+	nx := g.stepper(x+8, y, minus, plus) + 1
+	word := txtAuto.String()
+	ax := x + w - runeLen(word) - 2
+	kind := keySteel
+	if !r.Set {
+		kind = keyAccent
+	}
+	text := vibe.Line("ui.people_verbs.shareRow.02", "auto, by its buildings' slots")
+	if r.Set {
+		text = vibe.Line("ui.people_verbs.shareRow.03", "set to ") + game.SharePercent(float64(base))
+	}
+	g.putFit(nx, y, ax-nx-1, text, xText)
+	g.chip(ax, y, word, kind, command(verbRoster, r.Domain, "auto"), "", "", false)
 }
 
 // peopleLink draws text at (x, y) as a link to tab: the same words, in cells

@@ -286,13 +286,7 @@ func (c peopleBody) work() {
 		y++
 	}
 	y++
-	share := vibe.Line("ui.people_tabs.work.11", "auto, by its buildings' slots")
-	if r.Set {
-		share = vibe.Line("ui.people_tabs.work.12", "set to ") + game.SharePercent(float64(int(r.Percent+0.5)))
-	}
-	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.13", "Share  "), xDim}, xseg{share, xText})
-	y++
-	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.14", "Set it  "), xDim}, xseg{vibe.Line("ui.people_tabs.work.04", "roster ") + strings.ToLower(r.Name) + " <%|auto>", xText})
+	c.shareRow(rx, y, ri, r)
 	y += 2
 	lines := wrapText(recruitText(st), ri)
 	openAt := len(lines) // the first line of the note after it is gold
