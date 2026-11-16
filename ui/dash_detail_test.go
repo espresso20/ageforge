@@ -4,6 +4,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 	"image"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
