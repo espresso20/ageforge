@@ -112,6 +112,24 @@ func TestEngineRecordsAtSuccumb(t *testing.T) {
 	}
 }
 
+// A new game started over an unfinished run is a run end too: the abandoned run's
+// counts reach the records under its own save name.
+func TestEngineRecordsAtNewGame(t *testing.T) {
+	isolateAccountDir(t)
+	acct := testAccount(t)
+	ge := NewGameEngine()
+	ge.SetAccount(acct)
+	noErr(t, ge.StartNewNamedGame("first"))
+	ge.mu.Lock()
+	ge.Stats.TotalRecruited = 21
+	ge.mu.Unlock()
+	noErr(t, ge.StartNewNamedGame("second"))
+	s, _ := acct.LifetimeStats()
+	if got := s.BestRun[RunBestRecruited]; got.Value != 21 || got.Run != "first" {
+		t.Fatalf("best recruited after a new game = %+v, want 21 from the run \"first\"", got)
+	}
+}
+
 func TestMergeRecords(t *testing.T) {
 	isolateAccountDir(t)
 	mk := func(ticks int, run string, built int) AccountStats {

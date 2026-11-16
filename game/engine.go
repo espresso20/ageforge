@@ -4752,9 +4752,6 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	// Reset all game systems
-	if acct := ge.accountForRecordsLocked(); acct != nil {
-		ge.recordRunBestsLocked(acct)
-	}
 	ge.resetRunLocked(0.70)
 	// A prestige also forgets the harbinger outcomes and the epoch events
 	// (a Succumb keeps both).
@@ -4843,6 +4840,11 @@ func (ge *GameEngine) recordRunBestsLocked(acct *Account) {
 // bonus. Bus intentionally kept: dashboard subscriptions must survive across
 // resets. Caller holds the write lock.
 func (ge *GameEngine) resetRunLocked(morale float64) {
+	// Every run ends here (a prestige, a Succumb, a new game): its counts are offered
+	// to the account's records before they are cleared.
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		ge.recordRunBestsLocked(acct)
+	}
 	ge.tick = 0
 	ge.runFacts = RunFacts{}
 	ge.age = "primitive_age"
