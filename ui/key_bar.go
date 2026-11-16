@@ -166,8 +166,8 @@ func (g *xgrid) closeButton(w int) {
 	}
 	x := w - closeButtonCols
 	g.put(x, 0, " × ", xKeycap)
-	r := image.Rect(x, 0, x+3, 1)
-	g.keys = append(g.keys, xkey{key: kit.Key{Code: kit.KeyEsc}, r: r, cap: r, kind: keyClose})
+	// The whole slot takes the click; the key itself rests on its first cells.
+	g.keys = append(g.keys, xkey{key: kit.Key{Code: kit.KeyEsc}, r: image.Rect(x, 0, x+closeButtonCols, 1), cap: image.Rect(x, 0, x+3, 1), kind: keyClose})
 }
 
 // keyPresser is what a panel keeps to make the keys it draws pressable: what

@@ -336,6 +336,11 @@ func (k *keyPresser) paintKey(p *kit.Painter, g *xgrid, org image.Point, pal *ex
 	for x := key.cap.Min.X; x < key.cap.Max.X; x++ {
 		label = append(label, g.c[key.cap.Min.Y*g.w+x].r)
 	}
+	// Under the pointer the close key widens over its whole slot and names
+	// the key that does the same.
+	if name := []rune(" " + escClose()[0] + " "); key.kind == keyClose && (st == keyHover || st == keyPressed) && len(name) == key.r.Dx() {
+		cap, label = key.r.Add(org), name
+	}
 	ink := kit.Style{}.Foreground(theme.RGB(l.ink.R, l.ink.G, l.ink.B)).Bold(st != keyOff)
 	if pix {
 		cw, ch := pictureCell()
