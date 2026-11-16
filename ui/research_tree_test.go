@@ -514,7 +514,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 	if want := "It takes " + formatTicks(quick, st) + "."; !strings.Contains(cardOf(st, "siege_warfare"), want) {
 		t.Errorf("with +25%% research speed Siege Warfare's card should say %q:\n%s", want, cardOf(st, "siege_warfare"))
 	}
-	if out := statsProvider(st, 140); !strings.Contains(out, "Research speed +25%: techs take 75% of their base time.") {
+	if out := statsRowsText(researchRows(st)); !strings.Contains(out, "Research speed +25%: techs take 75% of their base time.") {
 		t.Errorf("the Stats panel does not say what research speed does")
 	}
 

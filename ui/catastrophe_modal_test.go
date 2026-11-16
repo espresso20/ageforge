@@ -112,7 +112,7 @@ func TestStatsCatastropheCounts(t *testing.T) {
 	state.CatastrophesSuccumbed = 3
 	// Legacy flags no longer drive the count (a repeat succumb in one epoch has one flag).
 	state.LegacyBonuses = map[string]bool{"iron_era": true}
-	out := statsProvider(state, 120)
+	out := statsRowsText(prestigeRows(state))
 	if !strings.Contains(out, "5  (endured 2, succumbed 3)") {
 		t.Errorf("catastrophe counts wrong:\n%s", out)
 	}

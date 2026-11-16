@@ -63,13 +63,13 @@ func TestPrestigeCueNoticeVisibility(t *testing.T) {
 
 func TestStatsPrestigeCueLineOnlyWhenReady(t *testing.T) {
 	state := prestigeCueTestState()
-	text := statsProvider(state, 0)
+	text := statsRowsText(prestigeRows(state))
 	want := "A new run would pass this age in about ~24s; finishing it takes about ~1m at today's income."
 	if !strings.Contains(text, want) {
 		t.Fatalf("stats missing cue line %q:\n%s", want, text)
 	}
 	state.PrestigeCue.Ready = false
-	if got := statsProvider(state, 0); strings.Contains(got, "A new run would pass this age") {
+	if got := statsRowsText(prestigeRows(state)); strings.Contains(got, "A new run would pass this age") {
 		t.Fatalf("stats showed cue while not ready:\n%s", got)
 	}
 }

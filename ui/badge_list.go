@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -218,44 +217,6 @@ func badgeListLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 	}
 	if len(fams) == 0 {
 		return append(lines, vibe.Line("ui.badge_list.badgeListLines.06", "   [gray]None to show yet.[-]"))
-	}
-	return append(lines, badgeCaseHint.String())
-}
-
-// badgeDigestLines is the account's badges in a few lines, for the Stats
-// panel: the count, the title, each family's count on a line, and the
-// badges earned last.
-func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
-	lines := badgeHeadLines(sum)
-	fams := badgeFamilies(views)
-	var latest []game.BadgeView
-	for _, f := range fams {
-		note := ""
-		if f.secrets > 0 {
-			note = vibe.Line("ui.badge_list.badgeDigestLines.01", " [gray]and ") + textfmt.Count(f.secrets, vibe.Line("ui.badge_list.badgeDigestLines.02", "secret"), vibe.Line("ui.badge_list.badgeDigestLines.03", "secrets")) + "[-]"
-		}
-		lines = append(lines, vibe.Sprintf("ui.badge_list.badgeDigestLines.04", "   [yellow]%-14s[-] %d of %d%s", f.title, f.got, f.shown, note))
-		for _, v := range f.earned {
-			if !v.At.IsZero() {
-				latest = append(latest, v)
-			}
-		}
-	}
-	if len(fams) == 0 {
-		return append(lines, vibe.Line("ui.badge_list.badgeDigestLines.05", "   [gray]None to show yet.[-]"))
-	}
-	sort.SliceStable(latest, func(a, b int) bool { return latest[a].At.After(latest[b].At) })
-	for i, v := range latest {
-		if i == 3 {
-			break
-		}
-		head := vibe.Line("ui.badge_list.badgeDigestLines.06", " [gold]Latest:[-]")
-		if i > 0 {
-			head = "        "
-		}
-		if l, ok := badgeLine(v); ok {
-			lines = append(lines, head+" "+l)
-		}
 	}
 	return append(lines, badgeCaseHint.String())
 }
