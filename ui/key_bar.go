@@ -31,6 +31,8 @@ type xkey struct {
 	// ask is what a click asks first, when the command is one that needs a
 	// yes; the command runs only on the answer. Empty to run at once.
 	ask string
+	// yes is the word on the danger button of that question.
+	yes string
 	// sign is the picture at the left of an action button.
 	sign signKind
 }
@@ -247,8 +249,8 @@ type keyPresser struct {
 	run func(cmd string)
 	// confirm asks the player a question and runs a command line if the
 	// answer is yes: a button that carries a question (xkey.ask) is clicked
-	// through it.
-	confirm func(question, cmd string)
+	// through it, and names the word on the danger button (xkey.yes).
+	confirm func(question, yes, cmd string)
 	// over is the cell the pointer is over, in the panel's own cells, while
 	// in says it is over the panel.
 	over image.Point
@@ -296,7 +298,7 @@ func (k *keyPresser) fire(b xkey) {
 		k.press(b.key)
 	case b.ask != "":
 		if k.confirm != nil {
-			k.confirm(b.ask, b.cmd)
+			k.confirm(b.ask, b.yes, b.cmd)
 		}
 	case k.run != nil:
 		k.run(b.cmd)

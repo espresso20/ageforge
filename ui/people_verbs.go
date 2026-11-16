@@ -38,7 +38,6 @@ func goOf(k kit.Key) (int, bool) {
 
 // The words the buttons say.
 var (
-	txtCancel  = vibe.E("ui.people_verbs.cancel.01", "Cancel")
 	txtDismiss = vibe.E("ui.people_verbs.dismiss.01", "Dismiss")
 	txtRecruit = vibe.E("ui.people_verbs.recruit.01", "Recruit")
 	txtSplit   = vibe.E("ui.people_verbs.split.01", "Split")
@@ -51,12 +50,12 @@ func dismissAsk(name string) string {
 
 // chip draws a one-row key of kind at (x, y) holding word, records that a click
 // runs cmd (after ask, when it has one) and returns the next x.
-func (g *xgrid) chip(x, y int, word string, kind keyKind, cmd, ask string, off bool) int {
+func (g *xgrid) chip(x, y int, word string, kind keyKind, cmd, ask, yes string, off bool) int {
 	word = " " + word + " "
 	r := image.Rect(x, y, x+runeLen(word), y+1)
 	g.put(x, y, word, xKeycap)
 	set := g.keyset()
-	set.keys = append(set.keys, xkey{r: r, cap: r, kind: kind, cmd: cmd, ask: ask, off: off})
+	set.keys = append(set.keys, xkey{r: r, cap: r, kind: kind, cmd: cmd, ask: ask, yes: yes, off: off})
 	return r.Max.X
 }
 
@@ -98,7 +97,7 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 		g.rput(rx+ri-1, y, count, xGood)
 		y++
 		if i == sub {
-			g.chip(rx+2, y, txtDismiss.String(), keyDanger, command(verbDismiss, b.key), dismissAsk(b.Name), b.WorkersAssigned == 0)
+			g.chip(rx+2, y, txtDismiss.String(), keyDanger, command(verbDismiss, b.key), dismissAsk(b.Name), txtDismiss.String(), b.WorkersAssigned == 0)
 			y++
 		}
 	}
@@ -131,7 +130,7 @@ func (c peopleBody) recruitBlock(x, y, w int) {
 		cx = g.actionButton(x, y, actionSpec{kind: keyPrimary, label: label, cmd: cmd, off: off}) + 1
 		cy = y + 1
 	} else {
-		cx = g.chip(x, y, label, keyAccent, cmd, "", off) + 1
+		cx = g.chip(x, y, label, keyAccent, cmd, "", "", off) + 1
 	}
 	for ch := buyChoice(0); ch < buyChoices; ch++ {
 		word := " " + buyWords[ch] + " "

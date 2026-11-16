@@ -1509,12 +1509,14 @@ func (d *Dashboard) pressLine(line string) {
 	d.runLine(line)
 }
 
-// askLine puts a question over the dashboard with a plain and a danger
-// button; the danger one runs the line as a click on a button does. Either
-// answer gives the keyboard back.
-func (d *Dashboard) askLine(question, line string) {
+var txtCancel = vibe.E("ui.people_verbs.cancel.01", "Cancel")
+
+// askLine puts a question over the dashboard with a plain button and a danger
+// button worded yes; the danger one runs the line as a click on a button does.
+// Either answer gives the keyboard back.
+func (d *Dashboard) askLine(question, yes, line string) {
 	const page = "ask_line"
-	buttons := []string{txtCancel.String(), txtDismiss.String()}
+	buttons := []string{txtCancel.String(), yes}
 	styleDangerModal(showButtonModal(d.app, d.pages, page, question, buttons, func(i int, _ string) {
 		if i == 1 {
 			d.pressLine(line)
