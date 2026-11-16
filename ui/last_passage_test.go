@@ -33,7 +33,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 		"✦ The Last Passage", "☄ The Last Passage", "Prestige waits on your answer",
 		"ENDURE: pass through, diminished", "You keep 50% of this run's prestige points",
 		"SUCCUMB: let it take the run", "no points from this run", "Cosmic Legacy: production +10%",
-		"[E] ENDURE", "[S] SUCCUMB", "prestige waits · type 'catastrophe' to reopen",
+		"decide later", "ENDURE", "SUCCUMB", "prestige waits · type 'catastrophe' to reopen",
 	)
 	if strings.Contains(screen, "buildings destroyed") {
 		t.Error("the Last Passage modal shows the epoch catastrophe's Endure terms")
@@ -99,7 +99,7 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 		t.Fatal("S acted on a closed Succumb")
 	}
 	keyTo(front, tk(kit.KeyTab, 0, 0))
-	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != kit.Escape("[E] ENDURE") {
+	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != "ENDURE" {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}
 }
@@ -120,7 +120,7 @@ func TestLastPassageModalLayoutFitsWidth(t *testing.T) {
 					}
 				}
 			}
-			if want := rows + 3 + 1 + 2; l.height != want {
+			if want := rows + 3 + actionRows + 2; l.height != want {
 				t.Errorf("brace %d legacy %v: height %d, want %d", brace, legacy, l.height, want)
 			}
 		}

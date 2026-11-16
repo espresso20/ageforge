@@ -42,7 +42,7 @@ func onFill(fill theme.Role) kit.Color {
 // cannot be undone: its buttons are action buttons, the last, which confirms,
 // the danger one and the others plain. The keyboard starts on the first, the
 // way out.
-func styleDangerModal(m *nativeDialog) *nativeDialog { return m.asActions() }
+func styleDangerModal(m *nativeDialog) *nativeDialog { return m.asActions(true) }
 
 // dangerTag is the inline tag for text inside a danger panel. Every color tag in
 // a Negative-filled panel must be this (optionally bold via dangerTagBold) — the

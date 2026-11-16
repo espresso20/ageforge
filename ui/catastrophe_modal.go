@@ -103,7 +103,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		hint:    hint,
 	}
 	// Rows: header, gap, endure, gap, succumb, gap, buttons, hint, + 2 border.
-	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + 1 + 1 + 2
+	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + actionRows + 1 + 2
 	return l
 }
 
@@ -151,7 +151,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 		succumb: strings.Join(succumbLines, "\n"),
 		hint:    vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.11", "[gray]Esc: decide later · prestige waits · type 'catastrophe' to reopen[-]"),
 	}
-	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + 1 + 1 + 2
+	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + actionRows + 1 + 2
 	return l
 }
 
@@ -202,35 +202,30 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchFactor, outcome, st)
 	}
 
-	btnEndure := newNativeButton(kit.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))).
-		SetSelectedFunc(func() {
+	endureKey, endureLabel := splitKeyed(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))
+	succumbKey, succumbLabel := splitKeyed(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB"))
+	hints, hintRest := keyHints(l.hint)
+	var laterKey, laterLabel string
+	if len(hints) > 0 {
+		laterKey, laterLabel = hints[0][0], hints[0][1]
+	}
+	choices := []choice{
+		{label: laterLabel, key: laterKey, kind: keyPlain, sign: signCross, press: d.closeCatastropheModal},
+		{label: endureLabel, key: endureKey, kind: keyDanger, press: func() {
 			if err := endure(); err != nil {
 				d.engine.AddLog("error", vibe.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
 			}
 			d.closeCatastropheModal()
-		})
-	styleFilledButton(btnEndure, theme.RoleNegative)
-
-	btnSuccumb := newNativeButton(kit.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
-	if succumbOpen {
-		btnSuccumb.SetSelectedFunc(func() {
+		}},
+		{label: succumbLabel, key: succumbKey, kind: keyDanger, off: !succumbOpen, press: func() {
 			if err := succumb(); err != nil {
 				d.engine.AddLog("error", vibe.Line("ui.catastrophe_modal.showCatastropheModal.04", "Succumb failed: ")+err.Error())
 			}
 			d.closeCatastropheModal()
-		})
-		styleFilledButton(btnSuccumb, theme.RoleNegative)
-	} else {
-		// Closed: drawn in the chip fill, never focused, never pressed.
-		styleFilledButton(btnSuccumb, theme.RoleChip)
+		}},
 	}
-
-	btnRow := newNativeFlex().SetDirection(flexColumn).
-		AddItem(surfaceBox(), 0, 1, false).
-		AddItem(btnEndure, 14, 0, true).
-		AddItem(surfaceBox(), 4, 0, false).
-		AddItem(btnSuccumb, 14, 0, false).
-		AddItem(surfaceBox(), 0, 1, false)
+	btnRow, btns := choiceRow(choices, 2, 1)
+	btnEndure, btnSuccumb := btns[1], btns[2]
 
 	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(surfaceText(l.header, kit.AlignCenter), lineCount(l.header), 0, false).
@@ -239,8 +234,8 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(surfaceText(l.succumb, kit.AlignLeft), lineCount(l.succumb), 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
-		AddItem(btnRow, 1, 0, true).
-		AddItem(surfaceText(l.hint, kit.AlignCenter), 1, 0, false)
+		AddItem(btnRow, actionRows, 0, true).
+		AddItem(surfaceText("[gray]"+hintRest+"[-]", kit.AlignCenter), 1, 0, false)
 	framed(inner, l.title, theme.RoleNegative).SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	modal := floatingModal(inner, catastropheModalWidth, l.height)

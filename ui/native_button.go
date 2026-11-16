@@ -17,6 +17,12 @@ type nativeButton struct {
 	// rows, action_button.go); plates are the pictures it has drawn.
 	act    keyKind
 	acting bool
+	// key is the key the button names on its cap ("" for none), and sign its
+	// picture.
+	key  string
+	sign signKind
+	// off draws the button unavailable.
+	off    bool
 	ground kit.Color
 	plates keyPresser
 }
@@ -63,11 +69,15 @@ func (b *nativeButton) Layout(r image.Rectangle) {
 	b.btn.Layout(r)
 }
 
-// asAction makes the button an action button of kind.
-func (b *nativeButton) asAction(kind keyKind, ground kit.Color) *nativeButton {
-	b.act, b.acting, b.ground = kind, true, ground
+// asAction makes the button an action button of kind, with the key it names
+// and its sign.
+func (b *nativeButton) asAction(kind keyKind, ground kit.Color, key string, sign signKind) *nativeButton {
+	b.act, b.acting, b.ground, b.key, b.sign = kind, true, ground, key, sign
 	return b
 }
+
+// actionWidth is the cells the button takes as an action button.
+func (b *nativeButton) actionWidth() int { return actionW(b.btn.Label, b.key, b.sign) }
 
 // Paint shows the button as it is now: with the focus the primitive holds.
 func (b *nativeButton) Paint(p *kit.Painter) {
@@ -86,13 +96,15 @@ func (b *nativeButton) paintAction(p *kit.Painter) {
 	hover, down := b.btn.State()
 	st := keyRest
 	switch {
+	case b.off:
+		st = keyOff
 	case down:
 		st = keyPressed
 	case hover || b.HasFocus():
 		st = keyHover
 	}
 	g := newXGrid(r.Dx(), r.Dy())
-	g.actionButton(0, 0, actionSpec{kind: b.act, label: b.btn.Label})
+	g.actionButton(0, 0, actionSpec{kind: b.act, label: b.btn.Label, key: b.key, sign: b.sign, off: b.off})
 	pal := newExpPalette()
 	pal.styles[xText] = pal.styles[xText].Background(b.ground)
 	b.plates.paintAction(p, g.keyset(), r.Min, pal, g.keys[0], st, pictureCell != nil)
