@@ -449,14 +449,3 @@ func (t *EconomyTab) wheelResources(rows int) bool {
 	t.resourceTV.changed()
 	return true
 }
-
-// domainToLabel maps domain strings to friendly display labels.
-var domainToLabel = map[string]vibe.Entry{
-	"food":        vibe.E("ui.tab_economy.domainToLabel.01", "Food"),
-	"faith":       vibe.E("ui.tab_economy.domainToLabel.02", "Faith"),
-	"military":    vibe.E("ui.tab_economy.domainToLabel.03", "Military"),
-	"trade":       vibe.E("ui.tab_economy.domainToLabel.04", "Trade"),
-	"engineering": vibe.E("ui.tab_economy.domainToLabel.05", "Engineering"),
-	"hacker":      vibe.E("ui.tab_economy.domainToLabel.06", "Hacker"),
-	"astronaut":   vibe.E("ui.tab_economy.domainToLabel.07", "Astronaut"),
-}

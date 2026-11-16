@@ -2050,13 +2050,6 @@ ui.tab_economy.layoutConstruction.07," %d cooking, the first drops in %s"
 ui.tab_economy.layoutConstruction.08," %d cooking, %s"
 ui.tab_economy.layoutConstruction.09," %d cooking"
 ui.tab_economy.layoutConstruction.10," +%d more cooking"
-ui.tab_economy.domainToLabel.01,Food gang
-ui.tab_economy.domainToLabel.02,Faith gang
-ui.tab_economy.domainToLabel.03,Military gang
-ui.tab_economy.domainToLabel.04,Trade gang
-ui.tab_economy.domainToLabel.05,Engineering gang
-ui.tab_economy.domainToLabel.06,Hacker gang
-ui.tab_economy.domainToLabel.07,Astronaut gang
 ui.theme_account.themeUnavailableMsg.01,That theme is gatekept. Type 'theme list' to see how to earn it.
 ui.theme_picker.swatchRoles.01,Base vibe
 ui.theme_picker.swatchRoles.02,Layer drip
