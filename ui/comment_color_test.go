@@ -40,7 +40,6 @@ var commentSites = map[string]int{
 	"ui/overlay_buildings.go":   1,
 	"ui/overlay_epoch.go":       1,
 	"ui/overlay_harbinger.go":   1,
-	"ui/tab_economy.go":         1,
 }
 
 func TestCommentColorIsDrawnOnlyOnFlavor(t *testing.T) {

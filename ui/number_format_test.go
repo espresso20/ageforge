@@ -60,10 +60,11 @@ func TestQuantumTownPrintsNoFourDigitFigure(t *testing.T) {
 	d, pages, _ := stagedDashboard(t, "quantum_age")
 	for _, sz := range layoutSizes {
 		w, h := sz[0], sz[1]
-		drawnDashboard(t, d, pages, w, h)
+		cells := drawnDashboard(t, d, pages, w, h)
+		bx, by, bw, bh := d.economyTab.buildBox.GetRect()
 		for name, text := range map[string]string{
 			"Resources": d.economyTab.resourceTV.GetText(true),
-			"Buildings": d.economyTab.buildingTV.GetText(true),
+			"Buildings": strings.Join(rectText(cells, w, bx, by, bw, bh), "\n"),
 			"Header":    d.headerTV.GetText(true),
 		} {
 			if m := bigFigure.FindString(text); m != "" {

@@ -2014,9 +2014,6 @@ ui.resources_box.faithBandFor.11,◈ Down bad
 ui.resources_box.faithBandFor.12,◈ Faith vibes
 ui.resources_box.faithBandFor.13,◈ Faith aura
 ui.resources_box.faithRow.01,[%s]%s[-] [gray](epoch lore: %s)[-]
-ui.resources_box.resLegends.01," [gray]Bag:[-] [green]going up[-] [gray]·[-] [red]▼[-] [gray]tanking [gray]· bar: stash · line: 8m vibes[-]"
-ui.resources_box.resLegends.02," [green]going up[-] [gray]·[-] [red]▼[-] [gray]tanking [gray]· bar: stash · line: 8m[-]"
-ui.resources_box.resLegends.03," [red]▼[-] [gray]tanking[-]"
 ui.resources_box.resMoreLine.01,"%d-%d of %d, the page"
 ui.resources_box.resMoreLine.02," more drip"
 ui.save_modal.showSaveChoiceModal.01,Lock in %q?
@@ -2036,17 +2033,6 @@ ui.scholars_text.scholarsShort.01,"Big brains: %d research, %d teach, %s"
 ui.spoilers.civRef.01,a civilization not in your group chat yet
 ui.spoilers.currentEraName.01,this era rn
 ui.spoilers.themeUnlockHint.01,Glow up to a later age
-ui.tab_economy.onboardingSteps.01,grind it by hand
-ui.tab_economy.onboardingSteps.03,snacks run out first
-ui.tab_economy.onboardingSteps.04,a crib; raises your housing
-ui.tab_economy.onboardingSteps.05,workers spawn on their own and staff the camps (staffed camps make 5x)
-ui.tab_economy.onboardingSteps.06,"then build the [gold]wonder[-] once its bag is full. You need it to advance, no skips."
-ui.tab_economy.renderOnboarding.01,"
- [gold]─── Getting Started, Tutorial Era ───[-]
-"
-ui.tab_economy.renderOnboarding.02," [white]Starter pack:[-]
-"
-ui.tab_economy.renderOnboarding.03,[white]Type[-] [cyan]help[-] [white]for every cheat code.[-]
 ui.tab_economy.cultureThresholdLabels.01,+5% big brain speed
 ui.tab_economy.cultureThresholdLabels.02,+10% big brain speed
 ui.tab_economy.cultureThresholdLabels.03,"+15% big brain speed, wonder tier unlocked"
@@ -2064,13 +2050,6 @@ ui.tab_economy.layoutConstruction.07," %d cooking, the first drops in %s"
 ui.tab_economy.layoutConstruction.08," %d cooking, %s"
 ui.tab_economy.layoutConstruction.09," %d cooking"
 ui.tab_economy.layoutConstruction.10," +%d more cooking"
-ui.tab_economy.buildingEntries.01,[yellow]MAXED[-]
-ui.tab_economy.buildingEntries.02,"[yellow]Maxed out on this building, no more slots.[-]"
-ui.tab_economy.buildingEntries.04,"   [green]Grinders[-] "
-ui.tab_economy.buildingEntries.05,[gold]↑ Glow-up ready: %s. Type: upgrade %s[-]
-ui.tab_economy.buildingEntries.06," [gray]Zero buildings unlocked, so early[-]"
-ui.tab_economy.layoutBuildings.01," ↑ %d more up top, bestie: PgUp (⌥↑)"
-ui.tab_economy.layoutBuildings.02," ↓ %d more down there, keep doomscrolling: PgDn (⌥↓)"
 ui.tab_economy.domainToLabel.01,Food gang
 ui.tab_economy.domainToLabel.02,Faith gang
 ui.tab_economy.domainToLabel.03,Military gang

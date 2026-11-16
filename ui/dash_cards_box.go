@@ -1,0 +1,891 @@
+package ui
+
+import (
+	"image"
+	"image/color"
+	"strings"
+
+	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
+)
+
+// dash_cards_box.go is the dashboard's Buildings box.
+//
+//	┌─ Buildings ─────────────────────────────────────────────────────┐
+//	│ Medieval Age                                  Buy  x1  x10  max │
+//	│ [ Gather Food ] [ Gather Wood ]                                 │  (the ages that gather)
+//	│▏▣ Cathedral x1               short of 44K gold · in 1m 44s      │
+//	│▏▣ +0.034 faith/s                                      [ Build ] │
+//	│▏▣ 444K gold · 1.33M stone                                       │
+//	│    · · ·  6 more later                                          │
+//	└─────────────────────────────────────────────────────────────────┘
+//
+// Each building is a card of three rows: its name and count, what a copy
+// makes in a second, its price. At the left a gauge says how much of the
+// price is in hand and a sign stands for the kind of building; at the right
+// is the Build button, the same column on every card. A price that does not
+// fit the row goes on a row more. A card that cannot be built has its button
+// off and says what stops it. The box lists the cards that can be built,
+// then the near ones, and counts the rest on a quiet row a click opens.
+
+const (
+	// The kinds of thing a click picks (xhit.id).
+	hitCard = 60 // n is the card's place in the layout
+	hitMore = 61 // the quiet row
+
+	// cardSignCols is the cells at the left of a card the gauge and the sign
+	// take; the card's words start after them.
+	cardSignCols = 6
+	// buildColWide is the Build button's cells with its Enter key, and
+	// buildColNarrow without it: the key goes where the box has no room.
+	buildColWide, buildColNarrow = 16, 9
+	buildKeyFrom                 = 64 // inner width from which the picked card's button shows its key
+	// gatherTallRows is the inner height from which the Gather buttons are
+	// three rows tall; a shorter box has them one row.
+	gatherTallRows = 22
+	// compactBelow is the inner width under which a card is stacked: its Build
+	// button is a one-row key in the name row and the sign gives way to the
+	// card's glyph, so the words have the width.
+	compactBelow = 40
+	// compactWords is where a stacked card's words start.
+	compactWords = 3
+	// compactKeyW is the cells of a stacked card's Build key.
+	compactKeyW = 7
+	// buyKeyBase is the first of the private runes the buy keys press.
+	buyKeyBase = 0xE000
+)
+
+// buyKey is the key a click on a buy choice presses: a private rune, which
+// the box takes before it reaches the app.
+func buyKey(c buyChoice) kit.Key { return kit.Key{Code: kit.KeyRune, Rune: rune(buyKeyBase + int(c))} }
+
+// buyOf is the buy choice a key stands for.
+func buyOf(k kit.Key) (buyChoice, bool) {
+	c := buyChoice(k.Rune - buyKeyBase)
+	return c, k.Code == kit.KeyRune && c >= 0 && c < buyChoices
+}
+
+// placedCard is a card as laid out: where it is, how many rows it takes and
+// the lines of its price.
+type placedCard struct {
+	card  buildCard
+	y     int // grid row of its first row
+	rows  int
+	price [][]costPart
+	build int // the index of its Build button in the box's keys
+	// compact says the card is stacked (compactBelow). keyRow is the row of
+	// its Build key, and reasonRow the row of its reason: the foot row, 0 when
+	// the card has none.
+	compact           bool
+	keyRow, reasonRow int
+}
+
+// buildBox is the Buildings box.
+type buildBox struct {
+	*nativeHost
+	kit.Base
+	title string
+	// plain reads the glyph tier: the plain one folds the box to ASCII.
+	plain func() bool
+	// k presses the box's keys: the buy choices, the Gather buttons and the
+	// Build buttons.
+	k keyPresser
+
+	st    game.GameState
+	has   bool
+	buy   buyChoice
+	cards []buildCard
+	// order is the keys of the cards in the order they are listed and shown
+	// how many are before the quiet row. It is kept as it is while the pointer
+	// is over the box, so a card never moves from under it, and sorted again
+	// when the pointer is away or a building was built (resort, built).
+	order  []string
+	shown  int
+	built  int
+	resort bool
+	// picked is the card the keyboard's Enter builds, expanded says the quiet
+	// row has been opened and first is the first listed thing on show.
+	picked   string
+	expanded bool
+	first    int
+
+	// the layout
+	grid   *xgrid
+	w, h   int
+	sized  bool
+	dirty  bool
+	placed []placedCard
+	more   int // the grid row of the quiet row, -1 for none
+	// strip and cardKeys are the keys of the strip and of the cards, for
+	// painting each in its own way.
+	strip, cardKeys *keySet
+	// shownItems is how many listed things the box showed and items how many
+	// there are, for the wheel.
+	shownItems, items, hidden int
+
+	// the pointer: the cell it is over in the box's cells, whether it is over
+	// the box, and the card under it (-1 for none).
+	over  image.Point
+	in    bool
+	hover int
+
+	imgs     map[cardPic]*image.RGBA
+	imgBytes int
+	imgCell  [2]int
+}
+
+func newBuildBox(plain func() bool, app *appLoop) *buildBox {
+	b := &buildBox{plain: plain, more: -1, hover: -1}
+	b.nativeHost = newNativeHost()
+	b.k.wire(app)
+	press := b.k.press
+	b.k.press = func(k kit.Key) {
+		if c, ok := buyOf(k); ok {
+			b.setBuy(c)
+			return
+		}
+		press(k)
+	}
+	return b
+}
+
+// update takes a new snapshot of the game: the cards are made again from it.
+func (b *buildBox) update(st game.GameState) {
+	b.st, b.has = st, true
+	b.recompute()
+}
+
+// setBuy changes how many copies a Build button builds and prices.
+func (b *buildBox) setBuy(c buyChoice) {
+	if c == b.buy {
+		return
+	}
+	b.buy = c
+	b.recompute()
+}
+
+// recompute makes the cards and puts them in order, unless the order is held.
+func (b *buildBox) recompute() {
+	b.cards = buildCards(b.st, b.buy)
+	built := len(b.st.BuildQueue)
+	for _, bs := range b.st.Buildings {
+		built += bs.Count
+	}
+	have := make(map[string]bool, len(b.cards))
+	for _, c := range b.cards {
+		have[c.key] = true
+	}
+	if b.order == nil || b.resort || !b.in || built != b.built {
+		b.order, b.shown = orderCards(b.cards)
+		b.resort = false
+	} else {
+		// The order stays: what is gone leaves it and what is new comes last.
+		var kept []string
+		shown := 0
+		seen := map[string]bool{}
+		for i, k := range b.order {
+			if have[k] {
+				kept = append(kept, k)
+				seen[k] = true
+				if i < b.shown {
+					shown++
+				}
+			}
+		}
+		for _, c := range b.cards {
+			if !seen[c.key] {
+				kept = append(kept, c.key)
+			}
+		}
+		b.order, b.shown = kept, shown
+	}
+	b.built = built
+	if b.picked != "" && !have[b.picked] {
+		b.picked = ""
+	}
+	b.dirty = true
+}
+
+// card is the card of key.
+func (b *buildBox) card(key string) (buildCard, bool) {
+	for _, c := range b.cards {
+		if c.key == key {
+			return c, true
+		}
+	}
+	return buildCard{}, false
+}
+
+// pickedLine is the command the picked card's Build button carries, "" when
+// no card is picked or it cannot be built.
+func (b *buildBox) pickedLine() string {
+	if c, ok := b.card(b.picked); ok && c.canBuild {
+		return c.cmd
+	}
+	return ""
+}
+
+// innerW and innerH are the cells inside the box's frame.
+func (b *buildBox) inner() (w, h int) { return b.w - 2, b.h - 2 }
+
+// ===== Layout =====
+
+// Layout takes the box's rectangle and lays the cards out for it.
+func (b *buildBox) Layout(r image.Rectangle) {
+	b.Place(r)
+	w, h := r.Dx(), r.Dy()
+	if w <= 0 || h <= 0 {
+		b.grid = nil
+		return
+	}
+	b.sized = true
+	if b.grid == nil || w != b.w || h != b.h || b.dirty {
+		b.draw(w, h)
+	}
+}
+
+// CanFocus: the box takes no keys.
+func (b *buildBox) CanFocus() bool { return false }
+
+// buildCol is the cells the Build column takes in an inner width.
+func buildCol(inner int) int {
+	if inner >= buildKeyFrom {
+		return buildColWide
+	}
+	return buildColNarrow
+}
+
+// priceLines breaks a price into lines at most room cells wide, between its
+// resources. A resource wider than the room ("49.8T dark matter crystals" in
+// a narrow box) goes on over several lines at its spaces, so none of it is cut.
+func priceLines(parts []costPart, room int) [][]costPart {
+	var lines [][]costPart
+	cur, used := []costPart(nil), 0
+	flush := func() {
+		if len(cur) > 0 {
+			lines = append(lines, cur)
+		}
+		cur, used = nil, 0
+	}
+	for _, p := range parts {
+		n := runeLen(p.text)
+		if n > room {
+			flush()
+			for _, chunk := range wrapWords(p.text, max(room, 1)) {
+				lines = append(lines, []costPart{{chunk, p.ok}})
+			}
+			continue
+		}
+		if len(cur) > 0 && used+3+n > room {
+			flush()
+		}
+		if len(cur) > 0 {
+			used += 3
+		}
+		cur = append(cur, p)
+		used += n
+	}
+	flush()
+	if len(lines) == 0 {
+		lines = [][]costPart{nil} // a building that costs nothing keeps its row
+	}
+	return lines
+}
+
+// draw lays the box out for w by h cells: the frame, the strip, and the cards
+// from the first one on show.
+func (b *buildBox) draw(w, h int) {
+	b.w, b.h, b.dirty = w, h, false
+	g := newXGrid(w, h)
+	b.grid, b.placed, b.more = g, nil, -1
+	g.box(0, 0, w, h, xBorder, strings.TrimSpace(b.title), xTitle, false)
+	iw, ih := w-2, h-2
+	b.strip, b.cardKeys, b.shownItems, b.items = nil, nil, 0, 0
+	if !b.has || iw < 8 || ih < 1 {
+		return
+	}
+	set := g.keyset()
+	// The strip: the age and the buy choices; in the ages that gather, the
+	// Gather buttons under them.
+	stripFrom := len(set.keys)
+	words := make([]string, buyChoices)
+	buyW := 0
+	for c := range words {
+		words[c] = " " + buyWords[c] + " "
+		buyW += runeLen(words[c]) + 1
+	}
+	buyW--
+	label := txtBuy.String() + " "
+	if iw < 36 {
+		label = ""
+	}
+	bx := w - 2 - buyW - runeLen(label)
+	g.putFit(2, 1, max(bx-3, 1), b.st.AgeName, xTitle)
+	x := g.put(bx, 1, label, xDim)
+	for c := buyChoice(0); c < buyChoices; c++ {
+		r := image.Rect(x, 1, x+runeLen(words[c]), 2)
+		g.put(x, 1, words[c], xKeycap)
+		kind := keySteel
+		if c == b.buy {
+			kind = keyAccent
+		}
+		set.keys = append(set.keys, xkey{key: buyKey(c), r: r, cap: r, kind: kind})
+		x = r.Max.X + 1
+	}
+	top := 3
+	if b.st.CanGatherByHand() {
+		tall := ih >= gatherTallRows
+		gx := 2
+		for _, res := range []string{"food", "wood", "stone"} {
+			rs, ok := b.st.Resources[res]
+			if !ok || !rs.Unlocked {
+				continue
+			}
+			name := vibe.Sprintf("ui.dash_cards_box.draw.01", "Gather %s", rs.Name)
+			cmd := command("gather", res)
+			if tall {
+				gx = g.actionButton(gx, top, actionSpec{kind: keyPlain, label: name, cmd: cmd}) + 1
+				continue
+			}
+			word := " " + name + " "
+			r := image.Rect(gx, top, gx+runeLen(word), top+1)
+			g.put(gx, top, word, xKeycap)
+			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keySteel, cmd: cmd})
+			gx = r.Max.X + 1
+		}
+		if gx > 2 {
+			top += 1 + actionRows
+			if !tall {
+				top = 5
+			}
+		}
+	}
+	b.strip = &keySet{keys: append([]xkey(nil), set.keys[stripFrom:]...), plain: g.plain, glyph: set.glyph}
+
+	// The cards: the ones before the quiet row, and once it has been opened
+	// the rest. The quiet row goes under the last card on show and counts the
+	// cards that are not on show below it.
+	items := b.order[:b.shown]
+	laterHidden := len(b.order) - b.shown
+	if b.expanded {
+		items, laterHidden = b.order, 0
+	}
+	b.items = len(items)
+	b.first = min(max(b.first, 0), max(len(items)-1, 0))
+	bw := buildCol(iw)
+	compact := iw < compactBelow
+	tx := 1 + cardSignCols
+	room := (1 + iw) - bw - 2 - tx // the words' cells
+	if compact {
+		tx = 1 + compactWords
+		room = iw - compactWords - 1
+	}
+	cardFrom := len(set.keys)
+	y := top
+	for i := b.first; i < len(items); i++ {
+		c, ok := b.card(items[i])
+		if !ok {
+			continue
+		}
+		lines := priceLines(c.price, room)
+		rows := 2 + len(lines)
+		// A reason goes at the right of the name row when all of it fits
+		// there, else on a row of its own under the price. A stacked card's
+		// Build key sits at the right of the last price line when that leaves
+		// room for it, else on a row of its own.
+		keyRow, reasonRow := 0, 0
+		if c.reason != "" {
+			full := c.reason
+			if c.wait != "" {
+				full += " · " + c.wait
+			}
+			if compact || runeLen(c.name+" x"+textfmt.Int(c.owned))+2+runeLen(full) > room {
+				reasonRow, rows = rows, rows+1
+			}
+		}
+		if compact {
+			last := 0
+			for j, part := range lines[len(lines)-1] {
+				last += runeLen(part.text) + 3*min(j, 1)
+			}
+			if last+1+compactKeyW <= room {
+				keyRow = 2 + len(lines) - 1
+			} else {
+				keyRow, rows = rows, rows+1
+			}
+		}
+		need := rows
+		if len(items)-(i+1)+laterHidden > 0 {
+			need++ // the quiet row stays under it
+		}
+		if y+need > h-1 {
+			// A box too short for even the first card shows what fits of its
+			// price; otherwise the card waits for the next page.
+			if b.shownItems > 0 || h-1-y < 3 {
+				break
+			}
+			cut := rows - (h - 1 - y)
+			lines = lines[:max(len(lines)-cut, 1)]
+			rows, keyRow, reasonRow = 2+len(lines), 0, 0
+			if compact {
+				keyRow = rows - 1
+			}
+		}
+		pc := placedCard{card: c, y: y, rows: rows, price: lines, compact: compact, keyRow: keyRow, reasonRow: reasonRow}
+		if compact {
+			kx := 1 + iw - compactKeyW - 1
+			word := " " + txtBuild.String() + " "
+			r := image.Rect(kx, y+keyRow, kx+compactKeyW, y+keyRow+1)
+			g.put(kx, y+keyRow, fitText(word, compactKeyW), xKeycap)
+			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild})
+		} else {
+			by := y + (rows-actionRows)/2
+			bxx := 1 + iw - bw - 1
+			spec := actionSpec{kind: keyPrimary, label: txtBuild.String(), cmd: c.cmd, off: !c.canBuild}
+			if c.key == b.picked && c.canBuild && bw == buildColWide {
+				spec.key = "Enter"
+			}
+			g.fill(bxx, by, bw, actionRows)
+			at := bxx + (bw-actionW(spec.label, spec.key, signNone))/2
+			set.action(at, by, spec, func(x, y int, text string) { g.put(x, y, text, xText) })
+			last := &set.keys[len(set.keys)-1]
+			last.r = image.Rect(bxx, by, bxx+bw, by+actionRows)
+		}
+		pc.build = len(set.keys) - 1 - cardFrom
+		g.hit(hitCard, len(b.placed), 1, y, iw, rows)
+		b.placed = append(b.placed, pc)
+		y += rows
+		b.shownItems++
+	}
+	b.hidden = len(items) - (b.first + b.shownItems) + laterHidden
+	if b.hidden > 0 && y < h-1 {
+		b.more = y
+		g.put(tx, y, "· · ·", xDim)
+		g.put(tx+6, y, vibe.Sprintf("ui.dash_cards_box.draw.02", "%s more later", textfmt.Int(b.hidden)), xDim)
+		g.hit(hitMore, 0, 1, y, iw, 1)
+	}
+	b.cardKeys = &keySet{keys: append([]xkey(nil), set.keys[cardFrom:]...), plain: g.plain, glyph: set.glyph}
+	if b.plain != nil && b.plain() {
+		g.fold()
+		b.strip.plain, b.cardKeys.plain = true, true
+	}
+}
+
+// ===== Mouse =====
+
+// cardAt is the card under the cell pt of the box, -1 for none.
+func (b *buildBox) cardAt(pt image.Point) int {
+	if b.grid == nil {
+		return -1
+	}
+	if n, ok := b.grid.hitAt(hitCard, pt); ok {
+		return n
+	}
+	return -1
+}
+
+// Mouse: a click on a Build button or a buy choice or a Gather button
+// presses it; a click on a card picks it and one on the quiet row opens or
+// closes it; the wheel turns the list. A move that changes what is lit asks
+// for a repaint.
+func (b *buildBox) Mouse(m kit.Mouse) bool {
+	org := b.Bounds().Min
+	was := b.hover
+	if b.in = m.Kind != kit.MouseLeave; b.in {
+		b.over = m.Pt().Sub(org)
+	}
+	b.hover = -1
+	if b.in {
+		b.hover = b.cardAt(b.over)
+	}
+	if b.grid != nil && b.k.mouse(b.grid, org, m) {
+		return true
+	}
+	switch {
+	case m.Kind == kit.MouseWheel:
+		// One listed thing a turn, however far the wheel went.
+		if m.Wheel < 0 {
+			return b.scroll(-1)
+		}
+		return b.scroll(1)
+	case m.Kind == kit.MousePress && m.Button == kit.ButtonLeft && b.in && b.grid != nil:
+		if _, ok := b.grid.hitAt(hitMore, b.over); ok {
+			b.moreClicked()
+			return true
+		}
+		if n := b.cardAt(b.over); n >= 0 && n < len(b.placed) {
+			b.picked = b.placed[n].card.key
+			b.dirty = true
+			return true
+		}
+	}
+	return was != b.hover
+}
+
+// moreClicked is a click on the quiet row: it opens the rest of the cards;
+// once they are open it turns a page toward the ones still below.
+func (b *buildBox) moreClicked() {
+	b.dirty = true
+	if !b.expanded {
+		b.expanded = true
+		return
+	}
+	b.page(1)
+}
+
+// scroll turns the list by n listed things, down for a positive n, and
+// opens the quiet row when it is turned past it. It reports whether
+// anything changed.
+func (b *buildBox) scroll(n int) bool {
+	if n == 0 {
+		return false
+	}
+	if n < 0 {
+		if b.first == 0 {
+			return false
+		}
+		b.first = max(b.first+n, 0)
+		b.dirty = true
+		return true
+	}
+	if b.first+b.shownItems >= b.items {
+		if b.expanded || len(b.order) == b.shown {
+			return false
+		}
+		b.expanded = true
+		b.dirty = true
+		return true
+	}
+	b.first = min(b.first+n, b.items-1)
+	b.dirty = true
+	return true
+}
+
+// page turns the list a page, down for a positive dir.
+func (b *buildBox) page(dir int) {
+	b.scroll(dir * max(b.shownItems, 1))
+}
+
+// PointerAt: the hand over a card, the quiet row and any key a click presses.
+func (b *buildBox) PointerAt(at image.Point) kit.Pointer {
+	org := b.Bounds().Min
+	if b.grid == nil {
+		return kit.PointerArrow
+	}
+	if b.k.pointer(b.grid, org, at) == kit.PointerHand {
+		return kit.PointerHand
+	}
+	pt := at.Sub(org)
+	_, more := b.grid.hitAt(hitMore, pt)
+	return handIf(more || b.cardAt(pt) >= 0)
+}
+
+// ===== Paint =====
+
+// cardLook is the colours a card is drawn in.
+type cardLook struct{ fill, light, dark, text, dim color.RGBA }
+
+// cardLookOf is the look of a card in a state.
+func cardLookOf(pal *expPalette, picked, hover, afford bool) cardLook {
+	g, tx := pal.tone(xText, true), pal.tone(xText, false)
+	dim := pal.tone(xDim, false)
+	acc := pal.tone(xAccent, false)
+	switch {
+	case picked:
+		return cardLook{toward(g, acc, .2), toward(acc, keyWhite, .25), toward(acc, keyBlack, .45), tx, dim}
+	case hover:
+		return cardLook{toward(g, acc, .12), toward(acc, keyWhite, .2), toward(acc, keyBlack, .4), tx, dim}
+	case !afford:
+		return cardLook{toward(g, tx, .03), toward(g, tx, .14), toward(g, keyBlack, .25), dim, toward(dim, g, .3)}
+	}
+	return cardLook{toward(g, tx, .07), toward(g, tx, .3), toward(g, keyBlack, .4), tx, dim}
+}
+
+// cardPic is what a card's picture was drawn for.
+type cardPic struct {
+	w, rows, cw, ch      int
+	kind                 string
+	look                 cardLook
+	ground, accent, good color.RGBA
+	gauge                int // the filled part of the gauge, in units
+	picked, hover, can   bool
+	light                bool
+	compact              bool // stacked: no sign
+}
+
+const cardPicMax = 8 << 20
+
+// picture is the picture of a card: its slab, gauge and edge, in the state it
+// is in. A picture that has been painted is never drawn on again, so each
+// state keeps its own.
+func (b *buildBox) picture(k cardPic) *image.RGBA {
+	if b.imgCell != [2]int{k.cw, k.ch} || b.imgBytes > cardPicMax {
+		b.imgs, b.imgCell, b.imgBytes = nil, [2]int{k.cw, k.ch}, 0
+	}
+	img, ok := b.imgs[k]
+	if !ok {
+		if b.imgs == nil {
+			b.imgs = map[cardPic]*image.RGBA{}
+		}
+		img = drawCard(k)
+		b.imgs[k] = img
+		b.imgBytes += len(img.Pix)
+	}
+	return img
+}
+
+// drawCard draws a card's picture in units of a pixel of a 10 by 21 cell: a
+// raised slab lit from the upper left, an accent ring when picked and a bar at
+// the left when the pointer is on it, the gauge, and the sign.
+func drawCard(k cardPic) *image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, k.w*k.cw, k.rows*k.ch))
+	u := max(1, k.ch/21)
+	a := art{img, u}
+	W, H := (img.Rect.Dx()+u-1)/u, (img.Rect.Dy()+u-1)/u
+	body := image.Rect(1, 0, W-1, H)
+	a.fill(body, 1, k.look.fill)
+	a.hline(body.Min.X+1, body.Max.X-1, body.Min.Y, k.look.light)
+	a.hline(body.Min.X+1, body.Max.X-1, body.Max.Y-1, k.look.dark)
+	for y := body.Min.Y + 1; y < body.Max.Y-1; y++ {
+		a.px(body.Min.X, y, k.look.light)
+		a.px(body.Max.X-1, y, k.look.dark)
+	}
+	if k.picked {
+		for i := 0; i < 2; i++ {
+			q := body.Inset(i)
+			a.hline(q.Min.X+1, q.Max.X-1, q.Min.Y, k.accent)
+			a.hline(q.Min.X+1, q.Max.X-1, q.Max.Y-1, k.accent)
+			for y := q.Min.Y; y < q.Max.Y; y++ {
+				a.px(q.Min.X, y, k.accent)
+				a.px(q.Max.X-1, y, k.accent)
+			}
+		}
+	}
+	if k.hover {
+		a.fill(image.Rect(2, 3, 5, H-3), 0, k.accent)
+	}
+	track := image.Rect(5, 8, 7, H-8)
+	a.fill(track, 0, toward(k.ground, keyBlack, .3))
+	fill := k.accent
+	if k.can {
+		fill = k.good
+	}
+	a.fill(image.Rect(5, track.Max.Y-k.gauge, 7, track.Max.Y), 0, fill)
+	dull := 0.0
+	if !k.can {
+		dull = .5
+	}
+	tint, ok := signTints[k.kind]
+	if !ok {
+		tint = color.RGBA{0xa0, 0xa6, 0xb0, 255}
+	}
+	if k.light {
+		tint = toward(tint, keyBlack, .28)
+	}
+	if !k.compact {
+		drawSign(a, 11, (H-36)/2, k.kind, tint, dull, k.ground)
+	}
+	return img
+}
+
+// inkOf is a colour as a bold or plain ink.
+func inkOf(c color.RGBA, bold bool) kit.Style {
+	return kit.Style{}.Foreground(theme.RGB(c.R, c.G, c.B)).Bold(bold)
+}
+
+// Paint puts the box on the painter in the theme's colours.
+func (b *buildBox) Paint(p *kit.Painter) {
+	r := b.Bounds()
+	if r.Empty() || b.grid == nil {
+		return
+	}
+	p = p.Clip(r)
+	pal := newExpPalette()
+	paintExpeditionKit(p, b.grid, r.Min, pal)
+	plain := b.plain != nil && b.plain()
+	cw, ch := 0, 0
+	if pictureCell != nil && !plain {
+		cw, ch = pictureCell()
+	}
+	hot, isHot := b.k.lit(b.cardKeys)
+	for i := range b.placed {
+		b.paintCard(p, pal, r.Min, i, cw, ch, plain, hot, isHot)
+	}
+	b.k.paint(p, b.strip, r.Min, pal)
+}
+
+// paintCard paints card i: its ground, its picture, its words and its Build
+// button.
+func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i, cw, ch int, plain bool, hot xkey, isHot bool) {
+	pc := b.placed[i]
+	c := pc.card
+	iw, _ := b.inner()
+	rect := image.Rect(org.X+1, org.Y+pc.y, org.X+1+iw, org.Y+pc.y+pc.rows)
+	picked := c.key == b.picked
+	look := cardLookOf(pal, picked, b.hover == i, c.canBuild)
+	ground := pal.tone(xText, true)
+	fill := theme.RGB(look.fill.R, look.fill.G, look.fill.B)
+	pix := cw > 0 && ch > 0
+	p.Fill(rect, fill)
+	if pix {
+		units := max(1, ch/21)
+		track := (pc.rows*ch+units-1)/units - 16
+		p.Picture(rect, b.picture(cardPic{w: iw, rows: pc.rows, cw: cw, ch: ch, kind: c.kind, look: look, ground: ground,
+			accent: pal.tone(xAccent, false), good: pal.tone(xGood, false), gauge: int(float64(track)*c.frac + .5),
+			picked: picked, hover: b.hover == i, can: c.canBuild, light: lightGround(ground), compact: pc.compact}))
+	}
+	if !pix || pc.compact {
+		b.paintCells(p, pal, rect, look, c, picked, pc.compact, pix)
+	}
+	lab := func(x, y int, s string, st kit.Style) int {
+		if plain {
+			s = foldToASCII(s)
+		}
+		return p.Label(rect.Min.X+x, rect.Min.Y+y, kit.Escape(s), st)
+	}
+	bw := buildCol(iw)
+	tx, room := cardSignCols, iw-bw-2-cardSignCols
+	if pc.compact {
+		tx, room = compactWords, iw-compactWords-1
+	}
+	count := " x" + textfmt.Int(c.owned)
+	n := lab(tx, 0, fitText(c.name, max(room-runeLen(count), 1)), inkOf(look.text, true))
+	lab(tx+n, 0, count, inkOf(look.dim, false))
+	if c.reason != "" {
+		row, from, to := 0, tx+n+runeLen(count), tx+room
+		if pc.reasonRow > 0 {
+			row, from, to = pc.reasonRow, tx, tx+room
+		}
+		b.paintReason(lab, pal, look, c, row, from, to)
+	}
+	lab(tx, 1, fitText(c.out, room), inkOf(toward(look.text, ground, .15), false))
+	for li, line := range pc.price {
+		x := tx
+		for pi, part := range line {
+			if pi > 0 {
+				x += lab(x, 2+li, " · ", inkOf(look.dim, false))
+			}
+			fg, bold := look.text, true
+			if !part.ok {
+				fg, bold = toward(look.dim, ground, .1), false
+			}
+			x += lab(x, 2+li, fitText(part.text, max(tx+room-x, 1)), inkOf(fg, bold))
+		}
+	}
+	// The Build button, on the card's own ground.
+	cp := *pal
+	cp.styles[xText] = cp.styles[xText].Background(fill)
+	key := b.cardKeys.keys[pc.build]
+	st := keyRest
+	switch {
+	case key.off:
+		st = keyOff
+	case b.k.press != nil && b.k.sunkButton(key):
+		st = keyPressed
+	case b.k.press != nil && isHot && hot.r == key.r:
+		st = keyHover
+	}
+	if pc.compact {
+		b.k.paintKey(p, b.cardKeys, org, &cp, key, st, pix)
+		return
+	}
+	b.k.paintAction(p, b.cardKeys, org, &cp, key, st, pix)
+}
+
+// paintReason writes what stops a card: the reason, then the wait, as much as
+// there is room for, at the right of the name row from column from, or from
+// column from on row when the card gives it a row of its own.
+func (b *buildBox) paintReason(lab func(x, y int, s string, st kit.Style) int, pal *expPalette, look cardLook, c buildCard, row, from, to int) {
+	bad := pal.tone(xBad, false)
+	room := to - from
+	if row == 0 {
+		room -= 2
+	}
+	full := c.reason
+	if c.wait != "" {
+		full += " · " + c.wait
+	}
+	x := to - runeLen(full)
+	if row > 0 {
+		x = from
+	}
+	switch {
+	case runeLen(full) <= room:
+		n := lab(x, row, c.reason, inkOf(bad, false))
+		if c.wait != "" {
+			lab(x+n, row, " · "+c.wait, inkOf(look.dim, false))
+		}
+	case runeLen(c.reason) <= room:
+		x = to - runeLen(c.reason)
+		if row > 0 {
+			x = from
+		}
+		lab(x, row, c.reason, inkOf(bad, false))
+	case room >= 6:
+		lab(from+(to-from-room), row, fitText(c.reason, room), inkOf(bad, false))
+	}
+}
+
+// paintCells draws a card's left edge in cells: for a window with no pictures
+// the gauge in the first column, the kind's glyph and the picked mark; for a
+// stacked card, which has no room for its sign, the glyph.
+func (b *buildBox) paintCells(p *kit.Painter, pal *expPalette, rect image.Rectangle, look cardLook, c buildCard, picked, compact, pix bool) {
+	acc := pal.tone(xAccent, false)
+	plain := b.plain != nil && b.plain()
+	fill := theme.RGB(look.fill.R, look.fill.G, look.fill.B)
+	if !pix {
+		lit := int(c.frac*float64(rect.Dy()) + .5)
+		for row := 0; row < rect.Dy(); row++ {
+			g, col := '│', look.dim
+			if rect.Dy()-row <= lit {
+				g, col = '┃', acc
+				if c.canBuild {
+					col = pal.tone(xGood, false)
+				}
+			}
+			if plain {
+				g = '|'
+				if col != look.dim {
+					g = '#'
+				}
+			}
+			p.Put(rect.Min.X, rect.Min.Y+row, g, inkOf(col, false))
+		}
+	}
+	glyphs := signGlyphs
+	if plain {
+		glyphs = signGlyphsPlain
+	}
+	gx := rect.Min.X + 2
+	if compact {
+		gx = rect.Min.X + 1
+	}
+	if gl, ok := glyphs[c.kind]; ok {
+		tint := signTints[c.kind]
+		if lightGround(pal.tone(xText, true)) {
+			tint = toward(tint, keyBlack, .28)
+		}
+		p.Put(gx, rect.Min.Y+rect.Dy()/2, gl, inkOf(tint, true).Background(fill))
+	}
+	if picked && !compact {
+		p.Put(rect.Min.X+1, rect.Min.Y+rect.Dy()/2, '▸', inkOf(acc, true).Background(fill))
+	}
+}
+
+// lightGround reports whether a ground colour is a light one.
+func lightGround(c color.RGBA) bool {
+	return 0.299*float64(c.R)+0.587*float64(c.G)+0.114*float64(c.B) > 140
+}
+
+// foldToASCII is s in ASCII, for the plain glyph tier.
+func foldToASCII(s string) string {
+	return strings.Map(func(r rune) rune {
+		if f, ok := foldExpedition[r]; ok {
+			return f
+		}
+		return r
+	}, s)
+}

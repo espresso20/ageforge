@@ -92,7 +92,7 @@ func TestASCIITierIsPlain(t *testing.T) {
 	r := rowNamed(rows, "Food")
 	r.trend = []float64{1, 2, 3, 4, 5, 6, 7, 8}
 	line := untag(f.line(r))
-	tail := line[strings.Index(line, "/tick")+len("/tick"):]
+	tail := line[strings.Index(line, "/s")+len("/s"):]
 	for _, c := range tail {
 		if c > 0x7e {
 			t.Fatalf("ASCII tier drew %q in %q", c, tail)
@@ -125,7 +125,7 @@ func TestNarrowDropsTrendThenBar(t *testing.T) {
 		}
 		for _, r := range rows {
 			line := untag(f.line(r))
-			rate, _ := rateParts(r.rate, f.unit)
+			rate, _ := f.rateText(r)
 			if runeLen(line) > w && w >= 24 {
 				t.Errorf("width %d: row too wide: %q", w, line)
 			}

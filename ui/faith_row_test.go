@@ -64,7 +64,7 @@ func TestFaithRowShowsTheStrengthTheRollsRead(t *testing.T) {
 // on the grid and the detail line under it), without tags, and how many
 // cells its bar has.
 func faithRowText(rs game.ResourceState, o game.CatastropheOutlook) (string, int) {
-	rows := []resRow{faithRow(rs, o)}
+	rows := []resRow{faithRow(rs, o, 0)}
 	lines, _ := layoutResourceBox(rows, 60, 10, 0)
 	return untag(strings.Join(lines[:2], "\n")), fitResourceFormat(rows, 60).bar
 }

@@ -112,7 +112,7 @@ func TestTheBoxTitlesFollowTheSwitch(t *testing.T) {
 	}
 	titles := func() []string {
 		out := []string{d.sidebar.GetTitle(), d.logTV.GetTitle(), d.inputField.GetTitle(),
-			d.economyTab.resourceTV.GetTitle(), d.economyTab.buildingTV.GetTitle(), d.economyTab.constructionTV.GetTitle()}
+			d.economyTab.resourceTV.GetTitle(), d.economyTab.buildBox.title, d.economyTab.constructionTV.GetTitle()}
 		for _, name := range []string{"help", "factions", "stats", "wonders", "logs", "epoch", "harbinger", "plan", "history", "buildings"} {
 			out = append(out, d.overlayMgr.entries[name].frame.title.String())
 		}

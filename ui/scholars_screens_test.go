@@ -403,10 +403,9 @@ func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 		"research cancel": usageFor("research cancel"),
 		"history labels":  historyProvider(st, 100),
 		"economy buildings": func() string {
-			_, e := buildingEntries(st, 60)
 			var sb strings.Builder
-			for _, x := range e {
-				sb.WriteString(strings.Join(x, "\n"))
+			for _, c := range buildCards(st, buyMax) {
+				fmt.Fprintln(&sb, c.name, c.out, c.reason, c.wait, c.price)
 			}
 			return sb.String()
 		}(),
@@ -488,8 +487,8 @@ func TestEnlightenmentLineNamesScholarOutput(t *testing.T) {
 	}
 }
 
-// In the Buildings panel a knowledge building past its cap shows no MAX and no
-// limit line, only the half-rate words; a building with a real limit still does.
+// In the Buildings box a knowledge building past its cap says nothing of a
+// limit; a building with a real limit still does.
 func TestKnowledgeBuildingPastItsCapShowsNoLimitInThePanel(t *testing.T) {
 	restoreForge(t)
 	const lib = "monastery_library"
@@ -505,34 +504,22 @@ func TestKnowledgeBuildingPastItsCapShowsNoLimitInThePanel(t *testing.T) {
 	}
 	for _, sz := range wallSizes {
 		w, h := sz[0], sz[1]
-		maxes, limits, halves, shown := 0, 0, 0, false
+		limits, shown := 0, false
 		for _, rows := range panelPages(t, d, pages, w, h) {
 			for _, r := range rows {
-				if strings.Contains(r, " "+name+" x"+fmt.Sprint(copies)) {
+				if strings.Contains(r, name+" x"+fmt.Sprint(copies)) {
 					shown = true
-					if strings.Contains(r, "MAX") {
-						t.Errorf("%dx%d: the %s shows MAX: %q", w, h, name, r)
-					}
 				}
-				if strings.Contains(r, "MAX") {
-					maxes++
-				}
-				if strings.Contains(r, "Building limit reached.") {
+				if strings.Contains(r, txtLimit.String()) {
 					limits++
 				}
-			}
-			if strings.Contains(flat(rows), "each researches at half rate") {
-				halves++
 			}
 		}
 		if !shown {
 			t.Errorf("%dx%d: the %s is on no page of the panel", w, h, name)
 		}
-		if halves == 0 {
-			t.Errorf("%dx%d: no page says a copy past the cap researches at half rate", w, h)
-		}
-		if maxes != 1 || limits != 1 {
-			t.Errorf("%dx%d: the monument at its limit shows MAX %d times and its limit line %d times, want once each", w, h, maxes, limits)
+		if limits != 1 {
+			t.Errorf("%dx%d: the monument at its limit shows its limit line %d times, want once", w, h, limits)
 		}
 	}
 }

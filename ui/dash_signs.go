@@ -1,0 +1,400 @@
+package ui
+
+import (
+	"image"
+	"image/color"
+
+	"github.com/espresso20/ageforge/config"
+)
+
+// dash_signs.go is the sign on a build card: a picture for each kind of
+// building, struck on a slab in the kind's tint. A kind is a lineage of
+// buildings (food, knowledge, military), so the signs are few.
+
+// signKinds are the kinds of building, in the order the signs are listed.
+var signKinds = []string{
+	"housing", "food", "storage", "knowledge", "faith", "culture", "military", "trade", "wood",
+	"stone", "metal", "engineering", "monument", "energy", "hacker", "harbor", "wonder", "diplomacy",
+}
+
+// lineageKind is the kind of each lineage of buildings.
+var lineageKind = map[string]string{
+	"housing": "housing", "food": "food", "storage": "storage", "knowledge": "knowledge",
+	"faith": "faith", "culture_arts": "culture", "military": "military", "trade": "trade",
+	"organic_extraction": "wood", "geological_extraction": "stone", "metallurgy": "metal",
+	"engineering": "engineering", "monument": "monument", "energy": "energy", "hacker": "hacker",
+	"harbor": "harbor", "wonder": "wonder",
+}
+
+// signKindOf is the kind of a building: its lineage's; a building with none
+// (the diplomacy buildings, the nano foundry) goes by its category, then by
+// what it makes.
+func signKindOf(def config.BuildingDef) string {
+	if k, ok := lineageKind[def.LineageKey]; ok {
+		return k
+	}
+	switch def.Category {
+	case "diplomacy":
+		return "diplomacy"
+	case "housing", "storage", "military", "monument", "wonder":
+		return def.Category
+	case "research":
+		return "knowledge"
+	}
+	return "metal"
+}
+
+// signTints is the colour of each kind's slab.
+var signTints = map[string]color.RGBA{
+	"housing": {0xd9, 0xa6, 0x6b, 255}, "food": {0x7a, 0xc0, 0x5a, 255}, "storage": {0xc0, 0x84, 0x3c, 255},
+	"knowledge": {0x62, 0x8f, 0xef, 255}, "faith": {0xa8, 0x7c, 0xe8, 255}, "culture": {0xe0, 0x68, 0xb4, 255},
+	"military": {0xe0, 0x5a, 0x50, 255}, "trade": {0xe8, 0xc2, 0x40, 255}, "wood": {0x8c, 0xb0, 0x4c, 255},
+	"stone": {0xa0, 0xa6, 0xb0, 255}, "metal": {0x84, 0x9a, 0xb6, 255}, "engineering": {0xe8, 0x8c, 0x3e, 255},
+	"monument": {0xcf, 0xb0, 0x6a, 255}, "energy": {0x5e, 0xc8, 0xf0, 255}, "hacker": {0x38, 0xd9, 0x8a, 255},
+	"harbor": {0x3a, 0x8f, 0xc8, 255}, "wonder": {0xf0, 0xe2, 0xb8, 255}, "diplomacy": {0xe8, 0xa0, 0xa0, 255},
+}
+
+// signGlyphs is the one cell a kind is drawn in where there are no pictures.
+var signGlyphs = map[string]rune{
+	"housing": '⌂', "food": '♣', "storage": '▣', "knowledge": '≡', "faith": '†', "culture": '☺', "military": '‡',
+	"trade": '$', "wood": '♠', "stone": '▲', "metal": '♦', "engineering": '⚙', "monument": '▮', "energy": 'ϟ',
+	"hacker": '>', "harbor": '≈', "wonder": '★', "diplomacy": '⚑',
+}
+
+// signGlyphsPlain is signGlyphs in ASCII.
+var signGlyphsPlain = map[string]rune{
+	"housing": 'H', "food": 'F', "storage": 'S', "knowledge": 'K', "faith": 'f', "culture": 'C', "military": 'M',
+	"trade": '$', "wood": 'W', "stone": 'R', "metal": 'I', "engineering": 'E', "monument": 'U', "energy": 'e',
+	"hacker": '>', "harbor": 'h', "wonder": '*', "diplomacy": 'D',
+}
+
+// signArt is the sign of each kind as 13 by 13 art pixels; a # is struck.
+var signPix = map[string][]string{
+	"housing": {
+		"......#......",
+		".....###.....",
+		"....#####....",
+		"...#######...",
+		"..#########..",
+		".###########.",
+		"#############",
+		".###########.",
+		".###########.",
+		".####...####.",
+		".####...####.",
+		".####...####.",
+		".####...####.",
+	},
+	"food": {
+		"......#......",
+		".....###.....",
+		"..#..###..#..",
+		".###.###.###.",
+		"..#..###..#..",
+		".###.###.###.",
+		"..#..###..#..",
+		".###..#..###.",
+		"..#...#...#..",
+		"......#......",
+		"......#......",
+		"......#......",
+		"......#......",
+	},
+	"storage": {
+		".............",
+		"...#######...",
+		"..#########..",
+		".###########.",
+		".###########.",
+		"#############",
+		".............",
+		"#############",
+		"#############",
+		"######.######",
+		"#####...#####",
+		"#############",
+		"#############",
+	},
+	"knowledge": {
+		".............",
+		".####...####.",
+		".#####.#####.",
+		".#.###.###.#.",
+		".#####.#####.",
+		".#.###.###.#.",
+		".#####.#####.",
+		".#.###.###.#.",
+		".#####.#####.",
+		"#############",
+		".###########.",
+		".............",
+		".............",
+	},
+	"faith": {
+		"......#......",
+		"......#......",
+		"....#####....",
+		"......#......",
+		"......#......",
+		".....###.....",
+		"....#####....",
+		"...#######...",
+		"..#########..",
+		"..####.####..",
+		"..####.####..",
+		"..####.####..",
+		"..####.####..",
+	},
+	"culture": {
+		".............",
+		".###########.",
+		"#############",
+		"##...###...##",
+		"##.#.###.#.##",
+		"##...###...##",
+		"#############",
+		"#############",
+		"##.#######.##",
+		"###.#####.###",
+		"####.....####",
+		".####...####.",
+		"..#########..",
+	},
+	"military": {
+		"......#......",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		"...#######...",
+		"...#######...",
+		"......#......",
+		"......#......",
+		".....###.....",
+		".....###.....",
+	},
+	"trade": {
+		".....###.....",
+		"......#......",
+		"....#####....",
+		"...#######...",
+		"..#########..",
+		".####...####.",
+		".####.######.",
+		".####...####.",
+		".######.#####",
+		".####...####.",
+		"..#########..",
+		"...#######...",
+		".............",
+	},
+	"wood": {
+		".............",
+		"......#......",
+		".....###.....",
+		"....#####....",
+		"...#######...",
+		"....#####....",
+		"...#######...",
+		"..#########..",
+		".###########.",
+		"......#......",
+		"......#......",
+		".....###.....",
+		".............",
+	},
+	"stone": {
+		".............",
+		".###.###.###.",
+		".###.###.###.",
+		".............",
+		"##.###.###.##",
+		"##.###.###.##",
+		".............",
+		".###.###.###.",
+		".###.###.###.",
+		".............",
+		"##.###.###.##",
+		"##.###.###.##",
+		".............",
+	},
+	"metal": {
+		".............",
+		".............",
+		"###########..",
+		"#############",
+		".###########.",
+		"..#########..",
+		"....#####....",
+		".....###.....",
+		".....###.....",
+		"....#####....",
+		"..#########..",
+		".###########.",
+		".............",
+	},
+	"engineering": {
+		"......#......",
+		"..#..###..#..",
+		".###.###.###.",
+		"..#########..",
+		"...##...##...",
+		".###.....###.",
+		"####.....####",
+		".###.....###.",
+		"...##...##...",
+		"..#########..",
+		".###.###.###.",
+		"..#..###..#..",
+		"......#......",
+	},
+	"monument": {
+		"......#......",
+		".....###.....",
+		"....#####....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		".....###.....",
+		"....#####....",
+		"...#######...",
+		"..#########..",
+	},
+	"energy": {
+		"......#####..",
+		".....#####...",
+		"....#####....",
+		"...#####.....",
+		"..#########..",
+		"...#########.",
+		".......####..",
+		"......####...",
+		".....####....",
+		"....####.....",
+		"...###.......",
+		"..##.........",
+		".#...........",
+	},
+	"hacker": {
+		".............",
+		"#############",
+		"#...........#",
+		"#.#.........#",
+		"#..#........#",
+		"#...#.......#",
+		"#..#........#",
+		"#.#...####..#",
+		"#...........#",
+		"#############",
+		".....###.....",
+		"...#######...",
+		".............",
+	},
+	"harbor": {
+		".....###.....",
+		"....##.##....",
+		".....###.....",
+		"......#......",
+		"...#######...",
+		"......#......",
+		"......#......",
+		"#.....#.....#",
+		"##....#....##",
+		".##...#...##.",
+		"..##..#..##..",
+		"...#######...",
+		".....###.....",
+	},
+	"wonder": {
+		"......#......",
+		"....#####....",
+		"..#########..",
+		"#############",
+		".............",
+		".##.##.##.##.",
+		".##.##.##.##.",
+		".##.##.##.##.",
+		".##.##.##.##.",
+		".##.##.##.##.",
+		".............",
+		"#############",
+		"#############",
+	},
+	"diplomacy": {
+		"..#..........",
+		"..###........",
+		"..#####......",
+		"..#######....",
+		"..#########..",
+		"..#######....",
+		"..#####......",
+		"..###........",
+		"..#..........",
+		"..#..........",
+		"..#..........",
+		".####........",
+		"#######......",
+	},
+}
+
+// drawSign draws a kind's sign on its slab into img, the slab's upper left
+// corner at unit (x0, y0). A unit is a pixel of a 10 by 21 cell: art is the
+// image in units of k real pixels. The slab is 36 units square, in the kind's
+// tint, lit from the upper left over a dithered field; the sign stands on it
+// raised, pale where it faces the light, dark where it faces away, over a
+// shadow a unit down and to the right. A dull slab (what cannot be built) is
+// pulled toward the ground.
+func drawSign(a art, x0, y0 int, kind string, tint color.RGBA, dull float64, ground color.RGBA) {
+	R := rampOf(toward(tint, ground, dull))
+	slab := image.Rect(x0, y0, x0+36, y0+36)
+	a.fill(slab, 1, R.deep)
+	f := slab.Inset(1)
+	a.fill(f, 1, R.dark)
+	in := f.Inset(1)
+	for y := in.Min.Y; y < in.Max.Y; y++ {
+		for x := in.Min.X; x < in.Max.X; x++ {
+			// the field: dark at the lower right, dithered toward the base at the upper left
+			lit := 1 - float64((x-in.Min.X)+(y-in.Min.Y))/float64(in.Dx()+in.Dy())
+			c := R.dark
+			if lit*0.9 > bayer4[y&3][x&3] {
+				c = toward(R.dark, R.base, .55)
+			}
+			a.px(x, y, c)
+		}
+	}
+	a.hline(in.Min.X+1, in.Max.X-1, f.Min.Y, toward(R.base, R.pale, .4))
+	for y := in.Min.Y + 1; y < in.Max.Y-1; y++ {
+		a.px(f.Min.X, y, toward(R.base, R.pale, .4))
+	}
+	pat := signPix[kind]
+	on := func(x, y int) bool { return y >= 0 && y < 13 && x >= 0 && x < 13 && pat[y][x] == '#' }
+	ox, oy := x0+5, y0+5
+	dot := func(x, y int, c color.RGBA) { a.fill(image.Rect(ox+x*2, oy+y*2, ox+x*2+2, oy+y*2+2), 0, c) }
+	for y := 0; y < 13; y++ {
+		for x := 0; x < 13; x++ {
+			if on(x, y) {
+				a.fill(image.Rect(ox+x*2+1, oy+y*2+1, ox+x*2+3, oy+y*2+3), 0, R.deep)
+			}
+		}
+	}
+	for y := 0; y < 13; y++ {
+		for x := 0; x < 13; x++ {
+			if !on(x, y) {
+				continue
+			}
+			c := toward(R.pale, keyWhite, .55)
+			switch {
+			case !on(x-1, y) || !on(x, y-1):
+				c = toward(R.pale, keyWhite, .85)
+			case !on(x+1, y) || !on(x, y+1):
+				c = toward(R.base, R.pale, .35)
+			}
+			dot(x, y, c)
+		}
+	}
+}

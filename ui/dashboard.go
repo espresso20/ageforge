@@ -326,7 +326,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 
 func (d *Dashboard) build() {
 	// Create permanent economy tab
-	d.economyTab = NewEconomyTab()
+	d.economyTab = NewEconomyTab(d.app)
 	d.economyTab.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
 
 	// Sidebar — command panel hints, laid out for the room it has: one
@@ -334,9 +334,7 @@ func (d *Dashboard) build() {
 	d.sidebar = newFitView(func(w, h int) string { return sidebarText(d.sidebarActive, w, h) })
 	// A click on a panel's name opens it, as typing the name does.
 	d.sidebar.body.OnRegion = func(name string, _ int) { d.runLine(name) }
-	// A click on a building writes its build command in the prompt, and a
-	// double click runs it; a click on the mini map opens the Map panel.
-	d.economyTab.buildingTV.body.OnRegion = d.clickLine
+	// A click on the mini map opens the Map panel.
 	d.miniMap.onClick = func() { d.runLine("map") }
 	d.sidebar.SetBorder(true)
 	theme.Track(func() { d.sidebar.SetTitleColor(theme.Of(theme.RoleAccent)) })
@@ -449,7 +447,12 @@ func (d *Dashboard) build() {
 	// Command input: completions show as ghost text (command_input.go),
 	// drawn from the registry and the state of the last refresh.
 	d.inputField = newCommandInput(newCompleter(d.engine, func() *game.GameState { return d.lastState }))
-	d.inputField.preview = func() string { return d.app.feel.preview }
+	d.inputField.preview = func() string {
+		if p := d.app.feel.preview; p != "" {
+			return p
+		}
+		return d.cardLine()
+	}
 	d.app.line = d.pressLine
 	d.app.feel.motion = func() bool { return d.mapSettings().Motion }
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
@@ -851,9 +854,10 @@ func (d *Dashboard) syncVibe() {
 		d.economyTab.retitle()
 		// A box that keeps the text it wrote for its size writes it again.
 		for _, v := range []*fitView{d.sidebar, d.workerMiniTV,
-			d.economyTab.resourceTV, d.economyTab.buildingTV, d.economyTab.constructionTV} {
+			d.economyTab.resourceTV, d.economyTab.constructionTV} {
 			v.changed()
 		}
+		d.economyTab.buildBox.recompute()
 		d.headerTV.changed()
 	}
 }
@@ -1421,10 +1425,26 @@ func (d *Dashboard) submitInput() {
 	d.histIdx = -1
 	d.histDraft = ""
 	if text == "" {
+		// Enter on an empty prompt runs what the prompt shows dim: the picked
+		// card's command, unless the pointer is on a button whose own command
+		// is shown in its place.
+		if line := d.cardLine(); line != "" && d.app.feel.preview == "" {
+			d.pressLine(line)
+		}
 		return
 	}
 	d.remember(text)
 	d.runLine(text)
+}
+
+// cardLine is the command of the picked build card, the line an empty prompt
+// shows dim and Enter runs; "" when no card is picked or one cannot be built,
+// and while a panel covers the dashboard.
+func (d *Dashboard) cardLine() string {
+	if d.overlayMgr != nil && d.overlayMgr.HasActive() {
+		return ""
+	}
+	return d.economyTab.buildBox.pickedLine()
 }
 
 // remember records a non-empty trimmed command in history (cap at 50).
@@ -1445,17 +1465,6 @@ func (d *Dashboard) pressLine(line string) {
 	d.inputField.echoLine(line)
 	d.remember(line)
 	d.runLine(line)
-}
-
-// clickLine writes a command line in the prompt and gives the prompt the
-// keyboard, for a click on something that stands for the line; the second
-// click of a double click runs it, as Enter would.
-func (d *Dashboard) clickLine(line string, clicks int) {
-	d.inputField.SetText(line)
-	d.app.SetFocus(d.inputField)
-	if clicks >= 2 {
-		d.submitInput()
-	}
 }
 
 // runLine does what a command line asks, as Enter on it does. It leaves the
