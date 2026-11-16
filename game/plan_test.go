@@ -403,6 +403,7 @@ func TestOffline_DayWithPlanIsFastAndDeterministic(t *testing.T) {
 	sa, sb := a.buildSaveSnapshot(), b.buildSaveSnapshot()
 	sa.Timestamp, sb.Timestamp = time.Time{}, time.Time{}
 	sa.Stats.GameStarted, sb.Stats.GameStarted = time.Time{}, time.Time{} // wall clock
+	sa.RunID, sb.RunID = "", ""                                           // random per run
 	va, vb := reflect.ValueOf(sa), reflect.ValueOf(sb)
 	for i := 0; i < va.NumField(); i++ {
 		if !reflect.DeepEqual(va.Field(i).Interface(), vb.Field(i).Interface()) {
