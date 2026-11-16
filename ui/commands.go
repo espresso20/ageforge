@@ -151,11 +151,11 @@ func panel(name, desc string, aliases ...string) *Command {
 // registry is the player command list, in Help panel order within each
 // section. Built fresh per call: callers may not modify it.
 func registry() []*Command {
-	confirmYes := func(form, text string) *Command {
-		return &Command{Name: "confirm", BareOK: true, Subs: []*Command{{Name: "yes", Dangerous: true}}, Help: []Usage{{form, text}}}
+	confirmYes := func(form, text string, dangerous bool) *Command {
+		return &Command{Name: "confirm", BareOK: true, Subs: []*Command{{Name: "yes", Dangerous: dangerous}}, Help: []Usage{{form, text}}}
 	}
-	prestigeConfirm := confirmYes("prestige confirm yes", vibe.Line("ui.help.commands.prestige_confirm_yes", "Prestige: a new run, keeping your points, carry-overs and Era Mastery"))
-	festivalConfirm := confirmYes("festival confirm yes", vibe.Line("ui.help.commands.festival_confirm_yes", "Hold the festival now"))
+	prestigeConfirm := confirmYes("prestige confirm yes", vibe.Line("ui.help.commands.prestige_confirm_yes", "Prestige: a new run, keeping your points, carry-overs and Era Mastery"), true)
+	festivalConfirm := confirmYes("festival confirm yes", vibe.Line("ui.help.commands.festival_confirm_yes", "Hold the festival now"), false)
 
 	return []*Command{
 		// Actions

@@ -36,7 +36,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 | `Enter` | If the line is already a whole command, run it exactly as typed. If not, and the completion makes it one, run the completion (`adv` runs `advance`). Otherwise run the line as typed, and the game says what is wrong with it. |
 | `↑` / `↓` | Step back and forward through the last 50 commands you ran. |
 
-Commands that can't be undone are never run from a completion. `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
+Commands that can't be undone are never run from a completion. `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
 
 In the window the Factions panel has a button for each `diplomacy` verb and trade offer, and the Harbinger panel has buttons for `harbinger appease`, `brace` and `invite`. Raid and Invite ask before they run. In the Trade panel the black market is a stop with a chip for each resource a run would pay in; a click runs `blackmarket <resource>` without asking.
 

@@ -1,11 +1,13 @@
 package ui
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // festivalStage is the People overview over a town where festivals are open
@@ -136,5 +138,54 @@ func TestFestivalButtonHoldsOneFestival(t *testing.T) {
 	st = eng.GetState()
 	if _, running := festivalRunning(st); !running || st.Festival.Ready {
 		t.Errorf("after the command: running %v, status %+v", running, st.Festival)
+	}
+}
+
+// The festival's question has a primary yes that Enter presses and a way out
+// on Esc; the question for a command that cannot be undone keeps the danger
+// button with the way out first.
+func TestQuestionIsDangerOnlyForADangerousLine(t *testing.T) {
+	keepTheme(t)
+	d, pages, eng := stagedDashboard(t, "bronze_age")
+	eng.GrantTechsForTest("drama")
+	eng.Resources.Add("culture", 1e12)
+	ask := func(yes, line string) *nativeDialog {
+		t.Helper()
+		d.askLine("Sure?", yes, line)
+		name, item := pages.GetFrontPage()
+		dlg, _ := item.(*nativeDialog)
+		if name != "ask_line" || dlg == nil {
+			t.Fatalf("%q opened no question (front page %q)", line, name)
+		}
+		d.app.SetFocus(dlg)
+		return dlg
+	}
+	look := func(dlg *nativeDialog) ([]keyKind, []string) {
+		var kinds []keyKind
+		var keys []string
+		for _, b := range dlg.buttons {
+			kinds, keys = append(kinds, b.act), append(keys, b.key)
+		}
+		return kinds, keys
+	}
+	held := func() bool { _, on := festivalRunning(eng.GetState()); return on }
+
+	dlg := ask("Sell", "sell hut")
+	if kinds, keys := look(dlg); !reflect.DeepEqual(kinds, []keyKind{keyPlain, keyDanger}) || !reflect.DeepEqual(keys, []string{"Esc", ""}) {
+		t.Errorf("a Dangerous line: kinds %v keys %v", kinds, keys)
+	}
+	keyTo(dlg, tk(kit.KeyEsc, 0, 0))
+
+	dlg = ask("Hold", festivalCmd)
+	if kinds, keys := look(dlg); !reflect.DeepEqual(kinds, []keyKind{keyPrimary, keyPlain}) || !reflect.DeepEqual(keys, []string{"Enter", "Esc"}) {
+		t.Errorf("the festival: kinds %v keys %v", kinds, keys)
+	}
+	keyTo(dlg, tk(kit.KeyEsc, 0, 0))
+	if held() {
+		t.Fatal("Esc on the question held the festival")
+	}
+	keyTo(ask("Hold", festivalCmd), tk(kit.KeyEnter, 0, 0))
+	if !held() {
+		t.Error("Enter on the question did not hold the festival")
 	}
 }

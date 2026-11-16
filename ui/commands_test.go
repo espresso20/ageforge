@@ -267,7 +267,7 @@ func TestRegistryShape(t *testing.T) {
 		walk(c.Name, c)
 	}
 	sort.Strings(dangerous)
-	want := "account import,account recover,account switch,account wipe,diplomacy raid,dismiss,festival confirm yes,harbinger invite,load,plan clear,prestige confirm yes,quit,research cancel,sell"
+	want := "account import,account recover,account switch,account wipe,diplomacy raid,dismiss,harbinger invite,load,plan clear,prestige confirm yes,quit,research cancel,sell"
 	if got := strings.Join(dangerous, ","); got != want {
 		t.Errorf("Dangerous commands = %s\nwant %s", got, want)
 	}

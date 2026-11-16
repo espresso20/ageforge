@@ -1502,18 +1502,27 @@ func (d *Dashboard) pressLine(line string) {
 
 var txtCancel = vibe.E("ui.dashboard.askLine.01", "Cancel")
 
-// askLine puts a question over the dashboard with a plain button and a danger
-// button worded yes; the danger one runs the line as a click on a button does.
-// Either answer gives the keyboard back.
+// askLine puts a question over the dashboard with a way out and a button
+// worded yes, which runs the line as a click on a button does. For a line the
+// command table marks Dangerous the yes is the danger button and the keyboard
+// starts on the way out; for any other the yes is the primary button, which
+// Enter presses. Either answer gives the keyboard back.
 func (d *Dashboard) askLine(question, yes, line string) {
 	const page = "ask_line"
-	buttons := []string{txtCancel.String(), yes}
-	styleDangerModal(showButtonModal(d.app, d.pages, page, question, buttons, func(i int, _ string) {
-		if i == 1 {
+	danger := lineDangerous(line)
+	buttons, run := []string{yes, txtCancel.String()}, 0
+	if danger {
+		buttons, run = []string{txtCancel.String(), yes}, 1
+	}
+	m := showButtonModal(d.app, d.pages, page, question, buttons, func(i int, _ string) {
+		if i == run {
 			d.pressLine(line)
 		}
 		d.returnFocus()
-	}))
+	})
+	if danger {
+		styleDangerModal(m)
+	}
 }
 
 // runLine does what a command line asks, as Enter on it does. It leaves the
