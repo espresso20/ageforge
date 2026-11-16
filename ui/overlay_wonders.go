@@ -57,8 +57,13 @@ func wonderSummary(state game.GameState) wonderBlock {
 		head := vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n")
 		blk.bankCol = runeLen(kit.Strip(strings.Trim(head, "\n"))) + 2
 		fmt.Fprint(&sb, head)
-		for _, r := range bankRows(current.def.BaseCost, bs.WonderBank) {
-			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", r.color, game.ResourceName(r.res), wonderProgressBar(r.share, 8), textfmt.Number(r.banked), textfmt.Number(r.need))
+		// The bars share a column: the longest name sets it.
+		rows, nameW := bankRows(current.def.BaseCost, bs.WonderBank), 0
+		for _, r := range rows {
+			nameW = max(nameW, runeLen(game.ResourceName(r.res)))
+		}
+		for _, r := range rows {
+			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", r.color, padRight(game.ResourceName(r.res), nameW), wonderProgressBar(r.share, 8), textfmt.Number(r.banked), textfmt.Number(r.need))
 		}
 		switch {
 		case bs.WonderBankFull && bs.CanBuild:
