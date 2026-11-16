@@ -32,7 +32,7 @@ func festivalStage(t *testing.T, mut func(*game.GameState)) *peopleStage {
 func TestFestivalButtonAsksFirstAndRunsOnlyOnTheYes(t *testing.T) {
 	s := festivalStage(t, nil)
 	k := s.key(t, festivalCmd)
-	if k.off || k.ask == "" || k.yes == "" || k.kind != keyAccent {
+	if k.off || k.ask == "" || k.yes == "" || k.kind != keyPrimary {
 		t.Fatalf("the festival button: off %v, asks %q, yes %q, kind %v", k.off, k.ask, k.yes, k.kind)
 	}
 	if !strings.Contains(k.ask, "5K") {

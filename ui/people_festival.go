@@ -91,7 +91,7 @@ func (c peopleBody) festivalCard(x, y, w, h int) {
 	off := running || !f.Ready || f.Culture < f.Cost
 	by := y + 4
 	if h-5 >= actionRows && actionW(word, "", signNone) <= ri {
-		g.actionButton(rx, by, actionSpec{kind: keyAccent, label: word, cmd: festivalCmd, ask: festivalAsk(st), yes: word, off: off})
+		g.actionButton(rx, by, actionSpec{kind: keyPrimary, label: word, cmd: festivalCmd, ask: festivalAsk(st), yes: word, off: off})
 		return
 	}
 	g.chip(rx, by, word, keyAccent, festivalCmd, festivalAsk(st), word, off)
