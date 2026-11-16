@@ -63,6 +63,10 @@ func (g *Game) drawCell(x, y int, c kit.Cell) {
 	} else {
 		vector.FillRect(g.buf, px, py, float32(cw), float32(g.ch), bg, false)
 	}
+	if c.Pic != 0 {
+		g.drawPic(x, y, c) // a picture's cell: its pixels, on the cell's ground
+		return
+	}
 	if c.R != ' ' && c.R != 0 {
 		if sh, ok := procedural(c.R, g.cw, g.ch); ok {
 			g.drawShape(sh, px, py, fg, bg)
@@ -123,4 +127,70 @@ func (g *Game) drawText(k kit.Cell, px, py float32, cw int, fg color.RGBA) {
 		op.Filter = ebiten.FilterNearest
 	}
 	text.Draw(g.buf, string(k.R)+k.Comb, face, op)
+}
+
+// syncPics gets the frame's pictures ready to draw: a picture that is new,
+// or sits somewhere else than in the frame before, has its cells drawn again
+// (a cell only says which picture it shows, so by itself it would look
+// unchanged), and a picture no longer on show is let go.
+func (g *Game) syncPics() {
+	if len(g.fr.Pics) == 0 && len(g.prevPics) == 0 {
+		return
+	}
+	again := func(r image.Rectangle) {
+		r = r.Intersect(image.Rect(0, 0, g.cols, g.rows))
+		for y := r.Min.Y; y < r.Max.Y; y++ {
+			for x := r.Min.X; x < r.Max.X; x++ {
+				g.prev[y*g.cols+x].R = -1 // matches nothing
+			}
+		}
+	}
+	for i, p := range g.fr.Pics {
+		if i >= len(g.prevPics) || g.prevPics[i] != p {
+			again(p.Rect)
+			if i < len(g.prevPics) {
+				again(g.prevPics[i].Rect)
+			}
+		}
+	}
+	for _, p := range g.prevPics[min(len(g.fr.Pics), len(g.prevPics)):] {
+		again(p.Rect)
+	}
+	g.prevPics = append(g.prevPics[:0], g.fr.Pics...)
+	if g.pics == nil {
+		g.pics = map[*image.RGBA]*ebiten.Image{}
+	}
+	shown := make(map[*image.RGBA]bool, len(g.fr.Pics))
+	for _, p := range g.fr.Pics {
+		shown[p.Img] = true
+		if g.pics[p.Img] == nil {
+			g.pics[p.Img] = ebiten.NewImageFromImage(p.Img)
+		}
+	}
+	for img, e := range g.pics {
+		if !shown[img] {
+			e.Deallocate()
+			delete(g.pics, img)
+		}
+	}
+}
+
+// drawPic draws the part of a picture that one cell shows. The whole picture
+// is drawn, stretched over its rectangle of cells, onto the cell alone: the
+// cell's own piece of the screen cuts the rest away.
+func (g *Game) drawPic(x, y int, c kit.Cell) {
+	if int(c.Pic) > len(g.fr.Pics) {
+		return
+	}
+	p := g.fr.Pics[c.Pic-1]
+	src := g.pics[p.Img]
+	if src == nil || p.Rect.Empty() {
+		return
+	}
+	cell := g.buf.SubImage(image.Rect(x*g.cw, y*g.ch, (x+1)*g.cw, (y+1)*g.ch)).(*ebiten.Image)
+	op := &ebiten.DrawImageOptions{Filter: ebiten.FilterNearest}
+	b := src.Bounds()
+	op.GeoM.Scale(float64(p.Rect.Dx()*g.cw)/float64(b.Dx()), float64(p.Rect.Dy()*g.ch)/float64(b.Dy()))
+	op.GeoM.Translate(float64(p.Rect.Min.X*g.cw), float64(p.Rect.Min.Y*g.ch))
+	cell.DrawImage(src, op)
 }

@@ -51,6 +51,9 @@ func (s *simScreen) sync() {
 type simCell struct {
 	Runes []rune
 	Style kit.Style
+	// Pic is one more than the index, in the buffer's pictures, of the
+	// picture the cell shows (kit.Cell.Pic); 0 for none.
+	Pic uint16
 }
 
 // newSim is a blank screen the size a terminal starts at.
@@ -106,7 +109,7 @@ func (s *simScreen) cell(c kit.Cell) simCell {
 	if c.Cont || c.R == 0 {
 		rs[0] = ' '
 	}
-	return simCell{Runes: append(rs, []rune(c.Comb)...), Style: st}
+	return simCell{Runes: append(rs, []rune(c.Comb)...), Style: st, Pic: c.Pic}
 }
 
 func (s *simScreen) GetContent(x, y int) (rune, []rune, kit.Style, int) {
@@ -133,12 +136,25 @@ func drawOn(scr *simScreen, p Primitive) {
 	root.Resize(max(w, 0), max(h, 0))
 	var b kit.Buffer
 	root.Paint(&b)
+	// A cell that shows a picture takes the picture's place in the screen's
+	// list, so the screen keeps the pictures its cells point at.
+	picAt := map[uint16]uint16{}
 	for _, r := range coveredBy(p) {
 		r = r.Intersect(image.Rect(0, 0, b.W, b.H))
 		for cy := r.Min.Y; cy < r.Max.Y; cy++ {
 			for cx := r.Min.X; cx < r.Max.X; cx++ {
+				c := b.Cells[cy*b.W+cx]
+				if c.Pic != 0 && int(c.Pic) <= len(b.Pics) {
+					n, ok := picAt[c.Pic]
+					if !ok {
+						scr.buf.Pics = append(scr.buf.Pics, b.Pics[c.Pic-1])
+						n = uint16(len(scr.buf.Pics))
+						picAt[c.Pic] = n
+					}
+					c.Pic = n
+				}
 				if sx, sy := x+cx, y+cy; sx >= 0 && sy >= 0 && sx < scr.buf.W && sy < scr.buf.H {
-					scr.buf.Cells[sy*scr.buf.W+sx] = b.Cells[cy*b.W+cx]
+					scr.buf.Cells[sy*scr.buf.W+sx] = c
 				}
 			}
 		}
@@ -205,13 +221,14 @@ func (s *stage) click(x, y int) {
 type frame struct {
 	w     int
 	cells []simCell
+	pics  []kit.Pic
 }
 
 // simCells is what sim shows now, copied so that the next draw on the same
 // screen does not change it.
 func simCells(sim *simScreen) frame {
 	cells, w, _ := sim.GetContents()
-	return frame{w: w, cells: cells}
+	return frame{w: w, cells: cells, pics: append([]kit.Pic(nil), sim.buf.Pics...)}
 }
 
 // drawPrimitive draws p over a fresh w×h screen and returns what it showed.
@@ -237,6 +254,9 @@ func drawWrapped(_ testing.TB, p Primitive, w, h, passes int) frame {
 
 // Cells is every cell, row by row.
 func (f frame) Cells() []simCell { return f.cells }
+
+// Pics are the pictures the frame drew, in the order they were drawn.
+func (f frame) Pics() []kit.Pic { return f.pics }
 
 // Rune is the rune drawn at column x of row y, a space where the cell is empty.
 func (f frame) Rune(x, y int) rune {

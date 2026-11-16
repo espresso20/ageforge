@@ -134,7 +134,7 @@ func TestBadgesCommandOpensTheCase(t *testing.T) {
 		t.Errorf("badges with no account: %+v", res)
 	}
 	m := buildCase(nil, game.BadgeSummary{}, false, caseTabAll, caseLayoutFor(80, 21, caseTabAll))
-	if text := renderCase(m, caseView{}, atRest).String(); !strings.Contains(text, "No account is loaded") {
+	if text := renderCase(m, caseView{}).String(); !strings.Contains(text, "No account is loaded") {
 		t.Errorf("the case with no account:\n%s", text)
 	}
 }
@@ -164,23 +164,20 @@ func TestBadgeCaseOnTheLiveScreen(t *testing.T) {
 		}
 		text := strings.Join(lines, "\n")
 		wantAll(t, fmt.Sprintf("%s: the detail", where), text, "Serial Reincarnator", "Gold · Rare · 25 pts", "Prestige 10 times.", "Rung 3 of 4 · Prestiges")
-		// The gold ring, whole, somewhere on the screen.
-		g := newTGrid(13, 7)
-		drawMedal(g, 0, 0, medal{tier: config.BadgeGold, emblem: '★'}, atRest, false)
-		want := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
+		// The gold medal is a picture in the detail's room, owning its cells.
+		bp := d.badgePanel
+		buf := kit.NewBuffer(w, h)
+		bp.Layout(bp.Bounds())
+		bp.Paint(kit.NewPainter(buf))
+		room := bp.model.medalRoom.Add(bp.Bounds().Min)
 		found := false
-		for y := 0; y+7 <= h && !found; y++ {
-			for x := 0; x+13 <= w && !found; x++ {
-				ok := true
-				for dy := 0; dy < 7 && ok; dy++ {
-					row := []rune(lines[y+dy] + strings.Repeat(" ", w))
-					ok = string(row[x:x+13]) == want[dy]
-				}
-				found = ok
+		for i, pic := range buf.Pics {
+			if pic.Rect == room && int(buf.At(room.Min.X, room.Min.Y).Pic) == i+1 && !oneColour(pic.Img) {
+				found = true
 			}
 		}
-		if !found {
-			t.Errorf("%s: the gold badge's art is not whole on screen:\n%s", where, text)
+		if !found || bp.model.medalFor == nil || bp.model.medalFor.id != "ladder.prestiges.3" {
+			t.Errorf("%s: the gold badge's medal is not painted in %v (%d pictures, for %v)", where, room, len(buf.Pics), bp.model.medalFor)
 		}
 		for i, c := range cells {
 			if len(c.Runes) > 0 && c.Runes[0] != ' ' && i/w < h-promptRows && uniseg.StringWidth(string(c.Runes[0])) != 1 {
@@ -205,113 +202,6 @@ func TestBadgeCaseOnTheLiveScreen(t *testing.T) {
 		}
 		if ev := captured(d.root, *esc); ev != nil || d.overlayMgr.ActiveName() != "" {
 			t.Errorf("%s: the second Esc did not close the panel", where)
-		}
-	}
-}
-
-// TestBadgeToastFitsTheBar: the toast for a badge is the badge's own art
-// at its smallest, three cells in its tier's colours, then its name, its
-// tier and what it is for. It is written for the bar's width: the whole of
-// it where it fits, without the description where that would be cut, and
-// never longer than the bar. It reads in every theme.
-func TestBadgeToastFitsTheBar(t *testing.T) {
-	views, _ := caseFixture()
-	by := map[string]game.BadgeView{}
-	for _, v := range views {
-		by[v.Key] = v
-	}
-	render := func(markup string) (text string, cells []simCell) {
-		tv := newNativeText().SetDynamicColors(true)
-		tv.SetText(safeTags(markup))
-		sim := newSim()
-		must(t, sim.Init())
-		defer sim.Fini()
-		sim.SetSize(200, 1)
-		tv.SetRect(0, 0, 200, 1)
-		drawOn(sim, tv)
-		sim.Show()
-		cells, _, _ = sim.GetContents()
-		return strings.TrimRight(tv.GetText(true), "\n"), append([]simCell(nil), cells...)
-	}
-	hut := by["special.hut_hoarder"]
-	if text, _ := render(badgeToast(hut, mapmodel.TierUnicode, 0)); text != "◖∩◗ Badge earned: Hut Hoarder (gold). "+hut.Desc {
-		t.Errorf("the toast at any width: %q", text)
-	}
-	if text, _ := render(badgeToast(hut, mapmodel.TierASCII, 0)); !strings.HasPrefix(text, "(n) Badge earned: Hut Hoarder (gold).") {
-		t.Errorf("the toast in the plain tier: %q", text)
-	}
-	for _, size := range treeSizes {
-		w := size[0]
-		for _, v := range views {
-			if v.Hidden {
-				continue
-			}
-			for _, tier := range caseTiers {
-				text, _ := render(badgeToast(v, tier, w))
-				if n := uniseg.StringWidth(text); n > w {
-					t.Errorf("%d columns: the toast for %s is %d cells: %q", w, v.Key, n, text)
-				}
-				if !strings.Contains(text, "Badge earned: "+v.Name) {
-					t.Errorf("%d columns: the toast for %s does not name it: %q", w, v.Key, text)
-				}
-				if strings.Contains(text, v.Desc[:8]) && !strings.HasSuffix(text, v.Desc) {
-					t.Errorf("%d columns: the toast for %s cuts its description: %q", w, v.Key, text)
-				}
-			}
-		}
-	}
-	if text, _ := render(badgeToast(hut, mapmodel.TierUnicode, 80)); text != "◖∩◗ Badge earned: Hut Hoarder (gold)." {
-		t.Errorf("80 columns: the toast keeps a description it has no room for: %q", text)
-	}
-	if text, _ := render(badgeToast(by["age.stone_age"], mapmodel.TierUnicode, 80)); text != "◖*◗ Badge earned: Rock Solid (bronze). Reach the Stone Age." {
-		t.Errorf("80 columns: %q", text)
-	}
-	long := hut
-	long.Name = strings.Repeat("Very Long Name ", 8)
-	if text, _ := render(badgeToast(long, mapmodel.TierUnicode, 60)); uniseg.StringWidth(text) > 60 || !strings.Contains(text, "…") {
-		t.Errorf("a name too long for the bar: %q", text)
-	}
-
-	// Colours: the mark in the tier's ink, and everything legible, in
-	// every theme.
-	eachThemeInline(t, func(th theme.Theme) {
-		bg := theme.Of(theme.RoleBackground)
-		_, cells := render(badgeToast(hut, mapmodel.TierUnicode, 0))
-		for x, c := range cells {
-			if len(c.Runes) == 0 || c.Runes[0] == ' ' {
-				continue
-			}
-			fg, _, _ := decompose(c.Style)
-			if r := theme.ContrastRatio(fg, bg); r < 2.99 {
-				t.Errorf("theme %s: the toast's %q at %d has a contrast of %.2f", th.Key, c.Runes[0], x, r)
-			}
-		}
-		pal := newGridPalette(0, nil)
-		if fg, _, _ := decompose(cells[0].Style); fg != pal.inkOn(inkGold, false) {
-			t.Errorf("theme %s: the toast's mark is %06x, not gold (%06x)", th.Key, fg.Hex(), pal.inkOn(inkGold, false).Hex())
-		}
-	})
-}
-
-// TestBadgeToastOnTheLiveScreen: an earned badge's toast is the notice in the
-// header's top edge at every size, whole, in one row: the badge and its name
-// always, its description once the edge has the room.
-func TestBadgeToastOnTheLiveScreen(t *testing.T) {
-	for _, size := range treeSizes {
-		w, h := size[0], size[1]
-		d, pages, eng := badgeDashboard(t)
-		drawnDashboard(t, d, pages, w, h) // the bar gets its width
-		// The report alone: an age entered for real raises its splash
-		// over the bar.
-		eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
-		cells := drawnDashboard(t, d, pages, w, h)
-		row := rectText(cells, w, 0, 0, w, 1)[0]
-		whole := "◖*◗ Badge earned: Rock Solid (bronze)."
-		if w >= 100 {
-			whole += " Reach the Stone Age."
-		}
-		if !strings.Contains(row, " "+whole+" ") {
-			t.Errorf("%dx%d: the header's top edge shows %q, want %q in it", w, h, row, whole)
 		}
 	}
 }

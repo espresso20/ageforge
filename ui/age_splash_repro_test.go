@@ -746,6 +746,10 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	if h.hasPage("catastrophe") {
 		t.Fatalf("refresh() re-popped the modal after Esc\n%s", h.describeUI())
 	}
+	// The badges the run earned on the way have their card over the header's
+	// right end for a few seconds; this test reads the header under it.
+	h.onUI(func() { h.a.dashboard.moment = badgeMoment{} })
+	h.refresh()
 	if scr := h.screenText(); !catastropheBadgeShown(t, scr) {
 		t.Errorf("pending badge missing from the status bar:\n%s", scr)
 	}

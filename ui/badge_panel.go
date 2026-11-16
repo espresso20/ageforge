@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
@@ -21,7 +20,7 @@ import (
 // detail. Esc closes the detail, then the panel.
 //
 // What moves in the case (a platinum badge's glints, a legendary badge's
-// ring, the three hand-drawn badges) is drawn from a frame number the
+// ring, the signs of the specials) is drawn from a frame number the
 // panel reads off the clock: nothing is stored, and the game's motion
 // setting turns it off.
 
@@ -51,12 +50,18 @@ type badgePanel struct {
 	kit.Base
 	// host paints the case's kit cells and takes the mouse; the keys stay
 	// with barPanel.
-	views   []game.BadgeView
-	sum     game.BadgeSummary
-	account bool
-	view    caseView
-	model   *caseModel
-	w, h    int // the last size drawn at
+	views []game.BadgeView
+	sum   game.BadgeSummary
+	// coins is the pictures of the coins; other screens may share it.
+	coins *coinCache
+	// picked is the badge whose large medal was painted last, and pickedAt
+	// the pose number it was first painted at: its turn starts there.
+	picked   string
+	pickedAt int
+	account  bool
+	view     caseView
+	model    *caseModel
+	w, h     int // the last size drawn at
 
 	// settings reads the glyph tier and the motion setting.
 	settings func() mapSettings
@@ -72,13 +77,14 @@ type badgePanel struct {
 }
 
 func newBadgePanel() *badgePanel {
-	p := &badgePanel{w: 120, h: 37, now: time.Now, start: time.Now(), motion: true}
+	p := &badgePanel{w: 120, h: 37, now: time.Now, start: time.Now(), motion: true, coins: &coinCache{}}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
 }
 
 // open is the overlay's build: it runs on every Show.
 func (p *badgePanel) open(state game.GameState) Primitive {
+	p.picked = "" // the large medal turns to face the player again
 	p.update(state)
 	return overBar(p)
 }
@@ -126,37 +132,6 @@ func (p *badgePanel) layout() {
 	p.model.follow(&p.view)
 }
 
-// frame is the animation frame: the clock's, or atRest when the motion
-// setting is off.
-func (p *badgePanel) frame() int {
-	if !p.motion {
-		return atRest
-	}
-	return int(p.now().Sub(p.start) / mapAnimStep)
-}
-
-// moves reports whether the case as it stands draws anything that moves:
-// the selected badge's art, or a legendary badge on the page.
-func (p *badgePanel) moves() bool {
-	if !p.motion || p.model == nil || !p.account {
-		return false
-	}
-	if it := p.model.selected(p.view); it != nil && medalOf(it.v, p.view.tier).animated() {
-		return true
-	}
-	for _, ln := range p.model.lines {
-		if ln.kind != lineBadges || !p.model.visible(ln, p.view.vy) {
-			continue
-		}
-		for _, i := range ln.items {
-			if md := medalOf(p.model.items[i].v, p.view.tier); md.state == medalEarned && md.tier == config.BadgeLegendary {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 // Layout takes the panel's rectangle and lays the case out again when its
 // size has changed.
 func (p *badgePanel) Layout(r image.Rectangle) {
@@ -174,15 +149,83 @@ func (p *badgePanel) Paint(p2 *kit.Painter) {
 		return
 	}
 	p.view.prompt = p.prompt != nil && p.prompt() != ""
-	grid := renderCase(p.model, p.view, p.frame())
+	grid := renderCase(p.model, p.view)
 	if p.view.plain() {
 		foldBadges(grid)
 	}
 	paintGridKit(p2, grid, r.Min, newGridPalette(0, nil))
-	p.moving.Store(p.moves())
+	if g := p.model.chrome; g != nil {
+		// The buttons, over the case: the key bar's row, and the close
+		// button's cells of the title bar.
+		pal := newExpPalette()
+		paintExpeditionKit(p2.Clip(image.Rect(r.Min.X, r.Max.Y-1, r.Max.X, r.Max.Y)), g, r.Min, pal)
+		for _, k := range g.keys {
+			if k.r.Min.Y == 0 {
+				paintExpeditionKit(p2.Clip(k.r.Add(r.Min)), g, r.Min, pal)
+			}
+		}
+		p.buttons.paintLit(p2, g, r.Min, pal)
+	}
+	p.moving.Store(p.paintCoins(p2, r.Min))
 }
 
-// Mouse: a click selects the badge under the pointer and a double click
+// paintCoins paints the case's coins as pictures, each in the pose its show
+// has come to, and reports whether any of them is in a show. The shows of a
+// shelf set off one after another, from the upper left, so a band of light
+// seems to cross the whole case; the picked badge's large medal turns to
+// face the player when it is picked, and its show begins there.
+func (p *badgePanel) paintCoins(p2 *kit.Painter, org image.Point) bool {
+	n, moving := p.coinFrame(), false
+	for _, c := range p.model.coins {
+		l := p.look(c.it, coinArt)
+		at := n
+		if n != atRest {
+			at -= 2*c.it.col + 3*c.it.line
+		}
+		p2.Picture(c.r.Add(org), p.coins.image(l, c.r.Size(), coinPoseAt(l, at)))
+		moving = moving || l.earned()
+	}
+	at, it := p.model.medalRoom, p.model.medalFor
+	if at.Empty() || it == nil {
+		return moving && n != atRest
+	}
+	if it.id != p.picked {
+		p.picked, p.pickedAt = it.id, n
+	}
+	l, since := p.look(it, medalArt), atRest
+	if n != atRest {
+		since = n - p.pickedAt
+	}
+	p2.Picture(at.Add(org), p.coins.image(l, at.Size(), pickedPoseAt(l, since)))
+	return n != atRest && (moving || l.earned() || since < turnSteps)
+}
+
+// coinFrame is the pose number the coins' shows are at: the clock's, or
+// atRest when the motion setting is off.
+func (p *badgePanel) coinFrame() int {
+	if !p.motion {
+		return atRest
+	}
+	// It starts well above zero, so a coin's own delay never takes it to
+	// atRest.
+	return 1<<16 + int(p.now().Sub(p.start)/coinStep)
+}
+
+// look is how a badge's coin looks at a size of art.
+func (p *badgePanel) look(it *caseItem, art int) coinLook {
+	return lookOf(medalOf(it.v), medalSign(it.v.Family), art)
+}
+
+// setCoins makes the panel draw its coins from a cache shared with other
+// screens.
+func (p *badgePanel) setCoins(c *coinCache) {
+	if c != nil {
+		p.coins = c
+	}
+}
+
+// Mouse: a click on a key of the key bar presses it, and the close button
+// presses Esc; a click selects the badge under the pointer and a double click
 // opens its detail, as Enter does; a click on a tab opens it, and on the
 // arrow at an end of the tab row the nearest tab out of sight that way; a
 // click outside an open detail closes it, as Esc does; the wheel moves the
@@ -192,6 +235,8 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 		return false
 	}
 	switch {
+	case p.buttons.mouse(p.model.chrome, p.Bounds().Min, m):
+		return true
 	case m.Kind == kit.MouseWheel && !p.view.card:
 		key := kit.KeyDown
 		if m.Wheel < 0 {
@@ -228,10 +273,14 @@ func (p *badgePanel) Mouse(m kit.Mouse) bool {
 	return true
 }
 
-// PointerAt: the hand over a badge, and over a tab a click would open.
+// PointerAt: the hand over a key button, a badge, and a tab a click would
+// open.
 func (p *badgePanel) PointerAt(at image.Point) kit.Pointer {
-	if p.model == nil || p.view.card {
+	if p.model == nil {
 		return kit.PointerArrow
+	}
+	if key := p.buttons.pointer(p.model.chrome, p.Bounds().Min, at); key != kit.PointerArrow || p.view.card {
+		return key
 	}
 	pt := at.Sub(p.Bounds().Min)
 	if pt.Y == 1 {
@@ -321,7 +370,7 @@ func (p *badgePanel) page(dir int) {
 	if p.model.lay.list {
 		lines = max(p.model.lay.gh-1, 1)
 	} else {
-		lines = max(p.model.lay.gh/casePitchY, 1)
+		lines = max(p.model.lay.gh/p.model.lay.pitchY(), 1)
 	}
 	p.jump(dir, lines)
 }
