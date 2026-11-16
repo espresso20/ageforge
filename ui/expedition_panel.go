@@ -186,14 +186,15 @@ func (p *expeditionPanel) Layout(r image.Rectangle) {
 // Paint puts the panel on the kit's painter in theme colors.
 func (p *expeditionPanel) Paint(p2 *kit.Painter) { p.paintGrid(p2, p.grid, p.Bounds()) }
 
-// Mouse: a click on an offer's pin highlights it, as the arrows do, and a
-// double click asks to send it, as Enter does; on the Report a click on a
+// Mouse: a click on a button presses its key (while the question is up only
+// its own buttons answer); a click on an offer's pin highlights it, as the
+// arrows do, and a double click asks to send it, as Enter does; on the Report a click on a
 // party picks it. A click outside the question before a party is sent takes
 // it back, as Esc does. The wheel moves the highlight a notch, as Up and Down
 // do.
 func (p *expeditionPanel) Mouse(m kit.Mouse) bool {
 	switch {
-	case !p.view.confirm && p.buttons.mouse(p.grid, p.Bounds().Min, m):
+	case p.buttons.mouse(p.grid, p.Bounds().Min, m):
 		return true
 	case m.Kind == kit.MouseWheel:
 		key := kit.KeyDown
@@ -234,19 +235,24 @@ func (p *expeditionPanel) Mouse(m kit.Mouse) bool {
 }
 
 // PointerAt: the hand over an offer's pin on the board and over a party on
-// the report; with the confirm up, nothing behind it takes a click.
+// the report, and over a button; with the confirm up, nothing behind it takes
+// a click, and only its own buttons are live.
 func (p *expeditionPanel) PointerAt(at image.Point) kit.Pointer {
-	if p.grid == nil || p.view.confirm {
+	if p.grid == nil {
+		return kit.PointerArrow
+	}
+	if p.buttons.pointer(p.grid, p.Bounds().Min, at) == kit.PointerHand {
+		return kit.PointerHand
+	}
+	if p.view.confirm {
 		return kit.PointerArrow
 	}
 	kind := hitOffer
 	if p.view.report {
 		kind = hitParty
 	}
-	pt := at.Sub(p.Bounds().Min)
-	_, ok := p.grid.hitAt(kind, pt)
-	_, key := p.grid.keyAt(pt)
-	return handIf(ok || key)
+	_, ok := p.grid.hitAt(kind, at.Sub(p.Bounds().Min))
+	return handIf(ok)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

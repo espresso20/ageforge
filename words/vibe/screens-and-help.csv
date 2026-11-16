@@ -586,7 +586,6 @@ ui.expedition_view.briefing.10,Damage
 ui.expedition_view.briefing.11,Damage
 ui.expedition_view.briefing.13,"If it flops, the cost is gone, a lot of the squad fall, and only a third of the haul makes it home."
 ui.expedition_view.briefing.14,"Legendary: bigger bag, harder road. If it fails, more of the squad fall and a third of the haul is kept."
-ui.expedition_view.briefing.16," send the squad"
 ui.expedition_view.drawBriefing.01,Mission tea
 ui.expedition_view.drawBriefing.02,The board is empty rn. New offers drop in a few minutes.
 ui.expedition_view.drawBriefing.04,"◈ Legendary, goated tier"

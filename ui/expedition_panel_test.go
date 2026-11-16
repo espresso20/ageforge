@@ -260,8 +260,10 @@ func TestExpeditionPanelShowsAnOfferThatCannotBeSentItsRefusal(t *testing.T) {
 	if joined := strings.Join(strings.Fields(strings.Join(card, " ")), " "); !strings.Contains(joined, refusalText(o)) {
 		t.Errorf("the card does not say why: want %q in\n%s", refusalText(o), text)
 	}
-	if strings.Contains(text, "send the party") {
-		t.Errorf("the card offers to send an offer that cannot be sent:\n%s", text)
+	for _, k := range g.keys {
+		if k.kind.action() {
+			t.Errorf("the card offers a button for an offer that cannot be sent:\n%s", text)
+		}
 	}
 	p.handleKey(kit.KeyEnter)
 	if p.view.confirm {
@@ -714,5 +716,62 @@ func TestExpeditionPanelMouse(t *testing.T) {
 	p.view.party = 0
 	if !press(pin(hitParty, 1), 1) || p.view.party != 1 {
 		t.Errorf("a click on the second party picked %d", p.view.party)
+	}
+}
+
+// TestExpeditionCanBeSentWithTheMouseAlone: the briefing's send button asks,
+// the box's send button sends, and the box's back button takes the question
+// back; the foot's keys are off while the box is up.
+func TestExpeditionCanBeSentWithTheMouseAlone(t *testing.T) {
+	engine, p := expFixture(t)
+	p.open(engine.GetState())
+	p.buttons.press = func(k kit.Key) {
+		if k.Code == kit.KeyEsc {
+			p.closeConfirm()
+			return
+		}
+		p.handleKey(k.Code)
+	}
+	r := image.Rect(0, 0, 100, 27)
+	p.Layout(r)
+	if o := p.scene().offers[p.scene().selected(p.view.sel)].offer; !o.CanLaunch {
+		t.Skip("staging: the highlighted offer cannot be sent")
+	}
+	press := func(label string) {
+		t.Helper()
+		for _, k := range p.grid.keys {
+			if k.kind.action() && !k.off && p.grid.String() != "" {
+				var got []rune
+				for x := k.word.Min.X; x < k.word.Max.X; x++ {
+					got = append(got, p.grid.c[k.word.Min.Y*p.grid.w+x].r)
+				}
+				if string(got) == label {
+					at := k.r.Min.Add(image.Pt(2, 1))
+					p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: at.X, Y: at.Y})
+					p.Mouse(kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonLeft, X: at.X, Y: at.Y})
+					p.Layout(r)
+					return
+				}
+			}
+		}
+		t.Fatalf("no %q button on screen:\n%s", label, p.grid.String())
+	}
+	press("send")
+	if !p.view.confirm {
+		t.Fatal("a click on the briefing's send did not ask")
+	}
+	for _, k := range p.grid.keys {
+		if !k.kind.action() && !k.off {
+			t.Errorf("a foot key %+v stays live under the question", k)
+		}
+	}
+	press("back")
+	if p.view.confirm || len(engine.GetState().Military.Active) != 0 {
+		t.Fatalf("back left confirm %v with %d out", p.view.confirm, len(engine.GetState().Military.Active))
+	}
+	press("send")
+	press("send")
+	if p.view.confirm || len(engine.GetState().Military.Active) != 1 {
+		t.Errorf("the box's send left confirm %v with %d out, want one party sent", p.view.confirm, len(engine.GetState().Military.Active))
 	}
 }
