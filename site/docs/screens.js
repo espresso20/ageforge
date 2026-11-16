@@ -99,6 +99,8 @@
       img.style.width = "calc(var(--cw) * " + p.w + ")";
       img.style.height = "calc(var(--ch) * " + p.h + ")";
       img.style.imageRendering = "pixelated";
+      // A page's cell is not quite the game's shape; the picture keeps its own.
+      img.style.objectFit = "contain";
       img.style.pointerEvents = "none";
       pre.appendChild(img);
     });

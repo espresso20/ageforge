@@ -928,6 +928,9 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	s.eng.SeedRNG(siteScreensSeed)
 	still := time.Unix(0, 0)
 	s.d.badgePanel.start, s.d.badgePanel.now = still, func() time.Time { return still }
+	// The coins stand still for the wiki: on a stopped clock the picked coin
+	// would be caught in the middle of its turn.
+	s.d.badgePanel.settings = func() mapSettings { m := s.d.mapSettings(); m.Motion = false; return m }
 
 	s.toBronze()
 	s.dismiss() // the Bronze Age's splash
