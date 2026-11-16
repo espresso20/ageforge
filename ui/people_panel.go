@@ -29,6 +29,33 @@ type peoplePanel struct {
 	settings func() mapSettings
 }
 
+// wire makes the panel's keys press: its own (a count for Recruit, a link to a
+// tab) are taken by the panel, the rest go to the app.
+func (p *peoplePanel) wire(app *appLoop) {
+	p.buttons.wire(app)
+	press := p.buttons.press
+	p.buttons.press = func(k kit.Key) {
+		if p.take(k) {
+			return
+		}
+		press(k)
+	}
+}
+
+// take does what a private key of the panel stands for and reports whether k
+// was one.
+func (p *peoplePanel) take(k kit.Key) bool {
+	if c, ok := buyOf(k); ok {
+		p.view.buy = c
+		return true
+	}
+	if t, ok := goOf(k); ok {
+		p.setTab(t)
+		return true
+	}
+	return false
+}
+
 func newPeoplePanel() *peoplePanel {
 	p := &peoplePanel{w: 100, h: 30}
 	p.barPanel = newBarPanel(p.routeKey)
@@ -46,6 +73,7 @@ func (p *peoplePanel) open(state game.GameState) Primitive {
 func (p *peoplePanel) update(state game.GameState) {
 	p.state = state
 	p.view.row = clamp(p.view.row, 0, peopleRows(state, p.view.tab)-1)
+	p.view.sub = max(0, p.view.sub)
 }
 
 // Layout takes the panel's rectangle and works the panel out in it.
@@ -89,8 +117,12 @@ func (p *peoplePanel) Mouse(m kit.Mouse) bool {
 		p.setTab(t)
 		return true
 	}
+	if n, ok := p.grid.hitAt(hitSub, pt); ok {
+		p.view.sub = n
+		return true
+	}
 	if n, ok := p.grid.hitAt(hitRow, pt); ok {
-		p.view.row = clamp(n, 0, peopleRows(p.state, p.view.tab)-1)
+		p.pick(n)
 		return true
 	}
 	return false
@@ -104,8 +136,9 @@ func (p *peoplePanel) PointerAt(at image.Point) kit.Pointer {
 	pt := at.Sub(p.Bounds().Min)
 	_, tab := p.grid.tabAt(pt)
 	_, row := p.grid.hitAt(hitRow, pt)
+	_, sub := p.grid.hitAt(hitSub, pt)
 	_, key := p.grid.keyAt(pt)
-	return handIf(tab || row || key)
+	return handIf(tab || row || sub || key)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it
@@ -116,6 +149,8 @@ func (p *peoplePanel) routeKey(ev *kit.Key, prompt string) bool {
 		if prompt != "" {
 			return false
 		}
+	case kit.KeyRune:
+		return p.take(*ev) || p.stepKey(ev.Rune, prompt)
 	default:
 		return false
 	}
@@ -130,13 +165,48 @@ func (p *peoplePanel) handleKey(key kit.KeyCode) {
 	case kit.KeyRight:
 		p.setTab((p.view.tab + 1) % len(peopleTabs))
 	case kit.KeyUp:
-		p.view.row = max(0, p.view.row-1)
+		p.pick(p.view.row - 1)
 	case kit.KeyDown:
-		p.view.row = min(max(0, peopleRows(p.state, p.view.tab)-1), p.view.row+1)
+		p.pick(p.view.row + 1)
 	}
+}
+
+// pick picks a row of the tab, within it; the picked building of an area goes
+// back to the first.
+func (p *peoplePanel) pick(row int) {
+	row = clamp(row, 0, max(0, peopleRows(p.state, p.view.tab)-1))
+	if row != p.view.row {
+		p.view.sub = 0
+	}
+	p.view.row = row
+}
+
+// stepKey takes + and - on the Work tab with an empty prompt: they put a
+// worker in the picked building and take one out, as its chips do.
+func (p *peoplePanel) stepKey(r rune, prompt string) bool {
+	if prompt != "" || p.view.tab != tabWork || p.buttons.run == nil {
+		return false
+	}
+	b, ok := pickedBuilding(p.state, p.view)
+	if !ok {
+		return false
+	}
+	minus, plus := buildingStep(b.key, b.BuildingState, p.state.Workers.TotalIdle)
+	side := minus
+	switch r {
+	case '+', '=':
+		side = plus
+	case '-':
+	default:
+		return false
+	}
+	if !side.off {
+		p.buttons.run(side.cmd)
+	}
+	return true
 }
 
 // setTab switches to a tab, on its first row.
 func (p *peoplePanel) setTab(t int) {
-	p.view.tab, p.view.row = t, 0
+	p.view.tab, p.view.row, p.view.sub = t, 0, 0
 }

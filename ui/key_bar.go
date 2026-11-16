@@ -28,6 +28,9 @@ type xkey struct {
 	// cmd is the command line a click runs, through the path a typed line
 	// takes, in place of pressing key. Empty for a key that only presses.
 	cmd string
+	// ask is what a click asks first, when the command is one that needs a
+	// yes; the command runs only on the answer. Empty to run at once.
+	ask string
 	// sign is the picture at the left of an action button.
 	sign signKind
 }
@@ -242,6 +245,10 @@ type keyPresser struct {
 	// run runs a command line as the command bar runs a typed one: a button
 	// that carries a line (xkey.cmd) is clicked through it.
 	run func(cmd string)
+	// confirm asks the player a question and runs a command line if the
+	// answer is yes: a button that carries a question (xkey.ask) is clicked
+	// through it.
+	confirm func(question, cmd string)
 	// over is the cell the pointer is over, in the panel's own cells, while
 	// in says it is over the panel.
 	over image.Point
@@ -262,7 +269,7 @@ type keyPresser struct {
 // the buttons.
 func (k *keyPresser) wire(a *appLoop) {
 	k.press, k.feel = a.Key, &a.feel
-	k.run = a.runLine
+	k.run, k.confirm = a.runLine, a.confirm
 }
 
 // sense is the presser's feel, made when it has none.
@@ -281,12 +288,17 @@ func (k *keyPresser) lit(s *keySet) (xkey, bool) {
 	return s.keyAt(k.over)
 }
 
-// fire does what a click or the key of b does: runs its command line, or
-// presses its key.
+// fire does what a click or the key of b does: runs its command line (after
+// its question, if it has one), or presses its key.
 func (k *keyPresser) fire(b xkey) {
-	if b.cmd == "" {
+	switch {
+	case b.cmd == "":
 		k.press(b.key)
-	} else if k.run != nil {
+	case b.ask != "":
+		if k.confirm != nil {
+			k.confirm(b.ask, b.cmd)
+		}
+	case k.run != nil:
 		k.run(b.cmd)
 	}
 }

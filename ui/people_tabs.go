@@ -121,6 +121,10 @@ func (c peopleBody) overview() {
 			if j == 0 {
 				kind = xBright
 			}
+			if j == 3 && (i == 1 || i == 2) {
+				g.peopleLink(x+1, cy+1+j, w-2, l, map[int]int{1: tabWork, 2: tabArmy}[i])
+				continue
+			}
 			g.putFit(x+2, cy+1+j, w-4, l, kind)
 		}
 	}
@@ -275,17 +279,8 @@ func (c peopleBody) work() {
 	rx, ri := c.x+lw+2, rw-4
 	y := c.y + 1
 	bs := c.areaList(r.Domain)
-	for i, b := range bs {
-		if y >= c.y+c.h-8 {
-			g.putFit(rx, y, ri, vibe.Sprintf("ui.people_tabs.work.09", "and %d more", len(bs)-i), xFaint)
-			y++
-			break
-		}
-		count := fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))
-		g.putFit(rx, y, ri-runeLen(count)-1, fmt.Sprintf("%s x%d", b.Name, b.Count), xText)
-		g.rput(rx+ri-1, y, count, xGood)
-		y++
-	}
+	recruitY := c.y + c.h - 1 - c.recruitRows()
+	y = c.workList(rx, y, ri, recruitY-6, bs)
 	if len(bs) == 0 {
 		g.putFit(rx, y, ri, vibe.Line("ui.people_tabs.work.10", "No buildings here yet."), xFaint)
 		y++
@@ -303,7 +298,7 @@ func (c peopleBody) work() {
 	openAt := len(lines) // the first line of the note after it is gold
 	lines = append(lines, wrapText(vibe.Line("ui.people_tabs.work.17", "Open slots fill from the reserve."), ri)...)
 	for i, l := range lines {
-		if y >= c.y+c.h-1 {
+		if y >= recruitY-1 {
 			break
 		}
 		k := xDim
@@ -313,6 +308,7 @@ func (c peopleBody) work() {
 		g.put(rx, y, l, k)
 		y++
 	}
+	c.recruitBlock(rx, recruitY, ri)
 	c.footer([][2]string{{"↑↓", vibe.Line("ui.people_tabs.work.19", "pick an area")}, escClose()}, "roster <area> <%|auto>")
 }
 
@@ -483,6 +479,9 @@ func (c peopleBody) scholars() {
 		lab := fitText(row[0], 9)
 		g.put(rx, y, lab, xDim)
 		g.putFit(rx+10, y, ri-10, row[1], xText)
+	}
+	if y := c.y + 7; y < c.y+topH-1 {
+		c.splitRow(rx, y, ri)
 	}
 
 	by := c.y + topH

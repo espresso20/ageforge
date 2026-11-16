@@ -262,7 +262,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.RegisterWidget("stats", vibe.E("ui.dashboard.NewDashboard.09", "Statistics"), d.statsPanel.open, d.statsPanel.update)
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.handToPrompt
-	d.peoplePanel.buttons.wire(d.app)
+	d.peoplePanel.wire(d.app)
 	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
@@ -472,7 +472,7 @@ func (d *Dashboard) build() {
 		}
 		return d.cardLine()
 	}
-	d.app.line = d.pressLine
+	d.app.line, d.app.confirm = d.pressLine, d.askLine
 	d.app.feel.motion = func() bool { return d.mapSettings().Motion }
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
 	d.inputField.SetBorder(true)
@@ -1507,6 +1507,20 @@ func (d *Dashboard) pressLine(line string) {
 	d.inputField.echoLine(line)
 	d.remember(line)
 	d.runLine(line)
+}
+
+// askLine puts a question over the dashboard with a plain and a danger
+// button; the danger one runs the line as a click on a button does. Either
+// answer gives the keyboard back.
+func (d *Dashboard) askLine(question, line string) {
+	const page = "ask_line"
+	buttons := []string{txtCancel.String(), txtDismiss.String()}
+	styleDangerModal(showButtonModal(d.app, d.pages, page, question, buttons, func(i int, _ string) {
+		if i == 1 {
+			d.pressLine(line)
+		}
+		d.returnFocus()
+	}))
 }
 
 // runLine does what a command line asks, as Enter on it does. It leaves the

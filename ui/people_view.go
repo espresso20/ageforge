@@ -32,12 +32,15 @@ const (
 // What a click on the panel can pick.
 const (
 	hitRow = iota // a card, a work area or a building
+	hitSub        // a building of the picked work area
 )
 
 // peopleView is what the player has picked.
 type peopleView struct {
-	tab int // the tab
-	row int // the picked row on the tab (a card, an area, a building)
+	tab int       // the tab
+	row int       // the picked row on the tab (a card, an area, a building)
+	sub int       // the picked building of the picked work area
+	buy buyChoice // how many Recruit takes
 }
 
 // peopleKeys are the panel's keys as the Help panel lists them.

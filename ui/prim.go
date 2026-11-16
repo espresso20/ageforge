@@ -129,6 +129,9 @@ type appLoop struct {
 	// line runs a command line as the command bar does (the dashboard sets
 	// it): what a button that carries one does when it is clicked.
 	line func(cmd string)
+	// confirm asks a question and runs the command line on a yes (the
+	// dashboard sets it).
+	confirm func(question, cmd string)
 
 	events chan func()   // what the loop has to do, in order
 	done   chan struct{} // closed by Stop
