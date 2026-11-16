@@ -83,3 +83,18 @@ func TestMaxBuildableIsWhatMaxBuilds(t *testing.T) {
 		t.Errorf("after max, %d more are still affordable", n)
 	}
 }
+
+func TestCanGatherByHandEndsAfterTheMedievalAge(t *testing.T) {
+	st := pricedEngine(t).GetState()
+	if !st.CanGatherByHand() {
+		t.Error("the first age cannot gather by hand")
+	}
+	st.Age = "medieval_age"
+	if !st.CanGatherByHand() {
+		t.Error("the Medieval Age cannot gather by hand")
+	}
+	st.Age = "renaissance_age"
+	if st.CanGatherByHand() {
+		t.Error("the age after the Medieval Age can gather by hand")
+	}
+}

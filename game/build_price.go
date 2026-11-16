@@ -67,3 +67,9 @@ func (s GameState) MaxBuildable(key string) int {
 	}
 	return n
 }
+
+// CanGatherByHand reports whether the age the snapshot is in still allows
+// the gather command: hand-gathering ends after the Medieval Age.
+func (s GameState) CanGatherByHand() bool {
+	return !pastMedievalForGather(s.Ruleset(), s.Age)
+}
