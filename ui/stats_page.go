@@ -235,6 +235,7 @@ func (pg *statsPage) heading(x, y, w int, s string) {
 // tile may span several of the n slots.
 func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 	tw := (w - (n - 1)) / n
+	rem := w - (n - 1) - n*tw
 	lr := 1
 	for _, t := range tiles {
 		lr = max(lr, len(wrapWords(t.name, tw-2)))
@@ -262,9 +263,11 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 		if slot%n+sp > n {
 			slot += n - slot%n
 		}
-		x, ty := slot%n*(tw+1), y+slot/n*(th+1)
+		// what the division left goes into the first gaps, so a row ends at the edge
+		col, ty := slot%n, y+slot/n*(th+1)
+		x := col*(tw+1) + min(col, rem)
 		slot += sp
-		tw := sp*tw + sp - 1
+		tw := (col+sp-1)*(tw+1) + min(col+sp-1, rem) + tw - x
 		t.r = image.Rect(x, ty, x+tw, ty+th)
 		if t.plaque != nil {
 			pg.layPlaque(t, nr)

@@ -335,3 +335,25 @@ func TestLifetimeStubIsGone(t *testing.T) {
 		}
 	}
 }
+
+// TestLifetimeTopTilesFillEveryRow: below the wide width the plaque takes a
+// row and the three counts share the next, so no row leaves a slot empty.
+func TestLifetimeTopTilesFillEveryRow(t *testing.T) {
+	for _, pics := range []bool{true, false} {
+		for _, w := range []int{80, 100} {
+			p, _ := lifeStats(t, 8, w, 60, pics, lifeSome, nil)
+			right := map[int]int{}
+			for _, tl := range p.page.tiles[:4] {
+				right[tl.r.Min.Y] = max(right[tl.r.Min.Y], tl.r.Max.X)
+			}
+			if len(right) != 2 {
+				t.Errorf("w %d pics %v: top tiles on %d rows, want 2", w, pics, len(right))
+			}
+			for y, x := range right {
+				if x < w-5 || x > w-4 {
+					t.Errorf("w %d pics %v: row %d ends at %d, page edge %d", w, pics, y, x, w-4)
+				}
+			}
+		}
+	}
+}

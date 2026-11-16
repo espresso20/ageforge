@@ -68,12 +68,11 @@ func (pg *statsPage) lifetime(st game.GameState, w int, wide bool, grow int) int
 		countTile(txtPrestiges.String(), "wonder", as.TotalPrestiges),
 		countTile(txtCivs.String(), "diplomacy", as.CivilizationsStarted),
 		{name: txtBadgesEarn.String(), text: fmt.Sprintf("%d/%d", bs.Earned, total), toks: toks, kind: "trade"}}
-	n := 3
-	switch {
-	case wide:
+	n := 3 // narrower: the plaque takes a row, the three counts the next
+	if wide {
 		n = 5
-	case w < 90:
-		n = 2
+	} else {
+		tiles[0].span = n
 	}
 	y := pg.layTiles(tiles, 0, w, n, 3+grow)
 	y = pg.ladder(st, as, y, w, grow)
