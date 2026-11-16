@@ -289,6 +289,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		return nil
 	})
 	d.overlayMgr.Register("harbinger", vibe.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
+	d.harbPanel.view.attach(d.overlayMgr, "harbinger", d.harbPanel.view.layer)
 	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
 	d.overlayMgr.SetKeyHandler("harbinger", func(event *kit.Key) *kit.Key {
 		// UI goroutine, no engine lock held: the engine's action methods and
