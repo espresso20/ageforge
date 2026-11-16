@@ -200,3 +200,40 @@ func TestBadgeMomentOnTheLiveScreen(t *testing.T) {
 		}
 	}
 }
+
+// TestBadgeMomentWaitsUnderAPanel: a badge earned while a panel covers the
+// dashboard keeps its card until the panel closes, then shows it.
+func TestBadgeMomentWaitsUnderAPanel(t *testing.T) {
+	const w, h = 160, 48
+	d, pages, eng := badgeDashboard(t)
+	drawnDashboard(t, d, pages, w, h)
+	clock := time.Unix(1_700_000_000, 0)
+	d.fxNow = func() time.Time { return clock }
+	d.miniMap.now = d.fxNow
+	must(t, eng.Account().SetMotion(true))
+
+	if !d.overlayMgr.Show("techs", eng.GetState()) {
+		t.Fatal("the Research panel did not open")
+	}
+	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
+	d.refresh()
+	if len(d.moment.queue) != 1 {
+		t.Fatalf("%d badges wait for the card, want 1", len(d.moment.queue))
+	}
+	name := d.moment.queue[0].Name
+	paintLive(pages, w, h)
+	clock = clock.Add(2 * momentLife * coinStep)
+	paintLive(pages, w, h)
+	if !d.moment.start.IsZero() || len(d.moment.queue) != 1 || d.momentOn.Load() {
+		t.Fatalf("the card ran under the panel: start %v, %d queued", d.moment.start, len(d.moment.queue))
+	}
+
+	d.overlayMgr.Hide()
+	paintLive(pages, w, h)
+	clock = clock.Add(momentOpen * coinStep)
+	b := paintLive(pages, w, h)
+	card := image.Rect(w-momentW-1, 1, w-1, 1+momentH)
+	if text := bufText(b, card); !strings.Contains(text, name) {
+		t.Errorf("the card does not show once the panel closes: %q", text)
+	}
+}

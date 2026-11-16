@@ -796,8 +796,13 @@ func (d *Dashboard) clock() func() time.Time {
 
 // drawMoment paints the earned-badge card over the dashboard, in the top
 // right from the second row (the header's buttons keep the first) down to the
-// command bar.
+// command bar. A card not yet begun waits while a panel covers the dashboard,
+// so it is seen when the panel closes.
 func (d *Dashboard) drawMoment(p *kit.Painter, bounds image.Rectangle) {
+	if d.overlayMgr.HasActive() && d.moment.start.IsZero() {
+		d.momentOn.Store(false)
+		return
+	}
 	area := image.Rect(bounds.Min.X, bounds.Min.Y+1, bounds.Max.X, bounds.Max.Y-promptRows)
 	set := d.mapSettings()
 	d.momentOn.Store(d.moment.paint(p, area, d.clock()(), set.Motion, set.Tier))
