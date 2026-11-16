@@ -96,7 +96,7 @@ func TestStatsPanelListsBadges(t *testing.T) {
 	}
 }
 
-// TestDashboardAnnouncesBadges: a badge earned in play gets a toast and one
+// TestDashboardAnnouncesBadges: a badge earned in play gets its card and one
 // log line, once.
 func TestDashboardAnnouncesBadges(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
@@ -117,10 +117,12 @@ func TestDashboardAnnouncesBadges(t *testing.T) {
 		t.Fatal("the log line was written under the engine's lock, before the dashboard drained it")
 	}
 	d.refresh()
-	// The toast: the badge in three cells, then its name, tier and what it
-	// is for (the tags are colours, checked in TestBadgeToastFitsTheBar).
-	if got := untag(d.toastMgr.GetCurrent()); got != "◖*◗ Badge earned: Rock Solid (bronze). Reach the Stone Age." {
+	// The card, not a toast: the notice stays empty.
+	if got := untag(d.toastMgr.GetCurrent()); got != "" {
 		t.Errorf("the toast reads %q", got)
+	}
+	if len(d.moment.queue) != 1 {
+		t.Errorf("the card has %d badges waiting, want 1", len(d.moment.queue))
 	}
 	if count() != 1 {
 		t.Errorf("the badge's log line appears %d times, want once", count())

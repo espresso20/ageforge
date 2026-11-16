@@ -122,10 +122,19 @@ type WindowHost interface {
 	ToggleFullscreen()
 }
 
-// pictureCell is the size in pixels of a cell of the grid, when the game is
-// drawn where pictures can show (a window); nil where they cannot, and there
-// everything is drawn in cells.
+// pictureCell is the window's cell size in pixels; nil when no window is open.
 var pictureCell func() (w, h int)
+
+// cellPixels is the size in pixels of a cell of the grid: the window's, or
+// a screenshot's cell when no window is open (tests, recorded screens).
+func cellPixels() (w, h int) {
+	if pictureCell != nil {
+		if w, h := pictureCell(); w > 0 && h > 0 {
+			return w, h
+		}
+	}
+	return shotCellW, shotCellH
+}
 
 // Resize, Key and Mouse are the window's events: the grid's size in cells,
 // a key press, and the pointer at a cell. They are safe to call from the

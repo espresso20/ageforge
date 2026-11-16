@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
@@ -189,6 +190,14 @@ func (om *OverlayManager) scrollKey(ev *kit.Key, prompt string) bool {
 		return true
 	}
 	return false
+}
+
+// SetOver has the named text overlay paint on its text once the text has
+// painted (see nativeText.over). Unknown names are ignored.
+func (om *OverlayManager) SetOver(name string, over func(p *kit.Painter, text image.Rectangle, top int)) {
+	if e, ok := om.entries[name]; ok {
+		e.tv.over = over
+	}
 }
 
 // SetFooter gives the named text overlay the keys on its foot, in place of the

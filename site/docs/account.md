@@ -248,9 +248,9 @@ A badge is a permanent mark on your account for something you did in a game: rea
 
 Badges are separate from [milestones](milestones.md). A milestone belongs to one run, pays a reward inside that run and starts over with the next. A badge belongs to the account and gives nothing inside a run, so the same game plays the same way whatever the account has earned.
 
-When you earn a badge, the game shows a toast for a few seconds and writes one line to the log, such as `Badge earned: Rock Solid (bronze). Reach the Stone Age.` The toast, which shows as the notice in the header's top edge, shows the badge in small, in its tier's colors, then its name, its tier and what it was for. A badge that gives a theme adds a second log line.
+When you earn a badge, a card opens at the top right of the dashboard for five seconds, and the log gets one line, such as `Badge earned: Rock Solid (bronze). Reach the Stone Age.` The card shows the badge's coin, which turns in to face you and then plays its tier's show (see below), beside the badge's name, its tier and what it was for. Badges earned together take the card one after another. With `motion off` the card opens whole and its coin stays still. A badge that gives a theme adds a second log line. Badges your account is given all at once when a game loads (rungs whose counts it had already passed) get one notice in the header that says how many, instead of a card each. A card for a badge earned while a panel is open waits, and opens when you close the panel.
 
-<figure class="screen" data-screen="badge-toast"><figcaption>A badge earned: the notice sits in the header's top edge, and the log keeps the same words.</figcaption></figure>
+<figure class="screen" data-screen="badge-toast"><figcaption>A badge earned: its card opens at the top right, and the log keeps the same words.</figcaption></figure>
 
 To see your badges, open the badge case:
 
@@ -262,36 +262,32 @@ The main menu's Badges entry (`b`) opens the same case with no game loaded, and 
 
 #### The badge case
 
-The case fills the screen except for the command bar, so the prompt keeps working while it is open. It shows every badge the account holds or can earn as a small badge in a grid, by family, with the selected badge at full size beside it.
+The case fills the screen except for the command bar, so the prompt keeps working while it is open. It shows every badge the account holds or can earn as a small coin in a grid, by family, with the selected badge's coin large beside it.
 
 <figure class="screen" data-screen="badge-case"><figcaption>The badge case, on its Ladders tab. The top bar counts what is earned and gives the score and the title you wear; each ladder says how far its next rung is.</figcaption></figure>
 
-A small badge looks like what it is:
+Every badge is a coin drawn in real pixels: a small coin for each badge of the grid, set on a shelf under its family's name, and the selected badge's coin large beside the grid. A coin shows what its badge is:
 
-| It looks like | It is |
+| The coin | It is |
 |---|---|
-| A rounded box with a notch under it | Bronze, earned |
-| A box with double lines | Silver, earned |
-| A frame of half blocks | Gold, earned |
-| The same frame with a star at each corner | Platinum, earned |
-| A solid ring of blocks | Legendary, earned |
-| A dashed box with a `?` | In sight, not earned yet. The detail says what it asks for |
-| A solid slab | Hidden: a secret badge, or one about something you have not come across yet |
-| A slab with `…` in it | All of a family's hidden badges, until you have reached the last age. After that each hidden badge has a slab of its own |
-| A frame of static | One of the three badges outside the families, once earned |
-| A strike through the badge | Earned in a modified game. It adds no points |
+| Bronze, silver or gold | Earned, in that tier |
+| Cold blue-white, with four blue studs in its rim | Platinum, earned |
+| Gold, with a rim that runs through the colors | Legendary, earned |
+| Dull steel with a keyhole | In sight, not earned yet. The detail says what it asks for |
+| Dull steel with a question mark | Hidden: a secret badge, or one about something you have not come across yet. Until you have reached the last age, a family's hidden badges share one coin; after that each has its own |
+| A strike cut across it | Earned in a modified game. It adds no points |
 
-The frame is the tier, so two tiers differ in shape before they differ in color. That holds in the plain glyph set (`map glyphs ascii`) too, where the same shapes are drawn with ordinary characters. At full size a tier grows with its worth, from a three-row bronze box to a nine-row legendary ring. The symbol in the middle is the badge's emblem, and every emblem is a symbol the [Map](map.md) already draws. A lineage wears its map symbol, and an age wears the town center of its era.
+The sign in the middle of a coin is its family's, and each of the seventeen families has its own. Eleven badges carry a sign of their own instead: eight legendary ones and the three that sit outside the families. The glyph set you chose with `map glyphs` changes the case's text, not its coins.
 
 - Tabs run along the top: All, one for each family you have something in sight of, and Next. Next lists the badges you are closest to, nearest first. `Tab` steps through the tabs, and the row scrolls when the window is too narrow for all of them. Once you have reached the last age, every family has a tab.
 - Ladders sit on a line of their own, lowest rung first, with the ladder's name and how far its next rung is beside them. A ladder with no running count (a payroll) names its next rung instead.
-- `Enter` opens the selected badge's detail: the badge at full size with everything the case knows about it. `badges <name>` opens a detail directly, and `badges <family>` opens a family's tab.
-- In the window every badge is a coin drawn in real pixels: a small coin for each badge of the grid, set on a shelf under its family's name, and the selected badge's coin large beside the grid. A coin is struck in the badge's metal (bronze, silver, gold or platinum; a legendary coin is gold with a rim that runs through the colors) and carries its family's sign in the middle. A badge not earned yet is a dull steel coin with a keyhole, a hidden one has a question mark, and a badge earned in a modified game has a strike cut across it. The selected coin sits on a lit plate. On the count line, at the right, a bar shows how far your score is toward the next title. The shapes in the table above are how the same badges look in the pictures on this site, and wherever the game cannot draw pictures.
-- In the window, the mouse works too: a click selects the badge under the pointer, a double click opens its detail, a click outside the open detail closes it, and the wheel moves the selection up and down. A click on a tab opens it, and a click on the arrow at an end of the tab row opens the nearest tab that is out of sight that way.
+- `Enter` opens the selected badge's detail: its coin large with everything the case knows about it. `badges <name>` opens a detail directly, and `badges <family>` opens a family's tab.
+- The selected coin sits on a lit plate. On the count line, at the right, a bar shows how far your score is toward the next title.
+- The mouse works too: a click selects the badge under the pointer, a double click opens its detail, a click outside the open detail closes it, and the wheel moves the selection up and down. A click on a tab opens it, and a click on the arrow at an end of the tab row opens the nearest tab that is out of sight that way.
 
 <figure class="screen" data-screen="badge-detail"><figcaption>One badge's detail: its tier, rarity and points, what it asked for, when it was earned and in which game, and its place on its ladder.</figcaption></figure>
 
-Platinum badges glint, and legendary badges turn through their colors with a band of light crossing the rim. Eleven badges have a drawing of their own that moves: eight legendary ones, and the three that sit outside the families. `motion off` holds all of it still (see [Motion](themes.md#motion)). Drawn as coins, every earned badge moves, and a higher tier moves more:
+Every earned coin moves, and a higher tier moves more. `motion off` holds all of it still (see [Motion](themes.md#motion)).
 
 | Tier | What its coin does |
 |---|---|
@@ -299,9 +295,9 @@ Platinum badges glint, and legendary badges turn through their colors with a ban
 | Silver | The band is brighter, and a sparkle opens on the rim. |
 | Gold | Two sparkles, and a light runs once round the rim. |
 | Platinum | A second band of light, three sparkles and two lights round the rim; the four blue studs in its rim flare as a light goes by. |
-| Legendary | The rim turns through the colors without rest, with three sparkles in its colors; the large medal stands on turning rays. |
+| Legendary | The rim turns through the colors without rest, with three sparkles in its colors; the large coin stands on turning rays. |
 
-The lights set off one coin after another, from the upper left, so they cross the whole case. When you select a badge its large medal turns to face you, and its lights begin there. A coin not earned yet does not move.
+The lights set off one coin after another, from the upper left, so they cross the whole case. When you select a badge its large coin turns to face you, and its lights begin there. A coin not earned yet does not move. The same coins, moving the same way, show on the [Epoch screen](epochs.md) and on the card for a badge just earned.
 
 The keys are listed under [Badges](commands.md#badges) on the commands page and in the Help panel.
 

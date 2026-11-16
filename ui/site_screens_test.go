@@ -4,8 +4,11 @@ package ui
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 	"slices"
@@ -281,7 +284,7 @@ func (s *siteStage) open(cmd, heading string) {
 	last := ""
 	for row := 0; row < 2000; row++ {
 		e.tv.ScrollTo(row, 0)
-		cells, _, _ := s.draw(sitePanelW, sitePanelH)
+		cells, _, _, _ := s.draw(sitePanelW, sitePanelH)
 		_, y, _, _ = e.tv.GetInnerRect()
 		if strings.Contains(line(cells, y), heading) {
 			return
@@ -306,8 +309,9 @@ func (s *siteStage) open(cmd, heading string) {
 func (s *siteStage) close() { s.d.overlayMgr.Hide() }
 
 // draw refreshes the dashboard from the engine and draws the whole screen at
-// w x h, the way the app does on its own screen.
-func (s *siteStage) draw(w, h int) ([]simCell, theme.Color, theme.Color) {
+// w x h, the way the app does on its own screen. It returns the cells and the
+// pictures the frame drew.
+func (s *siteStage) draw(w, h int) ([]simCell, []kit.Pic, theme.Color, theme.Color) {
 	s.t.Helper()
 	sim := newSim()
 	must(s.t, sim.Init())
@@ -318,6 +322,7 @@ func (s *siteStage) draw(w, h int) ([]simCell, theme.Color, theme.Color) {
 	// Twice: the first draw lays the panels out, and a refresh after it
 	// fills in what depends on their sizes (the mini map, wrapped text).
 	var cells []simCell
+	var pics []kit.Pic
 	for i := 0; i < 2; i++ {
 		s.d.refresh()
 		screen.Clear()
@@ -326,8 +331,9 @@ func (s *siteStage) draw(w, h int) ([]simCell, theme.Color, theme.Color) {
 		screen.Show()
 		got, _, _ := sim.GetContents()
 		cells = append(cells[:0], got...)
+		pics = append(pics[:0], sim.buf.Pics...)
 	}
-	return cells, theme.Of(theme.RoleText), theme.Of(theme.RoleBackground)
+	return cells, pics, theme.Of(theme.RoleText), theme.Of(theme.RoleBackground)
 }
 
 // --- the staged game ------------------------------------------------------------
@@ -654,8 +660,8 @@ func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 	defer m.leave()
 
 	cols, rows := siteDashW, siteDashH
-	cells := drawWrapped(w.t, m, cols, rows, 1).Cells()
-	raw, text, err := encodeSiteScreen(cells, cols, rows, theme.Of(theme.RoleText), theme.Of(theme.RoleBackground), false)
+	f := drawWrapped(w.t, m, cols, rows, 1)
+	raw, text, err := encodeSiteScreen(f.Cells(), f.Pics(), cols, rows, theme.Of(theme.RoleText), theme.Of(theme.RoleBackground), false)
 	if err != nil {
 		w.t.Fatalf("%s: %v", name, err)
 	}
@@ -681,8 +687,8 @@ func (w *siteShots) take(s *siteStage, name string) {
 func (w *siteShots) takeIn(s *siteStage, name, themeKey string, cols, rows int) {
 	w.t.Helper()
 	must(w.t, theme.SetActive(themeKey))
-	cells, fg, bg := s.draw(cols, rows)
-	raw, text, err := encodeSiteScreen(cells, cols, rows, fg, bg, themeKey != theme.DefaultKey)
+	cells, pics, fg, bg := s.draw(cols, rows)
+	raw, text, err := encodeSiteScreen(cells, pics, cols, rows, fg, bg, themeKey != theme.DefaultKey)
 	if err != nil {
 		w.t.Fatalf("%s: %v", name, err)
 	}
@@ -887,7 +893,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	t.Logf("wrote %d screens to %s: %d bytes", len(shots.bytes), out, total)
 }
 
-// writeBadgeScreens takes the badge case's pictures: a badge's toast on the
+// writeBadgeScreens takes the badge case's pictures: a badge's card on the
 // dashboard, the case, and one badge's detail. Badges belong to an account,
 // which the game above is played without, so these have a stage of their
 // own: a new account (in the test's own data folder, never the player's)
@@ -922,6 +928,9 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	s.eng.SeedRNG(siteScreensSeed)
 	still := time.Unix(0, 0)
 	s.d.badgePanel.start, s.d.badgePanel.now = still, func() time.Time { return still }
+	// The coins stand still for the wiki: on a stopped clock the picked coin
+	// would be caught in the middle of its turn.
+	s.d.badgePanel.settings = func() mapSettings { m := s.d.mapSettings(); m.Motion = false; return m }
 
 	s.toBronze()
 	s.dismiss() // the Bronze Age's splash
@@ -931,9 +940,21 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		s.eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 	}
 	s.d.refresh() // the dashboard announces what was earned
-	s.holdToast()
+	// The earned-badge card, whole and still: motion off and a clock held
+	// fixed (a still card keeps its place for its whole life, which the
+	// wall clock would run out).
+	was := s.d.mapSettings().Motion
+	if err := s.eng.Account().SetMotion(false); err != nil {
+		t.Fatal(err)
+	}
+	clock := time.Unix(0, 0)
+	s.d.fxNow = func() time.Time { return clock }
 	shots.take(s, "badge-toast")
-	s.quiet()
+	s.d.fxNow = nil
+	if err := s.eng.Account().SetMotion(was); err != nil {
+		t.Fatal(err)
+	}
+	s.d.moment = badgeMoment{}
 
 	// The case as it opens: the All tab, every family in sight under its
 	// heading, on an account a few ages in.
@@ -985,7 +1006,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	shots.take(s, "badge-detail")
 	s.close()
 
-	// A legendary special with a drawing of its own: every milestone chain
+	// A legendary special with a sign of its own: every milestone chain
 	// finished in one run. It is not a secret, so the wiki may show it.
 	const legend = "special.six_for_six"
 	state := s.eng.GetState()
@@ -1001,8 +1022,8 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	if !p.view.card || p.view.sel != legend {
 		t.Fatalf("the detail did not open on %s (on %s)", legend, p.view.sel)
 	}
-	if m := medalOf(viewOfBadge(t, s.eng, legend), p.view.tier); m.special == "" || m.state != medalEarned {
-		t.Fatalf("%s is not drawn by hand: %+v", legend, m)
+	if m := medalOf(viewOfBadge(t, s.eng, legend)); m.special == "" || m.state != medalEarned {
+		t.Fatalf("%s has no sign of its own: %+v", legend, m)
 	}
 	shots.take(s, "badge-legend")
 	s.close()
@@ -1047,6 +1068,8 @@ type siteScreenFile struct {
 	Palette []string        `json:"palette"`
 	Styles  [][3]int        `json:"styles"`
 	Rows    []siteScreenRow `json:"rows"`
+	Pics    []siteScreenPic `json:"pics,omitempty"`   // where each picture sits, in cells
+	Images  []string        `json:"images,omitempty"` // distinct images, base64 PNG
 }
 
 type siteScreenRow struct {
@@ -1054,18 +1077,47 @@ type siteScreenRow struct {
 	R []int  `json:"r"`
 }
 
+// A siteScreenPic is a picture over the grid: its cells from (X, Y), W by H
+// of them, showing Images[I].
+type siteScreenPic struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+	W int `json:"w"`
+	H int `json:"h"`
+	I int `json:"i"`
+}
+
 func siteHex(c theme.Color) string {
 	r, g, b := c.RGB()
 	return fmt.Sprintf("#%02x%02x%02x", r&0xff, g&0xff, b&0xff)
 }
 
-// encodeSiteScreen turns drawn cells into the file's bytes and a plain-text
-// copy. It refuses a cell the wiki's grid could not hold: a wide rune or a
-// combining one.
-func encodeSiteScreen(cells []simCell, w, h int, defFg, defBg theme.Color, ownGround bool) ([]byte, string, error) {
+// encodeSiteScreen turns drawn cells and their pictures into the file's bytes
+// and a plain-text copy. It refuses a cell the wiki's grid could not hold: a
+// wide rune or a combining one, and a picture that some other ink drew over.
+func encodeSiteScreen(cells []simCell, pics []kit.Pic, w, h int, defFg, defBg theme.Color, ownGround bool) ([]byte, string, error) {
 	f := siteScreenFile{W: w, H: h}
 	if ownGround {
 		f.Bg = siteHex(defBg)
+	}
+	kept, err := placePictures(cells, pics, w, h)
+	if err != nil {
+		return nil, "", err
+	}
+	imgIdx := map[string]int{} // encoded PNG -> its index in f.Images
+	for _, p := range kept {
+		enc, err := encodeSitePNG(reduceSiteImage(p.Img))
+		if err != nil {
+			return nil, "", err
+		}
+		i, ok := imgIdx[string(enc)]
+		if !ok {
+			i = len(f.Images)
+			imgIdx[string(enc)] = i
+			f.Images = append(f.Images, base64.StdEncoding.EncodeToString(enc))
+		}
+		r := p.Rect
+		f.Pics = append(f.Pics, siteScreenPic{X: r.Min.X, Y: r.Min.Y, W: r.Dx(), H: r.Dy(), I: i})
 	}
 	palIdx := map[string]int{}
 	color := func(c theme.Color) int {
@@ -1171,4 +1223,89 @@ func encodeSiteScreen(cells []simCell, w, h int, defFg, defBg theme.Color, ownGr
 		return nil, "", err
 	}
 	return buf.Bytes(), plain.String(), nil
+}
+
+// placePictures checks that each picture still owns every cell of its
+// rectangle: the cell's Pic is the picture's index plus one. A picture no cell
+// owns is left out. One that some cells own and others do not means something
+// was drawn over part of it, and the wiki must not show it.
+func placePictures(cells []simCell, pics []kit.Pic, w, h int) ([]kit.Pic, error) {
+	var kept []kit.Pic
+	for i, p := range pics {
+		r := p.Rect
+		owned, area := 0, 0
+		for y := r.Min.Y; y < r.Max.Y; y++ {
+			for x := r.Min.X; x < r.Max.X; x++ {
+				area++
+				if x < 0 || y < 0 || x >= w || y >= h {
+					continue
+				}
+				if int(cells[y*w+x].Pic) == i+1 {
+					owned++
+				}
+			}
+		}
+		switch {
+		case owned == 0:
+			continue
+		case owned < area:
+			return nil, fmt.Errorf("picture over %v: %d of its %d cells were drawn over", r, area-owned, area)
+		}
+		kept = append(kept, p)
+	}
+	return kept, nil
+}
+
+// reduceSiteImage shrinks img by the largest whole factor k that divides both
+// its sides and leaves every k×k block one colour. Coin art is drawn at a
+// whole multiple of its pixels, so this gives the art at its own size. The
+// result always starts at 0,0.
+func reduceSiteImage(img *image.RGBA) *image.RGBA {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	k := max(siteGCD(w, h), 1)
+	for ; k > 1 && (w%k != 0 || h%k != 0 || !siteBlocksUniform(img, k)); k-- {
+	}
+	out := image.NewRGBA(image.Rect(0, 0, w/k, h/k))
+	for y := 0; y < h/k; y++ {
+		for x := 0; x < w/k; x++ {
+			out.SetRGBA(x, y, img.RGBAAt(b.Min.X+x*k, b.Min.Y+y*k))
+		}
+	}
+	return out
+}
+
+// siteBlocksUniform reports whether every k×k block of img is one colour.
+func siteBlocksUniform(img *image.RGBA, k int) bool {
+	b := img.Bounds()
+	for by := b.Min.Y; by < b.Max.Y; by += k {
+		for bx := b.Min.X; bx < b.Max.X; bx += k {
+			c := img.RGBAAt(bx, by)
+			for y := by; y < by+k; y++ {
+				for x := bx; x < bx+k; x++ {
+					if img.RGBAAt(x, y) != c {
+						return false
+					}
+				}
+			}
+		}
+	}
+	return true
+}
+
+// siteGCD is the greatest common divisor of two positive numbers.
+func siteGCD(a, b int) int {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
+// encodeSitePNG is img as PNG bytes.
+func encodeSitePNG(img *image.RGBA) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
