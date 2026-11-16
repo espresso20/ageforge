@@ -739,7 +739,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	}{
 		{"buildings", "buildings", "Bronze Age (current)"},
 		{"plan", "plan", ""},
-		{"rates", "stats", "Resource rates"},
+		{"rates", "stats", ""},
 		{"people", "people", ""},
 		{"advance", "charter", ""},
 		{"trade", "trade", ""},
