@@ -346,7 +346,7 @@ func TestPeopleWorkRowsStayPutWhateverIsPicked(t *testing.T) {
 		if sub == 0 {
 			base = steps
 		}
-		if dismiss == nil || dismiss.r.Min.Y != ys[2*sub] {
+		if dismiss == nil || dismiss.r.Min.Y != ys[2*sub] || dismiss.r.Max.X+1 != steps[2*sub].r.Min.X {
 			t.Errorf("pick %d: dismiss %v not on the picked row (%v)", sub, dismiss, ys)
 		}
 		if len(steps) != len(base) {

@@ -99,7 +99,7 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 		nameEnd := sx
 		if i == sub {
 			word := txtDismiss.String()
-			nameEnd = sx - 1 - (runeLen(word) + 2)
+			nameEnd = sx - 2 - (runeLen(word) + 2)
 			g.chip(nameEnd+1, y, word, keyAlert, command(verbDismiss, b.key), dismissAsk(b.Name), word, b.WorkersAssigned == 0)
 		}
 		pickName(g, rx, y, nameEnd-rx-1, fmt.Sprintf("%s x%d", b.Name, b.Count), i == sub)
@@ -188,18 +188,16 @@ func (c peopleBody) shareRow(x, y, w int, r game.ShareRow) {
 	minus.off = base <= 0
 	plus.off = base >= 100
 	nx := g.stepper(x+8, y, minus, plus) + 1
-	word := txtAuto.String()
-	ax := x + w - runeLen(word) - 2
 	kind := keySteel
 	if !r.Set {
 		kind = keyAccent
 	}
+	nx = g.chip(nx, y, txtAuto.String(), kind, command(verbRoster, r.Domain, "auto"), "", "", false) + 1
 	text := vibe.Line("ui.people_verbs.shareRow.02", "auto, by its buildings' slots")
 	if r.Set {
 		text = vibe.Line("ui.people_verbs.shareRow.03", "set to ") + game.SharePercent(float64(base))
 	}
-	g.putFit(nx, y, ax-nx-1, text, xText)
-	g.chip(ax, y, word, kind, command(verbRoster, r.Domain, "auto"), "", "", false)
+	g.putFit(nx, y, x+w-nx, text, xText)
 }
 
 // peopleLink draws text at (x, y) as a link to tab: the same words, in cells
