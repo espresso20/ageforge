@@ -3013,11 +3013,14 @@ func (ge *GameEngine) festivalLength() int {
 func (ge *GameEngine) FestivalStatus() FestivalStatus {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	cd := ge.festivalReadyTick - ge.tick
-	if cd < 0 {
-		cd = 0
-	}
-	pool := ge.bonusPoolLocked(ge.buildResolver(), "production_all")
+	return ge.festivalStatusLocked(ge.buildResolver())
+}
+
+// festivalStatusLocked is FestivalStatus for a caller that holds ge.mu and
+// has the resolver at hand (the snapshot).
+func (ge *GameEngine) festivalStatusLocked(resolver *Resolver) FestivalStatus {
+	cd := max(ge.festivalReadyTick-ge.tick, 0)
+	pool := ge.bonusPoolLocked(resolver, "production_all")
 	return FestivalStatus{
 		CapNote:       CapNote(pool, festivalBuffPercent, false),
 		CapPhrase:     CapPhrase(pool, festivalBuffPercent, false),
@@ -5109,6 +5112,7 @@ func (ge *GameEngine) GetState() GameState {
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
+		Festival:              ge.festivalStatusLocked(resolver),
 		Plan:                  ge.planViews(),
 		PermanentBonuses:      maps.Clone(ge.permanentBonuses),
 		// Snapshot the resolver's aggregated modifiers for the UI's Active
