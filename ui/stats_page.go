@@ -134,6 +134,8 @@ type statsPage struct {
 	research []statsRow
 	pics     []statsPic
 	labels   []statsLabel
+	heads    [2]image.Rectangle // the heading rows of the ages band and of the bars, as the page's cells
+	ends     [2]int             // the row each column ends at (the left one holds the bars)
 }
 
 // statsKinds is the sign each resource's bar takes its colour from.
@@ -196,15 +198,16 @@ func countTile(name, kind string, n int) statsTile {
 }
 
 // buildStats lays the page of a part out in w cells, a row at a time down
-// the page, with pictures when pic is set. grow adds height to what is
-// drawn (taller numerals, courses and bars) for a page that would be bare.
-func buildStats(st game.GameState, part, w int, wide, pic bool, grow int) *statsPage {
+// the page, with pictures when pic is set. view is the rows the screen shows,
+// which the bars share out. grow adds height to what is drawn (taller
+// numerals and courses) for a page that would be bare.
+func buildStats(st game.GameState, part, w, view int, wide, pic bool, grow int) *statsPage {
 	pg := &statsPage{g: newXGrid(w, 400), pic: pic}
 	y := 0
 	if part == partLifetime {
 		y = pg.lifetime(st, w, grow)
 	} else {
-		y = pg.run(st, w, wide, grow)
+		y = pg.run(st, w, view, wide, grow)
 	}
 	pg.used = y
 	pg.g.h = y
@@ -235,6 +238,10 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 	if !pg.pic {
 		th = 2 + lr
 	}
+	texts := make([]string, len(tiles))
+	for i, t := range tiles {
+		texts[i] = t.text
+	}
 	for i := range tiles {
 		t := &tiles[i]
 		x, ty := i%n*(tw+1), y+i/n*(th+1)
@@ -257,16 +264,16 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 			pg.labels = append(pg.labels, statsLabel{x + 1, ty + (nr+1)/2, fitText(t.text, tw-2), xBright, ""})
 		}
 		toks, kind := t.toks, t.kind
-		pg.pics = append(pg.pics, statsPic{r: t.r, key: fmt.Sprint("tile", tw, th, nr, t.text, kind),
+		pg.pics = append(pg.pics, statsPic{r: t.r, key: fmt.Sprint("tile", tw, th, nr, texts, i, kind),
 			draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
-				return statsTilePic(tw, th, nr+1, cw, ch, toks, kind, in)
+				return statsTilePic(tw, th, nr+1, cw, ch, toks, kind, tiles, in)
 			}})
 	}
 	return y + (len(tiles)+n-1)/n*(th+1)
 }
 
 // run lays out "This run" and returns the page's rows.
-func (pg *statsPage) run(st game.GameState, w int, wide bool, grow int) int {
+func (pg *statsPage) run(st game.GameState, w, view int, wide bool, grow int) int {
 	s := st.Stats
 	pt, ptext := timeToks(s.PlayTime.Truncate(config.Billion))
 	play := statsTile{name: txtPlayTime.String(), text: ptext, toks: pt, kind: "monument"}
@@ -283,23 +290,36 @@ func (pg *statsPage) run(st game.GameState, w int, wide bool, grow int) int {
 	y := pg.layTiles(tiles, 0, w, n, 3+grow)
 	pg.tiles = tiles
 	y = pg.band(st, y, w, grow)
-	lw, rw, xr, yr := w, w, 0, 0
+	lw, rw, xr := w, w, 0
 	if wide {
 		lw = (w - 2) * 11 / 20
 		rw, xr = w-2-lw, lw+2
 	}
-	yl := pg.gathered(st, y, lw, grow)
-	if wide {
-		yr = y
-	} else {
-		yr = yl + 1
+	yl, yr := pg.gathered(st, y, lw, view), y
+	pg.mults, pg.rows, pg.research = activeMultipliers(st), prestigeRows(st), researchRows(st)
+	sections := []func(x, y, w int) int{
+		func(x, y, w int) int { return pg.rowsTable(txtPrestigeHd.String(), pg.rows, x, y, w) },
+		pg.multsTable,
+		func(x, y, w int) int { return pg.rowsTable(txtResearchHd.String(), pg.research, x, y, w) },
 	}
-	pg.mults = activeMultipliers(st)
-	yr = pg.multsTable(xr, yr, rw)
-	pg.rows = prestigeRows(st)
-	yr = pg.rowsTable(txtPrestigeHd.String(), pg.rows, xr, yr+1, rw)
-	pg.research = researchRows(st)
-	yr = pg.rowsTable(txtResearchHd.String(), pg.research, xr, yr+1, rw)
+	if !wide {
+		sections[0], sections[1] = sections[1], sections[0]
+	}
+	// the sections go under the shorter column, a tie to the right; the first
+	// opens the right one, and narrow pages have the one column
+	for i, sec := range sections {
+		switch {
+		case !wide:
+			yl = sec(0, yl+1, w)
+		case i > 0 && yl < yr:
+			yl = sec(0, yl+1, lw)
+		case i > 0:
+			yr = sec(xr, yr+1, rw)
+		default:
+			yr = sec(xr, yr, rw)
+		}
+	}
+	pg.ends = [2]int{yl, yr}
 	return max(yl, yr)
 }
 
@@ -350,6 +370,7 @@ func (pg *statsPage) band(st game.GameState, y, w, grow int) int {
 	if !pg.pic {
 		br, gap = 2, 1
 	}
+	pg.heads[0] = image.Rect(0, y, w, y+1)
 	pg.heading(0, y, w, txtAgesRun.String())
 	y++
 	for i0 := 0; i0 < n; i0 += per {
@@ -411,8 +432,11 @@ func (pg *statsPage) layBlock(b *statsBlock, i int) {
 
 // gathered lays the ranked bars of what the run has gathered out in the
 // column of width w at row y, on a log10 scale to the next power of ten
-// above the largest total.
-func (pg *statsPage) gathered(st game.GameState, y, w, grow int) int {
+// above the largest total. Each bar takes the rows the first screen has left
+// for it, at most three: two thick and a blank row, one thick and a blank
+// row, or one and no blank row.
+func (pg *statsPage) gathered(st game.GameState, y, w, view int) int {
+	pg.heads[1] = image.Rect(0, y, w, y+1)
 	pg.heading(0, y, w, txtGatheredHd.String())
 	y++
 	var keys []string
@@ -461,10 +485,9 @@ func (pg *statsPage) gathered(st game.GameState, y, w, grow int) int {
 		pg.g.rput(w-1, y, txtPerSecond.String(), xDim)
 	}
 	y++
-	bh, gap := 1+grow/3, grow/2
-	if !pg.pic {
-		bh = 1
-	}
+	pitch := clamp((view-y)/len(keys), 1, 3)
+	bh := max(1, pitch-1)
+	gap := pitch - bh
 	pg.bars = pg.bars[:0]
 	for i, k := range keys {
 		v := st.Stats.TotalGathered[k]
@@ -483,11 +506,10 @@ func (pg *statsPage) gathered(st game.GameState, y, w, grow int) int {
 			b.rate, rk = "+"+b.rate, xGood
 		}
 		b.track = image.Rect(trackX, y, trackX+trackW, y+bh)
-		ty := y + (bh-1)/2
-		pg.g.put(0, ty, fitText(b.name, nameW), xText)
-		pg.g.rput(trackX+trackW+totW, ty, b.total, xBright)
+		pg.g.put(0, y, fitText(b.name, nameW), xText)
+		pg.g.rput(trackX+trackW+totW, y, b.total, xBright)
 		if rateW > 0 {
-			pg.g.rput(w-1, ty, b.rate, rk)
+			pg.g.rput(w-1, y, b.rate, rk)
 		}
 		pg.g.hit(hitBar, i, 0, y, w, bh)
 		if pg.pic {
@@ -516,7 +538,7 @@ func (pg *statsPage) gathered(st game.GameState, y, w, grow int) int {
 		pg.bars = append(pg.bars, b)
 		y += bh + gap
 	}
-	return y
+	return y - gap
 }
 
 // isTick reports whether cell x of a track w cells long holds a decade tick.
@@ -567,7 +589,7 @@ func (pg *statsPage) multsTable(x, y, w int) int {
 		}
 		y += 2
 	}
-	return y
+	return y - 1
 }
 
 // rowsTable lays a table of label and value rows out under a heading.
@@ -778,7 +800,7 @@ func (p *statsPanel) Layout(r image.Rectangle) {
 	p.wide = p.w >= statsWide
 	bw, view := p.w-4, p.viewRows()
 	for grow := 0; ; grow++ {
-		p.page = buildStats(p.state, p.part, bw, p.wide, p.pic, grow)
+		p.page = buildStats(p.state, p.part, bw, view, p.wide, p.pic, grow)
 		if grow >= 4 || p.page.used*5 >= view*4 {
 			break
 		}
@@ -806,18 +828,19 @@ func (p *statsPanel) Layout(r image.Rectangle) {
 	p.chrome = g
 }
 
-// readout is the line a hovered block or bar gives.
-func (p *statsPanel) readout() string {
+// readout is the line a hovered block or bar gives, and the page's heading
+// row it is written on: the ages band's for a block, the bars' for a bar.
+func (p *statsPanel) readout() (string, image.Rectangle) {
 	if p.page == nil {
-		return ""
+		return "", image.Rectangle{}
 	}
 	if n, ok := p.page.g.hitAt(hitAge, p.hover); ok && n < len(p.page.blocks) {
-		return p.page.blocks[n].readout
+		return p.page.blocks[n].readout, p.page.heads[0]
 	}
 	if n, ok := p.page.g.hitAt(hitBar, p.hover); ok && n < len(p.page.bars) {
-		return p.page.bars[n].readout
+		return p.page.bars[n].readout, p.page.heads[1]
 	}
-	return ""
+	return "", image.Rectangle{}
 }
 
 // Paint puts the frame, then the page's visible rows with its pictures and
@@ -859,8 +882,9 @@ func (p *statsPanel) Paint(p2 *kit.Painter) {
 		}
 	}
 	p2.Bar(r.Min.X+p.w-2, view.Min.Y, view.Dy(), p.scroll, view.Dy(), p.page.used)
-	if s := p.readout(); s != "" {
-		p2.Label(r.Min.X+2, r.Min.Y+2, s, pal.style(xcell{k: xBright}))
+	if s, head := p.readout(); s != "" {
+		s = " " + s
+		bp.Label(org.X+head.Max.X-runeLen(s), org.Y+head.Min.Y, s, pal.style(xcell{k: xBright}))
 	}
 	p.buttons.paint(p2, p.chrome, r.Min, pal)
 }

@@ -20,7 +20,7 @@ func TestStatsShowsAgesThisRun(t *testing.T) {
 		{Age: "stone_age", Tick: 300},
 	}
 
-	pg := buildStats(st, partRun, 120, false, false, 0)
+	pg := buildStats(st, partRun, 120, 0, false, false, 0)
 	if !strings.Contains(statsPageText(st, partRun, 120), "Ages this run") {
 		t.Fatalf("stats panel has no Ages this run block")
 	}

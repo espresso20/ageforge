@@ -42,7 +42,7 @@ func statsRowsText(rows []statsRow) string {
 
 // statsPageText is the text of a part of the page in cells only, w wide.
 func statsPageText(st game.GameState, part, w int) string {
-	return strings.Join(gridLines(buildStats(st, part, w, w >= statsWide, false, 0).g), "\n")
+	return strings.Join(gridLines(buildStats(st, part, w, 0, w >= statsWide, false, 0).g), "\n")
 }
 
 // statsFixture is a run of nAges ages, nRes gathered resources and the given
@@ -302,16 +302,125 @@ func TestStatsHoverReadouts(t *testing.T) {
 	b, bar := p.page.blocks[1], p.page.bars[2]
 	at := func(r image.Rectangle) { p.hover = image.Pt(r.Min.X, r.Min.Y) }
 	at(b.r)
-	if got := p.readout(); got != b.readout || !strings.Contains(got, b.name) || !strings.Contains(got, b.time) {
+	if got, _ := p.readout(); got != b.readout || !strings.Contains(got, b.name) || !strings.Contains(got, b.time) {
 		t.Errorf("block readout %q", got)
 	}
 	at(bar.track)
-	if got := p.readout(); got != bar.readout || !strings.Contains(got, commas(bar.value)) {
+	if got, _ := p.readout(); got != bar.readout || !strings.Contains(got, commas(bar.value)) {
 		t.Errorf("bar readout %q", got)
 	}
 	p.hover = image.Pt(-1, -1)
-	if got := p.readout(); got != "" {
+	if got, _ := p.readout(); got != "" {
 		t.Errorf("readout off the page: %q", got)
+	}
+}
+
+// screenRow is row y of a painted buffer as text.
+func screenRow(b *kit.Buffer, y int) string {
+	var sb strings.Builder
+	for x := 0; x < b.W; x++ {
+		sb.WriteRune(max(' ', b.Cells[y*b.W+x].R))
+	}
+	return sb.String()
+}
+
+func TestStatsReadoutSitsOnItsHeadingRow(t *testing.T) {
+	p := laidStats(t, statsFixture(t, 6, 12, 5*time.Hour), 160, 40, true)
+	b, bar := p.page.blocks[1], p.page.bars[2]
+	for _, c := range []struct {
+		at   image.Rectangle
+		want string
+		head image.Rectangle
+	}{{b.r, b.readout, p.page.heads[0]}, {bar.track, bar.readout, p.page.heads[1]}} {
+		p.hover = c.at.Min
+		buf := paintAlone(overBar(p), 160, 40)
+		row := screenRow(buf, 3+c.head.Min.Y)
+		if !strings.Contains(row, c.want) || !strings.HasSuffix(strings.TrimRight(string([]rune(row)[:2+c.head.Max.X]), " "), c.want) {
+			t.Errorf("heading row %q lacks %q at its right end", row, c.want)
+		}
+		if strings.Contains(screenRow(buf, 2), c.want) {
+			t.Errorf("readout %q is still above the tiles", c.want)
+		}
+	}
+}
+
+func TestStatsBarsTakeTheHeightTheyHave(t *testing.T) {
+	for n, pitch := range map[int]int{3: 3, 8: 2, 20: 1} {
+		p := laidStats(t, statsFixture(t, 6, n, 5*time.Hour), 160, 40, true)
+		bars := p.page.bars
+		if len(bars) != n {
+			t.Fatalf("%d bars, want %d", len(bars), n)
+		}
+		if got := bars[1].track.Min.Y - bars[0].track.Min.Y; got != pitch {
+			t.Errorf("%d bars: pitch %d, want %d", n, got, pitch)
+		}
+		if got := bars[0].track.Dy(); got != max(1, pitch-1) {
+			t.Errorf("%d bars: %d rows thick at pitch %d", n, got, pitch)
+		}
+	}
+}
+
+func TestStatsSmallSectionsGoUnderTheShorterColumn(t *testing.T) {
+	col := func(st game.GameState, head string) int {
+		p := laidStats(t, st, 160, 40, true)
+		for _, l := range gridLines(p.page.g) {
+			if x := strings.Index(l, head); x >= 0 {
+				return x
+			}
+		}
+		t.Fatalf("no heading %q", head)
+		return 0
+	}
+	for _, head := range []string{txtMultsHd.String(), txtResearchHd.String()} {
+		if x := col(statsFixture(t, 1, 3, time.Minute), head); x != 0 {
+			t.Errorf("%q with three bars is at column %d, want the left one", head, x)
+		}
+		if x := col(statsFixture(t, 22, 24, 100*time.Hour), head); x == 0 {
+			t.Errorf("%q with 24 bars is in the left column, want the right one", head)
+		}
+	}
+	if x := col(statsFixture(t, 1, 3, time.Minute), txtPrestigeHd.String()); x == 0 {
+		t.Error("Prestige and epoch opens the left column, want the right one")
+	}
+	for _, c := range []struct{ ages, res int }{{1, 3}, {6, 12}} {
+		p := laidStats(t, statsFixture(t, c.ages, c.res, time.Hour), 160, 40, true)
+		if d := p.page.ends[0] - p.page.ends[1]; d > 6 || d < -6 {
+			t.Errorf("%d ages, %d resources: columns end at %v", c.ages, c.res, p.page.ends)
+		}
+	}
+}
+
+func TestStatsTilesShareOneScaleAndClearTheirSigns(t *testing.T) {
+	in := newStatsInk(newExpPalette())
+	for _, w := range []int{100, 120, 160} {
+		for _, st := range []game.GameState{statsFixture(t, 22, 24, 190*time.Hour), statsFixture(t, 1, 3, 5*time.Hour+12*time.Minute)} {
+			p := laidStats(t, st, w, 40, true)
+			var heights []int
+			for _, pc := range p.page.pics {
+				if !strings.HasPrefix(pc.key, "tile") {
+					continue
+				}
+				img := pc.draw(12, 24, false, in)
+				box := image.Rectangle{}
+				for y := 0; y < img.Rect.Dy(); y++ {
+					for x := 0; x < img.Rect.Dx(); x++ {
+						if img.RGBAAt(x, y) == in.face {
+							box = box.Union(image.Rect(x, y, x+1, y+1))
+						}
+					}
+				}
+				heights = append(heights, box.Dy())
+				if k := max(1, 24/21); box.Min.X-40*k < 12 {
+					t.Errorf("w %d: numeral starts %d px after the sign, want a cell", w, box.Min.X-40*k)
+				}
+			}
+			for _, h := range heights {
+				if h != heights[0] {
+					t.Errorf("w %d: numeral heights differ: %v", w, heights)
+					break
+				}
+			}
+		}
 	}
 }
 

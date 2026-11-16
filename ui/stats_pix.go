@@ -130,7 +130,7 @@ func newStatsInk(pal *expPalette) statsInk {
 // statsTilePic is a headline tile: a plate with a well, a sign at the left
 // of the well when kind is not empty, the numeral at its right, and the
 // label rows left below the well. tw, th and wr (the well's rows) are cells.
-func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, in statsInk) *image.RGBA {
+func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, all []statsTile, in statsInk) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, tw*cw, th*ch))
 	k := max(1, ch/21)
 	a := art{img, k}
@@ -141,16 +141,22 @@ func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, in statsIn
 	wellH := wr * ch / k
 	well := image.Rect(2, 2, W-2, wellH)
 	a.fill(well, 1, in.well)
-	avail := (well.Dx() - 4) * k
 	if kind != "" {
 		drawSign(a, well.Min.X+2, well.Min.Y+(well.Dy()-36)/2, kind, signTints[kind], .1, in.well)
-		avail -= 40 * k
 	}
-	s := 1
-	for c := (well.Dy() - 4) * k / 7; c >= 1; c-- {
-		if numWidth(toks, c) <= avail {
-			s = c
-			break
+	// one scale for every tile: the largest at which the widest numeral fits
+	// its well with a clear cell between the sign and the numeral
+	s := (well.Dy() - 4) * k / 7
+	for _, t := range all {
+		if t.toks == nil {
+			continue
+		}
+		room := (well.Dx() - 4) * k
+		if t.kind != "" {
+			room = (well.Dx()-40)*k - cw
+		}
+		for s > 1 && numWidth(t.toks, s)+s/2 > room {
+			s--
 		}
 	}
 	w := numWidth(toks, s)

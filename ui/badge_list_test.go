@@ -76,7 +76,7 @@ func TestStatsPanelListsBadges(t *testing.T) {
 	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 	_, sum := eng.Badges()
 
-	pg := buildStats(eng.GetState(), partLifetime, 120, false, false, 0)
+	pg := buildStats(eng.GetState(), partLifetime, 120, 0, false, false, 0)
 	tile := func(name string) string {
 		for _, tl := range pg.tiles {
 			if tl.name == name {
@@ -185,7 +185,7 @@ func TestBadgeLines(t *testing.T) {
 func TestStatsPanelShowsCivilizationsStarted(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	must(t, eng.StartNewNamedGame("run"))
-	pg := buildStats(eng.GetState(), partLifetime, 120, false, false, 0)
+	pg := buildStats(eng.GetState(), partLifetime, 120, 0, false, false, 0)
 	found := false
 	for _, tl := range pg.tiles {
 		found = found || tl.name == txtCivs.String() && tl.text == "1"
