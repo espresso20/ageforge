@@ -1006,7 +1006,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	shots.take(s, "badge-detail")
 	s.close()
 
-	// A legendary special with a drawing of its own: every milestone chain
+	// A legendary special with a sign of its own: every milestone chain
 	// finished in one run. It is not a secret, so the wiki may show it.
 	const legend = "special.six_for_six"
 	state := s.eng.GetState()
@@ -1023,7 +1023,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		t.Fatalf("the detail did not open on %s (on %s)", legend, p.view.sel)
 	}
 	if m := medalOf(viewOfBadge(t, s.eng, legend)); m.special == "" || m.state != medalEarned {
-		t.Fatalf("%s is not drawn by hand: %+v", legend, m)
+		t.Fatalf("%s has no sign of its own: %+v", legend, m)
 	}
 	shots.take(s, "badge-legend")
 	s.close()

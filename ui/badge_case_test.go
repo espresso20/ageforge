@@ -501,10 +501,10 @@ func TestBadgeEmblemsAreKnown(t *testing.T) {
 				t.Errorf("%s is an integrity badge without a sprite", def.Key)
 			}
 		case e.special != "":
-			// A hand-drawn sprite is for the rarest few: a legendary badge.
+			// A sign of its own is for the rarest few: a legendary badge.
 			drawn++
 			if def.Tier != config.BadgeLegendary {
-				t.Errorf("%s (%s) wears the sprite %q: the hand-drawn sprites are the legendary badges'", def.Key, def.Tier.Name(), e.special)
+				t.Errorf("%s (%s) has the sign %q: signs of their own are the legendary badges'", def.Key, def.Tier.Name(), e.special)
 			}
 			if _, ok := medalIcons[e.special]; !ok {
 				t.Errorf("%s names the sprite %q, which is not drawn", def.Key, e.special)
