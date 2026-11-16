@@ -408,6 +408,8 @@ A prestige pays for every age the run completed, and each era's ages pay three t
 
 A festival costs the larger of 2K culture or a number of hours of your own culture income, and gives +20% to all production for 390 ticks (about 13 minutes). Festivals have a 780-tick cooldown (about 26 minutes). The hours depend on the age: roughly 8 hours in the Classical Age, rising to 100 hours by the Industrial Age and staying at 100 in every age from the Victorian Age on, so the price stays in step with what you make. Three techs help: Baroque Arts makes the boost last 25% longer (487 ticks, about 16 minutes), Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus (see [The all-production pool](resources.md#the-all-production-pool)). If a limit holds that pool, `festival` says how much of the boost counts.
 
+The People panel's overview shows a Festival card once festivals are unlocked: the boost and its length, the cost beside the culture held, and whether a festival is ready, running or cooling down, with the time left. The card's Hold festival button asks first, then runs `festival confirm yes`; it is off while a festival runs, while the cooldown lasts and while the culture is short. The dashboard header shows a Festival chip with the boost and time left while one runs.
+
 ---
 
 ## Milestones and epochs

@@ -114,7 +114,7 @@ The four Cultural Monuments are one-off buildings (one of each) built with the n
 | Eternal Library | Industrial | 140K | +3% all production |
 | Monument of Ages | Modern | 7.1M | +5% all production |
 
-The `festival` command needs the Drama tech. It spends a lump of culture for +20% all production for 13 minutes (390 ticks), then waits 26 minutes (780 ticks) before the next one. The price is 2K culture or, if that is more, a number of hours of your own culture income. That number is between 8 and 100 hours up to the Industrial Age, set by the age, and 100 hours in every age from the Victorian Age on. Baroque Arts makes the boost last 25% longer, Radio shortens the wait by 20%, and Social Media cuts the price by 20%. See [Commands](commands.md).
+The `festival` command needs the Drama tech. It spends a lump of culture for +20% all production for 13 minutes (390 ticks), then waits 26 minutes (780 ticks) before the next one. The price is 2K culture or, if that is more, a number of hours of your own culture income. That number is between 8 and 100 hours up to the Industrial Age, set by the age, and 100 hours in every age from the Victorian Age on. Baroque Arts makes the boost last 25% longer, Radio shortens the wait by 20%, and Social Media cuts the price by 20%. The People panel's overview shows the festival and holds one with a button that asks first. See [Commands](commands.md).
 
 Culture also pays for:
 
