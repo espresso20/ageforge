@@ -236,7 +236,7 @@ Some progress is account-wide. It builds up across every game you play on that a
 | Civilizations Started | Every civilization you have begun on this account: each new game, and the one that follows each prestige and each Succumb. Loading a game starts nothing |
 | Highest Age Ever | The furthest age any of this account's civilizations has reached. It only goes up |
 
-The Stats panel shows all three under Lifetime (account). The [Accounts panel](#the-accounts-panel) shows the prestiges and highest age for each account, so you can compare your civilizations.
+The Stats panel's Lifetime part shows the prestiges and the highest age. The [Accounts panel](#the-accounts-panel) shows the prestiges and highest age for each account, so you can compare your civilizations.
 
 The account also records each prestige under the age it was made from (`prestiges_by_age` in the stats of `account.json`), so an early taste (a prestige from the Medieval Age to the Atomic Age) can be told from a full run (the Modern Age or deeper). See [Early tastes and full runs](prestige.md#early-tastes-and-full-runs). No panel shows this, and Total Prestiges counts every prestige, tastes included. Prestiges made before the account kept this record count only in the total. An export carries it, and an import keeps the higher count for each age.
 
@@ -307,7 +307,7 @@ Your badge points add up to a score, and the score holds a title. The badge case
 
 #### The plain list
 
-The Stats panel (`stats`) shows the badges in a few lines under Lifetime (account): the count, the title you wear, each family's count and the badges you earned last. For more, run:
+The Stats panel (`stats`) shows the number of badges earned and the title you wear in its Lifetime part. For more, run:
 
 ```
 account badges

@@ -251,15 +251,15 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 			continue
 		}
 		for j, s := range lines {
-			pg.labels = append(pg.labels, statsLabel{x + 1, ty + nr + 1 + j, fitText(s, tw-2), xDim, ""})
+			pg.labels = append(pg.labels, statsLabel{x + 1, ty + nr + 1 + j, fitText(s, tw-2), xText, ""})
 		}
 		if t.toks == nil {
 			pg.labels = append(pg.labels, statsLabel{x + 1, ty + (nr+1)/2, fitText(t.text, tw-2), xBright, ""})
 		}
 		toks, kind := t.toks, t.kind
-		pg.pics = append(pg.pics, statsPic{r: t.r, key: fmt.Sprint("tile", tw, th, t.text, kind),
+		pg.pics = append(pg.pics, statsPic{r: t.r, key: fmt.Sprint("tile", tw, th, nr, t.text, kind),
 			draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
-				return statsTilePic(tw, th, cw, ch, toks, kind, in)
+				return statsTilePic(tw, th, nr+1, cw, ch, toks, kind, in)
 			}})
 	}
 	return y + (len(tiles)+n-1)/n*(th+1)
@@ -430,7 +430,7 @@ func (pg *statsPage) gathered(st game.GameState, y, w, grow int) int {
 	}
 	nameW, totW, rateW := 0, 9, 11
 	for _, k := range keys {
-		nameW = min(16, max(nameW, runeLen(game.ResourceName(k))))
+		nameW = min(20, max(nameW, runeLen(game.ResourceName(k))))
 	}
 	trackX := nameW + 1
 	trackW := w - trackX - 1 - totW - 1 - rateW
@@ -450,7 +450,7 @@ func (pg *statsPage) gathered(st game.GameState, y, w, grow int) int {
 			pg.ticks = append(pg.ticks, float64(k)/float64(top))
 		}
 		if s := textfmt.Number(math.Pow10(k)); at > last+1 || k == 0 {
-			if trackX+at+runeLen(s) <= trackX+trackW+totW {
+			if at+runeLen(s) <= trackW {
 				pg.g.put(trackX+at, y, s, xDim)
 				last = at + runeLen(s)
 			}

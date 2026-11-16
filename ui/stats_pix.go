@@ -129,8 +129,8 @@ func newStatsInk(pal *expPalette) statsInk {
 
 // statsTilePic is a headline tile: a plate with a well, a sign at the left
 // of the well when kind is not empty, the numeral at its right, and the
-// bottom cell row left for the label. tw and th are cells.
-func statsTilePic(tw, th, cw, ch int, toks []numTok, kind string, in statsInk) *image.RGBA {
+// label rows left below the well. tw, th and wr (the well's rows) are cells.
+func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, in statsInk) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, tw*cw, th*ch))
 	k := max(1, ch/21)
 	a := art{img, k}
@@ -138,7 +138,7 @@ func statsTilePic(tw, th, cw, ch int, toks []numTok, kind string, in statsInk) *
 	a.fill(image.Rect(0, 0, W, H), 2, in.foot)
 	a.fill(image.Rect(0, 0, W, H-1), 2, in.plate)
 	a.hline(2, W-2, 0, in.lip)
-	wellH := (th - 1) * ch / k
+	wellH := wr * ch / k
 	well := image.Rect(2, 2, W-2, wellH)
 	a.fill(well, 1, in.well)
 	avail := (well.Dx() - 4) * k
@@ -210,6 +210,9 @@ func statsBarPic(wc, hc, cw, ch int, frac float64, ticks []float64, tone color.R
 		}
 	}
 	if n := int(frac*float64(W) + .5); n > 0 {
+		if lightGround(in.ground) {
+			tone = toward(tone, keyBlack, .3)
+		}
 		R := rampOf(tone)
 		if hot {
 			R = rampOf(toward(tone, keyWhite, .25))
