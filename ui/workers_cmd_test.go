@@ -180,7 +180,7 @@ func TestWorkersHelpAndPanel(t *testing.T) {
 		}
 	}
 	panel = renderPeople(ge.GetState(), faith, 100, 30).String()
-	wantAll(t, "the People panel's Work tab", panel, "Work areas", "Auto-recruit", "Faith", "set", "auto", "roster faith <%|auto>")
+	wantAll(t, "the People panel's Work tab", panel, "Work areas", "Auto-recruit", "Faith", "set", "auto", "Share")
 	// A fresh game shows the tab too, and says there is nothing to staff yet.
 	fresh := game.NewGameEngine()
 	panel = renderPeople(fresh.GetState(), peopleView{tab: tabWork}, 100, 30).String()
