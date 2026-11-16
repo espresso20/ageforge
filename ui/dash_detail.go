@@ -49,13 +49,12 @@ type detailInfo struct {
 	ok bool
 	bs game.BuildingState
 	// The commands, whether each can run and why not.
-	sellCmd, upCmd    string
-	sellOff, upOff    bool
-	sellWhy, upWhy    string
-	minusCmd, plusCmd string
-	minusOff, plusOff bool
-	workers           string
-	upLine            string // what an upgrade makes and costs, for an older building
+	sellCmd, upCmd string
+	sellOff, upOff bool
+	sellWhy, upWhy string
+	minus, plus    stepSide
+	workers        string
+	upLine         string // what an upgrade makes and costs, for an older building
 }
 
 // sellCommand is the sell command for the amount chosen: one copy, ten, or
@@ -112,10 +111,7 @@ func (b *buildBox) refreshDetail() {
 	}
 	if bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
 		d.workers = strings.TrimSpace(kit.Strip(workersText(bs)))
-		d.minusCmd = command(verbUnassign, b.picked)
-		d.plusCmd = command(verbAssign, b.picked)
-		d.minusOff = bs.WorkersAssigned == 0
-		d.plusOff = bs.Count == 0 || bs.WorkersAssigned >= bs.WorkerCapacity*bs.Count || b.st.Workers.TotalIdle == 0
+		d.minus, d.plus = buildingStep(b.picked, bs, b.st.Workers.TotalIdle)
 	}
 	b.detail = d
 }
@@ -188,14 +184,7 @@ func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h int) {
 		y++
 	}
 	if d.workers != "" && y < iy+4 {
-		for i, k := range []struct {
-			sign, cmd string
-			off       bool
-		}{{"-", d.minusCmd, d.minusOff}, {"+", d.plusCmd, d.plusOff}} {
-			r := image.Rect(ix+i*4, y, ix+i*4+3, y+1)
-			g.put(r.Min.X, y, " "+k.sign+" ", xKeycap)
-			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keySteel, cmd: k.cmd, off: k.off})
-		}
+		g.stepper(ix, y, d.minus, d.plus)
 		g.putFit(ix+8, y, tw-8, d.workers, xText)
 		y++
 	}
