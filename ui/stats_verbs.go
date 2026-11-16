@@ -23,9 +23,8 @@ var (
 // prestigeButton draws Prestige at (x, y), off until a prestige is open, and
 // returns the next y.
 func (pg *statsPage) prestigeButton(st game.GameState, x, y int) int {
-	pg.g.actionButton(x, y, actionSpec{kind: keyDanger, label: txtPrestigeVerb.String(), cmd: prestigeCmd, off: !st.Prestige.CanPrestige})
-	ks := pg.g.keyset()
-	ks.keys[len(ks.keys)-1].ask, ks.keys[len(ks.keys)-1].yes = txtPrestigeAsk.String(), txtPrestigeVerb.String()
+	word := txtPrestigeVerb.String()
+	pg.g.actionButton(x, y, actionSpec{kind: keyDanger, label: word, cmd: prestigeCmd, ask: txtPrestigeAsk.String(), yes: word, off: !st.Prestige.CanPrestige})
 	return y + actionRows
 }
 
