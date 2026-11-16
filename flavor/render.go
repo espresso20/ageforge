@@ -10,7 +10,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // The template model. A template is DATA: an ordered list of parts, where a part
@@ -127,8 +126,8 @@ type tmpl struct {
 	Topic string
 	// Parts is the ordered slot list.
 	Parts []part
-	// Row is the row id of the sentence in the copy export and in the VibeMode
-	// script (see vibe.go): the catalog, the pool and the place in it.
+	// Row is the row id of the sentence in the copy export: the catalog, the
+	// pool and the place in it.
 	Row string
 }
 
@@ -152,8 +151,8 @@ func Generate(req Request, rng *rand.Rand) Result {
 // right, then placeholder substitution. Split out of Generate so a Stream's
 // last-resort pick can render a template it chose itself.
 func render(t tmpl, req Request, rng *rand.Rand) Result {
-	// The draws are made on the plain catalog, whatever the switch says, so a
-	// seed reproduces the same stream with VibeMode on or off.
+	// The draws are made on the plain catalog, so a seed reproduces the same
+	// stream.
 	var draws []int
 	var drew string
 	for _, p := range t.Parts {
@@ -169,13 +168,9 @@ func render(t tmpl, req Request, rng *rand.Rand) Result {
 		drew = bank[i]
 	}
 
-	plain := fillAs(t.compose(draws, false), req, false)
-	text := plain
-	if vibe.On() {
-		text = fillAs(t.compose(draws, true), req, true)
-	}
+	plain := fillAs(t.compose(draws), req, false)
 	return Result{
-		Text:     text,
+		Text:     plain,
 		Plain:    plain,
 		Moment:   req.Moment,
 		Template: t.ID,
