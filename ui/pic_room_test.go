@@ -3,6 +3,8 @@ package ui
 import (
 	"image"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // roomCells are the cells (width, height in pixels) the window's font sizes
@@ -81,6 +83,27 @@ func TestPicRoomRoundsUp(t *testing.T) {
 	for _, c := range []struct{ right, gap, cw, want int }{{47, 1, 7, 7}, {48, 1, 7, 7}, {49, 1, 7, 8}, {10, 0, 10, 1}, {11, 0, 10, 2}, {5, 0, 0, 0}} {
 		if got := picRoom(c.right, c.gap, c.cw); got != c.want {
 			t.Errorf("picRoom(%d, %d, %d) = %d, want %d", c.right, c.gap, c.cw, got, c.want)
+		}
+	}
+}
+
+// A coin, the recess of a coin not earned and a ladder step are drawn to the
+// whole cells their layout reserves, at every cell size: none has a width in
+// art pixels that could run past its cells into the text beside it.
+func TestCellFilledPicturesStayInTheirCells(t *testing.T) {
+	in := newStatsInk(newExpPalette())
+	for name, c := range roomCells {
+		cw, ch := c[0], c[1]
+		w, h := coinCols*cw, coinRows*ch
+		l := lookOf(medal{tier: config.BadgeGold, state: medalEarned}, medalSign("run"), coinArt)
+		for what, img := range map[string]*image.RGBA{
+			"coin":   coinPicture(l, w, h, coinPose{}),
+			"recess": statsRecessPic(w, h, in),
+			"step":   statsStepPic(coinCols, coinRows, cw, ch, 1, 4, true, false, false, in.face, in),
+		} {
+			if img.Rect.Dx() != w || img.Rect.Dy() != h {
+				t.Errorf("%s %s: %dx%d, want %dx%d", name, what, img.Rect.Dx(), img.Rect.Dy(), w, h)
+			}
 		}
 	}
 }
