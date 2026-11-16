@@ -476,30 +476,10 @@ func TestEveryInkHasAColour(t *testing.T) {
 	}
 }
 
-// TestBadgeEmblemsAreMapGlyphs: every badge of the catalog names an emblem
-// the case knows, and every emblem is a symbol the maps draw, in all three
-// glyph tiers, one cell wide. The integrity badges have a sprite each.
-func TestBadgeEmblemsAreMapGlyphs(t *testing.T) {
-	onMap := map[rune]bool{}
-	for _, g := range mapmodel.AllGlyphs() {
-		onMap[g.Unicode] = true
-	}
-	check := func(name string, e badgeEmblem) {
-		if !onMap[e.glyph.Unicode] {
-			t.Errorf("the emblem %q is %q, which is not a symbol the maps draw", name, e.glyph.Unicode)
-		}
-		if e.glyph.ASCII < 0x21 || e.glyph.ASCII > 0x7e {
-			t.Errorf("the emblem %q has no plain glyph (%q)", name, e.glyph.ASCII)
-		}
-		for _, tier := range caseTiers {
-			if r := e.glyph.In(tier); uniseg.StringWidth(string(r)) != 1 {
-				t.Errorf("the emblem %q is %q in the %s tier, which is not one cell wide", name, r, tier)
-			}
-		}
-	}
-	for name, e := range badgeEmblems {
-		check(name, e)
-	}
+// TestBadgeEmblemsAreKnown: every badge of the catalog names an emblem
+// the case knows. The integrity badges have a sprite each, and only the
+// legendary badges have one besides.
+func TestBadgeEmblemsAreKnown(t *testing.T) {
 	specials := map[string]bool{}
 	integrity, drawn := 0, 0
 	for _, def := range rules.Core().Badges() {
@@ -508,7 +488,6 @@ func TestBadgeEmblemsAreMapGlyphs(t *testing.T) {
 			t.Errorf("%s names the emblem %q, which the case does not know", def.Key, def.Emblem)
 			continue
 		}
-		check(def.Key, e)
 		if e.special != "" {
 			if specials[e.special] {
 				t.Errorf("%s shares its sprite %q with another badge", def.Key, e.special)

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"math/rand"
 	"strings"
 	"sync/atomic"
@@ -168,6 +169,12 @@ type Dashboard struct {
 	fxStart time.Time
 	// fxNow is the effect's clock; nil means time.Now (a test pins it).
 	fxNow func() time.Time
+
+	// moment is the card an earned badge shows (badge_moment.go), and
+	// momentOn is set while it is on show and moving, so the refresh loop
+	// redraws it at the animation rate. Read off the UI goroutine.
+	moment   badgeMoment
+	momentOn atomic.Bool
 
 	stopCh chan struct{}
 }
@@ -752,7 +759,7 @@ func sidebarText(active string, w, h int) string {
 // over it the active theme's ambient effect.
 func (d *Dashboard) Root() Primitive {
 	if d.rootFx == nil {
-		d.rootFx = newFxRoot(d.root, d.drawEffect)
+		d.rootFx = newFxRoot(d.root, d.drawEffect, d.drawMoment)
 	}
 	return d.rootFx
 }
@@ -770,16 +777,30 @@ func (d *Dashboard) drawEffect(scr mapstyle.Cells, x, y, w, h int) {
 	if !set.Motion {
 		return
 	}
-	now := time.Now
-	if d.fxNow != nil {
-		now = d.fxNow
-	}
+	now := d.clock()
 	if d.fxStart.IsZero() {
 		d.fxStart = now()
 	}
 	// Not in the command bar: nothing moves where the player types.
 	h -= promptRows
 	drawThemeEffect(scr, x, y, w, h, effect, int(now().Sub(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
+}
+
+// clock is the dashboard's time: time.Now, or the one a test pinned.
+func (d *Dashboard) clock() func() time.Time {
+	if d.fxNow != nil {
+		return d.fxNow
+	}
+	return time.Now
+}
+
+// drawMoment paints the earned-badge card over the dashboard, in the top
+// right from the second row (the header's buttons keep the first) down to the
+// command bar.
+func (d *Dashboard) drawMoment(p *kit.Painter, bounds image.Rectangle) {
+	area := image.Rect(bounds.Min.X, bounds.Min.Y+1, bounds.Max.X, bounds.Max.Y-promptRows)
+	set := d.mapSettings()
+	d.momentOn.Store(d.moment.paint(p, area, d.clock()(), set.Motion, set.Tier))
 }
 
 // StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).
@@ -809,7 +830,7 @@ func (d *Dashboard) StartUpdates() {
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect.
 				other = !other
-				if d.badgePanel.moving.Load() || d.epochHall.pics.moving.Load() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.badgePanel.moving.Load() || d.momentOn.Load() || d.epochHall.pics.moving.Load() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
@@ -907,7 +928,7 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 
-	// Badges earned since the last refresh: a toast and a log line each, and a
+	// Badges earned since the last refresh: a card and a log line each, and a
 	// line for the theme a badge gives. Here, in the UI goroutine: outside the
 	// engine lock, never in a Bus handler. They wait for the film of a run's
 	// ending, which covers the header, and are told when it is over.
@@ -987,8 +1008,7 @@ func (d *Dashboard) refresh() {
 // its record already proved when it was loaded get one line between them.
 // Then it drains the badges the account earned since the last refresh
 // (the engine judged them under its lock and only queued them) and gives each a
-// toast in the badge's own colours, written for the room the header's notice has, and
-// one log line, with a second line for the theme it unlocks when it gives one. The line is fixed per badge, so earning one draws
+// place on the card in the top right (badge_moment.go) and one log line, with a second line for the theme it unlocks when it gives one. The line is fixed per badge, so earning one draws
 // nothing from the run's random streams.
 func (d *Dashboard) announceBadges() {
 	if d.engine == nil {
@@ -1002,7 +1022,7 @@ func (d *Dashboard) announceBadges() {
 		d.engine.AddLog("success", line)
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
-		d.toastMgr.ShowFit(func(w int) string { return badgeToast(v, d.mapSettings().Tier, w) }, 5*time.Second)
+		d.moment.add(v)
 		d.engine.AddLog("success", game.BadgeLogLine(v))
 		if t, ok := theme.ByKey(v.RewardTheme); ok {
 			d.engine.AddLog("success", themeUnlockToast(t.Name.String()))
@@ -1179,8 +1199,7 @@ func (d *Dashboard) headerView(w int) headerView {
 		msg := kit.Strip(safeTags(d.shame.String()))
 		v.Alerts = append([]headerAlert{{text: msg, short: fitText(msg, 14), k: xBad}}, v.Alerts...)
 	}
-	// A toast written to fit (a badge's) is asked for the room the notice has.
-	v.Notice = strings.TrimSpace(kit.Strip(safeTags(d.toastMgr.CurrentFor(max(w-31, 0)))))
+	v.Notice = strings.TrimSpace(kit.Strip(safeTags(d.toastMgr.Current())))
 	if d.ledger.ready {
 		v.Led = &d.ledger.data
 	}

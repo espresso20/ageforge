@@ -893,7 +893,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	t.Logf("wrote %d screens to %s: %d bytes", len(shots.bytes), out, total)
 }
 
-// writeBadgeScreens takes the badge case's pictures: a badge's toast on the
+// writeBadgeScreens takes the badge case's pictures: a badge's card on the
 // dashboard, the case, and one badge's detail. Badges belong to an account,
 // which the game above is played without, so these have a stage of their
 // own: a new account (in the test's own data folder, never the player's)
@@ -940,9 +940,21 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		s.eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 	}
 	s.d.refresh() // the dashboard announces what was earned
-	s.holdToast()
+	// The earned-badge card, whole and still: motion off and a clock held
+	// fixed (a still card keeps its place for its whole life, which the
+	// wall clock would run out).
+	was := s.d.mapSettings().Motion
+	if err := s.eng.Account().SetMotion(false); err != nil {
+		t.Fatal(err)
+	}
+	clock := time.Unix(0, 0)
+	s.d.fxNow = func() time.Time { return clock }
 	shots.take(s, "badge-toast")
-	s.quiet()
+	s.d.fxNow = nil
+	if err := s.eng.Account().SetMotion(was); err != nil {
+		t.Fatal(err)
+	}
+	s.d.moment = badgeMoment{}
 
 	// The case as it opens: the All tab, every family in sight under its
 	// heading, on an account a few ages in.

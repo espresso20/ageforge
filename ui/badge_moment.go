@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -127,6 +128,16 @@ func (m *badgeMoment) draw(p *kit.Painter, card image.Rectangle, v game.BadgeVie
 		}
 		p.Print(x, org.Y+5+i, momentTextW, lit(l), text.Foreground(kit.Role(theme.RoleText)))
 	}
+}
+
+// badgeToastWords are the card's head and the badge's tier text (" (gold)",
+// or nothing).
+func badgeToastWords(v game.BadgeView) (head, tierText string) {
+	head = vibe.Line("ui.badge_list.badgeToast.01", "Badge earned:")
+	if v.Tier != "" {
+		tierText = " (" + v.Tier + ")"
+	}
+	return head, tierText
 }
 
 // foldRunes is s in ASCII, as the badges' plain tier folds it.
