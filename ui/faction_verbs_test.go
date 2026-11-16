@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -184,6 +185,24 @@ func TestFactionRaidAsksFirstNamingTheCivAndRunsOnlyOnYes(t *testing.T) {
 	}
 }
 
+// Tribute is off one gold short of the engine's price and on at it.
+func TestFactionTributeIsOffOneGoldShortAndOnAtThePrice(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		diff float64
+		off  bool
+	}{{"one short", -1, true}, {"at the price", 0, false}} {
+		s := stageFactions(t, 0, func(st *game.GameState, key string) {
+			gold, _ := game.TributePrice(config.FactionByKey()[key])
+			setFaction(st, key, func(f *game.FactionInfo) { f.AtWar = true })
+			stockSet(st, "gold", gold+c.diff)
+		})
+		if k := s.button(t, diplomacyCmd+"tribute "+s.key); k.off != c.off {
+			t.Errorf("%s: Tribute off=%v, want %v", c.name, k.off, c.off)
+		}
+	}
+}
+
 func TestFactionDealButtonCarriesAcceptAndIsOffWhenTaken(t *testing.T) {
 	s := stageFactions(t, 0, func(st *game.GameState, key string) {
 		setFaction(st, key, func(f *game.FactionInfo) {
@@ -270,5 +289,81 @@ func TestFactionGiftAndRaidByMouseAlone(t *testing.T) {
 	keyTo(dlg, tk(kit.KeyEnter, 0, 0))
 	if got := eng.GetState().Diplomacy.Factions[def.Key].Opinion; got >= op {
 		t.Errorf("the raid did not lower opinion: %d -> %d", op, got)
+	}
+}
+
+// raidStage is the dashboard with a civilization met and its Raid button
+// found, the lines run through the command bar's path counted.
+func raidStage(t *testing.T) (press func(), answer func(danger bool), opinion func() int, ran *[]string, front func() string) {
+	t.Helper()
+	keepTheme(t)
+	d, pages, eng := stagedDashboard(t, "iron_age")
+	def := eng.Rules().Factions()[0]
+	eng.GrantTechsForTest("envoys")
+	must(t, eng.MeetFactionForTest(def.Key, 0))
+	d.overlayMgr.screenW = 130
+	d.overlayMgr.Show("factions", eng.GetState())
+	drawPrimitive(t, pages, 130, 60)
+	cmd := diplomacyCmd + "raid " + def.Key
+	press = func() {
+		for _, k := range d.factions.grid.keyset().keys {
+			if k.cmd != cmd {
+				continue
+			}
+			tv := d.overlayMgr.entries["factions"].tv
+			pt := tv.view.Bounds().Min.Add(k.r.Min).Add(image.Pt(k.r.Dx()/2, k.r.Dy()/2))
+			for _, kind := range []kit.MouseKind{kit.MousePress, kit.MouseRelease} {
+				tv.Mouse(kit.Mouse{Kind: kind, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: 1})
+			}
+			return
+		}
+		t.Fatalf("no button carries %q", cmd)
+	}
+	answer = func(danger bool) {
+		_, item := pages.GetFrontPage()
+		dlg, ok := item.(*nativeDialog)
+		if !ok {
+			t.Fatalf("the front page is %T, not the question", item)
+		}
+		d.app.SetFocus(dlg)
+		if danger {
+			keyTo(dlg, tk(kit.KeyTab, 0, 0))
+		}
+		keyTo(dlg, tk(kit.KeyEnter, 0, 0))
+	}
+	opinion = func() int { return eng.GetState().Diplomacy.Factions[def.Key].Opinion }
+	front = func() string { name, _ := pages.GetFrontPage(); return name }
+	return press, answer, opinion, &d.cmdHistory, front
+}
+
+// A click on Raid puts its question on screen and leaves the opinion alone;
+// Cancel leaves it alone too.
+func TestFactionRaidClickAsksAndCancelChangesNothing(t *testing.T) {
+	press, answer, opinion, ran, front := raidStage(t)
+	before := opinion()
+	press()
+	if front() != "ask_line" {
+		t.Fatalf("the front page is %q, not the question", front())
+	}
+	if opinion() != before || len(*ran) != 0 {
+		t.Fatalf("the click ran %q and moved opinion %d -> %d", *ran, before, opinion())
+	}
+	answer(false)
+	if opinion() != before || len(*ran) != 0 || front() == "ask_line" {
+		t.Errorf("Cancel ran %q, opinion %d -> %d, front %q", *ran, before, opinion(), front())
+	}
+}
+
+// The danger button runs the raid exactly once and the opinion falls.
+func TestFactionRaidDangerButtonRunsOnce(t *testing.T) {
+	press, answer, opinion, ran, _ := raidStage(t)
+	before := opinion()
+	press()
+	answer(true)
+	if len(*ran) != 1 || !strings.HasPrefix((*ran)[0], diplomacyCmd+"raid ") {
+		t.Errorf("ran %q, want one raid", *ran)
+	}
+	if got := opinion(); got >= before {
+		t.Errorf("opinion %d -> %d, want it to fall", before, got)
 	}
 }
