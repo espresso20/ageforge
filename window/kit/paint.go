@@ -180,6 +180,44 @@ func (p *Painter) Print(x, y, maxW int, s string, st Style) int {
 	return p.line(x, y, &l, 0, maxW)
 }
 
+// Label writes tagged text on one line from x, y like Print, over cells that
+// show a picture: each cell it writes keeps its picture and its ground, and
+// takes the text's glyph and ink. Where there is no picture it only writes
+// the glyphs and ink, as Print does. It returns the cells it took.
+func (p *Painter) Label(x, y int, s string, st Style) int {
+	if y < p.clip.Min.Y || y >= p.clip.Max.Y || s == "" {
+		return 0
+	}
+	ps := parse(s, st)
+	l := Line{g: glyphs(&ps, st)}
+	n := 0
+	for i := range l.g {
+		g := &l.g[i]
+		if !printable(g) {
+			continue
+		}
+		type kept struct {
+			c   *Cell
+			pic uint16
+			bg  color.RGBA
+		}
+		var keep [2]kept
+		for k := 0; k < min(g.w, 2); k++ {
+			if c := p.cell(x+n+k, y); c != nil {
+				keep[k] = kept{c, c.Pic, c.Bg}
+			}
+		}
+		p.put(x+n, y, g, g.st)
+		for _, k := range keep {
+			if k.c != nil {
+				k.c.Pic, k.c.Bg = k.pic, k.bg
+			}
+		}
+		n += g.w
+	}
+	return n
+}
+
 // PrintAligned paints tagged text on one line inside the w cells from x.
 func (p *Painter) PrintAligned(x, y, w int, s string, st Style, a Align) {
 	if n := Width(s); a != AlignLeft && n < w {

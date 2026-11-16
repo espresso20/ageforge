@@ -64,8 +64,7 @@ func (g *Game) drawCell(x, y int, c kit.Cell) {
 		vector.FillRect(g.buf, px, py, float32(cw), float32(g.ch), bg, false)
 	}
 	if c.Pic != 0 {
-		g.drawPic(x, y, c) // a picture's cell: its pixels, on the cell's ground
-		return
+		g.drawPic(x, y, c) // a picture's cell: its pixels, on the cell's ground; a glyph is drawn over them
 	}
 	if c.R != ' ' && c.R != 0 {
 		if sh, ok := procedural(c.R, g.cw, g.ch); ok {
