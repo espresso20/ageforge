@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/espresso20/ageforge/window/kit"
 	"image"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -54,12 +55,10 @@ func TestGatherButtonsStopAfterTheFirstTwoAges(t *testing.T) {
 	}
 }
 
-func TestBuildingThePickedCardKeepsThePickInPlace(t *testing.T) {
+func TestThePickFollowsTheBuildingWhenTheListIsSortedAgain(t *testing.T) {
 	d, st, eng := cardTown(t)
 	box := d.economyTab.buildBox
 	pickCard(t, d, st, "hut")
-	at := box.pickAt
-	// A unique building leaves the list when it is built.
 	for i := 0; i < 3; i++ {
 		before := ownedAndQueued(eng, box.picked)
 		runs := len(d.cmdHistory)
@@ -69,12 +68,25 @@ func TestBuildingThePickedCardKeepsThePickInPlace(t *testing.T) {
 		}
 		d.refresh()
 		st.paint()
-		if box.picked == "" {
-			t.Fatalf("after build %d nothing is picked", i+1)
+		if box.picked != "hut" {
+			t.Fatalf("after build %d the pick is %q, want hut", i+1, box.picked)
 		}
-		if got := box.pickAt; got > at && at < len(box.order) {
-			t.Errorf("the pick moved from place %d to %d", at, got)
+		if at := slices.Index(box.order, box.picked); at != box.pickAt {
+			t.Errorf("pick place %d, the card is at %d", box.pickAt, at)
 		}
+	}
+	// Sorted in another order, the same card stays picked.
+	slices.Reverse(box.order)
+	box.resort = true
+	box.recompute()
+	if box.picked != "hut" || box.order[box.pickAt] != "hut" {
+		t.Errorf("after a re-sort the pick is %q at %d", box.picked, box.pickAt)
+	}
+	// A card that left the list passes the pick to the one in its place.
+	box.order = slices.DeleteFunc(box.order, func(k string) bool { return k == "hut" })
+	box.settlePick()
+	if box.picked == "hut" || box.picked == "" {
+		t.Errorf("the pick is %q after its card left", box.picked)
 	}
 }
 
