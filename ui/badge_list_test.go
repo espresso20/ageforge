@@ -86,11 +86,11 @@ func TestStatsPanelListsBadges(t *testing.T) {
 		t.Fatalf("no %q tile in %+v", name, pg.tiles)
 		return ""
 	}
-	if got := tile(txtBadgesEarn.String()); got != fmt.Sprint(sum.Earned) || sum.Earned != 1 {
+	if got := tile(txtBadgesEarn.String()); got != fmt.Sprintf("%d/%d", sum.Earned, sum.Shown) || sum.Earned != 1 {
 		t.Errorf("badges earned tile = %q, summary %+v", got, sum)
 	}
-	if got := tile(txtTitleOf.String()); got != "Settler" {
-		t.Errorf("title tile = %q", got)
+	if pl := pg.tiles[0].plaque; pl == nil || pl.title != "Settler" {
+		t.Errorf("plaque = %+v", pl)
 	}
 	text := statsPageText(eng.GetState(), partLifetime, 120)
 	if strings.Contains(text, "Achievements") || strings.Contains(text, "☆") || strings.Contains(text, "Rock Solid") {

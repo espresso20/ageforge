@@ -21,7 +21,7 @@ var statsFont = map[rune]string{
 	'B': "####./#...#/#...#/####./#...#/#...#/####.", 'T': "#####/..#../..#../..#../..#../..#../..#..",
 	'h': "#..../#..../#.##./##..#/#...#/#...#/#...#", 'm': "...../...../##.#./#.#.#/#.#.#/#.#.#/#.#.#",
 	's': "...../...../.####/#..../.###./....#/####.", 'd': "....#/....#/.##.#/#..##/#...#/#..##/.##.#",
-	'.': "./././././././#", ',': "../../../../../.#/#.", ' ': "..././.../.../.../.../.../...",
+	'.': "./././././././#", '/': "....#/....#/...#./..#../.#.../#..../#....", ',': "../../../../../.#/#.", ' ': "..././.../.../.../.../.../...",
 }
 
 // numTok is one glyph of a numeral; half is a unit (h, m, s, d), drawn at
@@ -110,12 +110,12 @@ func fillPx(img *image.RGBA, r image.Rectangle, c color.RGBA) {
 // panel palette: the ground, a plate raised from it, the well a numeral sits
 // in, the lip of the plate and the numeral's face and shadow.
 type statsInk struct {
-	ground, plate, well, lip, foot, face, shadow color.RGBA
+	ground, plate, well, lip, foot, face, shadow, accent color.RGBA
 }
 
 func newStatsInk(pal *expPalette) statsInk {
 	ground, edge := pal.tone(xText, true), pal.tone(xBorder, false)
-	in := statsInk{ground: ground, face: pal.tone(xBright, false)}
+	in := statsInk{ground: ground, face: pal.tone(xBright, false), accent: pal.tone(xAccent, false)}
 	in.plate = toward(ground, edge, .4)
 	in.well = toward(ground, edge, .1)
 	in.lip = toward(in.plate, in.face, .3)
@@ -130,7 +130,8 @@ func newStatsInk(pal *expPalette) statsInk {
 // statsTilePic is a headline tile: a plate with a well, a sign at the left
 // of the well when kind is not empty, the numeral at its right, and the
 // label rows left below the well. tw, th and wr (the well's rows) are cells.
-func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, all []statsTile, in statsInk) *image.RGBA {
+// A tile that holds is framed in the accent tone.
+func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, hold bool, all []statsTile, in statsInk) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, tw*cw, th*ch))
 	k := max(1, ch/21)
 	a := art{img, k}
@@ -141,6 +142,16 @@ func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, all []stat
 	wellH := wr * ch / k
 	well := image.Rect(2, 2, W-2, wellH)
 	a.fill(well, 1, in.well)
+	if hold {
+		for t := 0; t < 2; t++ {
+			a.hline(2, W-2, t, in.accent)
+			a.hline(2, W-2, H-1-t, in.accent)
+			for y := 2; y < H-2; y++ {
+				a.px(t, y, in.accent)
+				a.px(W-1-t, y, in.accent)
+			}
+		}
+	}
 	if kind != "" {
 		drawSign(a, well.Min.X+2, well.Min.Y+(well.Dy()-36)/2, kind, signTints[kind], .1, in.well)
 	}
