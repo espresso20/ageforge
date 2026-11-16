@@ -235,15 +235,8 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
 	d.registerDeck("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeRoads
-	// The Factions panel, under two names pointing at one provider (the
-	// citymap/map precedent below). "factions" is the primary — it is what the
-	// sidebar lists, and the sidebar highlight matches on the registered name, so
-	// the two strings have to agree exactly. Bare `diplomacy` is routed to the
-	// primary name in input.go so it highlights too; "diplomacy" stays registered
-	// so anything holding the old overlay name still resolves.
 	d.factions = &factionsView{}
 	d.overlayMgr.Register("factions", vibe.E("ui.dashboard.NewDashboard.07", "Factions"), d.factions.provider)
-	d.overlayMgr.Register("diplomacy", vibe.E("ui.dashboard.NewDashboard.08", "Factions"), func(state game.GameState, w int) string { return factionsProvider(state, w) })
 	d.factions.wire(d.overlayMgr)
 	d.wonders = &wondersView{}
 	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)

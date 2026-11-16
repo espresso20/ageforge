@@ -67,43 +67,40 @@ func raidAsk(name string) string {
 // factionVerbs is a civilization's buttons: Gift, the most used, leads, and
 // Tribute takes its place while the civ is at war. A verb the engine would
 // refuse is off.
-func factionVerbs(state game.GameState, def config.FactionDef, f game.FactionInfo) []slotBtn {
+func factionVerbs(state game.GameState, def config.FactionDef, f game.FactionInfo) []actionSpec {
 	locked := false
 	if _, l := featureRefusal(state, config.FeatureDiplomacy); l {
 		locked = true
 	}
 	gold := state.Resources["gold"].Amount
 	culture := state.Resources["culture"].Amount
-	strength := f.Strength
-	if strength <= 0 {
-		strength = def.Strength
-	}
+	tributeGold, tributeCulture := game.TributePrice(def)
 	dip := state.Diplomacy
-	verb := func(word, sub string, kind keyKind, off bool) slotBtn {
-		return slotBtn{word: word, kind: kind, cmd: diplomacyCmd + sub + " " + def.Key, off: off}
+	verb := func(label, sub string, kind keyKind, off bool) actionSpec {
+		return actionSpec{label: label, kind: kind, cmd: diplomacyCmd + sub + " " + def.Key, off: off}
 	}
 	gift, tribute := keyPrimary, keyPlain
 	if f.AtWar {
 		gift, tribute = keyPlain, keyPrimary
 	}
 	raid := verb(txtVerbRaid.String(), "raid", keyDanger, false)
-	raid.ask, raid.yes = raidAsk(def.Name), raid.word
-	return []slotBtn{
+	raid.ask, raid.yes = raidAsk(def.Name), raid.label
+	return []actionSpec{
 		verb(txtVerbGift.String(), "gift", gift, locked || gold < dip.GiftCost),
 		verb(txtVerbAlly.String(), "ally", keyPlain, locked || f.Status == "allied" || f.Opinion < game.AllyOpinion || gold < dip.AllyCost),
 		verb(txtVerbRival.String(), "rival", keyPlain, locked || f.Status == "rival"),
 		verb(txtVerbEmbargo.String(), "embargo", keyPlain, locked || f.Status == "embargo"),
 		verb(txtVerbNeutral.String(), "neutral", keyPlain, f.Status == "neutral"),
-		verb(txtVerbTribute.String(), "tribute", tribute, !f.AtWar || gold < 300*float64(strength) || culture < 50*float64(strength)),
+		verb(txtVerbTribute.String(), "tribute", tribute, !f.AtWar || gold < tributeGold || culture < tributeCulture),
 		raid,
 	}
 }
 
 // dealButton is Accept for one offer of the civilization key, off when it is
 // taken, cannot be paid or the feature is still locked.
-func dealButton(state game.GameState, key string, d game.DealInfo) slotBtn {
+func dealButton(state game.GameState, key string, d game.DealInfo) actionSpec {
 	_, locked := featureRefusal(state, config.FeatureDiplomacy)
 	off := locked || d.Taken || state.Resources[d.Give].Amount < d.GiveAmt
 	cmd := strings.Join([]string{diplomacyCmd + "accept", key, strconv.Itoa(d.Num)}, " ")
-	return slotBtn{word: txtVerbAccept.String(), kind: keySteel, cmd: cmd, off: off}
+	return actionSpec{label: txtVerbAccept.String(), kind: keySteel, cmd: cmd, off: off}
 }

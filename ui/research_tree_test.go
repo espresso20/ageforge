@@ -694,7 +694,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	// Envoys and Drama belong to ages not in sight: the Factions panel and
 	// the festival command say nothing of them yet.
 	festival := func() string { return cmdFestival(nil, ge).Message + cmdFestival([]string{"confirm"}, ge).Message }
-	if out := factionsProvider(st, 120) + festival(); strings.Contains(out, "Envoys") || strings.Contains(out, "Drama") {
+	if out := factionsProvider(st, 120, nil) + festival(); strings.Contains(out, "Envoys") || strings.Contains(out, "Drama") {
 		t.Errorf("a panel names a tech of an age not in sight:\n%s", out)
 	}
 	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {
@@ -706,7 +706,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	// and stops once it is researched.
 	late := ge.GetState()
 	for what, c := range map[string][2]string{
-		"the Factions panel": {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
+		"the Factions panel": {factionsProvider(late, 120, nil), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
 		"festival":           {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
 		"festival confirm":   {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
 	} {
@@ -719,7 +719,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	}
 	ge.GrantTechsForTest("envoys", "drama", "the_wheel")
 	late = ge.GetState()
-	if out := factionsProvider(late, 120) + festival() + deckText(tradePage(late)); strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
+	if out := factionsProvider(late, 120, nil) + festival() + deckText(tradePage(late)); strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
 		t.Errorf("with the techs researched a lock is still shown:\n%s", out)
 	}
 	if strings.Contains(out, "Interstellar Trade") || strings.Contains(out, "interstellar_trade") {

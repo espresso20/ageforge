@@ -25,10 +25,9 @@ const poisonRune = 'א'
 var fullSizes = [][2]int{{80, 24}, {100, 30}, {160, 45}}
 
 // panelCommands are the commands that open the panels of the Panels list, and
-// the two more overlays a command opens (the Buildings list and the old name
-// of the Factions panel).
+// the one more overlay a command opens (the Buildings list).
 func panelCommands() []string {
-	return append(append([]string(nil), sidebarPanels...), "buildings", "diplomacy")
+	return append(append([]string(nil), sidebarPanels...), "buildings")
 }
 
 // poisonedStage is a dashboard in the Medieval Age with a page of poison over
