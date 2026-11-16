@@ -153,21 +153,10 @@ func loadLabels() {
 	})
 }
 
-// resourceLabelAs is resourceLabel in the reading asked for (see say). Told
-// while VibeMode is on, it is the script's name for the resource
-// (resource.<key>.name, the row the ruleset's definition reads) lowercased, so
-// a story names a resource as the log does; a resource the script has no name
-// for, and the plain reading, are resourceLabel.
+// resourceLabelAs is resourceLabel in the reading asked for (see say). There
+// is one reading now, so it is resourceLabel.
 func resourceLabelAs(key string, told bool) string {
-	plain := resourceLabel(key)
-	if !told || key == "" || !vibe.On() {
-		return plain
-	}
-	name, ok := nameCache[key]
-	if !ok {
-		return plain
-	}
-	return strings.ToLower(vibe.Line("resource."+key+".name", name))
+	return resourceLabel(key)
 }
 
 // classOf returns a key's noun class, defaulting to massNoun for anything
