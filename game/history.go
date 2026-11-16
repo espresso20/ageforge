@@ -115,7 +115,8 @@ func (t *HistoryTier) shrink(ring bool) {
 				if 2*i+1 == t.N-1 {
 					wb = t.Fill
 				}
-				b = float32((float64(a)*float64(full) + float64(b)*float64(wb)) / float64(full+wb))
+				// Each product is rounded before the sum (the float rules).
+				b = float32((float64(float64(a)*float64(full)) + float64(float64(b)*float64(wb))) / float64(full+wb))
 			}
 			c[i] = b
 		}
