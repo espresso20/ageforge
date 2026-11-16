@@ -379,7 +379,10 @@ func (b *buildBox) draw(w, h int) {
 	}
 	base := b.shownItems
 	b.drawAt(w, h, detailRows)
-	if b.shownItems < base || (b.shownItems == 0 && b.items > 0) {
+	// A list that already runs past the box keeps the detail while a few
+	// cards still show beside it; a list that fits keeps every card.
+	fits := base >= b.items
+	if (fits && b.shownItems < base) || b.shownItems < min(base, detailKeepCards) {
 		b.drawAt(w, h, 0)
 	}
 }
@@ -1003,7 +1006,11 @@ func (b *buildBox) paintCells(p *kit.Painter, pal *expPalette, rect image.Rectan
 		p.Put(gx, rect.Min.Y+rect.Dy()/2, gl, inkOf(tint, true).Background(fill))
 	}
 	if picked && !compact {
-		p.Put(rect.Min.X+1, rect.Min.Y+rect.Dy()/2, '▸', inkOf(acc, true).Background(fill))
+		mark := '▸'
+		if plain {
+			mark = '>'
+		}
+		p.Put(rect.Min.X+1, rect.Min.Y+rect.Dy()/2, mark, inkOf(acc, true).Background(fill))
 	}
 }
 

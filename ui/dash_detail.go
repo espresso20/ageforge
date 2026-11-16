@@ -30,6 +30,8 @@ const (
 	// under which the box leaves the detail out.
 	detailRows = 6
 	detailMinW = 46
+	// detailKeepCards is the cards a long list keeps on show beside the detail.
+	detailKeepCards = 3
 	// detailRoomW is the cells the text keeps beside the buttons.
 	detailRoomW = 24
 )
@@ -134,6 +136,8 @@ func (b *buildBox) detailNote(hot xkey, isHot bool) (text string, bad bool) {
 	switch {
 	case d.upLine != "" && !d.upOff:
 		return d.upLine, false
+	case d.upOff && d.upWhy != "":
+		return d.upWhy, true
 	case d.sellOff:
 		return d.sellWhy, true
 	case d.upLine != "":
@@ -231,14 +235,14 @@ func (b *buildBox) paintDetail(p *kit.Painter, pal *expPalette, org image.Point,
 	if text == "" {
 		return
 	}
-	if plain {
-		text = foldToASCII(text)
-	}
 	ink := inkOf(pal.tone(xDim, false), false)
 	if bad {
 		ink = inkOf(pal.tone(xBad, false), false)
 	}
 	room := b.note.Dx() - runeLen(b.detail.bs.Name+" x"+strconv.Itoa(b.detail.bs.Count)) - 2
 	text = fitText(text, max(room, 1))
+	if plain {
+		text = foldToASCII(text)
+	}
 	p.Label(org.X+b.note.Max.X-runeLen(text), org.Y+b.note.Min.Y, kit.Escape(text), ink)
 }

@@ -114,8 +114,78 @@ func TestDetailButtonsRunTheirCommandsAndOffOnesRunNothing(t *testing.T) {
 	if box.detail.upWhy == "" {
 		t.Error("an off Upgrade gives no reason")
 	}
+	if text, bad := box.detailNote(xkey{}, false); !bad || text != box.detail.upWhy {
+		t.Errorf("at rest the note is %q (bad %v), want the Upgrade's reason %q", text, bad, box.detail.upWhy)
+	}
 	_ = eng
 }
+
+// An off Sell runs nothing and says why, at rest and under the pointer.
+func TestAnOffSellRunsNothingAndShowsItsReason(t *testing.T) {
+	d, st, _ := cardTown(t)
+	box := d.economyTab.buildBox
+	d.runForTest("build hut")
+	d.refresh()
+	pickCard(t, d, st, "hut")
+	var sell xkey
+	for _, k := range box.det.keys {
+		if strings.HasPrefix(k.cmd, "sell ") {
+			sell = k
+		}
+	}
+	if sell.cmd == "" || !sell.off {
+		t.Fatalf("Sell is %+v, want a key that is off in this age", sell)
+	}
+	if box.detail.sellWhy == "" {
+		t.Fatal("an off Sell gives no reason")
+	}
+	p := centre(d, sell.r)
+	runs := len(d.cmdHistory)
+	st.click(p.X, p.Y)
+	if len(d.cmdHistory) != runs {
+		t.Errorf("an off Sell ran %v", d.cmdHistory[runs:])
+	}
+	if text, bad := box.detailNote(sell, true); !bad || text != box.detail.sellWhy {
+		t.Errorf("under the pointer the note is %q (bad %v), want %q", text, bad, box.detail.sellWhy)
+	}
+}
+
+// A long list keeps the detail while a few cards still show beside it.
+func TestALongListKeepsTheDetail(t *testing.T) {
+	d, st, eng := medievalTown(t, 160, 58)
+	box := d.economyTab.buildBox
+	setStock(eng, 1e9)
+	d.refresh()
+	st.paint()
+	keys := box.order
+	if len(keys) == 0 {
+		t.Fatal("no cards")
+	}
+	pickCard(t, d, st, placedKey(box))
+	_, _, w, _ := box.GetRect()
+	long := 0
+	defer func() {
+		if long == 0 {
+			t.Error("no height made a list longer than the box")
+		}
+	}()
+	for h := 30; h >= 20; h-- {
+		box.drawAt(w, h, 0)
+		if box.shownItems >= box.items {
+			continue
+		}
+		long++
+		box.draw(w, h)
+		if h >= 26 && box.det == nil {
+			t.Errorf("height %d: a long list lost the detail (%d cards shown)", h, box.shownItems)
+		}
+		if box.det != nil && box.shownItems < detailKeepCards {
+			t.Errorf("height %d: %d cards beside the detail, want at least %d", h, box.shownItems, detailKeepCards)
+		}
+	}
+}
+
+func placedKey(b *buildBox) string { return b.placed[0].card.key }
 
 func TestTheDetailGivesWayBeforeCardsAreHidden(t *testing.T) {
 	d, st, _ := cardTown(t)
@@ -128,10 +198,13 @@ func TestTheDetailGivesWayBeforeCardsAreHidden(t *testing.T) {
 	sawDetail, sawGone := false, false
 	for h := 40; h >= 6; h-- {
 		box.drawAt(w, h, 0)
-		base := box.shownItems
+		base, total := box.shownItems, box.items
 		box.draw(w, h)
-		if box.shownItems < base {
-			t.Errorf("at height %d the detail hid cards: %d shown, %d without it", h, box.shownItems, base)
+		if box.shownItems < base && (base >= total || box.shownItems < detailKeepCards) {
+			t.Errorf("at height %d the detail hid cards: %d shown, %d without it of %d", h, box.shownItems, base, total)
+		}
+		if box.det != nil && base >= total && box.shownItems < base {
+			t.Errorf("at height %d the detail cost a card of a list that fits", h)
 		}
 		sawDetail = sawDetail || box.det != nil
 		sawGone = sawGone || box.det == nil

@@ -657,11 +657,27 @@ func TestCardsDrawPictures(t *testing.T) {
 	pictureCell = func() (int, int) { return 10, 21 }
 	t.Cleanup(func() { pictureCell = was })
 	d, st, _ := cardTown(t)
+	box := d.economyTab.buildBox
+	count := func() int {
+		x, y, w, h := box.GetRect()
+		n := 0
+		for _, p := range st.buf.Pics {
+			if p.Rect.In(image.Rect(x, y, x+w, y+h)) {
+				n++
+			}
+		}
+		return n
+	}
 	st.paint()
-	pics := len(st.buf.Pics)
-	// One picture a card, and one more for each button, the buy keys and the gather buttons.
-	if want := 2 * len(d.economyTab.buildBox.placed); pics < want {
-		t.Errorf("%d pictures for %d cards, want at least %d", pics, len(d.economyTab.buildBox.placed), want)
+	// One picture a card, and one for each key: the buy keys, the gather
+	// buttons and the Build keys.
+	if got, want := count(), len(box.placed)+len(box.strip.keys)+len(box.cardKeys.keys); got != want || want < 12 {
+		t.Errorf("%d pictures in the box, want %d (cards %d, strip %d, card keys %d)", got, want, len(box.placed), len(box.strip.keys), len(box.cardKeys.keys))
+	}
+	// The detail adds one for each of its buttons.
+	pickCard(t, d, st, "hut")
+	if got, want := count(), len(box.placed)+len(box.strip.keys)+len(box.cardKeys.keys)+len(box.det.keys); got != want || len(box.det.keys) == 0 {
+		t.Errorf("with the detail: %d pictures, want %d", got, want)
 	}
 }
 
@@ -679,12 +695,16 @@ func TestCardsInThePlainTier(t *testing.T) {
 		d.mapLocal = &s
 		d.refresh()
 		st.paint()
+		pickCard(t, d, st, d.economyTab.buildBox.placed[0].card.key)
+		if d.economyTab.buildBox.det == nil || len(d.economyTab.buildBox.det.keys) == 0 || !d.economyTab.buildBox.det.plain {
+			t.Errorf("pictures %v: the plain tier drew no detail keys in ASCII", pix)
+		}
 		bx, by, bw, bh := d.economyTab.buildBox.GetRect()
 		var left []string
 		for y := by; y < by+bh; y++ {
 			for x := bx; x < bx+bw; x++ {
 				if c := st.buf.At(x, y); c.R >= 0x80 {
-					left = append(left, string(c.R))
+					left = append(left, fmt.Sprintf("%c@%d,%d", c.R, x-bx, y-by))
 				}
 			}
 		}
@@ -692,5 +712,50 @@ func TestCardsInThePlainTier(t *testing.T) {
 			t.Errorf("pictures %v: the plain tier left %d marks that are not ASCII: %v", pix, len(left), left[:min(len(left), 12)])
 		}
 		pictureCell = was
+	}
+}
+
+// At 100 and 120 columns the picked card keeps its one three-row button, every
+// card keeps clear of the others and no key leaves the box.
+func TestPickedCardKeepsItsButtonAtNarrowWidths(t *testing.T) {
+	for _, c := range []struct{ w, h int }{{100, 40}, {120, 45}} {
+		d, st, eng := medievalTown(t, c.w, c.h)
+		setStock(eng, 1e9)
+		d.refresh()
+		st.paint()
+		box := d.economyTab.buildBox
+		pickCard(t, d, st, box.placed[0].card.key)
+		bx, by, bw, bh := box.GetRect()
+		_, _ = bx, by
+		inner := image.Rect(0, 0, bw, bh)
+		tall := 0
+		for _, k := range box.cardKeys.keys {
+			if k.r.Dy() >= actionRows {
+				tall++
+			}
+		}
+		want := 1
+		if box.placed[0].compact {
+			want = 0 // a stacked card keeps its one-row key
+		}
+		if tall != want {
+			t.Errorf("%dx%d: %d three-row buttons among the cards, want %d", c.w, c.h, tall, want)
+		}
+		end := 0
+		for i, pc := range box.placed {
+			if pc.y < end {
+				t.Errorf("%dx%d: card %d starts on row %d inside the one above (ends %d)", c.w, c.h, i, pc.y, end)
+			}
+			end = pc.y + pc.rows
+		}
+		all := append([]xkey(nil), box.cardKeys.keys...)
+		if box.det != nil {
+			all = append(all, box.det.keys...)
+		}
+		for _, k := range all {
+			if !k.r.In(inner) {
+				t.Errorf("%dx%d: key %q at %v leaves the box %v", c.w, c.h, k.cmd, k.r, inner)
+			}
+		}
 	}
 }
