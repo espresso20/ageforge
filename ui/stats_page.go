@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -59,6 +60,7 @@ var (
 const (
 	hitAge = iota + 1
 	hitBar
+	hitStep
 )
 
 // the parts of the panel.
@@ -79,6 +81,9 @@ type statsTile struct {
 	toks             []numTok
 	kind             string
 	r                image.Rectangle
+	span             int          // slots wide; 0 is one
+	hold             bool         // framed in the accent tone
+	plaque           *statsPlaque // set for the account's plaque, which draws itself
 }
 
 // statsBlock is an age's block of the band.
@@ -134,6 +139,8 @@ type statsPage struct {
 	research []statsRow
 	pics     []statsPic
 	labels   []statsLabel
+	steps    []statsStep        // the ladder's steps (Lifetime)
+	top      int                // the highest step reached
 	heads    [2]image.Rectangle // the heading rows of the ages band and of the bars, as the page's cells
 	ends     [2]int             // the row each column ends at (the left one holds the bars)
 }
@@ -205,7 +212,7 @@ func buildStats(st game.GameState, part, w, view int, wide, pic bool, grow int) 
 	pg := &statsPage{g: newXGrid(w, 400), pic: pic}
 	y := 0
 	if part == partLifetime {
-		y = pg.lifetime(st, w, grow)
+		y = pg.lifetime(st, w, wide, grow)
 	} else {
 		y = pg.run(st, w, view, wide, grow)
 	}
@@ -224,7 +231,8 @@ func (pg *statsPage) heading(x, y, w int, s string) {
 	_ = end
 }
 
-// tiles lays the tiles out n across from row y and returns the row after.
+// tiles lays the tiles out n across from row y and returns the row after. A
+// tile may span several of the n slots.
 func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 	tw := (w - (n - 1)) / n
 	lr := 1
@@ -237,15 +245,31 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 	th := nr + 1 + lr
 	if !pg.pic {
 		th = 2 + lr
+		for _, t := range tiles {
+			if t.plaque != nil {
+				th = max(th, 4)
+			}
+		}
 	}
 	texts := make([]string, len(tiles))
 	for i, t := range tiles {
 		texts[i] = t.text
 	}
+	slot := 0
 	for i := range tiles {
 		t := &tiles[i]
-		x, ty := i%n*(tw+1), y+i/n*(th+1)
+		sp := min(max(t.span, 1), n)
+		if slot%n+sp > n {
+			slot += n - slot%n
+		}
+		x, ty := slot%n*(tw+1), y+slot/n*(th+1)
+		slot += sp
+		tw := sp*tw + sp - 1
 		t.r = image.Rect(x, ty, x+tw, ty+th)
+		if t.plaque != nil {
+			pg.layPlaque(t, nr)
+			continue
+		}
 		lines := wrapWords(t.name, tw-2)
 		if t.note != "" {
 			lines = append(lines[:1], t.note)
@@ -263,13 +287,13 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 		if t.toks == nil {
 			pg.labels = append(pg.labels, statsLabel{x + 1, ty + (nr+1)/2, fitText(t.text, tw-2), xBright, ""})
 		}
-		toks, kind := t.toks, t.kind
-		pg.pics = append(pg.pics, statsPic{r: t.r, key: fmt.Sprint("tile", tw, th, nr, texts, i, kind),
+		toks, kind, hold := t.toks, t.kind, t.hold
+		pg.pics = append(pg.pics, statsPic{r: t.r, key: fmt.Sprint("tile", tw, th, nr, texts, i, kind, hold),
 			draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
-				return statsTilePic(tw, th, nr+1, cw, ch, toks, kind, tiles, in)
+				return statsTilePic(tw, th, nr+1, cw, ch, toks, kind, hold, tiles, in)
 			}})
 	}
-	return y + (len(tiles)+n-1)/n*(th+1)
+	return y + (slot+n-1)/n*(th+1)
 }
 
 // run lays out "This run" and returns the page's rows.
@@ -715,41 +739,6 @@ func researchRows(st game.GameState) []statsRow {
 	return rows
 }
 
-// lifetime lays out the account's tiles: name, title and its progress,
-// prestiges, civilizations started, the highest age and the badges earned.
-func (pg *statsPage) lifetime(st game.GameState, w, grow int) int {
-	as := st.AccountStats
-	if as == nil {
-		pg.g.put(0, 1, txtNoAccount.String(), xDim)
-		return 3
-	}
-	age := vibe.Line("ui.stats_page.lifetime.01", "None")
-	if as.HighestAge != "" {
-		age = as.HighestAge
-		if def, ok := st.Ruleset().Age(as.HighestAge); ok {
-			age = def.Name
-		}
-	}
-	bs := as.BadgeSummary
-	title := statsTile{name: txtTitleOf.String(), text: bs.Title}
-	if bs.NextTitle != "" {
-		title.note = fmt.Sprintf(txtOfPoints.String(), bs.Points, bs.NextTitleAt, bs.NextTitle)
-	}
-	tiles := []statsTile{
-		{name: txtAccount.String(), text: as.DisplayName}, title,
-		countTile(txtPrestiges.String(), "", as.TotalPrestiges),
-		countTile(txtCivs.String(), "", as.CivilizationsStarted),
-		{name: txtHighestAge.String(), text: age},
-		countTile(txtBadgesEarn.String(), "", bs.Earned),
-	}
-	pg.tiles = tiles
-	n := 3
-	if w < 90 {
-		n = 2
-	}
-	return pg.layTiles(tiles, 1, w, n, 3+grow)
-}
-
 // statsPanel is the Stats overlay's primitive: the whole screen but the
 // command bar. It leaves the keyboard with the command bar and takes only
 // the keys that print nothing, and only while the bar is empty: Up, Down,
@@ -766,20 +755,22 @@ type statsPanel struct {
 	page      *statsPage
 	wide, pic bool
 	cache     map[string]*image.RGBA
+	// pick is the step of the ladder the pointer rests on; -1 is the highest.
+	pick int
 
 	// settings reads the glyph tier.
 	settings func() mapSettings
 }
 
 func newStatsPanel() *statsPanel {
-	p := &statsPanel{w: 100, h: 30, hover: image.Pt(-1, -1), cache: map[string]*image.RGBA{}}
+	p := &statsPanel{w: 100, h: 30, hover: image.Pt(-1, -1), cache: map[string]*image.RGBA{}, pick: -1}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
 }
 
 // open is the overlay's build: it runs on every Show.
 func (p *statsPanel) open(state game.GameState) Primitive {
-	p.state, p.part, p.scroll = state, partRun, 0
+	p.state, p.part, p.scroll, p.pick = state, partRun, 0, -1
 	return overBar(p)
 }
 
@@ -819,8 +810,11 @@ func (p *statsPanel) Layout(r image.Rectangle) {
 		g.tab(image.Rect(x, 1, end, 2), name, i, i == p.part)
 		x = end + 1
 	}
-	expKeyBar(g, expLayout{w: p.w, h: p.h, footY: p.h - 2}, [][2]string{{"Up/Dn", "scroll"}, {"PgUp/PgDn", "page"},
-		{"Tab", txtSwitchPart.String()}, escClose()}, "")
+	keys := [][2]string{{"Up/Dn", "scroll"}, {"PgUp/PgDn", "page"}, {"Tab", txtSwitchPart.String()}, escClose()}
+	if p.part == partLifetime {
+		keys = slices.Insert(keys, 2, [2]string{"Left/Right", txtPickAge.String()})
+	}
+	expKeyBar(g, expLayout{w: p.w, h: p.h, footY: p.h - 2}, keys, "")
 	if plain {
 		g.fold()
 		p.page.g.fold()
@@ -833,6 +827,9 @@ func (p *statsPanel) Layout(r image.Rectangle) {
 func (p *statsPanel) readout() (string, image.Rectangle) {
 	if p.page == nil {
 		return "", image.Rectangle{}
+	}
+	if len(p.page.steps) > 0 {
+		return p.page.steps[p.picked()].readout, p.page.heads[0]
 	}
 	if n, ok := p.page.g.hitAt(hitAge, p.hover); ok && n < len(p.page.blocks) {
 		return p.page.blocks[n].readout, p.page.heads[0]
@@ -861,7 +858,7 @@ func (p *statsPanel) Paint(p2 *kit.Painter) {
 		cw, ch := cellPixels()
 		for _, pc := range p.page.pics {
 			n, hot := p.page.g.hitAt(pc.hit, p.hover)
-			hot = hot && pc.hit != 0 && n == pc.n
+			hot = hot && pc.hit != 0 && n == pc.n || pc.hit == hitStep && pc.n == p.picked()
 			key := fmt.Sprint(pc.key, hot, cw, ch, in.ground, in.face, in.plate)
 			img := p.cache[key]
 			if img == nil {
@@ -880,6 +877,10 @@ func (p *statsPanel) Paint(p2 *kit.Painter) {
 			}
 			bp.Label(org.X+l.x, org.Y+l.y, l.s, kit.Style{}.Foreground(theme.RGB(col.R, col.G, col.B)))
 		}
+	}
+	if !p.pic && len(p.page.steps) > 0 {
+		st := p.page.steps[p.picked()]
+		bp.Label(org.X+st.r.Min.X, org.Y+st.mark, strings.Repeat("#", st.r.Dx()-1), pal.style(xcell{k: xSel}))
 	}
 	p2.Bar(r.Min.X+p.w-2, view.Min.Y, view.Dy(), p.scroll, view.Dy(), p.page.used)
 	if s, head := p.readout(); s != "" {
@@ -902,10 +903,9 @@ func (p *statsPanel) Mouse(m kit.Mouse) bool {
 		p.hover = image.Pt(-1, -1)
 		return false
 	case m.Kind == kit.MouseMove:
-		pt := m.Pt().Sub(p.Bounds().Min).Sub(image.Pt(2, 3))
-		p.hover = image.Pt(pt.X, pt.Y+p.scroll)
-		if pt.Y < 0 || pt.Y >= p.viewRows() {
-			p.hover = image.Pt(-1, -1)
+		p.hover = p.pagePt(m)
+		if n, ok := p.stepAt(p.hover); ok {
+			p.pick = n
 		}
 		return false
 	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft || p.chrome == nil:
@@ -915,7 +915,37 @@ func (p *statsPanel) Mouse(m kit.Mouse) bool {
 		p.setPart(t)
 		return true
 	}
+	if n, ok := p.stepAt(p.pagePt(m)); ok {
+		p.pick = n
+		return true
+	}
 	return false
+}
+
+// pagePt is the page cell under the pointer; (-1, -1) off the page.
+func (p *statsPanel) pagePt(m kit.Mouse) image.Point {
+	pt := m.Pt().Sub(p.Bounds().Min).Sub(image.Pt(2, 3))
+	if pt.Y < 0 || pt.Y >= p.viewRows() {
+		return image.Pt(-1, -1)
+	}
+	return image.Pt(pt.X, pt.Y+p.scroll)
+}
+
+// stepAt is the ladder step at a page cell.
+func (p *statsPanel) stepAt(pt image.Point) (int, bool) {
+	if p.page == nil {
+		return 0, false
+	}
+	return p.page.g.hitAt(hitStep, pt)
+}
+
+// picked is the step the pointer rests on: the one chosen, else the highest
+// reached.
+func (p *statsPanel) picked() int {
+	if p.pick < 0 {
+		return p.page.top
+	}
+	return min(p.pick, p.page.top)
 }
 
 // PointerAt: the hand over a tab or a key.
@@ -946,6 +976,15 @@ func (p *statsPanel) routeKey(ev *kit.Key, prompt string) bool {
 		p.scrollBy(p.viewRows())
 	case kit.KeyTab:
 		p.setPart(1 - p.part)
+	case kit.KeyLeft, kit.KeyRight:
+		if p.page == nil || len(p.page.steps) == 0 {
+			return false
+		}
+		d := 1
+		if ev.Code == kit.KeyLeft {
+			d = -1
+		}
+		p.pick = clamp(p.picked()+d, 0, p.page.top)
 	default:
 		return false
 	}
@@ -962,7 +1001,7 @@ func (p *statsPanel) scrollBy(n int) {
 
 func (p *statsPanel) setPart(t int) {
 	if t != p.part {
-		p.part, p.scroll = t, 0
+		p.part, p.scroll, p.pick = t, 0, -1
 		p.Layout(p.Bounds())
 	}
 }
