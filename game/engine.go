@@ -489,13 +489,17 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		ge.history.Mark(ge.tick, MarkAge, ageName, 0)
 	})
 	ge.Bus.Subscribe(EventEpochEventFired, func(e EventData) {
-		if kind, _ := e.Payload["event_type"].(string); kind == "catastrophe" {
-			key, _ := e.Payload["epoch_key"].(string)
-			ge.history.Mark(ge.tick, MarkCatastrophe, key, 0)
-			return
+		// A catastrophe is named by its era (rules.Set.Catastrophe); the Last
+		// Passage and an ordinary event are named by their own key.
+		kind, key := MarkEvent, e.Payload["event_key"]
+		if t, _ := e.Payload["event_type"].(string); t == "catastrophe" {
+			kind = MarkCatastrophe
+			if key != config.LastPassageKey {
+				key = e.Payload["epoch_key"]
+			}
 		}
-		key, _ := e.Payload["event_key"].(string)
-		ge.history.Mark(ge.tick, MarkEvent, key, 0)
+		name, _ := key.(string)
+		ge.history.Mark(ge.tick, kind, name, 0)
 	})
 	// Generate this run's master seed once. LoadGame overrides it with the saved
 	// seed; Reset re-rolls a fresh one.

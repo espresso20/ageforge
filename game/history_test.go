@@ -208,8 +208,14 @@ func TestHistoryMarksFromTheEngine(t *testing.T) {
 	if err := ge.ForceCatastropheForTest(); err != nil {
 		t.Fatal(err)
 	}
-	if markCount(ge, MarkCatastrophe) != 1 || markCount(ge, MarkEvent) != events+1 {
+	if markCount(ge, MarkCatastrophe) != 1 || markCount(ge, MarkEvent) != events+1 ||
+		!slices.Contains(ge.history.Marks, HistoryMark{Tick: ge.tick, Kind: MarkCatastrophe, Key: ge.currentEpoch}) {
 		t.Errorf("catastrophe marks: %+v", ge.history.Marks)
+	}
+
+	ge.triggerLastPassage(catastropheRolled)
+	if !slices.Contains(ge.history.Marks, HistoryMark{Tick: ge.tick, Kind: MarkCatastrophe, Key: config.LastPassageKey}) {
+		t.Errorf("last passage mark: %+v", ge.history.Marks)
 	}
 }
 

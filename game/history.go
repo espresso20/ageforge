@@ -19,7 +19,7 @@ const (
 const (
 	MarkAge         = "age"         // Key: the age's key
 	MarkWonder      = "wonder"      // Key: the building's key
-	MarkCatastrophe = "catastrophe" // Key: the epoch's key
+	MarkCatastrophe = "catastrophe" // Key: the epoch's key, or the Last Passage's own
 	MarkHarbinger   = "harbinger"   // Key: the epoch the thread pointed at
 	MarkEvent       = "event"       // Key: the epoch event's key
 	MarkAway        = "away"        // Tick: where the catch-up began; Ticks: the time credited
