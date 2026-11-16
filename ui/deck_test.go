@@ -41,7 +41,7 @@ func deckOnStage(t *testing.T, w, h int) (*deckPanel, *[]string) {
 	keepTheme(t)
 	ran := &[]string{}
 	p := newDeckPanel(func(game.GameState) deckPage { return sampleDeck() })
-	p.run = func(cmd string) { *ran = append(*ran, cmd) }
+	p.buttons.run = func(cmd string) { *ran = append(*ran, cmd) }
 	p.buttons.press = func(kit.Key) {}
 	p.open(game.GameState{})
 	p.Layout(image.Rect(0, 0, w, h))

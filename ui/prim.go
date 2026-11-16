@@ -126,6 +126,9 @@ type appLoop struct {
 	before  func(w, h int)
 	// feel is what the keys pressed do to the key buttons on the screen.
 	feel keyFeel
+	// line runs a command line as the command bar does (the dashboard sets
+	// it): what a button that carries one does when it is clicked.
+	line func(cmd string)
 
 	events chan func()   // what the loop has to do, in order
 	done   chan struct{} // closed by Stop
@@ -249,6 +252,13 @@ func (a *appLoop) Resize(cols, rows int) {
 		a.cols, a.rows = cols, rows
 		a.draw()
 	})
+}
+
+// runLine runs a command line through the command bar's path, if the app has one.
+func (a *appLoop) runLine(cmd string) {
+	if a.line != nil {
+		a.line(cmd)
+	}
 }
 
 func (a *appLoop) Key(k kit.Key) {

@@ -75,7 +75,7 @@ func deckOf(t *testing.T, page func(game.GameState) deckPage, state game.GameSta
 	keepTheme(t)
 	ran := &[]string{}
 	p := newDeckPanel(page)
-	p.run = func(cmd string) { *ran = append(*ran, cmd) }
+	p.buttons.run = func(cmd string) { *ran = append(*ran, cmd) }
 	p.buttons.press = func(kit.Key) {}
 	p.open(state)
 	p.Layout(image.Rect(0, 0, w, h))

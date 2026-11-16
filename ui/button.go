@@ -18,14 +18,22 @@ import (
 // under the cap's cells and the cap's text written back over it.
 
 // keyKind is the colour of a key: the accent for a key that acts, steel for
-// one that moves, and the close button's own.
+// one that moves, and the close button's own. The action buttons (three rows
+// tall, action_button.go) are primary in the accent, plain in steel and
+// danger in the alert colour.
 type keyKind uint8
 
 const (
 	keyAccent keyKind = iota
 	keySteel
 	keyClose
+	keyPrimary
+	keyPlain
+	keyDanger
 )
+
+// action reports whether the kind is an action button's.
+func (k keyKind) action() bool { return k >= keyPrimary }
 
 // keyState is how a key looks: at rest, under the pointer, pressed or
 // unavailable.
@@ -61,6 +69,17 @@ type keyFeel struct {
 	key  kit.Key
 	end  atomic.Int64
 	held atomic.Int64
+	// rect is the button a mouse button holds, for one that names no key.
+	rect image.Rectangle
+	// preview is the command line of the button the pointer rests on, "" for
+	// none: the command bar shows it dim while the bar is empty.
+	preview string
+	// motion says whether the motion setting is on (nil: off); glintOn is set
+	// by a paint that drew a button's glint and wake is the time (Unix
+	// nanoseconds) from which the next pose of it is due.
+	motion  func() bool
+	glintOn atomic.Bool
+	wake    atomic.Int64
 }
 
 func (f *keyFeel) clock() time.Time {
@@ -70,16 +89,24 @@ func (f *keyFeel) clock() time.Time {
 	return time.Now()
 }
 
-// typed notes that k was pressed now.
+// typed notes that k was pressed now. A key typed puts the command preview
+// away.
 func (f *keyFeel) typed(k kit.Key) {
-	f.key = k
+	f.key, f.preview = k, ""
 	f.end.Store(f.clock().Add(keySteps * coinStep).UnixNano())
 }
 
-// hold notes that k was pressed with a mouse button, which has it down.
-func (f *keyFeel) hold(k kit.Key) {
+// hold notes that the button at r, which presses k, was pressed with a mouse
+// button, which has it down.
+func (f *keyFeel) hold(k kit.Key, r image.Rectangle) {
 	f.typed(k)
+	f.rect = r
 	f.held.Store(f.clock().Add(keyHoldMax).UnixNano())
+}
+
+// heldAt reports whether a mouse button holds the button at r down.
+func (f *keyFeel) heldAt(r image.Rectangle) bool {
+	return f.clock().UnixNano() < f.held.Load() && f.rect == r
 }
 
 // release lets go of a held key, and says whether there was one.
@@ -136,7 +163,9 @@ func (p *expPalette) tone(k xk, bg bool) color.RGBA {
 // keyLook is the colours of a key in a state: the ramp of its face, the ink
 // of its cap, and the colours the unavailable key is drawn in.
 type keyLook struct {
-	ramp    keyRamp
+	ramp keyRamp
+	// cap is the ramp of the small keycap on an action button.
+	cap     keyRamp
 	ink     color.RGBA
 	chip    color.RGBA // the unavailable key's face
 	edge    color.RGBA // and its rim
@@ -150,12 +179,19 @@ type keyLook struct {
 func (p *expPalette) look(kind keyKind, st keyState) keyLook {
 	ground, text, dim := p.tone(xText, true), p.tone(xText, false), p.tone(xDim, false)
 	chip, accent := p.tone(xKeyName, true), p.tone(xKeycap, true)
-	base := accent
-	if kind != keyAccent {
+	base, capBase := accent, toward(accent, keyWhite, .78)
+	switch kind {
+	case keySteel, keyPlain:
 		base = toward(chip, text, .42)
-	}
-	if kind == keyClose && st != keyRest && st != keyOff {
+		capBase = accent
+	case keyDanger:
 		base = p.tone(xBad, false)
+		capBase = toward(base, keyWhite, .78)
+	case keyClose:
+		base = toward(chip, text, .42)
+		if st != keyRest && st != keyOff {
+			base = p.tone(xBad, false)
+		}
 	}
 	r := rampOf(base)
 	switch st {
@@ -164,7 +200,7 @@ func (p *expPalette) look(kind keyKind, st keyState) keyLook {
 	case keyPressed:
 		r = keyRamp{r.deep, r.dark, toward(r.base, r.dark, .35), r.base}
 	}
-	l := keyLook{ramp: r, ink: inkOn(r.base), chip: toward(chip, ground, .45), edge: toward(chip, ground, .1), ground: ground, word: text,
+	l := keyLook{ramp: r, cap: rampOf(capBase), ink: inkOn(r.base), chip: toward(chip, ground, .45), edge: toward(chip, ground, .1), ground: ground, word: text,
 		wordBar: toward(ground, accent, .16)}
 	if st == keyOff {
 		l.ink, l.word = toward(dim, ground, .2), toward(dim, ground, .25)
@@ -184,15 +220,22 @@ type plateKey struct {
 // is never drawn on again: the window keeps one picture per image.
 type plateSet struct {
 	m     map[plateKey]*image.RGBA
+	acts  map[actionKey]*image.RGBA
 	bytes int
 	cell  [2]int
 }
 
+// fit empties the set when the cell has changed size or the set has grown
+// past its bound.
+func (s *plateSet) fit(cw, ch int) {
+	if s.cell != [2]int{cw, ch} || s.bytes > plateSetMax {
+		s.m, s.acts, s.cell, s.bytes = nil, nil, [2]int{cw, ch}, 0
+	}
+}
+
 // plate is the picture of a key cap cols cells wide in state st.
 func (s *plateSet) plate(l keyLook, st keyState, cols, cw, ch int) *image.RGBA {
-	if s.cell != [2]int{cw, ch} || s.bytes > plateSetMax {
-		s.m, s.cell, s.bytes = nil, [2]int{cw, ch}, 0
-	}
+	s.fit(cw, ch)
 	key := plateKey{st, cols, cw, ch, l.ramp.base, l.chip, l.edge, l.ground}
 	img, ok := s.m[key]
 	if !ok {
@@ -288,23 +331,39 @@ func drawPlate(pk plateKey, R keyRamp) *image.RGBA {
 	return img
 }
 
-// paint restyles the keys g drew, over the grid already painted at org:
+// paint restyles the keys h drew, over the grid already painted at org:
 // each key in the state it is in. A key under the pointer rises and its word
 // is lit, a key being pressed (by the mouse, or typed) sinks, and one marked
 // off is dull. Where the window shows pictures a plate goes under the cap and
 // its text is written over; without them the cap is restyled as a chip.
-func (k *keyPresser) paint(p *kit.Painter, g *xgrid, org image.Point, pal *expPalette) {
-	if g == nil {
+func (k *keyPresser) paint(p *kit.Painter, h keyHolder, org image.Point, pal *expPalette) {
+	s := heldKeys(h)
+	if s == nil {
 		return
 	}
-	hot, isHot := k.lit(g)
-	pix := pictureCell != nil && !g.plain
-	for i, key := range g.keys {
+	hot, isHot := k.lit(s)
+	pix := pictureCell != nil && !s.plain
+	for i, key := range s.keys {
+		if key.kind.action() {
+			if !key.word.Empty() {
+				st := keyRest
+				switch {
+				case key.off:
+					st = keyOff
+				case k.press != nil && k.sunkButton(key):
+					st = keyPressed
+				case k.press != nil && isHot && hot.r == key.r:
+					st = keyHover
+				}
+				k.paintAction(p, s, org, pal, key, st, pix)
+			}
+			continue
+		}
 		if key.cap.Empty() {
 			continue
 		}
 		st, first := keyRest, true
-		for j, o := range g.keys {
+		for j, o := range s.keys {
 			if o.cap != key.cap {
 				continue
 			}
@@ -324,17 +383,24 @@ func (k *keyPresser) paint(p *kit.Painter, g *xgrid, org image.Point, pal *expPa
 		if !first {
 			continue
 		}
-		k.paintKey(p, g, org, pal, key, st, pix)
+		k.paintKey(p, s, org, pal, key, st, pix)
 	}
 }
 
+// sunkButton reports whether b is sunk: its key was typed, or a mouse button
+// holds it.
+func (k *keyPresser) sunkButton(b xkey) bool {
+	f := k.sense()
+	return b.key != (kit.Key{}) && f.sunk(b.key) || f.heldAt(b.r)
+}
+
 // paintKey paints one key and its word in state st.
-func (k *keyPresser) paintKey(p *kit.Painter, g *xgrid, org image.Point, pal *expPalette, key xkey, st keyState, pix bool) {
+func (k *keyPresser) paintKey(p *kit.Painter, g *keySet, org image.Point, pal *expPalette, key xkey, st keyState, pix bool) {
 	l := pal.look(key.kind, st)
 	cap := key.cap.Add(org)
 	var label []rune
 	for x := key.cap.Min.X; x < key.cap.Max.X; x++ {
-		label = append(label, g.c[key.cap.Min.Y*g.w+x].r)
+		label = append(label, g.glyph(x, key.cap.Min.Y))
 	}
 	// Under the pointer the close key widens over its whole slot and names
 	// the key that does the same.
@@ -373,6 +439,6 @@ func (k *keyPresser) paintKey(p *kit.Painter, g *xgrid, org image.Point, pal *ex
 	}
 	word := kit.Style{}.Foreground(theme.RGB(l.word.R, l.word.G, l.word.B)).Background(theme.RGB(bar.R, bar.G, bar.B))
 	for x := key.word.Min.X; x < key.word.Max.X; x++ {
-		p.Put(org.X+x, org.Y+key.word.Min.Y, g.c[key.word.Min.Y*g.w+x].r, word)
+		p.Put(org.X+x, org.Y+key.word.Min.Y, g.glyph(x, key.word.Min.Y), word)
 	}
 }

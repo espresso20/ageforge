@@ -27,8 +27,6 @@ type deckPanel struct {
 	// draw draws the page; nil draws it as a deck of cards. A panel with a
 	// scene of its own (the Trade panel's map of roads) sets it.
 	draw func(pg *deckPage, st game.GameState, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout)
-	// run types a command and runs it, as the command bar does.
-	run func(cmd string)
 	// settings reads the glyph tier.
 	settings func() mapSettings
 
@@ -51,11 +49,10 @@ func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
 
 // registerDeck makes a panel of cards from page and registers it as the
 // overlay name, with its keyboard left to the command bar and its commands
-// run as the command bar runs them.
+// run as the command bar runs them (the buttons' own path, key_bar.go).
 func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.GameState) deckPage) *deckPanel {
 	p := newDeckPanel(page)
 	p.settings = d.mapSettings
-	p.run = d.runLine
 	p.prompt = func() string { return d.inputField.GetText() }
 	p.toPrompt = d.handToPrompt
 	p.buttons.wire(d.app)
@@ -127,10 +124,10 @@ func (p *deckPanel) pick(n int) {
 // act runs the picked card's command and reports whether it has one.
 func (p *deckPanel) act() bool {
 	c, ok := p.pg.card(p.sel)
-	if !ok || c.Command == "" || p.run == nil {
+	if !ok || c.Command == "" || p.buttons.run == nil {
 		return false
 	}
-	p.run(c.Command)
+	p.buttons.run(c.Command)
 	return true
 }
 

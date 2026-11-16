@@ -354,7 +354,7 @@ func (d *Dashboard) build() {
 	// The header at the top: the account, the age, the people, the way to
 	// the next age (headerView).
 	d.toastMgr = NewToastManager()
-	d.headerTV = newHeaderBox(d.headerView, func() bool { return headerPlain(d.mapSettings()) }, d.runLine, d.app)
+	d.headerTV = newHeaderBox(d.headerView, func() bool { return headerPlain(d.mapSettings()) }, d.pressLine, d.app)
 
 	// Subscribe to events for toasts
 	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
@@ -448,6 +448,9 @@ func (d *Dashboard) build() {
 	// Command input: completions show as ghost text (command_input.go),
 	// drawn from the registry and the state of the last refresh.
 	d.inputField = newCommandInput(newCompleter(d.engine, func() *game.GameState { return d.lastState }))
+	d.inputField.preview = func() string { return d.app.feel.preview }
+	d.app.line = d.pressLine
+	d.app.feel.motion = func() bool { return d.mapSettings().Motion }
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
 	d.inputField.SetBorder(true)
 	theme.Track(func() {
@@ -803,7 +806,7 @@ func (d *Dashboard) StartUpdates() {
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.badgePanel.moving.Load() || d.app.feel.busy() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.badgePanel.moving.Load() || d.app.feel.busy() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
@@ -1419,15 +1422,28 @@ func (d *Dashboard) submitInput() {
 	if text == "" {
 		return
 	}
-	// Record non-empty trimmed commands in history (cap at 50)
-	cmd := strings.TrimSpace(text)
-	if cmd != "" {
+	d.remember(text)
+	d.runLine(text)
+}
+
+// remember records a non-empty trimmed command in history (cap at 50).
+func (d *Dashboard) remember(text string) {
+	if cmd := strings.TrimSpace(text); cmd != "" {
 		if len(d.cmdHistory) >= 50 {
 			d.cmdHistory = d.cmdHistory[1:] // drop oldest
 		}
 		d.cmdHistory = append(d.cmdHistory, cmd)
 	}
-	d.runLine(text)
+}
+
+// pressLine runs a line a button stands for, as typing it and pressing Enter
+// would: the command bar shows it for a moment, it enters the history, and it
+// runs through runLine. It is the one way a click or a panel's key runs a
+// command.
+func (d *Dashboard) pressLine(line string) {
+	d.inputField.echoLine(line)
+	d.remember(line)
+	d.runLine(line)
 }
 
 // clickLine writes a command line in the prompt and gives the prompt the

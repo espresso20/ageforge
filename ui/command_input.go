@@ -1,6 +1,15 @@
 package ui
 
-import "github.com/espresso20/ageforge/window/kit"
+import (
+	"strings"
+	"time"
+
+	"github.com/espresso20/ageforge/window/kit"
+)
+
+// echoFor is how long the command bar shows a line a button ran, as if it
+// had been typed.
+const echoFor = 600 * time.Millisecond
 
 // commandInput is the dashboard's command prompt: an input line that shows
 // the best completion of what was typed as dim ghost text after the cursor,
@@ -11,6 +20,46 @@ type commandInput struct {
 	*nativeInput
 	comp  *completer
 	cycle tabCycle
+	// An empty prompt shows a line in the dim ghost style without holding
+	// it: the line a button ran, for echoFor, else the one the pointer rests
+	// on (preview). now is the clock (nil: time.Now).
+	echo    string
+	echoEnd time.Time
+	preview func() string
+	now     func() time.Time
+}
+
+func (c *commandInput) clock() time.Time {
+	if c.now != nil {
+		return c.now()
+	}
+	return time.Now()
+}
+
+// echoLine shows line in the empty prompt for echoFor, as if it were typed.
+func (c *commandInput) echoLine(line string) {
+	c.echo, c.echoEnd = line, c.clock().Add(echoFor)
+}
+
+// echoing reports whether a frame drawn now may differ from the last: an
+// echo is showing, or ended since.
+func (c *commandInput) echoing() bool {
+	return c.echo != ""
+}
+
+// shadow is the line an empty prompt shows dim: the echo while it lasts,
+// else the preview.
+func (c *commandInput) shadow() string {
+	if c.echo != "" {
+		if c.clock().Before(c.echoEnd) {
+			return c.echo
+		}
+		c.echo = ""
+	}
+	if c.preview != nil {
+		return c.preview()
+	}
+	return ""
 }
 
 // tabCycle is a run of Tab presses: the candidates for the text before the
@@ -24,7 +73,12 @@ type tabCycle struct {
 
 func newCommandInput(comp *completer) *commandInput {
 	c := &commandInput{nativeInput: newNativeInput(), comp: comp}
-	c.in.Ghost = comp.ghost
+	c.in.Ghost = func(text string) string {
+		if strings.TrimSpace(text) == "" {
+			return c.shadow()
+		}
+		return comp.ghost(text)
+	}
 	return c
 }
 

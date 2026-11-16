@@ -90,10 +90,8 @@ type xgrid struct {
 	glyphGrid[xk]
 	// hits are the things a click can pick, recorded as they are drawn.
 	hits []xhit
-	// keys are the keys a click can press (key_bar.go).
-	keys []xkey
-	// plain is set once the grid is folded to ASCII: its keys stay chips.
-	plain bool
+	// keySet is the keys a click can press (key_bar.go).
+	keySet
 }
 
 // xhit is a thing a click can pick: what kind (the panel's own numbering),

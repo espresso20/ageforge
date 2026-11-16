@@ -25,11 +25,49 @@ type xkey struct {
 	// off marks a key that is drawn but unavailable; still, one that names no
 	// key to press ("1-9"): drawn as a key, never pressed.
 	off, still bool
+	// cmd is the command line a click runs, through the path a typed line
+	// takes, in place of pressing key. Empty for a key that only presses.
+	cmd string
+	// sign is the picture at the left of an action button.
+	sign signKind
+}
+
+// keySet is the buttons a panel drew and what it needs to read them back:
+// every grid that holds buttons has one, and so does a panel drawn on a grid
+// of another kind.
+type keySet struct {
+	keys []xkey
+	// plain is set once the grid is folded to ASCII: its keys stay chips.
+	plain bool
+	// glyph reads the rune a cell of the grid holds.
+	glyph func(x, y int) rune
+}
+
+// keyHolder is what holds a keySet: a grid, or the set itself.
+type keyHolder interface{ keyset() *keySet }
+
+func (s *keySet) keyset() *keySet { return s }
+
+// keyset is the grid's buttons, reading its cells.
+func (g *xgrid) keyset() *keySet {
+	if g == nil {
+		return nil
+	}
+	g.keySet.glyph = func(x, y int) rune { return g.c[y*g.w+x].r }
+	return &g.keySet
+}
+
+// heldKeys is the keySet h holds, nil for none.
+func heldKeys(h keyHolder) *keySet {
+	if h == nil {
+		return nil
+	}
+	return h.keyset()
 }
 
 // keyAt is the key the cell pt presses.
-func (g *xgrid) keyAt(pt image.Point) (xkey, bool) {
-	for _, k := range g.keys {
+func (s *keySet) keyAt(pt image.Point) (xkey, bool) {
+	for _, k := range s.keys {
 		if pt.In(k.r) && !k.still {
 			return k, true
 		}
@@ -37,11 +75,11 @@ func (g *xgrid) keyAt(pt image.Point) (xkey, bool) {
 	return xkey{}, false
 }
 
-// keysOff marks the keys drawn since the first len(g.keys) was from as
+// keysOff marks the keys drawn since the first len(s.keys) was from as
 // unavailable.
-func (g *xgrid) keysOff(from int) {
-	for i := from; i < len(g.keys); i++ {
-		g.keys[i].off = true
+func (s *keySet) keysOff(from int) {
+	for i := from; i < len(s.keys); i++ {
+		s.keys[i].off = true
 	}
 }
 
@@ -177,6 +215,9 @@ type keyPresser struct {
 	// has the keyboard. Nil in a panel drawn alone (a picture of the screen),
 	// whose keys are then not buttons.
 	press func(kit.Key)
+	// run runs a command line as the command bar runs a typed one: a button
+	// that carries a line (xkey.cmd) is clicked through it.
+	run func(cmd string)
 	// over is the cell the pointer is over, in the panel's own cells, while
 	// in says it is over the panel.
 	over image.Point
@@ -186,11 +227,19 @@ type keyPresser struct {
 	feel *keyFeel
 	// plates are the pictures of the keys drawn so far.
 	plates plateSet
+	// shows is the command of the button the pointer last came to rest on,
+	// put in feel.preview once: a key typed takes it away until the pointer
+	// has been to another button.
+	shows string
 }
 
-// wire connects the presser to the app: a press is a key sent to it, and the
-// keys typed on it show on the buttons.
-func (k *keyPresser) wire(a *appLoop) { k.press, k.feel = a.Key, &a.feel }
+// wire connects the presser to the app: a press is a key sent to it, a
+// command is a line the command bar runs, and the keys typed on it show on
+// the buttons.
+func (k *keyPresser) wire(a *appLoop) {
+	k.press, k.feel = a.Key, &a.feel
+	k.run = a.runLine
+}
 
 // sense is the presser's feel, made when it has none.
 func (k *keyPresser) sense() *keyFeel {
@@ -201,31 +250,60 @@ func (k *keyPresser) sense() *keyFeel {
 }
 
 // lit is the key under the pointer.
-func (k *keyPresser) lit(g *xgrid) (xkey, bool) {
-	if g == nil || k.press == nil || !k.in {
+func (k *keyPresser) lit(s *keySet) (xkey, bool) {
+	if s == nil || k.press == nil || !k.in {
 		return xkey{}, false
 	}
-	return g.keyAt(k.over)
+	return s.keyAt(k.over)
 }
 
-// mouse takes m for the keys g drew, with the panel's top left at org. A left
+// fire does what a click or the key of b does: runs its command line, or
+// presses its key.
+func (k *keyPresser) fire(b xkey) {
+	if b.cmd == "" {
+		k.press(b.key)
+	} else if k.run != nil {
+		k.run(b.cmd)
+	}
+}
+
+// preview keeps feel.preview as the command of the button under the pointer.
+func (k *keyPresser) preview(b xkey, lit bool) {
+	cmd := ""
+	if lit && !b.off {
+		cmd = b.cmd
+	}
+	if cmd == k.shows {
+		return
+	}
+	k.shows = cmd
+	k.sense().preview = cmd
+}
+
+// mouse takes m for the keys h drew, with the panel's top left at org. A left
 // press on a key presses it. It reports whether the event was used: a key was
 // pressed, or the key that is lit changed.
-func (k *keyPresser) mouse(g *xgrid, org image.Point, m kit.Mouse) bool {
-	was, wasLit := k.lit(g)
+func (k *keyPresser) mouse(h keyHolder, org image.Point, m kit.Mouse) bool {
+	s := heldKeys(h)
+	was, wasLit := k.lit(s)
 	if k.in = m.Kind != kit.MouseLeave; k.in {
 		k.over = m.Pt().Sub(org)
 	}
-	now, isLit := k.lit(g)
+	now, isLit := k.lit(s)
+	k.preview(now, isLit)
 	switch m.Kind {
 	case kit.MousePress:
 		// A press is a key's or it is not: one that only moved the light is
 		// left for the panel to use. The key stays sunk until the button is up.
+		// An unavailable one takes the press and does nothing.
 		if isLit && m.Button == kit.ButtonLeft {
-			k.press(now.key)
-			k.sense().hold(now.key)
+			if !now.off {
+				k.fire(now)
+				k.sense().hold(now.key, now.r)
+			}
+			return true
 		}
-		return isLit && m.Button == kit.ButtonLeft
+		return false
 	case kit.MouseRelease, kit.MouseLeave:
 		if k.feel != nil && k.feel.release() {
 			return true
@@ -235,10 +313,11 @@ func (k *keyPresser) mouse(g *xgrid, org image.Point, m kit.Mouse) bool {
 }
 
 // pointer is the hand over a key a click would press.
-func (k *keyPresser) pointer(g *xgrid, org, at image.Point) kit.Pointer {
-	if g == nil || k.press == nil {
+func (k *keyPresser) pointer(h keyHolder, org, at image.Point) kit.Pointer {
+	s := heldKeys(h)
+	if s == nil || k.press == nil {
 		return kit.PointerArrow
 	}
-	_, ok := g.keyAt(at.Sub(org))
-	return handIf(ok)
+	b, ok := s.keyAt(at.Sub(org))
+	return handIf(ok && !b.off)
 }
