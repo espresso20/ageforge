@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rivo/uniseg"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -22,115 +20,8 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// The full catalog on the case: the hand-drawn legendary badges, the
-// families' headings, the titles and the things only the UI can report.
+// The full catalog on the case: the families' headings, the titles and the things only the UI can report.
 // Every test runs in a temp data root, never data/.
-
-// TestLegendSprites: each hand-drawn legendary badge is a drawing of 17 by
-// 9 with a role for every inked cell and none for an empty one; it draws
-// in every glyph tier, one cell a rune and nothing but ASCII in the plain
-// tier; a frame is a function of its number; it moves when it may and
-// holds still at rest.
-func TestLegendSprites(t *testing.T) {
-	if len(legendSprites) != 8 {
-		t.Errorf("%d legendary sprites, want 8", len(legendSprites))
-	}
-	for key, sp := range legendSprites {
-		if len(sp.rows) != specialH || len(sp.roles) != specialH {
-			t.Fatalf("%s: %d rows and %d rows of roles, want %d", key, len(sp.rows), len(sp.roles), specialH)
-		}
-		inked := 0
-		for y := 0; y < specialH; y++ {
-			if len(sp.rows[y]) != specialW || len(sp.roles[y]) != specialW {
-				t.Fatalf("%s row %d: %d cells and %d roles, want %d", key, y, len(sp.rows[y]), len(sp.roles[y]), specialW)
-			}
-			for x := 0; x < specialW; x++ {
-				r, role := sp.rows[y][x], sp.roles[y][x]
-				if (r == ' ') != (role == ' ') {
-					t.Errorf("%s at %d,%d: the drawing has %q and the role map %q", key, x, y, r, role)
-				}
-				if r != ' ' {
-					inked++
-					if !strings.ContainsRune("pPqgGslbcmwdT", role) {
-						t.Errorf("%s at %d,%d: the role %q is not one the painter knows", key, x, y, role)
-					}
-				}
-			}
-		}
-		if inked < 30 {
-			t.Errorf("%s has only %d inked cells: not much of a drawing", key, inked)
-		}
-		m := medal{tier: config.BadgeLegendary, emblem: '*', special: key}
-		draw := func(n int, tier mapmodel.GlyphTier) string {
-			g := newTGrid(specialW, specialH)
-			drawMedal(g, 0, 0, m, n, tier == mapmodel.TierASCII)
-			if tier == mapmodel.TierASCII {
-				foldBadges(g)
-			}
-			for i, c := range g.c {
-				if c.r != ' ' && uniseg.StringWidth(string(c.r)) != 1 {
-					t.Fatalf("%s frame %d: %q at %d,%d is not one cell wide", key, n, c.r, i%g.w, i/g.w)
-				}
-				if tier == mapmodel.TierASCII && c.r >= 0x80 {
-					t.Fatalf("%s frame %d: the plain tier draws %q", key, n, c.r)
-				}
-			}
-			return fmt.Sprint(g.c)
-		}
-		if w, h := medalSize(m); w != specialW || h != specialH {
-			t.Errorf("%s: its full art is %dx%d", key, w, h)
-		}
-		for _, tier := range caseTiers {
-			rest := draw(atRest, tier)
-			if rest != draw(atRest, tier) {
-				t.Errorf("%s: two draws at rest differ", key)
-			}
-			moved := false
-			for n := 0; n < 48; n++ {
-				f := draw(n, tier)
-				if f != draw(n, tier) {
-					t.Fatalf("%s frame %d is not a function of its number", key, n)
-				}
-				moved = moved || f != rest
-			}
-			if !moved {
-				t.Errorf("%s never moves in the %s tier", key, tier)
-			}
-		}
-		// Not yet earned, it is the legendary shape, hollow: the drawing is
-		// for the account that has it.
-		m.state = medalLocked
-		plain := m
-		plain.special = ""
-		a, b := newTGrid(specialW, specialH), newTGrid(specialW, specialH)
-		drawMedal(a, 0, 0, m, atRest, false)
-		drawMedal(b, 0, 0, plain, atRest, false)
-		if a.String() != b.String() {
-			t.Errorf("%s shows its drawing before it is earned", key)
-		}
-	}
-}
-
-// TestLegendSpritesInEveryTheme: the hand-drawn legendary badges paint in
-// every theme with every cell legible on the canvas.
-func TestLegendSpritesInEveryTheme(t *testing.T) {
-	eachThemeInline(t, func(th theme.Theme) {
-		pal := newGridPalette(0, nil)
-		for key := range legendSprites {
-			g := newTGrid(specialW, specialH)
-			drawMedal(g, 0, 0, medal{tier: config.BadgeLegendary, emblem: '*', special: key}, 5, false)
-			for i, c := range g.c {
-				if c.r == ' ' {
-					continue
-				}
-				fg, _, _ := pal.style(c).Decompose()
-				if ratio := theme.ContrastRatio(fg, pal.bg); ratio < 2.9 {
-					t.Errorf("theme %s, %s at %d,%d: %q is %06x on %06x, a contrast of %.2f", th.Key, key, i%g.w, i/g.w, c.r, fg.Hex(), pal.bg.Hex(), ratio)
-				}
-			}
-		}
-	})
-}
 
 // TestEveryFamilyHasAHeading: every family in the catalog has a heading of
 // its own, in plain words, and the case lists the families in that order.
@@ -186,7 +77,7 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 	if got := titles(caseTabs(views, false)); got != "All Ages Specials Next" {
 		t.Errorf("tabs for a new account: %q", got)
 	}
-	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode}, atRest)
+	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode})
 	text := g.String()
 	for _, leak := range []string{"Civilizations", "Catastrophes"} {
 		if strings.Contains(text, leak) {
@@ -220,7 +111,7 @@ func TestPayrollLadderNamesItsNextRung(t *testing.T) {
 			Level: config.BadgeSilver, Tier: "silver", Emblem: "lineage.food", Ladder: "Food", Rung: n, Rungs: 2}
 	}
 	views := []game.BadgeView{rung(1, "Food Payroll"), rung(2, "Food Payroll II")}
-	_, _, g := drawCase(views, game.BadgeSummary{Shown: 2, Title: "Settler"}, 120, 40, caseView{tab: "domain", tier: mapmodel.TierUnicode}, atRest)
+	_, _, g := drawCase(views, game.BadgeSummary{Shown: 2, Title: "Settler"}, 120, 40, caseView{tab: "domain", tier: mapmodel.TierUnicode})
 	text := g.String()
 	if !strings.Contains(text, "next: Food Payroll") {
 		t.Errorf("the payroll ladder does not name its next rung:\n%s", text)
@@ -269,7 +160,7 @@ func TestTitleCommand(t *testing.T) {
 	if wornTitle(sum) != "Survivor" {
 		t.Errorf("the summary wears %q", wornTitle(sum))
 	}
-	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode}, atRest)
+	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode})
 	if !strings.Contains(strings.Split(g.String(), "\n")[0], "Survivor") {
 		t.Errorf("the badge case's title bar does not wear it: %q", strings.Split(g.String(), "\n")[0])
 	}
@@ -550,7 +441,6 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 	}
 	has("the number of themes badges give", fmt.Sprintf("%s [themes](themes.md) are the reward of a badge", textfmt.Capitalize(numberWords(given))))
 	has("the census period", fmt.Sprintf("every %d ticks", config.BadgeCensusTicks))
-	has("the number of drawn badges", fmt.Sprintf("%s badges have a drawing of their own", textfmt.Capitalize(numberWords(len(legendSprites)))))
 
 	// No wiki page names a secret badge, or one of the three that are not
 	// listed until earned.

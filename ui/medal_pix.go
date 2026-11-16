@@ -543,6 +543,23 @@ var medalSigns = map[string]string{
 	"ladder": "ladder", "theme": "theme", "map": "map", "special": "star",
 }
 
+// The signs a badge's emblem names (config.BadgeDef.Emblem names them
+// through the emblem table, badge_emblems.go).
+const (
+	specialCookieJar = "cookie_jar"
+	specialLedger    = "ledger"
+	specialSource    = "source"
+
+	specialChains    = "legend.chains"
+	specialBoxes     = "legend.boxes"
+	specialMuseum    = "legend.museum"
+	specialWonders   = "legend.wonders"
+	specialRogues    = "legend.rogues"
+	specialEndings   = "legend.endings"
+	specialUndying   = "legend.undying"
+	specialTranscend = "legend.transcend"
+)
+
 // medalIcons are the signs, 13 by 13: a # is struck, a . is the field. A
 // family's sign goes by a name of medalSigns; a badge with art of its own
 // (badge_emblems.go) has a sign of its own, under that art's key.

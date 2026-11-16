@@ -17,8 +17,8 @@ import (
 // An effect is drawn after the dashboard, over it, and only into cells
 // that hold nothing: a blank on the theme's own background, with blanks on
 // both sides of it, so text keeps clear air round it. Each frame is a pure
-// function of the frame number and the cell (the same hash as the
-// hand-drawn badges), so nothing is stored and no random number is drawn.
+// function of the frame number and the cell (a hash, see
+// theme_fx_art.go), so nothing is stored and no random number is drawn.
 // The motion setting turns it off: with motion off nothing here draws.
 
 // fxRoot is the dashboard's root: its layout, and over it the active
@@ -27,13 +27,16 @@ type fxRoot struct {
 	*nativeFlex
 	// after draws over the layout once it is painted.
 	after func(scr mapstyle.Cells, x, y, w, h int)
+	// over draws last, after the effect, into the root's bounds: what no
+	// effect may draw over.
+	over func(p *kit.Painter, bounds image.Rectangle)
 }
 
-// newFxRoot is layout with after drawn over it. The layout's host shows the
-// root from here on, so the effect is part of what it paints.
-func newFxRoot(layout *nativeFlex, after func(scr mapstyle.Cells, x, y, w, h int)) *fxRoot {
-	r := &fxRoot{nativeFlex: layout, after: after}
-	return r
+// newFxRoot is layout with after drawn over it, and over after that. The
+// layout's host shows the root from here on, so both are part of what it
+// paints.
+func newFxRoot(layout *nativeFlex, after func(scr mapstyle.Cells, x, y, w, h int), over func(p *kit.Painter, bounds image.Rectangle)) *fxRoot {
+	return &fxRoot{nativeFlex: layout, after: after, over: over}
 }
 
 func (r *fxRoot) Paint(p *kit.Painter) {
@@ -41,6 +44,9 @@ func (r *fxRoot) Paint(p *kit.Painter) {
 	if r.after != nil {
 		x, y, w, h := r.GetRect()
 		r.after(cellsFor(p, r, r.Bounds()), x, y, w, h)
+	}
+	if r.over != nil {
+		r.over(p, r.Bounds())
 	}
 }
 

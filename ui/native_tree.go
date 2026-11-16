@@ -470,12 +470,16 @@ func (c kitCells) SetContent(x, y int, r rune, _ []rune, st kit.Style) {
 }
 
 // GetContent reads a cell back as it was painted: its colors are literals,
-// and a ground that is none is Transparent.
+// and a ground that is none is Transparent. A cell under a picture reads as
+// the zero rune, so an effect that wants blank cells leaves it alone.
 func (c kitCells) GetContent(x, y int) (rune, []rune, kit.Style, int) {
 	cell := c.p.At(x-c.off.X, y-c.off.Y)
 	st := kit.Style{Fg: kit.RGB(cell.Fg.R, cell.Fg.G, cell.Fg.B), Bg: kit.Clear, Attr: cell.Attr}
 	if !cell.Clear() {
 		st.Bg = kit.RGB(cell.Bg.R, cell.Bg.G, cell.Bg.B)
+	}
+	if cell.Pic != 0 {
+		return 0, nil, st, 1 // under a picture: not a blank, so nothing draws over it
 	}
 	return cell.R, nil, st, 1
 }

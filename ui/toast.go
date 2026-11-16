@@ -17,10 +17,6 @@ type Toast struct {
 	Color    string
 	Duration time.Duration
 	Expiry   time.Time
-	// Fit, when set, writes the toast for a bar w cells wide (0: any
-	// width), with its own colour tags. It is asked again whenever the
-	// toast is read, so a toast follows the bar through a resize.
-	Fit func(w int) string
 }
 
 // ToastManager manages toast notifications with a queue
@@ -40,12 +36,6 @@ func (tm *ToastManager) Show(message, color string, duration time.Duration) {
 	tm.show(Toast{Message: message, Color: color, Duration: duration})
 }
 
-// ShowFit queues a toast that is written for the room the header's notice has
-// and carries its own colour tags (thread-safe).
-func (tm *ToastManager) ShowFit(fit func(w int) string, duration time.Duration) {
-	tm.show(Toast{Fit: fit, Duration: duration})
-}
-
 func (tm *ToastManager) show(toast Toast) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
@@ -58,20 +48,9 @@ func (tm *ToastManager) show(toast Toast) {
 	}
 }
 
-// CurrentFor is the current toast's text for a bar w cells wide (0: any
-// width), or "" when none is showing.
-func (tm *ToastManager) CurrentFor(w int) string {
-	text, fit := tm.onShow()
-	if fit != nil {
-		// Written outside the manager's lock: a toast that fits itself to
-		// the bar reads the theme and the account's settings.
-		return fit(w)
-	}
-	return text
-}
-
-// onShow is the toast on show: its text, or the function that writes it.
-func (tm *ToastManager) onShow() (text string, fit func(w int) string) {
+// Current is the toast on show as coloured text, or "" when none is showing
+// (thread-safe).
+func (tm *ToastManager) Current() string {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -90,12 +69,9 @@ func (tm *ToastManager) onShow() (text string, fit func(w int) string) {
 	}
 
 	if tm.current == nil {
-		return "", nil
+		return ""
 	}
-	if tm.current.Fit != nil {
-		return "", tm.current.Fit
-	}
-	return fmt.Sprintf("[%s]%s[-]", tm.current.Color, tm.current.Message), nil
+	return fmt.Sprintf("[%s]%s[-]", tm.current.Color, tm.current.Message)
 }
 
 // chainToast is the milestone-chain toast: "Chain complete: Settlement Chain.

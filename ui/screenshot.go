@@ -154,7 +154,47 @@ func ScreenImage(b *kit.Buffer, cellW, cellH int) *image.RGBA {
 			}
 		}
 	}
+	drawShotPics(img, b, cellW, cellH)
 	return img
+}
+
+// drawShotPics draws the buffer's pictures over the cells that still own
+// them, each stretched (nearest neighbour) over its rectangle of cells and
+// cut to the owning cells, as the window draws them.
+func drawShotPics(img *image.RGBA, b *kit.Buffer, cellW, cellH int) {
+	for cy := 0; cy < b.H; cy++ {
+		for cx := 0; cx < b.W; cx++ {
+			pi := int(b.Cells[cy*b.W+cx].Pic)
+			if pi == 0 || pi > len(b.Pics) {
+				continue
+			}
+			pic := b.Pics[pi-1]
+			sb := pic.Img.Bounds()
+			dw, dh := pic.Rect.Dx()*cellW, pic.Rect.Dy()*cellH
+			if dw == 0 || dh == 0 {
+				continue
+			}
+			for py := 0; py < cellH; py++ {
+				for px := 0; px < cellW; px++ {
+					sx := sb.Min.X + ((cx-pic.Rect.Min.X)*cellW+px)*sb.Dx()/dw
+					sy := sb.Min.Y + ((cy-pic.Rect.Min.Y)*cellH+py)*sb.Dy()/dh
+					src := pic.Img.RGBAAt(sx, sy)
+					if src.A == 0 {
+						continue
+					}
+					x, y := shotPad+cx*cellW+px, shotPad+cy*cellH+py
+					if src.A == 255 {
+						img.SetRGBA(x, y, src)
+						continue
+					}
+					dst := img.RGBAAt(x, y)
+					a := uint32(src.A)
+					m := func(s, d uint8) uint8 { return uint8((uint32(s)*255 + uint32(d)*(255-a)) / 255) }
+					img.SetRGBA(x, y, color.RGBA{m(src.R, dst.R), m(src.G, dst.G), m(src.B, dst.B), 255})
+				}
+			}
+		}
+	}
 }
 
 // symbolShapes are the marks the epoch screen uses that Go Mono has no shape

@@ -81,9 +81,8 @@ func TestMedalPicture(t *testing.T) {
 	}
 }
 
-// Where pictures can show, the case draws every badge of the grid as a small
-// coin and the selected badge's medal large in the pane; where they cannot,
-// the medals are drawn in cells as before and there is no picture.
+// The case draws every badge of the grid as a small coin and the selected
+// badge's medal large in the pane.
 func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 	views, sum := caseFixture()
 	st := game.GameState{AccountStats: &game.AccountStatsView{Badges: views, BadgeSummary: sum}}
@@ -98,16 +97,13 @@ func TestBadgeCaseShowsItsMedalsAsPictures(t *testing.T) {
 		p.Paint(kit.NewPainter(b))
 		return b
 	}
-	if b := paint(); len(b.Pics) != 0 || p.model.lay.tw != miniW {
-		t.Fatalf("with no window to draw pictures the case painted %d, on tiles %d wide", len(b.Pics), p.model.lay.tw)
-	}
 	was := pictureCell
 	pictureCell = func() (int, int) { return 10, 21 }
 	t.Cleanup(func() { pictureCell = was })
 	b := paint()
 	lay := p.model.lay
-	if !lay.pix || lay.tw != coinCols || lay.th != coinRows {
-		t.Fatalf("the case is laid out for tiles %d by %d (pix %v), want coins", lay.tw, lay.th, lay.pix)
+	if lay.tw != coinCols || lay.th != coinRows {
+		t.Fatalf("the case is laid out for tiles %d by %d, want coins", lay.tw, lay.th)
 	}
 	// The coins of the grid, then the medal of the pane.
 	coins := 0
@@ -406,7 +402,7 @@ func TestBadgePanelKeyButtons(t *testing.T) {
 	for _, w := range []int{60, 80, 120, 160} {
 		views, sum := caseFixture()
 		for _, tier := range caseTiers {
-			m, _, _ := drawCase(views, sum, w, 30, caseView{tier: tier}, atRest)
+			m, _, _ := drawCase(views, sum, w, 30, caseView{tier: tier})
 			for _, k := range m.chrome.keys {
 				if k.r.Min.X < 0 || k.r.Max.X > w {
 					t.Errorf("%d wide, %s: a key button spans columns %d to %d", w, tier, k.r.Min.X, k.r.Max.X)
