@@ -105,6 +105,7 @@ type headerView struct {
 	Age, Year, Prestige, Dev string
 	People, PeopleShort      headFact
 	Morale, Delta            headFact
+	Festival                 string // a running festival's chip; "" when none
 	MoraleK                  xk
 	Alerts                   []headerAlert
 	// the rows under it; nil until the first refresh
@@ -280,6 +281,13 @@ func headerNow(g *xgrid, v headerView, w, level int, draw bool) bool {
 		left = append(left, xseg{" ", xDim})
 		left = append(left, v.Delta.segs(xDim, v.MoraleK)...)
 	}
+	// A running festival is noted after morale; a click there is not a click
+	// on People.
+	note := 0
+	if v.Festival != "" && level < 5 {
+		left = append(left, xseg{"  ", xDim}, xseg{v.Festival, xGood})
+		note = 2 + runeLen(v.Festival)
+	}
 	type chip struct {
 		s   string
 		k   xk
@@ -326,7 +334,7 @@ func headerNow(g *xgrid, v headerView, w, level int, draw bool) bool {
 	x := 2
 	for i, p := range left {
 		if i == people {
-			g.hit(hitHeader, headerPeople, x, y, min(lw-(x-2), max(cx-2-x, 0)), 1)
+			g.hit(hitHeader, headerPeople, x, y, min(lw-note-(x-2), max(cx-2-x, 0)), 1)
 		}
 		x = g.putFit(x, y, max(cx-2-x, 0), p.s, p.k)
 	}

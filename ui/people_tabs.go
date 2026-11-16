@@ -132,8 +132,14 @@ func (c peopleBody) overview() {
 	// Lately: what happened to the people.
 	ly := cy + ch
 	if lh := c.y + c.h - ly; lh >= 4 {
-		g.box(c.x, ly, c.w, lh, xBorder, vibe.Line("ui.people_tabs.overview.07", "Lately"), xTitle, false)
-		drawLog(g, 3, ly+1, c.w-4, lh-2, recentLog(st, peopleEvent, lh-2), vibe.Line("ui.people_tabs.overview.08", "Nothing yet. People move in as you build homes."))
+		// The Festival card takes the right of the box when there is room.
+		lw := c.w
+		if fw := c.festivalWidth(); fw > 0 && lh >= festivalRowsMin {
+			lw -= fw
+			c.festivalCard(c.x+lw, ly, fw, lh)
+		}
+		g.box(c.x, ly, lw, lh, xBorder, vibe.Line("ui.people_tabs.overview.07", "Lately"), xTitle, false)
+		drawLog(g, 3, ly+1, lw-4, lh-2, recentLog(st, peopleEvent, lh-2), vibe.Line("ui.people_tabs.overview.08", "Nothing yet. People move in as you build homes."))
 	}
 	c.footer([][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
 }

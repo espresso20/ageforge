@@ -1269,6 +1269,7 @@ func statusLine(state game.GameState, year string) headerView {
 	if mBand.DeltaLabel != "" {
 		v.Delta = headFact{plainFact(vibe.Sprintf("ui.dashboard.statusLine.12", " (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)), mBand.DeltaLabel}
 	}
+	v.Festival = festivalChip(state)
 	pct := fmt.Sprintf("%.0f%%", state.Morale*100)
 	v.Morale = headFact{plainFact(vibe.Sprintf("ui.dashboard.statusLine.13", "  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, "")), pct}
 	// The name is cut to what a bar can hold; the title the account wears is
