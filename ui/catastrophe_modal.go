@@ -202,8 +202,8 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchFactor, outcome, st)
 	}
 
-	endureKey, endureLabel := splitKeyed(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))
-	succumbKey, succumbLabel := splitKeyed(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB"))
+	endureKey, endureLabel := splitKeyed(kit.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE")))
+	succumbKey, succumbLabel := splitKeyed(kit.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
 	hints, hintRest := keyHints(l.hint)
 	var laterKey, laterLabel string
 	if len(hints) > 0 {

@@ -225,7 +225,7 @@ func (c peopleBody) work() {
 	g.box(c.x+lw, c.y, rw, c.h, xBorder, "", xTitle, false)
 	if len(rows) == 0 {
 		g.putFit(c.x+2, c.y+1, lw-4, vibe.Line("ui.people_tabs.work.02", "No worker buildings yet: every area is on auto."), xFaint)
-		c.footer([][2]string{{"Esc", "close"}}, "roster <area> <%|auto>")
+		c.footer([][2]string{escClose()}, vibe.Line("ui.people_tabs.work.03", "roster <area> <%|auto>"))
 		return
 	}
 	inner := lw - 4
@@ -297,7 +297,7 @@ func (c peopleBody) work() {
 	}
 	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.13", "Share  "), xDim}, xseg{share, xText})
 	y++
-	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.14", "Set it  "), xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <%|auto>", xText})
+	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.14", "Set it  "), xDim}, xseg{vibe.Line("ui.people_tabs.work.04", "roster ") + strings.ToLower(r.Name) + " <%|auto>", xText})
 	y += 2
 	lines := wrapText(recruitText(st), ri)
 	openAt := len(lines) // the first line of the note after it is gold
