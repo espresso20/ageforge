@@ -102,11 +102,13 @@ const (
 
 // actionSpec is an action button: its colour, its label, the key it names
 // (empty for none), the command line a click runs (empty to press the key),
-// its sign, and whether it is unavailable.
+// its sign, and whether it is unavailable. ask, with yes, is the question a
+// click on a command asks first (xkey.ask).
 type actionSpec struct {
 	kind       keyKind
 	label, key string
 	cmd        string
+	ask, yes   string
 	sign       signKind
 	off        bool
 }
@@ -138,7 +140,7 @@ func (s *keySet) action(x, y int, a actionSpec, put func(x, y int, text string))
 	mid := y + 1
 	label := image.Rect(x+left, mid, x+left+len([]rune(a.label)), mid+1)
 	put(label.Min.X, mid, a.label)
-	b := xkey{r: image.Rect(x, y, x+w, y+actionRows), word: label, kind: a.kind, cmd: a.cmd, sign: a.sign, off: a.off}
+	b := xkey{r: image.Rect(x, y, x+w, y+actionRows), word: label, kind: a.kind, cmd: a.cmd, ask: a.ask, yes: a.yes, sign: a.sign, off: a.off}
 	if a.key != "" {
 		cx := label.Max.X + 1
 		b.cap = image.Rect(cx, mid, cx+len([]rune(a.key))+2, mid+1)

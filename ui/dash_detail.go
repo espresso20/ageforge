@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -50,11 +51,29 @@ type detailInfo struct {
 	bs game.BuildingState
 	// The commands, whether each can run and why not.
 	sellCmd, upCmd string
+	// sellAsk is the question before a sale.
+	sellAsk        string
 	sellOff, upOff bool
 	sellWhy, upWhy string
 	minus, plus    stepSide
 	workers        string
 	upLine         string // what an upgrade makes and costs, for an older building
+}
+
+// sellCount is how many copies the sell command for a buy choice sells.
+func sellCount(buy buyChoice, owned int) int {
+	switch {
+	case buy == buyTen:
+		return 10
+	case buy == buyMax && owned > 0:
+		return owned
+	}
+	return 1
+}
+
+// sellAsk is the question before a sale of n copies of the building name.
+func sellAsk(name string, n int) string {
+	return vibe.Sprintf("ui.dash_detail.sellAsk.01", "Sell %d x %s?", n, name)
 }
 
 // sellCommand is the sell command for the amount chosen: one copy, ten, or
@@ -93,6 +112,7 @@ func (b *buildBox) refreshDetail() {
 	d.sellWhy = b.st.SellRefusal(b.picked)
 	d.sellOff = d.sellWhy != ""
 	d.sellCmd = sellCommand(b.picked, b.buy, bs.Count)
+	d.sellAsk = sellAsk(bs.Name, sellCount(b.buy, bs.Count))
 	d.upCmd = upgradeCommand(b.picked, b.buy)
 	d.upOff = true
 	if b.offer != nil {
@@ -157,10 +177,11 @@ func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h int) {
 		x   int
 		txt string
 		cmd string
+		ask string
 		off bool
-	}{{sx, txtSell.String(), d.sellCmd, d.sellOff}, {ux, txtUpgrade.String(), d.upCmd, d.upOff}} {
+	}{{sx, txtSell.String(), d.sellCmd, d.sellAsk, d.sellOff}, {ux, txtUpgrade.String(), d.upCmd, "", d.upOff}} {
 		g.fill(a.x, iy+1, actionW(a.txt, "", signNone), actionRows)
-		set.action(a.x, iy+1, actionSpec{kind: keyPlain, label: a.txt, cmd: a.cmd, off: a.off}, func(x, y int, text string) { g.put(x, y, text, xText) })
+		set.action(a.x, iy+1, actionSpec{kind: keyPlain, label: a.txt, cmd: a.cmd, ask: a.ask, yes: txtSell.String(), off: a.off}, func(x, y int, text string) { g.put(x, y, text, xText) })
 	}
 	x := g.put(ix, iy, fitText(d.bs.Name, max(tw-6, 1)), xTitle)
 	g.put(x, iy, " x"+strconv.Itoa(d.bs.Count), xDim)

@@ -264,6 +264,13 @@ func (a *appLoop) runLine(cmd string) {
 	}
 }
 
+// askLine asks through the hook installed by the dashboard, if any.
+func (a *appLoop) askLine(question, yes, cmd string) {
+	if a.confirm != nil {
+		a.confirm(question, yes, cmd)
+	}
+}
+
 func (a *appLoop) Key(k kit.Key) {
 	a.offer(func() {
 		a.key(k)
