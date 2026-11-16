@@ -91,7 +91,7 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 			need = 2
 		}
 		if y+need > end {
-			g.putFit(rx, y, ri, vibe.Sprintf("ui.people_tabs.work.09", "and %d more", len(bs)-i), xFaint)
+			g.putFit(rx, y, ri, vibe.Sprintf("ui.people_verbs.workList.01", "and %d more", len(bs)-i), xFaint)
 			return y + 1
 		}
 		count := fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))
