@@ -104,8 +104,7 @@ type catalog struct {
 	matched   map[string]bool // "dir\x00text" for every text that code in the package folder dir compares or looks up
 	left      []left
 	byID      map[string]*row
-	saveNames map[string]wordlist.List        // the lists of game/savenames.txt, once read
-	ctxs      map[*srcFile]map[[2]int]nodeCtx // what the syntax around each text says, filled by wireVerdict file by file
+	saveNames map[string]wordlist.List // the lists of game/savenames.txt, once read
 }
 
 // read builds the catalog from the source under root.

@@ -1,20 +1,15 @@
 package main
 
-import "strings"
+import (
+	"go/ast"
+	"go/token"
+	"strconv"
+	"strings"
+)
 
-// vibe_map.go: what vibe-wire decides about the map sheet that the syntax
-// alone does not say. The rest of the sheet is decided like the screens: a text
-// in a function is wired as a vibe call, and a text in a table made once becomes
-// an entry that carries its id (vibe.E), or vibe.Same where the table holds a
-// string that has no row (see vibe/vibe.go).
-
-// typedIn are the commands the player types that a sentence of the map names
-// as they are typed (the hint line that ends in "map flows"), by row id. The
-// keep column cannot tell one from the words around it, so the sheet lists them
-// with the keys and the verbs, and vibe-lint holds a line to them.
-var typedIn = map[string][]string{
-	"ui.mapstyle.roguelike.chrome.bottom.01": {"map flows"},
-}
+// map_widths.go: the widths the map gives its labels, read by the export as the
+// max column of the map sheet, and the string-literal reader the width check
+// uses.
 
 // mapWidth is a limit on the rows of the map sheet whose ids start with prefix:
 // the width the map gives the label. The map clips what it draws to the cells it
@@ -44,4 +39,18 @@ func mapWidthOf(r *row) int {
 		}
 	}
 	return 0
+}
+
+// stringOf is the value of a single string literal. Unlike stringLit, it does
+// not follow + or parentheses.
+func stringOf(e ast.Expr) (string, bool) {
+	lit, ok := e.(*ast.BasicLit)
+	if !ok || lit.Kind != token.STRING {
+		return "", false
+	}
+	s, err := strconv.Unquote(lit.Value)
+	if err != nil {
+		return "", false
+	}
+	return s, true
 }

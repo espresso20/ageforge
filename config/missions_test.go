@@ -2,12 +2,8 @@ package config
 
 import (
 	"fmt"
-	"regexp"
-	"sort"
 	"strings"
 	"testing"
-
-	"github.com/espresso20/ageforge/vibe"
 )
 
 func TestMissionKinds(t *testing.T) {
@@ -114,15 +110,9 @@ func TestBadgeExpeditionsAreEveryEraAndKind(t *testing.T) {
 	}
 }
 
-// slotsOf lists the <slots> of a road story template, in order.
-func slotsOf(s string) []string { return regexp.MustCompile(`<[a-z]+>`).FindAllString(s, -1) }
-
-// TestRoadTemplatesCarryTheirRowsAndFollowTheSwitch: every road template has a
-// row id of its own, in the export's order, and is told by the script's line
-// for it while VibeMode is on. Off, or with no line, it reads as it is written.
-func TestRoadTemplatesCarryTheirRowsAndFollowTheSwitch(t *testing.T) {
-	was := vibe.On()
-	defer vibe.Set(was)
+// TestRoadTemplatesCarryTheirRows: every road template has a row id of its own,
+// in the export's order, and reads as it is written.
+func TestRoadTemplatesCarryTheirRows(t *testing.T) {
 	w := MissionWords{}
 	n := 0
 	rows := map[string]bool{}
@@ -135,23 +125,9 @@ func TestRoadTemplatesCarryTheirRowsAndFollowTheSwitch(t *testing.T) {
 				t.Errorf("%s template %d has the row %q, want %q", kind, i, row, want)
 			}
 			rows[row] = true
-
-			restore := vibe.UseScriptForTest(map[string]string{row: "SCRIPT " + row})
-			vibe.Set(false)
 			if got := w.RoadLine(template); got != template {
-				t.Errorf("%s: VibeMode off reads %q, want the template", row, got)
+				t.Errorf("%s reads %q, want the template", row, got)
 			}
-			vibe.Set(true)
-			if got := w.RoadLine(template); got != "SCRIPT "+row {
-				t.Errorf("%s: VibeMode on reads %q, want the script's line", row, got)
-			}
-			restore()
-			restore = vibe.UseScriptForTest(map[string]string{})
-			if got := w.RoadLine(template); got != template {
-				t.Errorf("%s: VibeMode on with no line reads %q, want the template", row, got)
-			}
-			restore()
-			vibe.Set(false)
 		}
 	}
 	if len(rows) != n {
@@ -159,35 +135,5 @@ func TestRoadTemplatesCarryTheirRowsAndFollowTheSwitch(t *testing.T) {
 	}
 	if got := w.RoadLine("A story written by hand."); got != "A story written by hand." {
 		t.Errorf("a story that is no template reads %q", got)
-	}
-}
-
-// TestTheScriptTellsRoadTemplatesWithTheirSlots: the script's line for a road
-// template has every <slot> the template has, none more, because the number
-// or the word that goes in a slot is put in by whoever tells the story, and
-// the lint cannot read <slots>.
-func TestTheScriptTellsRoadTemplatesWithTheirSlots(t *testing.T) {
-	told, total := 0, 0
-	for kind, pool := range roadEventTemplates {
-		for _, tpl := range pool {
-			total++
-			line, ok := vibe.Text(tpl.vibeRow)
-			if !ok {
-				continue
-			}
-			told++
-			want, got := slotsOf(tpl.text), slotsOf(line)
-			sort.Strings(want)
-			sort.Strings(got)
-			if strings.Join(want, "") != strings.Join(got, "") {
-				t.Errorf("%s (%s): the script's line has the slots %v, the template %v:\n  %s\n  %s", tpl.vibeRow, kind, got, want, line, tpl.text)
-			}
-			if strings.ContainsAny(line, "—") {
-				t.Errorf("%s: the script's line has an em dash: %s", tpl.vibeRow, line)
-			}
-		}
-	}
-	if told != total {
-		t.Errorf("%d of the %d road templates have a line in the script", told, total)
 	}
 }
