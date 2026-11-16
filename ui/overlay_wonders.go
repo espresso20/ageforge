@@ -76,13 +76,24 @@ func wonderSummary(state game.GameState) wonderBlock {
 		blk.build = sb.Len()
 		sb.WriteString(strings.Repeat("\n", actionRows))
 		blk.buildCmd = buildLine(state.Ruleset().Typed(rules.KindBuilding, current.key))
-		blk.buildOff = !bs.CanBuild
+		blk.buildOff = !bs.CanBuild || wonderQueued(state, current.key)
 		blk.collectCmd = wonderCollectCmd
 		blk.collectOff = !wonderBankable(state, current.def.BaseCost, bs)
 	}
 	sb.WriteString("\n")
 	blk.text = sb.String()
 	return blk
+}
+
+// wonderQueued says whether the wonder is already under construction: its
+// bank stays full while it builds, so Build waits until it stands.
+func wonderQueued(state game.GameState, key string) bool {
+	for _, q := range state.BuildQueue {
+		if q.Key == key {
+			return true
+		}
+	}
+	return false
 }
 
 // wonderBankPercent returns the floored share of a wonder's price that has

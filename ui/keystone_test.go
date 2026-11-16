@@ -94,6 +94,11 @@ func TestFullBankSaysWhatIsStillMissing(t *testing.T) {
 	if blk := wonderSummary(ge.GetState()); blk.buildCmd != "build great_monolith" || blk.buildOff {
 		t.Errorf("Build button: command %q, off %v; want the build command, on", blk.buildCmd, blk.buildOff)
 	}
+	queued := ge.GetState()
+	queued.BuildQueue = append(queued.BuildQueue, game.BuildQueueSnapshot{Key: "great_monolith", TicksLeft: 5, TotalTicks: 10})
+	if blk := wonderSummary(queued); !blk.buildOff {
+		t.Errorf("Build button is on while the wonder is under construction")
+	}
 	if cmd := cmdWonder(nil, ge); !strings.Contains(cmd.Message, "Bank full. Type 'build great_monolith' to start construction.") {
 		t.Errorf("`wonder` with a full bank and the keystone:\n%s", cmd.Message)
 	}
