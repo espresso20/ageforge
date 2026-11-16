@@ -38,9 +38,9 @@ const (
 	hitMore  = 61 // the quiet row
 	hitOlder = 62 // the row that counts the older buildings
 
-	// cardSignCols is the cells at the left of a card the gauge and the sign
-	// take; the card's words start after them.
-	cardSignCols = 6
+	// cardGlyphCols is the cells at the left of a card the gauge and the kind's
+	// glyph take where there are no pictures; with them cardSignRoom says.
+	cardGlyphCols = 6
 	// buildColWide is the Build button's cells with its Enter key, and
 	// buildColNarrow without it: the key goes where the box has no room.
 	buildColWide, buildColNarrow = 16, 9
@@ -118,9 +118,11 @@ type buildBox struct {
 	picked   string
 	expanded bool
 	first    int
-	// pickAt is the picked card's place in order: when it is built away the
-	// card now in that place is picked.
+	// pickAt is the picked card's place in order: when the card leaves the
+	// list the card now in that place is picked. reveal asks the next draw to
+	// scroll the pick into view.
 	pickAt int
+	reveal bool
 	// older says the box lists the older buildings the town holds in place of
 	// the ones to build, and olderN is how many kinds there are.
 	older  bool
@@ -156,6 +158,8 @@ type buildBox struct {
 	imgs     map[cardPic]*image.RGBA
 	imgBytes int
 	imgCell  [2]int
+	// laidCell is the cell size the layout was made for.
+	laidCell [2]int
 }
 
 func newBuildBox(plain func() bool, app *appLoop) *buildBox {
@@ -232,21 +236,22 @@ func (b *buildBox) recompute() {
 		}
 		b.order, b.shown = kept, shown
 	}
-	b.settlePick(built != b.built)
+	b.settlePick()
 	b.built = built
 	b.refreshDetail()
 	b.dirty = true
 }
 
-// settlePick keeps a card picked at the same place in the list: when the
-// picked card has left it, or a build has changed the order, the card now in
-// that place is picked (the last one when the place is past the end).
-func (b *buildBox) settlePick(built bool) {
+// settlePick keeps the same building picked when the list is sorted again:
+// the pick is the card, not its row. When the card has left the list, the card
+// now in its old place is picked (the last one when that is past the end). A
+// pick that moved is scrolled into view the next time the box is drawn.
+func (b *buildBox) settlePick() {
 	if b.picked == "" {
 		return
 	}
-	at := slices.Index(b.order, b.picked)
-	if at >= 0 && !(built && at != b.pickAt) {
+	if at := slices.Index(b.order, b.picked); at >= 0 {
+		b.reveal = b.reveal || at != b.pickAt
 		b.pickAt = at
 		return
 	}
@@ -255,7 +260,7 @@ func (b *buildBox) settlePick(built bool) {
 		return
 	}
 	b.pickAt = min(b.pickAt, len(b.order)-1)
-	b.picked = b.order[b.pickAt]
+	b.picked, b.reveal = b.order[b.pickAt], true
 }
 
 // pick picks the card of key.
@@ -305,6 +310,14 @@ func (b *buildBox) pickedLine() string {
 // inner is the cells inside the box's frame.
 func (b *buildBox) inner() (w, h int) { return b.w - 2, b.h - 2 }
 
+// picCells is the cell size the cards' pictures are drawn at, zero for none.
+func (b *buildBox) picCells() (cw, ch int) {
+	if b.plain != nil && b.plain() {
+		return 0, 0
+	}
+	return pictureCells()
+}
+
 // ===== Layout =====
 
 // Layout takes the box's rectangle and lays the cards out for it.
@@ -315,7 +328,7 @@ func (b *buildBox) Layout(r image.Rectangle) {
 		b.grid = nil
 		return
 	}
-	if b.grid == nil || w != b.w || h != b.h || b.dirty {
+	if cw, ch := b.picCells(); b.grid == nil || w != b.w || h != b.h || b.dirty || [2]int{cw, ch} != b.laidCell {
 		b.draw(w, h)
 	}
 }
@@ -373,6 +386,8 @@ func priceLines(parts []costPart, room int) [][]costPart {
 // both shows the cards.
 func (b *buildBox) draw(w, h int) {
 	b.w, b.h, b.dirty = w, h, false
+	cw, ch := b.picCells()
+	b.laidCell = [2]int{cw, ch}
 	b.drawAt(w, h, 0)
 	if !b.detail.ok || w-2 < detailMinW {
 		return
@@ -396,6 +411,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 	bot := h - 1 - d
 	g.box(0, 0, w, h, xBorder, strings.TrimSpace(b.title), xTitle, false)
 	iw, ih := w-2, h-2
+	seen := b.shownItems
 	b.strip, b.cardKeys, b.shownItems, b.items = nil, nil, 0, 0
 	if !b.has || iw < 8 || ih < 1 {
 		return
@@ -476,9 +492,16 @@ func (b *buildBox) drawAt(w, h, d int) {
 	}
 	b.items = len(items)
 	b.first = min(max(b.first, 0), max(len(items)-1, 0))
+	if b.reveal {
+		if i := slices.Index(items, b.picked); i >= 0 && (i < b.first || i >= b.first+max(seen, 1)) {
+			b.first = i
+		}
+		b.reveal = false
+	}
 	bw := buildCol(iw)
 	compact := iw < compactBelow
-	tx := 1 + cardSignCols
+	scols := cardSignRoom(b.picCells())
+	tx := 1 + scols
 	room := (1 + iw) - bw - 2 - tx // the words' cells
 	if compact {
 		tx = 1 + compactWords
@@ -825,7 +848,7 @@ func drawCard(k cardPic) *image.RGBA {
 		tint = toward(tint, keyBlack, .28)
 	}
 	if !k.compact {
-		drawSign(a, 11, (H-36)/2, k.kind, tint, dull, k.ground)
+		drawSign(a, cardSignArtLeft, (H-cardSignArtW)/2, k.kind, tint, dull, k.ground)
 	}
 	return img
 }
@@ -887,7 +910,8 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 		return p.Label(rect.Min.X+x, rect.Min.Y+y, kit.Escape(s), st)
 	}
 	bw := buildCol(iw)
-	tx, room := cardSignCols, iw-bw-2-cardSignCols
+	scols := cardSignRoom(cw, ch)
+	tx, room := scols, iw-bw-2-scols
 	if pc.compact {
 		tx, room = compactWords, iw-compactWords-1
 	}

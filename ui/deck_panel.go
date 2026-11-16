@@ -128,7 +128,7 @@ func (p *deckPanel) act() bool {
 	if !ok || c.Command == "" || p.buttons.run == nil {
 		return false
 	}
-	p.buttons.run(c.Command)
+	p.buttons.fire(xkey{cmd: c.Command})
 	return true
 }
 

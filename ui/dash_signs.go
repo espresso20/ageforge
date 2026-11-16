@@ -351,7 +351,7 @@ var signPix = map[string][]string{
 // pulled toward the ground.
 func drawSign(a art, x0, y0 int, kind string, tint color.RGBA, dull float64, ground color.RGBA) {
 	R := rampOf(toward(tint, ground, dull))
-	slab := image.Rect(x0, y0, x0+36, y0+36)
+	slab := image.Rect(x0, y0, x0+cardSignArtW, y0+cardSignArtW)
 	a.fill(slab, 1, R.deep)
 	f := slab.Inset(1)
 	a.fill(f, 1, R.dark)

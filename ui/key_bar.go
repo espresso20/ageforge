@@ -2,7 +2,9 @@ package ui
 
 import (
 	"image"
+	"strings"
 
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -271,7 +273,7 @@ type keyPresser struct {
 // the buttons.
 func (k *keyPresser) wire(a *appLoop) {
 	k.press, k.feel = a.Key, &a.feel
-	k.run, k.confirm = a.runLine, a.confirm
+	k.run, k.confirm = a.runLine, a.askLine
 }
 
 // sense is the presser's feel, made when it has none.
@@ -291,8 +293,13 @@ func (k *keyPresser) lit(s *keySet) (xkey, bool) {
 }
 
 // fire does what a click or the key of b does: runs its command line (after
-// its question, if it has one), or presses its key.
+// its question, if it has one), or presses its key. A command the command
+// table marks Dangerous is never run without a question: a button that gives
+// none is asked about with the line itself.
 func (k *keyPresser) fire(b xkey) {
+	if b.cmd != "" && b.ask == "" && lineDangerous(b.cmd) {
+		b.ask, b.yes = dangerAsk(b.cmd), txtDangerYes.String()
+	}
 	switch {
 	case b.cmd == "":
 		k.press(b.key)
@@ -303,6 +310,22 @@ func (k *keyPresser) fire(b xkey) {
 	case k.run != nil:
 		k.run(b.cmd)
 	}
+}
+
+// txtDangerYes is the word on the danger button of the question a click on a
+// Dangerous command asks without one of its own.
+var txtDangerYes = vibe.E("ui.key_bar.dangerYes.01", "Run")
+
+// dangerAsk is the question for a Dangerous command line a button gave none for.
+func dangerAsk(line string) string {
+	return vibe.Sprintf("ui.key_bar.dangerAsk.01", "Run \"%s\"?", line)
+}
+
+// lineDangerous reports whether line runs a command the command table marks
+// Dangerous: the check the typed path makes before a second Enter.
+func lineDangerous(line string) bool {
+	p, ok := parse(registry(), strings.Fields(line))
+	return ok && p.dangerous()
 }
 
 // preview keeps feel.preview as the command of the button under the pointer.
