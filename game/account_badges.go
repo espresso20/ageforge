@@ -186,6 +186,7 @@ func (a *Account) adoptBadgeFile() {
 	badges, counters, days, flagged := a.Badges, a.Counters, a.Days, a.BadgesTampered
 	a.Badges, a.Counters, a.Days, a.BadgesTampered = nil, nil, nil, false
 	a.loadBadgeFile(accountDir(a.AccountID))
+	a.loadRunFile(accountDir(a.AccountID)) // the slot's run file, if any, comes with its badge file
 	a.Badges = mergeBadges(a.Badges, badges)
 	a.Counters = mergeCounters(a.Counters, counters)
 	a.Days = mergeDays(a.Days, days)

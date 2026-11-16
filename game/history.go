@@ -90,26 +90,52 @@ func (t *HistoryTier) add(tick int, vals map[string]float64, limit int, ring boo
 	t.End = tick
 }
 
+// shrink makes room. A ring tier drops its oldest bucket. The run tier merges
+// neighbours in pairs and doubles the span: a mean column takes the mean of the
+// pair weighted by the samples each bucket holds (the open last bucket may hold
+// fewer than a full one), a count column the later value. An odd bucket stands
+// alone as the new last bucket. End and the first bucket's start do not move,
+// and Fill is the samples the new last bucket holds.
 func (t *HistoryTier) shrink(ring bool) {
-	for k, c := range t.Cols {
-		if ring {
+	if ring {
+		for k, c := range t.Cols {
 			t.Cols[k] = c[:copy(c, c[1:])]
-			continue
 		}
-		for i := 0; i < t.N/2; i++ {
+		t.N--
+		return
+	}
+	full := t.Span / historyInterval
+	pairs, odd := t.N/2, t.N%2 == 1
+	keep := (t.N + 1) / 2
+	for k, c := range t.Cols {
+		for i := 0; i < pairs; i++ {
 			a, b := c[2*i], c[2*i+1]
 			if !historyCounts[k] {
-				b = float32((float64(a) + float64(b)) / 2)
+				wb := full
+				if 2*i+1 == t.N-1 {
+					wb = t.Fill
+				}
+				// Each product is rounded before the sum (the float rules).
+				b = float32((float64(float64(a)*float64(full)) + float64(float64(b)*float64(wb))) / float64(full+wb))
 			}
 			c[i] = b
 		}
-		t.Cols[k] = c[:t.N/2]
+		if odd {
+			c[pairs] = c[t.N-1]
+		}
+		t.Cols[k] = c[:keep]
 	}
-	if ring {
-		t.N--
-	} else {
-		t.N /= 2
-		t.Span *= 2
+	if !odd {
+		t.Fill += full
+	}
+	t.N = keep
+	t.Span *= 2
+}
+
+// thin keeps at most limit buckets, merging as the run tier does when full.
+func (t *HistoryTier) thin(limit int) {
+	for t.N > limit && limit > 0 {
+		t.shrink(false)
 	}
 }
 
