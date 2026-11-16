@@ -443,6 +443,12 @@ This cannot be undone in the game, and no server keeps a copy. The game [backs u
 
 ---
 
+## Run archive
+
+Each run that ends, by prestige, by succumbing or by starting a new game, is filed on the account with its id, age, counts and outcome. A run of at least 30 recorded buckets is kept, and any prestige is. The 20 newest runs and the best run also keep a thinned history, and the archive holds up to 200 runs. It is stored in its own signed file beside the account file, travels in the progress export, and is merged by run id on import.
+
+---
+
 ## Recovery in short
 
 With no server, you recover your identity from a short code you write down. You recover progress only if you exported it first. If a machine's `data/` folder is gone and the progress was never backed up, no server holds a copy. The recovery code restores who you are, not what you have earned.
