@@ -200,6 +200,15 @@ func (om *OverlayManager) SetOver(name string, over func(p *kit.Painter, text im
 	}
 }
 
+// SetButtons gives the named text overlay buttons painted over its text
+// (SetOver): pick takes the mouse first and hand says where the pointer is a
+// hand. Unknown names are ignored.
+func (om *OverlayManager) SetButtons(name string, pick func(m kit.Mouse) bool, hand func(at image.Point) kit.Pointer) {
+	if e, ok := om.entries[name]; ok {
+		e.tv.pick, e.tv.hand = pick, hand
+	}
+}
+
 // SetFooter gives the named text overlay the keys on its foot, in place of the
 // scrolling ones. Unknown names are ignored.
 func (om *OverlayManager) SetFooter(name string, keys func() [][2]string) {

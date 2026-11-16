@@ -247,14 +247,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
 	d.overlayMgr.SetBackHandler("wonders", d.wonders.back)
 	d.overlayMgr.SetFooter("wonders", d.wonders.footer)
-	d.overlayMgr.SetKeyHandler("wonders", func(event *kit.Key) *kit.Key {
-		// UI goroutine, no engine lock held (see the harbinger handler).
-		if !d.wonders.handleKey(event) {
-			return event
-		}
-		d.overlayMgr.Refresh(d.engine.GetState())
-		return nil
-	})
+	d.wonders.wire(d.overlayMgr, func() { d.overlayMgr.Refresh(d.engine.GetState()) })
 	// The People panel, which `workers` opens too, leaves the keyboard with
 	// the command bar as well.
 	d.statsPanel.settings = d.mapSettings

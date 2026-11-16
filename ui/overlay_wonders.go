@@ -7,18 +7,28 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // renderCurrentWonderSummary returns a short text block for the current-age wonder,
 // prepended at the top of the wonders overlay so the player can see their active
 // wonder status without scrolling.
 func renderCurrentWonderSummary(state game.GameState) string {
+	return wonderSummary(state).text
+}
+
+// wonderSummary is the summary with what its buttons need: where the bank's
+// heading and the rows kept for Build begin in the text, and each button's
+// command and whether it is off.
+func wonderSummary(state game.GameState) wonderBlock {
 	var sb strings.Builder
+	blk := wonderBlock{bank: -1, build: -1}
 	current := currentWonder(state)
 	if current == nil {
-		return ""
+		return blk
 	}
 
 	bs, hasBs := state.Buildings[current.key]
@@ -43,18 +53,31 @@ func renderCurrentWonderSummary(state game.GameState) string {
 
 	// Bank progress if not built
 	if !built && hasBs {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n"))
+		blk.bank = sb.Len() + 1
+		head := vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n")
+		blk.bankCol = runeLen(kit.Strip(strings.Trim(head, "\n"))) + 2
+		fmt.Fprint(&sb, head)
 		for _, r := range bankRows(current.def.BaseCost, bs.WonderBank) {
 			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", r.color, game.ResourceName(r.res), wonderProgressBar(r.share, 8), textfmt.Number(r.banked), textfmt.Number(r.need))
 		}
-		if bs.WonderBankFull {
+		switch {
+		case bs.WonderBankFull && bs.CanBuild:
+			// The Build button carries the command this line named.
+		case bs.WonderBankFull:
 			fmt.Fprintf(&sb, "   %s\n", wonderBuildLine(state, current.key))
-		} else {
+		default:
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", wonderCollectHint())
 		}
+		blk.build = sb.Len()
+		sb.WriteString(strings.Repeat("\n", actionRows))
+		blk.buildCmd = buildLine(state.Ruleset().Typed(rules.KindBuilding, current.key))
+		blk.buildOff = !bs.CanBuild
+		blk.collectCmd = wonderCollectCmd
+		blk.collectOff = !wonderBankable(state, current.def.BaseCost, bs)
 	}
 	sb.WriteString("\n")
-	return sb.String()
+	blk.text = sb.String()
+	return blk
 }
 
 // wonderBankPercent returns the floored share of a wonder's price that has

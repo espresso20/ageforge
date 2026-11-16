@@ -41,6 +41,10 @@ type nativeText struct {
 	// over the cells. It is given the rectangle the text shows in and the
 	// text's first row in view.
 	over func(p *kit.Painter, text image.Rectangle, top int)
+	// pick and hand, when set, are the buttons that over painted: pick takes
+	// a mouse event first, hand says where the pointer is a hand.
+	pick func(m kit.Mouse) bool
+	hand func(at image.Point) kit.Pointer
 }
 
 // newNativeText is a text view: scrollable, wrapping at
@@ -267,6 +271,9 @@ func (t *nativeText) Paint(p *kit.Painter) {
 // Mouse gives the wheel to the box's own rule and a click to its own
 // action, where it has them and nothing in its text took them.
 func (t *nativeText) Mouse(m kit.Mouse) bool {
+	if t.pick != nil && t.pick(m) {
+		return true
+	}
 	switch {
 	case m.Kind == kit.MouseWheel:
 		return t.wheel != nil && t.wheel(m.Wheel)
@@ -278,7 +285,12 @@ func (t *nativeText) Mouse(m kit.Mouse) bool {
 }
 
 // PointerAt: the hand over a box a click acts on.
-func (t *nativeText) PointerAt(image.Point) kit.Pointer { return handIf(t.click != nil) }
+func (t *nativeText) PointerAt(at image.Point) kit.Pointer {
+	if t.hand != nil && t.hand(at) == kit.PointerHand {
+		return kit.PointerHand
+	}
+	return handIf(t.click != nil)
+}
 
 // viKeys are the letters a text view scrolls by, as the keys they stand for.
 var viKeys = map[rune]kit.KeyCode{'j': kit.KeyDown, 'k': kit.KeyUp, 'g': kit.KeyHome, 'G': kit.KeyEnd}
