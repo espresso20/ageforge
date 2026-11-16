@@ -340,6 +340,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 func (d *Dashboard) build() {
 	// Create permanent economy tab
 	d.economyTab = NewEconomyTab(d.app)
+	d.economyTab.buildBox.offer = d.engine.UpgradeOffer
 	d.economyTab.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
 
 	// Sidebar — command panel hints, laid out for the room it has: one
@@ -609,6 +610,9 @@ func (d *Dashboard) build() {
 		case kit.KeyEsc:
 			if d.overlayMgr != nil && d.overlayMgr.HasActive() {
 				d.overlayMgr.Hide()
+				return nil
+			}
+			if d.inputField.GetText() == "" && d.economyTab.buildBox.closeOlder() {
 				return nil
 			}
 			d.engine.SaveGame(d.engine.ActiveSaveName())

@@ -1168,8 +1168,8 @@ ui.overlay_buildings.buildingsProvider.02," [gray]Every age so far, full lore. D
 ui.overlay_buildings.buildingsProvider.03,"[gold]── %s (current era) ──[-]
 "
 ui.overlay_buildings.buildingsProvider.05," [gray](OG legacy)[-]"
-ui.overlay_buildings.buildingsProvider.06," [cyan]squad: %d/%d[-]"
-ui.overlay_buildings.buildingsProvider.07," [gray]squad cap: %d each[-]"
+ui.overlay_buildings.workersText.01," [cyan]squad: %d/%d[-]"
+ui.overlay_buildings.workersText.02," [gray]squad cap: %d each[-]"
 ui.overlay_epoch.epochProvider.01,"[gold]═══ Epoch Lore ═══[-]
 
 "

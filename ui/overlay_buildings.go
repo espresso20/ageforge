@@ -124,13 +124,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 			}
 
 			// Worker info.
-			workerPart := ""
-			if bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
-				workerPart = vibe.Sprintf("ui.overlay_buildings.buildingsProvider.06", " [cyan]workers: %d/%d[-]", bs.WorkersAssigned, bs.WorkerCapacity*bs.Count)
-				if bs.Count == 0 {
-					workerPart = vibe.Sprintf("ui.overlay_buildings.buildingsProvider.07", " [gray]workers: up to %d each[-]", bs.WorkerCapacity)
-				}
-			}
+			workerPart := workersText(bs)
 
 			// Name line.
 			nameColor := "yellow"
@@ -156,4 +150,16 @@ func buildingsProvider(state game.GameState, screenW int) string {
 	}
 
 	return sb.String()
+}
+
+// workersText is a building's workers line, with its colour markup, led by a
+// space; "" for a building that takes no workers.
+func workersText(bs game.BuildingState) string {
+	if bs.WorkerDomain == "" || bs.WorkerCapacity <= 0 {
+		return ""
+	}
+	if bs.Count == 0 {
+		return vibe.Sprintf("ui.overlay_buildings.workersText.02", " [gray]workers: up to %d each[-]", bs.WorkerCapacity)
+	}
+	return vibe.Sprintf("ui.overlay_buildings.workersText.01", " [cyan]workers: %d/%d[-]", bs.WorkersAssigned, bs.WorkerCapacity*bs.Count)
 }

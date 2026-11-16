@@ -3,6 +3,7 @@ package ui
 import (
 	"image"
 	"image/color"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -33,8 +34,9 @@ import (
 
 const (
 	// The kinds of thing a click picks (xhit.id).
-	hitCard = 60 // n is the card's place in the layout
-	hitMore = 61 // the quiet row
+	hitCard  = 60 // n is the card's place in the layout
+	hitMore  = 61 // the quiet row
+	hitOlder = 62 // the row that counts the older buildings
 
 	// cardSignCols is the cells at the left of a card the gauge and the sign
 	// take; the card's words start after them.
@@ -46,6 +48,8 @@ const (
 	// gatherTallRows is the inner height from which the Gather buttons are
 	// three rows tall; a shorter box has them one row.
 	gatherTallRows = 22
+	// gatherAges is how many of the first ages show the Gather buttons.
+	gatherAges = 2
 	// compactBelow is the inner width under which a card is stacked: its Build
 	// button is a one-row key in the name row and the sign gives way to the
 	// card's glyph, so the words have the width.
@@ -81,6 +85,9 @@ type placedCard struct {
 	// the card has none.
 	compact           bool
 	keyRow, reasonRow int
+	// small says the card's Build button is a one-row key: every card but the
+	// picked one. build is -1 for a card that has no button.
+	small bool
 }
 
 // buildBox is the Buildings box.
@@ -111,13 +118,28 @@ type buildBox struct {
 	picked   string
 	expanded bool
 	first    int
+	// pickAt is the picked card's place in order: when it is built away the
+	// card now in that place is picked.
+	pickAt int
+	// older says the box lists the older buildings the town holds in place of
+	// the ones to build, and olderN is how many kinds there are.
+	older  bool
+	olderN int
+	// offer is the engine's upgrade offer for a building.
+	offer func(key string) game.UpgradeOffer
+	// detail is what the detail box says, det its keys and note the cells of
+	// its note line; det is nil when the box has no room for it.
+	detail detailInfo
+	det    *keySet
+	note   image.Rectangle
 
 	// the layout
-	grid   *xgrid
-	w, h   int
-	dirty  bool
-	placed []placedCard
-	more   int // the grid row of the quiet row, -1 for none
+	grid     *xgrid
+	w, h     int
+	dirty    bool
+	placed   []placedCard
+	more     int // the grid row of the quiet row, -1 for none
+	olderRow int // the grid row of the older buildings' row, -1 for none
 	// strip and cardKeys are the keys of the strip and of the cards, for
 	// painting each in its own way.
 	strip, cardKeys *keySet
@@ -137,7 +159,7 @@ type buildBox struct {
 }
 
 func newBuildBox(plain func() bool, app *appLoop) *buildBox {
-	b := &buildBox{plain: plain, more: -1, hover: -1}
+	b := &buildBox{plain: plain, more: -1, olderRow: -1, hover: -1}
 	b.nativeHost = newNativeHost()
 	b.k.wire(app)
 	press := b.k.press
@@ -168,7 +190,16 @@ func (b *buildBox) setBuy(c buyChoice) {
 
 // recompute makes the cards and puts them in order, unless the order is held.
 func (b *buildBox) recompute() {
-	b.cards = buildCards(b.st, b.buy)
+	older := olderCards(b.st)
+	b.olderN = len(older)
+	if b.older && b.olderN == 0 {
+		b.older = false
+	}
+	if b.older {
+		b.cards = older
+	} else {
+		b.cards = buildCards(b.st, b.buy)
+	}
 	built := len(b.st.BuildQueue)
 	for _, bs := range b.st.Buildings {
 		built += bs.Count
@@ -201,11 +232,55 @@ func (b *buildBox) recompute() {
 		}
 		b.order, b.shown = kept, shown
 	}
+	b.settlePick(built != b.built)
 	b.built = built
-	if b.picked != "" && !have[b.picked] {
-		b.picked = ""
-	}
+	b.refreshDetail()
 	b.dirty = true
+}
+
+// settlePick keeps a card picked at the same place in the list: when the
+// picked card has left it, or a build has changed the order, the card now in
+// that place is picked (the last one when the place is past the end).
+func (b *buildBox) settlePick(built bool) {
+	if b.picked == "" {
+		return
+	}
+	at := slices.Index(b.order, b.picked)
+	if at >= 0 && !(built && at != b.pickAt) {
+		b.pickAt = at
+		return
+	}
+	if len(b.order) == 0 {
+		b.picked = ""
+		return
+	}
+	b.pickAt = min(b.pickAt, len(b.order)-1)
+	b.picked = b.order[b.pickAt]
+}
+
+// pick picks the card of key.
+func (b *buildBox) pick(key string) {
+	b.picked, b.pickAt = key, max(slices.Index(b.order, key), 0)
+	b.refreshDetail()
+	b.dirty = true
+}
+
+// toggleOlder switches the box between the buildings to build and the older
+// ones held.
+func (b *buildBox) toggleOlder() {
+	b.older = !b.older
+	b.picked, b.pickAt, b.first, b.expanded, b.resort = "", 0, 0, false, true
+	b.recompute()
+}
+
+// closeOlder returns the box to its build list, reporting whether it was
+// showing the older buildings.
+func (b *buildBox) closeOlder() bool {
+	if !b.older {
+		return false
+	}
+	b.toggleOlder()
+	return true
 }
 
 // card is the card of key.
@@ -293,12 +368,29 @@ func priceLines(parts []costPart, room int) [][]costPart {
 	return lines
 }
 
-// draw lays the box out for w by h cells: the frame, the strip, and the cards
-// from the first one on show.
+// draw lays the box out for w by h cells. The detail of the picked building
+// goes under the cards when it costs no card its place; a box too short for
+// both shows the cards.
 func (b *buildBox) draw(w, h int) {
 	b.w, b.h, b.dirty = w, h, false
+	b.drawAt(w, h, 0)
+	if !b.detail.ok || w-2 < detailMinW {
+		return
+	}
+	base := b.shownItems
+	b.drawAt(w, h, detailRows)
+	if b.shownItems < base || (b.shownItems == 0 && b.items > 0) {
+		b.drawAt(w, h, 0)
+	}
+}
+
+// drawAt lays the box out with d rows at the bottom kept for the detail
+// (none when 0): the frame, the strip, and the cards from the first one on
+// show.
+func (b *buildBox) drawAt(w, h, d int) {
 	g := newXGrid(w, h)
-	b.grid, b.placed, b.more = g, nil, -1
+	b.grid, b.placed, b.more, b.olderRow, b.det = g, nil, -1, -1, nil
+	bot := h - 1 - d
 	g.box(0, 0, w, h, xBorder, strings.TrimSpace(b.title), xTitle, false)
 	iw, ih := w-2, h-2
 	b.strip, b.cardKeys, b.shownItems, b.items = nil, nil, 0, 0
@@ -334,7 +426,7 @@ func (b *buildBox) draw(w, h int) {
 		x = r.Max.X + 1
 	}
 	top := 3
-	if b.st.CanGatherByHand() {
+	if b.st.CanGatherByHand() && b.gatherAge() {
 		tall := ih >= gatherTallRows
 		rowH := 1
 		if tall {
@@ -427,31 +519,37 @@ func (b *buildBox) draw(w, h int) {
 		if len(items)-(i+1)+laterHidden > 0 {
 			need++ // the quiet row stays under it
 		}
-		if y+need > h-1 {
+		if b.olderN > 0 {
+			need++ // and the row of the older buildings
+		}
+		if y+need > bot {
 			// A box too short for even the first card shows what fits of its
 			// price; otherwise the card waits for the next page.
-			if b.shownItems > 0 || h-1-y < 3 {
+			if b.shownItems > 0 || bot-y < 3 {
 				break
 			}
-			cut := rows - (h - 1 - y)
+			cut := rows - (bot - y)
 			lines = lines[:max(len(lines)-cut, 1)]
 			rows, keyRow, reasonRow = 2+len(lines), 0, 0
 			if compact {
 				keyRow = rows - 1
 			}
 		}
-		pc := placedCard{card: c, y: y, rows: rows, price: lines, compact: compact, keyRow: keyRow, reasonRow: reasonRow}
-		if compact {
+		pc := placedCard{card: c, y: y, rows: rows, price: lines, compact: compact, keyRow: keyRow, reasonRow: reasonRow, build: -1}
+		switch {
+		case c.older:
+		case compact:
 			kx := 1 + iw - compactKeyW - 1
 			word := " " + txtBuild.String() + " "
 			r := image.Rect(kx, y+keyRow, kx+compactKeyW, y+keyRow+1)
 			g.put(kx, y+keyRow, fitText(word, compactKeyW), xKeycap)
 			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild})
-		} else {
+		case c.key == b.picked:
+			// The picked card has the one primary button.
 			by := y + (rows-actionRows)/2
 			bxx := 1 + iw - bw - 1
 			spec := actionSpec{kind: keyPrimary, label: txtBuild.String(), cmd: c.cmd, off: !c.canBuild}
-			if c.key == b.picked && c.canBuild && bw == buildColWide {
+			if c.canBuild && bw == buildColWide {
 				spec.key = "Enter"
 			}
 			g.fill(bxx, by, bw, actionRows)
@@ -459,24 +557,53 @@ func (b *buildBox) draw(w, h int) {
 			set.action(at, by, spec, func(x, y int, text string) { g.put(x, y, text, xText) })
 			last := &set.keys[len(set.keys)-1]
 			last.r = image.Rect(bxx, by, bxx+bw, by+actionRows)
+		default:
+			// Every other card has a one-row key on its middle row, at the
+			// right of the Build column.
+			kx, ky := 1+iw-compactKeyW-1, y+(rows-actionRows)/2+1
+			r := image.Rect(kx, ky, kx+compactKeyW, ky+1)
+			g.put(kx, ky, fitText(" "+txtBuild.String()+" ", compactKeyW), xKeycap)
+			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild})
+			pc.small = true
 		}
-		pc.build = len(set.keys) - 1 - cardFrom
+		if !c.older {
+			pc.build = len(set.keys) - 1 - cardFrom
+		}
 		g.hit(hitCard, len(b.placed), 1, y, iw, rows)
 		b.placed = append(b.placed, pc)
 		y += rows
 		b.shownItems++
 	}
 	b.hidden = len(items) - (b.first + b.shownItems) + laterHidden
-	if b.hidden > 0 && y < h-1 {
+	if b.hidden > 0 && y < bot {
 		b.more = y
 		g.put(tx, y, "· · ·", xDim)
 		g.put(tx+6, y, vibe.Sprintf("ui.dash_cards_box.draw.02", "%s more later", textfmt.Int(b.hidden)), xDim)
 		g.hit(hitMore, 0, 1, y, iw, 1)
+		y++
+	}
+	if b.olderN > 0 && y < bot {
+		b.olderRow = y
+		look := xDim
+		if b.older {
+			look = xText
+		}
+		g.put(tx, y, "· · ·", xDim)
+		g.put(tx+6, y, textfmt.Int(b.olderN)+" "+txtOlder.String(), look)
+		g.hit(hitOlder, 0, 1, y, iw, 1)
 	}
 	b.cardKeys = &keySet{keys: append([]xkey(nil), set.keys[cardFrom:]...), plain: g.plain, glyph: set.glyph}
+	if d > 0 {
+		detFrom := len(set.keys)
+		b.drawDetail(g, set, w, h)
+		b.det = &keySet{keys: append([]xkey(nil), set.keys[detFrom:]...), plain: g.plain, glyph: set.glyph}
+	}
 	if b.plain != nil && b.plain() {
 		g.fold()
 		b.strip.plain, b.cardKeys.plain = true, true
+		if b.det != nil {
+			b.det.plain = true
+		}
 	}
 }
 
@@ -522,9 +649,12 @@ func (b *buildBox) Mouse(m kit.Mouse) bool {
 			b.moreClicked()
 			return true
 		}
+		if _, ok := b.grid.hitAt(hitOlder, b.over); ok {
+			b.toggleOlder()
+			return true
+		}
 		if n := b.cardAt(b.over); n >= 0 && n < len(b.placed) {
-			b.picked = b.placed[n].card.key
-			b.dirty = true
+			b.pick(b.placed[n].card.key)
 			return true
 		}
 	}
@@ -721,6 +851,7 @@ func (b *buildBox) Paint(p *kit.Painter) {
 		b.paintCard(p, pal, r.Min, i, cw, ch, plain, hot, isHot)
 	}
 	b.k.paint(p, b.strip, r.Min, pal)
+	b.paintDetail(p, pal, r.Min, cw > 0 && ch > 0, plain)
 }
 
 // paintCard paints card i: its ground, its picture, its words and its Build
@@ -784,17 +915,12 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 	// The Build button, on the card's own ground.
 	cp := *pal
 	cp.styles[xText] = cp.styles[xText].Background(fill)
-	key := b.cardKeys.keys[pc.build]
-	st := keyRest
-	switch {
-	case key.off:
-		st = keyOff
-	case b.k.press != nil && b.k.sunkButton(key):
-		st = keyPressed
-	case b.k.press != nil && isHot && hot.r == key.r:
-		st = keyHover
+	if pc.build < 0 {
+		return
 	}
-	if pc.compact {
+	key := b.cardKeys.keys[pc.build]
+	st := b.stateOf(key, hot, isHot)
+	if pc.compact || pc.small {
 		b.k.paintKey(p, b.cardKeys, org, &cp, key, st, pix)
 		return
 	}
@@ -894,4 +1020,11 @@ func foldToASCII(s string) string {
 		}
 		return r
 	}, s)
+}
+
+// gatherAge says whether the age is one of the first that show the Gather
+// buttons.
+func (b *buildBox) gatherAge() bool {
+	i, ok := b.st.Ruleset().Index(b.st.Age)
+	return ok && i < gatherAges
 }

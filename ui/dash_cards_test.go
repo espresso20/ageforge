@@ -214,9 +214,10 @@ func TestThePickedCardIsThePromptsPreview(t *testing.T) {
 	st.paint()
 	keys := 0
 	for _, pc := range box.placed {
-		if k := box.cardKeys.keys[pc.build]; !k.cap.Empty() {
+		if k := box.cardKeys.keys[pc.build]; k.key != (kit.Key{}) {
 			keys++
-			if pc.card.key != "gathering_camp" {
+			// The build moved the pick to the card now in its place.
+			if pc.card.key != box.picked {
 				t.Errorf("the button of %s carries a key", pc.card.key)
 			}
 		}

@@ -41,6 +41,10 @@ var (
 	txtNoIncome = vibe.E("ui.dash_cards.txtNoIncome.01", "no income")
 	// txtLimit is the card's reason at its count limit.
 	txtLimit = vibe.E("ui.dash_cards.txtLimit.01", "Building limit reached.")
+	// The detail box's buttons, and the row that counts the older buildings.
+	txtSell    = vibe.E("ui.dash_cards.txtSell.01", "Sell")
+	txtUpgrade = vibe.E("ui.dash_cards.txtUpgrade.01", "Upgrade")
+	txtOlder   = vibe.E("ui.dash_cards.txtOlder.01", "older buildings")
 )
 
 // nearShare is the share of a price in hand from which a card that cannot be
@@ -80,6 +84,8 @@ type buildCard struct {
 	reason, wait string
 	// cmd is the command a Build button carries.
 	cmd string
+	// older marks a card of an older building, which has no Build button.
+	older bool
 }
 
 // command is a command line of words.
@@ -157,6 +163,9 @@ func buildCards(state game.GameState, buy buyChoice) []buildCard {
 			c.reason, c.group = lockedNeedsLine(bs), groupLater
 		case limit:
 			c.reason, c.group = txtLimit.String(), groupLater
+			if why := state.QueuedRefusal(key); why != "" {
+				c.reason = why
+			}
 		case c.canBuild:
 			c.group = groupBuild
 		default:
@@ -167,6 +176,23 @@ func buildCards(state game.GameState, buy buyChoice) []buildCard {
 			}
 		}
 		cards = append(cards, c)
+	}
+	return cards
+}
+
+// olderCards lists the older buildings the town still holds as cards with no
+// price and no Build button.
+func olderCards(state game.GameState) []buildCard {
+	set := state.Ruleset()
+	var cards []buildCard
+	for _, key := range sortedKeysOf(state.Buildings) {
+		bs := state.Buildings[key]
+		def, ok := set.Building(key)
+		if !ok || !bs.IsLegacy || bs.Count == 0 || bs.Category == "wonder" {
+			continue
+		}
+		cards = append(cards, buildCard{key: key, name: bs.Name, kind: signKindOf(def), owned: bs.Count,
+			out: cardOutput(buildingText(bs), state.TickIntervalMs), older: true, group: groupBuild})
 	}
 	return cards
 }
