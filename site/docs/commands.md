@@ -548,7 +548,7 @@ The badge case leaves the prompt working and takes only the keys that print noth
 | `Enter` | Open the selected badge's detail, and close it |
 | `Esc` | Close the detail, then the case |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. A few badges move, and `motion off` holds them still. See [Badges](badges.md) for the badges themselves, their ladders, titles and the themes they give, and [the badge case](account.md#the-badge-case) for what the case shows. The title you wear belongs to your account and needs one to be loaded.
+With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. Every earned badge's coin moves, and `motion off` holds them still. See [Badges](badges.md) for the badges themselves, their ladders, titles and the themes they give, and [the badge case](account.md#the-badge-case) for what the case shows. The title you wear belongs to your account and needs one to be loaded.
 
 ---
 
