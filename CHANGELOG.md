@@ -78,6 +78,7 @@ All notable changes to AgeForge are documented here.
 - The wiki's pictures of the game show the badges' coins.
 
 ### Changed
+- Every rate on screen reads per second at the speed the game is running (per minute, or per hour, when it is under 0.1 a second), through one helper: the resource bar, build cards and the picked pane, People, Stats, the building, wonder, research, faction and log screens, the history graphs, the Advance panel's income row and the map inspector. A speed bonus raises the figure; a paused game shows the rate it would have running. Costs and durations are unchanged.
 - A question asked before a command runs has a red confirm button, with the keyboard starting on Cancel, only when the command cannot be undone. Any other question (the Festival's) has a primary confirm button that Enter presses, with Cancel on Esc. `festival confirm yes` is no longer held back from a completion.
 - The Harbinger's Invite asks once, by key or by click: the `I` key opens the same question the button opens, and the answer runs the command. The three answers show their keys on their buttons, and the key row under the text is gone. With pictures off, a chip that runs a command is bracketed, so chips on neighbouring rows read as two.
 - A click on a button whose command cannot be undone asks first, as the typed command does. The Sell button names the building and the count in its question.
