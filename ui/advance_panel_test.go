@@ -149,8 +149,12 @@ func TestAdvanceEnterAdvancesOnlyWhenReady(t *testing.T) {
 	if !p.view.Ready {
 		t.Fatalf("staging: the gate is met and the panel is not ready: %+v", p.view.Blockers)
 	}
-	if foot := renderAdvance(p.view, p.ui, 100, 27).Lines(); !strings.Contains(foot[24], "Enter") || !strings.Contains(foot[24], "Advance to the Iron Age") {
-		t.Errorf("a met gate has no Enter prompt: %q", foot[24])
+	g := renderAdvance(p.view, p.ui, 100, 27)
+	if foot := g.Lines(); !strings.Contains(foot[24], "Advance to the Iron Age") {
+		t.Errorf("a met gate does not say it advances: %q", foot[24])
+	}
+	if b, ok := advanceButton(g); !ok || b.off || b.key.Code != kit.KeyEnter {
+		t.Errorf("a met gate's advance button is %+v (found %v), want it live on Enter", b, ok)
 	}
 	p.handleKey(kit.KeyEnter)
 	if got := eng.GetState().Age; got != "iron_age" {
@@ -373,7 +377,7 @@ func TestAdvancePanelFitsItsSizes(t *testing.T) {
 				foot := lines[h-3]
 				switch {
 				case v.Ready:
-					if !strings.Contains(foot, "Enter") || !strings.Contains(foot, "Advance to the "+v.NextName) {
+					if !strings.Contains(foot, "Advance to the "+v.NextName) {
 						t.Errorf("%s: a met gate's foot is %q", where, foot)
 					}
 				case v.AllStand:
@@ -572,5 +576,46 @@ func TestAdvancePanelMouse(t *testing.T) {
 	p.ui.sel = 0
 	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || p.ui.sel != 1 {
 		t.Errorf("the wheel left the pick on %d", p.ui.sel)
+	}
+}
+
+// advanceButton is the panel's advance button.
+func advanceButton(g *xgrid) (xkey, bool) {
+	for _, k := range g.keys {
+		if k.kind == keyPrimary {
+			return k, true
+		}
+	}
+	return xkey{}, false
+}
+
+// TestTheAdvanceButtonIsOffUntilAllFourStandAndAClickAdvances: the button
+// is in the panel at every size and is off while a pillar is short; with the
+// gate met a click on it advances the age.
+func TestTheAdvanceButtonIsOffUntilAllFourStandAndAClickAdvances(t *testing.T) {
+	_, eng, p := advanceFixture(t, "bronze_age")
+	p.buttons.press = func(k kit.Key) { p.handleKey(k.Code) }
+	for _, sz := range advanceSizes {
+		g := renderAdvance(p.view, p.ui, sz[0], sz[1])
+		b, ok := advanceButton(g)
+		if !ok || !b.off || b.r.Dy() != actionRows || !b.r.In(image.Rect(0, 0, sz[0], sz[1])) {
+			t.Errorf("%dx%d: advance button %+v (found %v), want it off with the pillars short", sz[0], sz[1], b, ok)
+		}
+	}
+	meetTheGate(t, eng)
+	p.update(eng.GetState())
+	r := image.Rect(0, 0, 100, 27)
+	p.Layout(r)
+	b, ok := advanceButton(p.grid)
+	if !ok || b.off {
+		t.Fatalf("with the gate met the button is %+v (found %v)", b, ok)
+	}
+	at := b.r.Min.Add(image.Pt(2, 1))
+	if p.PointerAt(at) != kit.PointerHand {
+		t.Error("no hand over the advance button")
+	}
+	p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: at.X, Y: at.Y})
+	if got := eng.GetState().Age; got != "iron_age" {
+		t.Errorf("a click on advance left the game in %s", got)
 	}
 }

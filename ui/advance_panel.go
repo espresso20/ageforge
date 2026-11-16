@@ -142,8 +142,7 @@ func (p *advancePanel) PointerAt(at image.Point) kit.Pointer {
 	}
 	pt := at.Sub(p.Bounds().Min)
 	_, pillar := p.grid.hitAt(hitPillar, pt)
-	_, key := p.grid.keyAt(pt)
-	return handIf(pillar || key)
+	return handIf(pillar || p.buttons.pointer(p.grid, p.Bounds().Min, at) == kit.PointerHand)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

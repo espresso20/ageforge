@@ -81,7 +81,13 @@ func renderAdvance(v game.AdvanceView, u advanceUI, w, h int) *xgrid {
 		advCharter(g, v, u, 1, y0, w-2, bh)
 	} else {
 		advCharter(g, v, u, 1, y0, lw, bh)
-		advRight(g, v, lw+2, y0, rw, bh)
+		// The button that advances stands under what the next age brings; it
+		// is off until all four pillars stand.
+		if boxH := bh - actionRows; boxH >= 3 {
+			advRight(g, v, lw+2, y0, rw, boxH)
+		}
+		label := shortKeyUse("Enter")
+		g.actionButton(lw+2+rw-actionW(label, "Enter", signPlay), y0+bh-actionRows, actionSpec{kind: keyPrimary, label: label, key: "Enter", sign: signPlay, off: !v.AllStand})
 	}
 	advFoot(g, v, u, w, h)
 	return g
@@ -547,8 +553,7 @@ func advFoot(g *xgrid, v game.AdvanceView, u advanceUI, w, h int) {
 			g.putFit(2, y, room, v.Blockers[0], xDim)
 		}
 	case v.Ready:
-		x := g.put(2, y, " Enter ", xSel)
-		x = g.put(x+1, y, vibe.Line("ui.advance_view.advFoot.02", "Advance to the ")+v.NextName, xBright)
+		x := g.put(2, y, vibe.Line("ui.advance_view.advFoot.02", "Advance to the ")+v.NextName, xBright)
 		if len(v.Notices) > 0 && x+3 < w-2 {
 			g.putFit(x+2, y, w-3-x-2, v.Notices[0], xAccent)
 		}
