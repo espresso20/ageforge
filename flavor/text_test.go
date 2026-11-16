@@ -27,7 +27,7 @@ func TestTheShippedTextFilesAreWellFormed(t *testing.T) {
 		t.Fatal(err)
 	}
 	catalog := map[string]string{}
-	for _, row := range VibeRows() {
+	for _, row := range catalogRows() {
 		catalog[row.ID] = row.Plain
 	}
 	if len(entries) != len(catalog) {

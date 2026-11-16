@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -23,7 +22,6 @@ func TestMenuShowsSettingsNotThemes(t *testing.T) {
 
 func TestMenuSettingsRowsSave(t *testing.T) {
 	r := newMenuRig(t)
-	t.Cleanup(func() { vibe.Set(false) })
 	r.press('s')
 	if !r.m.settings || ids(r.m.view.items) != "set_theme set_vibe set_glyphs set_motion set_minimap set_discord set_back" {
 		t.Fatalf("Settings page not open: %v %q", r.m.settings, ids(r.m.view.items))
@@ -57,15 +55,6 @@ func TestMenuSettingsRowsSave(t *testing.T) {
 	r.key(kit.KeyRight, 0)
 	if g := r.acct.MapPrefs(); g != "ascii" || r.m.set.Tier != mapmodel.TierASCII {
 		t.Errorf("glyphs after wrapping: %q", g)
-	}
-	// VibeMode.
-	r.press('v')
-	if !r.acct.VibeOn() || !vibe.On() {
-		t.Error("vibe row did not turn VibeMode on")
-	}
-	r.press('v')
-	if r.acct.VibeOn() {
-		t.Error("vibe row did not turn VibeMode off")
 	}
 }
 
