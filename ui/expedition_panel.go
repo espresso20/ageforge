@@ -213,6 +213,12 @@ func (p *expeditionPanel) Mouse(m kit.Mouse) bool {
 		_, in := p.grid.hitAt(hitConfirm, pt)
 		return !in && p.closeConfirm()
 	}
+	if i, ok := p.grid.tabAt(pt); ok {
+		if (i == 1) != p.view.report {
+			p.setReport(i == 1)
+		}
+		return true
+	}
 	if p.view.report {
 		n, ok := p.grid.hitAt(hitParty, pt)
 		if ok {
@@ -252,7 +258,8 @@ func (p *expeditionPanel) PointerAt(at image.Point) kit.Pointer {
 		kind = hitParty
 	}
 	_, ok := p.grid.hitAt(kind, at.Sub(p.Bounds().Min))
-	return handIf(ok)
+	_, tab := p.grid.tabAt(at.Sub(p.Bounds().Min))
+	return handIf(ok || tab)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

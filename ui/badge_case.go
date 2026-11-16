@@ -927,6 +927,7 @@ func (m *caseModel) drawTabs(out *tGrid, v caseView) {
 		if a < 0 {
 			continue
 		}
+		m.keys.tab(image.Rect(a, 1, a+runeLen(t.title)+2, 2), t.title, i, i == open)
 		if i == open {
 			out.text(a, 1, "["+t.title+"]", tsLane, -1)
 			for dx := 0; dx < runeLen(t.title)+2; dx++ {
@@ -949,10 +950,8 @@ func (m *caseModel) drawTabs(out *tGrid, v caseView) {
 // that way.
 func (m *caseModel) tabAt(x int, v caseView) (key string, ok bool) {
 	at, open, left, right := m.tabRow(v)
-	for i, t := range m.tabs {
-		if at[i] >= 0 && x >= at[i] && x < at[i]+runeLen(t.title)+2 {
-			return t.key, true
-		}
+	if i, ok := m.keys.tabAt(image.Pt(x, 1)); ok {
+		return m.tabs[i].key, true
 	}
 	step := 0
 	switch {

@@ -37,6 +37,8 @@ type xkey struct {
 // of another kind.
 type keySet struct {
 	keys []xkey
+	// tabs are the panel's tabs (tabs.go).
+	tabs []tabPlate
 	// plain is set once the grid is folded to ASCII: its keys stay chips.
 	plain bool
 	// glyph reads the rune a cell of the grid holds.
@@ -308,6 +310,7 @@ func (k *keyPresser) preview(b xkey, lit bool) {
 func (k *keyPresser) mouse(h keyHolder, org image.Point, m kit.Mouse) bool {
 	s := heldKeys(h)
 	was, wasLit := k.lit(s)
+	wasTab := k.tabOver(s)
 	if k.in = m.Kind != kit.MouseLeave; k.in {
 		k.over = m.Pt().Sub(org)
 	}
@@ -333,7 +336,7 @@ func (k *keyPresser) mouse(h keyHolder, org image.Point, m kit.Mouse) bool {
 	case kit.MouseWheel:
 		return false // the panel scrolls; the pointer's light follows on its own
 	}
-	return isLit != wasLit || now.r != was.r
+	return isLit != wasLit || now.r != was.r || k.tabOver(s) != wasTab
 }
 
 // pointer is the hand over a key a click would press.

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"regexp"
 	"sort"
 	"strings"
@@ -30,8 +31,7 @@ const (
 
 // What a click on the panel can pick.
 const (
-	hitTab = iota // a tab
-	hitRow        // a card, a work area or a building
+	hitRow = iota // a card, a work area or a building
 )
 
 // peopleView is what the player has picked.
@@ -131,9 +131,11 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 			k = xSel
 		}
 		end := g.put(x, 1, " "+name+" ", k)
-		g.hit(hitTab, i, x, 1, end-x, 1)
+		g.tab(image.Rect(x, 1, end, 2), name, i, i == v.tab)
 		x = end + 1
 	}
+	// The key that steps through the tabs, once, at the end of the row.
+	x = g.keyButton(x, 1, "←→", "tabs")
 	ws := st.Workers
 	pop := textfmt.Number(float64(ws.TotalPop))
 	homes := textfmt.Number(float64(ws.MaxPop))

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"math"
 	"slices"
 	"strings"
@@ -391,14 +392,17 @@ func renderExpedition(state game.GameState, v expView, w, h int) *xgrid {
 var txtOf = vibe.E("ui.expedition_view.header.08", " of ")
 
 func header(g *xgrid, state game.GameState, v expView, l expLayout) {
-	ready, report := xDim, xDim
-	if v.report {
-		report = xSel
-	} else {
-		ready = xSel
+	x0 := 2
+	for i, name := range []string{vibe.Line("ui.expedition_view.header.01", " READY ROOM "), vibe.Line("ui.expedition_view.header.02", " EXPEDITION REPORT ")} {
+		k := xDim
+		if (i == 1) == v.report {
+			k = xSel
+		}
+		end := g.put(x0, 1, name, k)
+		g.tab(image.Rect(x0, 1, end, 2), strings.TrimSpace(name), i, (i == 1) == v.report)
+		x0 = end + 1
 	}
-	x := g.put(2, 1, vibe.Line("ui.expedition_view.header.01", " READY ROOM "), ready)
-	x = g.put(x+1, 1, vibe.Line("ui.expedition_view.header.02", " EXPEDITION REPORT "), report)
+	x := x0 - 1
 	if mil := state.Military; !v.report && mil.ReturnsMade > mil.ReturnsSeen {
 		g.put(x+1, 1, vibe.Sprintf("ui.expedition_view.header.03", "● %d new", mil.ReturnsMade-mil.ReturnsSeen), xLegend)
 	}

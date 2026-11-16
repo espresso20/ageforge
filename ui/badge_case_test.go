@@ -773,6 +773,7 @@ func TestBadgePanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0), 1) {
 		t.Error("a click on the title bar changed something")
 	}
+	drawPrimitive(t, p, 100, 27)
 	tabs, _, _, _ := p.model.tabRow(p.view)
 	if p.PointerAt(at("age.iron_age")) != kit.PointerHand || p.PointerAt(image.Pt(tabs[1]+2, 1)) != kit.PointerHand ||
 		p.PointerAt(image.Pt(tabs[0]+1, 1)) != kit.PointerArrow || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
