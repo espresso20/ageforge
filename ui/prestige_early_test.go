@@ -62,7 +62,7 @@ func TestPrestigedStateShowsLastingBonus(t *testing.T) {
 	must(t, engine.DoPrestige())
 	state := engine.GetState()
 	want := fmt.Sprintf("x%.2f", state.Prestige.ProductionMultiplier)
-	for _, got := range []string{untag(HandleCommand("prestige", engine).Message), untag(statsProvider(state, 0))} {
+	for _, got := range []string{untag(HandleCommand("prestige", engine).Message), statsRowsText(prestigeRows(state))} {
 		if !strings.Contains(got, want) {
 			t.Errorf("prestiged state omitted %q:\n%s", want, got)
 		}
@@ -71,12 +71,14 @@ func TestPrestigedStateShowsLastingBonus(t *testing.T) {
 		t.Errorf("retired prestige buy did not use the unknown-subcommand usage: %q", got)
 	}
 
-	dashboard, pages := newTestDashboard(engine)
-	dashboard.inputField.SetText("stats")
-	dashboard.submitInput()
 	for _, size := range [][2]int{{80, 24}, {100, 30}} {
-		dashboard.overlayMgr.entries["stats"].tv.ScrollTo(29, 0)
-		if screen := drawPrimitive(t, pages, size[0], size[1]).Text(); !strings.Contains(screen, want) {
+		panel := newStatsPanel()
+		screen := strings.Join(paintAlone(panel.open(state), size[0], size[1]).Lines(), "\n")
+		for i := 0; i < 20 && !strings.Contains(screen, want); i++ {
+			panel.scrollBy(panel.viewRows())
+			screen = strings.Join(paintAlone(panel, size[0], size[1]).Lines(), "\n")
+		}
+		if !strings.Contains(screen, want) {
 			t.Errorf("%dx%d stats screen omitted %q:\n%s", size[0], size[1], want, screen)
 		}
 	}
@@ -85,13 +87,13 @@ func TestPrestigedStateShowsLastingBonus(t *testing.T) {
 func TestStatsShowsPrestigeFloorOnlyUntilPassed(t *testing.T) {
 	engine := medievalRun(t)
 	must(t, engine.DoPrestige())
-	below := untag(statsProvider(engine.GetState(), 0))
+	below := statsRowsText(prestigeRows(engine.GetState()))
 	want := "Prestige opens once you pass the Medieval Age, the furthest an earlier run reached."
 	if !strings.Contains(below, want) {
 		t.Fatalf("stats omitted floor sentence %q:\n%s", want, below)
 	}
 	must(t, engine.EnterAgeForTest("renaissance_age"))
-	past := untag(statsProvider(engine.GetState(), 0))
+	past := statsRowsText(prestigeRows(engine.GetState()))
 	if strings.Contains(past, want) {
 		t.Fatalf("stats still shows floor sentence after passing it:\n%s", past)
 	}
@@ -103,7 +105,7 @@ func TestStatsHidesPrestigeFloorWhenSnapshotSaysItDoesNotBlock(t *testing.T) {
 	state := engine.GetState()
 	state.Prestige.Floor = "medieval_age"
 	state.Prestige.FloorBlocks = false
-	got := untag(statsProvider(state, 0))
+	got := statsRowsText(prestigeRows(state))
 	if strings.Contains(got, "Prestige opens once you pass") {
 		t.Fatalf("stats showed a non-blocking floor sentence:\n%s", got)
 	}

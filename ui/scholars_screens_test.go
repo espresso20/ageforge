@@ -241,9 +241,9 @@ func TestTeachingBonusHasItsOwnLine(t *testing.T) {
 		t.Fatalf("staging: %+v", st.Scholars)
 	}
 	pct := fmt.Sprintf("+%.0f%%", st.Scholars.TeachingBonus*100)
-	stats := statsProvider(st, 120)
-	if want := fmt.Sprintf("[green]%-7s[-] Worker output from teaching", pct); !strings.Contains(stats, want) {
-		t.Errorf("the stats have no teaching line for %s:\n%s", pct, section(t, stats, "Research bonuses", "Resource rates"))
+	stats := statsRowsText(researchRows(st))
+	if want := fmt.Sprintf("%-7s Worker output from teaching", pct); !strings.Contains(stats, want) {
+		t.Errorf("the stats have no teaching line for %s:\n%s", pct, stats)
 	}
 	rates := HandleCommand("rates", ge).Message
 	if want := "Teaching: " + pct + " to what workers make (" + fmt.Sprint(st.Scholars.Total) + " of " + fmt.Sprint(st.Scholars.Total) + " scholars teach)"; !strings.Contains(rates, want) {
@@ -395,7 +395,7 @@ func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 	screens := map[string]string{
 		"research list":   cmdResearchList(ge).Message,
 		"rates":           HandleCommand("rates", ge).Message,
-		"stats":           statsProvider(st, 120),
+		"stats":           statsPageText(st, partRun, 120),
 		"activity":        logsProvider(st, 100),
 		"buildings":       buildingsProvider(st, 120),
 		"build list":      cmdBuild(nil, ge).Message,

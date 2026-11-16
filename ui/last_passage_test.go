@@ -334,8 +334,8 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 		t.Errorf("multiplier label = %q", got)
 	}
 	engine.SetCosmicLegacyForTest(true)
-	out := untag(statsProvider(engine.GetState(), 140))
-	if !strings.Contains(out, "Cosmic Legacy:") || !strings.Contains(out, "Cosmic Legacy") {
+	out := statsRowsText(prestigeRows(engine.GetState()))
+	if !strings.Contains(out, "Cosmic Legacy:") {
 		t.Errorf("stats overlay without the Cosmic Legacy:\n%s", out)
 	}
 	// It is applied after the pools: a multiplier of its own beside the
@@ -347,11 +347,15 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 	if p := st.Pools["production_all"]; p.Earned <= 2 || p.Limited {
 		t.Fatalf("the all-production pool is not far past +200%% and in full in the Quantum Age with +400%% of milestone rewards: %+v", p)
 	}
-	out = untag(statsProvider(st, 140))
+	out = statsRowsText(prestigeRows(st))
 	wantAll(t, "the Stats panel", out,
-		"Cosmic Legacy:   all production +10%, counted in full after every other bonus (permanent, through every prestige)\n",
-		"Cosmic Legacy ×1.10",
+		"Cosmic Legacy: all production +10%, counted in full after every other bonus (permanent, through every prestige)\n",
 	)
+	var srcs []string
+	for _, r := range activeMultipliers(st) {
+		srcs = append(srcs, strings.Join(srcTexts(r), "|"))
+	}
+	wantAll(t, "the multipliers", strings.Join(srcs, "\n"), "Cosmic Legacy ×1.10")
 	if r := untag(HandleCommand("rates", engine).Message); !strings.Contains(r, "Cosmic Legacy: +") {
 		t.Errorf("rates has no Cosmic Legacy part:\n%s", r)
 	}

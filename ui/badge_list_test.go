@@ -68,31 +68,33 @@ func TestAccountBadgesWithoutAnAccount(t *testing.T) {
 	}
 }
 
-// TestStatsPanelListsBadges: the Stats panel's Lifetime section has the
-// badges in a few lines (the count, the title, each family's count and the
-// one earned last), where it used to list four achievement names.
+// TestStatsPanelListsBadges: the Stats panel's Lifetime part has the number of
+// badges earned and the title, and does not list locked badges.
 func TestStatsPanelListsBadges(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	must(t, eng.StartNewNamedGame("run"))
 	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 	_, sum := eng.Badges()
 
-	text := statsProvider(eng.GetState(), 0)
-	wantAll(t, "the Stats panel", text,
-		"Lifetime (account)", "Badges:", fmt.Sprintf("1 of %d earned", sum.Shown),
-		"Title:[-] Settler", "Ladders", "1 of ", "Latest:[-] [green]★[-] First Prestige",
-		"Type badges to open the badge case",
-	)
-	if strings.Contains(text, "Achievements") {
-		t.Error("the Stats panel still has an Achievements heading")
+	pg := buildStats(eng.GetState(), partLifetime, 120, false, false, 0)
+	tile := func(name string) string {
+		for _, tl := range pg.tiles {
+			if tl.name == name {
+				return tl.text
+			}
+		}
+		t.Fatalf("no %q tile in %+v", name, pg.tiles)
+		return ""
 	}
-	// A digest: the locked badges are in the case, not here.
-	if strings.Contains(text, "☆") || strings.Contains(text, "Rock Solid") {
-		t.Error("the Stats panel lists locked badges")
+	if got := tile(txtBadgesEarn.String()); got != fmt.Sprint(sum.Earned) || sum.Earned != 1 {
+		t.Errorf("badges earned tile = %q, summary %+v", got, sum)
 	}
-	digest := badgeDigestLines(eng.GetState().AccountStats.Badges, sum)
-	if len(digest) > 26 {
-		t.Errorf("the digest runs to %d lines", len(digest))
+	if got := tile(txtTitleOf.String()); got != "Settler" {
+		t.Errorf("title tile = %q", got)
+	}
+	text := statsPageText(eng.GetState(), partLifetime, 120)
+	if strings.Contains(text, "Achievements") || strings.Contains(text, "☆") || strings.Contains(text, "Rock Solid") {
+		t.Errorf("the Lifetime part lists achievements or locked badges:\n%s", text)
 	}
 }
 
@@ -178,16 +180,20 @@ func TestBadgeLines(t *testing.T) {
 }
 
 // TestStatsPanelShowsCivilizationsStarted is B12 on screen: the Lifetime
-// section shows Civilizations Started, which is now counted, and nothing
+// part shows Civilizations Started, which is now counted, and nothing
 // about saves completed, which never was and is retired.
 func TestStatsPanelShowsCivilizationsStarted(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	must(t, eng.StartNewNamedGame("run"))
-	text := statsProvider(eng.GetState(), 0)
-	if !strings.Contains(text, "Civilizations started:[-]  1") {
-		t.Errorf("the Stats panel does not show one civilization started:\n%s", text)
+	pg := buildStats(eng.GetState(), partLifetime, 120, false, false, 0)
+	found := false
+	for _, tl := range pg.tiles {
+		found = found || tl.name == txtCivs.String() && tl.text == "1"
 	}
-	if strings.Contains(strings.ToLower(text), "saves completed") {
+	if !found {
+		t.Errorf("the Stats panel does not show one civilization started: %+v", pg.tiles)
+	}
+	if text := statsPageText(eng.GetState(), partLifetime, 120); strings.Contains(strings.ToLower(text), "saves completed") {
 		t.Error("the Stats panel shows saves completed")
 	}
 

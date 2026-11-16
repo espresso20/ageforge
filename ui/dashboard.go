@@ -142,6 +142,8 @@ type Dashboard struct {
 
 	// peoplePanel is the People panel: Overview, Work, Army and Scholars.
 	peoplePanel *peoplePanel
+	// statsPanel is the Stats panel: the record board of the run.
+	statsPanel *statsPanel
 
 	// decks are the panels drawn as decks of cards (deck_panel.go), by
 	// overlay name.
@@ -191,6 +193,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		badgePanel:    newBadgePanel(),
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
+		statsPanel:    newStatsPanel(),
 		decks:         map[string]*deckPanel{},
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
@@ -239,7 +242,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// so anything holding the old overlay name still resolves.
 	d.overlayMgr.Register("factions", vibe.E("ui.dashboard.NewDashboard.07", "Factions"), factionsProvider)
 	d.overlayMgr.Register("diplomacy", vibe.E("ui.dashboard.NewDashboard.08", "Factions"), factionsProvider)
-	d.overlayMgr.Register("stats", vibe.E("ui.dashboard.NewDashboard.09", "Statistics"), statsProvider)
 	d.wonders = &wondersView{}
 	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)
 	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
@@ -255,6 +257,9 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	// The People panel, which `workers` opens too, leaves the keyboard with
 	// the command bar as well.
+	d.statsPanel.settings = d.mapSettings
+	d.statsPanel.buttons.wire(d.app)
+	d.overlayMgr.RegisterWidget("stats", vibe.E("ui.dashboard.NewDashboard.09", "Statistics"), d.statsPanel.open, d.statsPanel.update)
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.handToPrompt
 	d.peoplePanel.buttons.wire(d.app)
