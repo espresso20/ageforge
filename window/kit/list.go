@@ -29,6 +29,10 @@ type List struct {
 	Style, SelectedStyle Style
 	// TextOnly colors the selected row's text, not the whole row.
 	TextOnly bool
+	// AfterRow, when set, is called after each row is painted with the
+	// cells of the row, its number, whether it is the selected one and
+	// whether the pointer is over it: how a screen lights a row its own way.
+	AfterRow func(p *Painter, row image.Rectangle, i int, selected, hover bool)
 
 	items []string
 	sel   int
@@ -143,6 +147,9 @@ func (l *List) Paint(p *Painter) {
 			p.Fill(row, st.Bg)
 		}
 		p.Print(row.Min.X, row.Min.Y, w, l.items[i], st)
+		if l.AfterRow != nil {
+			l.AfterRow(p, row, i, i == l.sel, i == l.hover-1)
+		}
 	}
 	if w < r.Dx() {
 		p.Bar(r.Max.X-1, r.Min.Y, r.Dy(), l.top, r.Dy(), len(l.items))

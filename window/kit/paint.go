@@ -299,6 +299,26 @@ func (p *Painter) Shade(r image.Rectangle, toward Color, t float64) {
 	}
 }
 
+// Reground gives the cells of r whose ground is from the ground to, and
+// leaves what is written on them as it is: how a lit row is told from a row
+// at rest while the text on it keeps its colors.
+func (p *Painter) Reground(r image.Rectangle, from, to Color) {
+	f, ok := from.RGBA()
+	t, ok2 := to.RGBA()
+	r = r.Intersect(p.clip)
+	if !ok || !ok2 || r.Empty() {
+		return
+	}
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		row := p.buf.Cells[y*p.buf.W+r.Min.X : y*p.buf.W+r.Max.X]
+		for x := range row {
+			if row[x].Pic == 0 && !row[x].Clear() && row[x].Bg == f {
+				row[x].Bg = t
+			}
+		}
+	}
+}
+
 // Cursor shows the text cursor at x, y, when the painter may touch it.
 func (p *Painter) Cursor(x, y int) {
 	if image.Pt(x, y).In(p.clip) {
