@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"image"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -21,14 +20,10 @@ import (
 // wondersView is the panel's state: which view it is on.
 type wondersView struct {
 	gallery bool
-	// blk is the current wonder's summary as the list last showed it, and
-	// grid the buttons laid over it at the last paint, from org.
-	blk  wonderBlock
-	grid *xgrid
-	org  image.Point
-	// pr makes the buttons pressable; plain reports the ASCII glyph tier.
-	pr    keyPresser
-	plain func() bool
+	// blk is the current wonder's summary as the list last showed it; the
+	// buttons are laid over it.
+	blk wonderBlock
+	textButtons
 }
 
 // builtWonders lists the wonders the town has built, oldest first.
