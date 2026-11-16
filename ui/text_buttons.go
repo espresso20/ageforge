@@ -147,7 +147,7 @@ func (r *btnRec) lay(text string, rect image.Rectangle, top int) *xgrid {
 		x := s.x
 		for _, b := range s.btns {
 			if s.chips {
-				if row >= 0 && row < rect.Dy() {
+				if row >= 0 && row < rect.Dy() && x+runeLen(b.word)+2 <= rect.Dx() {
 					g.chip(x, row, b.word, b.kind, b.cmd, b.ask, b.yes, b.off)
 				}
 				continue

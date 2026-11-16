@@ -41,8 +41,12 @@ import (
 // columns lay out at the capped panelUsableWidth, while prose wraps at the full
 // inner width (with colour re-applied per line, as a soft wrap does not
 // carry colour tags across a break).
-func factionsProvider(state game.GameState, w int) string {
+func factionsProvider(state game.GameState, w int, recs ...*btnRec) string {
 	var sb strings.Builder
+	var rec *btnRec
+	if len(recs) > 0 {
+		rec = recs[0]
+	}
 
 	factions := state.Diplomacy.Factions // may be nil; indexing nil maps is safe
 	defs := state.Ruleset().Factions()
@@ -81,7 +85,7 @@ func factionsProvider(state game.GameState, w int) string {
 		if !ok || !f.Discovered {
 			continue
 		}
-		writeFactionCard(&sb, def, f, tally[def.Key], usable, max(56, overlayTextWidth(w)), state)
+		writeFactionCard(&sb, def, f, tally[def.Key], usable, max(56, overlayTextWidth(w)), state, rec)
 	}
 	if met > 0 {
 		// Embassies no longer gate first contact, but they are still how you court
@@ -96,7 +100,6 @@ func factionsProvider(state game.GameState, w int) string {
 	// ─── Not Yet Met ───
 	writeUndiscoveredRoster(&sb, pending)
 
-	sb.WriteString(vibe.Line("ui.overlay_factions.factionsProvider.08", "\n [gray]Commands: diplomacy ally/rival/embargo/gift/neutral/tribute/raid <civ>[-]\n"))
 	sb.WriteString(vibe.Line("ui.overlay_factions.factionsProvider.09", " [gray]Deals: diplomacy deals <civ> · diplomacy accept <civ> <n> · plan deal <civ> <n>[-]\n"))
 
 	return sb.String()
@@ -278,7 +281,7 @@ func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 // The body is unchanged from the original diplomacy panel apart from two
 // additions — the strength rating and the live-effect line — so muscle memory
 // and the existing assertions both survive.
-func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.FactionInfo, t factionEffectTally, usable, textW int, state game.GameState) {
+func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.FactionInfo, t factionEffectTally, usable, textW int, state game.GameState, rec *btnRec) {
 	// Strength lives on the snapshot, but a hand-built FactionInfo (tests, older
 	// saves) can carry a zero, so fall back to the static definition.
 	strength := f.Strength
@@ -365,18 +368,21 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	}
 
 	// Trade deals: what this civ offers now, or why it offers nothing.
-	writeFactionDeals(sb, f, state, usable)
+	writeFactionDeals(sb, f, state, usable, def.Key, rec)
 
-	// Action hint: the diplomacy commands available given current status.
+	// Action hint: what the status asks, then the buttons that carry the
+	// commands. An allied civ has nothing to add to them.
 	switch {
 	case f.AtWar:
 		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.16", "   [gray]diplomacy tribute %s (sue for peace) · or wait them out[-]\n\n", def.Key))
-	case f.Status == "allied":
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.17", "   [gray]diplomacy rival/embargo/neutral %s[-]\n\n", def.Key))
-	default:
+	case f.Status != "allied":
 		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.18", "   [gray]Send a gift: %s for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s[-]\n\n",
 			game.Amount(state.Diplomacy.GiftCost, "gold"), state.Diplomacy.GiftGain, def.Key, def.Key))
+	default:
+		sb.WriteString("\n")
 	}
+	rec.reserve(sb, factionVerbIndent, textW, factionVerbs(state, def, f))
+	sb.WriteString("\n")
 }
 
 // writeUndiscoveredRoster says how many civilizations are still out there,
@@ -529,7 +535,7 @@ func diplomacyThreshold(status string, opinion int, key string, allyCost float64
 // writeFactionDeals renders a civ's trade deals on its card: one numbered
 // line per offer (the number `diplomacy accept` takes), or why the civ offers
 // nothing. Theme roles only.
-func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int) {
+func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int, key string, rec *btnRec) {
 	if f.DealsBlocked != "" {
 		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, vibe.Line("ui.overlay_factions.writeFactionDeals.01", "Deals: none while they are ")+f.DealsBlocked+"."))
 		return
@@ -541,7 +547,15 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 	fmt.Fprintf(sb, "   %s %s\n", theme.Paint(theme.RoleLabel, vibe.Line("ui.overlay_factions.writeFactionDeals.03", "Deals:")),
 		theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_factions.writeFactionDeals.04", "new offers in ")+formatTicks(f.DealRefreshIn, state)))
 	for _, d := range f.Deals {
-		fmt.Fprintf(sb, "    %s\n", dealLine(d, state, usable-4))
+		// The line leaves room at its end for Accept, which sits on it.
+		room := usable - 4
+		if rec != nil {
+			btn := dealButton(state, key, d)
+			chip := runeLen(btn.word) + 2
+			rec.mark(sb, usable-chip, btn)
+			room -= chip + 1
+		}
+		fmt.Fprintf(sb, "    %s\n", dealLine(d, state, room))
 	}
 }
 
