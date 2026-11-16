@@ -4949,6 +4949,7 @@ func (ge *GameEngine) GetState() GameState {
 	for _, item := range ge.buildQueue {
 		def := ge.Buildings.defs[item.BuildingKey]
 		queue = append(queue, BuildQueueSnapshot{
+			Key:        item.BuildingKey,
 			Name:       def.Name,
 			TicksLeft:  item.TicksLeft,
 			TotalTicks: item.TotalTicks,
@@ -5065,6 +5066,7 @@ func (ge *GameEngine) GetState() GameState {
 		Stats:                 ge.Stats.Snapshot(),
 		TickSpeedBonus:        ge.tickSpeedBonus,
 		TickIntervalMs:        int(tickInterval.Milliseconds()),
+		BuildCostFactor:       ge.Buildings.costMult,
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
 		DevTouched:            ge.devTouched,

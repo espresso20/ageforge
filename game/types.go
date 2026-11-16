@@ -48,8 +48,11 @@ type GameState struct {
 	Stats          StatsSnapshot
 	TickSpeedBonus float64
 	TickIntervalMs int
-	CheaterBadge   bool
-	EliteBadge     bool
+	// BuildCostFactor is the build-cost multiplier every building's price is
+	// scaled by (BuildBatch).
+	BuildCostFactor float64
+	CheaterBadge    bool
+	EliteBadge      bool
 	// DevTouched is true once the developer console has changed this run (saved with
 	// the run; see GameEngine.markDevTouchedLocked).
 	DevTouched bool
@@ -220,6 +223,7 @@ type EpochEventRecord struct {
 
 // BuildQueueSnapshot represents a building under construction for UI
 type BuildQueueSnapshot struct {
+	Key        string
 	Name       string
 	TicksLeft  int
 	TotalTicks int
