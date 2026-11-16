@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -304,5 +305,61 @@ func TestAButtonsLineEntersTheHistoryAndTheBarLikeATypedOne(t *testing.T) {
 	}
 	if d.inputField.shadow() != "help" || d.inputField.GetText() != "" {
 		t.Errorf("the bar shows %q over text %q", d.inputField.shadow(), d.inputField.GetText())
+	}
+}
+
+// TestAClickOnAnOpenTechCardsStartStartsTheResearch: the card of a tech that
+// can start has a start button, and a click on it starts the research as the
+// second Enter does; the card of one that cannot has the button off.
+func TestAClickOnAnOpenTechCardsStartStartsTheResearch(t *testing.T) {
+	keepTheme(t)
+	ge := game.NewGameEngine()
+	ge.SeedRNG(1)
+	for _, a := range []string{"stone_age", "bronze_age", "iron_age", "classical_age"} {
+		must(t, ge.EnterAgeForTest(a))
+	}
+	ge.GrantTechsForTest("language", "tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "woodworking", "bronze_working", "currency", "masonry", "the_wheel", "mathematics", "iron_smelting")
+	ge.SetTownForTest(map[string]int{"story_circle": 5, "elders_hall": 5, "scriptorium": 5, "agora": 7}, 0)
+	ge.SetStockForTest("knowledge", 1e6)
+	p := newResearchPanel()
+	p.engine = ge
+	p.w, p.h = 120, 37
+	p.wireButtons(newAppLoop())
+	var start, wait *treeNode
+	st := ge.GetState()
+	m := buildTree(st, treeGeomFor(120, false), false, "")
+	for _, n := range m.nodes {
+		switch {
+		case start == nil && cardActionFor(st, n) == actStart:
+			start = n
+		case wait == nil && cardActionFor(st, n) == actPlan:
+			wait = n
+		}
+	}
+	if start == nil || wait == nil {
+		t.Fatalf("staging: a tech to start (%v) and one that waits (%v)", start, wait)
+	}
+	p.request("close", wait.key)
+	p.update(st)
+	renderLines(p)
+	if len(p.model.keys.keys) != 1 || !p.model.keys.keys[0].off {
+		t.Fatalf("the card of a tech that waits has %+v, want one button, off", p.model.keys.keys)
+	}
+	p.request("close", start.key)
+	p.update(st)
+	renderLines(p)
+	if len(p.model.keys.keys) != 1 || p.model.keys.keys[0].off || p.model.keys.keys[0].kind != keyPrimary {
+		t.Fatalf("the card of a tech that can start has %+v, want one primary button", p.model.keys.keys)
+	}
+	b := p.model.keys.keys[0]
+	at := b.r.Min.Add(image.Pt(2, 1))
+	if p.PointerAt(at) != kit.PointerHand {
+		t.Error("no hand over the start button")
+	}
+	if !p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: at.X, Y: at.Y}) {
+		t.Fatal("the click was not taken")
+	}
+	if got := ge.GetState().Research.CurrentTech; got != start.key {
+		t.Errorf("researching %q after the click, want %q", got, start.key)
 	}
 }

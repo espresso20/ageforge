@@ -206,6 +206,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.researchPanel.tier = func() mapmodel.GlyphTier { return d.mapSettings().Tier }
 	d.researchPanel.prompt = func() string { return d.inputField.GetText() }
 	d.researchPanel.toPrompt = d.handToPrompt
+	d.researchPanel.wireButtons(d.app)
 	d.overlayMgr.RegisterWidget("techs", vibe.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
 	// The badge case: the account's badges. It leaves the keyboard with the
 	// command bar too.
