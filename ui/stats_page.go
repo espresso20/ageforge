@@ -325,7 +325,9 @@ func (pg *statsPage) run(st game.GameState, w, view int, wide bool, grow int) in
 	yl, yr := pg.gathered(st, y, lw, view), y
 	pg.mults, pg.rows, pg.research = activeMultipliers(st), prestigeRows(st), researchRows(st)
 	sections := []func(x, y, w int) int{
-		func(x, y, w int) int { return pg.rowsTable(txtPrestigeHd.String(), pg.rows, x, y, w) },
+		func(x, y, w int) int {
+			return pg.prestigeButton(st, x, pg.rowsTable(txtPrestigeHd.String(), pg.rows, x, y, w)+1)
+		},
 		pg.multsTable,
 		func(x, y, w int) int { return pg.rowsTable(txtResearchHd.String(), pg.research, x, y, w) },
 	}
@@ -763,6 +765,8 @@ type statsPanel struct {
 
 	// settings reads the glyph tier.
 	settings func() mapSettings
+	// pageBtn presses the buttons on the page, as buttons does the frame's.
+	pageBtn keyPresser
 }
 
 func newStatsPanel() *statsPanel {
@@ -774,6 +778,7 @@ func newStatsPanel() *statsPanel {
 // open is the overlay's build: it runs on every Show.
 func (p *statsPanel) open(state game.GameState) Primitive {
 	p.state, p.part, p.scroll, p.pick = state, partRun, 0, -1
+	p.pageBtn.press, p.pageBtn.run, p.pageBtn.confirm, p.pageBtn.feel = p.buttons.press, p.buttons.run, p.buttons.confirm, p.buttons.feel
 	return overBar(p)
 }
 
@@ -885,6 +890,7 @@ func (p *statsPanel) Paint(p2 *kit.Painter) {
 		st := p.page.steps[p.picked()]
 		bp.Label(org.X+st.r.Min.X, org.Y+st.mark, strings.Repeat("#", st.r.Dx()-1), pal.style(xcell{k: xSel}))
 	}
+	p.pageBtn.paint(bp, p.page.g, org, pal)
 	p2.Bar(r.Min.X+p.w-2, view.Min.Y, view.Dy(), p.scroll, view.Dy(), p.page.used)
 	if s, head := p.readout(); s != "" {
 		s = " " + s
@@ -897,7 +903,7 @@ func (p *statsPanel) Paint(p2 *kit.Painter) {
 // scrolls; the pointer over a block or a bar reads it out.
 func (p *statsPanel) Mouse(m kit.Mouse) bool {
 	switch {
-	case p.buttons.mouse(p.chrome, p.Bounds().Min, m):
+	case p.buttons.mouse(p.chrome, p.Bounds().Min, m), p.pageMouse(m):
 		return true
 	case m.Kind == kit.MouseWheel:
 		p.scrollBy(m.Wheel * 3)
@@ -959,7 +965,7 @@ func (p *statsPanel) PointerAt(at image.Point) kit.Pointer {
 	pt := at.Sub(p.Bounds().Min)
 	_, tab := p.chrome.tabAt(pt)
 	_, key := p.chrome.keyAt(pt)
-	return handIf(tab || key)
+	return handIf(tab || key || p.pagePointer(at) == kit.PointerHand)
 }
 
 // routeKey takes a key if it is one of the panel's. With something typed in
