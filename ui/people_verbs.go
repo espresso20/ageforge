@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"image"
+	"strings"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
@@ -122,7 +123,7 @@ func (c peopleBody) recruitBlock(x, y, w int) {
 	if c.v.buy == buyTen {
 		need = 10
 	}
-	cmd := command(verbRecruit, buyCounts[c.v.buy])
+	cmd := strings.TrimSpace(command(verbRecruit, buyCounts[c.v.buy]))
 	off := free < need
 	label := txtRecruit.String()
 	cx, cy := x, y
