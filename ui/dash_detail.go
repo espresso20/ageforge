@@ -63,6 +63,8 @@ type detailInfo struct {
 // sellCount is how many copies the sell command for a buy choice sells.
 func sellCount(buy buyChoice, owned int) int {
 	switch {
+	case buy == buyTen && owned > 0:
+		return min(10, owned)
 	case buy == buyTen:
 		return 10
 	case buy == buyMax && owned > 0:
@@ -79,11 +81,8 @@ func sellAsk(name string, n int) string {
 // sellCommand is the sell command for the amount chosen: one copy, ten, or
 // every copy held.
 func sellCommand(key string, buy buyChoice, owned int) string {
-	switch {
-	case buy == buyTen:
-		return command(verbSell, key, "10")
-	case buy == buyMax && owned > 0:
-		return command(verbSell, key, strconv.Itoa(owned))
+	if n := sellCount(buy, owned); n > 1 {
+		return command(verbSell, key, strconv.Itoa(n))
 	}
 	return command(verbSell, key)
 }
@@ -178,10 +177,11 @@ func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h int) {
 		txt string
 		cmd string
 		ask string
+		yes string
 		off bool
-	}{{sx, txtSell.String(), d.sellCmd, d.sellAsk, d.sellOff}, {ux, txtUpgrade.String(), d.upCmd, "", d.upOff}} {
+	}{{sx, txtSell.String(), d.sellCmd, d.sellAsk, txtSell.String(), d.sellOff}, {ux, txtUpgrade.String(), d.upCmd, "", "", d.upOff}} {
 		g.fill(a.x, iy+1, actionW(a.txt, "", signNone), actionRows)
-		set.action(a.x, iy+1, actionSpec{kind: keyPlain, label: a.txt, cmd: a.cmd, ask: a.ask, yes: txtSell.String(), off: a.off}, func(x, y int, text string) { g.put(x, y, text, xText) })
+		set.action(a.x, iy+1, actionSpec{kind: keyPlain, label: a.txt, cmd: a.cmd, ask: a.ask, yes: a.yes, off: a.off}, func(x, y int, text string) { g.put(x, y, text, xText) })
 	}
 	x := g.put(ix, iy, fitText(d.bs.Name, max(tw-6, 1)), xTitle)
 	g.put(x, iy, " x"+strconv.Itoa(d.bs.Count), xDim)

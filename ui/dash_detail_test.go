@@ -4,6 +4,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 	"image"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -402,4 +403,27 @@ func TestTheResourceRowUnderThePointerIsLit(t *testing.T) {
 		t.Error("the row stays lit after the pointer leaves")
 	}
 	_ = w
+}
+
+// The question and the command name the same count, and it never exceeds the
+// copies held: the engine sells no more than the town has.
+func TestSellCountClampsToOwned(t *testing.T) {
+	cases := []struct {
+		buy   buyChoice
+		owned int
+		want  int
+	}{{buyOne, 5, 1}, {buyTen, 5, 5}, {buyTen, 30, 10}, {buyMax, 7, 7}}
+	for _, c := range cases {
+		if got := sellCount(c.buy, c.owned); got != c.want {
+			t.Errorf("sellCount(%v, %d) = %d, want %d", c.buy, c.owned, got, c.want)
+		}
+		cmd := sellCommand("farm", c.buy, c.owned)
+		wantCmd := command(verbSell, "farm")
+		if c.want > 1 {
+			wantCmd = command(verbSell, "farm", strconv.Itoa(c.want))
+		}
+		if cmd != wantCmd {
+			t.Errorf("sellCommand(%v, %d) = %q, want %q", c.buy, c.owned, cmd, wantCmd)
+		}
+	}
 }

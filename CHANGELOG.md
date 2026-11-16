@@ -165,6 +165,8 @@ All notable changes to AgeForge are documented here.
 - The badges drawn in characters (frames, rings and the eleven drawings) are gone, along with the one-line badge notice in the header.
 
 ### Fixed
+- The Sell question for a buy choice of x10 names the number of buildings owned when that is fewer than ten, and Sell sells that many.
+- The Wonders panel's Build button goes off while the wonder is under construction; it stayed on and looked unchanged after a click.
 - A picture beside text no longer covers the first characters of the text: the room a picture takes is worked out from its width in pixels and the cell's width in pixels, for the build cards, the picked building's pane and the action buttons, at every text size and pixel scale.
 - The History panel's charts show again. In the window every dot of them was a question mark, because no font the game ships has the braille dots they are drawn with. The window now draws those dots itself.
 - A right click followed quickly by a left click on the same spot no longer counts as a double click. It could build a building from one left click.
