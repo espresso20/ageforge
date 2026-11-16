@@ -94,8 +94,8 @@ func BackupAccount(id string) (string, error) {
 	if err := copyFile(srcAccount, filepath.Join(dst, accountFileName)); err != nil {
 		return "", fmt.Errorf("failed to back up account.json: %w", err)
 	}
-	// And the badge and settings files beside it, when the account has them.
-	for _, file := range []string{badgeFileName, settingsFileName} {
+	// And the badge, run and settings files beside it, when the account has them.
+	for _, file := range []string{badgeFileName, runArchiveFileName, settingsFileName} {
 		if err := copyIfExists(slot, dst, file); err != nil {
 			return "", err
 		}

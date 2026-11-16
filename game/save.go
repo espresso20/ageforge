@@ -140,6 +140,8 @@ type GameSave struct {
 	Morale float64 `json:"morale,omitempty"`
 	// RunHistory is the run's recorder: its measures and marks (history.go).
 	RunHistory *RunHistory `json:"run_history,omitempty"`
+	// RunID names the run (run_archive.go). A save without one is given one on load.
+	RunID string `json:"run_id,omitempty"`
 	// Integrity fields
 	CheaterBadge bool `json:"cheater_badge,omitempty"`
 	EliteBadge   bool `json:"elite_badge,omitempty"`
@@ -650,6 +652,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CosmicLegacy:       ge.cosmicLegacy,
 		Morale:             ge.morale,
 		RunHistory:         ge.history,
+		RunID:              ge.runID,
 		AccountID:          ge.saveAccountIDLocked(),
 		Plan:               cloneSlice(ge.plan),
 		WorkerShares:       cloneMap(ge.workerShares),
@@ -934,6 +937,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.history = save.RunHistory
 	} else {
 		ge.history = NewRunHistory()
+	}
+	ge.runID = save.RunID
+	if ge.runID == "" {
+		ge.runID = newRunID()
 	}
 
 	ge.morale = save.Morale
