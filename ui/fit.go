@@ -34,12 +34,18 @@ const glue = "\x1f"
 // between words, as size measures them. A word wider than the width gets a
 // line to itself.
 func wrapLines(words []string, width int, size func(string) int) []string {
+	return wrapLinesAt(words, func(int) int { return width }, size)
+}
+
+// wrapLinesAt is wrapLines for lines of different widths: the line at index i
+// holds at most widthAt(i) cells.
+func wrapLinesAt(words []string, widthAt func(int) int, size func(string) int) []string {
 	var lines []string
 	var line strings.Builder
 	lineSize := 0
 	for _, word := range words {
 		n := size(word)
-		if lineSize > 0 && lineSize+1+n > width {
+		if lineSize > 0 && lineSize+1+n > widthAt(len(lines)) {
 			lines = append(lines, line.String())
 			line.Reset()
 			lineSize = 0

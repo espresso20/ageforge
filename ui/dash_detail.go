@@ -173,26 +173,11 @@ func detailWidths(w int) (iwid, tw int) {
 // detail's text rows holding at most widthAt(i) cells; from is the index of
 // the first row it fills.
 func detailWrap(s string, from int, widthAt func(int) int) []string {
-	var rows []string
-	line, n := "", 0
-	for _, word := range strings.Fields(s) {
-		word = strings.ReplaceAll(word, glue, " ")
-		wl := visibleLen(word)
-		if n > 0 && n+1+wl > max(widthAt(from+len(rows)), 1) {
-			rows = append(rows, line)
-			line, n = "", 0
-		}
-		if n > 0 {
-			line += " "
-			n++
-		}
-		line += word
-		n += wl
+	words := strings.Fields(s)
+	for i, word := range words {
+		words[i] = strings.ReplaceAll(word, glue, " ")
 	}
-	if n > 0 {
-		rows = append(rows, line)
-	}
-	return rows
+	return wrapLinesAt(words, func(i int) int { return max(widthAt(from+i), 1) }, visibleLen)
 }
 
 // detailPlan is how the detail's text lies in its rows: the title on the
