@@ -263,7 +263,7 @@ func (a *Account) takeRunStoreLocked(f *runArchiveFile, merge bool) {
 // replace is set, otherwise the one with the larger end tick (the held one on a
 // tie). The records are copied, so neither side is shared with the result.
 func foldRuns(have, in []RunRecord, replace bool) []RunRecord {
-	out := make([]RunRecord, 0, len(have)+len(in))
+	out := make([]RunRecord, 0, len(have))
 	for _, r := range have {
 		out = append(out, r.clone())
 	}
