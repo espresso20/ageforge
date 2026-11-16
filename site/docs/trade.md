@@ -109,7 +109,7 @@ blackmarket <resource>   # make a smuggling run for the chosen resource
 trade black <resource>   # the same, through the trade command
 ```
 
-`bm` works in place of `blackmarket`.
+`bm` works in place of `blackmarket`. The Black Market has no button yet, because a run takes the resource you name and no screen lists the offers.
 
 A run costs the larger of 5K culture and a number of hours of your own culture income. That number is about 200 in the Colonial Age, about 166 in the Industrial Age, and 200 in every age from the Victorian Age on. A town that makes twice the culture pays twice.
 
