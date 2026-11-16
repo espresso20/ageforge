@@ -74,7 +74,7 @@ func (m *badgeMoment) paint(p *kit.Painter, area image.Rectangle, now time.Time,
 // withText is set and the coin when withCoin is.
 func (m *badgeMoment) draw(p *kit.Painter, card image.Rectangle, v game.BadgeView, tier mapmodel.GlyphTier, steps int, motion, withText, withCoin bool) {
 	plain := tier == mapmodel.TierASCII
-	look := lookOf(medalOf(v, tier), medalSign(v.Family), medalArt)
+	look := lookOf(medalOf(v), medalSign(v.Family), medalArt)
 	pale := metalOf(look).pale
 	paleC := kit.RGB(pale.R, pale.G, pale.B)
 	ground := kit.Role(theme.RoleSurface)

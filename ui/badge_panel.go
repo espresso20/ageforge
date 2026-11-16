@@ -213,7 +213,7 @@ func (p *badgePanel) coinFrame() int {
 
 // look is how a badge's coin looks at a size of art.
 func (p *badgePanel) look(it *caseItem, art int) coinLook {
-	return lookOf(medalOf(it.v, p.view.tier), medalSign(it.v.Family), art)
+	return lookOf(medalOf(it.v), medalSign(it.v.Family), art)
 }
 
 // setCoins makes the panel draw its coins from a cache shared with other

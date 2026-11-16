@@ -126,8 +126,8 @@ type medal struct {
 	special string
 }
 
-// medalOf is a badge as the renderer draws it, in a glyph tier.
-func medalOf(v game.BadgeView, _ mapmodel.GlyphTier) medal {
+// medalOf is a badge as the renderer draws it.
+func medalOf(v game.BadgeView) medal {
 	e, _ := emblemOf(v.Emblem)
 	m := medal{tier: v.Level, crossed: v.Crossed, special: e.special}
 	switch {

@@ -1022,7 +1022,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	if !p.view.card || p.view.sel != legend {
 		t.Fatalf("the detail did not open on %s (on %s)", legend, p.view.sel)
 	}
-	if m := medalOf(viewOfBadge(t, s.eng, legend), p.view.tier); m.special == "" || m.state != medalEarned {
+	if m := medalOf(viewOfBadge(t, s.eng, legend)); m.special == "" || m.state != medalEarned {
 		t.Fatalf("%s is not drawn by hand: %+v", legend, m)
 	}
 	shots.take(s, "badge-legend")

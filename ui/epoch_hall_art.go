@@ -41,7 +41,6 @@ type hallCtx struct {
 	rows     int // the screen's rows
 	y        int // the next free row
 	plain    bool
-	tier     mapmodel.GlyphTier
 	mo       hallMotion
 	pal      *menuPalette
 	duo      bool
@@ -53,7 +52,7 @@ type hallCtx struct {
 func newHallCtx(w, rows int, tier mapmodel.GlyphTier, mo hallMotion) *hallCtx {
 	th := theme.Active()
 	c := &hallCtx{
-		g: newMGrid(w, 600), w: w, rows: rows, tier: tier, plain: tier == mapmodel.TierASCII, mo: mo,
+		g: newMGrid(w, 600), w: w, rows: rows, plain: tier == mapmodel.TierASCII, mo: mo,
 		pal: newMenuPalette(th), duo: th.Duotone,
 		bg: th.Color(theme.RoleBackground), text: th.Color(theme.RoleText),
 	}
@@ -590,7 +589,7 @@ func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
 	if mini {
 		w, h, art = hallMiniCoinW, hallMiniCoinH, coinArt
 	}
-	look := lookOf(medalOf(v, c.tier), medalSign(v.Family), art)
+	look := lookOf(medalOf(v), medalSign(v.Family), art)
 	c.coins = append(c.coins, hallCoin{r: image.Rect(x, y, x+w, y+h), look: look, i: len(c.coins)})
 }
 
