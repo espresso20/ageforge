@@ -16,6 +16,13 @@ type resourceView struct {
 	at    image.Point
 	in    bool
 	plain func() bool
+	// tipFor says what the tooltip on text line i is; ok is false for a line
+	// with none. The box and the first line it showed at the last draw are
+	// kept so a pointer move can be traced to a line.
+	tip       *kit.Tip
+	tipFor    func(line int) (id any, text kit.TipText, ok bool)
+	box       image.Rectangle
+	firstLine int
 }
 
 func newResourceView(render func(w, h int) string, plain func() bool) *resourceView {
@@ -30,11 +37,17 @@ func (v *resourceView) Mouse(m kit.Mouse) bool {
 	in, at := m.Kind != kit.MouseLeave, m.Pt()
 	changed := in != v.in || (in && at != v.at)
 	v.in, v.at = in, at
+	if m.Kind == kit.MouseMove && in && v.tip != nil && v.tipFor != nil && at.In(v.box) {
+		if id, text, ok := v.tipFor(v.firstLine + at.Y - v.box.Min.Y); ok {
+			v.tip.Aim(id, image.Rect(v.box.Min.X, at.Y, v.box.Max.X, at.Y+1), text, false)
+		}
+	}
 	return v.fitView.Mouse(m) || changed
 }
 
 // light lights the line of text under the pointer, if it has text.
 func (v *resourceView) light(p *kit.Painter, r image.Rectangle, top int) {
+	v.box, v.firstLine = r, top
 	if !v.in || !v.at.In(r) {
 		return
 	}

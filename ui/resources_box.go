@@ -40,6 +40,7 @@ const (
 
 // resRow is one resource's row before it is laid out.
 type resRow struct {
+	key      string // the resource's key, for the tooltip on its line
 	name     string
 	amt      string // the amount column
 	amtColor string
@@ -94,6 +95,7 @@ func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRo
 	top := magnitudeTop(held)
 	for _, key := range keys {
 		rs := state.Resources[key]
+		n := len(rows)
 		switch key {
 		case "culture":
 			rows = append(rows, cultureRow(rs, state.TickIntervalMs))
@@ -106,6 +108,7 @@ func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRo
 			r.trend = hist.points(key, rs.Amount)
 			rows = append(rows, r)
 		}
+		rows[n].key = key
 	}
 	return rows
 }
@@ -439,8 +442,16 @@ func resourceRowsNeed(rows []resRow) int {
 // h) and how many pages the rows take: 1 when they all fit. page is the
 // page to show, counted from 0 and taken round the number of pages.
 func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int) {
+	lines, _, pages = layoutResourceOwners(rows, w, h, page)
+	return lines, pages
+}
+
+// layoutResourceOwners is layoutResourceBox that also says which row each
+// line belongs to (an index into rows, or -1 for a blank or the paging line),
+// so a line under the pointer can be traced back to its resource.
+func layoutResourceOwners(rows []resRow, w, h, page int) (lines []string, owner []int, pages int) {
 	if w < 1 || h < 1 {
-		return nil, 1
+		return nil, nil, 1
 	}
 	f := fitResourceFormat(rows, w)
 	n := len(rows)
@@ -458,28 +469,28 @@ func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int
 		}
 		return false
 	}
-	build := func(airy, withDetails bool) []string {
-		var out []string
+	build := func(airy, withDetails bool) (out []string, own []int) {
+		put := func(line string, i int) { out, own = append(out, line), append(own, i) }
 		for i, r := range rows {
-			out = append(out, f.line(r))
+			put(f.line(r), i)
 			if withDetails && hasDetail(i) {
-				out = append(out, "   "+r.detail)
+				put("   "+r.detail, i)
 			}
 			if airy && i < n-1 {
-				out = append(out, "")
+				put("", -1)
 			}
 		}
-		return out
+		return out, own
 	}
 	// From roomy to bare: a line between rows, the detail lines.
 	for _, v := range [][2]bool{{true, true}, {false, true}, {false, false}} {
-		if out := build(v[0], v[1]); len(out) <= h {
-			return out, 1
+		if out, own := build(v[0], v[1]); len(out) <= h {
+			return out, own, 1
 		}
 	}
 	// A page of rows, and the line that says so.
 	if h == 1 {
-		return []string{resMoreLine(1, n, n, w)}, 1
+		return []string{resMoreLine(1, n, n, w)}, []int{-1}, 1
 	}
 	size := h - 1
 	room := max(1, size)
@@ -487,11 +498,11 @@ func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int
 	page = ((page % pages) + pages) % pages
 	first := page * room
 	last := min(n, first+room)
-	for _, r := range rows[first:last] {
-		lines = append(lines, f.line(r))
+	for i, r := range rows[first:last] {
+		lines, owner = append(lines, f.line(r)), append(owner, first+i)
 	}
 	for len(lines) < size {
-		lines = append(lines, "")
+		lines, owner = append(lines, ""), append(owner, -1)
 	}
-	return append(lines, resMoreLine(first+1, last, n, w)), pages
+	return append(lines, resMoreLine(first+1, last, n, w)), append(owner, -1), pages
 }

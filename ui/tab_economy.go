@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // cultureThresholds defines the culture breakpoints at which rewards unlock.
@@ -61,6 +63,9 @@ type EconomyTab struct {
 	// resPage is the page of the Resources box on show (Ctrl+R turns it),
 	// and resPages how many its rows took at the last draw.
 	resPage, resPages int
+	// resKeys is the resource each text line of the box belongs to ("" for
+	// none), as of the last draw.
+	resKeys []string
 }
 
 // txtResourcesTitle is said the same way on several screens, so it has one id.
@@ -83,12 +88,22 @@ func NewEconomyTab(app *appLoop) *EconomyTab {
 	t := &EconomyTab{resPages: 1}
 
 	t.resourceTV = newResourceView(func(w, h int) string {
-		lines, pages := layoutResourceBox(t.rows(), w, h, t.resPage)
+		rows := t.rows()
+		lines, owner, pages := layoutResourceOwners(rows, w, h, t.resPage)
+		t.resKeys = t.resKeys[:0]
+		for _, o := range owner {
+			key := ""
+			if o >= 0 {
+				key = rows[o].key
+			}
+			t.resKeys = append(t.resKeys, key)
+		}
 		t.resPages = pages
 		t.resPage = ((t.resPage % pages) + pages) % pages
 		return strings.Join(lines, "\n")
 	}, func() bool { return t.plain != nil && t.plain() })
 	t.resourceTV.SetBorder(true)
+	t.resourceTV.tip, t.resourceTV.tipFor = &app.feel.tip, t.rateTip
 
 	t.resourceTV.wheel = t.wheelResources
 	t.buildBox = newBuildBox(func() bool { return t.plain != nil && t.plain() }, app)
@@ -448,4 +463,34 @@ func (t *EconomyTab) wheelResources(rows int) bool {
 	t.resPage = page
 	t.resourceTV.changed()
 	return true
+}
+
+// tipRate is the tooltip on a resource's line in the Resources box.
+type tipRate struct{ key string }
+
+// rateTip is the tooltip for line i of the Resources box: what the resource's
+// rate is made of, the largest parts first, in at most the plate's rows.
+func (t *EconomyTab) rateTip(i int) (any, kit.TipText, bool) {
+	if i < 0 || i >= len(t.resKeys) || t.resKeys[i] == "" {
+		return nil, kit.TipText{}, false
+	}
+	key := t.resKeys[i]
+	rs := t.state.Resources[key]
+	src := rateSources(rs.Breakdown, t.state.TickIntervalMs)
+	if len(src) == 0 {
+		return nil, kit.TipText{}, false
+	}
+	sort.SliceStable(src, func(a, b int) bool { return math.Abs(src[a].size) > math.Abs(src[b].size) })
+	lines := []string{rs.Name + ": " + rateText(rs.Rate, t.state.TickIntervalMs)}
+	shown := src
+	if len(src) > kit.TipMaxRows-1 {
+		shown = src[:kit.TipMaxRows-2]
+	}
+	for _, s := range shown {
+		lines = append(lines, "  "+s.text)
+	}
+	if more := len(src) - len(shown); more > 0 {
+		lines = append(lines, vibe.Sprintf("ui.tab_economy.rateTip.01", "  and %d more", more))
+	}
+	return tipRate{key}, kit.TipText{Lines: lines}, true
 }

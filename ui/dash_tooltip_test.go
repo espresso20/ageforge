@@ -275,3 +275,74 @@ func TestTooltipOnTheKeyPick(t *testing.T) {
 		t.Errorf("a key left %q", rows)
 	}
 }
+
+// restOnResource rests the pointer on the Resources box line of key and
+// returns what the tooltip says (empty when none shows).
+func restOnResource(t *testing.T, d *Dashboard, st *stage, clock *tipClock, key string) []string {
+	t.Helper()
+	d.refresh()
+	st.paint()
+	tv := d.economyTab.resourceTV
+	for i, k := range d.economyTab.resKeys {
+		if k != key {
+			continue
+		}
+		pointerTo(d, st, image.Pt(tv.box.Min.X+2, tv.box.Min.Y+i-tv.firstLine))
+		clock.wait(kit.TipDelay)
+		return tipRows(d, st)
+	}
+	t.Fatalf("the Resources box shows no line for %s", key)
+	return nil
+}
+
+// A resource's line says what its rate is made of, the largest part first,
+// and past five parts the rest are counted.
+func TestResourceRateTooltip(t *testing.T) {
+	d, st, eng := medievalTown(t, 160, 45)
+	clock := pinTip(d)
+	state := eng.GetState()
+	key := ""
+	for _, k := range sortedKeysOf(state.Resources) {
+		if rs := state.Resources[k]; rs.Unlocked && rs.Breakdown.BuildingRate > 0 {
+			key = k
+			break
+		}
+	}
+	if key == "" {
+		t.Fatal("staging: no resource has a building rate")
+	}
+	rows := restOnResource(t, d, st, clock, key)
+	if len(rows) < 2 || !strings.HasPrefix(rows[0], state.Resources[key].Name+": ") || !strings.HasPrefix(rows[1], "Buildings: ") {
+		t.Errorf("tooltip %q, want the name and rate, then Buildings first", rows)
+	}
+
+	// Seven parts: a title, four of them, and the count of the other three.
+	rs := d.economyTab.state.Resources[key]
+	rs.Breakdown = game.RateBreakdown{BuildingRate: 7, WorkerRate: 6, ResearchRate: 5, EventRate: 4, TradeRate: 3, BonusRate: 2, FoodDrain: -1}
+	d.economyTab.state.Resources[key] = rs
+	_, text, ok := d.economyTab.rateTip(tipLineOf(d.economyTab.resKeys, key))
+	if !ok || len(text.Lines) != kit.TipMaxRows || !strings.Contains(text.Lines[kit.TipMaxRows-1], "and 3 more") {
+		t.Errorf("seven parts: %q, want %d lines ending in 'and 3 more'", text.Lines, kit.TipMaxRows)
+	}
+	// Five parts fit whole.
+	rs.Breakdown = game.RateBreakdown{BuildingRate: 7, WorkerRate: 6, ResearchRate: 5, EventRate: 4, TradeRate: 3}
+	d.economyTab.state.Resources[key] = rs
+	if _, text, _ := d.economyTab.rateTip(tipLineOf(d.economyTab.resKeys, key)); len(text.Lines) != 6 || strings.Contains(strings.Join(text.Lines, "|"), "more") {
+		t.Errorf("five parts: %q, want all five and no count", text.Lines)
+	}
+	// A line with no breakdown has no tooltip.
+	rs.Breakdown = game.RateBreakdown{}
+	d.economyTab.state.Resources[key] = rs
+	if _, _, ok := d.economyTab.rateTip(tipLineOf(d.economyTab.resKeys, key)); ok {
+		t.Error("a resource with no breakdown got a tooltip")
+	}
+}
+
+func tipLineOf(keys []string, key string) int {
+	for i, k := range keys {
+		if k == key {
+			return i
+		}
+	}
+	return -1
+}

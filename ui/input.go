@@ -1382,41 +1382,9 @@ func cmdRates(_ []string, engine *game.GameEngine) CommandResult {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s", rs.Name, rateTag(rs.Rate, state.TickIntervalMs)))
-		b := rs.Breakdown
 		var parts []string
-		if b.BuildingRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.03", "Buildings: %s", rateText(b.BuildingRate, state.TickIntervalMs)))
-		}
-		if b.WorkerRate != 0 {
-			// What worker output bonuses add (game/engine.go, gather_rate).
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.04", "Worker bonus: %s", rateText(b.WorkerRate, state.TickIntervalMs)))
-		}
-		if b.ResearchRate != 0 {
-			// What the techs add: their bonus on what the resource's
-			// buildings make, counted after the pools, and the flat output
-			// of a tech that is its first source.
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.05", "Research: %s", rateText(b.ResearchRate, state.TickIntervalMs)))
-		}
-		if b.EventRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.06", "Events: %s", rateText(b.EventRate, state.TickIntervalMs)))
-		}
-		if b.TradeRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.07", "Trade: %s", rateText(b.TradeRate, state.TickIntervalMs)))
-		}
-		if b.BonusRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.08", "Bonuses: %s", rateText(b.BonusRate, state.TickIntervalMs)))
-		}
-		if b.LegacyRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.09", "Cosmic Legacy: %s", rateText(b.LegacyRate, state.TickIntervalMs)))
-		}
-		if b.MasteryRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.10", "Era Mastery: %s", rateText(b.MasteryRate, state.TickIntervalMs)))
-		}
-		if b.PrestigeRate != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.11", "Prestige: %s", rateText(b.PrestigeRate, state.TickIntervalMs)))
-		}
-		if b.FoodDrain != 0 {
-			parts = append(parts, vibe.Sprintf("ui.input.cmdRates.12", "Drain: %s", rateText(b.FoodDrain, state.TickIntervalMs)))
+		for _, src := range rateSources(rs.Breakdown, state.TickIntervalMs) {
+			parts = append(parts, src.text)
 		}
 		if len(parts) > 0 {
 			lines = append(lines, fmt.Sprintf("    %s", strings.Join(parts, "  ")))
