@@ -162,7 +162,7 @@ func (t *Tip) rect(area image.Rectangle) image.Rectangle {
 	pic := t.pictured()
 	ell, ink, padRows := "…", 2, 0
 	if !pic {
-		ell, ink, padRows = "...", 2, 2
+		ell, ink, padRows = "...", 4, 2
 	}
 	lines, reason := t.body(TipMaxCols-ink, TipMaxRows-padRows, ell)
 	w, h := 0, len(lines)
@@ -210,12 +210,12 @@ func (t *Tip) Paint(p *Painter, area image.Rectangle) {
 	if !t.pictured() {
 		p.Fill(r, Role(theme.RoleSurface))
 		p.Box(r, BorderASCII, text)
-		lines, reason := t.body(r.Dx()-2, r.Dy()-2, "...")
+		lines, reason := t.body(r.Dx()-4, r.Dy()-2, "...")
 		for i, l := range lines {
-			p.Print(r.Min.X+1, r.Min.Y+1+i, r.Dx()-2, Escape(l), text)
+			p.Print(r.Min.X+2, r.Min.Y+1+i, r.Dx()-4, Escape(l), text)
 		}
 		if reason != "" {
-			p.Print(r.Min.X+1, r.Min.Y+1+len(lines), r.Dx()-2, Escape(reason), warn)
+			p.Print(r.Min.X+2, r.Min.Y+1+len(lines), r.Dx()-4, Escape(reason), warn)
 		}
 		return
 	}
