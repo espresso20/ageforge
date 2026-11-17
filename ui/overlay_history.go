@@ -18,9 +18,6 @@ func historyProvider(engine *game.GameEngine) OverlayProvider {
 	}
 }
 
-// txtMorale is said the same way on several screens, so it has one id.
-var txtMorale = vibe.E("ui.overlay_history.renderHistoryOverlay.07", "Morale")
-
 func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) string {
 	if hist == nil || hist.Recent.Len() < 2 {
 		return vibe.Line("ui.overlay_history.renderHistoryOverlay.01", "\n[gray] No history yet. Play for a while and check back.[-]\n")
@@ -65,13 +62,13 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 	}
 
 	metrics := []metricDef{
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.02", "Population"), "[cyan]", "population", 1, vibe.Line("ui.overlay_history.renderHistoryOverlay.03", " workers"), false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", "food_rate", 1, "", true},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", "know_rate", 1, "", true},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", "faith", 1, "", false},
+		{txtPopulation.String(), "[cyan]", "population", 1, txtWorkers.String(), false},
+		{txtFoodRate.String(), "[green]", "food_rate", 1, "", true},
+		{txtResearchRate.String(), "[yellow]", "know_rate", 1, "", true},
+		{txtFaith.String(), "[gold]", "faith", 1, "", false},
 		{txtMorale.String(), "[yellow]", "morale", 100, "%", false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", "prod_all", 100, "%", false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.09", "Game speed"), "[gray]", "tick_speed", 1, "x", false},
+		{txtAllProduction.String(), "[warning]", "prod_all", 100, "%", false},
+		{txtGameSpeed.String(), "[gray]", "tick_speed", 1, "x", false},
 	}
 
 	var sb strings.Builder

@@ -218,6 +218,24 @@ func Duration(d time.Duration) string {
 	}
 }
 
+// DurationExact is Duration with the minutes kept past a day, for a chart
+// axis and a readout that must tell two close times apart: "45s", "1h 12m",
+// "3d 4h 20m". A zero unit is dropped; below a day it reads as Duration does.
+func DurationExact(d time.Duration) string {
+	total := int(d.Round(time.Second) / time.Second)
+	if total < 86400 {
+		return Duration(d)
+	}
+	out := fmt.Sprintf("%dd", total/86400)
+	if h := (total % 86400) / 3600; h != 0 {
+		out += fmt.Sprintf(" %dh", h)
+	}
+	if m := (total % 3600) / 60; m != 0 {
+		out += fmt.Sprintf(" %dm", m)
+	}
+	return out
+}
+
 // Ticks renders a tick count as an approximate wall-clock duration ("~2m") given
 // the length of one tick. The tilde marks it as approximate: the reading changes
 // with game speed.
