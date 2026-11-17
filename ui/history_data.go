@@ -227,11 +227,11 @@ func resourceRates(h *game.RunHistory) []string {
 	return keys
 }
 
-// value is the shown figure for a recorded value, per second for a rate
-// (perTick is how much a recorded unit is per second, see rateFactor).
-func (m histMeasure) value(v, perSecond float64) float64 {
+// shown is the figure a recorded value stands for. A rate stays per tick and
+// is said per second where it is written (rates.go).
+func (m histMeasure) shown(v float64) float64 {
 	if m.Rate {
-		return v * perSecond
+		return v
 	}
 	return v*m.Scale + m.Offset
 }
@@ -256,19 +256,6 @@ func histMeasures(h *game.RunHistory, label func(resKey string) string) []histMe
 		out = append(out, histMeasure{Key: k, Label: label(strings.TrimPrefix(k, "rate.")), Group: groupRates, Rate: true})
 	}
 	return out
-}
-
-// rateFactor is how many of a measure's recorded per-tick units make one unit
-// per second (or per minute or hour, when a second would round the figure
-// away) at a rate of peak, and the unit's suffix. The recorder keeps no tick
-// length, so it reads at the base tick.
-func rateFactor(peak float64) (k float64, unit string) {
-	ms := int(game.BaseTickInterval.Milliseconds())
-	v, unit := ratePer(peak, ms)
-	if peak == 0 {
-		return 1 / tickSeconds(ms), unit
-	}
-	return v / peak, unit
 }
 
 // Measure names. The ones already said on other screens keep their rows.

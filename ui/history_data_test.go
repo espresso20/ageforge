@@ -99,16 +99,3 @@ func TestResourceRatesSkipFoodAndSort(t *testing.T) {
 		t.Errorf("resourceRates = %v", got)
 	}
 }
-
-func TestRateFactorSaysPerSecond(t *testing.T) {
-	k, unit := rateFactor(1) // one per base tick
-	if unit != "/s" || k <= 0 {
-		t.Fatalf("rateFactor(1) = %v %q", k, unit)
-	}
-	if v := k * 1; v < 0.4 || v > 0.6 {
-		t.Errorf("one per 2 s tick reads %v per second", v)
-	}
-	if _, unit := rateFactor(0); unit != "/s" {
-		t.Errorf("a zero peak reads per second, got %q", unit)
-	}
-}
