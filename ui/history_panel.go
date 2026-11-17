@@ -60,18 +60,19 @@ type historyPanel struct {
 	// settings reads the glyph tier.
 	settings func() mapSettings
 
-	set   *rules.Set
-	hist  *game.RunHistory
-	arch  game.RunArchiveView
-	name  string
-	ms    []histMeasure
-	rng   histRange
-	logs  [histRanges]bool // the scale chosen for each range, while the panel is open
-	slots [histSlots]string
-	row   int // the picker's cursor, an index into ms
-	ptr   int // the tick under the pointer, -1 for the newest
-	hover image.Point
-	ghost string // the filed run drawn behind, by id
+	set            *rules.Set
+	hist           *game.RunHistory
+	arch           game.RunArchiveView
+	name           string
+	ms             []histMeasure
+	rng            histRange
+	logs           [histRanges]bool // the scale chosen for each range, while the panel is open
+	slots          [histSlots]string
+	row            int // the picker's cursor, an index into ms
+	ptr            int // the tick under the pointer, -1 for the newest
+	hover          image.Point
+	ghost          string // the filed run drawn behind, by id
+	cursor, scroll int    // the runs list's cursor and first row
 
 	w, h   int
 	chrome *xgrid
@@ -89,7 +90,7 @@ func newHistoryPanel() *historyPanel {
 // open is the overlay's build: it runs on every Show.
 func (p *historyPanel) open(state game.GameState) Primitive {
 	p.set = state.Ruleset()
-	p.rng, p.ptr, p.row, p.ghost = rangeRun, -1, 0, ""
+	p.rng, p.ptr, p.row, p.ghost, p.cursor, p.scroll = rangeRun, -1, 0, "", 0, 0
 	p.logs = [histRanges]bool{rangeAll: true}
 	p.slots = [histSlots]string{"population"}
 	p.load()
@@ -332,6 +333,7 @@ func (p *historyPanel) Layout(r image.Rectangle) {
 		x = end + 1
 	}
 	p.layoutPicker(g)
+	p.layoutRuns(g)
 	keys := [][2]string{{"←→", txtKeyPointer.String()}, {"1-0", txtKeyMeasure.String()}, {"Space", txtKeyShow.String()},
 		{"Tab", txtKeyRange.String()}, {"-", txtKeyLog.String()}}
 	if p.rng == rangeAll {
@@ -472,6 +474,9 @@ func (p *historyPanel) Mouse(m kit.Mouse) bool {
 		p.hover = m.Pt().Sub(p.Bounds().Min)
 		p.followMouse()
 		return false
+	case m.Kind == kit.MouseWheel && p.rng == rangeAll:
+		p.scrollRuns(m.Wheel * histRunWheel)
+		return true
 	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft:
 		return false
 	}
@@ -482,6 +487,11 @@ func (p *historyPanel) Mouse(m kit.Mouse) bool {
 		} else {
 			p.setLog(t == 4)
 		}
+		return true
+	}
+	if n, ok := p.chrome.hitAt(hitHistRun, pt); ok {
+		p.cursor = n
+		p.pickRun()
 		return true
 	}
 	if n, ok := p.chrome.hitAt(hitHistMeasure, pt); ok {
@@ -545,12 +555,16 @@ func (p *historyPanel) Paint(p2 *kit.Painter) {
 		cw, ch := cellPixels()
 		if p.plain {
 			v.cells(p2, org.Add(image.Pt(g.px0, g.y0)))
+			p.shapes(p2, org, 0, 0)
 		} else {
 			bounds := image.Rect(g.px0, g.y0, g.px0+g.pcols, g.axisY).Add(org)
 			p2.Picture(bounds, p.picture(cw, ch))
 			p.shapes(p2, org, cw, ch)
 		}
 		p.words(p2, org)
+	}
+	if p.rng == rangeAll && g.listTop > 0 {
+		p.runs(p2, org)
 	}
 	p.buttons.paint(p2, p.chrome, r.Min, pal)
 	_ = c
@@ -583,6 +597,10 @@ func (p *historyPanel) shapes(p2 *kit.Painter, org image.Point, cw, ch int) {
 			continue
 		}
 		if slot := slices.Index(p.slots[:], p.ms[r.idx].Key); slot >= 0 {
+			if p.plain {
+				p.text(p2, org, 2, v.geo.y0+j, string([]rune("●■▲")[slot]), v.ink.slot(slot), false)
+				continue
+			}
 			p2.Picture(image.Rect(2, v.geo.y0+j, 3, v.geo.y0+j+1).Add(org), shapeImg(slot, v.ink.slot(slot), v.ink.ground))
 		}
 	}
@@ -684,6 +702,10 @@ func (p *historyPanel) readout(p2 *kit.Painter, org image.Point) {
 		return
 	}
 	bw, bh := 36, 3+len(v.lines)
+	two := v.all && v.ghost != nil
+	if two {
+		bw = 50
+	}
 	if bw > g.pcols-2 || bh > g.plotRows()-1 {
 		return
 	}
@@ -729,7 +751,17 @@ func (p *historyPanel) readout(p2 *kit.Painter, org image.Point) {
 			put(bx+2, y, string([]rune("●■▲")[l.slot]), c.slot(l.slot), false)
 		}
 		put(bx+4, y, string([]rune(l.m.Label)[:min(runeLen(l.m.Label), 16)]), c.slot(l.slot), false)
-		put(bx+bw-2-runeLen(val), y, val, c.bright, false)
+		put(bx+bw-2-runeLen(val)-btoi(two)*14, y, val, c.bright, false)
+		if two {
+			gv := "-"
+			if x, ok := l.gh.at(v.ptr); ok {
+				gv = l.m.text(x, true)
+			}
+			put(bx+bw-2-runeLen(gv), y, gv, c.dim, false)
+		}
+	}
+	if two {
+		put(bx+bw-2-runeLen(txtKeyGhost.String()), by+1, txtKeyGhost.String(), c.dim, false)
 	}
 }
 
@@ -750,7 +782,3 @@ func (p *historyPanel) covers(bx, by, bw, bh int) int {
 	}
 	return n
 }
-
-// runKey and pickRun are the runs list's keys (history_runs.go).
-func (p *historyPanel) runKey(d int) {}
-func (p *historyPanel) pickRun()     {}

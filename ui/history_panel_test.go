@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
@@ -97,4 +98,111 @@ func TestHistoryEdgeSizes(t *testing.T) {
 		}
 	}
 	var _ = image.Pt
+}
+
+func histRunsFixture(n int) []game.RunRecord {
+	var out []game.RunRecord
+	for i := range n {
+		out = append(out, fixtureRecord("r"+string(rune('a'+i)), game.RunPrestige, 100+20*i, 3+i%5, 1))
+	}
+	return out
+}
+
+func TestHistoryPickingTheGhost(t *testing.T) {
+	runs := histRunsFixture(4)
+	runs[1].History = nil
+	p := histFixturePanel(160, 40, fixtureRun(300, 4, 1), runs)
+	p.setRange(rangeAll)
+	p.routeKey(&kit.Key{Code: kit.KeyEnter}, "")
+	if p.ghost != "ra" || p.v.ghost == nil {
+		t.Fatalf("ghost %q after Enter on the first row", p.ghost)
+	}
+	p.routeKey(&kit.Key{Code: kit.KeyDown}, "")
+	p.routeKey(&kit.Key{Code: kit.KeyEnter}, "")
+	if p.ghost != "ra" {
+		t.Fatalf("a run with no kept history was picked: %q", p.ghost)
+	}
+	p.routeKey(&kit.Key{Code: kit.KeyDown}, "")
+	hit, _ := p.chrome.hitAt(hitHistRun, image.Pt(5, p.v.geo.listTop+2+3))
+	if hit != 3 {
+		t.Fatalf("row 3 hit %d", hit)
+	}
+	p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: 5, Y: p.v.geo.listTop + 2 + 3})
+	if p.ghost != "rd" {
+		t.Fatalf("click picked %q", p.ghost)
+	}
+	p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: 5, Y: p.v.geo.listTop + 2 + 1})
+	if p.ghost != "rd" {
+		t.Fatalf("click on an unkept run changed the ghost to %q", p.ghost)
+	}
+	if got := p.v.lines[0].gh; len(got.V) == 0 {
+		t.Fatal("the ghost has no line")
+	}
+}
+
+func TestHistoryReadoutColumns(t *testing.T) {
+	p := histFixturePanel(160, 40, fixtureRun(300, 4, 1), histRunsFixture(2))
+	p.setRange(rangeAll)
+	p.routeKey(&kit.Key{Code: kit.KeyEnter}, "")
+	lines := histPaint(p).Lines()
+	n := 0
+	for _, l := range lines {
+		if strings.Contains(l, txtKeyGhost.String()) && strings.Contains(l, "At ") {
+			n++
+		}
+	}
+	if n != 1 {
+		t.Fatalf("readout head with a ghost column found %d times", n)
+	}
+}
+
+func TestHistoryEmptyAccount(t *testing.T) {
+	p := histFixturePanel(160, 40, fixtureRun(300, 4, 1), nil)
+	p.setRange(rangeAll)
+	lines := histPaint(p).Lines()
+	play, none := 0, 0
+	for _, l := range lines {
+		if strings.Contains(l, txtInPlay.String()) {
+			play++
+		}
+		if strings.Contains(l, txtNoRuns.String()) {
+			none++
+		}
+	}
+	if play != 1 || none != 1 {
+		t.Fatalf("in-play rows %d, placeholder lines %d", play, none)
+	}
+}
+
+func TestHistoryCountsHiddenBelow120(t *testing.T) {
+	for w, want := range map[int]bool{100: false, 119: false, 120: true, 160: true} {
+		p := histFixturePanel(w, 40, fixtureRun(300, 4, 1), histRunsFixture(3))
+		p.setRange(rangeAll)
+		got := false
+		for _, l := range histPaint(p).Lines() {
+			if strings.Contains(l, txtExpeditions.String()) && strings.Contains(l, txtRunCol.String()) {
+				got = true
+			}
+		}
+		if got != want {
+			t.Errorf("width %d: counts shown %v, want %v", w, got, want)
+		}
+	}
+}
+
+func TestHistoryNothingOutsideThePanel(t *testing.T) {
+	for _, w := range []int{100, 120} {
+		p := histFixturePanel(w, 40, fixtureRun(300, 4, 1), histRunsFixture(14))
+		p.setRange(rangeAll)
+		b := kit.NewBuffer(w+8, 40)
+		pt := kit.NewPainter(b)
+		p.Paint(pt)
+		for y := range 40 {
+			for x := w; x < w+8; x++ {
+				if c := b.At(x, y); c.R != ' ' || c.Pic != 0 {
+					t.Fatalf("width %d: a cell outside the panel at %d,%d", w, x, y)
+				}
+			}
+		}
+	}
 }
