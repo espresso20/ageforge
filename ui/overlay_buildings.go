@@ -104,7 +104,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 				if price := buildingPrice(&state, e.key, bs); len(price) > 0 {
 					sb.WriteString("[gray]" + costRow(txtIndentedCost.String(), price, width) + "[-]")
 				}
-				if text := buildingText(bs, state.TickIntervalMs); text != "" {
+				if text := buildingText(bs); text != "" {
 					fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)
 				}
 				sb.WriteString(hangingRow("   ", "[gray::i]"+lockedHintLine(e.key)+"[-:-:-]", width))
@@ -139,7 +139,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 			if price := buildingPrice(&state, e.key, bs); len(price) > 0 && !bs.IsLegacy {
 				sb.WriteString("[gray]" + costRow(txtIndentedCost.String(), price, overlayTextWidth(screenW)) + "[-]")
 			}
-			if text := buildingText(bs, state.TickIntervalMs); text != "" {
+			if text := buildingText(bs); text != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)
 			}
 			if bs.Flavor != "" {

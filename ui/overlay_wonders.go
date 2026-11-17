@@ -153,7 +153,7 @@ func wondersProvider(state game.GameState, _ int) string {
 			fmt.Fprintf(&sb, " %s [gold]★ %s[-]   [gray]%s[-]\n", WonderSpriteIcon(w.key), w.name, w.ageName)
 			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.02", "   [green]Built[-]\n"))
 			if w.def.Description != "" {
-				fmt.Fprintf(&sb, "   [gray]%s[-]\n", perSecondText(w.def.Description, state.TickIntervalMs))
+				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
 			}
 			if len(w.def.Effects) > 0 {
 				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.03", "   [cyan]Effects:[-]\n"))
@@ -188,7 +188,7 @@ func wondersProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "   %s\n", line)
 			}
 			if w.def.Description != "" {
-				fmt.Fprintf(&sb, "   [gray]%s[-]\n", perSecondText(w.def.Description, state.TickIntervalMs))
+				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
 			}
 			if len(w.def.Effects) > 0 {
 				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.08", "   [cyan]Effects when built:[-]\n"))

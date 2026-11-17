@@ -758,7 +758,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable = "[red]✗[-]"
 			}
 			lines = append(lines, vibe.Sprintf("ui.input.cmdBuild.02", "  %s [cyan]%s[-] (%d built) - Cost: %s %s",
-				affordable, state.Ruleset().Typed(rules.KindBuilding, key), b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b, state.TickIntervalMs)))
+				affordable, state.Ruleset().Typed(rules.KindBuilding, key), b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
 		}
 		return infoReply(strings.Join(lines, "\n"))
 	}

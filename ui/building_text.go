@@ -14,14 +14,13 @@ var txtCopies = vibe.E("ui.building_text.buildingText.06", "copies")
 // txtCopy is said the same way on several screens, so it has one id.
 var txtCopy = vibe.E("ui.building_text.buildingText.05", "copy")
 
-// buildingText is a building's description as the lists show it, its rates
-// per second (tickMs is the tick's length). A knowledge
-// building also says where its research halves ("Past 5 copies, each
+// buildingText is a building's description as the lists show it (its rates
+// are already per second). A knowledge building also says where its research halves ("Past 5 copies, each
 // researches at half rate.") and, when the description does not say it (it
 // does: "comes with 2 scholars"), its scholars a copy. Nothing refuses a copy
 // past that count, so the line is all it says about the count.
-func buildingText(bs game.BuildingState, tickMs int) string {
-	desc := perSecondText(bs.Description, tickMs)
+func buildingText(bs game.BuildingState) string {
+	desc := bs.Description
 	if bs.Scholars <= 0 {
 		return desc
 	}

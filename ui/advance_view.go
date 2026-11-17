@@ -417,7 +417,7 @@ func advRow(g *xgrid, r game.GateRow, tickMs, x, y, iw int) {
 // advAmount is a measured row's amounts at the right edge: "412 / 500", or
 // "2.1 / 3/s" for an income, which the game counts in ticks.
 func advAmount(r game.GateRow, tickMs int) string {
-	if r.Unit == "a tick" {
+	if r.PerTick {
 		goal, unit := ratePer(r.Target, tickMs)
 		scale := 1.0
 		if r.Target != 0 {
@@ -425,11 +425,7 @@ func advAmount(r game.GateRow, tickMs int) string {
 		}
 		return textfmt.Number(r.Value*scale) + " / " + textfmt.Number(goal) + unit
 	}
-	val := textfmt.Number(r.Value) + " / " + textfmt.Number(r.Target)
-	if r.Unit != "" {
-		val += " " + r.Unit
-	}
-	return val
+	return textfmt.Number(r.Value) + " / " + textfmt.Number(r.Target)
 }
 
 // ===== The right column =====

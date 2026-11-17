@@ -320,7 +320,7 @@ func fitResourceGrid(rows []resRow, w int) resFormat {
 // rateText is a row's rate as the grid writes it, and its color.
 func (f resFormat) rateText(r resRow) (text, color string) {
 	unit := r.unit
-	if f.short && unit == unitMinute {
+	if f.short && unit == textfmt.PerMinute {
 		unit = "/m"
 	}
 	return rateParts(r.rate, unit)

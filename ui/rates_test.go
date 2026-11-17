@@ -2,9 +2,11 @@ package ui
 
 import (
 	"math"
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -68,13 +70,11 @@ func TestPerSecondText(t *testing.T) {
 		in, want string
 		ms       int
 	}{
-		{"+1 culture/tick", "+0.5 culture/s", 2000},
-		{"+73.5 iron/tick (6 workers)", "+73.5 iron/s (6 workers)", 1000},
-		{"+1.2K iron ore/tick, -3 wood/tick", "+1.2K iron ore/s, -3 wood/s", 1000},
-		{"+0.004 faith/tick", "+0.24 faith/min", 1000},
-		{"Food -4.8/tick for ~10m.", "Food -4.8/s for ~10m.", 1000},
+		{"+1/tick", "+0.5/s", 2000},
+		{"+73.5/tick (6 workers)", "+73.5/s (6 workers)", 1000},
 		{"Food +1/tick, stone +0.5/tick for 5m.", "Food +1/s, stone +0.5/s for 5m.", 1000},
-		{"+0.5 opinion/tick per worker", "+0.5 opinion/s per worker", 1000},
+		{"-3/tick", "-3/s", 1000},
+		{"+0.004/tick", "+0.24/min", 1000},
 		{"+240 housing", "+240 housing", 1000},
 		{"+2% all production", "+2% all production", 1000},
 	} {
@@ -118,6 +118,18 @@ func TestScreensShowNoRateInTicks(t *testing.T) {
 			if strings.Contains(line, "/tick") || strings.Contains(line, "a tick") {
 				t.Errorf("%s: a rate is in ticks: %q", age, strings.TrimSpace(line))
 			}
+		}
+	}
+}
+
+// A hand-written awakening line may state a tick rate only as a signed number
+// followed by "/tick" ("Food +1/tick"); the screen converts exactly that form,
+// so no whole word "tick" may be left after it.
+func TestAwakeningLinesLoseTheirTicks(t *testing.T) {
+	word := regexp.MustCompile(`\btick\b`)
+	for _, a := range config.Awakenings() {
+		if got := perSecondText(a.FlavorText, 2000); word.MatchString(got) {
+			t.Errorf("%s: after the conversion the line still says tick: %q", a.Key, got)
 		}
 	}
 }

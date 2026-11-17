@@ -113,7 +113,7 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 
 		curStr := textfmt.Number(cur)
 		if m.rate {
-			curStr = signedRate(cur)
+			curStr = textfmt.RateNumber(cur)
 		}
 
 		// header line

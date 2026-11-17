@@ -44,7 +44,7 @@ type LineageShare struct {
 
 func flowsFor(m *Model, st *game.GameState) Flows {
 	f := Flows{IdleWorkers: m.Workers.Idle}
-	perSec := 1 / game.BaseTickInterval.Seconds()
+	perSec := 1 / tickSeconds(st)
 	for _, k := range slices.Sorted(maps.Keys(st.Resources)) {
 		r := st.Resources[k]
 		if !r.Unlocked {

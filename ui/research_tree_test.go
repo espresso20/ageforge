@@ -1011,3 +1011,31 @@ func TestResearchPanelMouse(t *testing.T) {
 		t.Error("the wheel did not move the selection")
 	}
 }
+
+// A tech's flat output reads per second on its card, never per tick.
+func TestResearchCardSaysFlatOutputPerSecond(t *testing.T) {
+	ge := classicalGame(t)
+	st := ge.GetState()
+	seen := 0
+	for _, def := range config.Technologies() {
+		for _, e := range def.Effects {
+			if e.Kind != config.EffectFlatOutput {
+				continue
+			}
+			if buildTree(st, treeGeomFor(120, false), false, def.Key).by[def.Key] == nil {
+				continue
+			}
+			seen++
+			card := cardOf(st, def.Key)
+			if strings.Contains(card, "/tick") || strings.Contains(card, "per tick") {
+				t.Errorf("%s's card says a rate per tick:\n%s", def.Key, card)
+			}
+			if want := e.Text(); !strings.Contains(card, want) {
+				t.Errorf("%s's card is missing %q:\n%s", def.Key, want, card)
+			}
+		}
+	}
+	if seen == 0 {
+		t.Fatal("no tech with a flat output reached the card")
+	}
+}

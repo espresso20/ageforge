@@ -69,7 +69,7 @@ func logsProvider(state game.GameState, _ int) string {
 			color = theme.TagName(theme.RoleText)
 			prefix = " · "
 		}
-		fmt.Fprintf(&sb, "[gray]T%-5d[-] [%s]%s %s[-]\n", entry.Tick, color, prefix, perSecondText(entry.Message, state.TickIntervalMs))
+		fmt.Fprintf(&sb, "[gray]T%-5d[-] [%s]%s %s[-]\n", entry.Tick, color, prefix, entry.Message)
 	}
 
 	// Engine state summary at the bottom

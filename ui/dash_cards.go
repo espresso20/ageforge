@@ -125,7 +125,7 @@ func buildCards(state game.GameState, buy buyChoice) []buildCard {
 			continue
 		}
 		c := buildCard{key: key, name: bs.Name, kind: signKindOf(def), owned: bs.Count,
-			out: cardOutput(buildingText(bs, state.TickIntervalMs))}
+			out: cardOutput(buildingText(bs))}
 		queued := 0
 		for _, q := range state.BuildQueue {
 			if q.Key == key {
@@ -191,7 +191,7 @@ func olderCards(state game.GameState) []buildCard {
 			continue
 		}
 		cards = append(cards, buildCard{key: key, name: bs.Name, kind: signKindOf(def), owned: bs.Count,
-			out: cardOutput(buildingText(bs, state.TickIntervalMs)), older: true, group: groupBuild})
+			out: cardOutput(buildingText(bs)), older: true, group: groupBuild})
 	}
 	return cards
 }

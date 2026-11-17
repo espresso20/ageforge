@@ -100,7 +100,7 @@ func (wv *wondersView) galleryText(state game.GameState) string {
 		}
 		fmt.Fprintf(&sb, "[gold]★ %s[-]  [gray]%s[-]%s\n", lit(w.name), lit(w.ageName), when)
 		if w.def.Description != "" {
-			fmt.Fprintf(&sb, "[gray]%s[-]\n", lit(perSecondText(w.def.Description, state.TickIntervalMs)))
+			fmt.Fprintf(&sb, "[gray]%s[-]\n", lit(w.def.Description))
 		}
 		sb.WriteString("\n")
 	}

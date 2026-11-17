@@ -276,11 +276,11 @@ func TestKnowledgeBuildingShowsScholarsAndSoftCap(t *testing.T) {
 		t.Fatalf("staging: %+v", bs)
 	}
 	want := fmt.Sprintf("Past %d copies, each researches at half rate.", bs.FullRateCopies)
-	if got := buildingText(bs, 1000); !strings.HasSuffix(got, want) || !strings.Contains(got, "2 scholars") {
+	if got := buildingText(bs); !strings.HasSuffix(got, want) || !strings.Contains(got, "2 scholars") {
 		t.Errorf("buildingText = %q, want 2 scholars and it to end %q", got, want)
 	}
 	// A description that does not name the scholars gets them added.
-	if got := buildingText(game.BuildingState{Description: "A hall.", Scholars: 3, FullRateCopies: 5, Count: 1}, 1000); got != "A hall. 3 scholars a copy. Past 5 copies, each researches at half rate." {
+	if got := buildingText(game.BuildingState{Description: "A hall.", Scholars: 3, FullRateCopies: 5, Count: 1}); got != "A hall. 3 scholars a copy. Past 5 copies, each researches at half rate." {
 		t.Errorf("buildingText without the scholars in the description = %q", got)
 	}
 	if !strings.Contains(buildingsProvider(st, 120), want) {
@@ -304,7 +304,7 @@ func TestKnowledgeBuildingShowsScholarsAndSoftCap(t *testing.T) {
 		}
 	}
 	// A building that is not a knowledge building adds nothing.
-	if got := buildingText(game.BuildingState{Description: "A hut."}, 1000); got != "A hut." {
+	if got := buildingText(game.BuildingState{Description: "A hut."}); got != "A hut." {
 		t.Errorf("buildingText of a plain building = %q", got)
 	}
 }

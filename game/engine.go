@@ -2863,7 +2863,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 
 // injectEpochRates starts an epoch event's timed rates (ev.Rates), sized
 // for this town (event_size.go), and logs the amounts they came to under
-// the event's headline: "  → Food -4.8/tick for ~10m." The flavor text
+// the event's headline: "  → Food -2.4/s for ~10m." The flavor text
 // states each rate as a share of the town's production; this line is the
 // amount. primary stands in for a rate that names no resource (the era's
 // primary one). A rate that comes to nothing (a town that makes none of
