@@ -267,15 +267,15 @@ func (p *historyPanel) runLine(p2 *kit.Painter, org image.Point, _, r runRow, y,
 		ac = toward(c.ground, ac, .55)
 	}
 	histFill(p2, org, image.Rect(x0+cl.age, y, x0+cl.age+1, y+1), ac)
-	name, nc, bold := r.name, text, false
+	name, nc, bold, tag := r.name, text, false, ""
+	room := cl.end - cl.name - 1
 	if r.playing {
+		// the run in play has no outcome sign, so its name runs to the age swatch
 		nc, bold = c.bright, true
-		name += " " + txtInPlay.String()
+		tag = " " + txtInPlay.String()
+		room = cl.age - cl.name - 1
 	}
-	if room := cl.end - cl.name - 1; runeLen(name) > room {
-		name = string([]rune(name)[:max(0, room)])
-	}
-	p.text(p2, org, x0+cl.name, y, name, nc, bold)
+	p.text(p2, org, x0+cl.name, y, fitText(name, room-runeLen(tag))+tag, nc, bold)
 	p.text(p2, org, x0+cl.age+3, y, histFit(v.ageName(r.age), cl.length-cl.age-4), ac, false)
 	p.text(p2, org, x0+cl.length, y, histTime(r.length), text, false)
 	if cl.counts > 0 {

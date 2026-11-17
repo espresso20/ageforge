@@ -207,3 +207,47 @@ func TestHistoryNothingOutsideThePanel(t *testing.T) {
 		}
 	}
 }
+
+// histCells gives the panel picture cells for the test.
+func histCells(t *testing.T) {
+	was := pictureCell
+	pictureCell = func() (int, int) { return 12, 24 }
+	t.Cleanup(func() { pictureCell = was })
+}
+
+func histRowText(b *kit.Buffer, y, w int) string {
+	return bufText(b, image.Rect(0, y, w, y+1))
+}
+
+// A long name of the run in play is cut with an ellipsis and keeps its tag.
+func TestHistoryRunNameCutWithEllipsis(t *testing.T) {
+	histCells(t)
+	p := histFixturePanel(160, 40, fixtureRun(300, 4, 1), nil)
+	p.name = "Sanctuary of Frostvale"
+	p.setRange(rangeAll)
+	p.Layout(p.Bounds())
+	row := histRowText(histPaint(p), p.v.geo.listTop+1, p.w)
+	if !strings.Contains(row, "…") || !strings.Contains(row, txtInPlay.String()) {
+		t.Errorf("row %q lacks the ellipsis or the tag", row)
+	}
+	p.name = "Hearth"
+	p.Layout(p.Bounds())
+	row = histRowText(histPaint(p), p.v.geo.listTop+1, p.w)
+	if strings.Contains(row, "…") || !strings.Contains(row, "Hearth "+txtInPlay.String()) {
+		t.Errorf("short name altered: %q", row)
+	}
+}
+
+// At 100 columns the All runs key bar keeps every key, Enter included.
+func TestHistoryKeyBarFitsAt100(t *testing.T) {
+	histCells(t)
+	p := histFixturePanel(100, 40, fixtureRun(300, 4, 1), []game.RunRecord{fixtureRecord("a", game.RunPrestige, 300, 4, 1)})
+	p.setRange(rangeAll)
+	p.Layout(p.Bounds())
+	row := histRowText(histPaint(p), p.v.geo.footY, p.w)
+	for _, w := range []string{txtKeyPointer.String(), txtKeyMeasure.String(), txtKeyRange.String(), txtKeyLog.String(), txtKeyRun.String(), txtKeyGhost.String()} {
+		if !strings.Contains(row, w) {
+			t.Errorf("key bar %q lacks %q", row, w)
+		}
+	}
+}
