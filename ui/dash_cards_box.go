@@ -79,6 +79,7 @@ type placedCard struct {
 	y     int // grid row of its first row
 	rows  int
 	price [][]costPart
+	tx    int // the column its words start at, in the box's cells
 	build int // the index of its Build button in the box's keys
 	// compact says the card is stacked (compactBelow). keyRow is the row of
 	// its Build key, and reasonRow the row of its reason: the foot row, 0 when
@@ -137,9 +138,12 @@ type buildBox struct {
 	noteBeside bool
 
 	// the layout
-	grid     *xgrid
-	w, h     int
-	dirty    bool
+	grid  *xgrid
+	w, h  int
+	dirty bool
+	// pickTip asks the next paint to aim the tooltip at the card the keys
+	// just picked.
+	pickTip  bool
 	placed   []placedCard
 	more     int // the grid row of the quiet row, -1 for none
 	olderRow int // the grid row of the older buildings' row, -1 for none
@@ -266,7 +270,7 @@ func (b *buildBox) settlePick() {
 
 // pick picks the card of key.
 func (b *buildBox) pick(key string) {
-	b.picked, b.pickAt = key, max(slices.Index(b.order, key), 0)
+	b.picked, b.pickAt, b.pickTip = key, max(slices.Index(b.order, key), 0), !b.in
 	b.refreshDetail()
 	b.dirty = true
 }
@@ -362,7 +366,7 @@ func priceLines(parts []costPart, room int) [][]costPart {
 		if n > room {
 			flush()
 			for _, chunk := range wrapWords(p.text, max(room, 1)) {
-				lines = append(lines, []costPart{{chunk, p.ok}})
+				lines = append(lines, []costPart{{text: chunk, ok: p.ok}})
 			}
 			continue
 		}
@@ -579,7 +583,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 				keyRow = rows - 1
 			}
 		}
-		pc := placedCard{card: c, y: y, rows: rows, price: lines, compact: compact, keyRow: keyRow, reasonRow: reasonRow, build: -1}
+		pc := placedCard{card: c, y: y, rows: rows, price: lines, tx: tx, compact: compact, keyRow: keyRow, reasonRow: reasonRow, build: -1}
 		switch {
 		case c.older:
 		case compact:
@@ -587,12 +591,12 @@ func (b *buildBox) drawAt(w, h, d int) {
 			word := " " + txtBuild.String() + " "
 			r := image.Rect(kx, y+keyRow, kx+compactKeyW, y+keyRow+1)
 			g.put(kx, y+keyRow, fitText(word, compactKeyW), xKeycap)
-			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild})
+			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild, why: c.reason})
 		case c.key == b.picked:
 			// The picked card has the one primary button.
 			by := y + (rows-actionRows)/2
 			bxx := 1 + iw - bw - 1
-			spec := actionSpec{kind: keyPrimary, label: txtBuild.String(), cmd: c.cmd, off: !c.canBuild}
+			spec := actionSpec{kind: keyPrimary, label: txtBuild.String(), cmd: c.cmd, off: !c.canBuild, why: c.reason}
 			if c.canBuild && bw == buildColWide {
 				spec.key = "Enter"
 			}
@@ -607,7 +611,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 			kx, ky := 1+iw-compactKeyW-1, y+(rows-actionRows)/2+1
 			r := image.Rect(kx, ky, kx+compactKeyW, ky+1)
 			g.put(kx, ky, fitText(" "+txtBuild.String()+" ", compactKeyW), xKeycap)
-			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild})
+			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild, why: c.reason})
 			pc.small = true
 		}
 		if !c.older {
@@ -678,6 +682,9 @@ func (b *buildBox) Mouse(m kit.Mouse) bool {
 	if b.in {
 		b.hover = b.cardAt(b.over)
 	}
+	if m.Kind == kit.MouseMove {
+		b.aimPrice(org)
+	}
 	if b.grid != nil && b.k.mouse(b.grid, org, m) {
 		return true
 	}
@@ -703,6 +710,52 @@ func (b *buildBox) Mouse(m kit.Mouse) bool {
 		}
 	}
 	return was != b.hover
+}
+
+// tipPrice is the target of the tooltip of one card's price.
+type tipPrice struct {
+	b   *buildBox
+	key string
+}
+
+// priceRect is the cells of a card's price lines, in the box's cells.
+func (b *buildBox) priceRect(pc placedCard) (image.Rectangle, bool) {
+	w := 0
+	for _, line := range pc.price {
+		n := 0
+		for j, part := range line {
+			n += runeLen(part.text) + 3*min(j, 1)
+		}
+		w = max(w, n)
+	}
+	return image.Rect(pc.tx, pc.y+2, pc.tx+w, pc.y+2+len(pc.price)), len(pc.card.price) > 0
+}
+
+// aimPrice aims the tooltip at the price of the card under the pointer when
+// the pointer is on its price lines.
+func (b *buildBox) aimPrice(org image.Point) {
+	if b.hover < 0 || b.hover >= len(b.placed) {
+		return
+	}
+	pc := b.placed[b.hover]
+	if r, ok := b.priceRect(pc); ok && b.over.In(r) {
+		b.k.sense().tip.Aim(tipPrice{b, pc.card.key}, r.Add(org), priceTip(pc.card.price), false)
+	}
+}
+
+// aimPicked aims the tooltip at the card the keys picked: its Build button
+// when that is off and has a reason, else its price.
+func (b *buildBox) aimPicked(org image.Point) {
+	for _, pc := range b.placed {
+		if pc.card.key != b.picked || pc.build < 0 {
+			continue
+		}
+		if k := b.cardKeys.keys[pc.build]; k.off && k.why != "" {
+			b.k.sense().tip.Aim(tipKey{&b.k, k.r}, k.r.Add(org), kit.TipText{Reason: k.why}, true)
+		} else if r, ok := b.priceRect(pc); ok {
+			b.k.sense().tip.Aim(tipPrice{b, pc.card.key}, r.Add(org), priceTip(pc.card.price), true)
+		}
+	}
 }
 
 // moreClicked is a click on the quiet row: it opens the rest of the cards;
@@ -889,6 +942,10 @@ func (b *buildBox) Paint(p *kit.Painter) {
 	cw, ch := 0, 0
 	if pictureCell != nil && !plain {
 		cw, ch = pictureCell()
+	}
+	if b.pickTip {
+		b.pickTip = false
+		b.aimPicked(r.Min)
 	}
 	hot, isHot := b.k.lit(b.cardKeys)
 	for i := range b.placed {

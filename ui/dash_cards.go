@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // dash_cards.go is the model of the dashboard's Buildings box: a card for
@@ -58,11 +59,27 @@ const (
 	groupLater        // the rest, and what a lock or a limit holds
 )
 
-// costPart is one resource of a price: its text, and whether the player holds
-// enough of it.
+// costPart is one resource of a price: its text, whether the player holds
+// enough of it, and what it is made of (the resource, held and needed).
 type costPart struct {
-	text string
-	ok   bool
+	text       string
+	ok         bool
+	res        string
+	have, need float64
+}
+
+// priceTip is the tooltip of a price: a line a resource, with what is held and
+// what is needed, the short ones marked with the sign the reason line uses.
+func priceTip(price []costPart) kit.TipText {
+	var t kit.TipText
+	for _, p := range price {
+		mark := "  "
+		if !p.ok {
+			mark = "! "
+		}
+		t.Lines = append(t.Lines, mark+vibe.Sprintf("ui.dash_cards.priceTip.01", "%s: have %s, need %s", game.ResourceName(p.res), textfmt.Number(p.have), textfmt.Number(p.need)))
+	}
+	return t
 }
 
 // buildCard is one building as the box lists it.
@@ -152,7 +169,7 @@ func buildCards(state game.GameState, buy buyChoice) []buildCard {
 			if shown[res] == 0 {
 				continue
 			}
-			c.price = append(c.price, costPart{game.Amount(shown[res], res), state.Resources[res].Amount >= shown[res]})
+			c.price = append(c.price, costPart{text: game.Amount(shown[res], res), ok: state.Resources[res].Amount >= shown[res], res: res, have: state.Resources[res].Amount, need: shown[res]})
 		}
 		c.frac, c.share = priceHeld(state, one)
 		c.canBuild = bs.CanBuild && !limit

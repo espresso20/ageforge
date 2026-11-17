@@ -68,13 +68,17 @@ func (t *Tip) Aim(id any, target image.Rectangle, text TipText, byKey bool) {
 	t.id, t.target, t.text = id, target, text
 }
 
-// Move clears the tip unless the pointer only moved within the target.
-func (t *Tip) Move(m Mouse) {
+// Move clears the tip unless the pointer only moved within the target, and
+// reports whether it took a shown tip away (the screen is drawn again).
+func (t *Tip) Move(m Mouse) bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.id != nil && !(m.Kind == MouseMove && m.Pt().In(t.target)) {
-		t.id = nil
+	if t.id == nil || (m.Kind == MouseMove && m.Pt().In(t.target)) {
+		return false
 	}
+	shown := !t.now().Before(t.due)
+	t.id = nil
+	return shown
 }
 
 // Clear takes the tip away.

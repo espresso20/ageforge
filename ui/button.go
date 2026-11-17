@@ -75,6 +75,9 @@ type keyFeel struct {
 	// preview is the command line of the button the pointer rests on, "" for
 	// none: the command bar shows it dim while the bar is empty.
 	preview string
+	// tip is the tooltip of the screen: a button that is off, a price, a rate
+	// each aim it when the pointer rests; a key or a click takes it away.
+	tip kit.Tip
 	// motion says whether the motion setting is on (nil: off); glintOn is set
 	// by a paint that drew a button's glint and wake is the time (Unix
 	// nanoseconds) from which the next pose of it is due.
@@ -94,6 +97,7 @@ func (f *keyFeel) clock() time.Time {
 // away.
 func (f *keyFeel) typed(k kit.Key) {
 	f.key, f.preview = k, ""
+	f.tip.Clear()
 	f.end.Store(f.clock().Add(keySteps * coinStep).UnixNano())
 }
 

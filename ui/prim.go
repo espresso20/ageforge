@@ -280,7 +280,8 @@ func (a *appLoop) Key(k kit.Key) {
 
 func (a *appLoop) Mouse(m kit.Mouse) {
 	a.offer(func() {
-		if tree := a.rootTree(); tree != nil && tree.Mouse(m) {
+		gone := a.feel.tip.Move(m)
+		if tree := a.rootTree(); (tree != nil && tree.Mouse(m)) || gone {
 			a.draw()
 		}
 	})

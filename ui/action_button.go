@@ -111,6 +111,8 @@ type actionSpec struct {
 	ask, yes   string
 	sign       signKind
 	off        bool
+	// why is the line that says why it is off (xkey.why).
+	why string
 }
 
 // actionW is the cells an action button takes: the label, the key when it
@@ -140,7 +142,7 @@ func (s *keySet) action(x, y int, a actionSpec, put func(x, y int, text string))
 	mid := y + 1
 	label := image.Rect(x+left, mid, x+left+len([]rune(a.label)), mid+1)
 	put(label.Min.X, mid, a.label)
-	b := xkey{r: image.Rect(x, y, x+w, y+actionRows), word: label, kind: a.kind, cmd: a.cmd, ask: a.ask, yes: a.yes, sign: a.sign, off: a.off}
+	b := xkey{r: image.Rect(x, y, x+w, y+actionRows), word: label, kind: a.kind, cmd: a.cmd, ask: a.ask, yes: a.yes, sign: a.sign, off: a.off, why: a.why}
 	if a.key != "" {
 		cx := label.Max.X + 1
 		b.cap = image.Rect(cx, mid, cx+len([]rune(a.key))+2, mid+1)

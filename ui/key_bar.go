@@ -27,6 +27,9 @@ type xkey struct {
 	// off marks a key that is drawn but unavailable; still, one that names no
 	// key to press ("1-9"): drawn as a key, never pressed.
 	off, still bool
+	// why says in a line why the key is off, shown as a tooltip while the
+	// pointer rests on it; off alone decides whether the key is off.
+	why string
 	// cmd is the command line a click runs, through the path a typed line
 	// takes, in place of pressing key. Empty for a key that only presses.
 	cmd string
@@ -37,6 +40,12 @@ type xkey struct {
 	yes string
 	// sign is the picture at the left of an action button.
 	sign signKind
+}
+
+// tipKey is the target of the tooltip of one key of one panel.
+type tipKey struct {
+	k *keyPresser
+	r image.Rectangle
 }
 
 // keySet is the buttons a panel drew and what it needs to read them back:
@@ -353,6 +362,9 @@ func (k *keyPresser) mouse(h keyHolder, org image.Point, m kit.Mouse) bool {
 	}
 	now, isLit := k.lit(s)
 	k.preview(now, isLit)
+	if m.Kind == kit.MouseMove && isLit && now.off && now.why != "" {
+		k.sense().tip.Aim(tipKey{k, now.r}, now.r.Add(org), kit.TipText{Reason: now.why}, false)
+	}
 	switch m.Kind {
 	case kit.MousePress:
 		// A press is a key's or it is not: one that only moved the light is

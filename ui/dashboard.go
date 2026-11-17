@@ -464,6 +464,7 @@ func (d *Dashboard) build() {
 	}
 	d.app.line, d.app.confirm = d.pressLine, d.askLine
 	d.app.feel.motion = func() bool { return d.mapSettings().Motion }
+	d.app.feel.tip.Cell = d.tipCell
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
 	d.inputField.SetBorder(true)
 	theme.Track(func() {
@@ -765,7 +766,7 @@ func sidebarText(active string, w, h int) string {
 // over it the active theme's ambient effect.
 func (d *Dashboard) Root() Primitive {
 	if d.rootFx == nil {
-		d.rootFx = newFxRoot(d.root, d.drawEffect, d.drawMoment)
+		d.rootFx = newFxRoot(d.root, d.drawEffect, d.drawOver)
 	}
 	return d.rootFx
 }
@@ -814,6 +815,27 @@ func (d *Dashboard) drawMoment(p *kit.Painter, bounds image.Rectangle) {
 	d.momentOn.Store(d.moment.paint(p, area, d.clock()(), set.Motion, set.Tier))
 }
 
+// tipCell is the cell size the tooltip's picture is drawn at: none in the
+// plain glyph set, or with no window.
+func (d *Dashboard) tipCell() (int, int) {
+	if pictureCell == nil || d.mapSettings().Tier == mapmodel.TierASCII {
+		return 0, 0
+	}
+	return pictureCell()
+}
+
+// drawOver draws what goes over the dashboard: the moment, then the tooltip,
+// which is the last thing painted. A panel over the dashboard takes the
+// tooltip away.
+func (d *Dashboard) drawOver(p *kit.Painter, bounds image.Rectangle) {
+	d.drawMoment(p, bounds)
+	if d.overlayMgr.HasActive() {
+		d.app.feel.tip.Clear()
+		return
+	}
+	d.app.feel.tip.Paint(p, image.Rect(bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y-promptRows))
+}
+
 // StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).
 // This is intentionally slower than the game tick rate (which can reach ~5 fps
 // at 2x speed) to avoid burning CPU on redraws.
@@ -841,7 +863,7 @@ func (d *Dashboard) StartUpdates() {
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.badgePanel.moving.Load() || d.momentOn.Load() || d.epochHall.pics.moving.Load() || d.app.feel.busy() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.badgePanel.moving.Load() || d.momentOn.Load() || d.epochHall.pics.moving.Load() || d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
