@@ -36,6 +36,7 @@ func TestHistoryLogDefaultOnAllRunsOnly(t *testing.T) {
 			t.Errorf("range %d: log %v, want %v", r, p.v.logOn, want)
 		}
 	}
+	p.setRange(rangeAll)
 	p.setLog(false)
 	p.setRange(rangeRun)
 	p.setRange(rangeAll)
