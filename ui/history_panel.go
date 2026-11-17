@@ -401,7 +401,7 @@ func (p *historyPanel) layoutPicker(g *xgrid) {
 		}
 		g.hit(hitHistMeasure, r.idx, 1, y, 28, 1)
 		if r.idx == p.row {
-			g.put(1, y, "›", xAccent)
+			g.put(1, y, "▸", xAccent)
 		}
 	}
 }

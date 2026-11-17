@@ -238,6 +238,18 @@ func TestHistoryRunNameCutWithEllipsis(t *testing.T) {
 	}
 }
 
+// The runs picker's cursor is a glyph the plain tier folds, not a stray one.
+func TestHistoryPlainPickerCursor(t *testing.T) {
+	histCells(t)
+	pictureCell = nil
+	p := histFixturePanel(160, 40, fixtureRun(300, 4, 1), nil)
+	p.Layout(p.Bounds())
+	b := histPaint(p)
+	if txt := bufText(b, image.Rect(0, 0, p.w, p.h)); strings.ContainsRune(txt, '?') || !strings.Contains(txt, ">") {
+		t.Errorf("plain picker shows a stray mark or no cursor:\n%s", txt)
+	}
+}
+
 // At 100 columns the All runs key bar keeps every key, Enter included.
 func TestHistoryKeyBarFitsAt100(t *testing.T) {
 	histCells(t)
