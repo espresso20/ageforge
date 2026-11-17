@@ -145,6 +145,8 @@ type Dashboard struct {
 	peoplePanel *peoplePanel
 	// statsPanel is the Stats panel: the record board of the run.
 	statsPanel *statsPanel
+	// historyPanel is the History panel: the metrics of the run.
+	historyPanel *historyPanel
 
 	// decks are the panels drawn as decks of cards (deck_panel.go), by
 	// overlay name.
@@ -195,6 +197,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),
+		historyPanel:  newHistoryPanel(),
 		decks:         map[string]*deckPanel{},
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
@@ -305,7 +308,14 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		d.overlayMgr.Refresh(d.engine.GetState())
 		return nil
 	})
-	d.overlayMgr.Register("history", vibe.E("ui.dashboard.NewDashboard.16", "Civilization History"), historyProvider(d.engine))
+	d.historyPanel.settings = d.mapSettings
+	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
+		return d.engine.History(), d.engine.RunArchive(), d.engine.ActiveSaveName()
+	}
+	d.historyPanel.prompt = d.researchPanel.prompt
+	d.historyPanel.toPrompt = d.handToPrompt
+	d.historyPanel.buttons.wire(d.app)
+	d.overlayMgr.RegisterWidget("history", txtHistoryTitle, d.historyPanel.open, d.historyPanel.update)
 	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
 	d.vibeSeen = vibe.On()
 	d.overlayMgr.Register("help", vibe.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)

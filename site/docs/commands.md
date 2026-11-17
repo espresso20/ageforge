@@ -428,9 +428,9 @@ See [Milestones](milestones.md) and [Epochs](epochs.md).
 
 | Command | Description |
 |---|---|
-| `history` | Open the Civilization History panel: braille line graphs of key metrics over time. |
+| `history` | Open the History panel: one chart of the run, with ranges for this age, this run and all runs, and a list of finished runs. |
 
-The History panel shows 7 graphs: Population, Food rate, Research rate, Faith, Morale, All production and Game speed. It keeps the last 300 samples, one every 10 ticks, so each graph covers about the last 100 minutes. Age advances appear as `│` markers across all graphs. History is saved with your game. See [History](history.md).
+The chart shows up to three measures at once (keys 1 to 0 for the core ten), with a pointer on the left and right arrows, Tab for the range, `-` for log scale, and Up, Down and Enter to draw a finished run behind the current one. See [History](history.md).
 
 ---
 

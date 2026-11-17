@@ -262,3 +262,21 @@ func TestEditDistance(t *testing.T) {
 		}
 	}
 }
+
+func TestDurationExact(t *testing.T) {
+	cases := map[time.Duration]string{
+		0:                                   "0s",
+		45 * time.Second:                    "45s",
+		72 * time.Minute:                    "1h 12m",
+		26 * time.Hour:                      "1d 2h",
+		(3*24 + 4) * time.Hour:              "3d 4h",
+		(3*24+4)*time.Hour + 20*time.Minute: "3d 4h 20m",
+		24*time.Hour + 5*time.Minute:        "1d 5m",
+		48 * time.Hour:                      "2d",
+	}
+	for d, want := range cases {
+		if got := DurationExact(d); got != want {
+			t.Errorf("DurationExact(%v) = %q, want %q", d, got, want)
+		}
+	}
+}

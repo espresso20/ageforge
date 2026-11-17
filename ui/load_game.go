@@ -576,6 +576,8 @@ func capKey(name string) (kit.Key, bool) {
 		return kit.Key{Code: kit.KeyHome}, true
 	case "End":
 		return kit.Key{Code: kit.KeyEnd}, true
+	case "Space":
+		return kit.Key{Code: kit.KeyRune, Rune: ' '}, true
 	case "+":
 		return kit.Key{Code: kit.KeyRune, Rune: '+'}, true
 	case "-", "−":

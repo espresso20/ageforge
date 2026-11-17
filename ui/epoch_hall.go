@@ -236,7 +236,7 @@ func newHallView(state game.GameState) hallView {
 	stat := func(n int, label string) hallStat {
 		return hallStat{value: textfmt.Int(n), big: textfmt.Int(n), label: label}
 	}
-	techs := stat(state.Research.TotalResearched, vibe.Line("ui.epoch_hall.newHallView.04", "Techs"))
+	techs := stat(state.Research.TotalResearched, txtTechsShort.String())
 	techs.value = vibe.Sprintf("ui.epoch_hall.newHallView.03", "%s of %s", textfmt.Int(state.Research.TotalResearched), textfmt.Int(len(set.Techs())))
 	techs.hasBar = true
 	if total := len(set.Techs()); total > 0 {
@@ -453,3 +453,6 @@ func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hall
 	c.sky(v.seed)
 	return c
 }
+
+// txtTechsShort is said the same way on several screens, so it has one id.
+var txtTechsShort = vibe.E("ui.epoch_hall.newHallView.04", "Techs")
