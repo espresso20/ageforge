@@ -30,9 +30,43 @@ func TestTipShowsOnlyAfterDelay(t *testing.T) {
 			t.Fatalf("byKey=%v: shown early", byKey)
 		}
 		c.t = c.t.Add(time.Millisecond)
-		if !tip.Visible() || tip.Waiting() {
-			t.Fatalf("byKey=%v: not shown after the delay", byKey)
+		if !tip.Visible() || !tip.Waiting() {
+			t.Fatalf("byKey=%v: not shown, or not asking to be drawn, after the delay", byKey)
 		}
+		tip.Paint(NewPainter(NewBuffer(80, 24)), image.Rect(0, 0, 80, 24))
+		if !tip.Visible() || tip.Waiting() {
+			t.Fatalf("byKey=%v: still asking to be drawn once painted", byKey)
+		}
+	}
+}
+
+func TestTipStopsWaitingWhenNeverPainted(t *testing.T) {
+	tip, c := newTip()
+	tip.Aim("a", tipTarget, TipText{Lines: []string{"x"}}, false)
+	c.t = c.t.Add(TipDelay + time.Second)
+	if tip.Waiting() {
+		t.Fatal("an unpainted tip asks to be drawn for ever")
+	}
+}
+
+func TestTipWideCoversItsRow(t *testing.T) {
+	area := image.Rect(0, 0, 120, 24)
+	row := image.Rect(2, 5, 62, 6)
+	tip, c := newTip()
+	tip.Aim("a", row, TipText{Lines: []string{"x"}, Wide: true}, false)
+	c.t = c.t.Add(TipDelay)
+	if r := tip.Rect(area); r.Min.X != row.Min.X || r.Dx() != row.Dx() {
+		t.Errorf("wide plate %v does not span its row %v", r, row)
+	}
+	tip.Aim("b", row, TipText{Lines: []string{"x"}}, false)
+	c.t = c.t.Add(TipDelay)
+	if r := tip.Rect(area); r.Dx() >= row.Dx() {
+		t.Errorf("plain plate %v is as wide as the row", r)
+	}
+	tip.Aim("c", image.Rect(0, 5, 200, 6), TipText{Lines: []string{"x"}, Wide: true}, false)
+	c.t = c.t.Add(TipDelay)
+	if r := tip.Rect(area); !r.In(area) {
+		t.Errorf("wide plate %v leaves the area %v", r, area)
 	}
 }
 

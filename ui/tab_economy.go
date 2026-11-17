@@ -492,5 +492,5 @@ func (t *EconomyTab) rateTip(i int) (any, kit.TipText, bool) {
 	if more := len(src) - len(shown); more > 0 {
 		lines = append(lines, vibe.Sprintf("ui.tab_economy.rateTip.01", "  and %d more", more))
 	}
-	return tipRate{key}, kit.TipText{Lines: lines}, true
+	return tipRate{key}, kit.TipText{Lines: lines, Wide: true}, true
 }

@@ -14,7 +14,8 @@ import (
 const (
 	// TipDelay is how long a target is rested on before its tip shows.
 	TipDelay = 400 * time.Millisecond
-	// TipMaxCols and TipMaxRows bound the plate, border included.
+	// TipMaxCols and TipMaxRows bound the plate, border included. A wide
+	// tip is as wide as its target when that is wider.
 	TipMaxCols, TipMaxRows = 40, 6
 )
 
@@ -23,6 +24,9 @@ const (
 type TipText struct {
 	Lines  []string
 	Reason string
+	// Wide makes the plate at least as wide as its target, for a tip that
+	// hangs under a whole row.
+	Wide bool
 }
 
 // A Tip is the one tooltip of a screen: a small plate that shows after the
@@ -42,6 +46,7 @@ type Tip struct {
 	target image.Rectangle
 	text   TipText
 	due    time.Time
+	drawn  bool
 	img    *image.RGBA
 	imgKey [3]int
 }
@@ -63,7 +68,7 @@ func (t *Tip) Aim(id any, target image.Rectangle, text TipText, byKey bool) {
 	same := t.id != nil && t.id == id
 	shown := same && !t.now().Before(t.due)
 	if !same || (!byKey && !shown) {
-		t.due = t.now().Add(TipDelay)
+		t.due, t.drawn = t.now().Add(TipDelay), false
 	}
 	t.id, t.target, t.text = id, target, text
 }
@@ -95,12 +100,13 @@ func (t *Tip) Visible() bool {
 	return t.id != nil && !t.now().Before(t.due)
 }
 
-// Waiting reports whether a tip is due but not yet showing, so that the
-// screen is drawn again once it is.
+// Waiting reports whether a tip is aimed and its plate not painted yet, so
+// that the screen is drawn again as soon as it is due. It gives up a second
+// after that, for a screen that does not paint the tip.
 func (t *Tip) Waiting() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return t.id != nil && t.now().Before(t.due)
+	return t.id != nil && !t.drawn && t.now().Before(t.due.Add(time.Second))
 }
 
 // cut shortens s to w columns, ending in ell when it was cut.
@@ -174,6 +180,9 @@ func (t *Tip) rect(area image.Rectangle) image.Rectangle {
 		h++
 	}
 	w, h = min(w+ink, TipMaxCols), min(h+padRows, TipMaxRows)
+	if t.text.Wide {
+		w = min(max(w, t.target.Dx()), area.Dx())
+	}
 	x, y := t.target.Min.X, t.target.Max.Y
 	if y+h > area.Max.Y {
 		y = t.target.Min.Y - h
@@ -201,6 +210,7 @@ func (t *Tip) Paint(p *Painter, area image.Rectangle) {
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.drawn = true
 	r := t.rect(area)
 	if r.Empty() {
 		return
