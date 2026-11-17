@@ -1630,7 +1630,7 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	// The log line states what the event did, with the real amounts, and
 	// how long a timed event lasts: its duration is stretched with the age
 	// (EventManager.Tick).
-	line := eventLine(def.LogMessage, out, ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
+	line := eventLine(def.LogMessage, out, ge.tickIntervalLocked().Seconds(), ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
 	// Setbacks log as warnings so they don't read like windfalls.
 	var about LogTag
 	if out.workers > 0 {
@@ -2912,7 +2912,7 @@ func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, ef
 // logTimedEffects logs a timed boost or penalty as
 // "  → All production +25% for ~6m." Caller holds ge.mu.
 func (ge *GameEngine) logTimedEffects(logType string, effects []config.Effect, ticks int) {
-	if text := effectsText(effects); text != "" {
+	if text := effectsText(effects, ge.tickIntervalLocked().Seconds()); text != "" {
 		ge.addLog(logType, vibe.Sprintf("game.engine.logTimedEffects.01", "  → %s for %s.", textfmt.Capitalize(text), ge.durationLocked(ticks)))
 	}
 }
@@ -2943,15 +2943,17 @@ func (ge *GameEngine) gainResource(res string, amount float64) float64 {
 }
 
 // effectsText describes timed event effects: "all production +25%",
-// "food -3/tick and gold +5/tick". Unknown effect types are left out.
-func effectsText(effects []config.Effect) string {
+// "food -1.5/s and gold +2.5/s". Rates are per second; tickSeconds is the
+// length of the engine's tick, which the caller reads under its own lock.
+// Unknown effect types are left out.
+func effectsText(effects []config.Effect, tickSeconds float64) string {
 	var parts []string
 	for _, e := range effects {
 		switch e.Type {
 		case "production_all":
 			parts = append(parts, vibe.Line("game.engine.effectsText.01", "all production ")+textfmt.SignedPercent(e.Value))
 		case "production":
-			parts = append(parts, ResourceName(e.Target)+" "+textfmt.Rate(e.Value))
+			parts = append(parts, ResourceName(e.Target)+" "+textfmt.RateText(e.Value/tickSeconds))
 		case "research_boost":
 			parts = append(parts, vibe.Line("game.engine.effectsText.02", "research speed ")+textfmt.SignedPercent(e.Value))
 		}

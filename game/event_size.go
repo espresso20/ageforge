@@ -131,8 +131,9 @@ type eventOutcome struct {
 }
 
 // eventLine is a random event's log line: its own sentence, then what it
-// did, with the real amounts. duration is how long its rates last.
-func eventLine(sentence string, out eventOutcome, duration string) string {
+// did, with the real amounts. tickSeconds is the engine's tick length, which
+// the rates are said against; duration is how long they last.
+func eventLine(sentence string, out eventOutcome, tickSeconds float64, duration string) string {
 	parts := []string{"[comment]" + strings.TrimSpace(sentence) + "[-]"}
 	if lost := lossParts(out.lost, out.workers); len(lost) > 0 {
 		parts = append(parts, vibe.Line("game.event_size.eventLine.01", "Lost ")+joinAnd(lost)+".")
@@ -142,7 +143,7 @@ func eventLine(sentence string, out eventOutcome, duration string) string {
 	if len(gained) > 0 {
 		parts = append(parts, vibe.Line("game.event_size.eventLine.02", "Gained ")+joinAnd(gained)+".")
 	}
-	if text := effectsText(out.rates); text != "" {
+	if text := effectsText(out.rates, tickSeconds); text != "" {
 		parts = append(parts, textfmt.Capitalize(text)+vibe.Line("game.event_size.eventLine.03", " for ")+duration+".")
 	}
 	return strings.Join(parts, " ")

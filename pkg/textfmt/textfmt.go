@@ -108,14 +108,47 @@ func Signed(n float64) string {
 	return "+" + Number(n)
 }
 
-// Rate formats a per-tick rate with its unit: "+3.25/tick", "-0.12/tick".
-// Small rates keep three significant figures (0.004, 0.711).
-func Rate(r float64) string {
-	return RateValue(r) + "/tick"
+// The units a rate is read in.
+const (
+	PerSecond = "/s"
+	PerMinute = "/min"
+	PerHour   = "/h"
+)
+
+// rateFloor is the size under which a rate moves to the next unit.
+const rateFloor = 0.1
+
+// RateUnit is a rate per second in the unit a player reads it in: per second
+// when its size is at least rateFloor, else per minute when that is at least
+// rateFloor, else per hour. Zero is zero a second.
+func RateUnit(perSecond float64) (value float64, unit string) {
+	switch a := math.Abs(perSecond); {
+	case a == 0 || a >= rateFloor:
+		return perSecond, PerSecond
+	case a*60 >= rateFloor:
+		return perSecond * 60, PerMinute
+	}
+	return perSecond * 3600, PerHour
 }
 
-// RateValue is Rate without the "/tick" unit, for tables whose header already
-// names the unit.
+// RateNumber is a rate's number as it is printed: a plus on a gain, a zero
+// bare.
+func RateNumber(v float64) string {
+	if v > 0 {
+		return "+" + Number(v)
+	}
+	return Number(v)
+}
+
+// RateText is a rate per second as it is printed: "+3.25/s", "-7.2/min", "0/s".
+func RateText(perSecond float64) string {
+	v, unit := RateUnit(perSecond)
+	return RateNumber(v) + unit
+}
+
+// RateValue is a signed amount of a rate or a percentage-point figure with no
+// unit, for tables whose header already names it: "+3.25", "-0.12", "+0".
+// Small figures keep three significant figures (0.004, 0.711).
 func RateValue(r float64) string {
 	abs := math.Abs(r)
 	sign := "+"
