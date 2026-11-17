@@ -143,7 +143,7 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspect
 	add(b.Capacity > 0, staff)
 	if b.Rate > 0 && b.RateName != "" {
 		v, unit := textfmt.RateUnit(b.Rate)
-		add(true, "+"+textfmt.Number(v)+" "+strings.ToLower(b.RateName)+unit)
+		add(true, textfmt.RateNumber(v)+" "+strings.ToLower(b.RateName)+unit)
 	}
 	if upgrade := m.Catalog.Defs[b.Upgrade]; upgrade != nil {
 		add(true, vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.07", "upgrades to ")+upgrade.Name)

@@ -52,9 +52,8 @@ type GateRow struct {
 	Label string
 	// Have and Need count the row in its kind's unit.
 	Have, Need int
-	// Value and Target are a GateRowAmount's amounts, and Unit what they are
-	// per: PerTick is set for an amount counted per tick (an income), unset
-	// for a head count.
+	// Value and Target are a GateRowAmount's amounts. PerTick is set for an
+	// amount counted per tick (an income), unset for a head count.
 	Value, Target float64
 	PerTick       bool
 	Met           bool
