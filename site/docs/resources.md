@@ -6,6 +6,8 @@ The Resources box on the dashboard lists every resource with its amount and its 
 
 Amounts print with up to three figures and a unit from a thousand up: K, M, B, T and Q, and past Q the units go on as Qi, Sx, Sp, Oc, No and Dc (1.5K, 876M, 11.8Qi).
 
+The game shows every rate per second, or per minute or per hour when the figure would be too small to read. One tick lasts 2 seconds before speed bonuses, so a figure listed per tick on these pages is half that per second.
+
 ---
 
 ## Full resource table

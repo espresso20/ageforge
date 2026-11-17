@@ -358,7 +358,7 @@ Exploration is the tree's one tech with two ways in: it needs Map Making or Boat
 | `feudalism` | Feudalism | optional | 1h 27m | `the_plough` | +8% housing |
 | `chronometry` | Chronometry | optional | 1h 54m | none | +5% game speed |
 | `guilds` | Guilds | capstone | 4h 11m | `civil_engineering`, `metal_casting` | Buildings cost 4% less, construction takes 8% less time |
-| `steel_forging` | Steel Forging | spine | 40m | `iron_smelting` | +0.25 steel/tick, +8% iron production |
+| `steel_forging` | Steel Forging | spine | 40m | `iron_smelting` | +0.125 steel/s, +8% iron production |
 | `fortification` | Fortification | optional | 2h 28m | `imperial_legions` | Raids on you take 15% less, +10% military power |
 
 ---
@@ -473,7 +473,7 @@ Exploration is the tree's one tech with two ways in: it needs Map Making or Boat
 | `titanium_alloys` | Titanium Alloys | optional | 39h 50m | `chemical_engineering` | +5% steel production, +5% titanium ore production |
 | `special_forces` | Special Forces | optional | 51h 44m | `nuclear_deterrence` | Campaigns take 15% less time |
 | `electricity_tech` | Advanced Electrics | spine | 4h 52m | `nuclear_fission` | Opens the Power Grid Hub, +5% electricity production |
-| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 8h 15m | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
+| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 8h 15m | `rocketry`, `electricity_tech` | +0.5 data/s, +10% expedition rewards |
 | `computers` | Computers | spine | 6h 20m | `electricity_tech` | +5% scholar output, research takes 3% less time |
 
 ---
