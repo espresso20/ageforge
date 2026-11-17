@@ -334,8 +334,11 @@ func (p *historyPanel) Layout(r image.Rectangle) {
 	}
 	p.layoutPicker(g)
 	p.layoutRuns(g)
-	keys := [][2]string{{"←→", txtKeyPointer.String()}, {"1-0", txtKeyMeasure.String()}, {"Space", txtKeyShow.String()},
-		{"Tab", txtKeyRange.String()}, {"-", txtKeyLog.String()}}
+	keys := [][2]string{{"←→", txtKeyPointer.String()}, {"1-0", txtKeyMeasure.String()}}
+	if p.rng != rangeAll {
+		keys = append(keys, [2]string{"Space", txtKeyShow.String()})
+	}
+	keys = append(keys, [2]string{"Tab", txtKeyRange.String()}, [2]string{"-", txtKeyLog.String()})
 	if p.rng == rangeAll {
 		keys = append(keys, [2]string{"↑↓", txtKeyRun.String()}, [2]string{"Enter", txtKeyGhost.String()})
 	}
