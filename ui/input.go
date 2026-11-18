@@ -45,10 +45,9 @@ type CommandResult struct {
 	// tech's card. Empty leaves the panel as it was.
 	ResearchZoom string
 	ResearchCard string
-	// Badges says how the badge case (OverlayName "badges") opens: on a
-	// tab, or on a badge with its detail open. The zero value leaves the
-	// case as it was.
-	Badges badgeRequest
+	// Drawer is the key of the cabinet's drawer (OverlayName "badges") to
+	// open on. Empty leaves the selection as it was.
+	Drawer string
 	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
 	// the account; with no account loaded the dashboard keeps it for the
@@ -2669,34 +2668,20 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	return res
 }
 
-// cmdBadges opens the badge case: bare, on a family's tab ("badges ages"),
-// on the badges nearest their count ("badges next"), or on one badge's
-// detail by its name ("badges hut hoarder"). A name is looked for among the
-// badges in sight only: a withheld badge has no name to find.
+// cmdBadges opens the coin cabinet: bare, or on a drawer ("badges iron age",
+// "badges ledgers"). An age is looked for among the ages in sight only.
 func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 	res := panelReply("badges")
 	if len(args) == 0 {
 		return res
 	}
-	want := strings.ToLower(strings.Join(args, " "))
-	if want == "all" {
-		res.Badges = badgeRequest{tab: caseTabAll, setTab: true}
-		return res
+	word := strings.Join(args, " ")
+	key, ok := findCabinetDrawer(engine.GetState(), word)
+	if !ok {
+		return errorReply(vibe.Sprintf("ui.input.cmdBadges.02", "No drawer is called %q. Type badges to open the cabinet.", word))
 	}
-	if want == "next" {
-		res.Badges = badgeRequest{tab: caseTabNext, setTab: true}
-		return res
-	}
-	views, sum := engine.Badges()
-	if tab, ok := findBadgeTab(views, sum.HiddenCounted, want); ok {
-		res.Badges = badgeRequest{tab: tab, setTab: true}
-		return res
-	}
-	if key, ok := findBadge(views, want); ok {
-		res.Badges = badgeRequest{sel: key, card: true}
-		return res
-	}
-	return errorReply(vibe.Sprintf("ui.input.cmdBadges.01", "No badge or family in sight is called %q. Type badges to look through them.", strings.Join(args, " ")))
+	res.Drawer = key
+	return res
 }
 
 // wornTitle is the title an account wears: the one it chose, or the one

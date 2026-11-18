@@ -135,8 +135,8 @@ type Dashboard struct {
 	// researchPanel is the Research panel, the tech tree as a map
 	// (research_panel.go).
 	researchPanel *researchPanel
-	// badgePanel is the badge case (badge_panel.go).
-	badgePanel *badgePanel
+	// cabinet is the coin cabinet (cabinet_panel.go).
+	cabinet *cabinetPanel
 	// expPanel is the Expeditions panel: the Ready Room and the Expedition
 	// Report (expedition_panel.go).
 	expPanel *expeditionPanel
@@ -193,7 +193,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		mapViews:      mv,
 		mapPanel:      newMapPanel(mv),
 		researchPanel: newResearchPanel(),
-		badgePanel:    newBadgePanel(),
+		cabinet:       newCabinetPanel(engine.Account),
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),
@@ -222,13 +222,11 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.researchPanel.toPrompt = d.handToPrompt
 	d.researchPanel.wireButtons(d.app)
 	d.overlayMgr.RegisterWidget("techs", vibe.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
-	// The badge case: the account's badges. It leaves the keyboard with the
-	// command bar too.
-	d.badgePanel.settings = d.mapSettings
-	d.badgePanel.prompt = d.researchPanel.prompt
-	d.badgePanel.toPrompt = d.handToPrompt
-	d.badgePanel.buttons.wire(d.app)
-	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
+	// The coin cabinet: the account's collection. It leaves the keyboard with
+	// the command bar too.
+	d.cabinet.prompt = d.researchPanel.prompt
+	d.cabinet.toPrompt = d.handToPrompt
+	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.cabinet.open, d.cabinet.update)
 	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
 	d.expPanel.engine = d.engine
@@ -266,11 +264,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
 	d.epochHall.card = func(st game.GameState) (epochCardResult, error) { return makeEpochCard(st, copyImageToClipboard) }
 	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
-	// The Badges panel and the epoch screen draw their coins from one set
-	// of pictures.
-	coins := &coinCache{}
-	d.badgePanel.setCoins(coins)
-	d.epochHall.pics.cache = coins
+	d.epochHall.pics.cache = &coinCache{}
 	d.overlayMgr.SetOver("epoch", d.epochHall.paintCoins)
 	d.overlayMgr.SetNotice("epoch", d.epochHall.notice)
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
@@ -873,14 +867,11 @@ func (d *Dashboard) StartUpdates() {
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.badgePanel.moving.Load() || d.momentOn.Load() || d.epochHall.pics.moving.Load() || d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.momentOn.Load() || d.epochHall.pics.moving.Load() || d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
 							d.mapPanel.hide()
-						}
-						if d.overlayMgr.ActiveName() != "badges" {
-							d.badgePanel.moving.Store(false)
 						}
 						if d.overlayMgr.ActiveName() != "epoch" {
 							d.epochHall.pics.moving.Store(false)
@@ -1622,7 +1613,7 @@ func (d *Dashboard) runLine(text string) {
 		d.researchPanel.request(result.ResearchZoom, result.ResearchCard)
 	}
 	if result.OverlayName == "badges" {
-		d.badgePanel.request(result.Badges)
+		d.cabinet.request(result.Drawer)
 	}
 	if result.Vibe {
 		d.syncVibe()

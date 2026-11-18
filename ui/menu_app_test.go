@@ -87,7 +87,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 	for _, c := range []struct {
 		key  rune
 		page string
-	}{{'l', loadGamePage}, {'a', accountsPage}, {'b', menuBadgesPage}} {
+	}{{'l', loadGamePage}, {'a', accountsPage}, {'b', menuCabinetPage}} {
 		h.key(kit.KeyRune, c.key)
 		h.waitFor(c.page+" in front", 5*time.Second, func() bool { return h.frontPage() == c.page })
 		if clockRuns() {

@@ -93,10 +93,6 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 	if !strings.Contains(list, "1 secret badge, each with a hint in the badge case.") || strings.Contains(list, "Something about huts.") {
 		t.Errorf("the list should count the secret and leave its hint to the case:\n%s", list)
 	}
-	// `badges civilizations` finds no such tab to open.
-	if _, ok := findBadgeTab(views, false, "civilizations"); ok {
-		t.Error("a family out of sight can be opened by name")
-	}
 	sum.HiddenCounted = true
 	if got := titles(caseTabs(views, true)); got != "All Ages Civilizations Catastrophes Specials Next" {
 		t.Errorf("tabs once the hidden badges are counted: %q", got)

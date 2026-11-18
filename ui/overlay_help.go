@@ -114,10 +114,10 @@ func helpProvider(_ game.GameState, screenW int) string {
 	keys(helpPairs(researchKeys)...)
 	note(vibe.Line("ui.overlay_help.helpProvider.50", "Zoom is a command too: research tree close, research tree far."))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.51", "\n[gold]═══ The badge case ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.52", "Your account's badges. The prompt keeps working while it is open; the case takes the keys that print nothing."))
-	keys(helpPairs(badgeKeys)...)
-	note(vibe.Line("ui.overlay_help.helpProvider.53", "Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still."))
+	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.51", "\n[gold]═══ The coin cabinet ═══[-]\n"))
+	note(vibe.Line("ui.overlay_help.helpProvider.52", "Your account's coins. The prompt keeps working while it is open; the cabinet takes the keys that print nothing."))
+	keys(helpPairs(cabinetKeys)...)
+	note(vibe.Line("ui.overlay_help.helpProvider.53", "Finding a drawer is a command: badges <age>, badges ledgers."))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.54", "\n[gold]═══ The Expeditions panel ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.55", "The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing."))

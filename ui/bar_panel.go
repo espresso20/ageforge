@@ -102,9 +102,8 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 			update:     d.researchPanel.update,
 		},
 		"badges": {
-			routeKey:   d.badgePanel.routeKey,
-			closeFirst: d.badgePanel.closeCard,
-			update:     d.badgePanel.update,
+			routeKey: d.cabinet.routeKey,
+			update:   d.cabinet.update,
 		},
 		"expedition": {
 			routeKey:   d.expPanel.routeKey,

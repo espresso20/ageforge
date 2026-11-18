@@ -392,13 +392,12 @@ func registry() []*Command {
 			}},
 
 		{Name: "badges", Run: cmdBadges, Aliases: []string{"achievements"}, Section: secAccounts, BareOK: true,
-			Panel: vibe.Line("ui.help.panels.badges", "The badge case: every badge your account holds or can earn (alias: achievements)"),
-			Args:  []Arg{{Kind: ArgText, Words: []string{"next", "all"}, Optional: true}},
+			Panel: vibe.Line("ui.help.panels.badges", "The coin cabinet: every coin your account holds, a drawer for each age (alias: achievements)"),
+			Args:  []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{
-				{"badges", vibe.Line("ui.help.commands.badges", "Open the badge case (alias: achievements); the prompt keeps working while it is open")},
-				{"badges <family>", vibe.Line("ui.help.commands.badges.2", "Open it on a family's tab: ages, lineages, ladders, specials and the rest (all: every family)")},
-				{"badges next", vibe.Line("ui.help.commands.badges.3", "Open it on the badges you are closest to")},
-				{"badges <name>", vibe.Line("ui.help.commands.badges.4", "Open a badge's detail by its name, or a part of it")},
+				{"badges", vibe.Line("ui.help.commands.badges", "Open the coin cabinet (alias: achievements); the prompt keeps working while it is open")},
+				{"badges <age>", vibe.Line("ui.help.commands.badges.2", "Open it on an age's drawer, by its name")},
+				{"badges ledgers|curios|themes", vibe.Line("ui.help.commands.badges.3", "Open it on one of the other drawers")},
 			}},
 		{Name: "title", Run: cmdTitle, Section: secAccounts, BareOK: true,
 			Args: []Arg{{Kind: ArgText, Words: []string{"default"}, Optional: true}},

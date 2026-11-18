@@ -643,7 +643,7 @@ func (m *mainMenu) open(id string) {
 		m.app.SetFocus(page)
 	case miBadges:
 		m.leave()
-		openMenuBadges(m.app, m.pages, m.engine, "splash")
+		openMenuCabinet(m.app, m.pages, m.engine, "splash")
 	case miSettings:
 		m.settings = true
 		m.settingsSel = 0

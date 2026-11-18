@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/espresso20/ageforge/pkg/cabinet"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -36,8 +37,8 @@ func TestMacKeysTranslation(t *testing.T) {
 }
 
 // TestOptionKeysReachThePanels runs the real app: Option+Up and Option+Down
-// reach the badge case as PgUp and PgDn, Option+Left and Option+Right as
-// Home and End, and the map zooms on - and = when it is.
+// reach the panels as PgUp and PgDn, Option+Left and Option+Right as
+// Home and End (the cabinet takes the last two), and the map zooms on - and = when it is.
 func TestOptionKeysReachThePanels(t *testing.T) {
 	h := newReproHarness(t)
 	press := func(k kit.KeyCode, r rune, m kit.Mod) {
@@ -55,58 +56,24 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 	d := h.a.dashboard
 
 	h.submit("badges")
-	h.waitFor("the badge case", 5*time.Second, func() bool {
+	h.waitFor("the cabinet", 5*time.Second, func() bool {
 		var ok bool
-		h.onUI(func() {
-			ok = d.overlayMgr.ActiveName() == "badges" && d.badgePanel.model != nil && len(d.badgePanel.model.items) > 1
-		})
+		h.onUI(func() { ok = d.overlayMgr.ActiveName() == "badges" })
 		return ok
 	})
-	sel := func() string {
-		var s string
-		h.onUI(func() { s = d.badgePanel.view.sel })
-		return s
-	}
-	var first, last string
-	h.onUI(func() {
-		items := d.badgePanel.model.items
-		first, last = items[0].id, items[len(items)-1].id
-	})
-	if first == last {
-		t.Fatal("the badge case holds one badge")
+	sel := func() int {
+		var i int
+		h.onUI(func() { i = d.cabinet.sel })
+		return i
 	}
 	alt := kit.ModAlt
-
-	press(kit.KeyHome, 0, 0)
-	if sel() != first {
-		t.Fatalf("Home selects %q, want %q", sel(), first)
-	}
-	press(kit.KeyDown, 0, alt)
-	pgdn := sel()
-	if pgdn == first {
-		t.Error("Alt+Down did not move a page")
-	}
-	press(kit.KeyHome, 0, 0)
-	press(kit.KeyPgDn, 0, 0)
-	if sel() != pgdn {
-		t.Errorf("Alt+Down selected %q, PgDn %q", pgdn, sel())
-	}
-	press(kit.KeyUp, 0, alt)
-	pgup := sel()
-	press(kit.KeyHome, 0, 0)
-	press(kit.KeyPgDn, 0, 0)
-	press(kit.KeyPgUp, 0, 0)
-	if sel() != pgup {
-		t.Errorf("Alt+Up selected %q, PgUp %q", pgup, sel())
-	}
-
 	press(kit.KeyRight, 0, alt)
-	if sel() != last {
-		t.Errorf("Alt+Right selected %q, want the last badge %q", sel(), last)
+	if sel() != cabinet.Slots-1 {
+		t.Errorf("Alt+Right selected drawer %d, want the last", sel())
 	}
 	press(kit.KeyLeft, 0, alt)
-	if sel() != first {
-		t.Errorf("Alt+Left selected %q, want the first badge %q", sel(), first)
+	if sel() != 0 {
+		t.Errorf("Alt+Left selected drawer %d, want the first", sel())
 	}
 
 	// The map: Option+arrows and - = zoom it, the prompt having the rest.

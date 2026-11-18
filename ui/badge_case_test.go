@@ -6,7 +6,6 @@ import (
 	"image"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/rivo/uniseg"
@@ -318,35 +317,6 @@ func TestBadgeCaseSmallWindows(t *testing.T) {
 	}
 }
 
-// TestLegendaryShimmerShowsInThePlainTier: a legendary coin is a picture in
-// the plain tier too, and its picture changes with the clock while the
-// picture of a coin that is not earned does not.
-func TestLegendaryShimmerShowsInThePlainTier(t *testing.T) {
-	p, paint, tick := picturePanel(t)
-	p.view.tier = mapmodel.TierASCII
-	first := paint()
-	legend := -1
-	for i, c := range p.model.coins {
-		if p.look(c.it, coinArt).tier == config.BadgeLegendary && p.look(c.it, coinArt).earned() {
-			legend = i
-		}
-	}
-	if legend < 0 {
-		t.Fatal("no earned legendary coin is in view")
-	}
-	if oneColour(first.Pics[legend].Img) {
-		t.Error("the legendary coin is one flat colour in the plain tier")
-	}
-	moved := false
-	for range 24 {
-		tick(1)
-		moved = moved || !bytes.Equal(paint().Pics[legend].Img.Pix, first.Pics[legend].Img.Pix)
-	}
-	if !moved {
-		t.Error("the legendary coin's picture never changes in the plain tier")
-	}
-}
-
 // TestBadgeArtPaintsInEveryTheme paints the case and the detail on a screen
 // in every theme, and holds the colours to the rules:
 //
@@ -615,124 +585,6 @@ func TestBadgeCaseLadders(t *testing.T) {
 	}
 }
 
-// TestBadgePanelKeysAndMotion drives the panel as the dashboard does: the
-// arrows move, Tab steps through the families and wraps round, Enter opens
-// and closes the detail and Esc closes it first, and keys that belong to
-// the prompt are left to it. With the motion setting off the panel draws
-// the same picture whatever the clock says and reports nothing moving.
-func TestBadgePanelKeysAndMotion(t *testing.T) {
-	views, sum := caseFixture()
-	st := game.GameState{AccountStats: &game.AccountStatsView{Badges: views, BadgeSummary: sum}}
-	set := mapSettings{Tier: mapmodel.TierUnicode, Motion: true}
-	clock := time.Unix(1_700_000_000, 0)
-	p := newBadgePanel()
-	p.settings = func() mapSettings { return set }
-	p.now = func() time.Time { return clock }
-	p.start = clock
-	p.SetRect(0, 0, 100, 27)
-	draw := func() string {
-		scr := newSim()
-		must(t, scr.Init())
-		defer scr.Fini()
-		scr.SetSize(100, 27)
-		drawOn(scr, p)
-		scr.Show()
-		var sb strings.Builder
-		cells, _, _ := scr.GetContents()
-		for _, c := range cells {
-			fg, bg, _ := decompose(c.Style)
-			fmt.Fprintf(&sb, "%c%d.%d ", c.Runes[0], fg, bg)
-		}
-		return sb.String()
-	}
-	press := func(k kit.KeyCode) bool { return p.routeKey(newKey(k, 0, 0), "") }
-	p.open(st)
-	draw()
-	if p.view.sel != "age.stone_age" || p.view.tab != caseTabAll {
-		t.Fatalf("the case opens on %q in tab %q", p.view.sel, p.view.tab)
-	}
-	press(kit.KeyRight)
-	if p.view.sel != "age.iron_age" {
-		t.Errorf("Right selects %q", p.view.sel)
-	}
-	press(kit.KeyDown)
-	if p.view.sel != "lineage.housing.2" {
-		t.Errorf("Down selects %q, want the badge under it", p.view.sel)
-	}
-	press(kit.KeyUp)
-	press(kit.KeyLeft)
-	if p.view.sel != "age.stone_age" {
-		t.Errorf("Up and Left come back to %q", p.view.sel)
-	}
-	press(kit.KeyEnd)
-	if p.view.sel != "special.creative_accounting" {
-		t.Errorf("End selects %q", p.view.sel)
-	}
-	press(kit.KeyHome)
-	var tabs []string
-	for range caseTabs(views, false) {
-		press(kit.KeyTab)
-		tabs = append(tabs, p.view.tab)
-	}
-	if got := strings.Join(tabs, ","); got != "age,lineage,ladder,special,next," {
-		t.Errorf("Tab steps through %q", got)
-	}
-	press(kit.KeyBacktab)
-	if p.view.tab != caseTabNext {
-		t.Errorf("Shift-Tab from All opens %q", p.view.tab)
-	}
-	press(kit.KeyTab)
-	if !press(kit.KeyEnter) || !p.view.card {
-		t.Error("Enter does not open the detail")
-	}
-	if !p.closeCard() || p.view.card || p.closeCard() {
-		t.Error("Esc closes the detail once")
-	}
-	// The prompt's keys stay the prompt's.
-	if p.routeKey(newKey(kit.KeyEnter, 0, 0), "build hut") || p.routeKey(newKey(kit.KeyTab, 0, 0), "bu") {
-		t.Error("with something typed, the panel took Enter or Tab from the prompt")
-	}
-	if p.routeKey(newKey(kit.KeyRune, 'b', 0), "") {
-		t.Error("the panel took a letter")
-	}
-
-	// Motion: a legendary badge selected moves with the clock.
-	paint := func() *kit.Buffer {
-		b := kit.NewBuffer(100, 27)
-		p.Layout(image.Rect(0, 0, 100, 27))
-		p.Paint(kit.NewPainter(b))
-		return b
-	}
-	p.request(badgeRequest{sel: "ladder.prestiges.4"})
-	p.update(st)
-	a := paint()
-	if !p.moving.Load() {
-		t.Error("a legendary badge is selected and the panel reports nothing moving")
-	}
-	clock = clock.Add(13 * mapAnimStep)
-	if samePictures(a, paint()) {
-		t.Error("the legendary badge did not move with the clock")
-	}
-	// Motion off: the pictures are the same whatever the clock says.
-	set.Motion = false
-	p.request(badgeRequest{sel: "ladder.prestiges.4"})
-	p.update(st)
-	a = paint()
-	clock = clock.Add(17 * mapAnimStep)
-	if !samePictures(a, paint()) || p.moving.Load() {
-		t.Error("with motion off the case still moves")
-	}
-	for _, sel := range []string{"special.hand_in_the_cookie_jar", "special.touched_by_the_source", "special.creative_accounting", "special.small_world"} {
-		p.request(badgeRequest{sel: sel, card: true})
-		p.update(st)
-		a = paint()
-		clock = clock.Add(29 * mapAnimStep)
-		if !samePictures(a, paint()) {
-			t.Errorf("with motion off %s still moves", sel)
-		}
-	}
-}
-
 // samePictures reports whether two buffers hold the same pictures, pixel for
 // pixel, in the same places.
 func samePictures(a, b *kit.Buffer) bool {
@@ -745,108 +597,6 @@ func samePictures(a, b *kit.Buffer) bool {
 		}
 	}
 	return true
-}
-
-// TestBadgePanelMouse: a click selects the badge under the pointer, a double
-// click opens its detail as Enter does, a click outside the detail closes it,
-// and the wheel moves the selection.
-func TestBadgePanelMouse(t *testing.T) {
-	views, sum := caseFixture()
-	st := game.GameState{AccountStats: &game.AccountStatsView{Badges: views, BadgeSummary: sum}}
-	clock := time.Unix(1_700_000_000, 0)
-	p := newBadgePanel()
-	p.now, p.start = func() time.Time { return clock }, clock
-	p.SetRect(0, 0, 100, 27)
-	p.open(st)
-	drawPrimitive(t, p, 100, 27)
-	lay := p.model.lay
-	at := func(id string) image.Point {
-		it := p.model.items[p.model.by[id]]
-		return image.Pt(lay.gx+it.col*lay.pitchX()+1, lay.gy+p.model.lines[it.line].y-p.view.vy+1)
-	}
-	press := func(pt image.Point, clicks int) bool {
-		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: clicks})
-	}
-	if !press(at("age.iron_age"), 1) || p.view.sel != "age.iron_age" || p.view.card {
-		t.Fatalf("a click: selected %q, detail open %v", p.view.sel, p.view.card)
-	}
-	if press(image.Pt(0, 0), 1) {
-		t.Error("a click on the title bar changed something")
-	}
-	drawPrimitive(t, p, 100, 27)
-	tabs, _, _, _ := p.model.tabRow(p.view)
-	if p.PointerAt(at("age.iron_age")) != kit.PointerHand || p.PointerAt(image.Pt(tabs[1]+2, 1)) != kit.PointerHand ||
-		p.PointerAt(image.Pt(tabs[0]+1, 1)) != kit.PointerArrow || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
-		t.Error("the hand should show over a badge and a closed tab, and not over the open tab or the title bar")
-	}
-	if !press(at("age.iron_age"), 2) || !p.view.card {
-		t.Error("a double click did not open the detail")
-	}
-	if p.PointerAt(at("age.iron_age")) != kit.PointerArrow {
-		t.Error("with the detail open the hand still shows over the badge behind it")
-	}
-	drawPrimitive(t, p, 100, 27)
-	if c := p.model.cardAt; press(c.Min.Add(image.Pt(c.Dx()/2, c.Dy()/2)), 1) {
-		t.Error("a click on the detail closed it")
-	}
-	if !press(image.Pt(0, 0), 1) || p.view.card {
-		t.Error("a click outside the detail did not close it")
-	}
-	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || p.view.sel != "lineage.housing.2" {
-		t.Errorf("the wheel down selects %q, want the badge under it", p.view.sel)
-	}
-}
-
-// TestBadgePanelTabsTakeClicks: a click on a tab's title opens that tab, as
-// Tab reaching it does; a click on the arrow at an end of the row opens the
-// nearest tab out of sight that way; a click on the row between tabs, or on
-// the open tab, changes nothing.
-func TestBadgePanelTabsTakeClicks(t *testing.T) {
-	views, sum := caseFixture()
-	st := game.GameState{AccountStats: &game.AccountStatsView{Badges: views, BadgeSummary: sum}}
-	clock := time.Unix(1_700_000_000, 0)
-	p := newBadgePanel()
-	p.now, p.start = func() time.Time { return clock }, clock
-	const w = 44 // too narrow for every tab: the row has more to the right
-	p.SetRect(0, 0, w, 27)
-	p.open(st)
-	drawPrimitive(t, p, w, 27)
-	press := func(x int) bool {
-		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: x, Y: 1, Clicks: 1})
-	}
-	at, open, left, right := p.model.tabRow(p.view)
-	if open != 0 || left || !right || at[1] < 0 || at[len(at)-1] >= 0 {
-		t.Fatalf("the fixture's tab row at %d columns: open %d, more left %v, more right %v, columns %v", w, open, left, right, at)
-	}
-	if press(at[0] + 1) {
-		t.Error("a click on the open tab changed something")
-	}
-	if press(at[1] - 1) {
-		t.Error("a click between two tabs changed something")
-	}
-	second := p.model.tabs[1].key
-	p.view.vy = 3
-	if !press(at[1]+2) || p.view.tab != second || p.view.vy != 0 {
-		t.Errorf("a click on the second tab: open %q (want %q), scrolled to %d (want its top)", p.view.tab, second, p.view.vy)
-	}
-	// The arrow at the right end opens the first tab that did not fit.
-	at, _, _, right = p.model.tabRow(p.view)
-	hidden := -1
-	for i := range at {
-		if at[i] < 0 && i > 1 {
-			hidden = i
-			break
-		}
-	}
-	if !right || hidden < 0 {
-		t.Fatalf("after the click the row has nothing more to the right: %v", at)
-	}
-	if want := p.model.tabs[hidden].key; !press(w-1) || p.view.tab != want {
-		t.Errorf("a click on the right arrow opened %q, want %q, the nearest tab out of sight", p.view.tab, want)
-	}
-	if at, _, _, _ = p.model.tabRow(p.view); at[hidden] < 0 {
-		t.Error("the tab the arrow opened is still out of sight")
-	}
 }
 
 // paintGrid puts a rendered grid on the screen in theme colours.
