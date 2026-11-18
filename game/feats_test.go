@@ -200,3 +200,168 @@ func TestFeatIsStruckOnAdvanceAndOnlyOnce(t *testing.T) {
 		t.Errorf("a second judging changed the stack: %+v", s)
 	}
 }
+
+// wonderKeyOf is a wonder of age.
+func wonderKeyOf(t *testing.T, age string) string {
+	t.Helper()
+	for _, b := range rules.Core().Buildings() {
+		if b.Category == "wonder" && b.RequiredAge == age {
+			return b.Key
+		}
+	}
+	t.Fatalf("no wonder in %s", age)
+	return ""
+}
+
+// atWar starts a war with a civilization the run has met.
+func atWar(ge *GameEngine, key string) {
+	ge.Diplomacy.DiscoverFaction(key)
+	ge.Diplomacy.factions[key].AtWar = true
+}
+
+// The feats of the ten later ages strike on the event that meets them and not on its near miss.
+func TestFeatsOfTheLaterAgesDecidedByAnEvent(t *testing.T) {
+	wonder := func(age string) Event {
+		return Event{Kind: config.BadgeEvWonderRaised, Subject: wonderKeyOf(t, age)}
+	}
+	lp := func(appease, brace int, invited bool) func(*GameEngine) {
+		return func(ge *GameEngine) {
+			ge.harbinger = &HarbingerSave{AppeaseLevel: appease, BraceLevel: brace, Invited: invited}
+		}
+	}
+	allied := func(met, unallied float64) Event {
+		return Event{Kind: config.BadgeEvCivAllied, Attrs: map[string]float64{"met": met, "unallied": unallied}}
+	}
+	cases := []struct {
+		name, age string
+		share     float64 // of the age's target spent in it
+		set       func(ge *GameEngine)
+		ev        Event
+		want      bool
+	}{
+		{"medieval, a war seen through", "medieval_age", 0.1, func(ge *GameEngine) { ge.Stats.Deeds.WarBegan("f", featEntry) }, Event{Kind: config.BadgeEvWarEnded, Subject: "f"}, true},
+		{"medieval, ended by tribute", "medieval_age", 0.1, func(ge *GameEngine) { ge.Stats.Deeds.WarBegan("f", featEntry); ge.Stats.Deeds.Tributes = 1 },
+			Event{Kind: config.BadgeEvWarEnded, Subject: "f", Attrs: map[string]float64{"tribute": 1}}, false},
+		{"medieval, an earlier tribute", "medieval_age", 0.1, func(ge *GameEngine) { ge.Stats.Deeds.WarBegan("f", featEntry); ge.Stats.Deeds.Tributes = 1 }, Event{Kind: config.BadgeEvWarEnded, Subject: "f"}, false},
+		{"medieval, a war from before the age", "medieval_age", 0.1, nil, Event{Kind: config.BadgeEvWarEnded, Subject: "f"}, false},
+		{"victorian, in the first sixth", "victorian_age", 1.0/6 - 0.01, nil, wonder("victorian_age"), true},
+		{"victorian, just past a sixth", "victorian_age", 1.0/6 + 0.01, nil, wonder("victorian_age"), false},
+		{"victorian, another age's wonder", "victorian_age", 0.05, nil, wonder("colonial_age"), false},
+		{"scholar chain finished", "information_age", 0.1, nil, Event{Kind: config.BadgeEvMilestone, Subject: "tech_master"}, true},
+		{"another milestone", "information_age", 0.1, nil, Event{Kind: config.BadgeEvMilestone, Subject: "tech_pioneer"}, false},
+		{"digital, wonder at war", "digital_age", 0.1, func(ge *GameEngine) { atWar(ge, "shadow_syndicate") }, wonder("digital_age"), true},
+		{"digital, wonder at peace", "digital_age", 0.1, nil, wonder("digital_age"), false},
+		{"fusion, eight allies at peace", "fusion_age", 0.1, nil, allied(10, 2), true},
+		{"fusion, seven allies", "fusion_age", 0.1, nil, allied(10, 3), false},
+		{"fusion, a war running", "fusion_age", 0.1, func(ge *GameEngine) { atWar(ge, "shadow_syndicate") }, allied(10, 2), false},
+		{"galactic, appease 2", "galactic_age", 0.1, lp(2, 0, false), Event{Kind: config.BadgeEvAppeased}, true},
+		{"galactic, appease 1", "galactic_age", 0.1, lp(1, 0, false), Event{Kind: config.BadgeEvAppeased}, false},
+		{"galactic, a doom's thread", "galactic_age", 0.1, func(ge *GameEngine) { ge.harbinger = &HarbingerSave{TargetEpoch: "cosmic_era", AppeaseLevel: 2} }, Event{Kind: config.BadgeEvAppeased}, false},
+		{"quantum, brace second", "quantum_age", 0.1, lp(0, 2, true), Event{Kind: config.BadgeEvBraced}, true},
+		{"quantum, invite second", "quantum_age", 0.1, lp(0, 2, true), Event{Kind: config.BadgeEvInvited}, true},
+		{"quantum, braced only", "quantum_age", 0.1, lp(0, 2, false), Event{Kind: config.BadgeEvBraced}, false},
+		{"quantum, invited at brace 1", "quantum_age", 0.1, lp(0, 1, true), Event{Kind: config.BadgeEvInvited}, false},
+		{"transcendent, endured at brace 2", "transcendent_age", 0.1, nil, Event{Kind: config.BadgeEvLastPassage, Subject: "endured", Attrs: map[string]float64{"brace": 2}}, true},
+		{"transcendent, endured at brace 1", "transcendent_age", 0.1, nil, Event{Kind: config.BadgeEvLastPassage, Subject: "endured", Attrs: map[string]float64{"brace": 1}}, false},
+		{"transcendent, spared", "transcendent_age", 0.1, nil, Event{Kind: config.BadgeEvLastPassage, Subject: "spared", Attrs: map[string]float64{"brace": 2}}, false},
+	}
+	for _, c := range cases {
+		ge, acct := featEngine(t, c.age, inAge(c.age, c.share))
+		ge.mu.Lock()
+		if c.set != nil {
+			c.set(ge)
+		}
+		ge.report(c.ev)
+		ge.mu.Unlock()
+		wantFeat(t, c.name, acct, c.age, c.want)
+	}
+}
+
+// A war's start is recorded where wars are told, and a tribute where it is paid.
+func TestWarDeedsAreCountedInTheAge(t *testing.T) {
+	ge, acct := featEngine(t, "medieval_age", inAge("medieval_age", 0.1))
+	ge.mu.Lock()
+	ge.Diplomacy.warEvents = []warEvent{{faction: "f", started: true, wars: 1}}
+	ge.noteWars(false)
+	began := ge.Stats.Deeds.Wars["f"]
+	ge.Diplomacy.warEvents = []warEvent{{faction: "f"}}
+	ge.noteWars(false)
+	ge.mu.Unlock()
+	if began != ge.tick {
+		t.Errorf("war began at %d, want %d", began, ge.tick)
+	}
+	wantFeat(t, "medieval, war told start to end", acct, "medieval_age", true)
+	ge.mu.Lock()
+	ge.advanceAge("renaissance_age")
+	d := ge.Stats.Deeds
+	ge.mu.Unlock()
+	if d.Wars != nil || d.Tributes != 0 {
+		t.Errorf("deeds not zeroed on entering an age: %+v", d)
+	}
+}
+
+// Colonial: nine routes with an unbroken run, judged on the tick.
+func TestColonialFeatNeedsNineRoutes(t *testing.T) {
+	for _, c := range []struct {
+		n    int
+		want bool
+	}{{9, true}, {8, false}} {
+		ge, acct := featEngine(t, "colonial_age", inAge("colonial_age", 0.1))
+		ge.mu.Lock()
+		ge.Stats.Deeds.RouteClean = map[string]int{}
+		for i := 0; i < c.n; i++ {
+			ge.Stats.Deeds.RouteClean[string(rune('a'+i))] = featEntry
+		}
+		ge.report(Event{Kind: config.BadgeEvTick})
+		ge.mu.Unlock()
+		wantFeat(t, "colonial routes", acct, "colonial_age", c.want)
+	}
+	// The age has nine routes to run: every route open by the Colonial Age.
+	n := 0
+	for _, r := range config.BaseTradeRoutes() {
+		if p, ok := rules.Core().Index(r.MinAge); ok {
+			if c, _ := rules.Core().Index("colonial_age"); p <= c {
+				n++
+			}
+		}
+	}
+	if n != int(config.FeatMarks["colonial_age"]) {
+		t.Errorf("%d routes open by the Colonial Age, the feat asks for %d", n, int(config.FeatMarks["colonial_age"]))
+	}
+}
+
+// Industrial: a third of the posted workers in energy jobs, on the census tick.
+func TestIndustrialFeatNeedsAThirdInEnergy(t *testing.T) {
+	if def, ok := rules.Core().Building("coal_plant"); !ok || def.WorkerDomain != "energy" || def.WorkerCapacity == 0 {
+		t.Fatalf("the Industrial Age cannot staff energy: %+v", def)
+	}
+	for _, c := range []struct {
+		energy, other int
+		tick          int
+		want          bool
+	}{{34, 66, 0, true}, {33, 67, 0, false}, {1, 2, 0, true}, {34, 66, 1, false}} {
+		ge, acct := featEngine(t, "industrial_age", 0)
+		ge.mu.Lock()
+		ge.tick = inAge("industrial_age", 0.1)
+		ge.tick += config.BadgeCensusTicks - ge.tick%config.BadgeCensusTicks + c.tick
+		ge.Workers.assignments = map[string]int{"coal_plant": c.energy, "farm": c.other}
+		ge.report(Event{Kind: config.BadgeEvTick})
+		ge.mu.Unlock()
+		wantFeat(t, "industrial share", acct, "industrial_age", c.want)
+	}
+}
+
+// Transcendent: endure is reported inside the prestige, while the run is still in its age.
+func TestTranscendentFeatIsStruckByAPrestigeThatEndures(t *testing.T) {
+	for _, c := range []struct {
+		brace int
+		want  bool
+	}{{2, true}, {1, false}} {
+		ge, acct := featEngine(t, "transcendent_age", inAge("transcendent_age", 0.1))
+		ge.mu.Lock()
+		ge.harbinger = &HarbingerSave{BraceLevel: c.brace, Invited: true}
+		ge.completePrestige(lastPassageEndured)
+		ge.mu.Unlock()
+		wantFeat(t, "transcendent endure", acct, "transcendent_age", c.want)
+	}
+}

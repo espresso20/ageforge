@@ -14,11 +14,13 @@ type AgeDeeds struct {
 	KeystoneTick int            `json:"keystone_tick,omitempty"` // tick the age's keystone tech was researched, 0 = not yet
 	RouteCycles  map[string]int `json:"route_cycles,omitempty"`  // cycles a trade route finished, by route key
 	RouteClean   map[string]int `json:"route_clean,omitempty"`   // tick a route's unbroken run began; removed on a miss or a stop
+	Wars         map[string]int `json:"wars,omitempty"`          // tick a war began in the age, by faction key
+	Tributes     int            `json:"tributes,omitempty"`      // tributes paid
 }
 
 // clone copies d so that it shares no map with it.
 func (d AgeDeeds) clone() AgeDeeds {
-	d.RouteCycles, d.RouteClean = maps.Clone(d.RouteCycles), maps.Clone(d.RouteClean)
+	d.RouteCycles, d.RouteClean, d.Wars = maps.Clone(d.RouteCycles), maps.Clone(d.RouteClean), maps.Clone(d.Wars)
 	return d
 }
 
@@ -42,4 +44,15 @@ func (d *AgeDeeds) RouteBroken(route string) {
 	if d != nil {
 		delete(d.RouteClean, route)
 	}
+}
+
+// WarBegan notes that a war with faction began at tick.
+func (d *AgeDeeds) WarBegan(faction string, tick int) {
+	if d == nil {
+		return
+	}
+	if d.Wars == nil {
+		d.Wars = map[string]int{}
+	}
+	d.Wars[faction] = tick
 }

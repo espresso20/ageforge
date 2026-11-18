@@ -253,6 +253,7 @@ func (ge *GameEngine) notePlanSize() {
 func (ge *GameEngine) noteWars(tribute bool) {
 	for _, w := range ge.Diplomacy.takeWarEvents() {
 		if w.started {
+			ge.Stats.Deeds.WarBegan(w.faction, ge.tick)
 			ge.report(Event{Kind: config.BadgeEvWarStarted, Subject: w.faction, Attrs: map[string]float64{"wars": float64(w.wars)}})
 			continue
 		}

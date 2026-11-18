@@ -4726,6 +4726,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	played := ge.Prestige.GetLevel()
 	full := ge.Prestige.CalculatePoints(ge.age)
 	points := ge.lastPassagePoints(how, full)
+	// Read before runEndingLines: resolving the thread there clears its levels.
+	brace := ge.lastPassageBraceLevel()
 	ge.recordLastPassageOutcome(how, points, full)
 	// The verdict and the ending belong to the old run; the reset below clears
 	// the log, so they are written aside and carried over.
@@ -4759,7 +4761,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 		ge.note(config.BadgeEvLastPassage, "spared")
 	case lastPassageEndured:
 		ge.report(Event{Kind: config.BadgeEvLastPassage, Subject: "endured",
-			Attrs: map[string]float64{"brace": float64(ge.lastPassageBraceLevel())}})
+			Attrs: map[string]float64{"brace": float64(brace)}})
 	case lastPassageSuccumbed:
 		ge.note(config.BadgeEvLastPassage, "succumbed")
 	}
@@ -5478,6 +5480,7 @@ func (ge *GameEngine) SendTribute(factionKey string) error {
 	ge.Resources.Remove("culture", cultureCost)
 	ge.addLog("success", vibe.Sprintf("game.engine.SendTribute.01", "Paid the %s a tribute of %s. The war is over.",
 		ge.rules.Name(rules.KindCiv, factionKey), Amounts(map[string]float64{"gold": goldCost, "culture": cultureCost})))
+	ge.Stats.Deeds.Tributes++
 	ge.noteWars(true)
 	return nil
 }
