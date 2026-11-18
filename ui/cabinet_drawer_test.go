@@ -49,10 +49,6 @@ func TestCabinetDrawerOpensAndCloses(t *testing.T) {
 	if p.tray.slot != -1 {
 		t.Error("right-click left the drawer open")
 	}
-	p.sel = len(config.Ages())
-	if press(p, kit.KeyEnter) || p.tray.slot != -1 {
-		t.Error("an ageless drawer opened")
-	}
 	d.overlayMgr.Hide()
 }
 
@@ -149,4 +145,43 @@ func TestCabinetFanOpensStepsAndCloses(t *testing.T) {
 	if got := plateText(b, lay.Hint); !strings.Contains(got, "Enter") {
 		t.Errorf("front hint %q", got)
 	}
+}
+
+// An ageless drawer opens like an age drawer and lists one well per coin;
+// the page keys turn its pages and nothing goes past either end.
+func TestCabinetAgelessDrawerOpensAndPages(t *testing.T) {
+	d, p, paint := trayRig(t)
+	for j, key := range []string{"ledgers", "curios", "themes"} {
+		slot := len(config.Ages()) + j
+		p.sel = slot
+		if !press(p, kit.KeyEnter) || p.tray.slot != slot {
+			t.Fatalf("Enter on %s left drawer %d", key, p.tray.slot)
+		}
+		paint()
+		ws := p.agelessWells(slot)
+		if want := []int{74, 87, 16}[j]; len(ws) != want || p.drawers[slot].Total != want {
+			t.Errorf("%s lists %d wells (drawer total %d), want %d", key, len(ws), p.drawers[slot].Total, want)
+		}
+		if !p.closeDrawer() || p.tray.slot != -1 {
+			t.Errorf("%s did not close", key)
+		}
+	}
+	p.sel = len(config.Ages())
+	press(p, kit.KeyEnter)
+	per, _ := p.gridDims()
+	press(p, kit.KeyPgDn)
+	if p.tray.well != per {
+		t.Errorf("PgDn went to well %d, want %d", p.tray.well, per)
+	}
+	press(p, kit.KeyEnd)
+	press(p, kit.KeyPgDn)
+	if want := len(p.agelessWells(p.tray.slot)) - 1; p.tray.well != want {
+		t.Errorf("past the last page the selection is %d, want %d", p.tray.well, want)
+	}
+	press(p, kit.KeyHome)
+	press(p, kit.KeyPgUp)
+	if p.tray.well != 0 {
+		t.Errorf("PgUp on the first page left well %d", p.tray.well)
+	}
+	d.overlayMgr.Hide()
 }

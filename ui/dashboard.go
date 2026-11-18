@@ -193,7 +193,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		mapViews:      mv,
 		mapPanel:      newMapPanel(mv),
 		researchPanel: newResearchPanel(),
-		cabinet:       newCabinetPanel(engine.Account),
+		cabinet:       newCabinetPanel(engine.Account, engine.Rules()),
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),

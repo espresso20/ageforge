@@ -62,8 +62,8 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 	views := []game.BadgeView{
 		{Key: "age.stone_age", Family: "age", Name: "Rock Solid", Desc: "Reach the Stone Age.", Level: config.BadgeBronze, Tier: "bronze"},
 		hidden("age.iron_age", "age"),
-		hidden("civ.a.met", "civ"), hidden("civ.b.met", "civ"),
-		hidden("doom.iron_era.endured", "doom"),
+		hidden("harbinger.a.met", "harbinger"), hidden("harbinger.b.met", "harbinger"),
+		hidden("lastpassage.endured", "doom"),
 		secret,
 	}
 	sum := game.BadgeSummary{Shown: 1, Hidden: 5, Title: "Settler"}
@@ -79,13 +79,13 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 	}
 	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode})
 	text := g.String()
-	for _, leak := range []string{"Civilizations", "Catastrophes"} {
+	for _, leak := range []string{"Harbingers", "Catastrophes"} {
 		if strings.Contains(text, leak) {
 			t.Errorf("the case names %q with nothing of it in sight", leak)
 		}
 	}
 	list := strings.Join(badgeListLines(views, sum), "\n")
-	for _, leak := range []string{"Civilizations", "Catastrophes"} {
+	for _, leak := range []string{"Harbingers", "Catastrophes"} {
 		if strings.Contains(list, leak) {
 			t.Errorf("the list names %q with nothing of it in sight", leak)
 		}
@@ -94,7 +94,7 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 		t.Errorf("the list should count the secret and leave its hint to the case:\n%s", list)
 	}
 	sum.HiddenCounted = true
-	if got := titles(caseTabs(views, true)); got != "All Ages Civilizations Catastrophes Specials Next" {
+	if got := titles(caseTabs(views, true)); got != "All Ages Catastrophes Harbingers Specials Next" {
 		t.Errorf("tabs once the hidden badges are counted: %q", got)
 	}
 }
@@ -263,13 +263,26 @@ func TestBadgeThemesSayHowTheyAreEarned(t *testing.T) {
 	st := eng.GetState()
 	acct := eng.Account()
 	for key, badge := range map[string]string{
-		"ashfall": "special.connoisseur_of_endings", "ledger": "ladder.deals.3", "prismatic": "special.museum_piece",
+		"ashfall": "special.connoisseur_of_endings", "ledger": "ledger.deals.3", "prismatic": "special.museum_piece",
 	} {
 		th, ok := theme.ByKey(key)
 		if !ok {
 			t.Fatalf("no theme %s", key)
 		}
 		def, ok := rules.Core().Badge(badge)
+		if _, _, gift := rules.Core().Tallies().Gift(badge); gift {
+			// a tally rung gives this theme: the theme table names the rung
+			if th.UnlockBadge != badge {
+				t.Errorf("%s says it comes from %q, not the rung %q", key, th.UnlockBadge, badge)
+			}
+			if !strings.Contains(th.UnlockHint.Plain(), "rung") {
+				t.Errorf("the hint for %s is %q", key, th.UnlockHint.Plain())
+			}
+			if themeAvailable(acct, th) {
+				t.Errorf("%s is unlocked on a new account", key)
+			}
+			continue
+		}
 		if !ok || def.Reward.Theme != key || th.UnlockBadge != badge {
 			t.Errorf("%s and %s do not name each other: theme says %q, badge gives %q", key, badge, th.UnlockBadge, def.Reward.Theme)
 		}
@@ -371,12 +384,6 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 	}
 
 	byFamily := map[string]int{}
-	type ladder struct {
-		family, name string
-		rungs        []float64
-		secret       bool
-	}
-	var ladders []*ladder
 	counted, points, secret := 0, 0, 0
 	for _, def := range set.Badges() {
 		if def.Integrity() {
@@ -388,13 +395,6 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 		if def.Hint != "" {
 			secret++
 		}
-		if def.Ladder != "" && def.Family != "special" {
-			if n := len(ladders); n == 0 || ladders[n-1].name != def.Ladder || ladders[n-1].family != def.Family {
-				ladders = append(ladders, &ladder{family: def.Family, name: def.Ladder, secret: def.Hint != ""})
-			}
-			l := ladders[len(ladders)-1]
-			l.rungs = append(l.rungs, def.Threshold)
-		}
 	}
 	has("the total", fmt.Sprintf("There are %d badges to earn, in %d families", counted, len(byFamily)))
 	has("the points", fmt.Sprintf("worth %s points", wholeNumber(points)))
@@ -402,23 +402,13 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 	for _, f := range badgeFamilyTitles {
 		has("the family "+f.title.String(), fmt.Sprintf("| **%s** | %d |", f.title.String(), byFamily[f.key]))
 	}
-	lifetime := 0
-	for _, l := range ladders {
-		switch l.family {
-		case "ladder":
-			lifetime++
-			if l.secret {
-				if strings.Contains(page, "| "+l.name+" |") {
-					t.Errorf("badges.md lists the secret ladder %q", l.name)
-				}
-				continue
-			}
-			has("the ladder "+l.name, fmt.Sprintf("| %s | %s |", l.name, rungs(l.rungs)))
-		case "lineage", "domain":
-			has("the "+l.family+" ladder "+l.name, fmt.Sprintf("| %s | %s |", l.name, rungs(l.rungs)))
+	// the tallies: each lineage, payroll and lifetime tally with its rungs
+	for _, tl := range set.Tallies() {
+		if !strings.HasPrefix(tl.Key, "resource.") {
+			has("the tally "+tl.Name, fmt.Sprintf("| %s | %s |", tl.Name, rungs(tl.Rungs)))
 		}
 	}
-	has("the number of ladders", fmt.Sprintf("in %d ladders", lifetime))
+	has("the ledgers drawer", fmt.Sprintf("holds the %d tallies below", len(set.Tallies())))
 	for _, st := range config.BadgeScoreTitles() {
 		has("the score title "+st.Title, fmt.Sprintf("| %s | %s |", st.Title, wholeNumber(st.Points)))
 	}

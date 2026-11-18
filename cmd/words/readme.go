@@ -48,8 +48,8 @@ func (c *catalog) request(mo *moment) (flavor.Request, string) {
 		req.Age = "bronze_age"
 		req.Kind = "scouting"
 		req.Resource, req.Amount = "food", 60
-		if exps := config.BadgeExpeditions(); len(exps) > 0 {
-			req.Subject = exps[0].Name
+		if eras := config.Epochs(); len(eras) > 0 {
+			req.Subject = eras[0].Name
 		}
 	case "civilization":
 		req.Age = "iron_age"

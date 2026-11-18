@@ -30,10 +30,10 @@ func TestAccountBadgesCommand(t *testing.T) {
 	wantAll(t, "the list", res.Message,
 		fmt.Sprintf("0 of %d earned", sum.Shown), "0 points", "??? hidden",
 		"Rock Solid", "Reach the Stone Age.",
-		"Faith Hobbyist", "(0 of 10)", "more to earn.",
-		"First Prestige", "Hut Hoarder",
+		"Dressed as Forge", "(0 of 6)", "more to earn.",
+		"Hut Hoarder",
 		"secret badges, each with a hint in the badge case.",
-		"Ages", "Lineages", "Ladders", "Specials", "Payrolls", "Resources",
+		"Ages", "Themes", "Maps", "Specials",
 		"Type badges to open the badge case",
 	)
 	for _, hidden := range []string{
@@ -73,7 +73,7 @@ func TestAccountBadgesWithoutAnAccount(t *testing.T) {
 func TestStatsPanelListsBadges(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	must(t, eng.StartNewNamedGame("run"))
-	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
+	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
 	_, sum := eng.Badges()
 
 	pg := buildStats(eng.GetState(), partLifetime, 120, 0, false, false, 0)

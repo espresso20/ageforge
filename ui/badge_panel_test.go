@@ -264,6 +264,9 @@ func TestHackerThemesBelongToTheirBadges(t *testing.T) {
 		}
 	}
 	for _, th := range theme.All() {
+		if _, _, gift := rules.Core().Tallies().Gift(th.UnlockBadge); gift {
+			continue
+		}
 		if th.UnlockBadge != "" && gives[th.Key] != th.UnlockBadge {
 			t.Errorf("the theme %s waits for the badge %q, which does not give it", th.Key, th.UnlockBadge)
 		}

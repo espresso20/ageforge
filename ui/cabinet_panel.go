@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/cabinet"
 	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
@@ -29,6 +30,7 @@ var cabinetKeys = []keyHelp{
 	{"Home/End", vibe.E("ui.cabinet_panel.cabinetKeys.02", "The first drawer and the last")},
 	{"Esc", vibe.E("ui.cabinet_panel.cabinetKeys.03", "Close the cabinet")},
 	{"Enter", vibe.E("ui.cabinet_panel.cabinetKeys.04", "Open the drawer; arrows then move between its wells")},
+	{"PgUp/PgDn", vibe.E("ui.cabinet_panel.cabinetKeys.06", "Turn the page of Ledgers, Curios or Themes")},
 	{"Esc, right-click", vibe.E("ui.cabinet_panel.cabinetKeys.05", "Close the open drawer")},
 }
 
@@ -47,6 +49,7 @@ type cabinetPanel struct {
 	// account reads the account whose collection is shown; nil means none.
 	account func() *game.Account
 	mint    *coins.Mint
+	set     *rules.Set // the tallies and badges the ageless drawers list
 
 	keys    [cabinet.Slots]string
 	names   [cabinet.Slots]string
@@ -71,8 +74,8 @@ type cabinetKey struct {
 	ds          [cabinet.Slots]cabinet.Drawer
 }
 
-func newCabinetPanel(account func() *game.Account) *cabinetPanel {
-	p := &cabinetPanel{account: account, mint: coins.NewMint(256), patchSel: -1, tray: cabinetTray{slot: -1, liftWell: -1}}
+func newCabinetPanel(account func() *game.Account, set *rules.Set) *cabinetPanel {
+	p := &cabinetPanel{account: account, set: set, mint: coins.NewMint(256), patchSel: -1, tray: cabinetTray{slot: -1, liftWell: -1}}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
 }
@@ -123,7 +126,15 @@ func (p *cabinetPanel) update(state game.GameState) {
 	}
 	for j, l := range cabinetAgeless {
 		i := len(config.Ages()) + j
-		p.keys[i], p.names[i], p.dim[i], p.drawers[i] = l.key, l.name, false, cabinet.Drawer{}
+		d := cabinet.Drawer{Reached: true}
+		p.keys[i], p.names[i], p.dim[i] = l.key, l.name, false
+		for _, w := range p.agelessWells(i) {
+			d.Total++
+			if w.held {
+				d.Held++
+			}
+		}
+		p.drawers[i] = d
 	}
 	p.sel = min(p.sel, cabinet.Slots-1)
 	p.loadTray()
@@ -220,8 +231,12 @@ func (p *cabinetPanel) routeKey(ev *kit.Key, prompt string) bool {
 			return true
 		}
 		return p.openDrawer(p.sel)
-	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd:
-		if p.tray.fan {
+	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd, kit.KeyPgUp, kit.KeyPgDn:
+		if p.tray.slot >= 0 && agelessSlot(p.tray.slot) {
+			p.moveGrid(ev.Code, len(p.agelessWells(p.tray.slot)))
+		} else if ev.Code == kit.KeyPgUp || ev.Code == kit.KeyPgDn {
+			return false
+		} else if p.tray.fan {
 			p.stepFan(ev.Code)
 		} else if p.tray.slot >= 0 {
 			p.moveWell(ev.Code)
@@ -329,7 +344,7 @@ func (c *menuCabinet) Key(k kit.Key) bool {
 // openMenuCabinet shows the cabinet over the menu and returns to returnPage
 // when it is closed. It draws from the account, which needs no game loaded.
 func openMenuCabinet(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) {
-	p := newCabinetPanel(engine.Account)
+	p := newCabinetPanel(engine.Account, engine.Rules())
 	st := game.GameState{}
 	if a := engine.Account(); a != nil {
 		s, _ := a.LifetimeStats()

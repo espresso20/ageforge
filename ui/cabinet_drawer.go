@@ -53,11 +53,12 @@ type cabinetTray struct {
 	fanWell, pick, pickOf int // pick is the selected copy's place from the left; pickOf the copy drawn raised, -1 for none
 	recs                  [cabinet.Wells][]game.CoinCopy
 	counts                [cabinet.Wells]int
+	gridKey               gridKey // the ageless drawer's kept picture
 }
 
 // openDrawer opens the drawer of an age in sight.
 func (p *cabinetPanel) openDrawer(i int) bool {
-	if i < 0 || i >= len(config.Ages()) || !p.drawers[i].Reached {
+	if i < 0 || i >= cabinet.Slots || !p.drawers[i].Reached {
 		return false
 	}
 	p.tray.slot, p.tray.well, p.tray.fan = i, 0, false
@@ -133,6 +134,11 @@ func (p *cabinetPanel) loadTray() {
 	if i < 0 {
 		return
 	}
+	p.tray.gridKey = gridKey{}
+	if agelessSlot(i) {
+		p.tray.recs, p.tray.counts = [cabinet.Wells][]game.CoinCopy{}, [cabinet.Wells]int{}
+		return
+	}
 	t := cabinet.Tray{Slot: i, Money: p.keys[i], Legend: p.drawers[i].Legend}
 	for j, typ := range config.CoinTypes {
 		t.Types[j] = typ
@@ -177,6 +183,9 @@ func (p *cabinetPanel) moveWell(key kit.KeyCode) {
 
 // wellAt is the well under a screen cell, or -1.
 func (p *cabinetPanel) wellAt(at image.Point) int {
+	if agelessSlot(p.tray.slot) {
+		return p.gridWellAt(at)
+	}
 	cw, ch := cellPixels()
 	r := p.Bounds()
 	if l, ok := cabinet.PlanTray(r.Dx(), r.Dy(), cw, ch); ok {
@@ -202,6 +211,9 @@ func (p *cabinetPanel) printPlate(p2 *kit.Painter, r, c image.Rectangle, s strin
 
 // paintTray paints the open drawer, and reports false when it does not fit.
 func (p *cabinetPanel) paintTray(p2 *kit.Painter, r image.Rectangle) bool {
+	if agelessSlot(p.tray.slot) {
+		return p.paintGrid(p2, r)
+	}
 	cw, ch := cellPixels()
 	l, ok := cabinet.PlanTray(r.Dx(), r.Dy(), cw, ch)
 	if !ok {

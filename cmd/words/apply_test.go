@@ -24,7 +24,7 @@ func partialTree(t *testing.T) string {
 	rels := []string{
 		"go.mod",
 		"config/research.go", "config/badge_catalog.go",
-		"ui/accounts_panel.go",
+		"ui/accounts_panel.go", "ui/advance_view.go",
 		"game/savenames.go", "game/savenames.txt",
 		"ui/copy_guard_test.go", "ui/stale_copy_test.go", "ui/docs_lint_test.go",
 		"config/effect_text_test.go", "config/event_flavor_test.go",
@@ -119,13 +119,13 @@ func TestImportRoundTrip(t *testing.T) {
 	if err := export(c, dir, io.Discard); err != nil {
 		t.Fatal(err)
 	}
-	files := []string{"config/research.go", "config/badge_catalog.go", "ui/accounts_panel.go"}
+	files := []string{"config/research.go", "config/badge_catalog.go", "ui/accounts_panel.go", "ui/advance_view.go"}
 	textFiles := []string{path.Join(flavorFolder, "exp_fail.txt"), saveNamesText}
 	before := sources(t, root, append(files, textFiles...)...)
 
 	desc := c.byID["tech.calendar.description"]
 	title := pick(t, c, "a tagged interface string", func(r *row) bool { return r.u.f.rel == "ui/accounts_panel.go" && tagged(r) })
-	label := pick(t, c, "a label the code matches on", func(r *row) bool { return len(r.twins) == 1 && plain(r) })
+	label := pick(t, c, "a label the code matches on", func(r *row) bool { return len(r.twins) == 1 && r.u.f.rel == "ui/advance_view.go" && r.current == "Esc" })
 	line := c.byID["flavor.expedition_fail.any.001"]
 	word := c.byID["flavor.words.exp_fail_kit.001"]
 	saveWord := pick(t, c, "a save name word no other row repeats", func(r *row) bool {

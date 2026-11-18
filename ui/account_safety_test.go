@@ -135,7 +135,7 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	eng.SetAccount(alice)
 	// A badge and a lifetime prestige, no themes: the stat, then the report.
 	alice.RecordPrestigeFrom("")
-	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
+	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
 
 	res := HandleCommand("account recover "+alice.RecoveryCode(), eng)
 	if res.Type != "info" || !strings.Contains(res.Message, "nothing to restore") {

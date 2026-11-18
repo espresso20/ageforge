@@ -99,12 +99,10 @@ func TestBadgeMomentOnTheLiveScreen(t *testing.T) {
 		}
 		card := image.Rect(w-momentW-1, 1, w-1, 1+momentH)
 
-		// Two badges together: the Stone Age and a prestige rung. The age is
+		// Two badges together: the Stone Age and the Bronze Age. The age is
 		// reported alone: an age entered for real raises its splash.
 		eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
-		for i := 0; i < 10; i++ {
-			eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
-		}
+		eng.ReportForTest(config.BadgeEvAgeReached, "bronze_age")
 		d.refresh()
 		var names []string
 		views, _ := eng.Badges()
