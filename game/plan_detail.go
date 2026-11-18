@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // The detail the plan panel shows for the item it has selected: one row for
@@ -114,13 +114,13 @@ func (ge *GameEngine) planDetailFor(v *PlanItemView, chk planCheck, reserved map
 		v.When = PlanWhenHand
 		v.BankShare = ge.wonderBankShare(v.Key)
 		if v.Note == "" {
-			v.Note = txtWonderByHand.String() + vibe.Line("game.plan_detail.planDetailFor.02", ". It also pays itself once the funds you hold cover the bank.")
+			v.Note = txtWonderByHand.String() + rowid.Line("game.plan_detail.planDetailFor.02", ". It also pays itself once the funds you hold cover the bank.")
 		}
 	}
 }
 
 // txtWonderByHand is a wonder item's note.
-var txtWonderByHand = vibe.E("game.plan_detail.planDetailFor.01", "needs a deposit by hand")
+var txtWonderByHand = rowid.E("game.plan_detail.planDetailFor.01", "needs a deposit by hand")
 
 // wonderBankShare is how full wonder w's bank is, 0 to 1.
 func (ge *GameEngine) wonderBankShare(w string) float64 {

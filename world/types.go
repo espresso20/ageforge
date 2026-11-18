@@ -96,7 +96,7 @@ type Object struct {
 	Kind ObjKind
 	Form Form   // KindFeature: how it looks
 	Key  string // unique within the frame
-	// Label and Inspect are vibe keys: the name the map writes by the object
+	// Label and Inspect are row ids: the name the map writes by the object
 	// and the text the inspect panel shows. Empty means unlabelled/unpickable.
 	Label, Inspect string
 	Pos            Vec     // in the frame's units

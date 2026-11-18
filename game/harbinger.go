@@ -11,8 +11,8 @@ import (
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // The Harbinger (Phase 9 follow-up).
@@ -280,9 +280,8 @@ type HarbingerSave struct {
 	// Fulfilled from Vindicated at resolution.
 	Invited bool `json:"invited,omitempty"`
 	// Lines are the current figure's arrival and warning lines, in plain
-	// English (a script's words are never kept). LineKeys name each of them
-	// for flavor.Retell, so they can be told in the script's words when they
-	// are read: "" for a line with no key.
+	// English. LineKeys name each of them by its catalog key, "" for a line
+	// with no key. Nothing reads LineKeys yet; it is kept in the save.
 	Lines       []string `json:"lines,omitempty"`
 	LineKeys    []string `json:"line_keys,omitempty"`
 	ArrivedTick int      `json:"arrived_tick,omitempty"`
@@ -502,7 +501,7 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 		ge.harbinger = lp
 	}
 
-	ge.addLog("event", vibe.Sprintf("game.harbinger.harbingerArriveLastPassage.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
+	ge.addLog("event", rowid.Sprintf("game.harbinger.harbingerArriveLastPassage.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), harbingerWarningText(ge.rules, "")))
 	for _, l := range ge.harbingerLinesTold(lp) {
 		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
@@ -531,7 +530,7 @@ func (ge *GameEngine) harbingerHandoff() {
 	h.AnnouncedTier = tier
 	h.Lines, h.LineKeys = ge.harbingerSpeak(def, tier)
 
-	ge.addLog("event", vibe.Sprintf("game.harbinger.harbingerHandoff.01", "⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
+	ge.addLog("event", rowid.Sprintf("game.harbinger.harbingerHandoff.01", "⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), warning))
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, h.TargetEpoch, true)
@@ -547,7 +546,7 @@ func harbingerWarningText(set *rules.Set, targetEpoch string) string {
 		name, _ := set.LastPassage()
 		return "the" + strings.TrimPrefix(name, "The")
 	}
-	return vibe.Line("game.harbinger.harbingerWarningText.01", "impending doom")
+	return rowid.Line("game.harbinger.harbingerWarningText.01", "impending doom")
 }
 
 // harbingerSpeak draws the arrival and warning lines for def at tier. It
@@ -613,12 +612,12 @@ func (ge *GameEngine) summonHarbinger() error {
 	}
 	if ge.rules.IsFinalEra(ge.currentEpoch) && ge.lastPassageThread() == nil {
 		if !ge.harbingerArriveLastPassage() {
-			return vibe.Errorf("game.harbinger.summonHarbinger.01", "The next passage cannot bring a catastrophe.")
+			return rowid.Errorf("game.harbinger.summonHarbinger.01", "The next passage cannot bring a catastrophe.")
 		}
 		return nil
 	}
 	if ge.harbinger != nil && ge.harbinger.TargetEpoch != "" {
-		return vibe.Errorf("game.harbinger.summonHarbinger.02", "A harbinger is already here.")
+		return rowid.Errorf("game.harbinger.summonHarbinger.02", "A harbinger is already here.")
 	}
 	ge.ensureFate()
 	f := ge.fate
@@ -633,7 +632,7 @@ func (ge *GameEngine) summonHarbinger() error {
 	f.Invited, f.Resolved, f.ResolvedTick, f.AtAdvance, f.Arrived = false, "", 0, false, false
 	f.StrikeTick = ge.tick + int(f.LeadFrac*ge.warningAgeTicks(ge.age))
 	if !ge.fateArrive() {
-		return vibe.Errorf("game.harbinger.summonHarbinger.03", "No harbinger could come in this age.")
+		return rowid.Errorf("game.harbinger.summonHarbinger.03", "No harbinger could come in this age.")
 	}
 	return nil
 }
@@ -1059,10 +1058,10 @@ func priceRowIn(set *rules.Set, epoch, age string, lastPassage bool) HarbingerPr
 // harbingerActionCheck returns the common refusal for all three actions.
 func (ge *GameEngine) harbingerActionCheck() error {
 	if ge.harbinger == nil {
-		return vibe.Errorf("game.harbinger.harbingerActionCheck.01", "No harbinger is here. One comes only when doom is on its way.")
+		return rowid.Errorf("game.harbinger.harbingerActionCheck.01", "No harbinger is here. One comes only when doom is on its way.")
 	}
 	if ge.pendingLastPassage {
-		return vibe.Errorf("game.harbinger.harbingerActionCheck.02", "The Last Passage has already come. Type 'catastrophe' to answer it.")
+		return rowid.Errorf("game.harbinger.harbingerActionCheck.02", "The Last Passage has already come. Type 'catastrophe' to answer it.")
 	}
 	return nil
 }
@@ -1070,7 +1069,7 @@ func (ge *GameEngine) harbingerActionCheck() error {
 // lastPassageCame is the refusal every action shows while the Last Passage
 // is pending: the answers belonged to the passage, which has been rolled.
 func lastPassageCame() string {
-	return vibe.Line("game.harbinger.lastPassageCame.01", "the Last Passage has already come")
+	return rowid.Line("game.harbinger.lastPassageCame.01", "the Last Passage has already come")
 }
 
 // harbingerPowerless is the refusal every action shows for a thread in an era
@@ -1081,7 +1080,7 @@ func (ge *GameEngine) harbingerPowerless() string {
 	if h == nil || h.TargetEpoch == "" || ge.rules.FateAllowed(h.EpochKey) {
 		return ""
 	}
-	return vibe.Line("game.harbinger.harbingerPowerless.01", "no catastrophe can strike in the ") + eraName(ge.rules, h.EpochKey)
+	return rowid.Line("game.harbinger.harbingerPowerless.01", "no catastrophe can strike in the ") + eraName(ge.rules, h.EpochKey)
 }
 
 // appeaseBlocked explains why Appease cannot be bought now, or "".
@@ -1089,15 +1088,15 @@ func (ge *GameEngine) appeaseBlocked() string {
 	h := ge.harbinger
 	switch {
 	case h == nil:
-		return vibe.Line("game.harbinger.appeaseBlocked.01", "no harbinger is here")
+		return rowid.Line("game.harbinger.appeaseBlocked.01", "no harbinger is here")
 	case ge.pendingLastPassage:
 		return lastPassageCame()
 	case ge.harbingerPowerless() != "":
 		return ge.harbingerPowerless()
 	case h.Invited:
-		return vibe.Line("game.harbinger.appeaseBlocked.02", "you invited the catastrophe; it will come whatever you offer")
+		return rowid.Line("game.harbinger.appeaseBlocked.02", "you invited the catastrophe; it will come whatever you offer")
 	case h.AppeaseLevel >= HarbingerMaxAppease:
-		return vibe.Line("game.harbinger.appeaseBlocked.03", "already appeased as far as it goes")
+		return rowid.Line("game.harbinger.appeaseBlocked.03", "already appeased as far as it goes")
 	}
 	return ""
 }
@@ -1107,13 +1106,13 @@ func (ge *GameEngine) braceBlocked() string {
 	h := ge.harbinger
 	switch {
 	case h == nil:
-		return vibe.Line("game.harbinger.braceBlocked.01", "no harbinger is here")
+		return rowid.Line("game.harbinger.braceBlocked.01", "no harbinger is here")
 	case ge.pendingLastPassage:
 		return lastPassageCame()
 	case ge.harbingerPowerless() != "":
 		return ge.harbingerPowerless()
 	case h.BraceLevel >= HarbingerMaxBrace:
-		return vibe.Line("game.harbinger.braceBlocked.02", "already braced as far as it goes")
+		return rowid.Line("game.harbinger.braceBlocked.02", "already braced as far as it goes")
 	}
 	return ""
 }
@@ -1123,13 +1122,13 @@ func (ge *GameEngine) inviteBlocked() string {
 	h := ge.harbinger
 	switch {
 	case h == nil:
-		return vibe.Line("game.harbinger.inviteBlocked.01", "no harbinger is here")
+		return rowid.Line("game.harbinger.inviteBlocked.01", "no harbinger is here")
 	case ge.pendingLastPassage:
 		return lastPassageCame()
 	case ge.harbingerPowerless() != "":
 		return ge.harbingerPowerless()
 	case h.Invited:
-		return vibe.Line("game.harbinger.inviteBlocked.02", "already invited")
+		return rowid.Line("game.harbinger.inviteBlocked.02", "already invited")
 	}
 	return ""
 }
@@ -1146,7 +1145,7 @@ func (ge *GameEngine) shortfall(cost map[string]float64) string {
 		if have >= need {
 			continue
 		}
-		part := textfmt.Number(math.Ceil(need-have)) + vibe.Line("game.harbinger.shortfall.01", " more ") + ResourceName(def.Key)
+		part := textfmt.Number(math.Ceil(need-have)) + rowid.Line("game.harbinger.shortfall.01", " more ") + ResourceName(def.Key)
 		parts = append(parts, part)
 	}
 	return strings.Join(parts, ", ")
@@ -1171,21 +1170,21 @@ func (ge *GameEngine) HarbingerAppease() error {
 		return err
 	}
 	if why := ge.appeaseBlocked(); why != "" {
-		return vibe.Errorf("game.harbinger.HarbingerAppease.01", "Cannot appease: %s.", why)
+		return rowid.Errorf("game.harbinger.HarbingerAppease.01", "Cannot appease: %s.", why)
 	}
 	h := ge.harbinger
 	level := h.AppeaseLevel + 1
 	cost := ge.appeasePrice(h, level)
 	if len(cost) == 0 {
-		return vibe.Errorf("game.harbinger.HarbingerAppease.02", "Cannot appease: there is nothing to offer.")
+		return rowid.Errorf("game.harbinger.HarbingerAppease.02", "Cannot appease: there is nothing to offer.")
 	}
 	if !ge.Resources.Pay(cost) {
-		return vibe.Errorf("game.harbinger.HarbingerAppease.03", "Cannot afford to appease: you need %s.", ge.shortfall(cost))
+		return rowid.Errorf("game.harbinger.HarbingerAppease.03", "Cannot afford to appease: you need %s.", ge.shortfall(cost))
 	}
 	h.AppeaseLevel = level
 	def, _ := ge.rules.Harbinger(h.Age)
 	ge.report(Event{Kind: config.BadgeEvAppeased, Subject: def.Key, Attrs: map[string]float64{"level": float64(level)}})
-	ge.addLog("success", vibe.Sprintf("game.harbinger.HarbingerAppease.04", "⚑ %s (Appease %d/%d): paid %s. The chance it strikes is now %.2fx its base.",
+	ge.addLog("success", rowid.Sprintf("game.harbinger.HarbingerAppease.04", "⚑ %s (Appease %d/%d): paid %s. The chance it strikes is now %.2fx its base.",
 		def.AppeaseLabel, level, HarbingerMaxAppease, harbingerCostText(ge.rules, cost), ge.harbingerAppeaseMultiplier()))
 	ge.harbingerFlavorLog(flavor.HarbingerAppeased, "")
 	return nil
@@ -1199,25 +1198,25 @@ func (ge *GameEngine) HarbingerBrace() error {
 		return err
 	}
 	if why := ge.braceBlocked(); why != "" {
-		return vibe.Errorf("game.harbinger.HarbingerBrace.01", "Cannot brace: %s.", why)
+		return rowid.Errorf("game.harbinger.HarbingerBrace.01", "Cannot brace: %s.", why)
 	}
 	h := ge.harbinger
 	level := h.BraceLevel + 1
 	cost := threadBraceCostIn(ge.rules, h, level)
 	if len(cost) == 0 {
-		return vibe.Errorf("game.harbinger.HarbingerBrace.02", "Cannot brace: this era asks nothing you can stockpile.")
+		return rowid.Errorf("game.harbinger.HarbingerBrace.02", "Cannot brace: this era asks nothing you can stockpile.")
 	}
 	if !ge.Resources.Pay(cost) {
-		return vibe.Errorf("game.harbinger.HarbingerBrace.03", "Cannot afford to brace: you need %s.", ge.shortfall(cost))
+		return rowid.Errorf("game.harbinger.HarbingerBrace.03", "Cannot afford to brace: you need %s.", ge.shortfall(cost))
 	}
 	h.BraceLevel = level
 	def, _ := ge.rules.Harbinger(h.Age)
 	ge.report(Event{Kind: config.BadgeEvBraced, Subject: def.Key, Attrs: map[string]float64{"level": float64(level)}})
 	if h.TargetEpoch == "" {
-		ge.addLog("success", vibe.Sprintf("game.harbinger.HarbingerBrace.04", "⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
+		ge.addLog("success", rowid.Sprintf("game.harbinger.HarbingerBrace.04", "⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
 			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(ge.rules, cost), LastPassageKeepFor(level)*100, LastPassageKeep*100))
 	} else {
-		ge.addLog("success", vibe.Sprintf("game.harbinger.HarbingerBrace.05", "⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not %d%%) and %.0f%% of stock is kept (not %.0f%%).",
+		ge.addLog("success", rowid.Sprintf("game.harbinger.HarbingerBrace.05", "⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not %d%%) and %.0f%% of stock is kept (not %.0f%%).",
 			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(ge.rules, cost), braceDestroyPct[level], braceDestroyPct[0], braceKeepFrac[level]*100, braceKeepFrac[0]*100))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerBraced, "")
@@ -1235,7 +1234,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 		return err
 	}
 	if why := ge.inviteBlocked(); why != "" {
-		return vibe.Errorf("game.harbinger.HarbingerInvite.01", "Cannot invite: %s.", why)
+		return rowid.Errorf("game.harbinger.HarbingerInvite.01", "Cannot invite: %s.", why)
 	}
 	h := ge.harbinger
 	h.Invited = true
@@ -1244,7 +1243,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 		Attrs: map[string]float64{"last": boolFact(h.TargetEpoch == "")}})
 	if h.TargetEpoch == "" {
 		ge.inviteCatastrophe()
-		ge.addLog("warning", vibe.Sprintf("game.harbinger.HarbingerInvite.02", "⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
+		ge.addLog("warning", rowid.Sprintf("game.harbinger.HarbingerInvite.02", "⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
 			def.InviteLabel))
 	} else {
 		if f := ge.fate; f != nil && f.EpochKey == h.EpochKey {
@@ -1252,11 +1251,11 @@ func (ge *GameEngine) HarbingerInvite() error {
 			f.Fated = true // a false prophet's doom is real now; the record still says it lied
 		}
 		// The thread's own era, never one to come.
-		when := vibe.Sprintf("game.harbinger.HarbingerInvite.03", "before the %s ends", eraName(ge.rules, h.EpochKey))
+		when := rowid.Sprintf("game.harbinger.HarbingerInvite.03", "before the %s ends", eraName(ge.rules, h.EpochKey))
 		if h.When == WhenThisAge {
-			when = vibe.Line("game.harbinger.HarbingerInvite.04", "before this age is out")
+			when = rowid.Line("game.harbinger.HarbingerInvite.04", "before this age is out")
 		}
-		ge.addLog("warning", vibe.Sprintf("game.harbinger.HarbingerInvite.05", "⚑ %s: you have invited it. The catastrophe will come %s. This cannot be undone.",
+		ge.addLog("warning", rowid.Sprintf("game.harbinger.HarbingerInvite.05", "⚑ %s: you have invited it. The catastrophe will come %s. This cannot be undone.",
 			def.InviteLabel, when))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerInvited, "")
@@ -1315,12 +1314,12 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 	def, _ := ge.rules.Harbinger(h.Age)
 	name := capFirst(def.Name)
 	targetName := eraName(ge.rules, epochKey)
-	spared := vibe.Sprintf("game.harbinger.settleHarbinger.01", "⚑ The doom %s foretold passed you by. The warning was real, and you were spared.", def.Name)
-	discredited := vibe.Sprintf("game.harbinger.settleHarbinger.02", "⚑ The doom %s foretold never came. The warning had been invented from the start.", def.Name)
+	spared := rowid.Sprintf("game.harbinger.settleHarbinger.01", "⚑ The doom %s foretold passed you by. The warning was real, and you were spared.", def.Name)
+	discredited := rowid.Sprintf("game.harbinger.settleHarbinger.02", "⚑ The doom %s foretold never came. The warning had been invented from the start.", def.Name)
 	if epochKey == "" {
 		targetName, _ = ge.rules.LastPassage()
-		spared = vibe.Sprintf("game.harbinger.settleHarbinger.03", "⚑ The Last Passage opens, and nothing comes through it. %s's warning was real, and you were spared.", name)
-		discredited = vibe.Sprintf("game.harbinger.settleHarbinger.04", "⚑ The Last Passage opens, and nothing comes through it. The warning had been invented from the start, and %s was the last to repeat it.", def.Name)
+		spared = rowid.Sprintf("game.harbinger.settleHarbinger.03", "⚑ The Last Passage opens, and nothing comes through it. %s's warning was real, and you were spared.", name)
+		discredited = rowid.Sprintf("game.harbinger.settleHarbinger.04", "⚑ The Last Passage opens, and nothing comes through it. The warning had been invented from the start, and %s was the last to repeat it.", def.Name)
 	}
 
 	var outcome, msg, kind string
@@ -1331,15 +1330,15 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 	switch {
 	case came && h.Invited:
 		outcome, moment = HarbingerOutcomeFulfilled, flavor.HarbingerFulfilled
-		msg = vibe.Sprintf("game.harbinger.settleHarbinger.05", "⚑ You invited it, and it came, as %s said it would.", def.Name)
+		msg = rowid.Sprintf("game.harbinger.settleHarbinger.05", "⚑ You invited it, and it came, as %s said it would.", def.Name)
 		if h.FalseProphet {
-			msg = vibe.Line("game.harbinger.settleHarbinger.06", "⚑ You invited it, and it came, though the warning, it emerged, had been invented from the start.")
+			msg = rowid.Line("game.harbinger.settleHarbinger.06", "⚑ You invited it, and it came, though the warning, it emerged, had been invented from the start.")
 		}
 	case came:
 		outcome, moment = HarbingerOutcomeVindicated, flavor.HarbingerVindicated
-		msg = vibe.Sprintf("game.harbinger.settleHarbinger.07", "⚑ %s was right.", name)
+		msg = rowid.Sprintf("game.harbinger.settleHarbinger.07", "⚑ %s was right.", name)
 		if h.FalseProphet {
-			msg = vibe.Sprintf("game.harbinger.settleHarbinger.08", "⚑ %s was right, though it emerged that the warning had been invented from the start.", name)
+			msg = rowid.Sprintf("game.harbinger.settleHarbinger.08", "⚑ %s was right, though it emerged that the warning had been invented from the start.", name)
 		}
 	case h.FalseProphet:
 		outcome, moment = HarbingerOutcomeDiscredited, flavor.HarbingerDiscredited
@@ -1354,7 +1353,7 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 	ge.addLog("event", msg)
 	if came && h.BraceLevel > 0 && epochKey != "" {
 		ge.pendingBraceLevel = h.BraceLevel
-		ge.addLog("info", vibe.Sprintf("game.harbinger.settleHarbinger.09", "  Your preparations hold: if you Endure, %d%% of buildings fall and %.0f%% of stock is kept.",
+		ge.addLog("info", rowid.Sprintf("game.harbinger.settleHarbinger.09", "  Your preparations hold: if you Endure, %d%% of buildings fall and %.0f%% of stock is kept.",
 			braceDestroyPct[h.BraceLevel], braceKeepFrac[h.BraceLevel]*100))
 	}
 	ge.threadFlavorLog(h, moment, kind)
@@ -1490,9 +1489,9 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 func harbingerWhenText(set *rules.Set, h *HarbingerSave) string {
 	switch h.When {
 	case WhenThisAge:
-		return vibe.Line("game.harbinger.harbingerWhenText.01", "before this age is out")
+		return rowid.Line("game.harbinger.harbingerWhenText.01", "before this age is out")
 	case WhenThisEra:
-		return vibe.Sprintf("game.harbinger.harbingerWhenText.02", "before the %s ends", eraName(set, h.EpochKey))
+		return rowid.Sprintf("game.harbinger.harbingerWhenText.02", "before the %s ends", eraName(set, h.EpochKey))
 	}
 	return ""
 }

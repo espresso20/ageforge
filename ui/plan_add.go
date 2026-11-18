@@ -5,8 +5,8 @@ import (
 	"unicode"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -116,7 +116,7 @@ func (p *planPanel) enterAdd(engine *game.GameEngine) {
 	picks := planPicks(engine.GetState(), engine, p.input)
 	switch len(picks) {
 	case 0:
-		p.note, p.noteGood = vibe.Sprintf("ui.plan_add.enterAdd.01", "Nothing called %q fits the plan.", p.input), false
+		p.note, p.noteGood = rowid.Sprintf("ui.plan_add.enterAdd.01", "Nothing called %q fits the plan.", p.input), false
 	case 1:
 		p.add(engine, picks[0])
 	default:
@@ -162,13 +162,13 @@ func (p *planPanel) add(engine *game.GameEngine, pick planPick) {
 		p.sel = max(0, after-1) // merged into the last item
 	}
 	p.mode, p.input, p.picks = planModeQueue, "", nil
-	p.note, p.noteGood = vibe.Sprintf("ui.plan_add.add.01", "Added %s.", pick.label), true
+	p.note, p.noteGood = rowid.Sprintf("ui.plan_add.add.01", "Added %s.", pick.label), true
 }
 
 // planAddLines is the name box and what the name fits so far.
 func planAddLines(sc planScreen) []string {
-	box := " " + theme.Paint(theme.RoleAccent, vibe.Line("ui.plan_add.planAddLines.01", "Add: ")) + kit.Escape(sc.input) + theme.Paint(theme.RoleHighlight, "▏")
-	hint := vibe.Line("ui.plan_add.planAddLines.02", "type a building, tech or mission   Enter add below   Esc cancel")
+	box := " " + theme.Paint(theme.RoleAccent, rowid.Line("ui.plan_add.planAddLines.01", "Add: ")) + kit.Escape(sc.input) + theme.Paint(theme.RoleHighlight, "▏")
+	hint := rowid.Line("ui.plan_add.planAddLines.02", "type a building, tech or mission   Enter add below   Esc cancel")
 	if sc.input != "" {
 		fits := planPicks(sc.state, nil, sc.input)
 		var names []string
@@ -182,7 +182,7 @@ func planAddLines(sc planScreen) []string {
 		if len(names) > 0 {
 			hint = strings.Join(names, ", ")
 		} else {
-			hint = vibe.Line("ui.plan_add.planAddLines.03", "no match")
+			hint = rowid.Line("ui.plan_add.planAddLines.03", "no match")
 		}
 	}
 	return []string{box, " " + theme.Paint(theme.RoleDim, kit.Escape(hint))}
@@ -202,7 +202,7 @@ func planPickLines(sc planScreen) []string {
 		}
 	}
 	return []string{
-		" " + theme.Paint(theme.RoleAccent, vibe.Line("ui.plan_add.planPickLines.01", "Which one? ")) + strings.Join(parts, "  "),
-		" " + theme.Paint(theme.RoleDim, vibe.Line("ui.plan_add.planPickLines.02", "↑↓ choose   Enter add below   Esc cancel")),
+		" " + theme.Paint(theme.RoleAccent, rowid.Line("ui.plan_add.planPickLines.01", "Which one? ")) + strings.Join(parts, "  "),
+		" " + theme.Paint(theme.RoleDim, rowid.Line("ui.plan_add.planPickLines.02", "↑↓ choose   Enter add below   Esc cancel")),
 	}
 }

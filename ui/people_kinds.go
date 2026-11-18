@@ -6,8 +6,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // people_kinds.go is the four kinds of person in the town, as the People box
@@ -56,7 +56,7 @@ func peopleKinds(st game.GameState) []peopleKind {
 }
 
 // txtOut is said the same way on several screens, so it has one id.
-var txtOut = vibe.E("ui.people_kinds.boxLine.01", " out")
+var txtOut = rowid.E("ui.people_kinds.boxLine.01", " out")
 
 // boxLine is the kind's line in the People box w cells wide (0: any width):
 // its name on the left, its count on the right, and, for the soldiers, "·

@@ -382,9 +382,6 @@ type LogEntry struct {
 	// Type is the category: "info", "success", "warning", "error", "event"
 	// or LogRoutine. It decides the color and the logs panel's tag.
 	Type string
-	// Tags say what the line is about, set where it is written, so a panel
-	// can pick lines by subject without reading their words. Never saved: the log is not.
-	Tags LogTag
 }
 
 // LogRoutine is the log category for routine confirmations: a line whose

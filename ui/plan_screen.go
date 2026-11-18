@@ -6,8 +6,8 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -55,20 +55,20 @@ func (sc planScreen) planSaving() (saved bool, d string) {
 
 // planHeader is "Build plan" on the left and the estimate on the right.
 func planHeader(sc planScreen) string {
-	left := theme.Paint(theme.RoleAccent, vibe.Line("ui.overlay_plan.planPanelText.01", "═══ Build plan ═══"))
+	left := theme.Paint(theme.RoleAccent, rowid.Line("ui.overlay_plan.planPanelText.01", "═══ Build plan ═══"))
 	if len(sc.state.Plan) == 0 {
 		return left
 	}
 	var right string
 	if sc.haveEst {
-		right = vibe.Line("ui.overlay_plan.planHeader.01", "Plan finishes in ") + planTimeText(sc.est.Finish)
+		right = rowid.Line("ui.overlay_plan.planHeader.01", "Plan finishes in ") + planTimeText(sc.est.Finish)
 		if sc.est.Finish <= 0 && sc.est.Untimed > 0 {
-			right = vibe.Line("ui.overlay_plan.planHeader.04", "Plan has no finish time yet")
+			right = rowid.Line("ui.overlay_plan.planHeader.04", "Plan has no finish time yet")
 		} else if sc.est.Untimed > 0 {
-			right += vibe.Sprintf("ui.overlay_plan.planHeader.03", " (%d not timed)", sc.est.Untimed)
+			right += rowid.Sprintf("ui.overlay_plan.planHeader.03", " (%d not timed)", sc.est.Untimed)
 		}
 		if ok, d := sc.planSaving(); ok {
-			right += " · " + theme.Paint(theme.RoleHighlight, "O") + vibe.Line("ui.overlay_plan.planHeader.02", " optimize could save ") + d
+			right += " · " + theme.Paint(theme.RoleHighlight, "O") + rowid.Line("ui.overlay_plan.planHeader.02", " optimize could save ") + d
 		}
 	}
 	if gap := sc.width - visibleLen(left) - visibleLen(right); gap > 1 {
@@ -98,13 +98,13 @@ func planPanelScreen(sc planScreen) string {
 // planEmptyLines says what an empty plan is and how to fill it.
 func planEmptyLines() []string {
 	return []string{
-		strings.TrimRight(vibe.Line("ui.overlay_plan.planPanelText.03", " The plan is empty.\n\n"), "\n"),
+		strings.TrimRight(rowid.Line("ui.overlay_plan.planPanelText.03", " The plan is empty.\n\n"), "\n"),
 		"",
-		" " + theme.Keycap("A") + vibe.Line("ui.overlay_plan.planEmptyLines.01", " add an item by name, or type a command:"),
+		" " + theme.Keycap("A") + rowid.Line("ui.overlay_plan.planEmptyLines.01", " add an item by name, or type a command:"),
 		"",
-		" " + theme.Paint(theme.RoleLabel, vibe.Line("ui.plan_screen.planEmptyLines.01", "plan build <building> [count[]")) + theme.Paint(theme.RoleDim, vibe.Line("ui.plan_screen.planEmptyLines.02", "   e.g. plan build hut 10")),
-		" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planPanelText.06", "            with what it needs first, in order")),
-		" " + theme.Paint(theme.RoleLabel, "plan expedition <mission>") + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planEmptyLines.02", "      a mission from the board")),
+		" " + theme.Paint(theme.RoleLabel, rowid.Line("ui.plan_screen.planEmptyLines.01", "plan build <building> [count[]")) + theme.Paint(theme.RoleDim, rowid.Line("ui.plan_screen.planEmptyLines.02", "   e.g. plan build hut 10")),
+		" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_plan.planPanelText.06", "            with what it needs first, in order")),
+		" " + theme.Paint(theme.RoleLabel, "plan expedition <mission>") + theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_plan.planEmptyLines.02", "      a mission from the board")),
 	}
 }
 
@@ -146,9 +146,9 @@ func planBody(sc planScreen, room int) []string {
 // planCountLine is "12 of 60 items, and 3 techs queued".
 func planCountLine(sc planScreen, n int) string {
 	load := game.PlanLoad(sc.state.Plan)
-	count := vibe.Sprintf("ui.overlay_plan.planPanelText.07", "%d of %d items", load, game.MaxPlanItems)
+	count := rowid.Sprintf("ui.overlay_plan.planPanelText.07", "%d of %d items", load, game.MaxPlanItems)
 	if techs := n - load; techs > 0 {
-		count += vibe.Sprintf("ui.overlay_plan.planPanelText.08", ", and %s queued (research takes no room)", textfmt.Count(techs, vibe.Line("ui.overlay_plan.planPanelText.09", "tech"), vibe.Line("ui.overlay_plan.planPanelText.10", "techs")))
+		count += rowid.Sprintf("ui.overlay_plan.planPanelText.08", ", and %s queued (research takes no room)", textfmt.Count(techs, rowid.Line("ui.overlay_plan.planPanelText.09", "tech"), rowid.Line("ui.overlay_plan.planPanelText.10", "techs")))
 	}
 	return " " + theme.Paint(theme.RoleDim, count)
 }
@@ -195,7 +195,7 @@ func planDetailLines(sc planScreen, width int) []string {
 	var out []string
 	head := theme.Paint(theme.RoleAccent, kit.Escape(planItemTitle(v))) + "  " + planStatusText(v)
 	if when := planWhen(v, est); when != "" {
-		head += theme.Paint(theme.RoleDim, "  ·  "+vibe.Line("ui.overlay_plan.planDetailLines.01", "starts ")+when)
+		head += theme.Paint(theme.RoleDim, "  ·  "+rowid.Line("ui.overlay_plan.planDetailLines.01", "starts ")+when)
 	}
 	out = append(out, head, "")
 	if v.Status == game.PlanStatusBlocked && v.Note != "" {
@@ -222,11 +222,11 @@ func planRowsTable(v game.PlanItemView, width int) []string {
 	}
 	nameW++
 	full := width >= nameW+52
-	hdr := padVis(vibe.Line("ui.overlay_plan.planRowsTable.01", "Resource"), nameW) + padVis(vibe.Line("ui.overlay_plan.planRowsTable.02", "Needs"), 8) + padVis(vibe.Line("ui.overlay_plan.planRowsTable.03", "Have"), 8)
+	hdr := padVis(rowid.Line("ui.overlay_plan.planRowsTable.01", "Resource"), nameW) + padVis(rowid.Line("ui.overlay_plan.planRowsTable.02", "Needs"), 8) + padVis(rowid.Line("ui.overlay_plan.planRowsTable.03", "Have"), 8)
 	if full {
-		hdr += padVis(vibe.Line("ui.overlay_plan.planRowsTable.04", "Held"), 8) + padVis(vibe.Line("ui.overlay_plan.planRowsTable.05", "Income"), 10)
+		hdr += padVis(rowid.Line("ui.overlay_plan.planRowsTable.04", "Held"), 8) + padVis(rowid.Line("ui.overlay_plan.planRowsTable.05", "Income"), 10)
 	}
-	hdr += vibe.Line("ui.overlay_plan.planRowsTable.06", "Ready in")
+	hdr += rowid.Line("ui.overlay_plan.planRowsTable.06", "Ready in")
 	out := []string{theme.Paint(theme.RoleDim, hdr)}
 	for _, r := range v.Rows {
 		line := padVis(game.ResourceName(r.Res), nameW) + padVis(textfmt.Number(r.Need), 8) + padVis(textfmt.Number(r.Have), 8)
@@ -235,7 +235,7 @@ func planRowsTable(v game.PlanItemView, width int) []string {
 			if r.Held >= 1 {
 				held = textfmt.Number(r.Held)
 			}
-			income := vibe.Line("ui.overlay_plan.planRowsTable.07", "none")
+			income := rowid.Line("ui.overlay_plan.planRowsTable.07", "none")
 			if r.PerSecond > 0 {
 				income = "+" + textfmt.Number(r.PerSecond) + "/s"
 			}
@@ -250,7 +250,7 @@ func planRowsTable(v game.PlanItemView, width int) []string {
 			line += textfmt.Duration(r.ReadyIn)
 		}
 		if r.Res == v.Bottleneck && v.Bottleneck != "" {
-			line += theme.Paint(theme.RoleWarning, " ◂ "+vibe.Line("ui.overlay_plan.planRowsTable.08", "slowest"))
+			line += theme.Paint(theme.RoleWarning, " ◂ "+rowid.Line("ui.overlay_plan.planRowsTable.08", "slowest"))
 		}
 		out = append(out, line)
 	}
@@ -276,12 +276,12 @@ func planHoldingLine(sc planScreen, width int) []string {
 		}
 		part := textfmt.Number(v.HeldBack[res]) + " " + game.ResourceName(res)
 		if len(below) > 0 {
-			part += vibe.Line("ui.overlay_plan.planHoldingLine.01", " from ") + planItemRange(below)
+			part += rowid.Line("ui.overlay_plan.planHoldingLine.01", " from ") + planItemRange(below)
 		}
 		parts = append(parts, part)
 	}
 	var out []string
-	for _, l := range wrapWords(vibe.Line("ui.overlay_plan.planHoldingLine.02", "Holding back: ")+strings.Join(parts, "; "), width) {
+	for _, l := range wrapWords(rowid.Line("ui.overlay_plan.planHoldingLine.02", "Holding back: ")+strings.Join(parts, "; "), width) {
 		out = append(out, theme.Paint(theme.RoleDim, kit.Escape(l)))
 	}
 	return append(out, "")
@@ -292,17 +292,17 @@ func planHoldingLine(sc planScreen, width int) []string {
 func planItemRange(n []int) string {
 	switch {
 	case len(n) == 1:
-		return fmt.Sprintf(vibe.Line("ui.overlay_plan.planItemRange.01", "item %d"), n[0])
+		return fmt.Sprintf(rowid.Line("ui.overlay_plan.planItemRange.01", "item %d"), n[0])
 	case n[len(n)-1]-n[0] == len(n)-1 && len(n) > 2:
-		return vibe.Sprintf("ui.overlay_plan.planItemRange.02", "items %d to %d", n[0], n[len(n)-1])
+		return rowid.Sprintf("ui.overlay_plan.planItemRange.02", "items %d to %d", n[0], n[len(n)-1])
 	case len(n) == 2:
-		return vibe.Sprintf("ui.overlay_plan.planItemRange.03", "items %d and %d", n[0], n[1])
+		return rowid.Sprintf("ui.overlay_plan.planItemRange.03", "items %d and %d", n[0], n[1])
 	}
 	s := make([]string, len(n))
 	for i, x := range n {
 		s[i] = fmt.Sprint(x)
 	}
-	return vibe.Line("ui.overlay_plan.planItemRange.04", "items ") + strings.Join(s, ", ")
+	return rowid.Line("ui.overlay_plan.planItemRange.04", "items ") + strings.Join(s, ", ")
 }
 
 // planKindLines are the lines only some items have: an advance's pillars, a
@@ -315,36 +315,36 @@ func planKindLines(sc planScreen, v game.PlanItemView, width int) []string {
 			line := padVis(truncate(p.Name, 12), 13) + wonderProgressBar(float64(p.Percent)/100, 10) + fmt.Sprintf(" %3d%%", p.Percent)
 			switch {
 			case p.Done:
-				line += theme.Paint(theme.RolePositive, " "+vibe.Line("ui.overlay_plan.planKindLines.01", "done"))
+				line += theme.Paint(theme.RolePositive, " "+rowid.Line("ui.overlay_plan.planKindLines.01", "done"))
 			case p.Blocker != "":
 				line += theme.Paint(theme.RoleDim, " "+kit.Escape(p.Blocker))
 				if p.Item > 0 {
-					line += theme.Paint(theme.RoleAccent, vibe.Sprintf("ui.overlay_plan.planKindLines.02", "  (item %d)", p.Item))
+					line += theme.Paint(theme.RoleAccent, rowid.Sprintf("ui.overlay_plan.planKindLines.02", "  (item %d)", p.Item))
 				} else {
-					line += theme.Paint(theme.RoleWarning, vibe.Line("ui.overlay_plan.planKindLines.03", "  (not in the plan)"))
+					line += theme.Paint(theme.RoleWarning, rowid.Line("ui.overlay_plan.planKindLines.03", "  (not in the plan)"))
 				}
 			}
 			out = append(out, line)
 		}
 	case v.When == game.PlanWhenHand:
-		out = append(out, vibe.Line("ui.overlay_plan.planKindLines.04", "Bank ")+wonderProgressBar(v.BankShare, 14)+fmt.Sprintf(" %3.0f%%", v.BankShare*100))
-		out = append(out, theme.Paint(theme.RoleWarning, vibe.Line("ui.overlay_plan.planKindLines.05", "Deposit by hand: wonder bank")))
+		out = append(out, rowid.Line("ui.overlay_plan.planKindLines.04", "Bank ")+wonderProgressBar(v.BankShare, 14)+fmt.Sprintf(" %3.0f%%", v.BankShare*100))
+		out = append(out, theme.Paint(theme.RoleWarning, rowid.Line("ui.overlay_plan.planKindLines.05", "Deposit by hand: wonder bank")))
 	case v.Kind == game.PlanResearch:
 		if v.Holds != "" {
-			line := vibe.Line("ui.overlay_plan.planKindLines.06", "The research slot holds ") + kit.Escape(v.Holds)
+			line := rowid.Line("ui.overlay_plan.planKindLines.06", "The research slot holds ") + kit.Escape(v.Holds)
 			if v.Frees > 0 {
-				line += vibe.Line("ui.overlay_plan.planKindLines.07", "; it frees in ") + textfmt.Duration(v.Frees)
+				line += rowid.Line("ui.overlay_plan.planKindLines.07", "; it frees in ") + textfmt.Duration(v.Frees)
 			}
 			out = append(out, line)
 		}
 	case v.Kind == game.PlanExpedition:
-		out = append(out, vibe.Line("ui.overlay_plan.planKindLines.08", "Mission: ")+kit.Escape(v.Name))
+		out = append(out, rowid.Line("ui.overlay_plan.planKindLines.08", "Mission: ")+kit.Escape(v.Name))
 		if len(v.Cost) > 0 {
-			out = append(out, vibe.Line("ui.overlay_plan.planKindLines.09", "Price: ")+strings.ReplaceAll(planPriceWhole(v.Cost), glue, " "))
+			out = append(out, rowid.Line("ui.overlay_plan.planKindLines.09", "Price: ")+strings.ReplaceAll(planPriceWhole(v.Cost), glue, " "))
 		}
-		slot := vibe.Line("ui.overlay_plan.planKindLines.10", "Party: at home, free to go")
+		slot := rowid.Line("ui.overlay_plan.planKindLines.10", "Party: at home, free to go")
 		if v.Status == game.PlanStatusBlocked && v.Note != "" {
-			slot = vibe.Line("ui.overlay_plan.planKindLines.11", "Party: ") + kit.Escape(v.Note)
+			slot = rowid.Line("ui.overlay_plan.planKindLines.11", "Party: ") + kit.Escape(v.Note)
 		}
 		out = append(out, slot)
 	}
@@ -355,9 +355,9 @@ func planKindLines(sc planScreen, v game.PlanItemView, width int) []string {
 		}
 	}
 	if v.Kind == game.PlanBuild || v.Kind == game.PlanUpgrade {
-		line := vibe.Sprintf("ui.overlay_plan.planKindLines.12", "Copies left: %d", v.Count)
+		line := rowid.Sprintf("ui.overlay_plan.planKindLines.12", "Copies left: %d", v.Count)
 		if v.Started > 0 {
-			line += vibe.Sprintf("ui.overlay_plan.planKindLines.13", " (%d started)", v.Started)
+			line += rowid.Sprintf("ui.overlay_plan.planKindLines.13", " (%d started)", v.Started)
 		}
 		out = append(out, theme.Paint(theme.RoleDim, line))
 	}

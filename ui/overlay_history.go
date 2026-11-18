@@ -7,7 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // historyProvider is the OverlayProvider for the history overlay. It fetches
@@ -19,11 +19,11 @@ func historyProvider(engine *game.GameEngine) OverlayProvider {
 }
 
 // txtMorale is said the same way on several screens, so it has one id.
-var txtMorale = vibe.E("ui.overlay_history.renderHistoryOverlay.07", "Morale")
+var txtMorale = rowid.E("ui.overlay_history.renderHistoryOverlay.07", "Morale")
 
 func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) string {
 	if hist == nil || hist.Recent.Len() < 2 {
-		return vibe.Line("ui.overlay_history.renderHistoryOverlay.01", "\n[gray] No history yet. Play for a while and check back.[-]\n")
+		return rowid.Line("ui.overlay_history.renderHistoryOverlay.01", "\n[gray] No history yet. Play for a while and check back.[-]\n")
 	}
 
 	recent := &hist.Recent
@@ -65,19 +65,19 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 	}
 
 	metrics := []metricDef{
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.02", "Population"), "[cyan]", "population", 1, vibe.Line("ui.overlay_history.renderHistoryOverlay.03", " workers"), false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", "food_rate", 1, "/tick", true},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", "know_rate", 1, "/tick", true},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", "faith", 1, "", false},
+		{rowid.Line("ui.overlay_history.renderHistoryOverlay.02", "Population"), "[cyan]", "population", 1, rowid.Line("ui.overlay_history.renderHistoryOverlay.03", " workers"), false},
+		{rowid.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", "food_rate", 1, "/tick", true},
+		{rowid.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", "know_rate", 1, "/tick", true},
+		{rowid.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", "faith", 1, "", false},
 		{txtMorale.String(), "[yellow]", "morale", 100, "%", false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", "prod_all", 100, "%", false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.09", "Game speed"), "[gray]", "tick_speed", 1, "x", false},
+		{rowid.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", "prod_all", 100, "%", false},
+		{rowid.Line("ui.overlay_history.renderHistoryOverlay.09", "Game speed"), "[gray]", "tick_speed", 1, "x", false},
 	}
 
 	var sb strings.Builder
 
-	sb.WriteString(vibe.Line("ui.overlay_history.renderHistoryOverlay.10", "\n[gold]═══ Civilization history ═══[-]\n"))
-	sb.WriteString(vibe.Sprintf("ui.overlay_history.renderHistoryOverlay.11", "[gray]Ticks %d – %d  │  %d samples  │  age advances marked │[-]\n\n",
+	sb.WriteString(rowid.Line("ui.overlay_history.renderHistoryOverlay.10", "\n[gold]═══ Civilization history ═══[-]\n"))
+	sb.WriteString(rowid.Sprintf("ui.overlay_history.renderHistoryOverlay.11", "[gray]Ticks %d – %d  │  %d samples  │  age advances marked │[-]\n\n",
 		firstTick, lastTick, n))
 
 	for _, m := range metrics {
@@ -104,7 +104,7 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 		}
 
 		// header line
-		sb.WriteString(vibe.Sprintf("ui.overlay_history.renderHistoryOverlay.12", "%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
+		sb.WriteString(rowid.Sprintf("ui.overlay_history.renderHistoryOverlay.12", "%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
 			m.color, m.label, trend, curStr, m.unit,
 			textfmt.Number(minV), textfmt.Number(maxV)))
 
@@ -126,7 +126,7 @@ func renderHistoryOverlay(state game.GameState, hist *game.RunHistory, w int) st
 
 	// x-axis age labels
 	if len(markerNames) > 0 {
-		sb.WriteString(vibe.Line("ui.overlay_history.renderHistoryOverlay.13", "[gray]  Ages: "))
+		sb.WriteString(rowid.Line("ui.overlay_history.renderHistoryOverlay.13", "[gray]  Ages: "))
 		for i, name := range markerNames {
 			if i > 0 {
 				sb.WriteString(" → ")

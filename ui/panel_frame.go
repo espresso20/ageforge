@@ -3,7 +3,7 @@ package ui
 import (
 	"image"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -36,7 +36,7 @@ const (
 type panelFrame struct {
 	*nativeHost
 	kit.Base
-	title vibe.Entry
+	title rowid.Entry
 	tv    *nativeText
 	// keys is the foot's keys, read on every draw (the Wonders panel's change
 	// with its view); hint is what the foot says may be typed, "" when the
@@ -56,7 +56,7 @@ type panelFrame struct {
 	grid    *xgrid
 }
 
-func newPanelFrame(title vibe.Entry, tv *nativeText) *panelFrame {
+func newPanelFrame(title rowid.Entry, tv *nativeText) *panelFrame {
 	f := &panelFrame{title: title, tv: tv}
 	f.nativeHost = newNativeHost()
 	return f

@@ -1,6 +1,6 @@
 package config
 
-import "github.com/espresso20/ageforge/vibe"
+import "github.com/espresso20/ageforge/rowid"
 
 // Mission kinds describe the three mission tiers and what each is worth.
 // A short mission is MissionScout, a long one MissionExpedition and a grand
@@ -81,7 +81,7 @@ const (
 )
 
 // RareTitleWord is the word a rare offer's title begins with.
-func RareTitleWord() string { return vibe.Line("config.missions.RareTitleWord.01", "Legendary") }
+func RareTitleWord() string { return rowid.Line("config.missions.RareTitleWord.01", "Legendary") }
 
 // MissionBoardLongestMinutes is the longest an ordinary offer can be out: the
 // grand tier's top length. A Legendary offer is longer still.

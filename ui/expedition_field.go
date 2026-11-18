@@ -8,7 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // expedition_field.go draws the Expedition Report's right side in the split
@@ -38,7 +38,7 @@ func outListH(missions, h int) int {
 }
 
 // txtOffer is said the same way on several screens, so it has one id.
-var txtOffer = vibe.E("ui.expedition_field.drawFieldReport.03", "offer")
+var txtOffer = rowid.E("ui.expedition_field.drawFieldReport.03", "offer")
 
 // drawFieldReport draws the Out list and the field report beside the map.
 func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScene, hi int) {
@@ -48,7 +48,7 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 	drawOutList(g, state, x, l.mainY, w, listH, sc, hi)
 
 	y, h := l.mainY+listH, l.mainH-listH
-	g.box(x, y, w, h, xBorder, vibe.Line("ui.expedition_field.drawFieldReport.01", "Field report"), xTitle, false)
+	g.box(x, y, w, h, xBorder, rowid.Line("ui.expedition_field.drawFieldReport.01", "Field report"), xTitle, false)
 	// With no legend row to hold it, the Society's line takes the box's foot.
 	soc, socKind := societyLine(state)
 	foot := 0
@@ -61,7 +61,7 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 	top, bottom := y+1, y+h-1-foot
 	if len(sc.acts) == 0 {
 		offers := len(sc.offers)
-		for i, ln := range wrapText(vibe.Sprintf("ui.expedition_field.drawFieldReport.02", "Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize(txtOffer.String(), offers)), cw) {
+		for i, ln := range wrapText(rowid.Sprintf("ui.expedition_field.drawFieldReport.02", "Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize(txtOffer.String(), offers)), cw) {
 			if top+i < bottom {
 				g.putFit(x+1, top+i, cw, ln, xDim)
 			}
@@ -77,7 +77,7 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 }
 
 // txtOutCount is said the same way on several screens, so it has one id.
-var txtOutCount = vibe.E("ui.expedition_field.drawOutList.01", "Out · %d")
+var txtOutCount = rowid.E("ui.expedition_field.drawOutList.01", "Out · %d")
 
 // drawOutList draws the Out list: each party under way on a line, its place
 // and its progress and time left, with the highlighted one marked. It scrolls
@@ -112,13 +112,13 @@ func drawOutList(g *xgrid, state game.GameState, x, y, w, h int, sc *expScene, h
 }
 
 // txtAboutMinutesOfIncome is said the same way on several screens, so it has one id.
-var txtAboutMinutesOfIncome = vibe.E("ui.expedition_field.fieldLines.10", "about %.0f min of income")
+var txtAboutMinutesOfIncome = rowid.E("ui.expedition_field.fieldLines.10", "about %.0f min of income")
 
 // txtHaul is said the same way on several screens, so it has one id.
-var txtHaul = vibe.E("ui.expedition_field.fieldLines.09", "Haul")
+var txtHaul = rowid.E("ui.expedition_field.fieldLines.09", "Haul")
 
 // txtSoldier is said the same way on several screens, so it has one id.
-var txtSoldier = vibe.E("ui.expedition_field.fieldLines.03", "soldier")
+var txtSoldier = rowid.E("ui.expedition_field.fieldLines.03", "soldier")
 
 // fieldLines is the field report for one party, wrapped to cw cells: its
 // title and tier, its soldiers, odds, progress and expected haul, then every
@@ -132,24 +132,24 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	}
 	tier := tierLabel(game.ExpeditionInfo{Label: a.Label, Tier: a.Tier, Grand: a.Grand})
 	if a.Rare {
-		add(xseg{tier, xAccent}, xseg{vibe.Line("ui.expedition_field.fieldLines.01", "  ◈ Legendary"), xLegend})
+		add(xseg{tier, xAccent}, xseg{rowid.Line("ui.expedition_field.fieldLines.01", "  ◈ Legendary"), xLegend})
 	} else {
 		add(xseg{tier, xAccent})
 	}
 	add()
 
 	if a.Party > 0 {
-		parts := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.02", "Party"), 7), xDim}, {fmt.Sprintf("%s %s", textfmt.Number(float64(a.Party)), pluralize(txtSoldier.String(), a.Party)), xText}}
+		parts := []xseg{{padRight(rowid.Line("ui.expedition_field.fieldLines.02", "Party"), 7), xDim}, {fmt.Sprintf("%s %s", textfmt.Number(float64(a.Party)), pluralize(txtSoldier.String(), a.Party)), xText}}
 		if fell := a.Party - a.Soldiers; fell > 0 {
-			parts = append(parts, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.04", " · %s fell so far", textfmt.Number(float64(fell))), xBad})
+			parts = append(parts, xseg{rowid.Sprintf("ui.expedition_field.fieldLines.04", " · %s fell so far", textfmt.Number(float64(fell))), xBad})
 		}
 		add(parts...)
 	}
 
-	odds := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.05", "Odds"), 7), xDim}, {expBar(a.SuccessChance, 10, "█", "░"), oddsKind(a.SuccessChance)},
+	odds := []xseg{{padRight(rowid.Line("ui.expedition_field.fieldLines.05", "Odds"), 7), xDim}, {expBar(a.SuccessChance, 10, "█", "░"), oddsKind(a.SuccessChance)},
 		{fmt.Sprintf(" %.0f%%", a.SuccessChance*100), oddsKind(a.SuccessChance)}}
 	if a.LaunchChance > 0 && fmt.Sprintf("%.0f", a.LaunchChance*100) != fmt.Sprintf("%.0f", a.SuccessChance*100) {
-		odds = append(odds, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.06", " (was %.0f%%)", a.LaunchChance*100), xDim})
+		odds = append(odds, xseg{rowid.Sprintf("ui.expedition_field.fieldLines.06", " (was %.0f%%)", a.LaunchChance*100), xDim})
 	}
 	add(odds...)
 
@@ -157,8 +157,8 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	if a.TotalTicks > 0 {
 		progress = 1 - float64(a.TicksLeft)/float64(a.TotalTicks)
 	}
-	add(xseg{padRight(vibe.Line("ui.expedition_field.fieldLines.07", "Going"), 7), xDim}, xseg{expBar(progress, 10, "▰", "▱"), xGood},
-		xseg{vibe.Sprintf("ui.expedition_field.fieldLines.08", " %s out · %s to go", expDur(a.TotalTicks-a.TicksLeft, state), expDur(a.TicksLeft, state)), xText})
+	add(xseg{padRight(rowid.Line("ui.expedition_field.fieldLines.07", "Going"), 7), xDim}, xseg{expBar(progress, 10, "▰", "▱"), xGood},
+		xseg{rowid.Sprintf("ui.expedition_field.fieldLines.08", " %s out · %s to go", expDur(a.TotalTicks-a.TicksLeft, state), expDur(a.TicksLeft, state)), xText})
 
 	add(xseg{padRight(txtHaul.String(), 7), xDim}, xseg{fmt.Sprintf(txtAboutMinutesOfIncome.String(), a.HaulMinutes), xGood})
 	var pays []string
@@ -170,13 +170,13 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	}
 	if s := a.HaulScale; s > 0 && math.Abs(s-1) > 1e-9 {
 		factor := strconv.FormatFloat(math.Round(s*100)/100, 'f', -1, 64)
-		add(xseg{"       ", xDim}, xseg{"x" + factor + vibe.Line("ui.expedition_field.fieldLines.11", " from the road"), xAccent})
+		add(xseg{"       ", xDim}, xseg{"x" + factor + rowid.Line("ui.expedition_field.fieldLines.11", " from the road"), xAccent})
 	}
 	add()
 
-	add(xseg{vibe.Line("ui.expedition_field.fieldLines.12", "On the road"), xAccent})
+	add(xseg{rowid.Line("ui.expedition_field.fieldLines.12", "On the road"), xAccent})
 	if len(a.RoadStories) == 0 {
-		add(xseg{vibe.Line("ui.expedition_field.fieldLines.13", "Nothing has happened yet."), xFaint})
+		add(xseg{rowid.Line("ui.expedition_field.fieldLines.13", "Nothing has happened yet."), xFaint})
 	}
 	for j := len(a.RoadStories) - 1; j >= 0; j-- {
 		kind := xText

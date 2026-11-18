@@ -6,7 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // scholars_text.go is how the screens say research: a bar that fills to 100
@@ -18,13 +18,13 @@ import (
 // researching (game.startedResearchLine); needsScholarsShort is the same
 // words for a list.
 var (
-	needsScholars      = vibe.E("ui.scholars_text.needsScholars.01", "It needs scholars researching to go on.")
-	needsScholarsShort = vibe.E("ui.scholars_text.needsScholarsShort.01", "needs scholars researching")
+	needsScholars      = rowid.E("ui.scholars_text.needsScholars.01", "It needs scholars researching to go on.")
+	needsScholarsShort = rowid.E("ui.scholars_text.needsScholarsShort.01", "needs scholars researching")
 )
 
 // noScholars is what the engine says of a town without scholars
 // (game.SetResearchShare), without "You have".
-var noScholars = vibe.E("ui.scholars_text.noScholars.01", "no scholars yet: knowledge buildings come with them")
+var noScholars = rowid.E("ui.scholars_text.noScholars.01", "no scholars yet: knowledge buildings come with them")
 
 // researchFraction is how far the tech in progress has come, 0 to 1: its
 // progress over its price, so it reads right with no scholar researching.
@@ -82,15 +82,15 @@ func researchingLine(state game.GameState, barW int) string {
 func scholarsLine(state game.GameState) string {
 	s := state.Scholars
 	if s.Total <= 0 {
-		return vibe.Line("ui.scholars_text.scholarsLine.01", "You have ") + noScholars.String() + "."
+		return rowid.Line("ui.scholars_text.scholarsLine.01", "You have ") + noScholars.String() + "."
 	}
-	return vibe.Sprintf("ui.scholars_text.scholarsLine.02", "%d research, %d teach. Teaching adds %s to what workers make.", s.Researching, s.Teaching, textfmt.SignedPercent(s.TeachingBonus))
+	return rowid.Sprintf("ui.scholars_text.scholarsLine.02", "%d research, %d teach. Teaching adds %s to what workers make.", s.Researching, s.Teaching, textfmt.SignedPercent(s.TeachingBonus))
 }
 
 // scholarsShort is scholarsLine in the fewest words, for a title bar.
 func scholarsShort(state game.GameState) string {
 	s := state.Scholars
-	return vibe.Sprintf("ui.scholars_text.scholarsShort.01", "Scholars %d research, %d teach, %s", s.Researching, s.Teaching, textfmt.SignedPercent(s.TeachingBonus))
+	return rowid.Sprintf("ui.scholars_text.scholarsShort.01", "Scholars %d research, %d teach, %s", s.Researching, s.Teaching, textfmt.SignedPercent(s.TeachingBonus))
 }
 
 // queueLines are the techs queued after the one in progress, in order. nil

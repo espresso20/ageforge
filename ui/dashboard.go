@@ -12,21 +12,21 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
 // shameMessages are randomly chosen at session start when the cheater badge is active.
 // Displayed in the top status bar — a deterrent against savegame manipulation.
-var shameMessages = []vibe.Entry{
-	vibe.E("ui.dashboard.shameMessages.01", "✦ FORGED SCROLLS ✦"),
-	vibe.E("ui.dashboard.shameMessages.02", "✦ ILLEGITIMATE EMPIRE ✦"),
-	vibe.E("ui.dashboard.shameMessages.03", "✦ COUNTERFEIT DYNASTY ✦"),
-	vibe.E("ui.dashboard.shameMessages.04", "✦ USURPER'S THRONE ✦"),
-	vibe.E("ui.dashboard.shameMessages.05", "✦ THE FABRICATED AGE ✦"),
-	vibe.E("ui.dashboard.shameMessages.06", "✦ DECREE OF DISHONOR ✦"),
+var shameMessages = []rowid.Entry{
+	rowid.E("ui.dashboard.shameMessages.01", "✦ FORGED SCROLLS ✦"),
+	rowid.E("ui.dashboard.shameMessages.02", "✦ ILLEGITIMATE EMPIRE ✦"),
+	rowid.E("ui.dashboard.shameMessages.03", "✦ COUNTERFEIT DYNASTY ✦"),
+	rowid.E("ui.dashboard.shameMessages.04", "✦ USURPER'S THRONE ✦"),
+	rowid.E("ui.dashboard.shameMessages.05", "✦ THE FABRICATED AGE ✦"),
+	rowid.E("ui.dashboard.shameMessages.06", "✦ DECREE OF DISHONOR ✦"),
 }
 
 // Dashboard is the main gameplay screen. The economy tab is the always-visible
@@ -80,7 +80,7 @@ type Dashboard struct {
 
 	// Shame badge — set once on first load when CheaterBadge is true; the
 	// header shows it as an alert.
-	shame *vibe.Entry // the message picked for the session; read as it is now each frame
+	shame *rowid.Entry // the message picked for the session; read as it is now each frame
 
 	// catModalShown tracks the pending catastrophe key we have already shown a modal for,
 	// so that closing it with Esc does not re-pop it on the next refresh tick (the
@@ -203,22 +203,22 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	// The text panels' frames fold to ASCII with the map glyphs.
 	d.overlayMgr.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
-	d.registerDeck("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesPage).draw = renderMileRoads
+	d.registerDeck("milestones", rowid.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesPage).draw = renderMileRoads
 	// The Research panel: the tech tree as a map. Like the Map it leaves
 	// the keyboard with the command bar.
 	d.researchPanel.engine = d.engine
 	d.researchPanel.tier = func() mapmodel.GlyphTier { return d.mapSettings().Tier }
 	d.researchPanel.prompt = func() string { return d.inputField.GetText() }
 	d.researchPanel.toPrompt = d.handToPrompt
-	d.overlayMgr.RegisterWidget("techs", vibe.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
+	d.overlayMgr.RegisterWidget("techs", rowid.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
 	// The badge case: the account's badges. It leaves the keyboard with the
 	// command bar too.
 	d.badgePanel.settings = d.mapSettings
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
 	d.badgePanel.buttons.press = d.app.Key
-	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
-	d.registerDeck("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
+	d.overlayMgr.RegisterWidget("badges", rowid.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
+	d.registerDeck("army", rowid.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
 	d.expPanel.engine = d.engine
 	d.expPanel.settings = d.mapSettings
@@ -226,18 +226,18 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.toPrompt = d.handToPrompt
 	d.expPanel.buttons.press = d.app.Key
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
-	d.registerDeck("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeRoads
+	d.registerDeck("trade", rowid.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeRoads
 	// The Factions panel, under two names pointing at one provider (the
 	// citymap/map precedent below). "factions" is the primary — it is what the
 	// sidebar lists, and the sidebar highlight matches on the registered name, so
 	// the two strings have to agree exactly. Bare `diplomacy` is routed to the
 	// primary name in input.go so it highlights too; "diplomacy" stays registered
 	// so anything holding the old overlay name still resolves.
-	d.overlayMgr.Register("factions", vibe.E("ui.dashboard.NewDashboard.07", "Factions"), factionsProvider)
-	d.overlayMgr.Register("diplomacy", vibe.E("ui.dashboard.NewDashboard.08", "Factions"), factionsProvider)
-	d.overlayMgr.Register("stats", vibe.E("ui.dashboard.NewDashboard.09", "Statistics"), statsProvider)
+	d.overlayMgr.Register("factions", rowid.E("ui.dashboard.NewDashboard.07", "Factions"), factionsProvider)
+	d.overlayMgr.Register("diplomacy", rowid.E("ui.dashboard.NewDashboard.08", "Factions"), factionsProvider)
+	d.overlayMgr.Register("stats", rowid.E("ui.dashboard.NewDashboard.09", "Statistics"), statsProvider)
 	d.wonders = &wondersView{}
-	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)
+	d.overlayMgr.Register("wonders", rowid.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)
 	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
 	d.overlayMgr.SetBackHandler("wonders", d.wonders.back)
 	d.overlayMgr.SetFooter("wonders", d.wonders.footer)
@@ -254,9 +254,9 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.handToPrompt
 	d.peoplePanel.buttons.press = d.app.Key
-	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
+	d.overlayMgr.RegisterWidget("people", rowid.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
-	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
+	d.overlayMgr.Register("logs", rowid.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
 	d.epochHall = &epochHall{
 		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
 		height: func() int { return d.overlayMgr.screenH },
@@ -264,7 +264,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	}
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
 	d.epochHall.card = func(st game.GameState) (epochCardResult, error) { return makeEpochCard(st, copyImageToClipboard) }
-	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
+	d.overlayMgr.Register("epoch", rowid.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
 	// The Badges panel and the epoch screen draw their coins from one set
 	// of pictures.
 	coins := &coinCache{}
@@ -283,7 +283,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		d.overlayMgr.Refresh(d.engine.GetState())
 		return nil
 	})
-	d.overlayMgr.Register("harbinger", vibe.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
+	d.overlayMgr.Register("harbinger", rowid.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
 	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
 	d.overlayMgr.SetKeyHandler("harbinger", func(event *kit.Key) *kit.Key {
 		// UI goroutine, no engine lock held: the engine's action methods and
@@ -306,9 +306,9 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		d.overlayMgr.Refresh(d.engine.GetState())
 		return nil
 	})
-	d.overlayMgr.Register("history", vibe.E("ui.dashboard.NewDashboard.16", "Civilization History"), historyProvider(d.engine))
+	d.overlayMgr.Register("history", rowid.E("ui.dashboard.NewDashboard.16", "Civilization History"), historyProvider(d.engine))
 	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
-	d.overlayMgr.Register("help", vibe.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
+	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
 
 	// The Map panel: the map full screen (map, and its aliases citymap and
 	// worldmap). Its settings travel with the account.
@@ -326,7 +326,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	}
 	d.mapPanel.settle = func(ids []string) { d.engine.SettlePlaces(ids) } // same thread and lock rules as spotted
 	d.mapPanel.toPrompt = d.handToPrompt
-	d.overlayMgr.RegisterWidget("map", vibe.E("ui.dashboard.NewDashboard.19", "Map"), d.mapPanel.open, d.mapPanel.update)
+	d.overlayMgr.RegisterWidget("map", rowid.E("ui.dashboard.NewDashboard.19", "Map"), d.mapPanel.open, d.mapPanel.update)
 	d.barOverlays = d.newBarOverlays()
 
 	return d
@@ -380,24 +380,24 @@ func (d *Dashboard) build() {
 			d.pendingEpochChanged = (oldEpoch != newEpoch && d.lastAge != "")
 		}
 		newAge, _ := e.Payload["new_age"].(string)
-		d.toastMgr.Show(vibe.Line("ui.dashboard.build.03", "Age advanced: ")+game.AgeName(newAge), "gold", 5*time.Second)
+		d.toastMgr.Show(rowid.Line("ui.dashboard.build.03", "Age advanced: ")+game.AgeName(newAge), "gold", 5*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventResearchDone, func(e game.EventData) {
 		tech, _ := e.Payload["tech"].(string)
-		d.toastMgr.Show(vibe.Line("ui.dashboard.build.04", "Research complete: ")+game.TechName(tech), "cyan", 4*time.Second)
+		d.toastMgr.Show(rowid.Line("ui.dashboard.build.04", "Research complete: ")+game.TechName(tech), "cyan", 4*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventBuildingBuilt, func(e game.EventData) {
 		building, _ := e.Payload["building"].(string)
 		// Only toast for wonders — look up from config, not engine state (avoids deadlock)
 		if def, ok := config.BuildingByKey()[building]; ok && def.Category == "wonder" {
-			d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.05", "Wonder built: %s", def.Name), "green", 4*time.Second)
+			d.toastMgr.Show(rowid.Sprintf("ui.dashboard.build.05", "Wonder built: %s", def.Name), "green", 4*time.Second)
 		}
 	})
 	d.engine.Bus.Subscribe(game.EventMilestoneCompleted, func(e game.EventData) {
 		name, _ := e.Payload["name"].(string)
 		rewardText, _ := e.Payload["reward_text"].(string)
 		// note: flavor quip rides in the log line, not the height-1 toast — see engine.checkMilestones.
-		msg := vibe.Line("ui.dashboard.build.06", "Milestone: ") + name
+		msg := rowid.Line("ui.dashboard.build.06", "Milestone: ") + name
 		if rewardText != "" {
 			msg += " " + rewardText
 		}
@@ -416,7 +416,7 @@ func (d *Dashboard) build() {
 		if epochIcon == "" {
 			epochIcon = "✦"
 		}
-		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.07", "%s %s dawns", epochIcon, epochName), "gold", 6*time.Second)
+		d.toastMgr.Show(rowid.Sprintf("ui.dashboard.build.07", "%s %s dawns", epochIcon, epochName), "gold", 6*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventRunEnded, func(e game.EventData) {
 		// Runs under the engine write lock: the payload only.
@@ -428,11 +428,11 @@ func (d *Dashboard) build() {
 		// Runs under the engine write lock: payload and the toast queue only.
 		// A toast is queued behind the age-advance one and never takes focus.
 		name, _ := e.Payload["harbinger_name"].(string)
-		verb := vibe.Line("ui.dashboard.build.08", "has come")
+		verb := rowid.Line("ui.dashboard.build.08", "has come")
 		if handoff, _ := e.Payload["handoff"].(bool); handoff {
-			verb = vibe.Line("ui.dashboard.build.09", "takes up the warning")
+			verb = rowid.Line("ui.dashboard.build.09", "takes up the warning")
 		}
-		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", textfmt.Capitalize(name), verb), "warning", 8*time.Second)
+		d.toastMgr.Show(rowid.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", textfmt.Capitalize(name), verb), "warning", 8*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
 		// Runs under the engine write lock: only flip the flag, never touch the engine.
@@ -442,7 +442,7 @@ func (d *Dashboard) build() {
 		eventName, _ := e.Payload["event_name"].(string)
 		eventType, _ := e.Payload["event_type"].(string)
 		if eventType == "catastrophe" {
-			d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.11", "☄ Catastrophe: %s. Type catastrophe to choose.", eventName), "red", 8*time.Second)
+			d.toastMgr.Show(rowid.Sprintf("ui.dashboard.build.11", "☄ Catastrophe: %s. Type catastrophe to choose.", eventName), "red", 8*time.Second)
 			return
 		}
 		color := "cyan"
@@ -451,7 +451,7 @@ func (d *Dashboard) build() {
 		} else if eventType == "good_legendary" {
 			color = "gold"
 		}
-		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.12", "Epoch event: %s", eventName), color, 6*time.Second)
+		d.toastMgr.Show(rowid.Sprintf("ui.dashboard.build.12", "Epoch event: %s", eventName), color, 6*time.Second)
 	})
 
 	// Command input: completions show as ghost text (command_input.go),
@@ -869,10 +869,10 @@ func (d *Dashboard) StopUpdates() {
 // script now in force. The People box's title is also written each frame, with
 // the headcount in it when there is room.
 func (d *Dashboard) retitle() {
-	d.sidebar.SetTitle(vibe.Line("ui.dashboard.build.01", " Panels "))
-	d.logTV.SetTitle(vibe.Line("ui.dashboard.build.02", " Log "))
-	d.inputField.SetTitle(vibe.Line("ui.dashboard.build.13", " Command "))
-	d.workerMiniTV.SetTitle(vibe.Line("ui.dashboard.build.14", " People "))
+	d.sidebar.SetTitle(rowid.Line("ui.dashboard.build.01", " Panels "))
+	d.logTV.SetTitle(rowid.Line("ui.dashboard.build.02", " Log "))
+	d.inputField.SetTitle(rowid.Line("ui.dashboard.build.13", " Command "))
+	d.workerMiniTV.SetTitle(rowid.Line("ui.dashboard.build.14", " People "))
 }
 
 // refresh is the central UI update function, called every 500 ms from StartUpdates.
@@ -1060,21 +1060,21 @@ func heldByLines(ws game.WorkerState, w int) []string {
 	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
 	switch ws.HeldBy {
 	case game.HeldHousing:
-		return []string{vibe.Line("ui.dashboard.heldByLines.01", "Held by: housing")}
+		return []string{rowid.Line("ui.dashboard.heldByLines.01", "Held by: housing")}
 	case game.HeldFood:
 		x := textfmt.RateValue(ws.FoodNet) // "+0.45"
-		feeds := vibe.Sprintf("ui.dashboard.heldByLines.02", "feeds %d more", ws.FoodFeeds)
+		feeds := rowid.Sprintf("ui.dashboard.heldByLines.02", "feeds %d more", ws.FoodFeeds)
 		for _, line := range []string{
-			x + vibe.Line("ui.dashboard.heldByLines.03", " food a tick ") + feeds,
-			x + vibe.Line("ui.dashboard.heldByLines.04", "/tick ") + feeds,
+			x + rowid.Line("ui.dashboard.heldByLines.03", " food a tick ") + feeds,
+			x + rowid.Line("ui.dashboard.heldByLines.04", "/tick ") + feeds,
 			x + " " + feeds,
 			feeds,
 		} {
 			if fits(line) {
-				return []string{vibe.Line("ui.dashboard.heldByLines.05", "Held by: food"), line}
+				return []string{rowid.Line("ui.dashboard.heldByLines.05", "Held by: food"), line}
 			}
 		}
-		return []string{vibe.Line("ui.dashboard.heldByLines.06", "Held by: food")}
+		return []string{rowid.Line("ui.dashboard.heldByLines.06", "Held by: food")}
 	}
 	return nil
 }
@@ -1102,24 +1102,24 @@ func peopleBoxCompact(state game.GameState, detail bool) bool {
 }
 
 // txtPeopleBoxCount is said the same way on several screens, so it has one id.
-var txtPeopleBoxCount = vibe.E("ui.dashboard.peopleBoxTitle.03", " People %s/%s ")
+var txtPeopleBoxCount = rowid.E("ui.dashboard.peopleBoxTitle.03", " People %s/%s ")
 
 // peopleBoxTitle is the People box's title: " People ", with the headcount
 // over the housing in it when the box is compact and it fits.
 func peopleBoxTitle(state game.GameState, detail bool) string {
 	if !peopleBoxCompact(state, detail) {
-		return vibe.Line("ui.dashboard.peopleBoxTitle.01", " People ")
+		return rowid.Line("ui.dashboard.peopleBoxTitle.01", " People ")
 	}
 	ws := state.Workers
 	for _, t := range []string{
-		vibe.Sprintf("ui.dashboard.peopleBoxTitle.02", " People %d/%d ", ws.TotalPop, ws.MaxPop),
+		rowid.Sprintf("ui.dashboard.peopleBoxTitle.02", " People %d/%d ", ws.TotalPop, ws.MaxPop),
 		fmt.Sprintf(txtPeopleBoxCount.String(), textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))),
 	} {
 		if runeLen(t) <= sidebarW-2 {
 			return t
 		}
 	}
-	return vibe.Line("ui.dashboard.peopleBoxTitle.04", " People ")
+	return rowid.Line("ui.dashboard.peopleBoxTitle.04", " People ")
 }
 
 // peopleBoxText writes the People box for a box w cells wide (0: any width):
@@ -1142,7 +1142,7 @@ func peopleBoxText(state game.GameState, w int, detail bool) string {
 		}
 		// The line is measured as it is drawn, in whichever script it is written.
 		popLine := func() string {
-			return vibe.Sprintf("ui.dashboard.peopleBoxText.02", "[gray]Pop[white] [%s]%s[white]/[green]%s[-]\n", popColor, pop, housing)
+			return rowid.Sprintf("ui.dashboard.peopleBoxText.02", "[gray]Pop[white] [%s]%s[white]/[green]%s[-]\n", popColor, pop, housing)
 		}
 		if w > 0 && visibleLen(strings.TrimRight(popLine(), "\n")) > w {
 			pop, housing = textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))
@@ -1198,7 +1198,7 @@ func moraleKind(b moraleBand) xk {
 	return xText
 }
 
-// plainFact is the text a vibe line wrote, without its colour tags and the
+// plainFact is the text a rowid line wrote, without its colour tags and the
 // spaces that set it off from what was beside it.
 func plainFact(s string) string { return strings.TrimSpace(kit.Strip(s)) }
 
@@ -1210,10 +1210,10 @@ func statusLine(state game.GameState, year string) headerView {
 	var v headerView
 	v.Age = state.AgeName
 	if state.Prestige.Level > 0 {
-		v.Prestige = plainFact(vibe.Sprintf("ui.dashboard.statusLine.01", "  [cyan]Prestige %d[-]", state.Prestige.Level))
+		v.Prestige = plainFact(rowid.Sprintf("ui.dashboard.statusLine.01", "  [cyan]Prestige %d[-]", state.Prestige.Level))
 	}
 	if game.DevModeActive {
-		v.Dev = plainFact(vibe.Line("ui.dashboard.statusLine.02", "  [red]DEV[-]"))
+		v.Dev = plainFact(rowid.Line("ui.dashboard.statusLine.02", "  [red]DEV[-]"))
 	}
 	// Colour morale by the continuous production multiplier, not the raw percent:
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
@@ -1224,21 +1224,21 @@ func statusLine(state game.GameState, year string) headerView {
 	// who closed the modal (or came back after a long idle) sees why advancing
 	// is blocked and how to reopen the choice.
 	if state.PendingCatastrophe != "" {
-		v.Alerts = append(v.Alerts, headerAlert{vibe.Line("ui.dashboard.statusLine.04", "☄ Catastrophe: type catastrophe"), vibe.Line("ui.dashboard.statusLine.05", "☄ Catastrophe"), "catastrophe", xChipMil})
+		v.Alerts = append(v.Alerts, headerAlert{rowid.Line("ui.dashboard.statusLine.04", "☄ Catastrophe: type catastrophe"), rowid.Line("ui.dashboard.statusLine.05", "☄ Catastrophe"), "catastrophe", xChipMil})
 	} else if state.LastPassage.Pending {
-		v.Alerts = append(v.Alerts, headerAlert{vibe.Line("ui.dashboard.statusLine.07", "☄ Last Passage: type catastrophe"), vibe.Line("ui.dashboard.statusLine.08", "☄ Last Passage"), "catastrophe", xChipMil})
+		v.Alerts = append(v.Alerts, headerAlert{rowid.Line("ui.dashboard.statusLine.07", "☄ Last Passage: type catastrophe"), rowid.Line("ui.dashboard.statusLine.08", "☄ Last Passage"), "catastrophe", xChipMil})
 	}
 	// Harbinger badge: present until the doom it warns of resolves. Nothing
 	// expires, so the badge is the idle player's reminder that there is a
 	// choice waiting (it never blocks anything).
 	if state.Harbinger != nil {
-		v.Alerts = append(v.Alerts, headerAlert{vibe.Line("ui.dashboard.statusLine.10", "⚑ Harbinger: type harbinger"), vibe.Line("ui.dashboard.statusLine.11", "⚑ Harbinger"), "harbinger", xChipLegend})
+		v.Alerts = append(v.Alerts, headerAlert{rowid.Line("ui.dashboard.statusLine.10", "⚑ Harbinger: type harbinger"), rowid.Line("ui.dashboard.statusLine.11", "⚑ Harbinger"), "harbinger", xChipLegend})
 	}
 	if mBand.DeltaLabel != "" {
-		v.Delta = headFact{plainFact(vibe.Sprintf("ui.dashboard.statusLine.12", " (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)), mBand.DeltaLabel}
+		v.Delta = headFact{plainFact(rowid.Sprintf("ui.dashboard.statusLine.12", " (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)), mBand.DeltaLabel}
 	}
 	pct := fmt.Sprintf("%.0f%%", state.Morale*100)
-	v.Morale = headFact{plainFact(vibe.Sprintf("ui.dashboard.statusLine.13", "  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, "")), pct}
+	v.Morale = headFact{plainFact(rowid.Sprintf("ui.dashboard.statusLine.13", "  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, "")), pct}
 	// The name is cut to what a bar can hold; the title the account wears is
 	// shown once it is not the one every account starts with.
 	if st := state.AccountStats; st != nil && st.DisplayName != "" {
@@ -1252,11 +1252,11 @@ func statusLine(state game.GameState, year string) headerView {
 	}
 	v.Honour = state.Milestones.CurrentTitle
 	if year != "" {
-		v.Year = vibe.Sprintf("ui.dashboard.statusLine.19", "Year %s", year)
+		v.Year = rowid.Sprintf("ui.dashboard.statusLine.19", "Year %s", year)
 	}
 	pop := groupedCount(state.Workers.TotalPop) + "/" + groupedCount(state.Workers.MaxPop)
 	short := textfmt.Number(float64(state.Workers.TotalPop)) + "/" + textfmt.Number(float64(state.Workers.MaxPop))
-	v.People = headFact{vibe.Sprintf("ui.dashboard.statusLine.17", "People %s", pop), pop}
+	v.People = headFact{rowid.Sprintf("ui.dashboard.statusLine.17", "People %s", pop), pop}
 	v.PeopleShort = headFact{strings.Replace(v.People.Text, pop, short, 1), short}
 	return v
 }
@@ -1345,7 +1345,7 @@ func (d *Dashboard) showDevUnlockModal() {
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
 				d.engine.NoteDevUnlocked()
-				d.engine.AddLog("info", vibe.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
+				d.engine.AddLog("info", rowid.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
 				d.app.SetFocus(d.inputField)
 			} else {
 				d.app.SetFocus(d.inputField)
@@ -1367,7 +1367,7 @@ func (d *Dashboard) showDevUnlockModal() {
 const accountNoticePage = "account_notice"
 
 // txtOK is said the same way on several screens, so it has one id.
-var txtOK = vibe.E("ui.dashboard.leaveToMenu.02", "OK")
+var txtOK = rowid.E("ui.dashboard.leaveToMenu.02", "OK")
 
 // leaveToMenu takes the player from the dashboard to the main menu after a command
 // ended the game in progress: an account switch or recovery, where the engine already
@@ -1393,8 +1393,8 @@ func (d *Dashboard) showWindow(text string) {
 	tv := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter)
-	tv.SetBorder(true).SetTitle(vibe.Line("ui.dashboard.showWindow.01", " Recovery code "))
-	tv.SetText("\n" + kit.Escape(text) + "\n\n" + theme.KeycapButton("Esc", vibe.Line("ui.dashboard.showWindow.03", "Close")))
+	tv.SetBorder(true).SetTitle(rowid.Line("ui.dashboard.showWindow.01", " Recovery code "))
+	tv.SetText("\n" + kit.Escape(text) + "\n\n" + theme.KeycapButton("Esc", rowid.Line("ui.dashboard.showWindow.03", "Close")))
 	done := func() {
 		d.pages.RemovePage(codeWindowPage)
 		d.app.SetFocus(d.inputField)

@@ -32,10 +32,10 @@ const (
 )
 
 // roadTemplate is a road event story and the row id of the copy export it is
-// told by (vibeRow).
+// told by (rowID).
 type roadTemplate struct {
-	vibeRow string
-	text    string
+	rowID string
+	text  string
 }
 
 // roadEventTemplates are short player-facing stories, selected by kind.

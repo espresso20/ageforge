@@ -6,7 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -52,7 +52,7 @@ func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
 // registerDeck makes a panel of cards from page and registers it as the
 // overlay name, with its keyboard left to the command bar and its commands
 // run as the command bar runs them.
-func (d *Dashboard) registerDeck(name string, title vibe.Entry, page func(game.GameState) deckPage) *deckPanel {
+func (d *Dashboard) registerDeck(name string, title rowid.Entry, page func(game.GameState) deckPage) *deckPanel {
 	p := newDeckPanel(page)
 	p.settings = d.mapSettings
 	p.run = d.runLine

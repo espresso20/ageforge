@@ -7,8 +7,8 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // logsProvider generates the logs overlay text from the current game state.
@@ -18,8 +18,8 @@ import (
 func logsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
-	sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.01", "[gold]═══ Game log ═══[-]\n"))
-	sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_logs.logsProvider.02", " Every line, with tick numbers. Routine confirmations are marked ·.")) + "\n\n")
+	sb.WriteString(rowid.Line("ui.overlay_logs.logsProvider.01", "[gold]═══ Game log ═══[-]\n"))
+	sb.WriteString(theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_logs.logsProvider.02", " Every line, with tick numbers. Routine confirmations are marked ·.")) + "\n\n")
 
 	logs := state.Log
 
@@ -33,7 +33,7 @@ func logsProvider(state game.GameState, _ int) string {
 	}
 
 	if len(visible) == 0 {
-		sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.03", "[gray]No game logs yet.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_logs.logsProvider.03", "[gray]No game logs yet.[-]\n"))
 		return sb.String()
 	}
 
@@ -73,29 +73,29 @@ func logsProvider(state game.GameState, _ int) string {
 	}
 
 	// Engine state summary at the bottom
-	sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.04", "\n[gold]═══ Engine state ═══[-]\n"))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_logs.logsProvider.05", " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Population: [cyan]%d/%d[-]\n",
+	sb.WriteString(rowid.Line("ui.overlay_logs.logsProvider.04", "\n[gold]═══ Engine state ═══[-]\n"))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.05", " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Population: [cyan]%d/%d[-]\n",
 		state.Tick, state.AgeName, state.Workers.TotalPop, state.Workers.MaxPop))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_logs.logsProvider.06", " Food use: [yellow]%s[-]  Reserve: [yellow]%d[-]\n",
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.06", " Food use: [yellow]%s[-]  Reserve: [yellow]%d[-]\n",
 		textfmt.Rate(-state.Workers.FoodDrain), state.Workers.TotalIdle))
 	if state.TickSpeedBonus > 0 {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_logs.logsProvider.07", " Game speed: [green]%s[-] (one tick every [cyan]%dms[-])\n",
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.07", " Game speed: [green]%s[-] (one tick every [cyan]%dms[-])\n",
 			textfmt.SignedPercent(state.TickSpeedBonus), state.TickIntervalMs))
 	} else {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_logs.logsProvider.08", " Game speed: [gray]base[-] (one tick every [cyan]%dms[-])\n", state.TickIntervalMs))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.08", " Game speed: [gray]base[-] (one tick every [cyan]%dms[-])\n", state.TickIntervalMs))
 	}
 
 	// Active events (compact)
 	if len(state.ActiveEvents) > 0 {
-		sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.09", "\n [gold]Active events:[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_logs.logsProvider.09", "\n [gold]Active events:[-]\n"))
 		for _, evt := range state.ActiveEvents {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_logs.logsProvider.10", "  [yellow]⚡ %s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state)))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.10", "  [yellow]⚡ %s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state)))
 		}
 	}
 
 	// Build queue
 	if len(state.BuildQueue) > 0 {
-		sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.11", "\n [gold]Build queue:[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_logs.logsProvider.11", "\n [gold]Build queue:[-]\n"))
 		for _, bq := range state.BuildQueue {
 			pct := 0.0
 			if bq.TotalTicks > 0 {
@@ -108,7 +108,7 @@ func logsProvider(state game.GameState, _ int) string {
 
 	// Research in progress
 	if state.Research.CurrentTech != "" {
-		sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.12", "\n [gold]Researching:[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_logs.logsProvider.12", "\n [gold]Researching:[-]\n"))
 		fmt.Fprintf(&sb, "  [cyan]%s[-] %s %d%% (%s)\n",
 			state.Research.CurrentTechName, researchBar(state, 10), researchPercent(state), researchLeft(state))
 		for _, l := range queueLines(state) {
@@ -137,9 +137,9 @@ func logsProvider(state game.GameState, _ int) string {
 	}
 	slices.SortFunc(domains, func(a, b domainEntry) int { return strings.Compare(a.name, b.name) })
 	if len(domains) > 0 {
-		sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.13", "\n [gold]Workers:[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_logs.logsProvider.13", "\n [gold]Workers:[-]\n"))
 		for _, d := range domains {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_logs.logsProvider.14", "  [cyan]%s[-] ×%d (reserve: %d)\n", d.name, d.count, d.idle))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.14", "  [cyan]%s[-] ×%d (reserve: %d)\n", d.name, d.count, d.idle))
 			for _, k := range keysWhere(d.assignments, func(_ string, n int) bool { return n > 0 }) {
 				fmt.Fprintf(&sb, "    → %s: %d\n", game.BuildingName(k), d.assignments[k])
 			}

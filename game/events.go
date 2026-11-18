@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // ActiveEvent represents a currently active timed event
@@ -125,7 +125,7 @@ func (em *EventManager) nameOf(ae ActiveEvent) (string, bool) {
 	case nameFromChain:
 		for _, c := range em.rules.MilestoneChains() {
 			if c.Key == ae.Ref {
-				return c.Name + vibe.Line("game.events.nameOf.01", " Speed Boost"), true
+				return c.Name + rowid.Line("game.events.nameOf.01", " Speed Boost"), true
 			}
 		}
 	case nameFromAwakening:
@@ -149,13 +149,13 @@ func (em *EventManager) nameOf(ae ActiveEvent) (string, bool) {
 func codeEventName(key string) (string, bool) {
 	switch key {
 	case "endure_reconstruction":
-		return vibe.Line("game.catastrophe.startReconstruction.01", "Reconstruction Effort"), true
+		return rowid.Line("game.catastrophe.startReconstruction.01", "Reconstruction Effort"), true
 	case "war_raid":
-		return vibe.Line("game.defense.applyWarRaids.01", "Under Raid"), true
+		return rowid.Line("game.defense.applyWarRaids.01", "Under Raid"), true
 	case "worker_lending":
-		return vibe.Line("game.engine.processDiplomacy.01", "Workers on Loan"), true
+		return rowid.Line("game.engine.processDiplomacy.01", "Workers on Loan"), true
 	case "cultural_festival":
-		return vibe.Line("game.engine.DoFestival.03", "Cultural Festival"), true
+		return rowid.Line("game.engine.DoFestival.03", "Cultural Festival"), true
 	}
 	return "", false
 }

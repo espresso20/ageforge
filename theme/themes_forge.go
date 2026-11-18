@@ -1,7 +1,7 @@
 package theme
 
 import (
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Forge is the default theme: AgeForge's current dark + gold look, formalized as
@@ -25,8 +25,8 @@ import (
 //     borders/titles via Accent.)
 var Forge = define(Theme{
 	Key:        "forge",
-	Name:       vibe.E("theme.forge.name", "Forge"),
-	Blurb:      vibe.E("theme.forge.blurb", "The classic dark-and-gold AgeForge look."),
+	Name:       rowid.E("theme.forge.name", "Forge"),
+	Blurb:      rowid.E("theme.forge.blurb", "The classic dark-and-gold AgeForge look."),
 	Accessible: false,
 	Standard:   true,
 	Colors: [numRoles]Color{

@@ -6,7 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Bonus caps: where a pool of bonuses stops counting in full, and how the
@@ -187,9 +187,9 @@ func CapNote(p BonusPool, v float64, held bool) string {
 		return ""
 	}
 	if math.Abs(counts) <= 1e-6 {
-		return vibe.Line("game.caps.capNote.02", "capped: no effect now")
+		return rowid.Line("game.caps.capNote.02", "capped: no effect now")
 	}
-	return vibe.Line("game.caps.capNote.03", "capped: ") + textfmt.SignedPercent(counts) + vibe.Line("game.caps.capNote.04", " of it counts now")
+	return rowid.Line("game.caps.capNote.03", "capped: ") + textfmt.SignedPercent(counts) + rowid.Line("game.caps.capNote.04", " of it counts now")
 }
 
 // CapPhrase is CapNote as the rest of a sentence about the bonus: "is capped:
@@ -199,7 +199,7 @@ func CapPhrase(p BonusPool, v float64, held bool) string {
 	if note == "" {
 		return note
 	}
-	return vibe.Line("game.caps.CapPhrase.01", "is ") + note
+	return rowid.Line("game.caps.CapPhrase.01", "is ") + note
 }
 
 // pointsText is a bonus as percentage points to three figures, signed:
@@ -218,9 +218,9 @@ func PoolNote(p BonusPool) string {
 		return ""
 	}
 	if p.Target == "research_speed" {
-		return vibe.Line("game.caps.PoolNote.01", "capped: a tech takes one tick at least, so only +100% counts")
+		return rowid.Line("game.caps.PoolNote.01", "capped: a tech takes one tick at least, so only +100% counts")
 	}
-	return vibe.Line("game.caps.PoolNote.03", "capped at ") + textfmt.SignedPercent(p.Limit) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolNote.04", " earned")
+	return rowid.Line("game.caps.PoolNote.03", "capped at ") + textfmt.SignedPercent(p.Limit) + ": " + textfmt.SignedPercent(p.Earned) + rowid.Line("game.caps.PoolNote.04", " earned")
 }
 
 // PoolLine is a pool that applies less (or more) than it has earned, as one
@@ -230,7 +230,7 @@ func PoolLine(p BonusPool) string {
 	if !p.Limited {
 		return ""
 	}
-	return textfmt.Capitalize(EffectTargetName(p.Target)) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolLine.01", " earned, ") + pointsText(p.Applied) + vibe.Line("game.caps.PoolLine.02", " counts.")
+	return textfmt.Capitalize(EffectTargetName(p.Target)) + ": " + textfmt.SignedPercent(p.Earned) + rowid.Line("game.caps.PoolLine.01", " earned, ") + pointsText(p.Applied) + rowid.Line("game.caps.PoolLine.02", " counts.")
 }
 
 // capNoteLocked is CapNote for a bonus the engine is about to add to, or has
@@ -271,9 +271,9 @@ func (ge *GameEngine) capLinesLocked(effects []config.Effect, held bool) []strin
 		_, limit, _ := poolApplied(target, earned, ge.speedMultiplier)
 		switch {
 		case target == "research_speed":
-			line += vibe.Line("game.caps.capLinesLocked.01", "A tech takes one tick at least, so research speed counts up to +100%, and you have earned ") + textfmt.SignedPercent(earned) + "."
+			line += rowid.Line("game.caps.capLinesLocked.01", "A tech takes one tick at least, so research speed counts up to +100%, and you have earned ") + textfmt.SignedPercent(earned) + "."
 		default:
-			line += textfmt.Capitalize(name) + vibe.Line("game.caps.capLinesLocked.05", " counts up to ") + textfmt.SignedPercent(limit) + vibe.Line("game.caps.capLinesLocked.06", ", and you have earned ") + textfmt.SignedPercent(earned) + "."
+			line += textfmt.Capitalize(name) + rowid.Line("game.caps.capLinesLocked.05", " counts up to ") + textfmt.SignedPercent(limit) + rowid.Line("game.caps.capLinesLocked.06", ", and you have earned ") + textfmt.SignedPercent(earned) + "."
 		}
 		out = append(out, line)
 	}

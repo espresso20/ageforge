@@ -9,8 +9,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // statsProvider generates the stats overlay text from the current game state.
@@ -19,17 +19,17 @@ func statsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
 	// ─── Statistics ───
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.01", "[gold]═══ Statistics ═══[-]\n\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.01", "[gold]═══ Statistics ═══[-]\n\n"))
 	s := state.Stats
 
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.02", " [gold]Play time:[-]          %s\n", s.PlayTime.Truncate(config.Billion)))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.03", " [gold]Game ticks:[-]         %s\n", textfmt.Int(state.Tick)))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.04", " [gold]Buildings built:[-]    %s\n", textfmt.Int(s.TotalBuilt)))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.05", " [gold]Workers recruited:[-]  %s\n", textfmt.Int(s.TotalRecruited)))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.06", " [gold]Techs researched:[-]   %s\n", textfmt.Int(state.Research.TotalResearched)))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.07", " [gold]Expeditions and campaigns done:[-] %s\n", textfmt.Int(state.Military.CompletedCount)))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.02", " [gold]Play time:[-]          %s\n", s.PlayTime.Truncate(config.Billion)))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.03", " [gold]Game ticks:[-]         %s\n", textfmt.Int(state.Tick)))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.04", " [gold]Buildings built:[-]    %s\n", textfmt.Int(s.TotalBuilt)))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.05", " [gold]Workers recruited:[-]  %s\n", textfmt.Int(s.TotalRecruited)))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.06", " [gold]Techs researched:[-]   %s\n", textfmt.Int(state.Research.TotalResearched)))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.07", " [gold]Expeditions and campaigns done:[-] %s\n", textfmt.Int(state.Military.CompletedCount)))
 
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.08", "\n [gold]Ages reached:[-]\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.08", "\n [gold]Ages reached:[-]\n"))
 	for _, age := range s.AgesReached {
 		fmt.Fprintf(&sb, "   [green]✓[-] %s\n", game.AgeName(age))
 	}
@@ -37,11 +37,11 @@ func statsProvider(state game.GameState, _ int) string {
 	// Time spent in each age of this run. The last entry is the current age, so
 	// its time runs to the current tick.
 	if len(s.AgeLog) > 0 {
-		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.09", "\n [gold]Ages this run[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.09", "\n [gold]Ages this run[-]\n"))
 		iv := tickInterval(state)
 		for i, e := range s.AgeLog {
 			if i == len(s.AgeLog)-1 {
-				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.10", "   %-14s %s so far\n", game.AgeName(e.Age),
+				fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.10", "   %-14s %s so far\n", game.AgeName(e.Age),
 					game.DurationText(state.Tick-e.Tick, iv)))
 				continue
 			}
@@ -50,7 +50,7 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.11", "\n [gold]Total gathered:[-]\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.11", "\n [gold]Total gathered:[-]\n"))
 	for _, k := range sortedKeysOf(s.TotalGathered) {
 		fmt.Fprintf(&sb, "   %-14s %s\n", textfmt.Capitalize(game.ResourceName(k)), textfmt.Number(s.TotalGathered[k]))
 	}
@@ -59,16 +59,16 @@ func statsProvider(state game.GameState, _ int) string {
 	// Cross-save aggregates persisted on the account (the accounts design §3.3, Phase 6),
 	// distinct from the per-save Statistics above. Renders a placeholder when no
 	// account is wired (AccountStats nil) so the panel never blanks out.
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.12", "\n [yellow]── Lifetime (account) ──[-]\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.12", "\n [yellow]── Lifetime (account) ──[-]\n"))
 	if state.AccountStats == nil {
-		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.13", " [gray]No account loaded.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.13", " [gray]No account loaded.[-]\n"))
 	} else {
 		as := state.AccountStats
 		if as.DisplayName != "" {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.14", " [gray]Account:[-] [white]%s[-]\n", as.DisplayName))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.14", " [gray]Account:[-] [white]%s[-]\n", as.DisplayName))
 		}
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.15", " [gold]Total prestiges:[-]        %d\n", as.TotalPrestiges))
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.16", " [gold]Civilizations started:[-]  %d\n", as.CivilizationsStarted))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.15", " [gold]Total prestiges:[-]        %d\n", as.TotalPrestiges))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.16", " [gold]Civilizations started:[-]  %d\n", as.CivilizationsStarted))
 
 		highestAge := "none"
 		if as.HighestAge != "" {
@@ -77,7 +77,7 @@ func statsProvider(state game.GameState, _ int) string {
 				highestAge = def.Name
 			}
 		}
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.18", " [gold]Highest age ever:[-]       %s\n", highestAge))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.18", " [gold]Highest age ever:[-]       %s\n", highestAge))
 
 		// The badges in a few lines; the badge case has them all. The views
 		// come with the spoiler rules applied.
@@ -87,33 +87,33 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	// Epoch & Legacy section
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.19", "\n [yellow]── Epoch and legacy ──[-]\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.19", "\n [yellow]── Epoch and legacy ──[-]\n"))
 
 	epochDisplay := state.EpochIcon + " " + state.EpochName
 	if strings.TrimSpace(epochDisplay) == "" {
 		epochDisplay = "none"
 	}
-	fmt.Fprintf(&sb, " %-20s [cyan]%s[-]\n", vibe.Line("ui.overlay_stats.statsProvider.21", "Current epoch:"), epochDisplay)
+	fmt.Fprintf(&sb, " %-20s [cyan]%s[-]\n", rowid.Line("ui.overlay_stats.statsProvider.21", "Current epoch:"), epochDisplay)
 
 	// Both counts come from the civilization log, so a pending catastrophe is
 	// in neither and repeat succumbs all count.
 	totalCatastrophes := state.CatastrophesEndured + state.CatastrophesSuccumbed
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.22", " %-20s %d  (endured %d, succumbed %d)\n",
-		vibe.Line("ui.overlay_stats.statsProvider.23", "Catastrophes:"), totalCatastrophes, state.CatastrophesEndured, state.CatastrophesSuccumbed))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.22", " %-20s %d  (endured %d, succumbed %d)\n",
+		rowid.Line("ui.overlay_stats.statsProvider.23", "Catastrophes:"), totalCatastrophes, state.CatastrophesEndured, state.CatastrophesSuccumbed))
 	if state.PendingCatastrophe != "" {
-		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.24", " [red]  One catastrophe is pending. Type catastrophe to choose.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.24", " [red]  One catastrophe is pending. Type catastrophe to choose.[-]\n"))
 	} else if state.LastPassage.Pending {
-		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.25", " [red]  The Last Passage is pending. Type catastrophe to choose.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.25", " [red]  The Last Passage is pending. Type catastrophe to choose.[-]\n"))
 	}
 
 	// Legacy bonuses
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.26", "\n [gold]Legacy bonuses:[-]\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.26", "\n [gold]Legacy bonuses:[-]\n"))
 	if len(state.LegacyBonuses) == 0 {
-		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.27", "  [gray]None[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.27", "  [gray]None[-]\n"))
 	} else {
 		activeEpochs := keysWhere(state.LegacyBonuses, func(_ string, active bool) bool { return active })
 		if len(activeEpochs) == 0 {
-			sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.28", "  [gray]None[-]\n"))
+			sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.28", "  [gray]None[-]\n"))
 		} else {
 			set := state.Ruleset()
 			for _, epochKey := range activeEpochs {
@@ -129,25 +129,25 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 	}
 	if f := state.SuccumbResearchFactor; f > 0 && f < 1 {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.29", "  %-16s research time %s (permanent, %s for each epoch succumbed in)\n", vibe.Line("ui.overlay_stats.statsProvider.30", "Ancient Knowledge:"), game.ResearchFactorText(f), game.ResearchFactorText(game.SuccumbResearchTimeFactor)))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.29", "  %-16s research time %s (permanent, %s for each epoch succumbed in)\n", rowid.Line("ui.overlay_stats.statsProvider.30", "Ancient Knowledge:"), game.ResearchFactorText(f), game.ResearchFactorText(game.SuccumbResearchTimeFactor)))
 	}
 	if state.LastPassage.CosmicLegacy {
 		// Applied after the pools, so it never carries a note.
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.31", "  %-16s all production %s, counted in full after every other bonus (permanent, through every prestige)\n", vibe.Line("ui.overlay_stats.statsProvider.32", "Cosmic Legacy:"), textfmt.SignedPercent(game.CosmicLegacyProductionBonus)))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.31", "  %-16s all production %s, counted in full after every other bonus (permanent, through every prestige)\n", rowid.Line("ui.overlay_stats.statsProvider.32", "Cosmic Legacy:"), textfmt.SignedPercent(game.CosmicLegacyProductionBonus)))
 	}
 
 	// Milestone summary hint
 	ms := state.Milestones
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.33", "\n [gray]Milestones: %d/%d. Type [white]milestones[-][gray] to see them.[-]\n",
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.33", "\n [gray]Milestones: %d/%d. Type [white]milestones[-][gray] to see them.[-]\n",
 		ms.CompletedCount, ms.TotalCount))
 
 	// ─── Active Events ───
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.34", "\n[gold]═══ Active events ═══[-]\n\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.34", "\n[gold]═══ Active events ═══[-]\n\n"))
 	if len(state.ActiveEvents) == 0 {
-		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.35", " [gray]No active events.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.35", " [gray]No active events.[-]\n"))
 	} else {
 		for _, evt := range state.ActiveEvents {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.36", " [yellow]⚡[-] [yellow]%s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state)))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.36", " [yellow]⚡[-] [yellow]%s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state)))
 			for _, eff := range evt.Effects {
 				color := "green"
 				if eff.Value < 0 {
@@ -165,42 +165,42 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	// ─── Prestige ───
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.37", "\n[gold]═══ Prestige ═══[-]\n\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.37", "\n[gold]═══ Prestige ═══[-]\n\n"))
 	p := state.Prestige
 
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.38", " [gold]Level:[-] [cyan]%d[-]\n", p.Level))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.39", " [gold]Prestige:[-] [green]x%.2f[-] production\n", p.ProductionMultiplier))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.38", " [gold]Level:[-] [cyan]%d[-]\n", p.Level))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.39", " [gold]Prestige:[-] [green]x%.2f[-] production\n", p.ProductionMultiplier))
 	if cue := state.PrestigeCue; cue.Ready {
 		iv := tickInterval(state)
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.40", " [gray]A new run would pass this age in about %s; finishing it takes about %s at today's income.[-]\n",
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.40", " [gray]A new run would pass this age in about %s; finishing it takes about %s at today's income.[-]\n",
 			game.DurationText(cue.FreshTicks, iv), game.DurationText(cue.FinishTicks, iv)))
 	}
 	if p.CanPrestige {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.41", " [gold]After this prestige:[-] [green]x%.2f[-] production\n", p.NextProductionMultiplier))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.41", " [gold]After this prestige:[-] [green]x%.2f[-] production\n", p.NextProductionMultiplier))
 	} else if p.FloorBlocks {
 		if p.Floor != "" {
 			floorName := state.Ruleset().Name(rules.KindAge, p.Floor)
 			if !strings.HasPrefix(strings.ToLower(floorName), "the ") {
 				floorName = "the " + floorName
 			}
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.43", " [yellow]Prestige opens once you pass %s, the furthest an earlier run reached.[-]\n", floorName))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.43", " [yellow]Prestige opens once you pass %s, the furthest an earlier run reached.[-]\n", floorName))
 		}
 	}
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.44", " [gold]Era Mastery:[-] %s\n", masteryNowText(state)))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.44", " [gold]Era Mastery:[-] %s\n", masteryNowText(state)))
 	if next := masteryNextText(state); next != "" {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.45", " [gray]Next prestige: %s.[-]\n", next))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.45", " [gray]Next prestige: %s.[-]\n", next))
 	}
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.46", " [gold]Points earned:[-] [cyan]%d[-] total\n", p.TotalEarned))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.46", " [gold]Points earned:[-] [cyan]%d[-] total\n", p.TotalEarned))
 
 	if p.CanPrestige {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.47", " [green]Prestige now for %s.[-]\n", textfmt.Count(p.PendingPoints, vibe.Line("ui.overlay_stats.statsProvider.48", "point"), vibe.Line("ui.overlay_stats.statsProvider.49", "points"))))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.47", " [green]Prestige now for %s.[-]\n", textfmt.Count(p.PendingPoints, rowid.Line("ui.overlay_stats.statsProvider.48", "point"), rowid.Line("ui.overlay_stats.statsProvider.49", "points"))))
 		if p.NextAge != "" {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.50", " [gray]From %s: %s.[-]\n", ageRef(state, p.NextAge), textfmt.Count(p.NextAgePoints, vibe.Line("ui.overlay_stats.statsProvider.51", "point"), vibe.Line("ui.overlay_stats.statsProvider.52", "points"))))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.50", " [gray]From %s: %s.[-]\n", ageRef(state, p.NextAge), textfmt.Count(p.NextAgePoints, rowid.Line("ui.overlay_stats.statsProvider.51", "point"), rowid.Line("ui.overlay_stats.statsProvider.52", "points"))))
 		}
 	} else if p.Level == 0 {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.53", " [gray]Reach %s to prestige.[-]\n", ageRef(state, game.PrestigeMinAge)))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.53", " [gray]Reach %s to prestige.[-]\n", ageRef(state, game.PrestigeMinAge)))
 	} else {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.54", " [yellow]Reach %s to prestige again.[-]\n", ageRef(state, game.PrestigeMinAge)))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.54", " [yellow]Reach %s to prestige again.[-]\n", ageRef(state, game.PrestigeMinAge)))
 	}
 
 	for _, line := range carryoverStatusLines(state) {
@@ -210,10 +210,10 @@ func statsProvider(state game.GameState, _ int) string {
 	// ─── Resource Rates ───
 	// What research adds up to: the tech tree is a map, so the totals
 	// live here.
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.55", "\n[gold]═══ Research bonuses ═══[-]\n\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.55", "\n[gold]═══ Research bonuses ═══[-]\n\n"))
 	sb.WriteString(researchSummaryLines(state))
 
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.56", "\n[gold]═══ Resource rates ═══[-]\n\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.56", "\n[gold]═══ Resource rates ═══[-]\n\n"))
 	rateKeys := keysWhere(state.Resources, func(k string, rs game.ResourceState) bool {
 		if !rs.Unlocked {
 			return false
@@ -224,7 +224,7 @@ func statsProvider(state game.GameState, _ int) string {
 		return true
 	})
 	if len(rateKeys) == 0 {
-		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.57", " [gray]No unlocked resources.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.57", " [gray]No unlocked resources.[-]\n"))
 	} else {
 		for _, k := range rateKeys {
 			rs := state.Resources[k]
@@ -237,7 +237,7 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	// ─── Active Multipliers ───
-	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.58", "\n[gold]═══ Active multipliers ═══[-]\n\n"))
+	sb.WriteString(rowid.Line("ui.overlay_stats.statsProvider.58", "\n[gold]═══ Active multipliers ═══[-]\n\n"))
 	sb.WriteString(renderActiveMultipliers(state))
 
 	return sb.String()
@@ -297,7 +297,7 @@ func renderActiveMultipliers(state game.GameState) string {
 	}
 
 	if !wrote {
-		return vibe.Line("ui.overlay_stats.renderActiveMultipliers.01", " [gray]No active multipliers.[-]\n")
+		return rowid.Line("ui.overlay_stats.renderActiveMultipliers.01", " [gray]No active multipliers.[-]\n")
 	}
 	return sb.String()
 }
@@ -405,27 +405,27 @@ func multiplierTargetLabel(target string) string {
 // Known sources are title-cased; "event:<name>" becomes "Event: <name>".
 func multiplierSourceLabel(src string) string {
 	if name, ok := strings.CutPrefix(src, "event:"); ok {
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.01", "Event: ") + name
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.01", "Event: ") + name
 	}
 	switch src {
 	case "research":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.02", "Research")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.02", "Research")
 	case "prestige":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.03", "Prestige")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.03", "Prestige")
 	case "wonders":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.04", "Wonders")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.04", "Wonders")
 	case "permanent":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.05", "Permanent")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.05", "Permanent")
 	case "morale":
 		return txtMorale.String()
 	case "event":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.07", "Event")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.07", "Event")
 	case "diplomacy":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.08", "Diplomacy")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.08", "Diplomacy")
 	case "legacy":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.09", "Legacy")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.09", "Legacy")
 	case "cosmic_legacy":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.10", "Cosmic Legacy")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.10", "Cosmic Legacy")
 	}
 	return textfmt.Capitalize(src)
 }

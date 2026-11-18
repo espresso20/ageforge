@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // advance_view_v2.go is the Advance panel's pillars under the measured gate
@@ -32,7 +32,7 @@ func (st GameState) measuredRows(set *rules.Set, m config.GateMeasure, rows map[
 		rows[config.PillarKnowledge] = append(rows[config.PillarKnowledge], st.keyTechRow(set, m.KeyTech))
 	}
 
-	pop := amountRow("population", vibe.Line("game.advance_view_v2.measuredRows.01", "Population"), float64(town.Population), float64(m.People), "")
+	pop := amountRow("population", rowid.Line("game.advance_view_v2.measuredRows.01", "Population"), float64(town.Population), float64(m.People), "")
 	pop.Met = town.PeopleMet()
 	rows[config.PillarPeople] = append(rows[config.PillarPeople], pop)
 
@@ -40,7 +40,7 @@ func (st GameState) measuredRows(set *rules.Set, m config.GateMeasure, rows map[
 	for _, res := range m.Materials {
 		names = append(names, set.Name(rules.KindResource, res))
 	}
-	income := amountRow("income", strings.Join(names, " + ")+vibe.Line("game.advance_view_v2.measuredRows.02", " income"), town.Income, m.Income, vibe.Line("game.advance_view_v2.measuredRows.03", "a tick"))
+	income := amountRow("income", strings.Join(names, " + ")+rowid.Line("game.advance_view_v2.measuredRows.02", " income"), town.Income, m.Income, rowid.Line("game.advance_view_v2.measuredRows.03", "a tick"))
 	income.Met = town.IndustryMet()
 	rows[config.PillarIndustry] = append(rows[config.PillarIndustry], income)
 }
@@ -62,7 +62,7 @@ func amountRow(key, label string, have, need float64, unit string) GateRow {
 // keyTechRow is the age's key tech as a row: met when it is researched.
 func (st GameState) keyTechRow(set *rules.Set, tech string) GateRow {
 	ts := st.Research.Techs[tech]
-	r := GateRow{Kind: GateRowDone, Key: tech, Label: vibe.Line("game.advance_view_v2.keyTechRow.01", "Key tech: ") + set.Name(rules.KindTech, tech), Need: 1}
+	r := GateRow{Kind: GateRowDone, Key: tech, Label: rowid.Line("game.advance_view_v2.keyTechRow.01", "Key tech: ") + set.Name(rules.KindTech, tech), Need: 1}
 	switch {
 	case ts.Researched:
 		r.Have, r.Met, r.Progress, r.Note = 1, true, 1, "researched"
@@ -70,9 +70,9 @@ func (st GameState) keyTechRow(set *rules.Set, tech string) GateRow {
 		if st.Research.Price > 0 {
 			r.Progress = clampShare(st.Research.Progress / st.Research.Price)
 		}
-		r.Note = vibe.Sprintf("game.advance_view_v2.keyTechRow.02", "researching, %d%%", int(r.Progress*100))
+		r.Note = rowid.Sprintf("game.advance_view_v2.keyTechRow.02", "researching, %d%%", int(r.Progress*100))
 	default:
-		r.Note = vibe.Line("game.advance_view_v2.keyTechRow.03", "not started")
+		r.Note = rowid.Line("game.advance_view_v2.keyTechRow.03", "not started")
 		for _, q := range st.Research.Queue {
 			if q == tech {
 				r.Note = "queued"

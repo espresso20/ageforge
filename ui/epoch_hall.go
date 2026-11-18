@@ -10,8 +10,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -78,9 +78,9 @@ func (h *epochHall) makeCard() {
 	case err != nil:
 		h.note = err.Error()
 	case res.Copied:
-		h.note = vibe.Line("ui.epoch_hall.makeCard.01", "Picture copied. Paste it into Discord.")
+		h.note = rowid.Line("ui.epoch_hall.makeCard.01", "Picture copied. Paste it into Discord.")
 	default:
-		h.note = vibe.Sprintf("ui.epoch_hall.makeCard.02", "Picture saved to %s.", res.Path)
+		h.note = rowid.Sprintf("ui.epoch_hall.makeCard.02", "Picture saved to %s.", res.Path)
 	}
 	h.noteUntil = h.clock().Add(hallNoteFor)
 }
@@ -118,9 +118,9 @@ func (h *epochHall) handleKey(ev *kit.Key) bool {
 func (h *epochHall) footer() [][2]string {
 	turn := "details"
 	if h.details {
-		turn = vibe.Line("ui.epoch_hall.footer.02", "front page")
+		turn = rowid.Line("ui.epoch_hall.footer.02", "front page")
 	}
-	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", vibe.Line("ui.epoch_hall.footer.05", "page")}, {"Tab", turn}, {"Esc", "close"}}
+	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", rowid.Line("ui.epoch_hall.footer.05", "page")}, {"Tab", turn}, {"Esc", "close"}}
 }
 
 func (h *epochHall) glyphTier() mapmodel.GlyphTier {
@@ -236,18 +236,18 @@ func newHallView(state game.GameState) hallView {
 	stat := func(n int, label string) hallStat {
 		return hallStat{value: textfmt.Int(n), big: textfmt.Int(n), label: label}
 	}
-	techs := stat(state.Research.TotalResearched, vibe.Line("ui.epoch_hall.newHallView.04", "Techs"))
-	techs.value = vibe.Sprintf("ui.epoch_hall.newHallView.03", "%s of %s", textfmt.Int(state.Research.TotalResearched), textfmt.Int(len(set.Techs())))
+	techs := stat(state.Research.TotalResearched, rowid.Line("ui.epoch_hall.newHallView.04", "Techs"))
+	techs.value = rowid.Sprintf("ui.epoch_hall.newHallView.03", "%s of %s", textfmt.Int(state.Research.TotalResearched), textfmt.Int(len(set.Techs())))
 	techs.hasBar = true
 	if total := len(set.Techs()); total > 0 {
 		techs.frac = float64(state.Research.TotalResearched) / float64(total)
 	}
 	v.stats = []hallStat{
-		stat(state.Workers.TotalPop, vibe.Line("ui.epoch_hall.newHallView.01", "Population")),
-		stat(buildings, vibe.Line("ui.epoch_hall.newHallView.02", "Buildings")),
+		stat(state.Workers.TotalPop, rowid.Line("ui.epoch_hall.newHallView.01", "Population")),
+		stat(buildings, rowid.Line("ui.epoch_hall.newHallView.02", "Buildings")),
 		techs,
-		stat(len(builtWonders(state)), vibe.Line("ui.epoch_hall.newHallView.05", "Wonders")),
-		stat(state.Prestige.Level, vibe.Line("ui.epoch_hall.newHallView.06", "Prestige")),
+		stat(len(builtWonders(state)), rowid.Line("ui.epoch_hall.newHallView.05", "Wonders")),
+		stat(state.Prestige.Level, rowid.Line("ui.epoch_hall.newHallView.06", "Prestige")),
 	}
 
 	// The ages: those the run has been through, the one it is in, and the
@@ -337,17 +337,17 @@ func rarestBadges(state game.GameState, n int) []game.BadgeView {
 func hallFeats(state game.GameState) []hallFeat {
 	var feats []hallFeat
 	if n := state.CatastrophesEndured + state.CatastrophesSuccumbed; n > 0 {
-		feats = append(feats, hallFeat{featCatastrophe, vibe.Sprintf("ui.epoch_hall.hallFeats.01", "Catastrophes met: %d, endured %d, succumbed %d",
+		feats = append(feats, hallFeat{featCatastrophe, rowid.Sprintf("ui.epoch_hall.hallFeats.01", "Catastrophes met: %d, endured %d, succumbed %d",
 			n, state.CatastrophesEndured, state.CatastrophesSuccumbed)})
 	}
 	for _, r := range state.HarbingerHistory {
 		feats = append(feats, hallFeat{featHarbinger, harbingerRecordText(state.Ruleset(), r)})
 	}
 	if ms := state.Milestones; ms.CompletedCount > 0 {
-		feats = append(feats, hallFeat{featMilestone, vibe.Sprintf("ui.epoch_hall.hallFeats.02", "Milestones reached: %d of %d", ms.CompletedCount, ms.TotalCount)})
+		feats = append(feats, hallFeat{featMilestone, rowid.Sprintf("ui.epoch_hall.hallFeats.02", "Milestones reached: %d of %d", ms.CompletedCount, ms.TotalCount)})
 	}
 	if age, ticks, ok := fastestAge(state); ok {
-		feats = append(feats, hallFeat{featFastest, vibe.Sprintf("ui.epoch_hall.hallFeats.03", "Fastest age: %s, in %s", age, game.DurationText(ticks, tickInterval(state)))})
+		feats = append(feats, hallFeat{featFastest, rowid.Sprintf("ui.epoch_hall.hallFeats.03", "Fastest age: %s, in %s", age, game.DurationText(ticks, tickInterval(state)))})
 	}
 	return feats
 }
@@ -431,23 +431,23 @@ func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hall
 	c.paragraph(line, c.ink(stops[2]))
 	c.y += c.gap
 
-	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.01", "Highlights"))
+	c.heading(rowid.Line("ui.epoch_hall.hallFrontText.01", "Highlights"))
 	c.tiles(v.stats)
 	c.y += c.gap - 1
 
-	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.02", "Ages"))
+	c.heading(rowid.Line("ui.epoch_hall.hallFrontText.02", "Ages"))
 	c.track(v)
 	c.y += c.gap
 
-	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.04", "Top badges"))
+	c.heading(rowid.Line("ui.epoch_hall.hallFrontText.04", "Top badges"))
 	c.badges(v.badges)
 	c.y += c.gap - 1
 
-	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.06", "Feats"))
+	c.heading(rowid.Line("ui.epoch_hall.hallFrontText.06", "Feats"))
 	c.feats(v)
 
 	if hint {
-		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.08", "Press c to copy a picture for Discord."), c.role(theme.RoleDim))
+		c.paragraph(rowid.Line("ui.epoch_hall.hallFrontText.08", "Press c to copy a picture for Discord."), c.role(theme.RoleDim))
 	}
 	c.end = c.y
 	c.sky(v.seed)

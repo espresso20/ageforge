@@ -6,9 +6,9 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -80,7 +80,7 @@ const (
 )
 
 // endWord is the word for the moment, set in iron at the strike.
-var endWord = vibe.E("ui.ending_page.endWord.01", "Prestige")
+var endWord = rowid.E("ui.ending_page.endWord.01", "Prestige")
 
 // endSpan is a beat's place in the film.
 type endSpan struct {
@@ -142,7 +142,7 @@ func endLevelTag(level string) string {
 }
 
 // txtBadge is said the same way on several screens, so it has one id.
-var txtBadge = vibe.E("ui.ending_page.endViewFor.03", "badge")
+var txtBadge = rowid.E("ui.ending_page.endViewFor.03", "badge")
 
 // endViewFor works out what the film says from the record of the ending.
 func endViewFor(end game.RunEnding, pal *menuPalette) endView {
@@ -173,12 +173,12 @@ func endViewFor(end game.RunEnding, pal *menuPalette) endView {
 	v.lines = append(v.lines, endLine{kind: elAge, text: v.age})
 	if v.prestige && (end.Points > 0 || end.Kind != game.RunEndSuccumbed) {
 		v.lines = append(v.lines, endLine{kind: elCount, count: end.Points, say: func(n int) string {
-			return textfmt.Count(n, vibe.Line("ui.ending_page.endViewFor.01", "prestige point"), vibe.Line("ui.ending_page.endViewFor.02", "prestige points"))
+			return textfmt.Count(n, rowid.Line("ui.ending_page.endViewFor.01", "prestige point"), rowid.Line("ui.ending_page.endViewFor.02", "prestige points"))
 		}})
 	}
 	if end.Badges > 0 {
 		v.lines = append(v.lines, endLine{kind: elCount, count: end.Badges, say: func(n int) string {
-			return textfmt.Count(n, txtBadge.String(), vibe.Line("ui.ending_page.endViewFor.04", "badges")) + txtEarned.String()
+			return textfmt.Count(n, txtBadge.String(), rowid.Line("ui.ending_page.endViewFor.04", "badges")) + txtEarned.String()
 		}})
 	}
 	v.lines = append(v.lines, rest...)
