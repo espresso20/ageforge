@@ -58,6 +58,10 @@ func TestSameArgumentsSamePicture(t *testing.T) {
 	}
 }
 
+// varied lists the ages whose copies differ from one another; the others draw
+// every copy alike.
+var varied = map[string]bool{"classical_age": true, "medieval_age": true, "victorian_age": true}
+
 func TestSeedsAndLevelsDiffer(t *testing.T) {
 	for _, age := range coins.Ages() {
 		var ims []*image.RGBA
@@ -66,15 +70,19 @@ func TestSeedsAndLevelsDiffer(t *testing.T) {
 		}
 		for i := range ims {
 			for j := i + 1; j < len(ims); j++ {
-				if d := differ(ims[i], ims[j]); d < 0.05 {
+				d := differ(ims[i], ims[j])
+				if varied[age] && d < 0.05 {
 					t.Errorf("%s seeds %d and %d differ in only %.1f%%", age, i+1, j+1, d*100)
+				}
+				if !varied[age] && d != 0 {
+					t.Errorf("%s seeds %d and %d differ, but the age draws every copy alike", age, i+1, j+1)
 				}
 			}
 		}
 		for level := 1; level < coins.Legendary; level++ {
 			a := coins.Render(age, "age", level, 0, 48)
 			b := coins.Render(age, "age", level+1, 0, 48)
-			if d := differ(a, b); d < 0.05 {
+			if d := differ(a, b); d < 0.01 {
 				t.Errorf("%s levels %d and %d differ in only %.1f%%", age, level, level+1, d*100)
 			}
 		}

@@ -64,10 +64,13 @@ func (r ramp) pick(s float64, x, y int) color.RGBA {
 }
 
 // sample is what a face says about one point: its height and which of the
-// four ramps colours it.
+// four ramps colours it. A tone above 0 is an inlay lit at exactly that tone;
+// seal draws the point flat, with no shading from its neighbours.
 type sample struct {
-	h float64
-	z int
+	h    float64
+	z    int
+	tone float64
+	seal bool
 }
 
 // spec is one piece: an outline, a face, and how it is shaded.
@@ -79,6 +82,7 @@ type spec struct {
 	edgeT     float64
 	edge      float64
 	reed      int // >0: reeding round the edge, this many sectors
+	edgeSeg   int // >0: reeding on every other one of this many edge segments
 	rimW      float64
 	rimH      float64
 	field     int // 0 matte, 1 satin, 2 mirror, 3 matte with no stipple (one pure tone)
@@ -224,6 +228,15 @@ func sdTrueEllipse(x, y, a, b, rot float64) float64 {
 	return (k - 1) / math.Max(g, 1e-6)
 }
 
+// polyline is the distance to a chain of segments, w wide.
+func polyline(x, y float64, pts []vec, w float64) float64 {
+	m := 1e9
+	for i := 0; i+1 < len(pts); i++ {
+		m = math.Min(m, sdSeg(x, y, pts[i].x, pts[i].y, pts[i+1].x, pts[i+1].y, w))
+	}
+	return m
+}
+
 func sdSub(a, b float64) float64 { return math.Max(a, -b) }
 
 // bevel is a height rising from the edge of a shape (sd < 0) over w units.
@@ -249,6 +262,8 @@ func render(sp *spec, n int) *image.RGBA {
 	W := n + 2
 	H := make([]float64, W*W)
 	Z := make([]int, W*W)
+	T := make([]float64, W*W)
+	Sl := make([]bool, W*W)
 	D := make([]float64, W*W)
 	for py := -1; py <= n; py++ {
 		for px := -1; px <= n; px++ {
@@ -262,7 +277,7 @@ func render(sp *spec, n int) *image.RGBA {
 				p := smooth(0, sp.rimW*0.45, d) * (1 - smooth(sp.rimW*0.8, sp.rimW*1.15, d))
 				h = math.Max(h, ground+sp.rimH*p)
 			}
-			H[i], Z[i] = h, st.z
+			H[i], Z[i], T[i], Sl[i] = h, st.z, st.tone, st.seal
 		}
 	}
 	lx, ly, lz := -0.5, -0.6, 0.62
@@ -293,7 +308,8 @@ func render(sp *spec, n int) *image.RGBA {
 					if sp.edgeT > 0 {
 						t = sp.edgeT
 					}
-					if sp.reed > 0 && int(math.Floor((angle(x, y)+math.Pi)*float64(sp.reed)/(2*math.Pi)))&1 == 0 {
+					if sp.reed > 0 && (sp.edgeSeg == 0 || int(math.Floor((angle(x, y)+math.Pi)*float64(sp.edgeSeg)/(2*math.Pi)))&1 == 0) &&
+						int(math.Floor((angle(x, y)+math.Pi)*float64(sp.reed)/(2*math.Pi)))&1 == 0 {
 						t += 0.16
 					}
 					img.SetRGBA(px, py, r.pick(t+0.03*float64((px+py)&1), px, py))
@@ -303,6 +319,9 @@ func render(sp *spec, n int) *image.RGBA {
 			h := H[i]
 			gx := (H[i+1] - H[i-1]) * s / 2
 			gy := (H[i+W] - H[i-W]) * s / 2
+			if Sl[i] {
+				gx, gy = 0, 0
+			}
 			nx, ny := -gx, -gy
 			nl := math.Sqrt(nx*nx + ny*ny + 1)
 			dot := (nx*lx + ny*ly + lz) / nl
@@ -310,7 +329,7 @@ func render(sp *spec, n int) *image.RGBA {
 			z := Z[i]
 			dd := D[i]
 			rel := math.Abs(h-ground) > 0.4
-			flat := z == 0 && !rel && dd > sp.rimW*1.1
+			flat := z == 0 && !rel && !Sl[i] && T[i] == 0 && dd > sp.rimW*1.1
 			if flat {
 				switch sp.field {
 				case 0:
@@ -324,6 +343,9 @@ func render(sp *spec, n int) *image.RGBA {
 						sv = 0.84
 					}
 				}
+			}
+			if T[i] > 0 {
+				sv = T[i]
 			}
 			sv += sp.bright
 			if flat && sp.field == 3 { // one pure tone: snapped to a ramp step, no dither
