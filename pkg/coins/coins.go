@@ -24,6 +24,7 @@ type entry struct {
 var table = [...]entry{
 	{"classical_age", classical, classicalLegend},
 	{"medieval_age", medieval, medievalLegend},
+	{"victorian_age", victorian, victorianLegend},
 }
 
 func find(age string) *entry {
