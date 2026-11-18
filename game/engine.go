@@ -581,9 +581,9 @@ func (ge *GameEngine) techLockErr(def config.BuildingDef) error {
 // or research its keystone tech first when that is still to come.
 func (ge *GameEngine) wonderNextStep(key string) string {
 	if ge.Buildings.TechLocked(key) {
-		return vibe.Sprintf("game.engine.wonderNextStep.01", "Research %s, then type 'build %s' to start construction.", ge.techName(ge.Buildings.defs[key].RequiredTech), ge.rules.Typed(rules.KindBuilding, key))
+		return vibe.Sprintf("game.engine.wonderNextStep.01", "Research %s, then type 'build %s' to start construction.", ge.techName(ge.Buildings.defs[key].RequiredTech), key)
 	}
-	return vibe.Sprintf("game.engine.wonderNextStep.02", "Type 'build %s' to start construction.", ge.rules.Typed(rules.KindBuilding, key))
+	return vibe.Sprintf("game.engine.wonderNextStep.02", "Type 'build %s' to start construction.", key)
 }
 
 // techName is a tech's display name (its key if it has no def).
@@ -1038,42 +1038,9 @@ func (ge *GameEngine) SetAccount(a *Account) {
 	}
 	if a != nil {
 		_ = a.FlushIfDirty()
-		// The words follow the account: its setting, not the last one's.
-		ge.followVibe(a.VibeOn())
 		if moved := a.takeSetAside(); moved != "" {
 			ge.AddLog("info", vibe.Sprintf("game.engine.SetAccount.01", "An account from before 4.0 had this name. It was moved to %s.", moved))
 		}
-	}
-}
-
-// SetVibeMode turns VibeMode on or off: the words of the game read in the
-// VibeMode script, or in plain English again, at once. The setting is saved
-// to the account when there is one (with none it lasts for the session). Only
-// words change: the run, its numbers and its saves are as they were. Never
-// call it from a Bus handler or with ge.mu held.
-func (ge *GameEngine) SetVibeMode(on bool) error {
-	if acct := ge.Account(); acct != nil {
-		if err := acct.SetVibe(on); err != nil {
-			return err
-		}
-	}
-	ge.followVibe(on)
-	return nil
-}
-
-// followVibe puts the process's text switch where on says, and moves the
-// engine onto the matching core ruleset (Rebind) unless it plays by a set of
-// its own, which has its own words.
-func (ge *GameEngine) followVibe(on bool) {
-	vibe.Set(on)
-	ge.mu.RLock()
-	cur := ge.rules
-	ge.mu.RUnlock()
-	if !rules.IsCore(cur) {
-		return
-	}
-	if want := rules.CoreFor(on); want != cur {
-		ge.Rebind(want)
 	}
 }
 
@@ -3405,9 +3372,9 @@ func (ge *GameEngine) AdvanceAge() error {
 			if wonderKey != "" && ge.Buildings.GetCount(wonderKey) < 1 {
 				if def, ok := ge.Buildings.defs[wonderKey]; ok {
 					if ge.Buildings.TechLocked(wonderKey) {
-						return vibe.Errorf("game.engine.AdvanceAge.01", "Build the %s wonder before advancing: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, ge.techName(def.RequiredTech), ge.rules.Typed(rules.KindBuilding, wonderKey))
+						return vibe.Errorf("game.engine.AdvanceAge.01", "Build the %s wonder before advancing: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, ge.techName(def.RequiredTech), wonderKey)
 					}
-					return vibe.Errorf("game.engine.AdvanceAge.02", "Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, ge.rules.Typed(rules.KindBuilding, wonderKey))
+					return vibe.Errorf("game.engine.AdvanceAge.02", "Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, wonderKey)
 				}
 			}
 			return vibe.Errorf("game.engine.AdvanceAge.05", "Not ready to advance. The bar at the top lists what it is waiting on. Type 'charter' to see everything the advance needs.")
@@ -3938,7 +3905,7 @@ func checkAmount(amount float64) error {
 // closest one: "Unknown building 'farmm'. Did you mean 'farm'?"
 func (ge *GameEngine) unknownBuildingErr(key string) error {
 	if suggestion := closestKey(key, ge.Buildings.defs); suggestion != "" {
-		return vibe.Errorf("game.engine.unknownBuildingErr.01", "Unknown building '%s'. Did you mean '%s'?", key, ge.rules.Typed(rules.KindBuilding, suggestion))
+		return vibe.Errorf("game.engine.unknownBuildingErr.01", "Unknown building '%s'. Did you mean '%s'?", key, suggestion)
 	}
 	return vibe.Errorf("game.engine.unknownBuildingErr.02", "Unknown building '%s'. Type 'build' to see available buildings.", key)
 }
@@ -5189,9 +5156,7 @@ func (ge *GameEngine) addLog(logType, message string) {
 // lines by (see LogTag): tags say what, whatever words the line is written
 // in. Must be called with the lock held.
 func (ge *GameEngine) addLogAbout(logType string, tags LogTag, message string) {
-	if !vibe.On() {
-		tags |= TagPlain
-	}
+	tags |= TagPlain
 	entry := LogEntry{
 		Tick:    ge.tick,
 		Message: message,

@@ -16,8 +16,6 @@ badges
 
 [Accounts & Recovery](account.md#the-badge-case) describes the case itself: what each coin shows, the tabs, the detail card and the plain list. The Stats panel shows a short digest of your badges. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
 
-VibeMode rewrites the names and descriptions of badges. The badges, their tiers and their points stay the same.
-
 ## How a badge is earned
 
 Every badge is one of three kinds, and its description says which:

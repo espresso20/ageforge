@@ -10,7 +10,7 @@ import (
 )
 
 // widths.go: the longest a label of the screens may be, from the width the
-// code lays it out in. A VibeMode line can be longer than the plain one, and
+// code lays it out in. A rewritten line can be longer than the plain one, and
 // where the code gives a label a fixed width it does not make room: the value
 // after it moves, or a table's column spills. So the export carries the width
 // as the row's max, and vibe-lint holds a line to it.

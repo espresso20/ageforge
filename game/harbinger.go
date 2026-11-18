@@ -557,7 +557,7 @@ func (ge *GameEngine) harbingerSpeak(def config.HarbingerDef, tier CatastropheTi
 	rng := ge.gameRNG()
 	stream := ge.flavorStream()
 	// The lines are kept in plain English, the figure's name too.
-	subject := ge.harborPlainName(def)
+	subject := def.Name
 	arrival := stream.Generate(flavor.Request{Moment: flavor.HarbingerArrival, Age: def.Age, Subject: subject}, rng)
 	warning := stream.Generate(flavor.Request{Moment: flavor.HarbingerWarning, Age: def.Age, Subject: subject, Kind: string(tier)}, rng)
 	for _, res := range []flavor.Result{arrival, warning} {
@@ -569,46 +569,10 @@ func (ge *GameEngine) harbingerSpeak(def config.HarbingerDef, tier CatastropheTi
 	return lines, keys
 }
 
-// harborPlainName is the name of a figure in plain English, whatever script
-// the game is read in: a game on a core set reads it from the plain one, as a
-// save's title is (savedTitle), and a game on a set of its own has its own.
-func (ge *GameEngine) harborPlainName(def config.HarbingerDef) string {
-	if rules.IsCore(ge.rules) {
-		if plain, ok := rules.CoreFor(false).Harbinger(def.Age); ok {
-			return plain.Name
-		}
-	}
-	return def.Name
-}
-
-// harbingerLinesTold are a thread's arrival and warning lines as they read
-// now: in the script's words while VibeMode is on, told again from the keys
-// the thread holds; as they were drawn otherwise, and for a line whose key
-// does not name it any more (a build whose catalog differed). Read-only.
+// harbingerLinesTold are a thread's arrival and warning lines as they were
+// drawn. Read-only.
 func (ge *GameEngine) harbingerLinesTold(h *HarbingerSave) []string {
-	out := append([]string(nil), h.Lines...)
-	if !vibe.On() {
-		return out
-	}
-	def, ok := ge.rules.Harbinger(h.Age)
-	if !ok {
-		return out
-	}
-	for i := range out {
-		if i >= len(h.LineKeys) || h.LineKeys[i] == "" {
-			continue
-		}
-		// The key must tell the line the thread holds, in plain English, before
-		// it is trusted to tell it in the script's words.
-		plain, ok := flavor.Retell(h.LineKeys[i], flavor.Request{Subject: ge.harborPlainName(def)}, false)
-		if !ok || plain != h.Lines[i] {
-			continue
-		}
-		if told, ok := flavor.Retell(h.LineKeys[i], flavor.Request{Subject: def.Name}, true); ok && told != "" {
-			out[i] = told
-		}
-	}
-	return out
+	return append([]string(nil), h.Lines...)
 }
 
 // harbingerLogLines writes the current figure's lines to the log in gray.
@@ -1652,7 +1616,7 @@ func (ge *GameEngine) redrawHarbingerHistory() {
 
 // harbingerHistoryForSave is the record as a save holds it: the keys the
 // names are drawn from and not the names, so a save reads the same in any
-// script (VibeMode).
+// ruleset.
 func (ge *GameEngine) harbingerHistoryForSave() []HarbingerRecord {
 	out := cloneHarbingerHistory(ge.harbingerHistory)
 	for i, r := range out {

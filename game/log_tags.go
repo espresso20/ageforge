@@ -6,15 +6,14 @@ import "strings"
 //
 // The People and Army tabs list the log lines about their subject, and the
 // log colours a loss red and a gain green. They used to find those lines by
-// reading their words ("recruited", "lost", "soldier"), which a VibeMode script
-// writes its own way. A line now carries tags, set where it is written
+// reading their words ("recruited", "lost", "soldier"). A line now carries tags, set where it is written
 // (addLogAbout), and a panel asks the line what it is about (LogEntry.About).
 
 // LogTag says what a log line is about.
 type LogTag uint8
 
 const (
-	// TagPlain marks a line written while VibeMode was off, in the game's own
+	// TagPlain marks a line written in the game's own
 	// English: it is read by its words, as every line was before there were
 	// tags. A line written under a script has other words, so it is read by its
 	// tags alone.

@@ -17,7 +17,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -476,30 +475,22 @@ func TestSceneInsetIsTheChrome(t *testing.T) {
 	}
 }
 
-// BenchmarkMapFrame is one 200x60 frame of the map at a few ages, with
-// VibeMode off and on: the cost a player pays every redraw of the map, and
-// what the switch adds to it (an atomic load for each text the frame writes,
-// and with it on, a lookup of the script for each).
+// BenchmarkMapFrame is one 200x60 frame of the map at a few ages: the cost a
+// player pays every redraw of the map.
 func BenchmarkMapFrame(b *testing.B) {
 	for _, age := range []string{"medieval_age", "modern_age", "fusion_age", "space_age", "galactic_age"} {
-		for _, name := range []string{"off", "on"} {
-			b.Run(age+"/vibemode_"+name, func(b *testing.B) {
-				was := vibe.On()
-				b.Cleanup(func() { vibe.Set(was) })
-				vibe.Set(false)
-				m := grown(b, fixture.Options{Age: age, Seed: 7, Harbinger: true, Wars: 1})
-				v := New()
-				scr := capture.NewScreen(200, 60)
-				defer scr.Fini()
-				r := Rect{W: 200, H: 60}
-				v.Draw(scr, r, Frame{Model: m})
-				vibe.Set(name == "on")
-				b.ReportAllocs()
-				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
-					v.Draw(scr, r, Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-				}
-			})
-		}
+		b.Run(age, func(b *testing.B) {
+			m := grown(b, fixture.Options{Age: age, Seed: 7, Harbinger: true, Wars: 1})
+			v := New()
+			scr := capture.NewScreen(200, 60)
+			defer scr.Fini()
+			r := Rect{W: 200, H: 60}
+			v.Draw(scr, r, Frame{Model: m})
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				v.Draw(scr, r, Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
+			}
+		})
 	}
 }
