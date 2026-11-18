@@ -5156,7 +5156,6 @@ func (ge *GameEngine) addLog(logType, message string) {
 // lines by (see LogTag): tags say what, whatever words the line is written
 // in. Must be called with the lock held.
 func (ge *GameEngine) addLogAbout(logType string, tags LogTag, message string) {
-	tags |= TagPlain
 	entry := LogEntry{
 		Tick:    ge.tick,
 		Message: message,

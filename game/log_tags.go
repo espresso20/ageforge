@@ -13,15 +13,10 @@ import "strings"
 type LogTag uint8
 
 const (
-	// TagPlain marks a line written in the game's own
-	// English: it is read by its words, as every line was before there were
-	// tags. A line written under a script has other words, so it is read by its
-	// tags alone.
-	TagPlain  LogTag = 1 << iota
-	TagPeople        // about the people of the town: recruited, assigned, moved in, starving, scholars, soldiers
-	TagArmy          // about the army: soldiers, campaigns, raids, the garrison
-	TagBad           // bad news: something or someone lost
-	TagGood          // good news: someone arrived or came home
+	TagPeople LogTag = 1 << iota // about the people of the town: recruited, assigned, moved in, starving, scholars, soldiers
+	TagArmy                      // about the army: soldiers, campaigns, raids, the garrison
+	TagBad                       // bad news: something or someone lost
+	TagGood                      // good news: someone arrived or came home
 )
 
 // logWords are the words that mark a line written in plain English as being
@@ -35,12 +30,8 @@ var logWords = map[LogTag][]string{
 }
 
 // About reports whether the line is about subject (one of TagPeople, TagArmy,
-// TagBad, TagGood). A line written in plain English is read by its words; a
-// line written under a script, by the tags it was given.
+// TagBad, TagGood), by the words the line has.
 func (e LogEntry) About(subject LogTag) bool {
-	if e.Tags&TagPlain == 0 {
-		return e.Tags&subject != 0
-	}
 	m := strings.ToLower(e.Message)
 	for _, w := range logWords[subject] {
 		if strings.Contains(m, w) {
