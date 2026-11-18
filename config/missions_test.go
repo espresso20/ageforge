@@ -100,16 +100,6 @@ func TestRoadEventStoryPools(t *testing.T) {
 	}
 }
 
-func TestBadgeExpeditionsAreEveryEraAndKind(t *testing.T) {
-	got := BadgeExpeditions()
-	if want := len(Epochs()) * 3; len(got) != want {
-		t.Fatalf("%d mission badge subjects, want %d", len(got), want)
-	}
-	if got[0].Key != MissionBadgeKey(Epochs()[0].Key, MissionScout) || got[1].Kind != MissionExpedition || got[2].Kind != MissionCampaign {
-		t.Errorf("order: %+v", got[:3])
-	}
-}
-
 // TestRoadTemplatesCarryTheirRows: every road template has a row id of its own,
 // in the export's order, and reads as it is written.
 func TestRoadTemplatesCarryTheirRows(t *testing.T) {

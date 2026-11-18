@@ -12,15 +12,9 @@ import (
 
 // The seed catalog's keys the tests name.
 const (
-	badgePrestige1  = "ladder.prestiges.1"
-	badgePrestige3  = "ladder.prestiges.2"
-	badgePrestige10 = "ladder.prestiges.3"
-	badgePrestige25 = "ladder.prestiges.4"
 	badgeStone      = "age.stone_age"
 	badgeIron       = "age.iron_age"
 	badgeModern     = "age.modern_age"
-	badgeHousing1   = "lineage.housing.1"
-	badgeHousing2   = "lineage.housing.2"
 	badgeCollector  = "special.collector" // 15 badges earned
 	badgeHutHoarder = "special.hut_hoarder"
 	badgeLate       = "special.fashionably_late"
@@ -37,6 +31,13 @@ func hasBadge(a *Account, key string) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	return a.earnedLocked(key)
+}
+
+// hasTally reports whether the account's coin for the tally is struck at
+// level or finer.
+func hasTally(a *Account, key string, level int) bool {
+	l, _, _ := a.TallyCoin(key)
+	return l >= level
 }
 
 // recordPrestige is a prestige from age as the engine records it: the

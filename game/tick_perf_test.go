@@ -182,7 +182,7 @@ func TestBadgesAddLittleToATick(t *testing.T) {
 		bare.doTick()
 		held.doTick()
 	}
-	if held.account == nil || len(held.badges.defs) < 500 {
+	if held.account == nil || len(held.badges.defs) < 150 {
 		t.Fatalf("precondition: the held engine judges %d badges", len(held.badges.defs))
 	}
 	// Averaged over whole census periods, so the census and the production

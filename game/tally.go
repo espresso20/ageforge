@@ -20,6 +20,8 @@ func tallyCounters(t config.TallyDef) []string {
 	switch {
 	case t.Peak:
 		return []string{peakCounter(t)}
+	case len(t.Subjects) > 0 && t.Counter == "":
+		return t.Subjects
 	case len(t.Subjects) > 0:
 		out := make([]string, len(t.Subjects))
 		for i, s := range t.Subjects {
@@ -36,8 +38,8 @@ func (a *Account) tallyValue(t config.TallyDef) float64 {
 		return a.Counters[tallyCounters(t)[0]]
 	}
 	n := 0.0
-	for _, c := range tallyCounters(t) {
-		if a.Counters[c] >= t.Min {
+	for i, c := range tallyCounters(t) {
+		if a.Counters[c] >= t.MinOf(i) {
 			n++
 		}
 	}
@@ -120,8 +122,10 @@ func (a *Account) peaksLocked(book *badgeBook, ev Event, ctx badgeCtx, depth int
 	}
 }
 
-// tallyLevelOf is a tally's level, for the titles it gives.
+// tallyLevelOf is a tally's level, for the titles it gives, 0 when its coin is crossed. The lock is held.
 func (a *Account) tallyLevelOf(key string) int {
-	l, _, _ := a.TallyCoin(key)
-	return l
+	if s, ok := a.coins[coinKey(config.CoinTally, key)]; ok && len(s.Copies) > 0 && s.Copies[0].Flags&BadgeFlagCrossed == 0 {
+		return s.Copies[0].Level
+	}
+	return 0
 }

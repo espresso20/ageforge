@@ -536,9 +536,11 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 			changed = true
 		}
 	}
+	rev := a.badgeRev
 	for _, t := range book.tallies {
 		a.tallyLocked(book, t, badgeCtx{}, true, 0)
 	}
+	changed = changed || a.badgeRev != rev
 	highest, reached := book.set.Index(a.Stats.HighestAge)
 	for i := range book.defs {
 		def := &book.defs[i]

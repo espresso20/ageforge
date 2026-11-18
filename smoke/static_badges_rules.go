@@ -231,13 +231,6 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 		if _, ok := c.set.Era(def.Subject); !ok {
 			return fmt.Sprintf("names the era %q, which does not exist", def.Subject)
 		}
-	case config.BadgeEvExpedition:
-		for _, x := range config.BadgeExpeditions() {
-			if x.Key == def.Subject {
-				return ""
-			}
-		}
-		return fmt.Sprintf("names the mission %q, which does not exist", def.Subject)
 	case config.BadgeEvAwakening:
 		for _, a := range c.m.ages {
 			if aw, ok := c.set.Awakening(a.Key); ok && aw.Key == def.Subject {

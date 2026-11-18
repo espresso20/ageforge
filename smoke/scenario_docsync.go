@@ -45,7 +45,7 @@ func GameCounts() map[string]int {
 	c[qThemes] = len(theme.All())
 	// The mission board is random, so the docs count the kinds of mission
 	// there are: a short, a long and a grand one for each era.
-	c[qExpeditions] = len(config.BadgeExpeditions())
+	c[qExpeditions] = len(config.Epochs()) * len(config.MissionKinds())
 	return c
 }
 

@@ -551,7 +551,7 @@ func TestBoard_LegendaryBadge(t *testing.T) {
 		t.Fatalf("the badge is %+v, %v", badge, ok)
 	}
 	send(false, true)
-	wantBadges(t, acct, "an ordinary success", []string{"expedition.expedition_iron_era_scout"}, legend)
+	wantBadges(t, acct, "an ordinary success", []string{"ledger.expeditions.1"}, legend)
 	send(true, false)
 	wantBadges(t, acct, "a failed Legendary mission", nil, legend)
 	send(true, true)

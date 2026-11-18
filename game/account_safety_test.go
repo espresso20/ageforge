@@ -73,7 +73,7 @@ func TestRecoverKeepsActiveAccountIntact(t *testing.T) {
 	}
 	got := slotAccount(t, alice.AccountID)
 	if got.AccountID != alice.AccountID || got.DisplayName != "Alice" ||
-		got.Stats.TotalPrestiges != 1 || len(got.Badges) != 1 || !hasBadge(got, badgePrestige1) {
+		got.Stats.TotalPrestiges != 1 || len(got.Badges) != 0 || !hasTally(got, "ledger.prestiges", 1) {
 		t.Errorf("Alice's slot after the recovery: id=%s name=%q stats=%+v badges=%v",
 			got.AccountID, got.DisplayName, got.Stats, got.Badges)
 	}

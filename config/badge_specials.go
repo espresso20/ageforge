@@ -414,8 +414,8 @@ func Badges() []BadgeDef {
 		},
 		{
 			Key: "special.museum_piece", Family: "special",
-			Name: "Museum Piece", Desc: "Earn 400 badges. Unlocks the Prismatic theme.",
-			Tier: BadgeLegendary, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 400,
+			Name: "Museum Piece", Desc: "Earn 160 badges. Unlocks the Prismatic theme.",
+			Tier: BadgeLegendary, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 160,
 			Emblem: "sprite.museum", Ladder: "Badges earned",
 			Reward: BadgeReward{Theme: "prismatic"},
 			Proof:  DerivedProof(),
@@ -441,7 +441,7 @@ func Badges() []BadgeDef {
 		},
 		{
 			Key: "special.small_world", Family: "special",
-			Name: "Small World", Desc: "Meet every civilization there is.",
+			Name: "Small World", Desc: "Meet, ally, trade five deals with and end a war with every civilization there is.",
 			Tier: BadgePlatinum, Scope: BadgeMoment, Event: BadgeEvTallyTop, Subject: "ledger.civs",
 			Reveal: onCiv, Emblem: "civ", Proof: DerivedProof(),
 		},

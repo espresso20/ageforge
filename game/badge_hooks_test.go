@@ -36,18 +36,33 @@ func runTally(ge *GameEngine, name string) float64 {
 func wantBadges(t *testing.T, acct *Account, when string, held []string, not ...string) {
 	t.Helper()
 	for _, key := range held {
-		if _, ok := rules.Core().Badge(key); !ok {
+		if _, ok := rules.Core().Badge(key); !ok && !tallyKnown(key) {
 			t.Fatalf("no badge %s in the catalog", key)
 		}
-		if !hasBadge(acct, key) {
+		if !heldKey(acct, key) {
 			t.Errorf("%s: %s was not earned (holds %v)", when, key, mainKeys(acct.EarnedBadges()))
 		}
 	}
 	for _, key := range not {
-		if hasBadge(acct, key) {
+		if heldKey(acct, key) {
 			t.Errorf("%s: %s was earned", when, key)
 		}
 	}
+}
+
+// tallyKnown reports whether key names a rung of a tally ("ledger.endured.3").
+func tallyKnown(key string) bool {
+	_, _, ok := rules.Core().Tallies().Gift(key)
+	return ok
+}
+
+// heldKey reports whether the account holds a badge, or a tally's coin at
+// the level a rung is struck at.
+func heldKey(a *Account, key string) bool {
+	if k, l, ok := rules.Core().Tallies().Gift(key); ok {
+		return hasTally(a, k, l)
+	}
+	return hasBadge(a, key)
 }
 
 // TestProductionCountsTowardTheResourceLadders: what the tick's rates
@@ -77,12 +92,12 @@ func TestProductionCountsTowardTheResourceLadders(t *testing.T) {
 		t.Errorf("production is tallied in the run's facts (%v): it must be the account's alone", n)
 	}
 	// The first rung of a ladder is reachable this way.
-	rung, ok := rules.Core().Badge("resource.food.1")
-	if !ok || rung.Counter != food {
-		t.Fatalf("the food ladder's first rung: %+v", rung)
+	rung := tallyByKey(t, "resource.food")
+	if rung.Counter != food {
+		t.Fatalf("the food tally's counter: %+v", rung)
 	}
 	ge.mu.Lock()
-	ge.tell(Event{Kind: config.BadgeEvProduced, Subject: "food", N: rung.Threshold})
+	ge.tell(Event{Kind: config.BadgeEvProduced, Subject: "food", N: rung.Rungs[0]})
 	ge.mu.Unlock()
 	wantBadges(t, acct, "a rung's worth of food", []string{"resource.food.1"}, "resource.food.2")
 
@@ -143,10 +158,10 @@ func TestTimeAwayCountsItsProduction(t *testing.T) {
 func TestCensusReadsThePayroll(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
-	first, _ := rules.Core().Badge("domain.food.1")
-	second, _ := rules.Core().Badge("domain.food.2")
-	if first.Threshold <= 0 || second.Threshold <= first.Threshold {
-		t.Fatalf("the food payroll's rungs: %v then %v", first.Threshold, second.Threshold)
+	food := tallyByKey(t, "domain.food")
+	first, second := food.Rungs[0], food.Rungs[1]
+	if first <= 0 || second <= first {
+		t.Fatalf("the food payroll's rungs: %v then %v", first, second)
 	}
 	staff := func(n int) {
 		ge.mu.Lock()
@@ -160,11 +175,11 @@ func TestCensusReadsThePayroll(t *testing.T) {
 			ge.mu.Unlock()
 		}
 	}
-	staff(int(first.Threshold) - 1)
+	staff(int(first) - 1)
 	wantBadges(t, acct, "one worker short", nil, "domain.food.1")
-	staff(int(first.Threshold))
+	staff(int(first))
 	wantBadges(t, acct, "the first payroll", []string{"domain.food.1"}, "domain.food.2", "domain.lumber.1")
-	staff(int(second.Threshold))
+	staff(int(second))
 	wantBadges(t, acct, "the second payroll", []string{"domain.food.2"})
 	if n := runTally(ge, config.BadgeEvCensus); n != 0 {
 		t.Errorf("the census is tallied in the run's facts (%v)", n)
@@ -311,7 +326,7 @@ func TestWarsAreReported(t *testing.T) {
 	if err := ge.SendTribute(a); err != nil {
 		t.Fatalf("SendTribute: %v", err)
 	}
-	wantBadges(t, acct, "a war bought off", []string{"special.protection_money", "civ." + a + ".peace"}, "special.cold_shoulder")
+	wantBadges(t, acct, "a war bought off", []string{"special.protection_money"}, "special.cold_shoulder")
 
 	// Waited out: the war ends by itself once the grudge has run its course.
 	ge.mu.Lock()
@@ -326,7 +341,7 @@ func TestWarsAreReported(t *testing.T) {
 	if !ended {
 		t.Fatal("the second war never ended by itself")
 	}
-	wantBadges(t, acct, "a war waited out", []string{"special.cold_shoulder", "civ." + b + ".peace"})
+	wantBadges(t, acct, "a war waited out", []string{"special.cold_shoulder"})
 	if n := runTally(ge, config.BadgeEvWarEnded); n != 2 {
 		t.Errorf("two wars ended, %v tallied", n)
 	}
@@ -348,7 +363,7 @@ func TestLendsGiftsAndAlliances(t *testing.T) {
 	wantBadges(t, acct, "workers on loan", []string{"special.regifting"})
 
 	say(ge, config.BadgeEvCivAllied, "riverlands_tribes", map[string]float64{"met": 3, "unallied": 0})
-	wantBadges(t, acct, "three met, all allied", []string{"civ.riverlands_tribes.allied"}, "special.everybodys_friend")
+	wantBadges(t, acct, "three met, all allied", nil, "special.everybodys_friend")
 	say(ge, config.BadgeEvCivAllied, "ironhold_clans", map[string]float64{"met": 4, "unallied": 1})
 	wantBadges(t, acct, "four met, one not allied", nil, "special.everybodys_friend")
 	say(ge, config.BadgeEvCivAllied, "merchant_guild", map[string]float64{"met": 4, "unallied": 0})
@@ -359,7 +374,7 @@ func TestLendsGiftsAndAlliances(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		say(ge, config.BadgeEvDeal, "riverlands_tribes", nil)
 	}
-	wantBadges(t, acct, "five deals from one civilization", []string{"civ.riverlands_tribes.regular"}, "special.loyal_customer", "civ.ironhold_clans.regular")
+	wantBadges(t, acct, "five deals from one civilization", nil, "special.loyal_customer")
 	for i := 0; i < 9; i++ {
 		say(ge, config.BadgeEvDeal, "ironhold_clans", nil)
 	}
@@ -401,55 +416,6 @@ func TestDefaultLooksAreInTheCatalog(t *testing.T) {
 	}
 }
 
-// TestBadgeExpeditionsMatchTheGame: the catalog's table of mission badges
-// is one per era and kind of the game's missions (the board's tiers), each in
-// the age its era opens with.
-func TestBadgeExpeditionsMatchTheGame(t *testing.T) {
-	set := rules.Core()
-	type slot struct{ era, kind, first string }
-	game := map[string]slot{}
-	for _, age := range set.AgeKeys() {
-		// Every age's board has offers of every tier, and an offer is
-		// judged by the era of its age and the kind of its tier.
-		for _, tier := range boardTiers {
-			era, kind := set.EraOf(age), tierKind(tier)
-			key := config.MissionBadgeKey(era, kind)
-			if _, seen := game[key]; !seen {
-				game[key] = slot{era, kind, age}
-			}
-		}
-	}
-	if got := len(config.BadgeExpeditions()); got != 21 {
-		t.Fatalf("badge mission catalog has %d entries, want 21", got)
-	}
-	listed := map[string]bool{}
-	for _, x := range config.BadgeExpeditions() {
-		listed[x.Key] = true
-		g, ok := game[x.Key]
-		if !ok {
-			t.Errorf("the catalog lists %s, which the game does not have", x.Key)
-			continue
-		}
-		if g.first != x.MinAge {
-			t.Errorf("%s comes in the %s; the catalog says %s", x.Key, g.first, x.MinAge)
-		}
-		b, ok := set.Badge("expedition." + x.Key)
-		if !ok {
-			t.Errorf("no badge for %s", x.Key)
-			continue
-		}
-		want := "Come back from a successful " + config.MissionKindWord(g.kind) + " mission in the " + x.Name + "."
-		if b.Desc != want {
-			t.Errorf("%s reads %q, want %q", x.Key, b.Desc, want)
-		}
-	}
-	for key := range game {
-		if !listed[key] {
-			t.Errorf("the game has %s, which the catalog does not list", key)
-		}
-	}
-}
-
 // TestInvitedDoomsAreMarked: Endure and Succumb report whether the doom
 // was invited, read from the run's own fate.
 func TestInvitedDoomsAreMarked(t *testing.T) {
@@ -467,14 +433,14 @@ func TestInvitedDoomsAreMarked(t *testing.T) {
 	}
 	strike(false)
 	noErr(t, ge.Endure())
-	wantBadges(t, acct, "a doom endured that nobody asked for", []string{"doom.iron_era.endured", "ladder.endured.1"}, "special.asked_for_it")
+	wantBadges(t, acct, "a doom endured that nobody asked for", []string{"ledger.endured.1"}, "special.asked_for_it")
 	strike(true)
 	noErr(t, ge.Endure())
 	wantBadges(t, acct, "an invited doom endured", []string{"special.asked_for_it"})
 
 	strike(false)
 	noErr(t, ge.Succumb())
-	wantBadges(t, acct, "a doom succumbed to", []string{"doom.iron_era.succumbed", "ladder.succumbed.1"}, "special.signed_the_guest_book")
+	wantBadges(t, acct, "a doom succumbed to", []string{"ledger.succumbed.1"}, "special.signed_the_guest_book")
 	strike(true)
 	noErr(t, ge.Succumb())
 	wantBadges(t, acct, "an invited doom succumbed to", []string{"special.signed_the_guest_book"})
@@ -615,23 +581,25 @@ func TestSetsAndTopRungs(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
 	set := rules.Core()
-	civs := set.BadgesInSet("civ.met")
-	if len(civs) != len(set.Factions()) {
-		t.Fatalf("the set civ.met has %d badges for %d civilizations", len(civs), len(set.Factions()))
-	}
+	civs := len(set.Factions())
 	for i, f := range set.Factions() {
 		say(ge, config.BadgeEvCivMet, f.Key, nil)
-		if i < len(civs)-1 && hasBadge(acct, "special.small_world") {
-			t.Fatalf("Small World was earned after %d of %d civilizations", i+1, len(civs))
+		say(ge, config.BadgeEvCivAllied, f.Key, nil)
+		for range 5 {
+			say(ge, config.BadgeEvDeal, f.Key, nil)
 		}
+		if i < civs-1 && hasBadge(acct, "special.small_world") {
+			t.Fatalf("Small World was earned after %d of %d civilizations", i+1, civs)
+		}
+		say(ge, config.BadgeEvWarEnded, f.Key, nil)
 	}
 	wantBadges(t, acct, "every civilization met", []string{"special.small_world"})
 
-	top, _ := set.Badge("lineage.harbor.5")
+	top := tallyByKey(t, "lineage.harbor").Rungs[4]
 	say(ge, config.BadgeEvBuiltLineage, "harbor", nil)
 	wantBadges(t, acct, "one harbor", nil, "special.full_set")
 	ge.mu.Lock()
-	ge.report(Event{Kind: config.BadgeEvBuiltLineage, Subject: "harbor", N: top.Threshold})
+	ge.report(Event{Kind: config.BadgeEvBuiltLineage, Subject: "harbor", N: top})
 	ge.mu.Unlock()
 	wantBadges(t, acct, "the top of a lineage ladder", []string{"lineage.harbor.5", "special.full_set"})
 }
@@ -662,7 +630,7 @@ func TestTitlesFromBadges(t *testing.T) {
 	}
 	// Every title in the catalog names a badge or a set that exists.
 	for _, tt := range rules.Core().BadgeWornTitles() {
-		if tt.Badge != "" {
+		if tt.Badge != "" && !tallyKnown(tt.Badge) {
 			def, ok := rules.Core().Badge(tt.Badge)
 			if !ok || def.Reward.Title != tt.Title {
 				t.Errorf("the title %s names the badge %s, which gives %q", tt.Title, tt.Badge, def.Reward.Title)
@@ -690,7 +658,7 @@ func TestTitlesFromBadges(t *testing.T) {
 	for i := 0; i < 15; i++ {
 		say(ge, config.BadgeEvEndured, "iron_era", nil)
 	}
-	if _, sum = ge.Badges(); !hasBadge(acct, "ladder.endured.3") || slices.Contains(sum.Titles, "Survivor") {
+	if _, sum = ge.Badges(); !heldKey(acct, "ledger.endured.3") || slices.Contains(sum.Titles, "Survivor") {
 		t.Errorf("a crossed rung gave its title: %v", sum.Titles)
 	}
 }
@@ -774,13 +742,15 @@ func TestHeldBadgesCountTowardTheCollectors(t *testing.T) {
 			acct.Badges[def.Key] = BadgeEarned{At: 5, Run: "old"}
 			continue
 		}
-		if held < 30 && !def.Integrity() && !strings.HasPrefix(def.Counter, config.BadgeEvBadge) && def.Family == "lineage" {
+		if held < 30 && !def.Integrity() && !strings.HasPrefix(def.Counter, config.BadgeEvBadge) && (def.Family == "techs" || def.Family == "maximalist") {
 			acct.Badges[def.Key] = BadgeEarned{At: 5, Run: "old"}
 			// The record backs the rung, as a real account's does.
-			if acct.Counters == nil {
-				acct.Counters = map[string]float64{}
+			if def.Counter != "" {
+				if acct.Counters == nil {
+					acct.Counters = map[string]float64{}
+				}
+				acct.Counters[def.Counter] = max(acct.Counters[def.Counter], def.Threshold)
 			}
-			acct.Counters[def.Counter] = max(acct.Counters[def.Counter], def.Threshold)
 			held++
 		}
 	}
@@ -797,7 +767,7 @@ func TestHeldBadgesCountTowardTheCollectors(t *testing.T) {
 	}
 	// Collector is itself a badge held: the count includes it.
 	if got := counter(acct, config.BadgeEvBadge); got != float64(held+1) {
-		t.Errorf("the badge counter is %v, want %d (the thirty and Collector)", got, held+1)
+		t.Errorf("the badge counter is %v, want %d (the thirty and Collector): %v", got, held+1, acct.EarnedBadges())
 	}
 	if earned := ge.DrainEarnedBadges(); len(earned) != 0 {
 		t.Errorf("bringing the account up announced %v", earnedKeysOf(earned))

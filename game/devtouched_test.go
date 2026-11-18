@@ -75,19 +75,19 @@ func TestDevTouchedRunStillRecords(t *testing.T) {
 		t.Fatalf("DoPrestige: %v", err)
 	}
 	stats, earned := acct.LifetimeStats()
-	if stats.TotalPrestiges != 1 || stats.PrestigesByAge["modern_age"] != 1 || len(earned) != 1 || earned[0] != badgePrestige1 {
+	if stats.TotalPrestiges != 1 || stats.PrestigesByAge["modern_age"] != 1 || len(earned) != 0 || !hasTally(acct, "ledger.prestiges", 1) {
 		t.Errorf("a dev-touched run's prestige did not record: stats=%+v badges=%v", stats, earned)
 	}
 	if got := counter(acct, config.BadgeEvPrestige); got != 1 {
 		t.Errorf("the prestige counter is %v, want 1", got)
 	}
 	noErr(t, acct.FlushIfDirty())
-	if disk := slotAccount(t, acct.AccountID); disk.Stats.TotalPrestiges != 1 || !hasBadge(disk, badgePrestige1) || disk.Tampered || disk.BadgesTampered {
+	if disk := slotAccount(t, acct.AccountID); disk.Stats.TotalPrestiges != 1 || !hasTally(disk, "ledger.prestiges", 1) || disk.Tampered || disk.BadgesTampered {
 		t.Errorf("on disk: %+v, badges %v, flags %v %v", disk.Stats, disk.EarnedBadges(), disk.Tampered, disk.BadgesTampered)
 	}
 	// Nothing about the console crosses a badge: that is for edited files.
-	if e := acct.Badges[badgePrestige1]; e.Flags != 0 {
-		t.Errorf("a badge earned in a dev-touched run is flagged: %+v", e)
+	if l, at, _ := acct.TallyCoin("ledger.prestiges"); l != 1 || at == 0 {
+		t.Errorf("the prestiges coin of a dev-touched run: level %d at %d", l, at)
 	}
 }
 
@@ -154,7 +154,7 @@ func TestDevModeWithoutCommandsStillRecords(t *testing.T) {
 
 	prestigeNow(t, ge)
 	stats, ach := acct.LifetimeStats()
-	if stats.TotalPrestiges != 1 || len(ach) != 1 || ach[0] != badgePrestige1 {
+	if stats.TotalPrestiges != 1 || len(ach) != 0 || !hasTally(acct, "ledger.prestiges", 1) {
 		t.Errorf("a clean run with dev mode on did not record: stats=%+v badges=%v", stats, ach)
 	}
 }

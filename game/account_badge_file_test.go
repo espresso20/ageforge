@@ -279,7 +279,7 @@ func TestImportMergesBadges(t *testing.T) {
 			Version: badgeFileVersion, AccountID: acct.AccountID,
 			Badges: map[string]BadgeEarned{
 				badgeStone:     {At: 100, Run: "first"},
-				badgePrestige1: {At: 150},
+				badgeModern: {At: 150},
 			},
 			Counters: map[string]float64{"prestige": 5, "built.lineage.housing": 10},
 			Days:     []string{"2026-10-01", "2026-10-02"},
@@ -291,7 +291,7 @@ func TestImportMergesBadges(t *testing.T) {
 	if e := acct.Badges[badgeStone]; e.At != 100 || e.Run != "first" {
 		t.Errorf("merge kept the later copy of a badge both hold: %+v", e)
 	}
-	if !hasBadge(acct, badgeIron) || !hasBadge(acct, badgePrestige1) {
+	if !hasBadge(acct, badgeIron) || !hasBadge(acct, badgeModern) {
 		t.Errorf("merge dropped a badge one side held: %v", acct.Badges)
 	}
 	if acct.Counters["prestige"] != 5 || acct.Counters["built.lineage.housing"] != 40 {
@@ -457,8 +457,8 @@ func TestEditedBadgeFileCrossesItsBadges(t *testing.T) {
 		}
 	}
 	// The edit bought the top rung of the ladder; it is crossed, and worth nothing.
-	if !hasBadge(loaded, badgePrestige25) {
-		t.Fatalf("precondition: the edited counter did not reach the top rung: %v", loaded.EarnedBadges())
+	if l, _, _ := loaded.TallyCoin("ledger.prestiges"); l != 6 {
+		t.Fatalf("precondition: the edited counter did not reach the top rung: level %d", l)
 	}
 	if _, sum := ge.Badges(); sum.Points != 0 {
 		t.Errorf("an edited badge file scores %d points", sum.Points)

@@ -71,11 +71,10 @@ type Set struct {
 	badgeDesc map[string]descSource
 	// badgeTitles is the titles a badge score earns, lowest first.
 	badgeTitles []config.BadgeScoreTitle
-	// badgeWornTitles is the titles badges give; badgeExpeditions and
-	// badgeThemes the tables outside config a badge family is made from.
-	badgeWornTitles  []config.BadgeTitleDef
-	badgeExpeditions []config.BadgeExpeditionDef
-	badgeThemes      []config.BadgeThemeDef
+	// badgeWornTitles is the titles badges give; badgeThemes the table
+	// outside config a badge family is made from.
+	badgeWornTitles []config.BadgeTitleDef
+	badgeThemes     []config.BadgeThemeDef
 
 	missionWords []config.MissionWords
 
@@ -187,7 +186,7 @@ func Compile(src Source) *Set {
 	s.derive()
 	s.buildNames()
 	s.buildCounts()
-	s.badgeExpeditions, s.badgeThemes = slices.Clone(src.BadgeExpeditions), slices.Clone(src.BadgeThemes)
+	s.badgeThemes = slices.Clone(src.BadgeThemes)
 	s.buildBadges(src.Badges, src.BadgeFamilies)
 	s.missionWords = slices.Clone(src.MissionWords)
 	s.badgeTitles = slices.Clone(src.BadgeTitles)

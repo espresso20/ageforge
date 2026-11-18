@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -129,8 +128,8 @@ func TestPrestigeLadderFromPlay(t *testing.T) {
 	ge, acct := devEngine(t, "Ada")
 
 	prestigeNow(t, ge)
-	if !hasBadge(acct, badgePrestige1) || hasBadge(acct, badgePrestige3) {
-		t.Fatalf("after one prestige: %v", acct.EarnedBadges())
+	if !hasTally(acct, "ledger.prestiges", 1) || hasTally(acct, "ledger.prestiges", 3) {
+		t.Fatalf("after one prestige the prestiges coin is not level 1")
 	}
 	if got := counter(acct, config.BadgeEvPrestige); got != 1 {
 		t.Errorf("prestige counter %v, want 1", got)
@@ -140,8 +139,8 @@ func TestPrestigeLadderFromPlay(t *testing.T) {
 	prestigeNow(t, ge)
 	ge.SetPrestigeFloorForTest("")
 	prestigeNow(t, ge)
-	if !hasBadge(acct, badgePrestige3) {
-		t.Errorf("three prestiges did not earn %s: %v", badgePrestige3, acct.EarnedBadges())
+	if !hasTally(acct, "ledger.prestiges", 3) {
+		t.Errorf("three prestiges did not strike level 3 of the prestiges coin")
 	}
 	if stats, _ := acct.LifetimeStats(); stats.TotalPrestiges != 3 {
 		t.Errorf("TotalPrestiges %d, want 3", stats.TotalPrestiges)
@@ -221,16 +220,15 @@ func TestLineageLadderCountsABuildOnce(t *testing.T) {
 	const housing = config.BadgeEvBuiltLineage + ".housing"
 
 	// The first rung's count, from the catalog.
-	first, _ := rules.Core().Badge(badgeHousing1)
-	need := int(first.Threshold)
+	need := int(tallyByKey(t, "lineage.housing").Rungs[0])
 	if need < 6 {
 		t.Fatalf("the first housing rung asks for %d: the test builds the rung's count less one and sells five of them", need)
 	}
 	for i := 0; i < need-1; i++ {
 		finishOne(ge, "hut")
 	}
-	if got := counter(acct, housing); got != float64(need-1) || hasBadge(acct, badgeHousing1) {
-		t.Fatalf("after %d huts: counter %v, rung earned %v", need-1, got, hasBadge(acct, badgeHousing1))
+	if got := counter(acct, housing); got != float64(need-1) || hasTally(acct, "lineage.housing", 1) {
+		t.Fatalf("after %d huts: counter %v, rung earned %v", need-1, got, hasTally(acct, "lineage.housing", 1))
 	}
 	// Sell five and build five back: nothing new was built.
 	sellSome(ge, "hut", 5)
@@ -241,8 +239,8 @@ func TestLineageLadderCountsABuildOnce(t *testing.T) {
 		t.Fatalf("selling 5 huts and rebuilding them moved the counter to %v", got)
 	}
 	finishOne(ge, "hut") // one more than the run has ever built
-	if got := counter(acct, housing); got != float64(need) || !hasBadge(acct, badgeHousing1) {
-		t.Fatalf("hut %d: counter %v, rung earned %v", need, got, hasBadge(acct, badgeHousing1))
+	if got := counter(acct, housing); got != float64(need) || !hasTally(acct, "lineage.housing", 1) {
+		t.Fatalf("hut %d: counter %v, rung earned %v", need, got, hasTally(acct, "lineage.housing", 1))
 	}
 	// A counter no badge names is not kept at all.
 	acct.mu.Lock()
@@ -375,8 +373,7 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 		t.Fatal("precondition: the dev command did not mark the run")
 	}
 	advanceTo(ge, "stone_age")
-	first, _ := rules.Core().Badge(badgeHousing1)
-	houses := int(first.Threshold)
+	houses := int(tallyByKey(t, "lineage.housing").Rungs[0])
 	for i := 0; i < houses; i++ {
 		finishOne(ge, "hut")
 	}
@@ -385,7 +382,7 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 	ge.mu.Unlock()
 	prestigeNow(t, ge)
 
-	want := []string{badgeStone, badgePrestige1, badgeHousing1, badgeSale}
+	want := []string{badgeStone, badgeSale}
 	slices.Sort(want)
 	if earned := mainKeys(acct.EarnedBadges()); !slices.Equal(earned, want) {
 		t.Errorf("a dev-touched run earned %v, want %v", earned, want)
@@ -401,6 +398,12 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 	stats, _ := acct.LifetimeStats()
 	if stats.TotalPrestiges != 1 || stats.HighestAge != "stone_age" {
 		t.Errorf("lifetime stats from a dev-touched run: %+v", stats)
+	}
+	if l, at, _ := acct.TallyCoin("lineage.housing"); l != 1 || at == 0 {
+		t.Errorf("the housing coin: level %d at %d, want level 1 dated", l, at)
+	}
+	if l, _, _ := acct.TallyCoin("ledger.prestiges"); l != 1 {
+		t.Errorf("the prestiges coin: level %d, want 1", l)
 	}
 	if pending := mainViews(ge.DrainEarnedBadges()); len(pending) != len(want) {
 		t.Errorf("%d toasts queued, want %d", len(pending), len(want))
@@ -614,21 +617,6 @@ func TestBadgesHideWhatTheSpoilerRulesHide(t *testing.T) {
 	acct.mu.Unlock()
 	if _, sum := ge.Badges(); !sum.HiddenCounted {
 		t.Errorf("an account that reached the last age still hides the count: %+v", sum)
-	}
-}
-
-// TestLifetimeProgressShows: a locked ladder rung that shows carries its
-// count and its threshold.
-func TestLifetimeProgressShows(t *testing.T) {
-	isolateAccountDir(t)
-	ge, _ := devEngine(t, "Ada")
-	for i := 0; i < 3; i++ {
-		finishOne(ge, "hut")
-	}
-	views, _ := ge.Badges()
-	first, _ := rules.Core().Badge(badgeHousing1)
-	if v := viewOf(t, views, badgeHousing1); v.Progress != 3 || v.Target != first.Threshold || v.Target <= 3 || v.Earned {
-		t.Errorf("Housing Hobbyist after 3 huts: %+v", v)
 	}
 }
 
@@ -950,17 +938,11 @@ func TestSessionEventsStayOutOfTheRun(t *testing.T) {
 	}
 }
 
-// TestLoweredLaddersCatchUpInOneLine: an account whose counters had already
-// passed a rung when the rung was lowered is given it on its next load, with
-// every other rung its record proves. None of them raises a toast of its
-// own: the dashboard is told how many there were, once. The counts are the
-// owner's first playthrough, a Bronze Age account that had made a million
-// food while the first food rung asked for a billion, with the food count
-// carried over to the town of eight: the food rungs are an ordinary town's
-// income over the age, which that town grew by 1.6, so the second rung is
-// 1.4 million now and the million that proved it then does not. The housing
-// count is a round figure between the first rung and the second.
-func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
+// TestTalliesCatchUpFromTheRecord: an account whose counters already passed
+// a rung is given that coin on its next load, silently: undated, no toast,
+// and a second load finds nothing more to do. The next rung earned in play
+// is struck dated.
+func TestTalliesCatchUpFromTheRecord(t *testing.T) {
 	isolateAccountDir(t)
 	acct, err := CreateAccount("Ada")
 	if err != nil {
@@ -969,8 +951,6 @@ func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
 	book := coreBook()
 	acct.mu.Lock()
 	acct.Counters = map[string]float64{
-		config.BadgeEvProduced + ".food":        1.712 * config.Million, // 1.07M then, times the 1.6 the town grew by
-		config.BadgeEvProduced + ".wood":        900_000,
 		config.BadgeEvBuiltLineage + ".housing": 900, // over the first rung (610), under the second (1.5K)
 		config.BadgeEvWonderRaised:              2,
 	}
@@ -979,45 +959,19 @@ func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
 	if !acct.ensureBadges(book) {
 		t.Fatal("the load gave the account nothing")
 	}
-	for _, key := range []string{"resource.food.1", "resource.food.2", "resource.wood.1", "resource.wood.2", badgeHousing1, "ladder.wonders.1"} {
-		if !hasBadge(acct, key) {
-			t.Errorf("the account's record proves %s, and the load did not give it", key)
+	for key, want := range map[string]int{"lineage.housing": 1, "ledger.wonders": 1} {
+		if l, at, _ := acct.TallyCoin(key); l != want || at != 0 {
+			t.Errorf("%s after the load: level %d at %d, want level %d undated", key, l, at, want)
 		}
 	}
-	for _, key := range []string{"resource.food.3", "lineage.housing.2", "ladder.wonders.2"} {
-		if hasBadge(acct, key) {
-			t.Errorf("the load gave %s, which the record does not prove", key)
-		}
-	}
-	held := len(acct.EarnedBadges())
-	if held < 6 {
-		t.Fatalf("the account holds %d badges after the load, want the six above at least", held)
-	}
-	// No toast for any of them, and one count for all.
 	if queued := acct.drainEarned(); len(queued) != 0 {
 		t.Errorf("the load queued %d toasts: %v", len(queued), queued)
 	}
-	ge := NewGameEngine()
-	ge.SetAccount(acct)
-	if got := ge.DrainBadgeCatchUp(); got != held {
-		t.Errorf("the dashboard is told of %d badges, want all %d the load gave", got, held)
-	}
-	if got := ge.DrainBadgeCatchUp(); got != 0 {
-		t.Errorf("the count was not forgotten once told: %d", got)
-	}
-	if got, want := BadgeCatchUpLine(held), strconv.Itoa(held)+" badges earned from your earlier play."; got != want {
-		t.Errorf("the line reads %q, want %q", got, want)
-	}
-	if got, want := BadgeCatchUpLine(1), "1 badge earned from your earlier play."; got != want {
-		t.Errorf("the line for one reads %q, want %q", got, want)
-	}
-	// A second load finds nothing to do and says nothing.
-	if acct.ensureBadges(book) || ge.DrainBadgeCatchUp() != 0 {
+	if acct.ensureBadges(book) {
 		t.Error("a second load gave the account something more")
 	}
-	// Play goes on as ever: the next rung is earned with a toast of its own.
 	acct.judge(book, Event{Kind: config.BadgeEvWonderRaised, N: 22}, badgeCtx{})
-	if queued := acct.drainEarned(); len(queued) != 1 || queued[0] != "ladder.wonders.2" {
-		t.Errorf("after 22 more wonders the account was told of %v, want the second wonders rung", queued)
+	if l, at, _ := acct.TallyCoin("ledger.wonders"); l != 4 || at == 0 {
+		t.Errorf("after 22 more wonders: level %d at %d, want level 4 dated", l, at)
 	}
 }

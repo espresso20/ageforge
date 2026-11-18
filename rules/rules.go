@@ -48,11 +48,10 @@ type Source struct {
 	BadgeFamilies []config.BadgeFamilyDef
 	// BadgeTitles is the titles a badge score earns, lowest first.
 	BadgeTitles []config.BadgeScoreTitle
-	// BadgeWornTitles is the titles badges give. BadgeExpeditions and
-	// BadgeThemes are the tables outside config a family is made from.
-	BadgeWornTitles  []config.BadgeTitleDef
-	BadgeExpeditions []config.BadgeExpeditionDef
-	BadgeThemes      []config.BadgeThemeDef
+	// BadgeWornTitles is the titles badges give. BadgeThemes is the table
+	// outside config a family is made from.
+	BadgeWornTitles []config.BadgeTitleDef
+	BadgeThemes     []config.BadgeThemeDef
 
 	// MissionWords is the words the mission board builds its offers from, an
 	// entry for each age.
@@ -136,7 +135,6 @@ func FromConfig() Source {
 		BadgeFamilies:        config.BadgeFamilies(),
 		BadgeTitles:          config.BadgeScoreTitles(),
 		BadgeWornTitles:      config.BadgeTitles(),
-		BadgeExpeditions:     config.BadgeExpeditions(),
 		BadgeThemes:          config.BadgeThemes(),
 		MissionWords:         config.AllMissionWords(),
 		Events:               config.RandomEvents(),

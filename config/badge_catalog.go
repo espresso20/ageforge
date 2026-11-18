@@ -10,41 +10,6 @@ package config
 
 // ----- the tables a family may be made from that live outside config -----
 
-// BadgeExpeditionDef is a badge subject for the missions: one era and one
-// kind. Key is MissionBadgeKey, Name the era's name, MinAge the era's first
-// age. The missions themselves belong to the game package, which checks this
-// table against its own (TestBadgeExpeditionsMatchTheGame).
-type BadgeExpeditionDef struct{ Key, Name, MinAge, Kind string }
-
-// MissionBadgeKey is the badge subject of an era's mission of one kind.
-func MissionBadgeKey(era, kind string) string { return "expedition_" + era + "_" + kind }
-
-// MissionKindWord is the word a badge uses for a mission kind.
-func MissionKindWord(kind string) string {
-	switch kind {
-	case MissionExpedition:
-		return "long"
-	case MissionCampaign:
-		return "grand"
-	}
-	return "scout"
-}
-
-// BadgeExpeditions lists every era and kind a mission badge exists for, in
-// the catalog's order.
-func BadgeExpeditions() []BadgeExpeditionDef {
-	var out []BadgeExpeditionDef
-	for _, era := range Epochs() {
-		if len(era.Ages) == 0 {
-			continue
-		}
-		for _, kind := range MissionKinds() {
-			out = append(out, BadgeExpeditionDef{MissionBadgeKey(era.Key, kind), era.Name, era.Ages[0], kind})
-		}
-	}
-	return out
-}
-
 // BadgeThemeDef is a theme as the catalog needs it: its key, its name and
 // the badge that gives it ("" for a theme every account has). The themes
 // themselves belong to the theme package; the UI checks this table against
@@ -200,6 +165,15 @@ func BadgeFamilies() []BadgeFamilyDef {
 			AnySubject: true,
 			Proof:      StaticProof(BadgeRuleTechs),
 			Emblem:     "knowledge",
+		},
+		// F10. Each harbinger heard out: the figures of every age.
+		{
+			Family: "harbinger", Source: BadgeSourceHarbingers,
+			Key: "harbinger.{key}.met", Name: "{Name}", Desc: "Hear {name} out.",
+			Names: map[string]string{"harbinger.future_self.met": "Your Future Self", "harbinger.unmade_self.met": "Your Unmade Self"},
+			Tier:  BadgeBronze, Scope: BadgeMoment, Event: BadgeEvHarbingerMet,
+			RevealBySubject: true, Emblem: "harbinger", Set: "harbinger.met",
+			Proof: Occurs("An era's doom is fated by a roll at the era's first tick, and a fated doom sends the harbinger of the age its warning falls in. Each era rolls again on every run."),
 		},
 		// F13. Each theme, worn at an advance.
 		{

@@ -280,8 +280,8 @@ var Ledger = define(Theme{
 	},
 	GainGlyph:   flavorGainGlyph,
 	LossGlyph:   flavorLossGlyph,
-	UnlockBadge: "ladder.deals.3",
-	UnlockHint:  vibe.E("theme.ledger.unlock_hint", "Given by the top rung of a badge ladder"),
+	UnlockBadge: "ledger.deals.3",
+	UnlockHint:  vibe.E("theme.ledger.unlock_hint", "Given by the top rung of a tally"),
 	Effect:      EffectGreenbar,
 })
 
@@ -310,7 +310,7 @@ var Prismatic = define(Theme{
 	GainGlyph:   flavorGainGlyph,
 	LossGlyph:   flavorLossGlyph,
 	UnlockBadge: "special.museum_piece",
-	UnlockHint:  vibe.E("theme.prismatic.unlock_hint", "Earn 400 badges"),
+	UnlockHint:  vibe.E("theme.prismatic.unlock_hint", "Earn 160 badges"),
 	Effect:      EffectPrism,
 })
 

@@ -120,21 +120,6 @@ func TestBadgeViewsCarryArtAndRewards(t *testing.T) {
 	if stone.Emblem != "centre.0" || stone.Level != config.BadgeBronze || stone.Ladder != "" {
 		t.Errorf("the Stone Age badge: %+v", stone)
 	}
-	for i, key := range []string{badgePrestige1, badgePrestige3, badgePrestige10, badgePrestige25} {
-		v := viewOf(t, views, key)
-		if v.Ladder != "Prestiges" || v.Rung != i+1 || v.Rungs != 4 || v.Emblem != "star" {
-			t.Errorf("%s: ladder %q rung %d of %d, emblem %q", key, v.Ladder, v.Rung, v.Rungs, v.Emblem)
-		}
-	}
-	if v := viewOf(t, views, badgePrestige25); v.Level != config.BadgeLegendary || v.Tier != "legendary" {
-		t.Errorf("the top rung: %+v", v)
-	}
-	for i, key := range []string{badgeHousing1, badgeHousing2} {
-		v := viewOf(t, views, key)
-		if v.Ladder != "Housing" || v.Rung != i+1 || v.Rungs != 5 || v.Emblem != "lineage.housing" {
-			t.Errorf("%s: ladder %q rung %d of %d, emblem %q", key, v.Ladder, v.Rung, v.Rungs, v.Emblem)
-		}
-	}
 	if v := viewOf(t, views, badgeHutHoarder); v.Emblem != "hut" || v.Ladder != "" || v.Rung != 0 {
 		t.Errorf("Hut Hoarder: %+v", v)
 	}

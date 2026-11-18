@@ -19,12 +19,22 @@ type TallyDef struct {
 	Key, Name string
 	// Counter is the account counter that is counted. With Subjects, the
 	// count is how many of Counter+"."+subject have reached Min; with Peak,
-	// the counter is the most a run has had at once.
+	// the counter is the most a run has had at once. With no Counter, each
+	// subject is a whole counter name and Mins its own minimum.
 	Counter  string
 	Subjects []string
 	Min      float64
+	Mins     []float64
 	Peak     bool
 	Rungs    []float64
+}
+
+// MinOf is the count subject i must reach to be counted.
+func (t TallyDef) MinOf(i int) float64 {
+	if i < len(t.Mins) {
+		return t.Mins[i]
+	}
+	return t.Min
 }
 
 // Level is the level a count reaches, 0 below the first rung: the rungs
@@ -84,8 +94,18 @@ func TallyLedgers() Tallies {
 // (Counter + "." + civ at least once), how many first twelve harbingers were
 // appeased.
 func TallyCivs(civs, harbingers []string) Tallies {
+	var parts []string
+	var mins []float64
+	for _, c := range civs {
+		for _, p := range []struct {
+			ev  string
+			min float64
+		}{{BadgeEvCivMet, 1}, {BadgeEvCivAllied, 1}, {BadgeEvDeal, 5}, {BadgeEvWarEnded, 1}} {
+			parts, mins = append(parts, p.ev+"."+c), append(mins, p.min)
+		}
+	}
 	return Tallies{
-		{Key: "ledger.civs", Name: "Civilizations met", Counter: BadgeEvCivMet, Subjects: civs, Min: 1, Rungs: []float64{1, 5, 11, 22, 33, 44}},
+		{Key: "ledger.civs", Name: "Civilization firsts", Subjects: parts, Mins: mins, Rungs: []float64{1, 5, 11, 22, 33, 44}},
 		{Key: "ledger.heeded", Name: "Harbingers heeded", Counter: BadgeEvAppeased, Subjects: harbingers, Min: 1, Rungs: []float64{1, 3, 6, 9, 12}},
 	}
 }

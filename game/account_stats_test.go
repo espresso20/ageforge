@@ -19,11 +19,11 @@ func TestRecordPrestigeIncrementsAndUnlocks(t *testing.T) {
 	if acct.Stats.TotalPrestiges != 1 {
 		t.Fatalf("TotalPrestiges = %d, want 1", acct.Stats.TotalPrestiges)
 	}
-	if !hasBadge(acct, badgePrestige1) {
-		t.Fatalf("expected %s earned at 1 prestige", badgePrestige1)
+	if !hasTally(acct, "ledger.prestiges", 1) {
+		t.Fatalf("expected the prestiges coin struck at 1 prestige")
 	}
-	if hasBadge(acct, badgePrestige10) {
-		t.Fatalf("%s earned too early (1 prestige)", badgePrestige10)
+	if hasTally(acct, "ledger.prestiges", 4) {
+		t.Fatalf("the prestiges coin is too fine at 1 prestige")
 	}
 	if !acct.dirty {
 		t.Fatalf("expected dirty=true after a prestige")
@@ -32,19 +32,19 @@ func TestRecordPrestigeIncrementsAndUnlocks(t *testing.T) {
 	// Climb to 10; the rung is earned exactly at the threshold, not before.
 	for acct.Stats.TotalPrestiges < 9 {
 		recordPrestige(acct, "modern_age")
-		if hasBadge(acct, badgePrestige10) {
-			t.Fatalf("%s earned early at %d prestiges", badgePrestige10, acct.Stats.TotalPrestiges)
+		if hasTally(acct, "ledger.prestiges", 4) {
+			t.Fatalf("the prestiges coin is too fine at %d prestiges", acct.Stats.TotalPrestiges)
 		}
 	}
-	if !hasBadge(acct, badgePrestige3) {
-		t.Errorf("%s not earned by 9 prestiges", badgePrestige3)
+	if !hasTally(acct, "ledger.prestiges", 3) {
+		t.Errorf("the prestiges coin is not level 3 by 9 prestiges")
 	}
 	recordPrestige(acct, "modern_age") // -> 10
 	if acct.Stats.TotalPrestiges != 10 {
 		t.Fatalf("TotalPrestiges = %d, want 10", acct.Stats.TotalPrestiges)
 	}
-	if !hasBadge(acct, badgePrestige10) {
-		t.Fatalf("expected %s earned at 10 prestiges", badgePrestige10)
+	if !hasTally(acct, "ledger.prestiges", 4) {
+		t.Fatalf("expected the prestiges coin at level 4 at 10 prestiges")
 	}
 	if got := acct.Counters[config.BadgeEvPrestige]; got != 10 {
 		t.Errorf("the prestige counter is %v, want 10", got)
@@ -123,11 +123,11 @@ func TestFlushIfDirtyPersistsAndClears(t *testing.T) {
 	if reloaded.Stats.HighestAge != "iron_age" {
 		t.Fatalf("reloaded HighestAge = %q, want iron_age", reloaded.Stats.HighestAge)
 	}
-	if !hasBadge(reloaded, badgePrestige1) || !hasBadge(reloaded, badgeIron) {
+	if !hasTally(reloaded, "ledger.prestiges", 1) || !hasBadge(reloaded, badgeIron) {
 		t.Fatalf("reloaded account missing expected badges: %v", reloaded.Badges)
 	}
-	if e := reloaded.Badges[badgePrestige1]; e.At == 0 || e.Flags != 0 {
-		t.Errorf("a badge earned in play came back undated or flagged: %+v", e)
+	if _, at, _ := reloaded.TallyCoin("ledger.prestiges"); at == 0 {
+		t.Errorf("a coin struck in play came back undated")
 	}
 	if reloaded.Tampered {
 		t.Fatalf("reloaded account flagged tampered — sign/round-trip broke")
@@ -142,17 +142,18 @@ func TestLifetimeStatsReturnsCopy(t *testing.T) {
 
 	acct := testAccount(t)
 	recordPrestige(acct, "modern_age")
+	recordAge(t, acct, "stone_age")
 
 	stats, earned := acct.LifetimeStats()
 	if stats.TotalPrestiges != 1 {
 		t.Fatalf("LifetimeStats TotalPrestiges = %d, want 1", stats.TotalPrestiges)
 	}
-	if len(earned) != 1 || earned[0] != badgePrestige1 {
-		t.Fatalf("LifetimeStats badges = %v, want [%s]", earned, badgePrestige1)
+	if len(earned) != 1 || earned[0] != badgeStone {
+		t.Fatalf("LifetimeStats badges = %v, want [%s]", earned, badgeStone)
 	}
 	// Mutating the returned slice must not affect the account.
 	earned[0] = "tampered_key"
-	if hasBadge(acct, "tampered_key") || !hasBadge(acct, badgePrestige1) {
+	if hasBadge(acct, "tampered_key") || !hasBadge(acct, badgeStone) {
 		t.Fatalf("LifetimeStats leaked its backing data: caller mutation reached the account")
 	}
 }
