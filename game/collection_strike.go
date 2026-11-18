@@ -56,6 +56,7 @@ func (ge *GameEngine) strikeOn(ev Event) {
 	if ge.badges == nil {
 		return
 	}
+	defer ge.judgeFeatOn(ev)
 	switch ev.Kind {
 	case config.BadgeEvWonderRaised:
 		if def, ok := ge.rules.Building(ev.Subject); ok {
@@ -84,12 +85,9 @@ func (ge *GameEngine) strikeOn(ev Event) {
 		if !ok || len(ge.badges.ageTechs[tech.Age]) == 0 || ge.coinHeldLocked(config.CoinTechs, tech.Age) {
 			return
 		}
-		for _, k := range ge.badges.ageTechs[tech.Age] {
-			if !ge.Research.IsResearched(k) {
-				return
-			}
+		if ge.ageTechsDone(tech.Age) {
+			ge.strikeCoin(config.CoinTechs, tech.Age)
 		}
-		ge.strikeCoin(config.CoinTechs, tech.Age)
 	case config.BadgeEvHarbingerMet:
 		for _, age := range ge.rules.AgeKeys() {
 			if h, ok := ge.rules.Harbinger(age); ok && h.Key == ev.Subject {

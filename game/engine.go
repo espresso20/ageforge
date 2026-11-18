@@ -2255,6 +2255,9 @@ const (
 func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
 	prevK := ge.speedK()
+	if newAge != oldAge && ge.badges != nil {
+		ge.judgeFeatLeaving(oldAge)
+	}
 	ge.age = newAge
 	ge.resetCalendar()
 	ge.Prestige.NoteAgeEntered(newAge)
