@@ -7,8 +7,7 @@ import (
 
 // stud is a round brass head with one hard highlight; a missing one is a dark
 // hole. Each head takes its own variation from the seed.
-func (c *canvas) stud(x, y int, held bool, seed int) {
-	d := max(4, c.sc(8))
+func (c *canvas) stud(x, y, d int, held bool, seed int) {
 	r := float64(d) / 2
 	h := hash(x, y, seed)
 	hl := d*3/8 + int(h*2) // highlight reach
@@ -42,12 +41,12 @@ func (c *canvas) stud(x, y int, held bool, seed int) {
 // studs sets the drawer's count of pieces as a row centred on cx, each stud
 // a pixel off the line by its own seed.
 func (c *canvas) studs(cx, cy, total, held, maxW, seed int) {
-	d := max(4, c.sc(8))
-	pitch := min(c.sc(13), (maxW-d)/max(total, 1))
+	d := max(4, c.sc(8)) + int(hash(seed, 1, 5)*2.5)
+	pitch := min(int(float64(c.sc(13))*(0.8+0.4*hash(seed, 2, 5))), (maxW-d)/max(total, 1))
 	x0 := cx - ((total-1)*pitch+d)/2
 	for i := 0; i < total; i++ {
 		jy := int(hash(i, seed, 5) * 3)
-		c.stud(x0+i*pitch, cy-d/2+jy-1, i < held, seed+i*31)
+		c.stud(x0+i*pitch, cy-d/2+jy-1, d, i < held, seed+i*31)
 	}
 }
 

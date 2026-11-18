@@ -8,16 +8,21 @@ import (
 // seal is a wax seal whose outline, lobes and rim vary with the seed.
 func (c *canvas) seal(cx, cy, seed int) {
 	r := max(5, c.sc(13))
-	lobes := float64(6 + seed%3)
-	amp := (1.2 + 0.8*hash(seed, 3, 7)) * c.s
-	phase := hash(seed, 4, 7) * math.Pi
-	ring := 4 + hash(seed, 5, 7)*2
+	lobes := float64(5 + int(hash(seed, 8, 7)*5))
+	amp := (1.2 + 2*hash(seed, 3, 7)) * c.s
+	phase := hash(seed, 4, 7) * 2 * math.Pi
+	ring := 3.5 + hash(seed, 5, 7)*3
+	dripAt, dripLen := hash(seed, 9, 7)*2*math.Pi, (0.12+0.3*hash(seed, 10, 7))*float64(r)
+	rim := math.Max(1, (1+2*hash(seed, 11, 7))*c.s)
+	tint := 0.85 + 0.3*hash(seed, 12, 7)
 	sh := max(1, c.sc(3))
 	for pass := 0; pass < 2; pass++ {
 		for y := -r - 3; y <= r+3; y++ {
 			for x := -r - 3; x <= r+3; x++ {
 				d := math.Hypot(float64(x), float64(y))
-				rr := float64(r) + amp*math.Sin(lobes*math.Atan2(float64(y), float64(x))+phase)
+				ang := math.Atan2(float64(y), float64(x))
+				da := math.Remainder(ang-dripAt, 2*math.Pi)
+				rr := float64(r) + amp*math.Sin(lobes*ang+phase) + dripLen*math.Exp(-da*da/0.2)
 				if d > rr {
 					continue
 				}
@@ -25,8 +30,8 @@ func (c *canvas) seal(cx, cy, seed int) {
 					c.px(cx+x+sh, cy+y+sh, black)
 					continue
 				}
-				col := tone(wax, 0.55-0.45*float64(x+y)/float64(2*r), cx+x, cy+y)
-				if d > rr-math.Max(1, 2.2*c.s) {
+				col := mul(tone(wax, 0.55-0.45*float64(x+y)/float64(2*r), cx+x, cy+y), tint)
+				if d > rr-rim {
 					col = wax[1]
 					if x+y < 0 {
 						col = wax[4]

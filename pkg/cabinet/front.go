@@ -64,7 +64,11 @@ func (c *canvas) pull(cx, cy, dia int, d Drawer, mint *coins.Mint) {
 func (c *canvas) drawer(l Layout, d Drawer, i int, off image.Point, mint *coins.Mint) {
 	f := l.Fronts[i].Add(off)
 	seed := i*7919 + 13
-	c.board(f, 100+i*37, []float64{0, 0.16, 0, -0.14, 0, 0.1, -0.1}[i%7], false)
+	lift := 0.0
+	if off != (image.Point{}) {
+		lift = 0.14 // a pulled front catches more light
+	}
+	c.board(f, 100+i*37, []float64{0, 0.16, 0, -0.14, 0, 0.1, -0.1}[i%7]+lift, false)
 	c.edge(f, false)
 	c.edge(f.Inset(1), false)
 	c.edge(f.Inset(max(3, c.sc(5))), true)
@@ -109,8 +113,19 @@ func Patch(l Layout, ds []Drawer, i int, mint *coins.Mint) (cells image.Rectangl
 	cells = image.Rect(f.Min.X/l.Cell.X-1, f.Min.Y/l.Cell.Y-1, f.Max.X/l.Cell.X+1, f.Max.Y/l.Cell.Y+1)
 	c := newCanvas(l.pix(cells), l.s)
 	c.carcass(l)
-	po, sh := max(2, c.sc(6)), max(2, c.sc(3))
+	room := min(l.Cell.X, l.Cell.Y) - 1
+	po, sh := min(max(4, c.sc(10)), room), min(max(3, c.sc(7)), room)
 	c.fill(f.Add(image.Pt(sh, sh)), black)
+	c.sides(f.Add(image.Pt(-po, -po)), po)
 	c.drawer(l, drawerAt(ds, i), i, image.Pt(-po, -po), mint)
 	return cells, c.img
+}
+
+// sides paints the boards of a pulled drawer in perspective, below and to the
+// right of its front, each line a step darker as it recedes.
+func (c *canvas) sides(r image.Rectangle, n int) {
+	for k := 1; k <= n; k++ {
+		c.fill(image.Rect(r.Min.X+k, r.Max.Y-1+k, r.Max.X+k, r.Max.Y+k), walnut[4-k*3/(n+1)])
+		c.fill(image.Rect(r.Max.X-1+k, r.Min.Y+k, r.Max.X+k, r.Max.Y-1+k), walnut[1-k/(n+1)])
+	}
 }
