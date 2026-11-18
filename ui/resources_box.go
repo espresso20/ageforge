@@ -7,8 +7,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // resources_box.go lays the dashboard's Resources box out for the size it
@@ -133,11 +133,11 @@ func cultureRow(rs game.ResourceState) resRow {
 		if rs.Amount < step {
 			r.cap = textfmt.Number(step)
 			r.fill = rs.Amount / step
-			r.detail = vibe.Line("ui.resources_box.cultureRow.01", "[gray]at ") + textfmt.Number(step) + ": " + cultureThresholdLabels[i].String() + "[-]"
+			r.detail = rowid.Line("ui.resources_box.cultureRow.01", "[gray]at ") + textfmt.Number(step) + ": " + cultureThresholdLabels[i].String() + "[-]"
 			return r
 		}
 	}
-	r.status, r.statusColor, r.fill = []string{vibe.Line("ui.resources_box.cultureRow.02", "✦ Culture mastered"), vibe.Line("ui.resources_box.cultureRow.03", "✦ mastered"), "✦"}, "gold", 1
+	r.status, r.statusColor, r.fill = []string{rowid.Line("ui.resources_box.cultureRow.02", "✦ Culture mastered"), rowid.Line("ui.resources_box.cultureRow.03", "✦ mastered"), "✦"}, "gold", 1
 	return r
 }
 
@@ -154,21 +154,21 @@ type faithBand struct {
 // The odds are the engine's for the band the rolls read (o.FaithBand); the
 // label only splits the bands finer.
 func faithBandFor(held float64, o game.CatastropheOutlook) faithBand {
-	odds := vibe.Sprintf("ui.resources_box.faithBandFor.01", "%.0f%% good", game.EpochGoodChanceIn(o.FaithBand)*100)
+	odds := rowid.Sprintf("ui.resources_box.faithBandFor.01", "%.0f%% good", game.EpochGoodChanceIn(o.FaithBand)*100)
 	strength := o.FaithStrength
 	switch {
 	case held <= 0:
-		return faithBand{"red", vibe.Line("ui.resources_box.faithBandFor.02", "✝ No faith"), vibe.Line("ui.resources_box.faithBandFor.03", "✝ None"), "✝", odds}
+		return faithBand{"red", rowid.Line("ui.resources_box.faithBandFor.02", "✝ No faith"), rowid.Line("ui.resources_box.faithBandFor.03", "✝ None"), "✝", odds}
 	case o.FaithBand == game.FaithBandLow:
-		return faithBand{"gray", vibe.Line("ui.resources_box.faithBandFor.04", "◈ Dim faith"), vibe.Line("ui.resources_box.faithBandFor.05", "◈ Dim"), "◈", odds}
+		return faithBand{"gray", rowid.Line("ui.resources_box.faithBandFor.04", "◈ Dim faith"), rowid.Line("ui.resources_box.faithBandFor.05", "◈ Dim"), "◈", odds}
 	case o.FaithBand == game.FaithBandHigh && strength >= 1:
-		return faithBand{"gold", vibe.Line("ui.resources_box.faithBandFor.06", "✦ Faith full"), vibe.Line("ui.resources_box.faithBandFor.07", "✦ Full"), "✦", odds}
+		return faithBand{"gold", rowid.Line("ui.resources_box.faithBandFor.06", "✦ Faith full"), rowid.Line("ui.resources_box.faithBandFor.07", "✦ Full"), "✦", odds}
 	case o.FaithBand == game.FaithBandHigh:
-		return faithBand{"green", vibe.Line("ui.resources_box.faithBandFor.08", "◈ Strong faith"), vibe.Line("ui.resources_box.faithBandFor.09", "◈ Strong"), "◈", odds}
+		return faithBand{"green", rowid.Line("ui.resources_box.faithBandFor.08", "◈ Strong faith"), rowid.Line("ui.resources_box.faithBandFor.09", "◈ Strong"), "◈", odds}
 	case strength <= 0.50:
-		return faithBand{"white", vibe.Line("ui.resources_box.faithBandFor.10", "◈ Low faith"), vibe.Line("ui.resources_box.faithBandFor.11", "◈ Low"), "◈", odds}
+		return faithBand{"white", rowid.Line("ui.resources_box.faithBandFor.10", "◈ Low faith"), rowid.Line("ui.resources_box.faithBandFor.11", "◈ Low"), "◈", odds}
 	}
-	return faithBand{"yellow", vibe.Line("ui.resources_box.faithBandFor.12", "◈ Faith"), vibe.Line("ui.resources_box.faithBandFor.13", "◈ Faith"), "◈", odds}
+	return faithBand{"yellow", rowid.Line("ui.resources_box.faithBandFor.12", "◈ Faith"), rowid.Line("ui.resources_box.faithBandFor.13", "◈ Faith"), "◈", odds}
 }
 
 // faithRow is faith: the amount column and the bar are the faith strength
@@ -182,7 +182,7 @@ func faithRow(rs game.ResourceState, o game.CatastropheOutlook) resRow {
 		name: rs.Name, amt: fmt.Sprintf("%.0f%%", o.FaithStrength*100), amtColor: "white",
 		status: []string{band.label, band.short, band.mark}, statusColor: band.color,
 		rate: rs.Rate, fill: o.FaithStrength, progress: true,
-		detail: vibe.Sprintf("ui.resources_box.faithRow.01", "[%s]%s[-] [gray](epoch: %s)[-]", band.color, band.label, band.epochOdds),
+		detail: rowid.Sprintf("ui.resources_box.faithRow.01", "[%s]%s[-] [gray](epoch: %s)[-]", band.color, band.label, band.epochOdds),
 	}
 }
 
@@ -399,10 +399,10 @@ func shortName(name string, n int) string {
 // resLegends are the legend under the rows, from full to brief: what the
 // amount's color and the marker mean, so neither carries meaning by color
 // alone. The box prints the fullest that fits.
-var resLegends = []vibe.Entry{
-	vibe.E("ui.resources_box.resLegends.01", " [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m trend[-]"),
-	vibe.E("ui.resources_box.resLegends.02", " [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m[-]"),
-	vibe.E("ui.resources_box.resLegends.03", " [red]▼[-] [gray]falling[-]"),
+var resLegends = []rowid.Entry{
+	rowid.E("ui.resources_box.resLegends.01", " [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m trend[-]"),
+	rowid.E("ui.resources_box.resLegends.02", " [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m[-]"),
+	rowid.E("ui.resources_box.resLegends.03", " [red]▼[-] [gray]falling[-]"),
 }
 
 func resLegend(w int) string {
@@ -417,9 +417,9 @@ func resLegend(w int) string {
 // resMoreLine is the last line of a box that shows a page of its rows:
 // which rows these are, and the key that turns the page.
 func resMoreLine(first, last, total, w int) string {
-	rng := vibe.Sprintf("ui.resources_box.resMoreLine.01", "%d-%d of %d", first, last, total)
+	rng := rowid.Sprintf("ui.resources_box.resMoreLine.01", "%d-%d of %d", first, last, total)
 	for _, l := range []string{
-		" " + theme.Paint(theme.RoleDim, rng+" ·") + " " + theme.Keycap(resourcePageKeyName) + theme.Paint(theme.RoleDim, vibe.Line("ui.resources_box.resMoreLine.02", " next page")),
+		" " + theme.Paint(theme.RoleDim, rng+" ·") + " " + theme.Keycap(resourcePageKeyName) + theme.Paint(theme.RoleDim, rowid.Line("ui.resources_box.resMoreLine.02", " next page")),
 		" " + theme.Paint(theme.RoleDim, rng) + " " + theme.Keycap(resourcePageKeyName),
 		" " + theme.Paint(theme.RoleDim, fmt.Sprintf("%d-%d/%d", first, last, total)) + " " + theme.Paint(theme.RoleAccent, resourcePageKeyName),
 	} {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Resource countability — the part of this package that stops the generator
@@ -89,24 +89,24 @@ func isAbstract(key string) bool { return abstractResource[key] }
 
 // countSingular holds the SINGULAR label for each count noun, for the "1 X" case.
 // Mass nouns need no entry — they do not inflect.
-var countSingular = map[string]vibe.Entry{
-	"nanobots":             vibe.E("flavor.resource.countSingular.01", "nanobot"),
-	"dark_matter_crystals": vibe.E("flavor.resource.countSingular.02", "dark matter crystal"),
+var countSingular = map[string]rowid.Entry{
+	"nanobots":             rowid.E("flavor.resource.countSingular.01", "nanobot"),
+	"dark_matter_crystals": rowid.E("flavor.resource.countSingular.02", "dark matter crystal"),
 }
 
 // The pieces of the two frames that are words of the game's own, and so are
 // told in the script's.
 var (
-	storesOpen  = vibe.E("flavor.resource.phraseStores.01", "your ")
-	storesClose = vibe.E("flavor.resource.phraseStores.02", " stores")
-	haulOpen    = vibe.E("flavor.resource.phraseHaul.01", "a haul of ")
+	storesOpen  = rowid.E("flavor.resource.phraseStores.01", "your ")
+	storesClose = rowid.E("flavor.resource.phraseStores.02", " stores")
+	haulOpen    = rowid.E("flavor.resource.phraseHaul.01", "a haul of ")
 )
 
 // say is an entry as it reads now: the script's line when the line is to be
 // told in the script's words (told), else the game's own English. A line is
 // put together in both readings (Result.Text and Result.Plain), so the frames
 // below take the reading they are asked for and never the switch's.
-func say(told bool, e vibe.Entry) string {
+func say(told bool, e rowid.Entry) string {
 	if told {
 		return e.String()
 	}

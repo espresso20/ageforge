@@ -1,6 +1,6 @@
 package config
 
-import "github.com/espresso20/ageforge/vibe"
+import "github.com/espresso20/ageforge/rowid"
 
 // The gate's four pillars. What stands between a town and the next age is
 // shown as four groups (the Advance panel): Knowledge, People, Industry and
@@ -25,13 +25,13 @@ func GatePillars() []string {
 func PillarName(pillar string) string {
 	switch pillar {
 	case PillarKnowledge:
-		return vibe.Line("config.gate_pillars.PillarName.01", "Knowledge")
+		return rowid.Line("config.gate_pillars.PillarName.01", "Knowledge")
 	case PillarPeople:
-		return vibe.Line("config.gate_pillars.PillarName.02", "People")
+		return rowid.Line("config.gate_pillars.PillarName.02", "People")
 	case PillarIndustry:
-		return vibe.Line("config.gate_pillars.PillarName.03", "Industry")
+		return rowid.Line("config.gate_pillars.PillarName.03", "Industry")
 	case PillarMonument:
-		return vibe.Line("config.gate_pillars.PillarName.04", "Monument")
+		return rowid.Line("config.gate_pillars.PillarName.04", "Monument")
 	}
 	return pillar
 }

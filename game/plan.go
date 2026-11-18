@@ -8,8 +8,8 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // The build plan: an ordered list of builds and techs the player wants, which
@@ -201,7 +201,7 @@ func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 // last matching item. Caller-facing validation mirrors `upgrade`.
 func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 	if count <= 0 || count > maxPlanCount {
-		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.01", "The count must be a whole number from 1 to %d.", maxPlanCount)
+		return 0, rowid.Errorf("game.plan.PlanAddUpgrade.01", "The count must be a whole number from 1 to %d.", maxPlanCount)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -211,7 +211,7 @@ func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 	}
 	newDef, pending := ge.Buildings.UpgradeTarget(key)
 	if !pending {
-		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.02", "%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
+		return 0, rowid.Errorf("game.plan.PlanAddUpgrade.02", "%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
 	if err := ge.upgradeTechErr(newDef); err != nil {
 		return 0, err
@@ -219,15 +219,15 @@ func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 	planned := plannedCount(ge.plan, PlanUpgrade, key)
 	count = min(count, ge.Buildings.GetCount(key)-planned)
 	if count <= 0 {
-		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.03", "You have no %s to upgrade.", oldDef.Name)
+		return 0, rowid.Errorf("game.plan.PlanAddUpgrade.03", "You have no %s to upgrade.", oldDef.Name)
 	}
 	count = min(count, ge.planRoom(newDef, planned))
 	if count <= 0 {
-		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.04", "%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
+		return 0, rowid.Errorf("game.plan.PlanAddUpgrade.04", "%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
 	}
 	added, atMax, err := ge.planAppendLocked(PlanUpgrade, key, count)
 	if atMax {
-		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
+		return 0, rowid.Errorf("game.plan.PlanAddUpgrade.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
 	}
 	return added, err
 }
@@ -240,25 +240,25 @@ func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 // building must be one `build` would accept in this age, ignoring cost.
 func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 	if count <= 0 || count > maxPlanCount {
-		return 0, vibe.Errorf("game.plan.PlanAddBuild.01", "The count must be a whole number from 1 to %d.", maxPlanCount)
+		return 0, rowid.Errorf("game.plan.PlanAddBuild.01", "The count must be a whole number from 1 to %d.", maxPlanCount)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	def, ok := ge.Buildings.defs[key]
 	if !ok {
 		if s := closestKey(key, ge.Buildings.defs); s != "" {
-			return 0, vibe.Errorf("game.plan.PlanAddBuild.02", "Unknown building '%s'. Did you mean '%s'?", key, s)
+			return 0, rowid.Errorf("game.plan.PlanAddBuild.02", "Unknown building '%s'. Did you mean '%s'?", key, s)
 		}
-		return 0, vibe.Errorf("game.plan.PlanAddBuild.03", "Unknown building '%s'. Type build to see what you can build.", key)
+		return 0, rowid.Errorf("game.plan.PlanAddBuild.03", "Unknown building '%s'. Type build to see what you can build.", key)
 	}
 	planned := plannedCount(ge.plan, PlanBuild, key)
 	if reason := ge.planBuildInvalid(key, planned); reason != "" {
-		return 0, vibe.Errorf("game.plan.PlanAddBuild.04", "Can't plan %s: %s.", def.Name, reason)
+		return 0, rowid.Errorf("game.plan.PlanAddBuild.04", "Can't plan %s: %s.", def.Name, reason)
 	}
 	count = min(count, ge.planRoom(def, planned))
 	added, atMax, err := ge.planAppendLocked(PlanBuild, key, count)
 	if atMax {
-		return 0, vibe.Errorf("game.plan.PlanAddBuild.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
+		return 0, rowid.Errorf("game.plan.PlanAddBuild.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
 	}
 	return added, err
 }
@@ -336,19 +336,19 @@ func (ge *GameEngine) PlanMove(n, delta int) (int, error) {
 
 func (ge *GameEngine) planIndexErr(n int) error {
 	if len(ge.plan) == 0 {
-		return vibe.Errorf("game.plan.planIndexErr.01", "The plan is empty.")
+		return rowid.Errorf("game.plan.planIndexErr.01", "The plan is empty.")
 	}
-	return vibe.Errorf("game.plan.planIndexErr.02", "There is no plan item %d (the plan has %s).", n, countPlanItems(len(ge.plan)))
+	return rowid.Errorf("game.plan.planIndexErr.02", "There is no plan item %d (the plan has %s).", n, countPlanItems(len(ge.plan)))
 }
 
 // errPlanFull is the refusal when the plan holds MaxPlanItems items besides
 // its research.
 func errPlanFull() error {
-	return vibe.Errorf("game.plan.errPlanFull.01", "The plan is full (%d items, not counting research). Remove one with plan remove <n> first.", MaxPlanItems)
+	return rowid.Errorf("game.plan.errPlanFull.01", "The plan is full (%d items, not counting research). Remove one with plan remove <n> first.", MaxPlanItems)
 }
 
 // txtAdvanceWhenReady names an advance item of the plan.
-var txtAdvanceWhenReady = vibe.E("game.plan.planItemLabel.01", "advance when ready")
+var txtAdvanceWhenReady = rowid.E("game.plan.planItemLabel.01", "advance when ready")
 
 // planItemLabel is "3 Huts" or "research Pottery".
 func (ge *GameEngine) planItemLabel(it PlanItem) string {
@@ -359,13 +359,13 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 		return ge.planDealLabel(it)
 	}
 	if it.Kind == PlanExpedition {
-		return vibe.Line("game.plan.planItemLabel.04", "expedition ") + it.Key
+		return rowid.Line("game.plan.planItemLabel.04", "expedition ") + it.Key
 	}
 	if it.Kind == PlanResearch {
-		return vibe.Line("game.plan.planItemLabel.02", "research ") + techDefName(ge.rules, it.Key)
+		return rowid.Line("game.plan.planItemLabel.02", "research ") + techDefName(ge.rules, it.Key)
 	}
 	if it.Kind == PlanUpgrade {
-		return vibe.Line("game.plan.planItemLabel.03", "upgrade ") + buildingCountIn(ge.rules, it.Count, it.Key)
+		return rowid.Line("game.plan.planItemLabel.03", "upgrade ") + buildingCountIn(ge.rules, it.Count, it.Key)
 	}
 	return buildingCountIn(ge.rules, it.Count, it.Key)
 }
@@ -399,7 +399,7 @@ func (ge *GameEngine) planRoom(def config.BuildingDef, planned int) int {
 func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 	def, ok := ge.Buildings.defs[key]
 	if !ok {
-		return vibe.Line("game.plan.planBuildInvalid.01", "unknown building")
+		return rowid.Line("game.plan.planBuildInvalid.01", "unknown building")
 	}
 	// The next age's buildings may be planned ahead: they wait (checkPlanItem)
 	// until an advance unlocks them.
@@ -407,18 +407,18 @@ func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 	// A building its tech still holds back may be planned too: it waits
 	// (checkPlanItem) until the research is done.
 	if !ge.Buildings.AgeUnlocked(key) && !future {
-		return vibe.Line("game.plan.planBuildInvalid.02", "not unlocked yet")
+		return rowid.Line("game.plan.planBuildInvalid.02", "not unlocked yet")
 	}
 	if def.RequiredAge != "" && def.RequiredAge != ge.age && !future {
-		return vibe.Line("game.plan.planBuildInvalid.03", "it belongs to another age")
+		return rowid.Line("game.plan.planBuildInvalid.03", "it belongs to another age")
 	}
 	if def.MaxCount > 0 {
 		have := ge.Buildings.GetCount(key) + ge.Buildings.GetQueueCount(key, ge.buildQueue) + planned
 		if have >= def.MaxCount {
 			if def.Category == "wonder" {
-				return vibe.Line("game.plan.planBuildInvalid.04", "already built or planned")
+				return rowid.Line("game.plan.planBuildInvalid.04", "already built or planned")
 			}
-			return vibe.Sprintf("game.plan.planBuildInvalid.05", "at its limit of %d", def.MaxCount)
+			return rowid.Sprintf("game.plan.planBuildInvalid.05", "at its limit of %d", def.MaxCount)
 		}
 	}
 	return ""
@@ -429,13 +429,13 @@ func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 // reached yet is not one: it waits for the age (planTechAhead).
 func (ge *GameEngine) planResearchInvalid(key string) string {
 	if _, ok := ge.rules.Tech(key); !ok {
-		return vibe.Line("game.plan.planResearchInvalid.01", "unknown technology")
+		return rowid.Line("game.plan.planResearchInvalid.01", "unknown technology")
 	}
 	if ge.Research.IsResearched(key) {
-		return vibe.Line("game.plan.planResearchInvalid.02", "already researched")
+		return rowid.Line("game.plan.planResearchInvalid.02", "already researched")
 	}
 	if ge.Research.currentTech == key {
-		return vibe.Line("game.plan.planResearchInvalid.03", "already being researched")
+		return rowid.Line("game.plan.planResearchInvalid.03", "already being researched")
 	}
 	return ""
 }
@@ -481,9 +481,9 @@ func (ge *GameEngine) planResearchRefused(key string, idx int) string {
 	case names == "":
 		return ""
 	case either:
-		return vibe.Sprintf("game.plan.planResearchRefused.01", "it needs %s first, and none of them is researched or planned before it", names)
+		return rowid.Sprintf("game.plan.planResearchRefused.01", "it needs %s first, and none of them is researched or planned before it", names)
 	default:
-		return vibe.Sprintf("game.plan.planResearchRefused.02", "it needs %s first, which isn't researched or planned before it", names)
+		return rowid.Sprintf("game.plan.planResearchRefused.02", "it needs %s first, which isn't researched or planned before it", names)
 	}
 }
 
@@ -527,21 +527,21 @@ func (s *planStarts) describe(set *rules.Set) string {
 		for _, k := range s.order {
 			builds = append(builds, buildingCountIn(set, s.builds[k], k))
 		}
-		parts = append(parts, vibe.Line("game.plan.describe.01", "started building ")+textfmt.List(builds))
+		parts = append(parts, rowid.Line("game.plan.describe.01", "started building ")+textfmt.List(builds))
 	}
 	if len(s.techs) > 0 {
 		names := make([]string, 0, len(s.techs))
 		for _, k := range s.techs {
 			names = append(names, techDefName(set, k))
 		}
-		parts = append(parts, vibe.Line("game.plan.describe.02", "started researching ")+textfmt.List(names))
+		parts = append(parts, rowid.Line("game.plan.describe.02", "started researching ")+textfmt.List(names))
 	}
 	parts = append(parts, s.deals...)
 	if len(s.expeditions) > 0 {
-		parts = append(parts, vibe.Line("game.plan.describe.04", "sent ")+textfmt.List(s.expeditions))
+		parts = append(parts, rowid.Line("game.plan.describe.04", "sent ")+textfmt.List(s.expeditions))
 	}
 	if s.advanced != "" {
-		parts = append(parts, vibe.Line("game.plan.describe.03", "advanced to the ")+s.advanced)
+		parts = append(parts, rowid.Line("game.plan.describe.03", "advanced to the ")+s.advanced)
 	}
 	return strings.Join(parts, ", ")
 }
@@ -571,7 +571,7 @@ type planCheck struct {
 
 // incomeShortfall is why a plan item waits on a resource it has too little of.
 func (ge *GameEngine) incomeShortfall(res string) string {
-	return vibe.Line("game.plan.checkPlanItem.04", "too little ") + ge.rules.ResourceLabel(res) + vibe.Line("game.plan.checkPlanItem.05", " coming in")
+	return rowid.Line("game.plan.checkPlanItem.04", "too little ") + ge.rules.ResourceLabel(res) + rowid.Line("game.plan.checkPlanItem.05", " coming in")
 }
 
 // checkPlanItem works out whether item it could start now. researchFirst is
@@ -581,16 +581,16 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 	case PlanUpgrade:
 		newDef, pending := ge.Buildings.UpgradeTarget(it.Key)
 		if !pending {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.01", "no upgrade available")}
+			return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.01", "no upgrade available")}
 		}
 		if err := ge.upgradeTechErr(newDef); err != nil {
 			return planCheck{blocked: err.Error()}
 		}
 		if ge.Buildings.GetCount(it.Key) <= 0 {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.02", "no copies left")}
+			return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.02", "no copies left")}
 		}
 		if room := ge.Buildings.UpgradeRoom(newDef.Key, 1, ge.buildQueue); room <= 0 {
-			return planCheck{blocked: vibe.Sprintf("game.plan.checkPlanItem.03", "%s is at its max count of %d", newDef.Name, newDef.MaxCount)}
+			return planCheck{blocked: rowid.Sprintf("game.plan.checkPlanItem.03", "%s is at its max count of %d", newDef.Name, newDef.MaxCount)}
 		}
 		cost := ge.Buildings.UpgradeCopyCost(it.Key, 0, ge.buildQueue)
 		// note: no God Mode shortcut here; the upgrade path still charges,
@@ -605,10 +605,10 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 	case PlanBuild:
 		def := ge.Buildings.defs[it.Key]
 		if def.RequiredAge != "" && def.RequiredAge != ge.age {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.06", "waits for the ") + ge.progress.GetAgeName(def.RequiredAge)}
+			return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.06", "waits for the ") + ge.progress.GetAgeName(def.RequiredAge)}
 		}
 		if ge.Buildings.TechLocked(it.Key) {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.07", "waits for ") + ge.techName(def.RequiredTech)}
+			return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.07", "waits for ") + ge.techName(def.RequiredTech)}
 		}
 		if def.Category == "wonder" {
 			if DevGodMode || ge.Buildings.IsWonderBankFull(it.Key) {
@@ -635,15 +635,15 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 	case PlanResearch:
 		def, _ := ge.rules.Tech(it.Key)
 		if order := ge.progress.GetAgeOrder(); order[def.Age] > order[ge.age] {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.10", "waits for the ") + ge.progress.GetAgeName(def.Age)}
+			return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.10", "waits for the ") + ge.progress.GetAgeName(def.Age)}
 		}
 		// A tech has no price to afford: it waits only for the research slot,
 		// the research above it and what it needs first.
 		if ge.Research.currentTech != "" {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.11", "research slot busy"), reserve: true}
+			return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.11", "research slot busy"), reserve: true}
 		}
 		if !researchFirst {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.12", "after the research above it"), reserve: true}
+			return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.12", "after the research above it"), reserve: true}
 		}
 		if pre := def.MissingPrereq(ge.Research.IsResearched); pre != "" {
 			return planCheck{blocked: needsFirst(techDefName(ge.rules, pre)), reserve: true}
@@ -653,7 +653,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		}
 		return planCheck{reserve: true}
 	}
-	return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.17", "unknown item")}
+	return planCheck{blocked: rowid.Line("game.plan.checkPlanItem.17", "unknown item")}
 }
 
 // wonderBankRest is what wonder w's bank still lacks, by resource.
@@ -746,13 +746,13 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		}
 		if it.Kind == PlanDeal {
 			if gone := ge.planDealGone(it); gone != "" {
-				ge.addLog("warning", vibe.Sprintf("game.plan.runPlan.01", "Plan: dropped %s (%s).", ge.planItemLabel(it), gone))
+				ge.addLog("warning", rowid.Sprintf("game.plan.runPlan.01", "Plan: dropped %s (%s).", ge.planItemLabel(it), gone))
 				continue
 			}
 			if ge.runPlanDeal(it, reserved) {
 				started = true
 				ge.note(config.BadgeEvPlanStarted, PlanDeal)
-				starts.deals = append(starts.deals, vibe.Line("game.plan.runPlan.02", "took a ")+ge.planItemLabel(it))
+				starts.deals = append(starts.deals, rowid.Line("game.plan.runPlan.02", "took a ")+ge.planItemLabel(it))
 				continue
 			}
 			out = append(out, it)
@@ -766,10 +766,10 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			reason = ge.planBuildInvalid(it.Key, plannedCount(out, PlanBuild, it.Key))
 		} else if it.Kind == PlanUpgrade {
 			if !ge.Buildings.IsOlder(it.Key) {
-				reason = vibe.Line("game.plan.runPlan.03", "no upgrade available")
+				reason = rowid.Line("game.plan.runPlan.03", "no upgrade available")
 			}
 			if reason == "" && ge.Buildings.GetCount(it.Key) <= 0 {
-				reason = vibe.Line("game.plan.runPlan.04", "no copies left")
+				reason = rowid.Line("game.plan.runPlan.04", "no copies left")
 			}
 		} else if it.Kind == PlanExpedition {
 			reason = ge.planExpeditionGone(it)
@@ -792,10 +792,10 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		}
 		if reason != "" || it.Count <= 0 {
 			if reason == "" {
-				reason = vibe.Line("game.plan.runPlan.05", "nothing left to start")
+				reason = rowid.Line("game.plan.runPlan.05", "nothing left to start")
 			}
 			label := ge.planItemLabel(it)
-			ge.addLog("warning", vibe.Sprintf("game.plan.runPlan.06", "Plan: dropped %s (%s).", label, reason))
+			ge.addLog("warning", rowid.Sprintf("game.plan.runPlan.06", "Plan: dropped %s (%s).", label, reason))
 			continue
 		}
 		first := it.Kind == PlanResearch && !researchSeen
@@ -836,7 +836,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					// MaxCount may be reached mid-item.
 					if it.Count > 0 {
 						if why := ge.planBuildInvalid(it.Key, plannedCount(out, PlanBuild, it.Key)); why != "" {
-							ge.addLog("warning", vibe.Sprintf("game.plan.runPlan.10", "Plan: dropped the last %s (%s).", ge.planItemLabel(it), why))
+							ge.addLog("warning", rowid.Sprintf("game.plan.runPlan.10", "Plan: dropped the last %s (%s).", ge.planItemLabel(it), why))
 							it.Count = 0
 						}
 					}
@@ -881,7 +881,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	ge.plan = out
 	if advanceAt >= 0 {
 		next := ge.progress.GetNextAge(ge.age)
-		ge.addLog("info", vibe.Sprintf("game.plan.runPlan.12", "Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
+		ge.addLog("info", rowid.Sprintf("game.plan.runPlan.12", "Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
 		// Reported before the advance, so a badge judged on reaching the age
 		// sees that the plan did it.
 		ge.note(config.BadgeEvPlanStarted, PlanAdvance)
@@ -964,7 +964,7 @@ func planStaffSource(def config.BuildingDef) bool {
 func (ge *GameEngine) runPlanTick() {
 	var s planStarts
 	if ge.runPlan(&s) {
-		ge.addLog(LogRoutine, vibe.Line("game.plan.runPlanTick.01", "Plan: ")+s.describe(ge.rules)+".")
+		ge.addLog(LogRoutine, rowid.Line("game.plan.runPlanTick.01", "Plan: ")+s.describe(ge.rules)+".")
 	}
 }
 

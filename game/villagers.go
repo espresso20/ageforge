@@ -2,8 +2,8 @@ package game
 
 import (
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // WorkerManager manages population and worker assignments.
@@ -323,7 +323,7 @@ func (vm *WorkerManager) Snapshot(popCap int) WorkerState {
 		}
 	}
 	if className == "" {
-		className = vibe.Line("game.villagers.Snapshot.01", "Worker")
+		className = rowid.Line("game.villagers.Snapshot.01", "Worker")
 	}
 	return WorkerState{
 		Types: map[string]WorkerDomainState{

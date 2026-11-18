@@ -5,8 +5,8 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // MilestoneManager tracks milestone completion, chain progress, and the
@@ -238,7 +238,7 @@ func (mm *MilestoneManager) planFor(def config.MilestoneDef) milestonePlan {
 		plan.rows++
 	}
 	if def.MinAge != "" {
-		plan.ageLabel = vibe.Line("game.milestones.planFor.01", "Age: ") + mm.rules.Name(rules.KindAge, def.MinAge)
+		plan.ageLabel = rowid.Line("game.milestones.planFor.01", "Age: ") + mm.rules.Name(rules.KindAge, def.MinAge)
 		plan.rows++
 	}
 	// Sort resource keys before iterating — map iteration order is random,
@@ -276,7 +276,7 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 	progress := rows.take(plan.rows)
 
 	if def.MinTick > 0 {
-		progress = append(progress, row(vibe.Line("game.milestones.progressFor.01", "Ticks survived"), params.Tick, def.MinTick))
+		progress = append(progress, row(rowid.Line("game.milestones.progressFor.01", "Ticks survived"), params.Tick, def.MinTick))
 	}
 
 	if def.MinAge != "" {
@@ -295,18 +295,18 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 	}
 
 	if def.MinPopulation > 0 {
-		progress = append(progress, row(vibe.Line("game.milestones.progressFor.02", "Population"), params.Population, def.MinPopulation))
+		progress = append(progress, row(rowid.Line("game.milestones.progressFor.02", "Population"), params.Population, def.MinPopulation))
 	}
 
 	if def.MinTechCount > 0 {
-		progress = append(progress, row(vibe.Line("game.milestones.progressFor.03", "Technologies"), params.TechCount, def.MinTechCount))
+		progress = append(progress, row(rowid.Line("game.milestones.progressFor.03", "Technologies"), params.TechCount, def.MinTechCount))
 	}
 
 	// Run counters
-	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.04", "Buildings built"), params.TotalBuilt, def.MinTotalBuilt)
-	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.05", "Soldiers trained"), params.SoldiersTrained, def.MinSoldiersTrained)
-	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.06", "Wonders"), params.WonderCount, def.MinWonders)
-	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.07", "Knowledge workers"), params.KnowledgeCount, def.MinKnowledgeWorkers)
+	progress = appendCounter(progress, rowid.Line("game.milestones.progressFor.04", "Buildings built"), params.TotalBuilt, def.MinTotalBuilt)
+	progress = appendCounter(progress, rowid.Line("game.milestones.progressFor.05", "Soldiers trained"), params.SoldiersTrained, def.MinSoldiersTrained)
+	progress = appendCounter(progress, rowid.Line("game.milestones.progressFor.06", "Wonders"), params.WonderCount, def.MinWonders)
+	progress = appendCounter(progress, rowid.Line("game.milestones.progressFor.07", "Knowledge workers"), params.KnowledgeCount, def.MinKnowledgeWorkers)
 
 	return progress
 }
@@ -348,7 +348,7 @@ func overallProgress(progress []MilestoneProgress) float64 {
 }
 
 // txtResearchProgress is what research done on a tech is called in a reward and in an amount.
-var txtResearchProgress = vibe.E("game.milestones.formatRewards.01", "research progress")
+var txtResearchProgress = rowid.E("game.milestones.formatRewards.01", "research progress")
 
 // formatRewards formats effects into a human-readable reward string
 func formatRewards(effects []config.Effect) string {

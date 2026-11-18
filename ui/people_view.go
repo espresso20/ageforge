@@ -7,7 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // people_view.go draws the People panel: a pure function of the game's state
@@ -19,7 +19,7 @@ import (
 // boxes lose blank lines before they lose facts.
 
 // peopleTabs are the tab names, in order.
-var peopleTabs = []vibe.Entry{vibe.E("ui.people_view.peopleTabs.01", "OVERVIEW"), vibe.E("ui.people_view.peopleTabs.02", "WORK"), vibe.E("ui.people_view.peopleTabs.03", "ARMY"), vibe.E("ui.people_view.peopleTabs.04", "SCHOLARS")}
+var peopleTabs = []rowid.Entry{rowid.E("ui.people_view.peopleTabs.01", "OVERVIEW"), rowid.E("ui.people_view.peopleTabs.02", "WORK"), rowid.E("ui.people_view.peopleTabs.03", "ARMY"), rowid.E("ui.people_view.peopleTabs.04", "SCHOLARS")}
 
 const (
 	tabOverview = iota
@@ -42,9 +42,9 @@ type peopleView struct {
 
 // peopleKeys are the panel's keys as the Help panel lists them.
 var peopleKeys = []keyHelp{
-	{"Left/Right", vibe.E("ui.people_view.peopleKeys.01", "Switch between Overview, Work, Army and Scholars")},
-	{"Up/Down", vibe.E("ui.people_view.peopleKeys.02", "Pick a card, a work area or a building")},
-	{"Esc", vibe.E("ui.people_view.peopleKeys.04", "Close the panel")},
+	{"Left/Right", rowid.E("ui.people_view.peopleKeys.01", "Switch between Overview, Work, Army and Scholars")},
+	{"Up/Down", rowid.E("ui.people_view.peopleKeys.02", "Pick a card, a work area or a building")},
+	{"Esc", rowid.E("ui.people_view.peopleKeys.04", "Close the panel")},
 }
 
 // peopleRows is how many rows the tab has to pick from.
@@ -98,10 +98,10 @@ func knowledgeBuildings(st game.GameState) []peopleBuilding {
 // renderPeople draws the panel w by h.
 func renderPeople(st game.GameState, v peopleView, w, h int) *xgrid {
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, vibe.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, xTitle, false)
+	g.box(0, 0, w, h, xBorder, rowid.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, xTitle, false)
 	g.closeButton(w)
 	if w < 60 || h < 14 {
-		g.put(2, 2, fitText(vibe.Line("ui.people_view.renderPeople.02", "The window is too small for the People panel. Esc closes it."), w-4), xBad)
+		g.put(2, 2, fitText(rowid.Line("ui.people_view.renderPeople.02", "The window is too small for the People panel. Esc closes it."), w-4), xBad)
 		return g
 	}
 	v.tab = clamp(v.tab, 0, len(peopleTabs)-1)
@@ -137,7 +137,7 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 	ws := st.Workers
 	pop := textfmt.Number(float64(ws.TotalPop))
 	homes := textfmt.Number(float64(ws.MaxPop))
-	people, of, homesWord := vibe.Line("ui.people_view.peopleHeader.04", "People "), txtOf.String(), vibe.Line("ui.people_view.peopleHeader.06", " homes")
+	people, of, homesWord := rowid.Line("ui.people_view.peopleHeader.04", "People "), txtOf.String(), rowid.Line("ui.people_view.peopleHeader.06", " homes")
 	n := runeLen(people + pop + of + homes + homesWord)
 	if start := g.w - 3 - n + 1; start > x+1 {
 		k := xBright

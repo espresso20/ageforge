@@ -3,8 +3,8 @@ package ui
 import (
 	"strings"
 
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // panels_table.go is the Panels list as the rich layout shows it
@@ -16,43 +16,43 @@ import (
 // panelInfo is one panel: the command that opens it and what it is for.
 type panelInfo struct {
 	name string
-	job  vibe.Entry
+	job  rowid.Entry
 }
 
 // panelGroup is a heading and the panels under it.
 type panelGroup struct {
-	title  vibe.Entry
+	title  rowid.Entry
 	panels []panelInfo
 }
 
 // panelGroups is the Panels list, grouped. The job lines are placeholders
 // for the copy the game's words get; keep each under panelJobMax cells.
 var panelGroups = []panelGroup{
-	{vibe.E("ui.panels_table.panelGroups.01", "Town"), []panelInfo{
-		{"people", vibe.E("ui.panels_table.panelGroups.02", "workers and army")},
-		{"plan", vibe.E("ui.panels_table.panelGroups.03", "queue builds ahead")},
-		{"wonders", vibe.E("ui.panels_table.panelGroups.04", "the great works")},
-		{"map", vibe.E("ui.panels_table.panelGroups.05", "your town, drawn")},
+	{rowid.E("ui.panels_table.panelGroups.01", "Town"), []panelInfo{
+		{"people", rowid.E("ui.panels_table.panelGroups.02", "workers and army")},
+		{"plan", rowid.E("ui.panels_table.panelGroups.03", "queue builds ahead")},
+		{"wonders", rowid.E("ui.panels_table.panelGroups.04", "the great works")},
+		{"map", rowid.E("ui.panels_table.panelGroups.05", "your town, drawn")},
 	}},
-	{vibe.E("ui.panels_table.panelGroups.06", "Progress"), []panelInfo{
-		{"milestones", vibe.E("ui.panels_table.panelGroups.07", "goals and rewards")},
-		{"research", vibe.E("ui.panels_table.panelGroups.08", "the tech tree")},
-		{"charter", vibe.E("ui.panels_table.panelGroups.09", "what advance needs")},
-		{"epoch", vibe.E("ui.panels_table.panelGroups.10", "eras and disasters")},
-		{"history", vibe.E("ui.panels_table.panelGroups.11", "your story so far")},
+	{rowid.E("ui.panels_table.panelGroups.06", "Progress"), []panelInfo{
+		{"milestones", rowid.E("ui.panels_table.panelGroups.07", "goals and rewards")},
+		{"research", rowid.E("ui.panels_table.panelGroups.08", "the tech tree")},
+		{"charter", rowid.E("ui.panels_table.panelGroups.09", "what advance needs")},
+		{"epoch", rowid.E("ui.panels_table.panelGroups.10", "eras and disasters")},
+		{"history", rowid.E("ui.panels_table.panelGroups.11", "your story so far")},
 	}},
-	{vibe.E("ui.panels_table.panelGroups.12", "World"), []panelInfo{
-		{"expedition", vibe.E("ui.panels_table.panelGroups.13", "send parties out")},
-		{"army", vibe.E("ui.panels_table.panelGroups.14", "soldiers and ranks")},
-		{"trade", vibe.E("ui.panels_table.panelGroups.15", "routes and goods")},
-		{"factions", vibe.E("ui.panels_table.panelGroups.16", "your neighbors")},
-		{"harbinger", vibe.E("ui.panels_table.panelGroups.17", "the coming warning")},
+	{rowid.E("ui.panels_table.panelGroups.12", "World"), []panelInfo{
+		{"expedition", rowid.E("ui.panels_table.panelGroups.13", "send parties out")},
+		{"army", rowid.E("ui.panels_table.panelGroups.14", "soldiers and ranks")},
+		{"trade", rowid.E("ui.panels_table.panelGroups.15", "routes and goods")},
+		{"factions", rowid.E("ui.panels_table.panelGroups.16", "your neighbors")},
+		{"harbinger", rowid.E("ui.panels_table.panelGroups.17", "the coming warning")},
 	}},
-	{vibe.E("ui.panels_table.panelGroups.18", "You"), []panelInfo{
-		{"badges", vibe.E("ui.panels_table.panelGroups.19", "your trophies")},
-		{"stats", vibe.E("ui.panels_table.panelGroups.20", "numbers and rates")},
-		{"logs", vibe.E("ui.panels_table.panelGroups.21", "the full record")},
-		{"help", vibe.E("ui.panels_table.panelGroups.22", "how to play")},
+	{rowid.E("ui.panels_table.panelGroups.18", "You"), []panelInfo{
+		{"badges", rowid.E("ui.panels_table.panelGroups.19", "your trophies")},
+		{"stats", rowid.E("ui.panels_table.panelGroups.20", "numbers and rates")},
+		{"logs", rowid.E("ui.panels_table.panelGroups.21", "the full record")},
+		{"help", rowid.E("ui.panels_table.panelGroups.22", "how to play")},
 	}},
 }
 

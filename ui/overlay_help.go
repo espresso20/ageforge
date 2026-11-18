@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -42,26 +42,26 @@ func helpProvider(_ game.GameState, screenW int) string {
 		}
 	}
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.01", "[gold]═══ Getting around ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open over the whole screen, and the prompt keeps working in most of them. The Wonders, Harbinger and Build Plan panels use letter keys, so press Esc before you type a command there."))
-	keys([2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.04", "Scroll a panel that is longer than the screen, like this one")},
-		[2]string{"Option+arrows", vibe.Line("ui.overlay_help.helpProvider.67", "No Page Up, Page Down, Home or End on your keyboard? Option+Up and Option+Down are PgUp and PgDn, and Option+Left and Option+Right are Home and End, in every panel. Alt does the same on other keyboards")},
-		[2]string{"Esc", vibe.Line("ui.overlay_help.helpProvider.06", "Close the panel (with no panel open: save and go to the main menu)")},
-		[2]string{"Tab", vibe.Line("ui.overlay_help.helpProvider.08", "Finish the word you are typing (press again for the next match)")},
-		[2]string{"help", vibe.Line("ui.overlay_help.helpProvider.10", "Open this page again at any time")})
-	note(vibe.Line("ui.overlay_help.helpProvider.11", "New here? Try: build hut, then status, then research. Each panel below lists its own keys."))
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.12", "\n[gold]═══ The dashboard ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.13", "With no panel open."))
-	keys([2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.15", "Scroll the Buildings list")},
-		[2]string{resourcePageKeyName, vibe.Line("ui.overlay_help.helpProvider.16", "The next page of the Resources box, when it has more than it can show")},
-		[2]string{"Esc", vibe.Line("ui.overlay_help.helpProvider.18", "Save and go to the main menu (with a panel open: close it)")})
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.01", "[gold]═══ Getting around ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open over the whole screen, and the prompt keeps working in most of them. The Wonders, Harbinger and Build Plan panels use letter keys, so press Esc before you type a command there."))
+	keys([2]string{"PgUp/PgDn", rowid.Line("ui.overlay_help.helpProvider.04", "Scroll a panel that is longer than the screen, like this one")},
+		[2]string{"Option+arrows", rowid.Line("ui.overlay_help.helpProvider.67", "No Page Up, Page Down, Home or End on your keyboard? Option+Up and Option+Down are PgUp and PgDn, and Option+Left and Option+Right are Home and End, in every panel. Alt does the same on other keyboards")},
+		[2]string{"Esc", rowid.Line("ui.overlay_help.helpProvider.06", "Close the panel (with no panel open: save and go to the main menu)")},
+		[2]string{"Tab", rowid.Line("ui.overlay_help.helpProvider.08", "Finish the word you are typing (press again for the next match)")},
+		[2]string{"help", rowid.Line("ui.overlay_help.helpProvider.10", "Open this page again at any time")})
+	note(rowid.Line("ui.overlay_help.helpProvider.11", "New here? Try: build hut, then status, then research. Each panel below lists its own keys."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.12", "\n[gold]═══ The dashboard ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.13", "With no panel open."))
+	keys([2]string{"PgUp/PgDn", rowid.Line("ui.overlay_help.helpProvider.15", "Scroll the Buildings list")},
+		[2]string{resourcePageKeyName, rowid.Line("ui.overlay_help.helpProvider.16", "The next page of the Resources box, when it has more than it can show")},
+		[2]string{"Esc", rowid.Line("ui.overlay_help.helpProvider.18", "Save and go to the main menu (with a panel open: close it)")})
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.19", "\n[gold]═══ The prompt ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.20", "As you type, the best completion shows in dim text after the cursor."))
-	keys([2]string{"Tab", vibe.Line("ui.overlay_help.helpProvider.22", "Take the completion; press again for the next one")},
-		[2]string{"→", vibe.Line("ui.overlay_help.helpProvider.23", "Take the completion (cursor at the end of the line)")},
-		[2]string{"Enter", vibe.Line("ui.overlay_help.helpProvider.25", "Run the line; an unfinished line runs its completion (irreversible ones, like sell, are only filled in: Enter again runs them)")},
-		[2]string{"↑/↓", vibe.Line("ui.overlay_help.helpProvider.26", "Command history")})
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.19", "\n[gold]═══ The prompt ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.20", "As you type, the best completion shows in dim text after the cursor."))
+	keys([2]string{"Tab", rowid.Line("ui.overlay_help.helpProvider.22", "Take the completion; press again for the next one")},
+		[2]string{"→", rowid.Line("ui.overlay_help.helpProvider.23", "Take the completion (cursor at the end of the line)")},
+		[2]string{"Enter", rowid.Line("ui.overlay_help.helpProvider.25", "Run the line; an unfinished line runs its completion (irreversible ones, like sell, are only filled in: Enter again runs them)")},
+		[2]string{"↑/↓", rowid.Line("ui.overlay_help.helpProvider.26", "Command history")})
 
 	sb.WriteString("\n")
 	for i, sec := range helpSections {
@@ -89,52 +89,52 @@ func helpProvider(_ game.GameState, screenW int) string {
 		}
 	}
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.27", "\n[gold]═══ Panels ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.28", "Type the command to open the panel."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.27", "\n[gold]═══ Panels ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.28", "Type the command to open the panel."))
 	for _, name := range panelOrder {
 		if c := lookup(reg, name); c != nil && c.Panel != "" {
 			row("  [cyan]"+padRight(c.Name, 12)+"[-] - ", c.Panel)
 		}
 	}
-	row("  [cyan]"+padRight(vibe.Line("ui.overlay_help.helpProvider.29", "Accounts"), 12)+"[-] - ", vibe.Line("ui.overlay_help.helpProvider.30", "Switch, create or back up accounts [gray](main-menu panel, not a command)[-]"))
+	row("  [cyan]"+padRight(rowid.Line("ui.overlay_help.helpProvider.29", "Accounts"), 12)+"[-] - ", rowid.Line("ui.overlay_help.helpProvider.30", "Switch, create or back up accounts [gray](main-menu panel, not a command)[-]"))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.31", "\n[gold]═══ The Map panel ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.32", "The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = while the prompt is empty."))
-	keys([2]string{"Arrows", vibe.Line("ui.overlay_help.helpProvider.34", "Move the cursor; Shift moves further")},
-		[2]string{"Tab", vibe.Line("ui.overlay_help.helpProvider.36", "Next building, wonder or civilization (Shift-Tab: the one before)")},
-		[2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.38", "Zoom out and in (Option+Up and Option+Down do the same)")},
-		[2]string{"+/-", vibe.Line("ui.overlay_help.helpProvider.39", "Zoom in and out with no Page keys (= works as +)")},
-		[2]string{"Home/End", vibe.Line("ui.overlay_help.helpProvider.42", "The town square")},
-		[2]string{"Enter", vibe.Line("ui.overlay_help.helpProvider.44", "Put the command for what the cursor is on in the prompt (with something typed, Tab and Enter act on the prompt instead)")},
-		[2]string{"Esc", vibe.Line("ui.overlay_help.helpProvider.46", "Close the panel")})
-	note(vibe.Line("ui.overlay_help.helpProvider.47", "Settings are commands: map glyphs, map flows, minimap."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.31", "\n[gold]═══ The Map panel ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.32", "The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = while the prompt is empty."))
+	keys([2]string{"Arrows", rowid.Line("ui.overlay_help.helpProvider.34", "Move the cursor; Shift moves further")},
+		[2]string{"Tab", rowid.Line("ui.overlay_help.helpProvider.36", "Next building, wonder or civilization (Shift-Tab: the one before)")},
+		[2]string{"PgUp/PgDn", rowid.Line("ui.overlay_help.helpProvider.38", "Zoom out and in (Option+Up and Option+Down do the same)")},
+		[2]string{"+/-", rowid.Line("ui.overlay_help.helpProvider.39", "Zoom in and out with no Page keys (= works as +)")},
+		[2]string{"Home/End", rowid.Line("ui.overlay_help.helpProvider.42", "The town square")},
+		[2]string{"Enter", rowid.Line("ui.overlay_help.helpProvider.44", "Put the command for what the cursor is on in the prompt (with something typed, Tab and Enter act on the prompt instead)")},
+		[2]string{"Esc", rowid.Line("ui.overlay_help.helpProvider.46", "Close the panel")})
+	note(rowid.Line("ui.overlay_help.helpProvider.47", "Settings are commands: map glyphs, map flows, minimap."))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.48", "\n[gold]═══ The Research panel ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.49", "The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.48", "\n[gold]═══ The Research panel ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.49", "The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing."))
 	keys(helpPairs(researchKeys)...)
-	note(vibe.Line("ui.overlay_help.helpProvider.50", "Zoom is a command too: research tree close, research tree far."))
+	note(rowid.Line("ui.overlay_help.helpProvider.50", "Zoom is a command too: research tree close, research tree far."))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.51", "\n[gold]═══ The badge case ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.52", "Your account's badges. The prompt keeps working while it is open; the case takes the keys that print nothing."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.51", "\n[gold]═══ The badge case ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.52", "Your account's badges. The prompt keeps working while it is open; the case takes the keys that print nothing."))
 	keys(helpPairs(badgeKeys)...)
-	note(vibe.Line("ui.overlay_help.helpProvider.53", "Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still."))
+	note(rowid.Line("ui.overlay_help.helpProvider.53", "Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still."))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.54", "\n[gold]═══ The Expeditions panel ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.55", "The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.54", "\n[gold]═══ The Expeditions panel ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.55", "The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
 	keys(helpPairs(expeditionKeys)...)
-	note(vibe.Line("ui.overlay_help.helpProvider.56", "Sending by name is a command: expedition <name>, with as much of the name as it takes to tell the offers apart."))
+	note(rowid.Line("ui.overlay_help.helpProvider.56", "Sending by name is a command: expedition <name>, with as much of the name as it takes to tell the offers apart."))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.57", "\n[gold]═══ The People panel ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.58", "Every person in the town: workers, the reserve, soldiers and scholars, each by the name the age gives them. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.57", "\n[gold]═══ The People panel ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.58", "Every person in the town: workers, the reserve, soldiers and scholars, each by the name the age gives them. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
 	keys(helpPairs(peopleKeys)...)
-	note(vibe.Line("ui.overlay_help.helpProvider.59", "Shares are a command: roster <area> <percent|auto>. The panel opens with people or workers."))
+	note(rowid.Line("ui.overlay_help.helpProvider.59", "Shares are a command: roster <area> <percent|auto>. The panel opens with people or workers."))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.60", "\n[gold]═══ The Advance panel ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.61", "The gate into the next age as four pillars (Knowledge, People, Industry and Monument), with the march of ages and a calendar year that moves as you close in. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.60", "\n[gold]═══ The Advance panel ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.61", "The gate into the next age as four pillars (Knowledge, People, Industry and Monument), with the march of ages and a calendar year that moves as you close in. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
 	keys(helpPairs(advanceKeys)...)
-	note(vibe.Line("ui.overlay_help.helpProvider.62", "The panel opens with charter. Typing advance does the same as Enter on it."))
+	note(rowid.Line("ui.overlay_help.helpProvider.62", "The panel opens with charter. Typing advance does the same as Enter on it."))
 
-	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.63", "\n[gold]═══ Shortcuts ═══[-]\n"))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.63", "\n[gold]═══ Shortcuts ═══[-]\n"))
 	var short []string
 	for _, c := range reg {
 		for _, a := range c.Aliases {
@@ -146,8 +146,8 @@ func helpProvider(_ game.GameState, screenW int) string {
 	// Developer Console — only listed when dev mode is active (Ctrl+K passphrase).
 	// Hidden entirely otherwise so the reference stays clean for normal play.
 	if game.DevModeActive {
-		sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.64", "\n[gold]═══ Developer console ═══[-]\n"))
-		sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.65", "[gray]Dev mode is on. Type these in the [-][cyan]>[-][gray] prompt:[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.64", "\n[gold]═══ Developer console ═══[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.65", "[gray]Dev mode is on. Type these in the [-][cyan]>[-][gray] prompt:[-]\n"))
 		for _, d := range devCommands {
 			row("  [cyan]"+padRight(d.form, 28)+"[-] - ", d.text)
 		}

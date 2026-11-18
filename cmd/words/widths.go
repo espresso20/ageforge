@@ -102,7 +102,7 @@ func (c *catalog) verbWidth(u *unit) int {
 		switch pkg.Name + "." + sel.Sel.Name {
 		case "fmt.Sprintf", "fmt.Errorf":
 			format = 0
-		case "fmt.Fprintf", "vibe.Sprintf", "vibe.Errorf":
+		case "fmt.Fprintf", "rowid.Sprintf", "rowid.Errorf":
 			format = 1
 		}
 		if format < 0 || format >= len(call.Args) {

@@ -152,7 +152,7 @@ func newCodeReader(c *catalog, f *srcFile, units []*unit) *codeReader {
 					v = kv.Value
 				}
 				// A vibe call counts as the text it carries, so wiring a text leaves its
-				// list as it was. The exception is vibe.Line outside the map files: it
+				// list as it was. The exception is rowid.Line outside the map files: it
 				// is not seen through, so a single lower-case word in one is still
 				// judged as a possible key, even in a list of worded text. This keeps
 				// the log and screens exports unchanged.

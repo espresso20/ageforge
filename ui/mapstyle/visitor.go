@@ -2,7 +2,7 @@ package mapstyle
 
 import (
 	"github.com/espresso20/ageforge/mapgen"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // visitor.go says what the cursor says on the rare visitor: a small visitor
@@ -10,20 +10,20 @@ import (
 // hears to hand out the secret badge.
 
 var (
-	visitorTitles = map[string]vibe.Entry{
-		"visitor": vibe.E("ui.mapstyle.roguelike.visitor.visitorAt.02", "Visitor"),
-		"alien":   vibe.E("ui.mapstyle.roguelike.visitor.visitorAt.01", "Unknown craft"),
+	visitorTitles = map[string]rowid.Entry{
+		"visitor": rowid.E("ui.mapstyle.roguelike.visitor.visitorAt.02", "Visitor"),
+		"alien":   rowid.E("ui.mapstyle.roguelike.visitor.visitorAt.01", "Unknown craft"),
 	}
-	visitorLines = map[string][]vibe.Entry{
+	visitorLines = map[string][]rowid.Entry{
 		"visitor": {
-			vibe.E("ui.mapstyle.roguelike.visitor.walkerLines.01", "It waves, then it's gone."),
-			vibe.E("ui.mapstyle.roguelike.visitor.walkerLines.02", "A small visitor, far from home."),
-			vibe.E("ui.mapstyle.roguelike.visitor.walkerLines.03", "It seems lost, and fine with that."),
+			rowid.E("ui.mapstyle.roguelike.visitor.walkerLines.01", "It waves, then it's gone."),
+			rowid.E("ui.mapstyle.roguelike.visitor.walkerLines.02", "A small visitor, far from home."),
+			rowid.E("ui.mapstyle.roguelike.visitor.walkerLines.03", "It seems lost, and fine with that."),
 		},
 		"alien": {
-			vibe.E("ui.mapstyle.roguelike.visitor.saucerLines.01", "Not one of ours."),
-			vibe.E("ui.mapstyle.roguelike.visitor.saucerLines.02", "It hums, then it's gone."),
-			vibe.E("ui.mapstyle.roguelike.visitor.saucerLines.03", "Lights in the sky. Nobody will believe you."),
+			rowid.E("ui.mapstyle.roguelike.visitor.saucerLines.01", "Not one of ours."),
+			rowid.E("ui.mapstyle.roguelike.visitor.saucerLines.02", "It hums, then it's gone."),
+			rowid.E("ui.mapstyle.roguelike.visitor.saucerLines.03", "Lights in the sky. Nobody will believe you."),
 		},
 	}
 )

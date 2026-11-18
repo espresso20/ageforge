@@ -1,9 +1,9 @@
-// Package vibe carries the row id the copy export gives each string the game
+// Package rowid carries the row id the copy export gives each string the game
 // writes itself, so the export and the import find the same text by the same
 // id. The wrappers return the plain string.
 //
-// vibe imports nothing of the game, so any package may use it.
-package vibe
+// rowid imports nothing of the game, so any package may use it.
+package rowid
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ func Errorf(id, format string, a ...any) error { return fmt.Errorf(format, a...)
 // Entry is a string of a table the code makes once (a list of key hints, the
 // headings of a panel): it carries its row id and its plain text.
 //
-//	var panelKeys = []vibe.Entry{vibe.E("ui.panel.panelKeys.01", "Close the panel")}
+//	var panelKeys = []rowid.Entry{rowid.E("ui.panel.panelKeys.01", "Close the panel")}
 //	... panelKeys[0].String()
 type Entry struct {
 	id, plain string

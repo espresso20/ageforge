@@ -1,7 +1,7 @@
 package theme
 
 import (
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Light themes (the theming design §4). Both are always available: Daylight sits in the
@@ -20,8 +20,8 @@ import (
 // ink, and deep-amber brand accents that echo Forge's gold.
 var Daylight = define(Theme{
 	Key:        "daylight",
-	Name:       vibe.E("theme.daylight.name", "Daylight"),
-	Blurb:      vibe.E("theme.daylight.blurb", "Clean light theme — charcoal ink on a bright page, amber accents."),
+	Name:       rowid.E("theme.daylight.name", "Daylight"),
+	Blurb:      rowid.E("theme.daylight.blurb", "Clean light theme — charcoal ink on a bright page, amber accents."),
 	Accessible: false,
 	Standard:   true,
 	Colors: [numRoles]Color{
@@ -51,8 +51,8 @@ var Daylight = define(Theme{
 // accessible on both axes — contrast and color vision.
 var HighContrastLight = define(Theme{
 	Key:        "high_contrast_light",
-	Name:       vibe.E("theme.high_contrast_light.name", "High Contrast Light"),
-	Blurb:      vibe.E("theme.high_contrast_light.blurb", "Maximum legibility on a white page: black ink, bold roles."),
+	Name:       rowid.E("theme.high_contrast_light.name", "High Contrast Light"),
+	Blurb:      rowid.E("theme.high_contrast_light.blurb", "Maximum legibility on a white page: black ink, bold roles."),
 	Accessible: true,
 	Colors: [numRoles]Color{
 		RoleBackground: NewRGBColor(0xff, 0xff, 0xff),

@@ -21,7 +21,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Model is one snapshot laid out for the maps.
@@ -152,7 +152,7 @@ const (
 )
 
 func (r Relation) String() string {
-	return [...]string{"neutral", "friendly", "allied", "rival", "embargo", vibe.Line("mapmodel.model.String.06", "at war")}[r]
+	return [...]string{"neutral", "friendly", "allied", "rival", "embargo", rowid.Line("mapmodel.model.String.06", "at war")}[r]
 }
 
 // Faction is a civilization.
@@ -517,7 +517,7 @@ func (m *Model) world(st *game.GameState) {
 		c.Pending = st.PendingCatastrophe
 		c.PendingName = cat.Catastrophes[st.PendingCatastrophe]
 		if c.PendingName == "" {
-			c.PendingName = vibe.Line("mapmodel.model.world.01", "Catastrophe")
+			c.PendingName = rowid.Line("mapmodel.model.world.01", "Catastrophe")
 		}
 		c.Pressure = 1
 	} else {

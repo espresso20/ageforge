@@ -1,6 +1,6 @@
 package mapmodel
 
-import "github.com/espresso20/ageforge/vibe"
+import "github.com/espresso20/ageforge/rowid"
 
 // Terrain is a tile's ground type, as the map names it.
 type Terrain uint8
@@ -20,27 +20,27 @@ const (
 type Pt struct{ X, Y int }
 
 // The syllables a town's name is put together from.
-var syllA = []vibe.Entry{
-	vibe.E("mapmodel.world.syllA.01", "Ash"),
-	vibe.E("mapmodel.world.syllA.02", "Bram"),
-	vibe.E("mapmodel.world.syllA.03", "Cor"),
-	vibe.E("mapmodel.world.syllA.04", "Dun"),
-	vibe.E("mapmodel.world.syllA.05", "Eld"),
-	vibe.E("mapmodel.world.syllA.06", "Fen"),
-	vibe.E("mapmodel.world.syllA.07", "Gal"),
-	vibe.E("mapmodel.world.syllA.08", "Hol"),
-	vibe.E("mapmodel.world.syllA.09", "Ir"),
-	vibe.E("mapmodel.world.syllA.10", "Kest"),
-	vibe.E("mapmodel.world.syllA.11", "Lun"),
-	vibe.E("mapmodel.world.syllA.12", "Mor"),
-	vibe.E("mapmodel.world.syllA.13", "Nor"),
-	vibe.E("mapmodel.world.syllA.14", "Ost"),
-	vibe.E("mapmodel.world.syllA.15", "Rav"),
-	vibe.E("mapmodel.world.syllA.16", "Sel"),
-	vibe.E("mapmodel.world.syllA.17", "Thorn"),
-	vibe.E("mapmodel.world.syllA.18", "Umb"),
-	vibe.E("mapmodel.world.syllA.19", "Vel"),
-	vibe.E("mapmodel.world.syllA.20", "Wyn"),
+var syllA = []rowid.Entry{
+	rowid.E("mapmodel.world.syllA.01", "Ash"),
+	rowid.E("mapmodel.world.syllA.02", "Bram"),
+	rowid.E("mapmodel.world.syllA.03", "Cor"),
+	rowid.E("mapmodel.world.syllA.04", "Dun"),
+	rowid.E("mapmodel.world.syllA.05", "Eld"),
+	rowid.E("mapmodel.world.syllA.06", "Fen"),
+	rowid.E("mapmodel.world.syllA.07", "Gal"),
+	rowid.E("mapmodel.world.syllA.08", "Hol"),
+	rowid.E("mapmodel.world.syllA.09", "Ir"),
+	rowid.E("mapmodel.world.syllA.10", "Kest"),
+	rowid.E("mapmodel.world.syllA.11", "Lun"),
+	rowid.E("mapmodel.world.syllA.12", "Mor"),
+	rowid.E("mapmodel.world.syllA.13", "Nor"),
+	rowid.E("mapmodel.world.syllA.14", "Ost"),
+	rowid.E("mapmodel.world.syllA.15", "Rav"),
+	rowid.E("mapmodel.world.syllA.16", "Sel"),
+	rowid.E("mapmodel.world.syllA.17", "Thorn"),
+	rowid.E("mapmodel.world.syllA.18", "Umb"),
+	rowid.E("mapmodel.world.syllA.19", "Vel"),
+	rowid.E("mapmodel.world.syllA.20", "Wyn"),
 }
 
 var syllB = []string{"vale", "ford", "hold", "mere", "wick", "stead", "haven", "gate", "moor", "crest", "fall", "reach"}

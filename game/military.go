@@ -7,8 +7,8 @@ import (
 	"slices"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Expedition categories. Every mission costs resources, but only a military
@@ -368,12 +368,12 @@ func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResu
 		for res, amount := range active.SuccessRewards {
 			rewards[res] = amount
 		}
-		message = vibe.Sprintf("game.military.tickMission.01", "%s succeeded. Loot: %s.", active.Title, amountsText(rewards))
+		message = rowid.Sprintf("game.military.tickMission.01", "%s succeeded. Loot: %s.", active.Title, amountsText(rewards))
 	} else {
 		for res, amount := range active.FailureRewards {
 			rewards[res] = amount
 		}
-		message = vibe.Sprintf("game.military.tickMission.02", "%s failed. You kept %.0f%% of the loot: %s.", active.Title, failedLootShare*100, amountsText(rewards))
+		message = rowid.Sprintf("game.military.tickMission.02", "%s failed. You kept %.0f%% of the loot: %s.", active.Title, failedLootShare*100, amountsText(rewards))
 	}
 	fell := missionLosses(active.luckStream(), active.Soldiers, success, active.Rare)
 	gained, before, after := mm.gainExperience(config.ArmyExperienceFor(active.Kind(), success))

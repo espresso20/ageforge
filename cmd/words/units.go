@@ -35,7 +35,7 @@ type unit struct {
 
 	vibeID    string // the row id of the vibe call it is the string of (Line, E, Sprintf, Errorf), or of the table entry it is in (vibeTable); "" if neither
 	vibeKey   bool   // it is a row id (the first argument of a vibe call, or a vibeRow field), not text
-	vibeTable bool   // its vibeID is the vibeRow field of the table entry it is in, read by vibe.Line when the entry is drawn
+	vibeTable bool   // its vibeID is the vibeRow field of the table entry it is in, read by rowid.Line when the entry is drawn
 }
 
 // vibeRowField is the name of the struct field that holds the row id of a
@@ -152,8 +152,8 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 			}
 		case *ast.CallExpr:
 			if kind, ok := vibeCallKind(f, p); ok && child != p.Fun {
-				// A vibe call is the string it carries, said another way. vibe.Line adds
-				// no call to what is around the text. vibe.Sprintf and vibe.Errorf count
+				// A vibe call is the string it carries, said another way. rowid.Line adds
+				// no call to what is around the text. rowid.Sprintf and rowid.Errorf count
 				// as the fmt call they stand for, with the id left out of the arguments.
 				idx := -1
 				for i, a := range p.Args {
@@ -162,7 +162,7 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 					}
 				}
 				if kind == "Line" && inChain == child {
-					inChain = p // vibe.Line is the string it carries, in the line it stands in
+					inChain = p // rowid.Line is the string it carries, in the line it stands in
 				}
 				switch {
 				case idx == 0:
@@ -228,7 +228,7 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 					if name == "" {
 						continue
 					}
-					// A sibling that is wired with a row id (vibe.E) is the text it carries:
+					// A sibling that is wired with a row id (rowid.E) is the text it carries:
 					// {title} in a row's description reads the same wired or not.
 					sibVal := val
 					if call, ok := val.(*ast.CallExpr); ok {
@@ -245,9 +245,9 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 						site.field = name
 					}
 				}
-				// An entry of a table that is read through vibe.Line when it is
+				// An entry of a table that is read through rowid.Line when it is
 				// drawn carries its row id in a field of its own, since a table is
-				// made once and cannot call vibe.Line itself.
+				// made once and cannot call rowid.Line itself.
 				switch {
 				case site.field == vibeRowField:
 					u.vibeKey = true
@@ -356,14 +356,14 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 	return u
 }
 
-// isVibeCall reports whether call is, as written, a call of vibe.Line,
-// vibe.Sprintf, vibe.Errorf or vibe.E with at least two arguments.
+// isVibeCall reports whether call is, as written, a call of rowid.Line,
+// rowid.Sprintf, rowid.Errorf or rowid.E with at least two arguments.
 func isVibeCall(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || len(call.Args) < 2 {
 		return false
 	}
-	if x, ok := sel.X.(*ast.Ident); !ok || x.Name != "vibe" {
+	if x, ok := sel.X.(*ast.Ident); !ok || x.Name != "rowid" {
 		return false
 	}
 	switch sel.Sel.Name {
@@ -373,13 +373,13 @@ func isVibeCall(call *ast.CallExpr) bool {
 	return false
 }
 
-// isVibeLine reports whether call is, as written, vibe.Line(id, "text").
+// isVibeLine reports whether call is, as written, rowid.Line(id, "text").
 func isVibeLine(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	return ok && isVibeCall(call) && len(call.Args) == 2 && sel.Sel.Name == "Line"
 }
 
-// vibeCarried is the string a vibe.Line, vibe.E or vibe.Same call carries: the
+// vibeCarried is the string a rowid.Line, rowid.E or rowid.Same call carries: the
 // text of the entry it stands for.
 func vibeCarried(call *ast.CallExpr) (ast.Expr, bool) {
 	switch {
@@ -393,7 +393,7 @@ func vibeCarried(call *ast.CallExpr) (ast.Expr, bool) {
 	return nil, false
 }
 
-// isVibeSame reports whether call is, as written, vibe.Same("text"): the entry
+// isVibeSame reports whether call is, as written, rowid.Same("text"): the entry
 // of a table for a string that has no row.
 func isVibeSame(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
@@ -401,18 +401,18 @@ func isVibeSame(call *ast.CallExpr) bool {
 		return false
 	}
 	x, ok := sel.X.(*ast.Ident)
-	return ok && x.Name == "vibe" && sel.Sel.Name == "Same"
+	return ok && x.Name == "rowid" && sel.Sel.Name == "Same"
 }
 
 // vibeCallKind says whether call is a call of the vibe package that carries a
-// row id and a string (Line, Sprintf, Errorf), and which. vibe.E counts as
+// row id and a string (Line, Sprintf, Errorf), and which. rowid.E counts as
 // Line.
 func vibeCallKind(f *srcFile, call *ast.CallExpr) (string, bool) {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || len(call.Args) < 2 {
 		return "", false
 	}
-	if x, ok := sel.X.(*ast.Ident); !ok || x.Name != "vibe" || !f.imports["vibe"] {
+	if x, ok := sel.X.(*ast.Ident); !ok || x.Name != "rowid" || !f.imports["rowid"] {
 		return "", false
 	}
 	switch sel.Sel.Name {
@@ -435,7 +435,7 @@ func chainOf(top ast.Expr, at ast.Expr) *chain {
 		case *ast.ParenExpr:
 			flatten(x.X)
 		case *ast.CallExpr:
-			// vibe.Line is the string it carries.
+			// rowid.Line is the string it carries.
 			if sel, ok := x.Fun.(*ast.SelectorExpr); ok && isVibeCall(x) && sel.Sel.Name == "Line" {
 				flatten(x.Args[1])
 				return

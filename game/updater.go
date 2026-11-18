@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 const (
@@ -32,7 +32,7 @@ type UpdateResult struct {
 // CheckLatest fetches the latest GitHub release tag and compares it to currentVersion.
 func CheckLatest(currentVersion string) (UpdateResult, error) {
 	if currentVersion == "dev" {
-		return UpdateResult{}, vibe.Errorf("game.updater.CheckLatest.01", "dev build — update check not available")
+		return UpdateResult{}, rowid.Errorf("game.updater.CheckLatest.01", "dev build — update check not available")
 	}
 
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -47,7 +47,7 @@ func CheckLatest(currentVersion string) (UpdateResult, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return UpdateResult{}, vibe.Errorf("game.updater.CheckLatest.05", "GitHub returned HTTP %d", resp.StatusCode)
+		return UpdateResult{}, rowid.Errorf("game.updater.CheckLatest.05", "GitHub returned HTTP %d", resp.StatusCode)
 	}
 
 	var release struct {
@@ -86,7 +86,7 @@ func DownloadAndInstall(result UpdateResult) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", vibe.Errorf("game.updater.DownloadAndInstall.03", "download failed: HTTP %d", resp.StatusCode)
+		return "", rowid.Errorf("game.updater.DownloadAndInstall.03", "download failed: HTTP %d", resp.StatusCode)
 	}
 
 	// Stream to temp file
@@ -121,7 +121,7 @@ func DownloadAndInstall(result UpdateResult) (string, error) {
 			os.Remove(tmpPath)
 			return "", fmt.Errorf("save failed: %w", err)
 		}
-		return vibe.Sprintf(
+		return rowid.Sprintf(
 			"game.updater.DownloadAndInstall.09", "Saved as:\n%s\n\nReplace the current .exe to apply the update.",
 			newPath,
 		), nil
@@ -137,7 +137,7 @@ func DownloadAndInstall(result UpdateResult) (string, error) {
 	}
 	_ = os.Remove(backupPath)
 
-	return vibe.Sprintf("game.updater.DownloadAndInstall.11", "Updated to %s\n\nRestart the game to play the new version.", result.LatestVersion), nil
+	return rowid.Sprintf("game.updater.DownloadAndInstall.11", "Updated to %s\n\nRestart the game to play the new version.", result.LatestVersion), nil
 }
 
 // updaterPlatformBinary returns the release asset filename for the current OS/arch.
@@ -211,7 +211,7 @@ func updaterVerifyChecksum(filePath, checksumURL, binaryName string) error {
 	}
 	actual := hex.EncodeToString(h.Sum(nil))
 	if actual != expected {
-		return vibe.Errorf("game.updater.updaterVerifyChecksum.01", "expected %.8s…, got %.8s…", expected, actual)
+		return rowid.Errorf("game.updater.updaterVerifyChecksum.01", "expected %.8s…, got %.8s…", expected, actual)
 	}
 	return nil
 }

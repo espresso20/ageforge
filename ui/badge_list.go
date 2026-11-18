@@ -7,7 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // badge_list.go writes the account's badges as plain text: the Stats
@@ -17,31 +17,31 @@ import (
 // what to hide.
 
 // txtExpeditions is said the same way on several screens, so it has one id.
-var txtExpeditions = vibe.E("ui.badge_list.badgeFamilyTitles.19", "Expeditions")
+var txtExpeditions = rowid.E("ui.badge_list.badgeFamilyTitles.19", "Expeditions")
 
 // badgeFamilyTitles are the headings of the badge families, in the order
 // they list. A family not named here lists last, under its own key.
 var badgeFamilyTitles = []struct {
 	key   string
-	title vibe.Entry
+	title rowid.Entry
 }{
-	{"age", vibe.E("ui.badge_list.badgeFamilyTitles.02", "Ages")},
-	{"swift", vibe.E("ui.badge_list.badgeFamilyTitles.04", "Swift Eras")},
-	{"wonder", vibe.E("ui.badge_list.badgeFamilyTitles.05", "Wonders")},
-	{"maximalist", vibe.E("ui.badge_list.badgeFamilyTitles.07", "Maximalists")},
-	{"techs", vibe.E("ui.badge_list.badgeFamilyTitles.08", "Research")},
-	{"lineage", vibe.E("ui.badge_list.badgeFamilyTitles.10", "Lineages")},
-	{"domain", vibe.E("ui.badge_list.badgeFamilyTitles.12", "Payrolls")},
-	{"resource", vibe.E("ui.badge_list.badgeFamilyTitles.14", "Resources")},
-	{"civ", vibe.E("ui.badge_list.badgeFamilyTitles.15", "Civilizations")},
-	{"harbinger", vibe.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
-	{"doom", vibe.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
+	{"age", rowid.E("ui.badge_list.badgeFamilyTitles.02", "Ages")},
+	{"swift", rowid.E("ui.badge_list.badgeFamilyTitles.04", "Swift Eras")},
+	{"wonder", rowid.E("ui.badge_list.badgeFamilyTitles.05", "Wonders")},
+	{"maximalist", rowid.E("ui.badge_list.badgeFamilyTitles.07", "Maximalists")},
+	{"techs", rowid.E("ui.badge_list.badgeFamilyTitles.08", "Research")},
+	{"lineage", rowid.E("ui.badge_list.badgeFamilyTitles.10", "Lineages")},
+	{"domain", rowid.E("ui.badge_list.badgeFamilyTitles.12", "Payrolls")},
+	{"resource", rowid.E("ui.badge_list.badgeFamilyTitles.14", "Resources")},
+	{"civ", rowid.E("ui.badge_list.badgeFamilyTitles.15", "Civilizations")},
+	{"harbinger", rowid.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
+	{"doom", rowid.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
 	{"expedition", txtExpeditions},
-	{"awakening", vibe.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
-	{"ladder", vibe.E("ui.badge_list.badgeFamilyTitles.23", "Ladders")},
-	{"theme", vibe.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
-	{"map", vibe.E("ui.badge_list.badgeFamilyTitles.25", "Maps")},
-	{"special", vibe.E("ui.badge_list.badgeFamilyTitles.27", "Specials")},
+	{"awakening", rowid.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
+	{"ladder", rowid.E("ui.badge_list.badgeFamilyTitles.23", "Ladders")},
+	{"theme", rowid.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
+	{"map", rowid.E("ui.badge_list.badgeFamilyTitles.25", "Maps")},
+	{"special", rowid.E("ui.badge_list.badgeFamilyTitles.27", "Specials")},
 }
 
 // badgeListLocked is how many locked badges of a family the plain list
@@ -69,15 +69,15 @@ func wholeNumber(n int) string {
 // are stays "???" until the account has seen the last age.
 func badgeSummaryLine(sum game.BadgeSummary) string {
 	parts := []string{
-		vibe.Sprintf("ui.badge_list.badgeSummaryLine.01", "%d of %d earned", sum.Earned, sum.Shown),
-		textfmt.Count(sum.Points, vibe.Line("ui.badge_list.badgeSummaryLine.02", "point"), vibe.Line("ui.badge_list.badgeSummaryLine.03", "points")),
+		rowid.Sprintf("ui.badge_list.badgeSummaryLine.01", "%d of %d earned", sum.Earned, sum.Shown),
+		textfmt.Count(sum.Points, rowid.Line("ui.badge_list.badgeSummaryLine.02", "point"), rowid.Line("ui.badge_list.badgeSummaryLine.03", "points")),
 	}
 	if sum.Hidden > 0 {
 		hidden := game.BadgeHiddenName
 		if sum.HiddenCounted {
 			hidden = textfmt.Int(sum.Hidden)
 		}
-		parts = append(parts, hidden+vibe.Line("ui.badge_list.badgeSummaryLine.04", " hidden"))
+		parts = append(parts, hidden+rowid.Line("ui.badge_list.badgeSummaryLine.04", " hidden"))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -94,7 +94,7 @@ func badgeLine(v game.BadgeView) (line string, ok bool) {
 	case v.Earned:
 		line = fmt.Sprintf("[green]★[-] %s%s  %s", lit(v.Name), tier, lit(v.Desc))
 		if v.Crossed {
-			line += vibe.Line("ui.badge_list.badgeLine.01", " [red]Earned in a modified game: no points.[-]")
+			line += rowid.Line("ui.badge_list.badgeLine.01", " [red]Earned in a modified game: no points.[-]")
 		}
 		return line, true
 	case v.Hidden:
@@ -110,7 +110,7 @@ func badgeLine(v game.BadgeView) (line string, ok bool) {
 	}
 	line = fmt.Sprintf("[gray]☆[-] %s%s  [gray]%s[-]", lit(v.Name), tier, lit(v.Desc))
 	if v.Target > 0 {
-		line += vibe.Sprintf("ui.badge_list.badgeLine.02", " [gray](%s of %s)[-]", textfmt.Number(v.Progress), textfmt.Number(v.Target))
+		line += rowid.Sprintf("ui.badge_list.badgeLine.02", " [gray](%s of %s)[-]", textfmt.Number(v.Progress), textfmt.Number(v.Target))
 	}
 	return line, true
 }
@@ -176,18 +176,18 @@ func badgeFamilies(views []game.BadgeView) []badgeFamilyList {
 
 // badgeHeadLines is the top of both lists: the count, and the title worn.
 func badgeHeadLines(sum game.BadgeSummary) []string {
-	lines := []string{vibe.Line("ui.badge_list.badgeHeadLines.01", "[gold]Badges:[-] ") + badgeSummaryLine(sum)}
+	lines := []string{rowid.Line("ui.badge_list.badgeHeadLines.01", "[gold]Badges:[-] ") + badgeSummaryLine(sum)}
 	if sum.Title != "" {
-		title := vibe.Line("ui.badge_list.badgeHeadLines.02", " [gold]Title:[-] ") + wornTitle(sum)
+		title := rowid.Line("ui.badge_list.badgeHeadLines.02", " [gold]Title:[-] ") + wornTitle(sum)
 		if sum.NextTitle != "" {
-			title += vibe.Sprintf("ui.badge_list.badgeHeadLines.03", " [gray](%s at %s points)[-]", sum.NextTitle, wholeNumber(sum.NextTitleAt))
+			title += rowid.Sprintf("ui.badge_list.badgeHeadLines.03", " [gray](%s at %s points)[-]", sum.NextTitle, wholeNumber(sum.NextTitleAt))
 		}
 		lines = append(lines, title)
 	}
 	return lines
 }
 
-var badgeCaseHint = vibe.E("ui.badge_list.badgeCaseHint.01", " [gray]Type badges to open the badge case and see them all.[-]")
+var badgeCaseHint = rowid.E("ui.badge_list.badgeCaseHint.01", " [gray]Type badges to open the badge case and see them all.[-]")
 
 // badgeListLines is the account's badges as a list (`account badges`): a
 // count line, then each family in sight under a heading with its own
@@ -197,7 +197,7 @@ func badgeListLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 	lines := badgeHeadLines(sum)
 	fams := badgeFamilies(views)
 	for _, f := range fams {
-		lines = append(lines, vibe.Sprintf("ui.badge_list.badgeListLines.01", " [yellow]%s[-] [gray](%d of %d)[-]", f.title, f.got, f.shown))
+		lines = append(lines, rowid.Sprintf("ui.badge_list.badgeListLines.01", " [yellow]%s[-] [gray](%d of %d)[-]", f.title, f.got, f.shown))
 		for _, v := range f.earned {
 			if l, ok := badgeLine(v); ok {
 				lines = append(lines, "   "+l)
@@ -205,7 +205,7 @@ func badgeListLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 		}
 		for i, v := range f.locked {
 			if i == badgeListLocked {
-				lines = append(lines, vibe.Sprintf("ui.badge_list.badgeListLines.02", "   [gray]and %s more to earn.[-]", wholeNumber(len(f.locked)-i)))
+				lines = append(lines, rowid.Sprintf("ui.badge_list.badgeListLines.02", "   [gray]and %s more to earn.[-]", wholeNumber(len(f.locked)-i)))
 				break
 			}
 			if l, ok := badgeLine(v); ok {
@@ -213,11 +213,11 @@ func badgeListLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 			}
 		}
 		if f.secrets > 0 {
-			lines = append(lines, "   [gray]? "+textfmt.Count(f.secrets, vibe.Line("ui.badge_list.badgeListLines.03", "secret badge"), vibe.Line("ui.badge_list.badgeListLines.04", "secret badges"))+vibe.Line("ui.badge_list.badgeListLines.05", ", each with a hint in the badge case.[-]"))
+			lines = append(lines, "   [gray]? "+textfmt.Count(f.secrets, rowid.Line("ui.badge_list.badgeListLines.03", "secret badge"), rowid.Line("ui.badge_list.badgeListLines.04", "secret badges"))+rowid.Line("ui.badge_list.badgeListLines.05", ", each with a hint in the badge case.[-]"))
 		}
 	}
 	if len(fams) == 0 {
-		return append(lines, vibe.Line("ui.badge_list.badgeListLines.06", "   [gray]None to show yet.[-]"))
+		return append(lines, rowid.Line("ui.badge_list.badgeListLines.06", "   [gray]None to show yet.[-]"))
 	}
 	return append(lines, badgeCaseHint.String())
 }
@@ -232,9 +232,9 @@ func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 	for _, f := range fams {
 		note := ""
 		if f.secrets > 0 {
-			note = vibe.Line("ui.badge_list.badgeDigestLines.01", " [gray]and ") + textfmt.Count(f.secrets, vibe.Line("ui.badge_list.badgeDigestLines.02", "secret"), vibe.Line("ui.badge_list.badgeDigestLines.03", "secrets")) + "[-]"
+			note = rowid.Line("ui.badge_list.badgeDigestLines.01", " [gray]and ") + textfmt.Count(f.secrets, rowid.Line("ui.badge_list.badgeDigestLines.02", "secret"), rowid.Line("ui.badge_list.badgeDigestLines.03", "secrets")) + "[-]"
 		}
-		lines = append(lines, vibe.Sprintf("ui.badge_list.badgeDigestLines.04", "   [yellow]%-14s[-] %d of %d%s", f.title, f.got, f.shown, note))
+		lines = append(lines, rowid.Sprintf("ui.badge_list.badgeDigestLines.04", "   [yellow]%-14s[-] %d of %d%s", f.title, f.got, f.shown, note))
 		for _, v := range f.earned {
 			if !v.At.IsZero() {
 				latest = append(latest, v)
@@ -242,14 +242,14 @@ func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 		}
 	}
 	if len(fams) == 0 {
-		return append(lines, vibe.Line("ui.badge_list.badgeDigestLines.05", "   [gray]None to show yet.[-]"))
+		return append(lines, rowid.Line("ui.badge_list.badgeDigestLines.05", "   [gray]None to show yet.[-]"))
 	}
 	sort.SliceStable(latest, func(a, b int) bool { return latest[a].At.After(latest[b].At) })
 	for i, v := range latest {
 		if i == 3 {
 			break
 		}
-		head := vibe.Line("ui.badge_list.badgeDigestLines.06", " [gold]Latest:[-]")
+		head := rowid.Line("ui.badge_list.badgeDigestLines.06", " [gold]Latest:[-]")
 		if i > 0 {
 			head = "        "
 		}

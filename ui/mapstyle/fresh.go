@@ -3,7 +3,7 @@ package mapstyle
 import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/world"
 )
 
@@ -86,9 +86,9 @@ func rungName(stars bool, z int) string {
 	if stars {
 		switch z {
 		case zCloseUp:
-			return vibe.Line("ui.mapstyle.roguelike.view.zoomNames.closeup", "CLOSE-UP")
+			return rowid.Line("ui.mapstyle.roguelike.view.zoomNames.closeup", "CLOSE-UP")
 		case zOverview:
-			return vibe.Line("ui.mapstyle.roguelike.view.zoomNames.overview", "OVERVIEW")
+			return rowid.Line("ui.mapstyle.roguelike.view.zoomNames.overview", "OVERVIEW")
 		}
 	}
 	return zoomName(z).String()
