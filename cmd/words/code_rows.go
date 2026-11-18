@@ -300,7 +300,7 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 			r.unsure = true
 			what = "An error from the plumbing under the game (files, the network), which may never be shown as written"
 		}
-	case isLog:
+	case isLog && !single:
 		r.kind = kindMessage
 		what = "A line in the game log"
 		r.seen = seenNews
