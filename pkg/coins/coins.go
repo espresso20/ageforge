@@ -23,6 +23,7 @@ type entry struct {
 // table is the fixed list of ages with drawn money, in display order.
 var table = [...]entry{
 	{"classical_age", classical, classicalLegend},
+	{"medieval_age", medieval, medievalLegend},
 }
 
 func find(age string) *entry {
