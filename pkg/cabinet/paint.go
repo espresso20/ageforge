@@ -39,7 +39,7 @@ func hash(x, y, seed int) float64 {
 }
 
 func smooth(a, b, x float64) float64 {
-	t := math.Max(0, math.Min(1, (x-a)/(b-a)))
+	t := clamp((x-a)/(b-a), 0, 1)
 	return t * t * (3 - 2*t)
 }
 
@@ -58,10 +58,7 @@ func valueNoise(x, y float64, seed int) float64 {
 // tone picks a ramp step for v in 0..1, stippling only the seams.
 func tone(r []color.RGBA, v float64, x, y int) color.RGBA {
 	v = clamp(v, 0, 1) * float64(len(r)-1)
-	lo := int(v)
-	if lo >= len(r)-1 {
-		return r[len(r)-1]
-	}
+	lo := min(int(v), len(r)-2)
 	if v-float64(lo) > bayer[y&3][x&3] {
 		lo++
 	}
@@ -105,10 +102,8 @@ func (c *canvas) get(x, y int) color.RGBA {
 	return color.RGBA{}
 }
 
-func (c *canvas) bounds() image.Rectangle { return c.img.Rect.Add(c.org) }
-
 func (c *canvas) fill(r image.Rectangle, col color.RGBA) {
-	r = r.Intersect(c.bounds())
+	r = r.Intersect(c.img.Rect.Add(c.org))
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		for x := r.Min.X; x < r.Max.X; x++ {
 			c.px(x, y, col)
@@ -124,7 +119,7 @@ func (c *canvas) fall(x, y int) float64 {
 // board paints a walnut board with its own grain (seed), one step of tone
 // (shift) and a grain direction.
 func (c *canvas) board(r image.Rectangle, seed int, shift float64, vert bool) {
-	r = r.Intersect(c.bounds())
+	r = r.Intersect(c.img.Rect.Add(c.org))
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		for x := r.Min.X; x < r.Max.X; x++ {
 			u, v := float64(x), float64(y)

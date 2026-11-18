@@ -34,12 +34,8 @@ func (c *canvas) carcass(l Layout) {
 	for _, f := range l.Fronts {
 		o := f.Inset(-cut)
 		c.fill(o, black)
-		for x := o.Min.X; x < o.Max.X; x++ {
-			c.px(x, o.Max.Y-1, walnut[3])
-		}
-		for y := o.Min.Y; y < o.Max.Y; y++ {
-			c.px(o.Max.X-1, y, walnut[2])
-		}
+		c.fill(image.Rect(o.Min.X, o.Max.Y-1, o.Max.X, o.Max.Y), walnut[3])
+		c.fill(image.Rect(o.Max.X-1, o.Min.Y, o.Max.X, o.Max.Y), walnut[2])
 	}
 }
 
@@ -48,14 +44,13 @@ func (c *canvas) bands(w, y0, y1 int, idx []int) {
 	for y := y0; y < y1; y++ {
 		k := idx[(y-y0)*len(idx)/(y1-y0)]
 		for x := 0; x < w; x++ {
-			switch {
-			case k < 0:
-				c.px(x, y, black)
-			case k == 9:
-				c.px(x, y, walnut[3+(x/max(1, c.sc(3)))%2])
-			default:
-				c.px(x, y, walnut[k])
+			col := black
+			if k == 9 {
+				col = walnut[3+(x/max(1, c.sc(3)))%2]
+			} else if k >= 0 {
+				col = walnut[k]
 			}
+			c.px(x, y, col)
 		}
 	}
 }

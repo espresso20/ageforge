@@ -12,11 +12,10 @@ import (
 // Cols, Rows and Slots give the grid of drawers.
 const (
 	Cols, Rows, Slots = 5, 5, 25
-
-	ageGlyphs = 18 // cells under the name plate of an age drawer
-	freeGlyph = 12 // cells under the name plate of an ageless drawer
-	minFront  = 22 // narrowest front, in cells
-	minPull   = 24 // smallest pull, in pixels
+	ageGlyphs         = 18 // cells under the name plate of an age drawer
+	freeGlyph         = 12 // cells under the name plate of an ageless drawer
+	minFront          = 22 // narrowest front, in cells
+	minPull           = 24 // smallest pull, in pixels
 )
 
 // Layout is where everything sits. Fronts are in pixels; the rest are in cells.
@@ -25,12 +24,11 @@ type Layout struct {
 	Fronts      [Slots]image.Rectangle // pixels, on whole cells
 	Plates      [Slots]image.Rectangle // cells: one row, the drawer's name
 	Title, Hint image.Rectangle        // cells: the totals plate on the cornice, the hint plate on the plinth
-
-	s       float64     // pixels per design unit
-	gap     image.Point // cells between fronts
-	cornice int         // rows of cornice
-	base    int         // first row of the plinth
-	stile   [2]int      // cells of the left and right sides of the case
+	s           float64                // pixels per design unit
+	gap         image.Point            // cells between fronts
+	cornice     int                    // rows of cornice
+	base        int                    // first row of the plinth
+	stile       [2]int                 // cells of the left and right sides of the case
 }
 
 // Plan picks the largest five by five grid that fits the panel, keeping the

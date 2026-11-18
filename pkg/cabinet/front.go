@@ -16,8 +16,6 @@ type Drawer struct {
 	Total, Held int    // studs, and how many are lit
 }
 
-func (d Drawer) complete() bool { return d.Reached && d.Total > 0 && d.Held == d.Total }
-
 func drawerAt(ds []Drawer, i int) Drawer {
 	if i < len(ds) {
 		return ds[i]
@@ -46,7 +44,7 @@ func (c *canvas) pull(cx, cy, dia int, d Drawer, mint *coins.Mint) {
 	case d.Legend:
 		c.disc(cx, cy, dia, true)
 		if im := piece(coins.Legendary, n+2); im != nil {
-			c.blit(im, cx, cy)
+			c.lay(im, cx, cy, 0, false)
 		}
 	default:
 		im := piece(min(d.Best, coins.Levels), n)
@@ -57,8 +55,8 @@ func (c *canvas) pull(cx, cy, dia int, d Drawer, mint *coins.Mint) {
 		if covered(im) < 0.4 { // a thin piece needs the recess to read against the wood
 			c.disc(cx, cy, dia, false)
 		}
-		c.cast(im, cx, cy, max(1, c.sc(3)))
-		c.blit(im, cx, cy)
+		c.lay(im, cx, cy, max(1, c.sc(3)), true)
+		c.lay(im, cx, cy, 0, false)
 	}
 }
 
@@ -80,7 +78,7 @@ func (c *canvas) drawer(l Layout, d Drawer, i int, off image.Point, mint *coins.
 	lo := pl.Max.Y + max(2, c.sc(3)) + max(1, c.sc(3))
 	hi := f.Max.Y - max(3, c.sc(5)) - off.Y
 	c.studs(cx+off.X, (lo+hi)/2+off.Y, d.Total, d.Held, f.Dx()-2*c.sc(24), seed)
-	if d.complete() {
+	if d.Reached && d.Total > 0 && d.Held == d.Total {
 		c.seal(f.Max.X-c.sc(26), f.Min.Y+c.sc(26), seed)
 	}
 }

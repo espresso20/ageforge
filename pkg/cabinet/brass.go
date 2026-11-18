@@ -16,7 +16,7 @@ func (c *canvas) stud(x, y int, held bool, seed int) {
 	if h > 0.8 {
 		body = brass[2]
 	}
-	lip := max(1, c.sc(1.5))
+	lip := float64(max(1, c.sc(1.5))) + 0.5
 	for yy := 0; yy <= d; yy++ {
 		for xx := 0; xx <= d; xx++ {
 			dist := math.Hypot(float64(xx)-r+0.5, float64(yy)-r+0.5)
@@ -32,14 +32,10 @@ func (c *canvas) stud(x, y int, held bool, seed int) {
 				}
 				c.px(x+xx, y+yy, col)
 			case in:
-				col := black
-				if xx+yy < 3 {
-					col = hx(0)
-				}
-				c.px(x+xx, y+yy, col)
-			case held && dist <= r+0.5+float64(lip) && xx+yy > d:
 				c.px(x+xx, y+yy, black)
-			case !held && dist <= r+0.5+float64(lip) && xx+yy > d:
+			case held && dist <= r+lip && xx+yy > d:
+				c.px(x+xx, y+yy, black)
+			case !held && dist <= r+lip && xx+yy > d:
 				c.px(x+xx, y+yy, walnut[4])
 			}
 		}
@@ -64,19 +60,19 @@ func (c *canvas) ring(cx, cy, dia, seed int) {
 	t := math.Max(1.5, r*0.14)
 	mw := max(2, int(r*0.35)) + int(hash(seed, 1, 2)*2)
 	top := cy - int(r) - int(r*0.38)
-	c.fill(image.Rect(cx-mw, top, cx+mw, top+int(r*0.7)), brass[2])
+	mh := int(r * 0.7)
+	c.fill(image.Rect(cx-mw, top, cx+mw, top+mh), brass[2])
 	c.fill(image.Rect(cx-mw, top, cx+mw, top+1), brass[4])
-	c.fill(image.Rect(cx+mw-1, top, cx+mw, top+int(r*0.7)), brass[1])
-	reach := int(r + t + 1)
+	c.fill(image.Rect(cx+mw-1, top, cx+mw, top+mh), brass[1])
+	sh := max(1, c.sc(4))
 	for pass := 0; pass < 2; pass++ {
-		for y := -reach; y <= reach; y++ {
-			for x := -reach; x <= reach; x++ {
+		for y := -int(r + t + 1); y <= int(r+t+1); y++ {
+			for x := -int(r + t + 1); x <= int(r+t+1); x++ {
 				d := math.Hypot(float64(x), float64(y))
 				if math.Abs(d-r) > t {
 					continue
 				}
 				if pass == 0 {
-					sh := max(1, c.sc(4))
 					c.px(cx+x+sh, cy+y+sh, black)
 					continue
 				}
@@ -122,29 +118,19 @@ func (c *canvas) disc(cx, cy, dia int, gold bool) {
 	}
 }
 
-// outline lays the shape of a piece in a recess: its edge dim, its main inner
-// contour dimmer and its body one step above the floor.
+// outline lays the shape of a piece in a recess: its edge dim and its body
+// one step above the floor.
 func (c *canvas) outline(cx, cy int, im *image.RGBA) {
 	n := im.Rect.Dx()
 	solid := func(x, y int) bool { return image.Pt(x, y).In(im.Rect) && im.RGBAAt(x, y).A > 0 }
-	lum := func(x, y int) float64 {
-		p := im.RGBAAt(x, y)
-		return (float64(p.R)*0.3 + float64(p.G)*0.59 + float64(p.B)*0.11) / 255
-	}
 	for y := 0; y < n; y++ {
 		for x := 0; x < n; x++ {
 			if !solid(x, y) {
 				continue
 			}
 			col := hx(0x3a281a)
-			switch {
-			case !solid(x-1, y) || !solid(x+1, y) || !solid(x, y-1) || !solid(x, y+1):
+			if !solid(x-1, y) || !solid(x+1, y) || !solid(x, y-1) || !solid(x, y+1) {
 				col = hx(0x84704a)
-			case solid(x-2, y) && solid(x+2, y) && solid(x, y-2) && solid(x, y+2) && x+2 < n && y+2 < n:
-				l := lum(x, y)
-				if math.Abs(l-lum(x+1, y)) > 0.12 || math.Abs(l-lum(x, y+1)) > 0.12 {
-					col = hx(0x5e4a32)
-				}
 			}
 			c.px(cx-n/2+x, cy-n/2+y, col)
 		}
@@ -162,25 +148,18 @@ func covered(im *image.RGBA) float64 {
 	return float64(n) / float64(len(im.Pix)/4)
 }
 
-// blit lays the opaque pixels of im with its centre at cx, cy.
-func (c *canvas) blit(im *image.RGBA, cx, cy int) {
+// lay draws the opaque pixels of im centred on cx, cy and moved by d; a
+// shadow draws them all black, the hard cast shadow of the piece.
+func (c *canvas) lay(im *image.RGBA, cx, cy, d int, shadow bool) {
 	b := im.Rect
 	for y := 0; y < b.Dy(); y++ {
 		for x := 0; x < b.Dx(); x++ {
-			if p := im.RGBAAt(b.Min.X+x, b.Min.Y+y); p.A > 0 {
-				c.px(cx-b.Dx()/2+x, cy-b.Dy()/2+y, p)
+			p := im.RGBAAt(b.Min.X+x, b.Min.Y+y)
+			if shadow && p.A > 0 {
+				p = black
 			}
-		}
-	}
-}
-
-// cast draws the hard shadow of im, offset down and right.
-func (c *canvas) cast(im *image.RGBA, cx, cy, d int) {
-	b := im.Rect
-	for y := 0; y < b.Dy(); y++ {
-		for x := 0; x < b.Dx(); x++ {
-			if im.RGBAAt(b.Min.X+x, b.Min.Y+y).A > 0 {
-				c.px(cx-b.Dx()/2+x+d, cy-b.Dy()/2+y+d, black)
+			if p.A > 0 {
+				c.px(cx-b.Dx()/2+x+d, cy-b.Dy()/2+y+d, p)
 			}
 		}
 	}
@@ -234,22 +213,17 @@ func (c *canvas) plate(face image.Rectangle, dim bool, seed int) {
 	sh := max(1, c.sc(3))
 	c.fill(o.Add(image.Pt(sh, sh)), black)
 	c.fill(o, PlateFace(dim))
-	for x := o.Min.X; x < o.Max.X; x++ {
-		c.px(x, o.Min.Y, lit)
-		c.px(x, o.Max.Y-1, dk)
-	}
-	for y := o.Min.Y; y < o.Max.Y; y++ {
-		c.px(o.Min.X, y, lit)
-		c.px(o.Max.X-1, y, dk)
-	}
+	c.fill(image.Rect(o.Min.X, o.Min.Y, o.Max.X, o.Min.Y+1), lit)
+	c.fill(image.Rect(o.Min.X, o.Max.Y-1, o.Max.X, o.Max.Y), dk)
+	c.fill(image.Rect(o.Min.X, o.Min.Y, o.Min.X+1, o.Max.Y), lit)
+	c.fill(image.Rect(o.Max.X-1, o.Min.Y, o.Max.X, o.Max.Y), dk)
 	ps := max(1, c.sc(2))
-	jit := func(k int, span int) int { return int(hash(seed, k, 11) * float64(span+1)) }
+	jit := func(k, span int) int { return int(hash(seed, k, 11) * float64(span+1)) }
 	for k := 0; k < 4; k++ {
-		x := o.Min.X + 1 + jit(k, mx-ps-3)
+		x, y := o.Min.X+1+jit(k, mx-ps-3), o.Min.Y+1+jit(k+4, 1)
 		if k&1 == 1 {
 			x = o.Max.X - 1 - ps - jit(k, mx-ps-3)
 		}
-		y := o.Min.Y + 1 + jit(k+4, 1)
 		if k&2 == 2 {
 			y = o.Max.Y - 1 - ps - jit(k+4, 1)
 		}
