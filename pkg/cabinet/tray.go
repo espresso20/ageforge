@@ -269,20 +269,19 @@ func lining(slot int) ([]color.RGBA, int) {
 	return baize, 0
 }
 
-// tray paints what lies in the canvas: the frame, the lining, the wells and
-// the plates. sel is the selected well, Wells for the legendary, -1 for none.
-func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
+// frame paints the frame, the lining and the grooves, and gives the lining.
+func (c *canvas) frame(l TrayLayout, slot int) []color.RGBA {
 	whole, lin := c.img.Rect.Add(c.org), l.lining
 	w, h := l.Cells.X*l.Cell.X, l.Cells.Y*l.Cell.Y
-	rp, kind := lining(t.Slot)
+	rp, kind := lining(slot)
 	c.dark = mul(rp[1], 0.55)
 	for _, r := range []image.Rectangle{image.Rect(0, 0, w, lin.Min.Y), image.Rect(0, lin.Max.Y, w, h),
 		image.Rect(0, lin.Min.Y, lin.Min.X, lin.Max.Y), image.Rect(lin.Max.X, lin.Min.Y, w, lin.Max.Y)} {
 		par(r.Intersect(whole), func(b image.Rectangle) {
 			if kind == 2 {
-				c.surface(b, lin, alu, 1, 9+t.Slot)
+				c.surface(b, lin, alu, 1, 9+slot)
 			} else {
-				c.board(b, 700+t.Slot, 0, false)
+				c.board(b, 700+slot, 0, false)
 			}
 		})
 	}
@@ -293,6 +292,26 @@ func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
 	c.edge(image.Rect(0, 0, w, st-groove), false)
 	c.edge(image.Rect(0, h-st+groove, w, h), false)
 	c.edge(lin.Inset(-1), true)
+	return rp
+}
+
+// rail plates the rail's name, count, hint and ticket and the neighbours' names.
+func (c *canvas) rail(l TrayLayout, slot int) {
+	seed := slot*20 + 1
+	for k, r := range []image.Rectangle{l.Name, l.Count, l.Hint, l.Above, l.Below} {
+		if (k == 3 && slot == 0) || (k == 4 && slot == Slots-1) {
+			continue
+		}
+		c.plate(l.pix(r), false, seed+k)
+	}
+	c.plate(l.pix(l.Ticket), false, seed+12)
+}
+
+// tray paints what lies in the canvas: the frame, the lining, the wells and
+// the plates. sel is the selected well, Wells for the legendary, -1 for none.
+func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
+	whole := c.img.Rect.Add(c.org)
+	rp := c.frame(l, t.Slot)
 	for i := 0; i < Wells; i++ {
 		if l.Wells[i].Overlaps(whole) {
 			c.well(l, t, i, mint, sel == i, rp)
@@ -302,13 +321,7 @@ func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
 		c.legend(l, t, mint, sel == Wells, rp)
 	}
 	seed := t.Slot*20 + 1
-	for k, r := range []image.Rectangle{l.Name, l.Count, l.Hint, l.Above, l.Below} {
-		if (k == 3 && t.Slot == 0) || (k == 4 && t.Slot == Slots-1) {
-			continue
-		}
-		c.plate(l.pix(r), false, seed+k)
-	}
-	c.plate(l.pix(l.Ticket), false, seed+12)
+	c.rail(l, t.Slot)
 	for i, r := range l.Labels {
 		c.plate(l.pix(r), i < Wells && len(t.Stacks[i]) == 0 || i == Wells && !t.Legend, seed+5+i)
 	}
