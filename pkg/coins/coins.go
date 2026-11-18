@@ -25,6 +25,7 @@ var table = [...]entry{
 	{"classical_age", classical, classicalLegend},
 	{"medieval_age", medieval, medievalLegend},
 	{"victorian_age", victorian, victorianLegend},
+	{"modern_age", modern, modernLegend},
 	{"cyberpunk_age", cyberpunk, cyberpunkLegend},
 }
 

@@ -174,6 +174,19 @@ func sector(x, y float64, n int, rot float64) int {
 	return int(math.Floor((a+sec/2+10*math.Pi*2)/sec)) % n
 }
 
+// frac is the part of v after the whole number below it.
+func frac(v float64) float64 { return v - math.Floor(v) }
+
+// ngon is the corners of a regular polygon of circumradius r, rotated by rot.
+func ngon(n int, r, rot float64) []vec {
+	p := make([]vec, n)
+	for i := range p {
+		a := rot + 2*math.Pi*float64(i)/float64(n)
+		p[i] = vec{r * math.Cos(a), r * math.Sin(a)}
+	}
+	return p
+}
+
 // ---- signed distances, negative inside ----
 
 type vec struct{ x, y float64 }
