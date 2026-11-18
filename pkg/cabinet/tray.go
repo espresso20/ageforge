@@ -149,7 +149,7 @@ func (c *canvas) cut(m mask, wx, wy int, rp []color.RGBA, sel, recess bool, seed
 		floor, d1, d2 = mul(rp[1], 1.1), mul(rp[0], 0.45), mul(rp[0], 0.95)
 	}
 	if sel {
-		lip, lipN = brass[4], 1
+		lip, lipN = brass[4], 3
 	}
 	rim, spk := 2+seed/3%2, 0.8+0.03*float64(seed%5)
 	for y := -3; y < m.h+3; y++ {
@@ -202,7 +202,7 @@ func (c *canvas) well(l TrayLayout, t Tray, i int, mint *coins.Mint, sel bool, r
 	}
 	lift, sh := 0, max(2, c.sc(3))
 	if sel {
-		lift = max(3, c.sc(5))
+		lift = max(4, c.sc(8))
 	}
 	for k := n - 1; k >= 0; k-- {
 		im := get(mint, t.Money, t.Types[i], st[k].Level, st[k].Seed, l.piece)
@@ -210,13 +210,20 @@ func (c *canvas) well(l TrayLayout, t Tray, i int, mint *coins.Mint, sel bool, r
 			continue
 		}
 		x, y := cp.X-half.X+offs[k].X, cp.Y-half.Y+offs[k].Y
-		d := sh
+		d, lf := sh, 0
 		if k == 0 {
-			x, y, d = x-lift, y-lift, sh+lift
+			x, y, d, lf = x-lift, y-lift, sh+lift, lift
 		}
-		c.lay(im, x, y, d, true)
-		c.lay(im, x, y, 0, false)
+		c.cast(im, x, y, d, lf)
 	}
+}
+
+// cast lays a piece over a hard shadow, long when the piece is lifted.
+func (c *canvas) cast(im *image.RGBA, x, y, d, lift int) {
+	for e := d; e <= d+lift; e += max(1, lift/2) {
+		c.lay(im, x, y, e, true)
+	}
+	c.lay(im, x, y, 0, false)
 }
 
 // get is the mint's piece, or nil where there is no mint.
@@ -229,22 +236,33 @@ func get(m *coins.Mint, age, typ string, level int, seed uint32, size int) *imag
 
 // legend paints the round central well: the level 7 piece when held, its
 // outline when not.
-func (c *canvas) legend(l TrayLayout, t Tray, mint *coins.Mint, sel bool) {
+func (c *canvas) legend(l TrayLayout, t Tray, mint *coins.Mint, sel bool, rp []color.RGBA) {
 	cp := l.ctr[Wells]
-	c.disc(cp.X, cp.Y, l.dia, true)
+	c.pit(cp.X, cp.Y, l.dia, rp)
 	im := get(mint, t.Money, "feat", coins.Legendary, 0, l.dia*6/7)
 	switch {
 	case im == nil:
 	case !t.Legend:
 		c.outline(cp.X, cp.Y, im)
 	case sel:
-		d := max(3, c.sc(5))
-		c.lay(im, cp.X-d, cp.Y-d, d+max(2, c.sc(3)), true)
-		c.lay(im, cp.X-d, cp.Y-d, 0, false)
+		d := max(4, c.sc(8))
+		c.cast(im, cp.X-d, cp.Y-d, d+max(2, c.sc(3)), d)
 	default:
-		c.lay(im, cp.X, cp.Y, max(2, c.sc(3)), true)
-		c.lay(im, cp.X, cp.Y, 0, false)
+		c.cast(im, cp.X, cp.Y, max(2, c.sc(3)), 0)
 	}
+}
+
+// lining is the ramp and the kind of surface of a drawer's tray.
+func lining(slot int) ([]color.RGBA, int) {
+	switch {
+	case slot >= 15 && slot < 22:
+		return foam, 2
+	case slot > 12:
+		return felt, 0
+	case slot > 7:
+		return velvet, 0
+	}
+	return baize, 0
 }
 
 // tray paints what lies in the canvas: the frame, the lining, the wells and
@@ -252,20 +270,11 @@ func (c *canvas) legend(l TrayLayout, t Tray, mint *coins.Mint, sel bool) {
 func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
 	whole, lin := c.img.Rect.Add(c.org), l.lining
 	w, h := l.Cells.X*l.Cell.X, l.Cells.Y*l.Cell.Y
-	late := t.Slot >= 15 && t.Slot < 22
-	rp, kind, frame := baize, 0, 0
-	switch {
-	case late:
-		rp, kind, frame = foam, 2, 1
-	case t.Slot > 12:
-		rp = felt
-	case t.Slot > 7:
-		rp = velvet
-	}
+	rp, kind := lining(t.Slot)
 	for _, r := range []image.Rectangle{image.Rect(0, 0, w, lin.Min.Y), image.Rect(0, lin.Max.Y, w, h),
 		image.Rect(0, lin.Min.Y, lin.Min.X, lin.Max.Y), image.Rect(lin.Max.X, lin.Min.Y, w, lin.Max.Y)} {
 		par(r.Intersect(whole), func(b image.Rectangle) {
-			if frame == 1 {
+			if kind == 2 {
 				c.surface(b, lin, alu, 1, 9+t.Slot)
 			} else {
 				c.board(b, 700+t.Slot, 0, false)
@@ -285,7 +294,7 @@ func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
 		}
 	}
 	if l.Legend.Overlaps(whole) {
-		c.legend(l, t, mint, sel == Wells)
+		c.legend(l, t, mint, sel == Wells, rp)
 	}
 	seed := t.Slot*20 + 1
 	for k, r := range []image.Rectangle{l.Name, l.Count, l.Hint, l.Above, l.Below} {
@@ -294,6 +303,7 @@ func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
 		}
 		c.plate(l.pix(r), false, seed+k)
 	}
+	c.plate(l.pix(l.Ticket), false, seed+12)
 	for i, r := range l.Labels {
 		c.plate(l.pix(r), i < Wells && len(t.Stacks[i]) == 0 || i == Wells && !t.Legend, seed+5+i)
 	}
@@ -318,4 +328,28 @@ func Lift(l TrayLayout, t Tray, i int, mint *coins.Mint) (cells image.Rectangle,
 	c := newCanvas(l.pix(cells), l.s)
 	c.tray(l, t, mint, i)
 	return cells, c.img
+}
+
+// pit paints the legendary's round well: a floor a few steps darker than the
+// lining and dithered lighter towards the rim, a hard shadow along the upper
+// edge and a thin gold lip.
+func (c *canvas) pit(cx, cy, dia int, rp []color.RGBA) {
+	r, cut := float64(dia)/2, float64(max(3, c.sc(10)))
+	for y := -dia/2 - 1; y <= dia/2+1; y++ {
+		for x := -dia/2 - 1; x <= dia/2+1; x++ {
+			d := math.Hypot(float64(x), float64(y))
+			col := mul(rp[1], 0.5)
+			switch {
+			case d > r:
+				continue
+			case d > r-2:
+				col = brass[4]
+			case float64(-x-y)/math.Sqrt2 > 0 && r-d < cut:
+				col = mul(rp[0], 0.35)
+			case (d-r*0.75)/(r*0.25) > bayer[(cy+y)&3][(cx+x)&3]:
+				col = mul(rp[1], 0.8)
+			}
+			c.px(cx+x, cy+y, col)
+		}
+	}
 }

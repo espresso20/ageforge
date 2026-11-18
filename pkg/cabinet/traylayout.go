@@ -24,11 +24,14 @@ type TrayLayout struct {
 	Labels            [Wells + 1]image.Rectangle // one row under each well; the last is the legendary's
 	Name, Count, Hint image.Rectangle            // one row each, on this drawer's rail
 	Above, Below      image.Rectangle            // the neighbours' name plates
+	Ticket            image.Rectangle            // two rows on the rail, for the selected copy's words
 	s                 float64                    // pixels per design unit
 	lining            image.Rectangle
 	ctr               [Wells + 1]image.Point
-	piece, grow, step int // type piece size, rim of the cut, offset between copies
-	dia               int // diameter of the legendary well
+	piece, grow, step int             // type piece size, rim of the cut, offset between copies
+	dia               int             // diameter of the legendary well
+	fan               image.Rectangle // cells of the lining below the arc, where Fan lays copies
+	fanSz, pad        int             // size of a fanned copy; room for its shadow
 }
 
 // PlanTray places the tray for a panel of cols by rows cells. The wells sit
@@ -52,7 +55,7 @@ func PlanTray(cols, rows, cw, ch int) (TrayLayout, bool) {
 	if l.piece < 48 {
 		return TrayLayout{}, false
 	}
-	ox, oy := (lin.Min.X+lin.Max.X)/2, lin.Min.Y+(lin.Dy()-u(706))/2
+	ox, oy := (lin.Min.X+lin.Max.X)/2, lin.Min.Y-u(5)
 	reach := l.piece/2 + l.grow + 4*l.step + 1
 	for i, dx := range [Wells]float64{-640, -340, 0, 340, 640} {
 		t := dx / 640
@@ -80,13 +83,22 @@ func PlanTray(cols, rows, cw, ch int) (TrayLayout, bool) {
 			}
 		}
 	}
+	low := 0
+	for _, r := range l.Labels {
+		low = max(low, l.pix(r).Max.Y)
+	}
+	l.pad = my + 1
+	l.fan = image.Rect((lin.Min.X+cw-1)/cw, (low+2*my+1+ch-1)/ch, lin.Max.X/cw, lin.Max.Y/ch)
+	l.fanSz = min(l.piece, l.pix(l.fan).Dy()-2*l.pad)
 	x0, pr := (sw+cw-1)/cw+2, rows-strip-rail/2-1
 	l.Name = image.Rect(x0, pr, x0+ageGlyphs, pr+1)
 	l.Count = image.Rect(x0+ageGlyphs+3, pr, x0+ageGlyphs+3+freeGlyph, pr+1)
 	l.Hint = image.Rect(l.Count.Max.X+3, pr, l.Count.Max.X+39, pr+1)
 	l.Above = image.Rect(x0, 1, x0+ageGlyphs, 2)
 	l.Below = image.Rect(x0, rows-2, x0+ageGlyphs, rows-1)
-	return l, l.Hint.Max.X < cols
+	right := cols - x0
+	l.Ticket = image.Rect(max(right-36, l.Hint.Max.X+3), pr, right, pr+2)
+	return l, l.Ticket.Dx() >= 24
 }
 
 // At gives the well under a cell, Wells for the legendary well, or -1.

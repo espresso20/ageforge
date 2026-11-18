@@ -40,9 +40,10 @@ func TestPlanTrayShapes(t *testing.T) {
 		for _, c := range l.Labels {
 			rs = append(rs, l.pix(c))
 		}
-		for _, c := range []image.Rectangle{l.Name, l.Count, l.Hint, l.Above, l.Below} {
+		for _, c := range []image.Rectangle{l.Name, l.Count, l.Hint, l.Above, l.Below, l.Ticket} {
 			rs = append(rs, l.pix(c))
 		}
+		rs = append(rs, l.pix(l.fan))
 		for i, a := range rs {
 			for j := i + 1; j < len(rs); j++ {
 				if a.Overlaps(rs[j]) {
