@@ -12,10 +12,7 @@ func (c *canvas) stud(x, y int, held bool, seed int) {
 	r := float64(d) / 2
 	h := hash(x, y, seed)
 	hl := d*3/8 + int(h*2) // highlight reach
-	body := brass[3]
-	if h > 0.8 {
-		body = brass[2]
-	}
+	body := brass[3-int(h+0.2)]
 	lip := float64(max(1, c.sc(1.5))) + 0.5
 	for yy := 0; yy <= d; yy++ {
 		for xx := 0; xx <= d; xx++ {
@@ -57,13 +54,30 @@ func (c *canvas) studs(cx, cy, total, held, maxW, seed int) {
 // ring is a plain brass ring pull on a small mount.
 func (c *canvas) ring(cx, cy, dia, seed int) {
 	r := float64(dia) * 0.27
-	t := math.Max(1.5, r*0.14)
-	mw := max(2, int(r*0.35)) + int(hash(seed, 1, 2)*2)
-	top := cy - int(r) - int(r*0.38)
-	mh := int(r * 0.7)
-	c.fill(image.Rect(cx-mw, top, cx+mw, top+mh), brass[2])
-	c.fill(image.Rect(cx-mw, top, cx+mw, top+1), brass[4])
-	c.fill(image.Rect(cx+mw-1, top, cx+mw, top+mh), brass[1])
+	t := math.Max(1.5, r*0.14*(0.85+0.4*hash(seed, 2, 2)))
+	mw := max(3, int(r*0.42)) + int(hash(seed, 1, 2)*3)
+	top, mh := cy-int(r*1.62), int(r*0.8)
+	cut, shape := max(1, mw/2), int(hash(seed, 6, 2)*3)
+	for y := top; y < top+mh; y++ {
+		for x := cx - mw; x < cx+mw; x++ {
+			dx, dy := x-cx, y-top-mh/2
+			corner := (dx < cut-mw || dx >= mw-cut) && (y < top+cut || y >= top+mh-cut)
+			if (shape == 1 && corner) || (shape == 2 && math.Hypot(float64(dx)+.5, float64(dy)+.5) > float64(mw)) {
+				continue
+			}
+			col := brass[2]
+			if dx+dy < -mw/2 {
+				col = brass[4]
+			} else if dx+dy > mw/2 {
+				col = brass[1]
+			}
+			c.px(x, y, col)
+		}
+	}
+	u := c.sc(1)
+	cx, cy = cx+(int(hash(seed, 4, 2)*3)-1)*u, cy+int(hash(seed, 3, 2)*3)*u
+	th := math.Pi/4 + (hash(seed, 5, 2)-0.5)*0.87
+	cs, sn := math.Sqrt2*math.Cos(th), math.Sqrt2*math.Sin(th)
 	sh := max(1, c.sc(4))
 	for pass := 0; pass < 2; pass++ {
 		for y := -int(r + t + 1); y <= int(r+t+1); y++ {
@@ -76,8 +90,9 @@ func (c *canvas) ring(cx, cy, dia, seed int) {
 					c.px(cx+x+sh, cy+y+sh, black)
 					continue
 				}
-				col := tone(brass, 0.55-0.5*float64(x+y)/(2*r), cx+x, cy+y)
-				if (d > r+t*0.45 && x+y < 0) || (d < r-t*0.45 && x+y > 0) {
+				q := float64(x)*cs + float64(y)*sn
+				col := tone(brass, 0.55-0.5*q/(2*r), cx+x, cy+y)
+				if (d > r+t*0.45 && q < 0) || (d < r-t*0.45 && q > 0) {
 					col = brass[4]
 				}
 				c.px(cx+x, cy+y, col)
@@ -110,7 +125,7 @@ func (c *canvas) disc(cx, cy, dia int, gold bool) {
 				}
 				c.px(cx+x, cy+y, col)
 			case gold && d <= r:
-				c.px(cx+x, cy+y, brass[4]) // the gold line, all the way round
+				c.px(cx+x, cy+y, brass[4])
 			case d <= r+float64(cut)*0.8 && x+y > 0:
 				c.px(cx+x, cy+y, walnut[4])
 			}
@@ -118,19 +133,39 @@ func (c *canvas) disc(cx, cy, dia int, gold bool) {
 	}
 }
 
-// outline lays the shape of a piece in a recess: its edge dim and its body
-// one step above the floor.
+// outline lays the shape of a piece in a recess: its edge dim, its inner
+// contours dimmer and its body one step above the floor.
 func (c *canvas) outline(cx, cy int, im *image.RGBA) {
 	n := im.Rect.Dx()
 	solid := func(x, y int) bool { return image.Pt(x, y).In(im.Rect) && im.RGBAAt(x, y).A > 0 }
+	lum := func(x, y int) float64 {
+		p := im.RGBAAt(x, y)
+		return (float64(p.R)*0.3 + float64(p.G)*0.59 + float64(p.B)*0.11) / 255
+	}
+	near := func(x, y int) bool { // within two pixels of the edge of the shape
+		for dy := -2; dy <= 2; dy++ {
+			for dx := -2; dx <= 2; dx++ {
+				if !solid(x+dx, y+dy) {
+					return true
+				}
+			}
+		}
+		return false
+	}
 	for y := 0; y < n; y++ {
 		for x := 0; x < n; x++ {
 			if !solid(x, y) {
 				continue
 			}
 			col := hx(0x3a281a)
-			if !solid(x-1, y) || !solid(x+1, y) || !solid(x, y-1) || !solid(x, y+1) {
+			switch {
+			case !solid(x-1, y) || !solid(x+1, y) || !solid(x, y-1) || !solid(x, y+1):
 				col = hx(0x84704a)
+			case !near(x, y):
+				l := lum(x, y)
+				if math.Abs(l-lum(x+1, y)) > 0.12 || math.Abs(l-lum(x, y+1)) > 0.12 {
+					col = hx(0x5e4a32)
+				}
 			}
 			c.px(cx-n/2+x, cy-n/2+y, col)
 		}
@@ -163,75 +198,4 @@ func (c *canvas) lay(im *image.RGBA, cx, cy, d int, shadow bool) {
 			}
 		}
 	}
-}
-
-// seal is a wax seal whose outline, lobes and rim vary with the seed.
-func (c *canvas) seal(cx, cy, seed int) {
-	r := max(5, c.sc(13))
-	lobes := float64(6 + seed%3)
-	amp := (1.2 + 0.8*hash(seed, 3, 7)) * c.s
-	phase := hash(seed, 4, 7) * math.Pi
-	ring := 4 + hash(seed, 5, 7)*2
-	sh := max(1, c.sc(3))
-	for pass := 0; pass < 2; pass++ {
-		for y := -r - 3; y <= r+3; y++ {
-			for x := -r - 3; x <= r+3; x++ {
-				d := math.Hypot(float64(x), float64(y))
-				rr := float64(r) + amp*math.Sin(lobes*math.Atan2(float64(y), float64(x))+phase)
-				if d > rr {
-					continue
-				}
-				if pass == 0 {
-					c.px(cx+x+sh, cy+y+sh, black)
-					continue
-				}
-				col := tone(wax, 0.55-0.45*float64(x+y)/float64(2*r), cx+x, cy+y)
-				if d > rr-math.Max(1, 2.2*c.s) {
-					col = wax[1]
-					if x+y < 0 {
-						col = wax[4]
-					}
-				}
-				if d < ring*float64(r)/13+1 && d > ring*float64(r)/13-1.5 {
-					col = wax[1]
-				}
-				c.px(cx+x, cy+y, col)
-			}
-		}
-	}
-}
-
-// plate paints the brass round the cell box face: a hard shadow, the frame,
-// four pins by the seed, and the flat face the caller writes words on.
-func (c *canvas) plate(face image.Rectangle, dim bool, seed int) {
-	mx, my := max(4, c.sc(8)), max(2, c.sc(3))
-	o := image.Rect(face.Min.X-mx, face.Min.Y-my, face.Max.X+mx, face.Max.Y+my)
-	lit, dk, pin := brass[4], brass[0], brass[3]
-	if dim {
-		lit, pin = brass[3], brass[2]
-	}
-	sh := max(1, c.sc(3))
-	c.fill(o.Add(image.Pt(sh, sh)), black)
-	c.fill(o, PlateFace(dim))
-	c.fill(image.Rect(o.Min.X, o.Min.Y, o.Max.X, o.Min.Y+1), lit)
-	c.fill(image.Rect(o.Min.X, o.Max.Y-1, o.Max.X, o.Max.Y), dk)
-	c.fill(image.Rect(o.Min.X, o.Min.Y, o.Min.X+1, o.Max.Y), lit)
-	c.fill(image.Rect(o.Max.X-1, o.Min.Y, o.Max.X, o.Max.Y), dk)
-	ps := max(1, c.sc(2))
-	jit := func(k, span int) int { return int(hash(seed, k, 11) * float64(span+1)) }
-	for k := 0; k < 4; k++ {
-		x, y := o.Min.X+1+jit(k, mx-ps-3), o.Min.Y+1+jit(k+4, 1)
-		if k&1 == 1 {
-			x = o.Max.X - 1 - ps - jit(k, mx-ps-3)
-		}
-		if k&2 == 2 {
-			y = o.Max.Y - 1 - ps - jit(k+4, 1)
-		}
-		col := pin
-		if hash(seed, k, 13) > 0.7 {
-			col = brass[4]
-		}
-		c.fill(image.Rect(x, y, x+ps, y+ps), col)
-	}
-	c.fill(face, PlateFace(dim))
 }

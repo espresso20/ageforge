@@ -77,7 +77,7 @@ func (c *canvas) drawer(l Layout, d Drawer, i int, off image.Point, mint *coins.
 	}
 	lo := pl.Max.Y + max(2, c.sc(3)) + max(1, c.sc(3))
 	hi := f.Max.Y - max(3, c.sc(5)) - off.Y
-	c.studs(cx+off.X, (lo+hi)/2+off.Y, d.Total, d.Held, f.Dx()-2*c.sc(24), seed)
+	c.studs(cx, (lo+hi)/2, d.Total, d.Held, f.Dx()-2*c.sc(24), seed)
 	if d.Reached && d.Total > 0 && d.Held == d.Total {
 		c.seal(f.Max.X-c.sc(26), f.Min.Y+c.sc(26), seed)
 	}

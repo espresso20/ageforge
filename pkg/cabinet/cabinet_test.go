@@ -146,3 +146,25 @@ func TestPatchAndDeterminism(t *testing.T) {
 		}
 	}
 }
+
+func TestUnreachedPullsShowTheirDesign(t *testing.T) {
+	l := plan(t, sizes[2])
+	m := coins.NewMint(64)
+	cx, cy, dia := l.pull(0)
+	box := image.Rect(cx-dia/2, cy-dia/2, cx+dia/2, cy+dia/2)
+	a := Front(l, []Drawer{{Money: "victorian_age"}}, m)
+	b := Front(l, []Drawer{{Money: "modern_age"}}, m)
+	n := 0
+	for y := box.Min.Y; y < box.Max.Y; y++ {
+		for x := box.Min.X; x < box.Max.X; x++ {
+			if a.RGBAAt(x, y) != b.RGBAAt(x, y) {
+				n++
+			}
+		}
+	}
+	share := float64(n) / float64(box.Dx()*box.Dy())
+	t.Logf("differing share %.4f", share)
+	if share < 0.15 {
+		t.Errorf("unreached pulls of two ages are too alike: %.4f differ", share)
+	}
+}

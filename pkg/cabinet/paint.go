@@ -38,11 +38,6 @@ func hash(x, y, seed int) float64 {
 	return float64(n&0xffff) / 65535.0
 }
 
-func smooth(a, b, x float64) float64 {
-	t := clamp((x-a)/(b-a), 0, 1)
-	return t * t * (3 - 2*t)
-}
-
 func clamp(x, a, b float64) float64 { return math.Max(a, math.Min(b, x)) }
 
 func valueNoise(x, y float64, seed int) float64 {
@@ -113,7 +108,8 @@ func (c *canvas) fill(r image.Rectangle, col color.RGBA) {
 
 // fall is 0 near the lamp and 1 far from it.
 func (c *canvas) fall(x, y int) float64 {
-	return smooth(500*c.s, 2400*c.s, math.Hypot(float64(x)-c.lamp[0], float64(y)-c.lamp[1]))
+	t := clamp((math.Hypot(float64(x)-c.lamp[0], float64(y)-c.lamp[1])-500*c.s)/(1900*c.s), 0, 1)
+	return t * t * (3 - 2*t)
 }
 
 // board paints a walnut board with its own grain (seed), one step of tone
