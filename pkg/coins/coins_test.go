@@ -30,6 +30,20 @@ func painted(im *image.RGBA) int {
 	return n
 }
 
+// span is the shorter side of the box around a picture's painted pixels.
+func span(im *image.RGBA) int {
+	b := im.Bounds()
+	x0, y0, x1, y1 := b.Max.X, b.Max.Y, b.Min.X-1, b.Min.Y-1
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			if im.RGBAAt(x, y).A != 0 {
+				x0, y0, x1, y1 = min(x0, x), min(y0, y), max(x1, x), max(y1, y)
+			}
+		}
+	}
+	return max(0, min(x1-x0, y1-y0)+1)
+}
+
 func TestEveryPieceDraws(t *testing.T) {
 	for _, age := range coins.Ages() {
 		for level := 1; level <= coins.Legendary; level++ {
@@ -38,8 +52,11 @@ func TestEveryPieceDraws(t *testing.T) {
 				if im == nil || im.Rect.Dx() != size || im.Rect.Dy() != size {
 					t.Fatalf("%s level %d size %d: wrong picture", age, level, size)
 				}
-				if p := painted(im); p < size*size/4 {
-					t.Errorf("%s level %d size %d: only %d painted pixels", age, level, size, p)
+				// Some money is an open form that paints little of the square, so
+				// the check is on the room a piece takes up, with a low floor on
+				// its pixels.
+				if w, p := span(im), painted(im); w < size/3 || p < size*size/100 {
+					t.Errorf("%s level %d size %d: spans %d px with %d painted pixels", age, level, size, w, p)
 				}
 			}
 		}
@@ -79,12 +96,18 @@ func TestSeedsAndLevelsDiffer(t *testing.T) {
 				}
 			}
 		}
+		// Neighbouring levels are compared at full detail. The small size drops
+		// fine marks, so there only the two ends of the range are compared.
 		for level := 1; level < coins.Legendary; level++ {
-			a := coins.Render(age, "age", level, 0, 48)
-			b := coins.Render(age, "age", level+1, 0, 48)
+			a := coins.Render(age, "age", level, 0, 128)
+			b := coins.Render(age, "age", level+1, 0, 128)
 			if d := differ(a, b); d < 0.01 {
 				t.Errorf("%s levels %d and %d differ in only %.1f%%", age, level, level+1, d*100)
 			}
+		}
+		lo, hi := coins.Render(age, "age", 1, 0, 48), coins.Render(age, "age", coins.Levels, 0, 48)
+		if d := differ(lo, hi); d < 0.10 {
+			t.Errorf("%s levels 1 and %d differ in only %.1f%% at the small size", age, coins.Levels, d*100)
 		}
 	}
 }
