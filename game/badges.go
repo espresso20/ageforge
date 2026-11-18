@@ -342,6 +342,7 @@ func (ge *GameEngine) report(ev Event) {
 		ge.runFacts.note(ge.badges, ev)
 	}
 	ge.judgeBadges(ev)
+	ge.strikeOn(ev)
 }
 
 // note is report for an event of one, with no attributes.

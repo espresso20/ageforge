@@ -2297,6 +2297,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		acct.RecordAgeTime(newAge, ge.tick, badgeClock(), ge.activeSaveName)
 		ge.recordRunBestsLocked(acct)
 	}
+	// The age left is struck as a coin, with the time spent in it.
+	ge.strikeCoin(config.CoinAge, oldAge)
 	// The reports the age badges are judged on (badge_hooks.go).
 	ge.reportAgeReached(oldAge, newAge)
 
