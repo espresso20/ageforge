@@ -263,6 +263,9 @@ func (a *Account) judge(book *badgeBook, ev Event, ctx badgeCtx) {
 const maxBadgeChain = 8
 
 func (a *Account) judgeLocked(book *badgeBook, ev Event, ctx badgeCtx, depth int) {
+	if ev.Kind == config.BadgeEvCensus {
+		a.peaksLocked(book, ev, ctx, depth)
+	}
 	a.countLocked(book, ev.Kind, ev.amount(), ctx, depth)
 	if ev.Subject != "" {
 		a.countLocked(book, ev.Kind+"."+ev.Subject, ev.amount(), ctx, depth)
@@ -288,6 +291,7 @@ func (a *Account) countLocked(book *badgeBook, name string, n float64, ctx badge
 	a.Counters[name] += n
 	a.dirty = true
 	a.badgeRev++
+	a.tallyCountLocked(book, name, ctx, depth)
 	for _, i := range book.byCounter[name] {
 		def := &book.defs[i]
 		if a.Counters[name] < def.Threshold {
@@ -531,6 +535,9 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 			a.grantLocked(book, def, badgeCtx{}, true, 0)
 			changed = true
 		}
+	}
+	for _, t := range book.tallies {
+		a.tallyLocked(book, t, badgeCtx{}, true, 0)
 	}
 	highest, reached := book.set.Index(a.Stats.HighestAge)
 	for i := range book.defs {
@@ -916,6 +923,9 @@ func (a *Account) badgeTitlesLocked(book *badgeBook) []string {
 	var out []string
 	for _, t := range book.set.BadgeWornTitles() {
 		held := t.Badge != "" && clean(t.Badge)
+		if k, l, ok := book.tallies.Gift(t.Badge); ok {
+			held = a.tallyLevelOf(k) >= l
+		}
 		if t.Set != "" {
 			keys := book.setOf[t.Set]
 			held = len(keys) > 0

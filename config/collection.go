@@ -24,7 +24,7 @@ var CoinTypes = []string{CoinAge, CoinWonder, CoinTechs, CoinMaximalist, CoinHar
 
 // IsCoinType reports whether key is one of the coin types, the feat coin included.
 func IsCoinType(key string) bool {
-	if key == CoinFeat {
+	if key == CoinFeat || key == CoinTally {
 		return true
 	}
 	for _, t := range CoinTypes {

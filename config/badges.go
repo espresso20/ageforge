@@ -204,6 +204,9 @@ const (
 	BadgeEvEraEvent = "era_event"
 	// BadgeEvAwakening: an awakening fired. Subject: the awakening.
 	BadgeEvAwakening = "awakening"
+	// BadgeEvTallyTop: a tally's coin reached its finest level. Subject: the
+	// tally's key. Attrs: lineage, 1 for a lineage's tally.
+	BadgeEvTallyTop = "tally_top"
 	// BadgeEvCivMet: a civilization was met for the first time this run.
 	// Subject: the civilization.
 	BadgeEvCivMet = "civ_met"

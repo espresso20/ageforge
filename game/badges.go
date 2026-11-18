@@ -115,6 +115,9 @@ type badgeBook struct {
 	rung map[string][2]int
 	// setOf is the badges of each set, for the titles a whole set gives.
 	setOf map[string][]string
+	// tallies is the lifetime tallies; tallyOf the ones read from each counter.
+	tallies config.Tallies
+	tallyOf map[string][]int
 }
 
 // newBadgeBook indexes set's badges.
@@ -134,6 +137,18 @@ func newBadgeBook(set *rules.Set) *badgeBook {
 		ageTechs:     map[string][]string{},
 		rung:         map[string][2]int{},
 		setOf:        map[string][]string{},
+		tallies:      set.Tallies(),
+		tallyOf:      map[string][]int{},
+	}
+	for i, t := range b.tallies {
+		for _, c := range tallyCounters(t) {
+			b.counters[c] = true
+			b.tallyOf[c] = append(b.tallyOf[c], i)
+			b.countsProduction = b.countsProduction || strings.HasPrefix(c, config.BadgeEvProduced+".")
+		}
+		if t.Peak {
+			b.domains = append(b.domains, strings.TrimPrefix(t.Counter, factStaffed))
+		}
 	}
 	for _, kind := range set.BadgeSessionEvents() {
 		b.untallied[kind] = true

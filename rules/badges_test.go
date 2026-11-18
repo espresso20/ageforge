@@ -13,9 +13,8 @@ func TestCatalog(t *testing.T) {
 	s := Core()
 	want := map[string]int{
 		"age": s.NumAges() - 1, "swift": len(s.Eras()), "wonder": s.NumAges(), "maximalist": s.NumAges(),
-		"techs": s.NumAges(), "lineage": 75, "domain": 20, "resource": 90, "civ": 4 * len(s.Factions()),
-		"harbinger": 34, "doom": 15, "expedition": 21, "theme": 16, "map": 2,
-		"awakening": 7, "ladder": 70, "special": 68,
+		"techs": s.NumAges(), "doom": 3, "theme": 16, "map": 2,
+		"awakening": 7, "special": 68,
 	}
 	got := map[string]int{}
 	seen := map[string]bool{}
@@ -38,18 +37,16 @@ func TestCatalog(t *testing.T) {
 			t.Errorf("family %s (%d badges) is not in this test", fam, n)
 		}
 	}
-	if n := len(s.Badges()); n != 556 {
-		t.Errorf("the catalog has %d badges, want 556", n)
+	if n := len(s.Badges()); n != 190 {
+		t.Errorf("the catalog has %d badges, want 190", n)
 	}
-	if points != 12865 {
-		t.Errorf("the badges add up to %d points, want 12,865", points)
+	if points != 3900 {
+		t.Errorf("the badges add up to %d points, want 3,900", points)
 	}
 
 	// The badges accounts have held since the seed catalog keep their keys.
 	for _, key := range []string{
 		"age.stone_age", "age.iron_age", "age.modern_age",
-		"lineage.housing.1", "lineage.housing.2",
-		"ladder.prestiges.1", "ladder.prestiges.2", "ladder.prestiges.3", "ladder.prestiges.4",
 		"special.hut_hoarder", "special.fashionably_late", "special.liquidation_sale",
 		"special.hand_in_the_cookie_jar", "special.touched_by_the_source", "special.creative_accounting",
 	} {
@@ -58,7 +55,6 @@ func TestCatalog(t *testing.T) {
 		}
 	}
 	for alias, key := range map[string]string{
-		"first_prestige": "ladder.prestiges.1", "prestige_x10": "ladder.prestiges.3",
 		"reached_iron": "age.iron_age", "reached_modern": "age.modern_age",
 	} {
 		if got, ok := s.BadgeForAlias(alias); !ok || got != key {
@@ -92,34 +88,6 @@ func TestFamilyBadges(t *testing.T) {
 		t.Errorf("the Modern Age is in the Digital Era, so its badge is gold; got %s", modern.Tier.Name())
 	}
 
-	rung, ok := s.Badge("lineage.housing.2")
-	if !ok {
-		t.Fatal("no second housing rung")
-	}
-	if rung.Name != "Housing Contractor" || rung.Tier != config.BadgeSilver || rung.Threshold != 1500 ||
-		rung.Counter != "built.lineage.housing" || rung.Scope != config.BadgeLifetime {
-		t.Errorf("the second housing rung: %+v", rung)
-	}
-	if want := "Build 1.5K housing buildings across all your runs. Sold and rebuilt copies count once."; rung.Desc != want {
-		t.Errorf("description %q, want %q", rung.Desc, want)
-	}
-	if rung.Reveal.Kind != config.BadgeVisible {
-		t.Errorf("housing starts in the first age, so its ladder shows from the start: %+v", rung.Reveal)
-	}
-	if _, ok := s.Badge("lineage.housing.6"); ok {
-		t.Error("a rung with no count in the ladder table was made")
-	}
-	if top, _ := s.Badge("lineage.housing.5"); top.Tier != config.BadgeLegendary {
-		t.Errorf("the top housing rung is %s, want legendary", top.Tier.Name())
-	}
-
-	first, _ := s.Badge("ladder.prestiges.1")
-	if first.Name != "First Prestige" || first.Desc != "Prestige for the first time." || first.Subject != "" {
-		t.Errorf("the first prestige rung: %+v", first)
-	}
-	if last, _ := s.Badge("ladder.prestiges.4"); last.Desc != "Prestige 25 times." || last.Tier != config.BadgeLegendary {
-		t.Errorf("the last prestige rung: %+v", last)
-	}
 }
 
 // Every table a family can be made from gives one badge per row, with the

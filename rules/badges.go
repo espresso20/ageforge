@@ -662,3 +662,6 @@ func (s *Set) BadgeSessionEvents() []string { return config.BadgeSessionEvents()
 // IsFlowResource reports whether res is a flow resource: one that is spent
 // as it is made rather than saved up (config.IsFlowResource).
 func (s *Set) IsFlowResource(res string) bool { return config.IsFlowResource(res) }
+
+// BadgeThemes is the themes a badge, or a tally, may give.
+func (s *Set) BadgeThemes() []config.BadgeThemeDef { return slices.Clone(s.badgeThemes) }
