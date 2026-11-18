@@ -40,7 +40,7 @@ A game belongs to the account it was started or loaded under. Its saves go to th
 
 The game no longer moves or converts old accounts. Every account the game saves carries a format number, 4, in `account.json`. An account without it was written before 4.0, played or not, and the game refuses it with the line saves from before 4.0 get: "This was saved before 4.0 and can no longer be loaded." It is not listed in the Accounts panel and is left on disk as it is. To play, make an account: if you give it the same name as the refused one, the game moves the old account's whole folder to `data/backups/<id>.before-4.0`, starts a new empty account under that name, and says so in the log. An export from before [badges](#badges) is refused too.
 
-Each time the game loads an account, it adds the badges the account's record already proves: the badge of every age the account has reached, and ladder rungs whose counts the account has passed. It reports them in one toast and one log line, such as `12 badges earned from your earlier play.`
+Each time the game loads an account, it adds the badges the account's record already proves: the badge of every age the account has reached, and the level of every tally coin whose count the account has passed. It reports the badges in one toast and one log line, such as `12 badges earned from your earlier play.` A tally coin is struck without a message.
 
 Five themes come with age badges (see [Themes from badges](badges.md#themes-from-badges)). If an account has reached one of those ages without the theme, the game adds the badge and the theme when it loads the account.
 
@@ -248,7 +248,7 @@ These stats update the moment you prestige or advance into an age. They are save
 
 ### Badges
 
-A badge is a permanent mark on your account for something you did in a game: reaching an age, building enough of something across all your runs, or pulling off something specific in one run. A badge is earned once and kept for good. It stays with your account through every prestige and every new game, and it travels in an export. The [Badges](badges.md) page lists the families, the ladders and their rungs, the titles and the themes that badges give. This section covers the badge case and how badges are kept.
+A badge is a permanent mark on your account for something you did in a game: reaching an age, building enough of something across all your runs, or pulling off something specific in one run. A badge is earned once and kept for good. It stays with your account through every prestige and every new game, and it travels in an export. The [Badges](badges.md) page lists the families, the tallies and their rungs, the titles and the themes that badges give. This section covers the badge case and how badges are kept.
 
 Badges are separate from [milestones](milestones.md). A milestone belongs to one run, pays a reward inside that run and starts over with the next. A badge belongs to the account and gives nothing inside a run, so the same game plays the same way whatever the account has earned.
 
@@ -469,4 +469,4 @@ That is also why the code is safe to share or lose. It names an account and unlo
 
 - [All Commands](commands.md): the full `account` command reference
 - [Saving & Loading](saving-and-loading.md): how your game saves are stored per account under `data/accounts/<id>/saves/`
-- [Badges](badges.md): the badge families, ladders, titles and themes
+- [Badges](badges.md): the badge families, tallies, titles and themes

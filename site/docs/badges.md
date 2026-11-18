@@ -1,6 +1,6 @@
 # Badges
 
-A badge is a permanent mark on your account for something you did in a game. There are 553 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A badge is a permanent mark on your account for something you did in a game. There are 209 badges to earn, in 11 families: one for every age, wonder, harbinger and awakening, and a set of one-off feats. Alongside them, counts kept across all your runs are not badges but tallies: one coin each that is struck finer as the count climbs. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
@@ -32,7 +32,7 @@ A few rules hold for all of them:
 
 - A badge goes to the account the game belongs to. A game started or loaded under one account never earns for another.
 - Building counts ignore selling and rebuilding. A copy counts only when it takes that building past the most the run has built of it, and an upgrade is not a built copy.
-- Production counts what was made. A resource ladder counts what your buildings, workers and techs produce. Trades, loot, refunds and gifts are not production.
+- Production counts what was made. A resource tally counts what your buildings, workers and techs produce. Trades, loot, refunds and gifts are not production.
 - Time away counts. What the game produced while you were gone counts the same as what it produced while you watched.
 - A modified game marks what it earns. A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points.
 - The developer console does not block badges. A game it has changed still earns like any other.
@@ -49,7 +49,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a score
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 12,865 points.
+A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 4,010 points. A tally's coin is worth none: the badge case shows it, but it adds nothing to the score.
 
 A legendary coin is gold, with a rim that runs through the colors and turning rays behind it when motion is on. Eight legendary badges carry a sign of their own instead of their family's.
 
@@ -64,15 +64,9 @@ A legendary coin is gold, with a rim that runs through the colors and turning ra
 | **Wonders** | 22 | Raising each age's wonder |
 | **Maximalists** | 22 | Having a set number of an age's buildings built at the same time, before you leave the age. Wonders do not count |
 | **Research** | 22 | Researching every tech of an age in one run |
-| **Lineages** | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 14 lineages and for storage |
-| **Payrolls** | 20 | Workers at work in one domain at the same time: two rungs for each of 10 domains |
-| **Resources** | 90 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
-| **Civilizations** | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and ending a war with it |
-| **Harbingers** | 34 | Hearing out each of the 22 harbingers, and appeasing each of the first 12 while it speaks |
-| **Catastrophes** | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
-| **Expeditions** | 21 | Coming back with a success from a scout, a long or a grand mission in each era |
+| **Catastrophes** | 3 | The three ways the Last Passage can end |
+| **Harbingers** | 22 | Meeting each of the 22 harbingers |
 | **Awakenings** | 7 | Witnessing each awakening |
-| **Ladders** | 70 | Counts kept across all your runs, in 22 ladders |
 | **Themes** | 16 | Advancing an age while wearing each theme |
 | **Maps** | 2 | Advancing an age with each glyph set |
 | **Specials** | 65 | One-off feats, from the easy to the very hard |
@@ -81,15 +75,17 @@ One special asks you to save up. Everything Full is earned in the Industrial Age
 
 Three more badges sit outside the families. They are worth no points, count toward nothing, and are not listed until they are earned.
 
-## Ladders
+## Tallies
 
-A ladder is a set of badges that share one count and ask for more of it at each rung. The badge case draws a ladder on a line of its own, lowest rung first, with how far the next rung is.
+A tally is a count that climbs across all your runs and keeps one coin. The coin is struck at level 1 when the count reaches the first rung and one level finer at each rung after, up to level 6. A tally with fewer than six rungs skips levels, so its last rung is always level 6: the rung's place in the climb is spread over the six levels, halves up. A level never goes down. A tally's coin is not a badge: it has no tier, no points and no rarity.
 
-### Lifetime ladders
+The badge case keeps tallies in drawers that belong to no age. The Ledgers drawer holds the 74 tallies below, the Curios drawer the one-off feats and the other badges that belong to no age, and the Themes drawer the themes. Each opens like an age's drawer, with a well for each coin, and pages through them with PgUp and PgDn when they do not all fit.
+
+### Lifetime tallies
 
 These count across all your runs. A dot separates the rungs.
 
-| Ladder | Rungs |
+| Tally | Rungs |
 |---|---|
 | Prestiges | 1 · 3 · 10 · 25 |
 | Dooms endured | 1 · 5 · 15 · 30 |
@@ -98,6 +94,7 @@ These count across all your runs. A dot separates the rungs.
 | Appeasements | 1 · 10 · 50 |
 | Braces | 1 · 10 · 50 |
 | Invitations | 1 · 5 · 20 |
+| False prophets | 1 · 3 · 5 |
 | Wonders raised | 2 · 24 · 300 |
 | Techs researched | 5 · 77 · 1,200 |
 | Milestones | 5 · 70 · 1,000 |
@@ -112,18 +109,20 @@ These count across all your runs. A dot separates the rungs.
 | Black market deals | 1 · 10 · 50 |
 | Ancient Memories | 1 · 5 · 12 |
 | Hard times weathered | 1 · 10 · 30 |
+| Civilization firsts | 1 · 5 · 11 · 22 · 33 · 44 |
+| Harbingers heeded | 1 · 3 · 6 · 9 · 12 |
 
-One more ladder of three rungs is secret.
+Civilization firsts counts four things for each civilization: meeting it, allying with it, taking five of its deals, and ending a war with it. Harbingers heeded counts the harbingers you have appeased while they spoke.
 
-The first rung of a lifetime ladder is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears. Many first rungs ask for one of something. No top rung of a ladder that counts play asks for more than 25 runs of ordinary play. Returns counts the times you came back to a game, so it climbs with your visits and not with your runs.
+The first rung of a lifetime tally is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears. Many first rungs ask for one of something. No top rung of a tally that counts play asks for more than 25 runs of it.
 
-When you load an account that has already passed a rung it does not hold, the game gives it the rung and says in one line how many badges that was. A rung remembers the count it was earned at, so a rung you hold keeps saying what you did, and a rung you have not earned shows the count asked today. A rung earned before counts were kept, whose counter is under today's bar, goes back to unearned the first time the account is loaded. Rungs that give a theme or a title are left alone.
+When you load an account that has already passed a rung its coin does not show, the game strikes the coin to the level it has earned, without a fanfare. A coin never goes down.
 
-### Lineage ladders
+### Lineage tallies
 
-Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contractor, Magnate, Tycoon and Dynasty. They count buildings of the lineage built across all your runs.
+Each of the 14 lineages has five rungs, and so does storage. They count buildings of the lineage built across all your runs.
 
-Each lineage is on its own scale, because lineages differ a great deal in how many copies a town can build. A full clear builds about 1,000 houses and about 130 harbors. Dynasty is set to what a dedicated player builds of the lineage over about 25 runs, so it is a long-term goal. That player buys new copies instead of upgrading old ones, since an upgrade is not a built copy. Each rung below Dynasty is about two fifths of the one above. Energy and Hacker begin in later ages, so their first rungs come a run later.
+Each lineage is on its own scale, because lineages differ a great deal in how many copies a town can build. A full clear builds about 1,000 houses and about 130 harbors. The top rung is set to what a dedicated player builds of the lineage over about 25 runs.
 
 | Lineage | Rungs |
 |---|---|
@@ -145,7 +144,7 @@ Each lineage is on its own scale, because lineages differ a great deal in how ma
 
 ### Payrolls
 
-A payroll badge asks for that many workers at work in one domain at the same time. The game takes the count every 50 ticks, so the workers have to stay at work for a moment, not only pass through. The Military payroll counts soldiers at their posts instead of workers.
+A payroll tally asks for that many workers at work in one domain at the same time. The game takes the count every 50 ticks, so the workers have to stay at work for a moment, not only pass through. The Military payroll counts soldiers at their posts instead of workers. Each has two rungs.
 
 | Domain | Rungs |
 |---|---|
@@ -160,9 +159,9 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 | Energy | 76 · 137 |
 | Hacker | 260 · 520 |
 
-### Resource ladders
+### Resource tallies
 
-Each resource has a ladder: Trickle, Stream, River and Flood. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is 25 full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. Soldiers have a ladder too, and it counts the soldiers who take their posts. The badge case shows each rung's number and how far along you are.
+Each resource has a tally of up to four rungs. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is 25 full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. Soldiers have a tally too, and it counts the soldiers who take their posts. The badge case shows each rung's number and how far along you are.
 
 Three of them, as examples:
 
@@ -176,13 +175,13 @@ Three of them, as examples:
 
 The badge case never names something the game has not shown you yet:
 
-- A badge for reaching an age shows once that age is your next age, because the long bar in the header already names it. Badges tied to an age (its wonder, its Maximalist and Research badges, and the lineages, resources, payrolls and missions that begin in it) stay hidden until you reach that age.
+- A badge for reaching an age shows once that age is your next age, because the long bar in the header already names it. Badges tied to an age (its wonder, its Maximalist and Research badges, and the lineage, resource and payroll tallies that begin in it) stay hidden until you reach that age.
 - A badge about a civilization or a harbinger stays hidden until you have met it, one about an awakening until it happens, and one about a catastrophe until its warning names it or it strikes.
 - The badge for wearing a theme that a badge unlocks stays hidden until you hold the theme.
 - A family with nothing in sight has no tab and no heading until you have reached the last age.
 - The counts cover what you can see. `account badges` starts with a line such as `3 of 127 earned, 15 points, ??? hidden`. The game does not say how many badges are hidden until an account has reached the last age.
 
-**14 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
+**11 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
 
 ## Titles
 
@@ -202,9 +201,9 @@ Six more titles come with badges, not with the score:
 
 | Title | Comes with |
 |---|---|
-| Survivor | The gold rung of Dooms endured |
-| Merchant Prince | The gold rung of Faction deals |
-| Harbinger Whisperer | Appeasing each of the 12 harbingers that have a badge for it |
+| Survivor | The third rung of Dooms endured |
+| Merchant Prince | The top rung of Faction deals |
+| Harbinger Whisperer | The top rung of Harbingers heeded |
 | Cosmic Heir | Succumbing to the Last Passage |
 | The Undying | Enduring every catastrophe and the Last Passage |
 | Hut Magnate | A secret badge |
@@ -230,9 +229,9 @@ Ten [themes](themes.md) are the reward of a badge. Earning the badge unlocks the
 | Monochrome | Reaching the Information Age |
 | Cyberpunk | Reaching the Cyberpunk Age |
 | Cosmic | Reaching the Galactic Age |
-| Ledger | The gold rung of Faction deals (100 deals) |
+| Ledger | The top rung of Faction deals (100 deals) |
 | Ashfall | Succumbing to every era's catastrophe |
-| Prismatic | Earning 400 badges |
+| Prismatic | Earning 160 badges |
 | Source | A secret badge |
 | Glitch | A secret badge |
 

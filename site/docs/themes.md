@@ -25,7 +25,7 @@ Themes come in three groups. **Standard** has the default dark **Forge** and the
 | **Glitch** | `glitch` | Unlockable | Dark | Given by a secret badge. Cyan and magenta on violet black, with tears of static |
 | **Ashfall** | `ashfall` | Unlockable | Dark | Succumb to every era's catastrophe. Ember orange on soot, with sparks rising |
 | **Ledger** | `ledger` | Unlockable | Light | Take 100 deals from civilizations. Ink and bookkeeper's green on green-bar paper |
-| **Prismatic** | `prismatic` | Unlockable | Dark | Earn 400 badges. Starlight on blue-black, with glints that turn through the spectrum |
+| **Prismatic** | `prismatic` | Unlockable | Dark | Earn 160 badges. Starlight on blue-black, with glints that turn through the spectrum |
 
 ### Every theme paints its own background
 
@@ -76,8 +76,8 @@ The picker and `theme list` show a locked theme's unlock condition. One earned i
 |---|---|
 | Source and Glitch | Given by a secret badge |
 | Ashfall | Given by a legendary badge |
-| Ledger | Given by the top rung of a badge ladder |
-| Prismatic | Earn 400 badges |
+| Ledger | Given by the top rung of a tally |
+| Prismatic | Earn 160 badges |
 
 The picker fills the window and **previews** each theme as you move to it. Themes are grouped under **Standard**, **Accessibility** and **Unlockable** headings. Each row shows **light** or **dark**, and **accessible** or **locked** (`🔒`) where they apply. The theme you had when you opened the picker is marked `(current)`.
 
@@ -138,7 +138,7 @@ Beyond the Standard and Accessibility groups, AgeForge has ten **flavor themes**
 | **Cosmic** | Dark | Reach the Galactic Age |
 | **Ledger** | Light | Take 100 deals from civilizations, across all your runs |
 | **Ashfall** | Dark | Succumb to every era's catastrophe |
-| **Prismatic** | Dark | Earn 400 badges |
+| **Prismatic** | Dark | Earn 160 badges |
 | **Source** | Dark | Earn a secret badge |
 | **Glitch** | Dark | Earn another secret badge |
 

@@ -524,7 +524,7 @@ See [Saving & Loading](saving-and-loading.md) for branching, the save tree, row 
 | Command | Description |
 |---|---|
 | `badges` | Open the badge case: every badge your account holds or can earn. The prompt keeps working while it is open. |
-| `badges <family>` | Open the case on one family's tab, by its name: `ages`, `wonders`, `lineages`, `ladders`, `specials` and the rest. A family you have nothing in sight of yet has no tab to open. |
+| `badges <family>` | Open the case on one family's tab, by its name: `ages`, `wonders`, `harbingers`, `specials` and the rest. A family you have nothing in sight of yet has no tab to open. |
 | `badges all` | Open the case on the All tab, which shows every family. |
 | `badges next` | Open the case on the badges you are closest to earning, nearest first. |
 | `badges <name>` | Open one badge's detail by its name, or a part of it (`badges hut hoarder`, `badges rock`). Only badges you can already see are found. |
