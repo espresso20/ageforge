@@ -83,9 +83,8 @@ func (p *cabinetPanel) open(state game.GameState) Primitive {
 	return overBar(p)
 }
 
-// request selects the drawer a command named, by its key, and opens it when
-// it is an age; a type or "feat" after a space selects that well. "" leaves
-// the selection as it was.
+// request selects the drawer a command named by its key and opens it when it
+// is an age; a well's key after a space selects that well.
 func (p *cabinetPanel) request(key string) {
 	key, typ, _ := strings.Cut(key, " ")
 	for i, k := range p.keys {
@@ -211,19 +210,15 @@ func (p *cabinetPanel) move(key kit.KeyCode) {
 
 // routeKey takes a key if it is one of the cabinet's and reports whether it did.
 func (p *cabinetPanel) routeKey(ev *kit.Key, prompt string) bool {
-	if p.tray.slot >= 0 {
-		switch ev.Code {
-		case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd:
-			p.moveWell(ev.Code)
-			return true
-		}
-		return false
-	}
 	switch ev.Code {
 	case kit.KeyEnter:
-		return prompt == "" && p.openDrawer(p.sel)
+		return p.tray.slot < 0 && prompt == "" && p.openDrawer(p.sel)
 	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd:
-		p.move(ev.Code)
+		if p.tray.slot >= 0 {
+			p.moveWell(ev.Code)
+		} else {
+			p.move(ev.Code)
+		}
 		return true
 	}
 	return false
@@ -243,16 +238,11 @@ func (p *cabinetPanel) drawerAt(at image.Point) int {
 // the next or the previous drawer.
 func (p *cabinetPanel) Mouse(m kit.Mouse) bool {
 	if p.tray.slot >= 0 {
-		switch {
-		case m.Kind == kit.MousePress && m.Button == kit.ButtonRight:
-			return p.closeDrawer()
-		case m.Kind == kit.MousePress && m.Button == kit.ButtonLeft:
-			if w := p.wellAt(m.Pt()); w >= 0 {
-				p.tray.well = w
-				return true
-			}
+		w := p.wellAt(m.Pt())
+		if m.Kind == kit.MousePress && m.Button == kit.ButtonLeft && w >= 0 {
+			p.tray.well = w
 		}
-		return false
+		return m.Kind == kit.MousePress && m.Button == kit.ButtonRight && p.closeDrawer() || w >= 0
 	}
 	switch {
 	case m.Kind == kit.MouseWheel && m.Wheel != 0:

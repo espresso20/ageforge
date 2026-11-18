@@ -2679,7 +2679,6 @@ func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	key, ok := findCabinetDrawer(state, word)
 	if n := len(args); !ok && n > 1 {
-		// "badges <age> <type>": the last word may name a well.
 		if w := cabinetWell(args[n-1]); w >= 0 {
 			if key, ok = findCabinetDrawer(state, strings.Join(args[:n-1], " ")); ok {
 				key += " " + cabinetWells[w].key
