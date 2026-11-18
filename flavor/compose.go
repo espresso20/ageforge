@@ -59,12 +59,12 @@ var templateByID = sync.OnceValue(func() map[string]tmpl {
 	return out
 })
 
-// Retell is the line a Key names, for req, in plain English. told is kept for
-// its callers and changes nothing. req fills the placeholders as Generate did
-// (only the fields the line uses matter). It reports false for a key this
-// catalog does not know (one from a save of another build, or one that is
-// edited), and the caller keeps the plain line it has.
-func Retell(key string, req Request, told bool) (string, bool) {
+// Retell is the line a Key names, for req, in plain English. req fills the
+// placeholders as Generate did (only the fields the line uses matter). It
+// reports false for a key this catalog does not know (one from a save of
+// another build, or one that is edited), and the caller keeps the plain line
+// it has.
+func Retell(key string, req Request) (string, bool) {
 	id, rest, hasDraws := strings.Cut(key, ":")
 	t, ok := templateByID()[id]
 	if !ok {
@@ -93,5 +93,5 @@ func Retell(key string, req Request, told bool) (string, bool) {
 	if slots != len(draws) {
 		return "", false
 	}
-	return fillAs(t.compose(draws), req, false), true
+	return fillAs(t.compose(draws), req), true
 }
