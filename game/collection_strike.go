@@ -29,7 +29,17 @@ func (ge *GameEngine) strikeCoin(typ, age string) {
 		return
 	}
 	entered, _ := ge.ageEntryTick(age)
-	acct.StrikeCoin(typ, age, max(0, ge.tick-entered), ge.Prestige.AgeSpeed(age), ge.activeSaveName, badgeClock())
+	acct.StrikeCoin(typ, age, max(0, ge.tick-entered), ge.Prestige.AgeSpeed(age), ge.activeSaveName, badgeClock(), ge.cheaterBadge)
+}
+
+// strikeLastAgeCoin strikes the age coin of the last age when a run ends by a
+// prestige from it: the last age is never left by advanceAge, so its end is
+// the run's. A fall (Succumb) or a wipe from it completes nothing and strikes
+// none. Callers hold ge.mu for writing.
+func (ge *GameEngine) strikeLastAgeCoin(outcome string) {
+	if outcome == RunPrestige && ge.age != "" && ge.rules.Next(ge.age) == "" {
+		ge.strikeCoin(config.CoinAge, ge.age)
+	}
 }
 
 // coinHeldLocked reports whether this run already holds a coin of typ for

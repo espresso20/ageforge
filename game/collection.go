@@ -50,6 +50,9 @@ type CoinCopy struct {
 	Figure int `json:"f"`
 	// Seed is stable for a copy: see coinSeed.
 	Seed uint32 `json:"s"`
+	// Flags is a set of BadgeFlag bits, set as a badge's are: crossed when the
+	// strike was made on an edited run or account.
+	Flags int `json:"fl,omitempty"`
 }
 
 // CoinStack is every copy of one type in one age, finest first. Count is every
@@ -140,12 +143,18 @@ func (a *Account) putCoinStackLocked(key string, s CoinStack) {
 
 // StrikeCoin strikes a coin of typ for age in run, at the level that ticksInAge
 // ticks (at the age's speed) earn. It returns the copy held for the run and
-// whether the strike added a copy or bettered one. IN-MEMORY ONLY, like the
+// whether the strike added a copy or bettered one. crossed is the run's own
+// edited-save mark, as a badge's. IN-MEMORY ONLY, like the
 // Record* hooks: the engine calls it under its write lock.
-func (a *Account) StrikeCoin(typ, age string, ticksInAge int, speed float64, run string, at time.Time) (CoinCopy, bool) {
+func (a *Account) StrikeCoin(typ, age string, ticksInAge int, speed float64, run string, at time.Time, crossed bool) (CoinCopy, bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	flags := 0
+	if crossed || a.Tampered || a.BadgesTampered {
+		flags = BadgeFlagCrossed
+	}
 	return a.strikeCoinLocked(CoinCopy{
+		Flags:  flags,
 		Type:   typ,
 		Age:    age,
 		Level:  config.CoinLevel(age, float64(ticksInAge), speed),
@@ -266,7 +275,7 @@ func foldCoinCopies(s CoinStack, more []CoinCopy) CoinStack {
 		if c.Level < 1 || c.Level > config.CoinLevels {
 			continue
 		}
-		if held, ok := byRun[c.Run]; !ok || c.Level > held.Level {
+		if held, ok := byRun[c.Run]; !ok || c.Level > held.Level || (c.Level == held.Level && c.At < held.At) {
 			byRun[c.Run] = c
 		}
 	}

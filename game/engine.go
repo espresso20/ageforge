@@ -4858,6 +4858,7 @@ func (ge *GameEngine) resetRunLocked(morale float64, outcome string, level int) 
 	// Every run ends here (a prestige, a Succumb, a new game): it is filed on the
 	// account, and its counts are offered to the account's records, before they
 	// are cleared. level is the prestige level the run was played at.
+	ge.strikeLastAgeCoin(outcome)
 	ge.fileRunLocked(outcome, level)
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		ge.recordRunBestsLocked(acct)

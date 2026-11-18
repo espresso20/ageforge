@@ -2,6 +2,7 @@ package game
 
 import (
 	"testing"
+	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
@@ -149,4 +150,59 @@ func TestCoinsAreStruckInDevModeAndNeedAnAccount(t *testing.T) {
 	bare.mu.Lock()
 	bare.note(config.BadgeEvHarbingerMet, "anything")
 	bare.mu.Unlock()
+}
+
+func TestLastAgeCoinIsStruckWhenARunEndsByPrestigeFromIt(t *testing.T) {
+	isolateAccountDir(t)
+	last := "transcendent_age"
+	for _, c := range []struct {
+		outcome, age string
+		want         bool
+	}{
+		{RunPrestige, last, true},
+		{RunSuccumbed, last, false},
+		{RunLeft, last, false},
+		{RunPrestige, "quantum_age", false},
+	} {
+		ge, acct := devEngine(t, "Ada")
+		ge.mu.Lock()
+		ge.age = c.age
+		ge.resetRunLocked(0.7, c.outcome, 0)
+		ge.mu.Unlock()
+		if got := len(acct.CoinStackOf(config.CoinAge, c.age).Copies) == 1; got != c.want {
+			t.Errorf("%s from %s: struck %v, want %v", c.outcome, c.age, got, c.want)
+		}
+	}
+}
+
+func TestCoinCopyCarriesTheEditedMark(t *testing.T) {
+	isolateAccountDir(t)
+	a := testAccount(t)
+	if c, _ := strikeAt(a, "age", "stone_age", 1.5, "r1", 10); c.Flags != 0 {
+		t.Errorf("a clean strike is marked: %+v", c)
+	}
+	if c, _ := a.StrikeCoin("age", "iron_age", 1, 1, "r1", time.Unix(10, 0), true); c.Flags&BadgeFlagCrossed == 0 {
+		t.Errorf("a strike on an edited run is not marked: %+v", c)
+	}
+	a.Tampered = true
+	if c, _ := strikeAt(a, "age", "bronze_age", 1.5, "r1", 10); c.Flags&BadgeFlagCrossed == 0 {
+		t.Errorf("a strike on an edited account is not marked: %+v", c)
+	}
+	// The earlier copy of a run keeps its mark through a merge, as a badge does.
+	theirs := &Account{AccountID: a.AccountID}
+	theirs.StrikeCoin("age", "bronze_age", 1, 1, "r1", time.Unix(5, 0), false)
+	mine := testAccount(t)
+	mine.StrikeCoin("age", "bronze_age", 1, 1, "r1", time.Unix(9, 0), true)
+	mine.mu.Lock()
+	mine.takeCollectionLocked(theirs.collectionLocked(), true)
+	mine.mu.Unlock()
+	if c := mine.CoinStackOf("age", "bronze_age").Copies[0]; c.At != 5 || c.Flags != 0 {
+		t.Errorf("merge kept %+v, want the earlier, unmarked copy", c)
+	}
+	// A save round trip keeps the mark.
+	b := &Account{AccountID: a.AccountID}
+	b.coins = coinsFromFile(a.collectionLocked())
+	if c := b.CoinStackOf("age", "iron_age").Copies[0]; c.Flags&BadgeFlagCrossed == 0 {
+		t.Errorf("round trip lost the mark: %+v", c)
+	}
 }
