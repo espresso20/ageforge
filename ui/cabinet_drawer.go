@@ -218,7 +218,7 @@ func (p *cabinetPanel) paintTray(p2 *kit.Painter, r image.Rectangle) bool {
 	pr(l.Count, vibe.Sprintf("ui.cabinet_drawer.paintTray.01", "%d of %d", d.Held, d.Total), false)
 	hint := vibe.Line("ui.cabinet_drawer.paintTray.02", "Arrows move   Esc goes back")
 	if t.fan {
-		hint = vibe.Line("ui.cabinet_drawer.paintTray.03", "Arrows step along the copies   Esc closes the fan")
+		hint = vibe.Line("ui.cabinet_drawer.paintTray.03", "Arrows step   Esc closes the fan")
 	}
 	pr(l.Hint, hint, false)
 	a, b := p.ticketWords()
