@@ -17,6 +17,7 @@ func (ge *GameEngine) StateJSON() ([]byte, error) {
 	defer ge.mu.RUnlock()
 	s := ge.buildSaveSnapshot()
 	s.Timestamp = time.Time{}
+	s.RunID = "" // random per run, like the wall-clock fields
 	if s.Stats != nil {
 		s.Stats.GameStarted = time.Time{}
 	}

@@ -110,8 +110,6 @@ type GameState struct {
 	// LastPassage is the Cosmic Era's prestige passage: pending choice, the
 	// Endure share and the Cosmic Legacy flag (last_passage.go).
 	LastPassage LastPassageState
-	// History overlay
-	History *HistoryCollector
 	// Morale system
 	Morale    float64 // current morale 0.10–cap
 	MoraleCap float64 // current cap (1.0 + 0.05 per wonder, plus the techs' term)
@@ -175,8 +173,11 @@ type AccountStatsView struct {
 	TotalPrestiges       int
 	HighestAge           string
 	CivilizationsStarted int
-	Badges               []BadgeView
-	BadgeSummary         BadgeSummary
+	// FastestAge and BestRun are copies of the account's records.
+	FastestAge   map[string]AgeRecord
+	BestRun      map[string]RunBest
+	Badges       []BadgeView
+	BadgeSummary BadgeSummary
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.

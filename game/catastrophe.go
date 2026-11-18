@@ -536,7 +536,7 @@ func (ge *GameEngine) Succumb() error {
 
 	// Full reset, as at a prestige (resetRunLocked); morale starts lower.
 	// Prestige, the legacy flags and both histories carry over untouched.
-	ge.resetRunLocked(0.50)
+	ge.resetRunLocked(0.50, RunSuccumbed, ge.Prestige.GetLevel())
 	// The tick speed bonus and a pending Last Passage start over too.
 	ge.tickSpeedBonus = 0
 	ge.pendingLastPassage = false

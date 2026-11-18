@@ -17,6 +17,7 @@ data/
 │   └── <account_id>/
 │       ├── account.json            # identity, theme unlocks, lifetime stats, theme, map glyphs, mini map
 │       ├── badges.json             # badges and the counts behind them (written with every save of the account)
+│       ├── runs.json               # the run archive: a record of each run that ended
 │       ├── settings.json           # motion, worn title and current game
 │       ├── account-<id8>-export.json   # where `account export` writes by default
 │       └── saves/                  # this account's game saves
@@ -102,7 +103,7 @@ An account has two kinds of backup, and they do different jobs.
 
 | Backup | What it carries | How to keep it |
 |---|---|---|
-| Account export | The account's ID, name, theme unlocks, lifetime stats, badges, theme, map glyphs and mini map setting | Save the export file somewhere safe |
+| Account export | The account's ID, name, theme unlocks, lifetime stats, badges, [run archive](#run-archive), theme, map glyphs and mini map setting | Save the export file somewhere safe |
 | Recovery code | Identity only (the account ID) | Write down the short `AGEF-…` string |
 
 ### Exporting
@@ -162,7 +163,7 @@ The import is refused, and your accounts are left unchanged, if the file cannot 
 
 ## Backups
 
-A backup is a full copy of an account's slot: `account.json`, `badges.json` and `settings.json` (each when the slot has it) plus a copy of the slot's whole `saves/` folder. It holds more than an [export](#exporting-amp-importing-accounts). An export is one file of account-wide progress with no saves, and a backup includes your games.
+A backup is a full copy of an account's slot: `account.json`, `badges.json`, `runs.json` and `settings.json` (each when the slot has it) plus a copy of the slot's whole `saves/` folder. It holds more than an [export](#exporting-amp-importing-accounts). An export is one file of account-wide progress with no saves, and a backup includes your games.
 
 The game makes a backup at three points:
 
@@ -178,6 +179,7 @@ data/
     └── <name>-<id8>-<timestamp>/
         ├── account.json
         ├── badges.json
+        ├── runs.json
         ├── settings.json
         └── saves/
 ```
@@ -188,7 +190,7 @@ The game keeps the 10 most recent backups per account. After each new backup, it
 
 ### Restoring from a backup
 
-There is no restore command. A backup is plain files, so you put them back by hand. Copy the backup folder's `account.json`, `badges.json`, `settings.json` (if it has one) and `saves/` into that account's slot at `data/accounts/<id>/`. The `<id8>` in the backup folder's name is the start of the full ID, and the full ID is the slot's folder name under `data/accounts/`.
+There is no restore command. A backup is plain files, so you put them back by hand. Copy the backup folder's `account.json`, `badges.json`, `runs.json` and `settings.json` (each if it has one) and `saves/` into that account's slot at `data/accounts/<id>/`. The `<id8>` in the backup folder's name is the start of the full ID, and the full ID is the slot's folder name under `data/accounts/`.
 
 ---
 
@@ -239,6 +241,8 @@ Some progress is account-wide. It builds up across every game you play on that a
 The Stats panel shows all three under Lifetime (account). The [Accounts panel](#the-accounts-panel) shows the prestiges and highest age for each account, so you can compare your civilizations.
 
 The account also records each prestige under the age it was made from (`prestiges_by_age` in the stats of `account.json`), so an early taste (a prestige from the Medieval Age to the Atomic Age) can be told from a full run (the Modern Age or deeper). See [Early tastes and full runs](prestige.md#early-tastes-and-full-runs). No panel shows this, and Total Prestiges counts every prestige, tastes included. Prestiges made before the account kept this record count only in the total. An export carries it, and an import keeps the higher count for each age.
+
+The account also keeps two kinds of record across runs (`fastest_age` and `best_run` in the stats of `account.json`): the fewest game ticks it has taken a run to enter each age, and the best single-run figures for buildings built, workers recruited, techs researched and expeditions and campaigns done. Each record stores when it was set and in which save. Age times update as you enter an age, and the run figures when you enter an age and when a run ends (a prestige, a Succumb or a new game). No panel shows them yet. An export carries them, and an import keeps the faster time and the higher figure.
 
 These stats update the moment you prestige or advance into an age. They are saved to your account with the next autosave, on a clean exit, and when you switch accounts, so a fresh prestige is never lost. They count for the account the game belongs to. A game started or loaded under one account never adds to another's.
 
@@ -435,6 +439,18 @@ On confirmation, the wipe permanently deletes that account's:
 This cannot be undone in the game, and no server keeps a copy. The game [backs up](#backups) the slot, saves included, to `data/backups/` first and shows the backup's path. Restoring that copy is manual. Otherwise the old identity comes back only if you wrote down its [recovery code](#the-recovery-code) beforehand, and its earned progress only if you [exported it](#exporting-amp-importing-accounts) first. If you wipe your last account, the game asks you to name a new one.
 
 > Typing `account wipe` at the `>` prompt does not wipe anything. It tells you where to find the wipe in the Accounts panel, the only place it happens.
+
+---
+
+## Run archive
+
+The account keeps a record of each run that ends: by a prestige, by a Succumb, when a new game is started over it, or when the account's saves are deleted while it is loaded. A record holds the run's id, the save it was played in, when it started and ended, its last tick, the age it reached, its prestige level, how it ended, and its counts of buildings built, workers recruited, techs researched and expeditions done. A prestige is always recorded. Any other run is recorded once it has about 300 ticks behind it.
+
+The 20 newest records, and the best run (the highest age, then the fewest ticks), also keep a thinned copy of the run's history: ten measures at up to 256 points each, with its age, wonder, catastrophe and harbinger marks. The account keeps up to 200 records and drops the oldest past that. No panel shows them yet.
+
+A run left for a new game is still in its save. If that save is loaded and the run ends later, the new record replaces the old one. Saves branched from the same game share one run id, so they share one record.
+
+The records are in `runs.json`, a signed file beside `account.json`. An export carries them, an import merges them by run id (the copy that ran longer is kept), and a backup copies the file. If the file is missing, damaged or edited, the archive starts again empty and nothing else about the account changes.
 
 ---
 

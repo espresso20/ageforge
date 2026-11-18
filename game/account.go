@@ -162,6 +162,35 @@ type AccountStats struct {
 	// Age) from a full run (the Modern Age or deeper, PrestigeRunAge).
 	// Prestiges recorded before it existed are only in TotalPrestiges.
 	PrestigesByAge map[string]int `json:"prestiges_by_age,omitempty"`
+	// FastestAge is the fewest run ticks it has taken, from the start of a run, to enter
+	// each age (RecordAgeTime). The first age is never in it.
+	FastestAge map[string]AgeRecord `json:"fastest_age,omitempty"`
+	// BestRun is the largest single-run value of each count named by the RunBest*
+	// constants (RecordRunBests).
+	BestRun map[string]RunBest `json:"best_run,omitempty"`
+}
+
+// The keys of AccountStats.BestRun: the counts a run is measured by.
+const (
+	RunBestBuilt       = "built"       // buildings built
+	RunBestRecruited   = "recruited"   // workers recruited
+	RunBestResearched  = "researched"  // techs researched
+	RunBestExpeditions = "expeditions" // expeditions and campaigns done
+)
+
+// AgeRecord is the fastest time to an age: run ticks, when it was set, and the save it was
+// set in (as the badges name a run).
+type AgeRecord struct {
+	Ticks int       `json:"ticks"`
+	At    time.Time `json:"at"`
+	Run   string    `json:"run,omitempty"`
+}
+
+// RunBest is the best single-run value of one count, with when and in which save.
+type RunBest struct {
+	Value int       `json:"value"`
+	At    time.Time `json:"at"`
+	Run   string    `json:"run,omitempty"`
 }
 
 // AccountPrefs holds preferences that travel with the account (the accounts design §3.3).
@@ -274,6 +303,11 @@ type Account struct {
 	badgeDisk       []byte
 	badgeUnreadable bool
 
+	// runs is the finished runs the account keeps, newest first (run_archive.go),
+	// and runsChanged that they differ from runs.json. Neither is in account.json.
+	runs        []RunRecord
+	runsChanged bool
+
 	// mu guards the unlock/prefs reads and writes (and the Save inside the mutating
 	// methods): the account is read from the UI goroutine (HasTheme/ActiveTheme/
 	// UnlockedThemes) while another goroutine writes (UnlockTheme/SetActiveTheme).
@@ -371,6 +405,7 @@ func LoadAccount() (*Account, bool, error) {
 		acct.Tampered = true
 	}
 	acct.loadSavedBadgeFile(filepath.Dir(path))
+	acct.loadRunFile(filepath.Dir(path))
 	// Confirm the loaded account as active (the loaded id is authoritative over the pointer).
 	setActiveAccountID(acct.AccountID)
 	return &acct, true, nil
@@ -460,6 +495,7 @@ func loadAccountFromSlot(id string) (*Account, bool, error) {
 		acct.Tampered = true
 	}
 	acct.loadSavedBadgeFile(filepath.Dir(path))
+	acct.loadRunFile(filepath.Dir(path))
 	return &acct, true, nil
 }
 
@@ -838,6 +874,9 @@ func (a *Account) Save() error {
 	if err := a.saveBadgeFile(dir); err != nil {
 		return err
 	}
+	if err := a.saveRunFile(dir); err != nil {
+		return err
+	}
 	a.Format = accountFormat
 	a.Signature = signAccount(a)
 	data, err := json.MarshalIndent(a, "", "  ")
@@ -1191,6 +1230,10 @@ type progressExport struct {
 	// covers exactly what a build from before badges signs, so such a build still
 	// verifies and imports the export, and simply does not see this key.
 	BadgeStore *badgeFile `json:"badge_store,omitempty"`
+	// RunStore is the account's filed runs, carried whole with its own signature,
+	// and outside Signature for the same reason. An export without it, or with
+	// one that does not verify, brings no runs.
+	RunStore *runArchiveFile `json:"run_store,omitempty"`
 }
 
 // signProgressExport returns the HMAC-SHA256 hex of the export payload with Signature
@@ -1234,6 +1277,7 @@ func (a *Account) ExportProgress() ([]byte, error) {
 		Prefs:        a.Prefs,
 		Tampered:     a.Tampered,
 		BadgeStore:   a.badgeFileLocked(),
+		RunStore:     a.runArchiveLocked(),
 	}
 	exp.Signature = signProgressExport(&exp)
 
@@ -1312,6 +1356,9 @@ func decodeAccountExport(blob []byte) (*progressExport, error) {
 	if b.AccountID != exp.AccountID || !verifyBadgeFile(b) {
 		return nil, vibe.Errorf("game.account.decodeAccountExport.05", "That progress export has been changed or damaged since it was made, so it cannot be imported.")
 	}
+	if r := exp.RunStore; r != nil && (r.AccountID != exp.AccountID || !verifyRunArchive(r)) {
+		exp.RunStore = nil
+	}
 	return &exp, nil
 }
 
@@ -1345,6 +1392,7 @@ func importExportToSlot(exp *progressExport, merge bool, book *badgeBook) (*Acco
 		// With a badge file left in the slot, if any: the two are merged.
 		target.adoptBadgeFile()
 		target.takeBadgeStoreLocked(exp.BadgeStore, true)
+		target.takeRunStoreLocked(exp.RunStore, true)
 	} else {
 		target.applyExportLocked(exp, merge) // target is private to this call; no lock needed
 	}
@@ -1371,6 +1419,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 		a.Stats = exp.Stats
 		a.Achievements = append([]string(nil), exp.Achievements...)
 		a.takeBadgeStoreLocked(exp.BadgeStore, false)
+		a.takeRunStoreLocked(exp.RunStore, false)
 		a.Prefs = exp.Prefs
 		return
 	}
@@ -1380,6 +1429,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	// Badges: every badge either copy holds, the earlier of two. Counters: the larger
 	// of each, never the sum, so importing your own backup doubles nothing.
 	a.takeBadgeStoreLocked(exp.BadgeStore, true)
+	a.takeRunStoreLocked(exp.RunStore, true)
 	// Max each numeric lifetime stat — bests don't regress.
 	a.Stats.TotalPrestiges = max(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
 	for _, age := range sortedKeys(exp.Stats.PrestigesByAge) {
@@ -1389,6 +1439,17 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 		a.Stats.PrestigesByAge[age] = max(a.Stats.PrestigesByAge[age], exp.Stats.PrestigesByAge[age])
 	}
 	a.Stats.CivilizationsStarted = max(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
+	// Records: the lower time and the higher count win; one-sided records are kept.
+	for age, r := range exp.Stats.FastestAge {
+		if old, ok := a.Stats.FastestAge[age]; !ok || r.Ticks < old.Ticks {
+			a.Stats.FastestAge = setKey(a.Stats.FastestAge, age, r)
+		}
+	}
+	for k, r := range exp.Stats.BestRun {
+		if r.Value > a.Stats.BestRun[k].Value {
+			a.Stats.BestRun = setKey(a.Stats.BestRun, k, r)
+		}
+	}
 	a.Stats.SavesCompleted = max(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
 	// HighestAge is a key, not a number: the later age of the two wins.
 	if ageOrderOf(exp.Stats.HighestAge) > ageOrderOf(a.Stats.HighestAge) {
@@ -1514,6 +1575,41 @@ func (a *Account) RecordAgeReached(ageKey string, ageOrder int) {
 	}
 }
 
+// RecordAgeTime keeps the fastest run time to ageKey: it sets the record when there is
+// none or runTicks is lower, and ignores runTicks <= 0. IN-MEMORY ONLY (same discipline as
+// RecordPrestigeFrom).
+func (a *Account) RecordAgeTime(ageKey string, runTicks int, at time.Time, run string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if old, ok := a.Stats.FastestAge[ageKey]; runTicks <= 0 || (ok && runTicks >= old.Ticks) {
+		return
+	}
+	a.Stats.FastestAge = setKey(a.Stats.FastestAge, ageKey, AgeRecord{Ticks: runTicks, At: at, Run: run})
+	a.dirty = true
+}
+
+// RecordRunBests raises the record of each count (keyed by the RunBest* constants) the
+// run beats, and never lowers one. IN-MEMORY ONLY (same discipline as RecordPrestigeFrom).
+func (a *Account) RecordRunBests(counts map[string]int, at time.Time, run string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for k, v := range counts {
+		if v > a.Stats.BestRun[k].Value {
+			a.Stats.BestRun = setKey(a.Stats.BestRun, k, RunBest{Value: v, At: at, Run: run})
+			a.dirty = true
+		}
+	}
+}
+
+// setKey sets m[k] = v, making the map first when it is nil.
+func setKey[V any](m map[string]V, k string, v V) map[string]V {
+	if m == nil {
+		m = map[string]V{}
+	}
+	m[k] = v
+	return m
+}
+
 // highestOrderLocked returns the Order of the currently-stored HighestAge, or -1 if none
 // is set (or the stored key is unknown — treated as "below everything" so any real age
 // wins). Callers must hold a.mu. It consults the pure config age table (no locks).
@@ -1573,5 +1669,7 @@ func (a *Account) LifetimeStats() (AccountStats, []string) {
 	defer a.mu.Unlock()
 	st := a.Stats
 	st.PrestigesByAge = maps.Clone(a.Stats.PrestigesByAge) // no alias of the live map
+	st.FastestAge = maps.Clone(a.Stats.FastestAge)
+	st.BestRun = maps.Clone(a.Stats.BestRun)
 	return st, sortedKeys(a.Badges)
 }
