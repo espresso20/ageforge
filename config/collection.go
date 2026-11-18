@@ -13,11 +13,20 @@ const (
 	CoinHarbinger  = "harbinger"
 )
 
+// CoinFeat is the legendary coin of an age: struck once for the age's one hard
+// feat. It is not a well, so it is not in CoinTypes, but the account keeps and
+// merges its copies like the others. It has no level ladder: a copy is held at
+// CoinLegendary.
+const CoinFeat = "feat"
+
 // CoinTypes is the coin types in their display order.
 var CoinTypes = []string{CoinAge, CoinWonder, CoinTechs, CoinMaximalist, CoinHarbinger}
 
-// IsCoinType reports whether key is one of the coin types.
+// IsCoinType reports whether key is one of the coin types, the feat coin included.
 func IsCoinType(key string) bool {
+	if key == CoinFeat {
+		return true
+	}
 	for _, t := range CoinTypes {
 		if t == key {
 			return true
@@ -28,6 +37,27 @@ func IsCoinType(key string) bool {
 
 // CoinLevels is how many levels a coin has: 1 is the lowest, CoinLevels the finest.
 const CoinLevels = 6
+
+// CoinLegendary is the one level a feat coin is held at, above the six.
+const CoinLegendary = CoinLevels + 1
+
+// CoinLevelOK reports whether level is one a coin of typ can be held at.
+func CoinLevelOK(typ string, level int) bool {
+	if typ == CoinFeat {
+		return level == CoinLegendary
+	}
+	return level >= 1 && level <= CoinLevels
+}
+
+// CoinRefTicks is the reference time of age for a run that plays it at speed
+// times the base rate: the age's pacing target at 1x divided by speed (a speed
+// of 0 or less counts as 1). Every time mark on a coin or a feat is a share of it.
+func CoinRefTicks(age string, speed float64) float64 {
+	if speed <= 0 {
+		speed = 1
+	}
+	return AgeTargetTicks(age) / speed
+}
 
 // coinMarks are the level marks as shares of an age's reference time, finest
 // first: a coin struck at or under the share has at least that level. Every
@@ -49,10 +79,7 @@ var coinMarks = [CoinLevels - 1]struct {
 // the age's pacing target at 1x divided by speed (a speed of 0 or less counts
 // as 1). An unknown age, or one with no target, gives level 1.
 func CoinLevel(age string, ticksInAge, speed float64) int {
-	if speed <= 0 {
-		speed = 1
-	}
-	ref := AgeTargetTicks(age) / speed
+	ref := CoinRefTicks(age, speed)
 	if ref <= 0 {
 		return 1
 	}

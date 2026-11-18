@@ -105,7 +105,7 @@ func capCoins(s *CoinStack) {
 // It returns the copy now held for the run and whether this strike changed
 // the stack. Callers hold a.mu.
 func (a *Account) strikeCoinLocked(c CoinCopy) (CoinCopy, bool) {
-	if !config.IsCoinType(c.Type) || c.Age == "" || c.Level < 1 || c.Level > config.CoinLevels {
+	if !config.IsCoinType(c.Type) || c.Age == "" || !config.CoinLevelOK(c.Type, c.Level) {
 		return CoinCopy{}, false
 	}
 	key := coinKey(c.Type, c.Age)
@@ -147,6 +147,16 @@ func (a *Account) putCoinStackLocked(key string, s CoinStack) {
 // edited-save mark, as a badge's. IN-MEMORY ONLY, like the
 // Record* hooks: the engine calls it under its write lock.
 func (a *Account) StrikeCoin(typ, age string, ticksInAge int, speed float64, run string, at time.Time, crossed bool) (CoinCopy, bool) {
+	return a.strike(typ, age, config.CoinLevel(age, float64(ticksInAge), speed), ticksInAge, run, at, crossed)
+}
+
+// StrikeFeat strikes the feat coin of age for run, at the one level it has.
+// ticksInAge is the figure kept with the copy. Otherwise as StrikeCoin.
+func (a *Account) StrikeFeat(age string, ticksInAge int, run string, at time.Time, crossed bool) (CoinCopy, bool) {
+	return a.strike(config.CoinFeat, age, config.CoinLegendary, ticksInAge, run, at, crossed)
+}
+
+func (a *Account) strike(typ, age string, level, ticksInAge int, run string, at time.Time, crossed bool) (CoinCopy, bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	flags := 0
@@ -157,7 +167,7 @@ func (a *Account) StrikeCoin(typ, age string, ticksInAge int, speed float64, run
 		Flags:  flags,
 		Type:   typ,
 		Age:    age,
-		Level:  config.CoinLevel(age, float64(ticksInAge), speed),
+		Level:  level,
 		Run:    run,
 		At:     at.Unix(),
 		Figure: ticksInAge,
@@ -272,7 +282,7 @@ func coinsFromFile(f *collectionFile) map[string]CoinStack {
 func foldCoinCopies(s CoinStack, more []CoinCopy) CoinStack {
 	byRun := map[string]CoinCopy{}
 	for _, c := range slices.Concat(s.Copies, more) {
-		if c.Level < 1 || c.Level > config.CoinLevels {
+		if !config.CoinLevelOK(c.Type, c.Level) {
 			continue
 		}
 		if held, ok := byRun[c.Run]; !ok || c.Level > held.Level || (c.Level == held.Level && c.At < held.At) {

@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestCoinLevelMarks(t *testing.T) {
 	const age = "stone_age"
@@ -56,5 +59,14 @@ func TestCoinTypes(t *testing.T) {
 	}
 	if IsCoinType("swift") {
 		t.Error("swift is not a coin type")
+	}
+}
+
+func TestFeatCoinIsNotAWell(t *testing.T) {
+	if !IsCoinType(CoinFeat) || slices.Contains(CoinTypes, CoinFeat) {
+		t.Error("the feat coin must be a coin type and not one of the wells")
+	}
+	if !CoinLevelOK(CoinFeat, CoinLegendary) || CoinLevelOK(CoinFeat, CoinLevels) || CoinLevelOK(CoinAge, CoinLegendary) || !CoinLevelOK(CoinAge, CoinLevels) {
+		t.Error("levels: the feat coin has only the legendary level and the others never reach it")
 	}
 }

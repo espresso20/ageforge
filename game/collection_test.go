@@ -240,3 +240,55 @@ func TestCoinExportCarriesTheCollection(t *testing.T) {
 		t.Error("an edited file verifies")
 	}
 }
+
+// A feat coin has the one level above the six, one copy for each run, and it
+// is not one of the five wells.
+func TestFeatCoinIsHeldOncePerRunAndKeptThroughSaveAndMerge(t *testing.T) {
+	isolateAccountDir(t)
+	a := testAccount(t)
+	at := time.Unix(50, 0)
+	c, ok := a.StrikeFeat("iron_age", 400, "r1", at, true)
+	if !ok || c.Level != config.CoinLegendary || c.Type != config.CoinFeat || c.Figure != 400 || c.Seed == 0 || c.Flags&BadgeFlagCrossed == 0 {
+		t.Fatalf("first strike: %+v, %v", c, ok)
+	}
+	if _, ok := a.StrikeFeat("iron_age", 90, "r1", time.Unix(60, 0), false); ok {
+		t.Error("a second strike in the same run changed the stack")
+	}
+	if !a.coinHeld(config.CoinFeat, "iron_age", "r1") || a.coinHeld(config.CoinFeat, "iron_age", "r2") || a.coinHeld(config.CoinFeat, "stone_age", "r1") {
+		t.Error("held is not per run and age")
+	}
+	if _, ok := a.StrikeFeat("iron_age", 10, "r2", at, false); !ok {
+		t.Fatal("a second run did not strike")
+	}
+	if s := a.CoinStackOf(config.CoinFeat, "iron_age"); s.Count != 2 || len(s.Copies) != 2 {
+		t.Errorf("stack: %+v", s)
+	}
+	if got := a.CoinStacksOfAge("iron_age"); len(got) != 0 {
+		t.Errorf("the feat coin is listed as a well: %+v", got)
+	}
+	if err := a.FlushIfDirty(); err != nil {
+		t.Fatal(err)
+	}
+	back := reloadAccount(t)
+	want := a.CoinStackOf(config.CoinFeat, "iron_age")
+	if got := back.CoinStackOf(config.CoinFeat, "iron_age"); got.Count != 2 || len(got.Copies) != 2 || got.Copies[0].Flags != want.Copies[0].Flags {
+		t.Errorf("after a round trip: %+v, want %+v", got, want)
+	}
+	// A merge keeps the copy once and brings the other account's runs in.
+	theirs := &Account{AccountID: a.AccountID}
+	theirs.StrikeFeat("iron_age", 400, "r1", time.Unix(70, 0), false)
+	theirs.StrikeFeat("iron_age", 5, "r3", time.Unix(80, 0), false)
+	f := theirs.collectionLocked()
+	a.mu.Lock()
+	a.takeCollectionLocked(f, true)
+	a.mu.Unlock()
+	s := a.CoinStackOf(config.CoinFeat, "iron_age")
+	if len(s.Copies) != 3 {
+		t.Fatalf("merged stack: %+v", s)
+	}
+	for _, c := range s.Copies {
+		if c.Run == "r1" && (c.At != 50 || c.Flags&BadgeFlagCrossed == 0) {
+			t.Errorf("the merge did not keep the earlier marked copy: %+v", c)
+		}
+	}
+}
