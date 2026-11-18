@@ -127,6 +127,13 @@ func TestCabinetFanOpensStepsAndCloses(t *testing.T) {
 		t.Errorf("stepping: pick %d well %d, fan rebuilt %v", p.tray.pick, p.tray.well, p.tray.fanImg != img)
 	}
 	row2 := image.Rect(l.Ticket.Min.X, l.Ticket.Min.Y+1, l.Ticket.Max.X, l.Ticket.Max.Y)
+	if got := plateText(b, row2); strings.Contains(got, "Run") || len(got) > l.Ticket.Dx() {
+		t.Errorf("a run with no number, or a line past the face: %q", got)
+	}
+	p.tray.recs[2][p.pickCopy()].Run = "12"
+	if _, w := p.ticketWords(); !strings.Contains(w, "Run 12") {
+		t.Errorf("numbered run: %q", w)
+	}
 	if !strings.Contains(plateText(b, row2), "Figure") {
 		t.Errorf("second ticket row %q", plateText(b, row2))
 	}

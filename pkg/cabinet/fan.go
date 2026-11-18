@@ -48,15 +48,17 @@ func (l TrayLayout) fan9(t Tray, well, sel int, mint *coins.Mint) (cells image.R
 	st := t.Stacks[well][:min(len(t.Stacks[well]), FanMax)]
 	sz, pts, box := l.fanSz, l.fanAt(well, len(st)), image.Rectangle{}
 	lift := max(4, int(8*l.s+0.5))
+	lip := max(2, int(3*l.s+0.5))
 	for k, p := range pts {
 		if sel < 0 || k == sel {
-			box = box.Union(image.Rect(p.X-sz/2-lift-2, p.Y-sz/2-lift-2, p.X-sz/2+sz+l.pad+2, p.Y-sz/2+sz+l.pad+2))
+			box = box.Union(image.Rect(p.X-sz/2-lift-lip, p.Y-sz/2-lift-lip, p.X-sz/2+sz+l.pad+lip, p.Y-sz/2+sz+l.pad+lip))
 		}
 	}
 	cells = image.Rect(box.Min.X/l.Cell.X, box.Min.Y/l.Cell.Y, (box.Max.X+l.Cell.X-1)/l.Cell.X, (box.Max.Y+l.Cell.Y-1)/l.Cell.Y).Intersect(l.fan)
 	c := newCanvas(l.pix(cells), l.s)
 	rp, kind := lining(t.Slot)
 	c.surface(l.pix(cells), l.lining, rp, kind, 7)
+	c.dark = mul(rp[1], 0.4)
 	for k := len(st) - 1; k >= 0; k-- {
 		im := get(mint, t.Money, t.Types[well], st[k].Level, st[k].Seed, sz)
 		switch {
@@ -67,8 +69,10 @@ func (l TrayLayout) fan9(t Tray, well, sel int, mint *coins.Mint) (cells image.R
 			x, y := pts[k].X-lift, pts[k].Y-lift
 			c.cast(im, x, y, l.pad-1+lift, lift)
 			c.tint = brass[4]
-			for _, d := range [][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
-				c.lay(im, x+d[0], y+d[1], 0, true)
+			for w := 1; w <= max(2, c.sc(3)); w++ {
+				for _, d := range [][2]int{{-w, 0}, {w, 0}, {0, -w}, {0, w}} {
+					c.lay(im, x+d[0], y+d[1], 0, true)
+				}
 			}
 			c.lay(im, x, y, 0, false)
 		}

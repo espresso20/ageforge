@@ -3,6 +3,7 @@ package ui
 import (
 	"image"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -118,9 +119,12 @@ func (p *cabinetPanel) ticketWords() (a, b string) {
 		return n, ""
 	}
 	c := t.recs[t.well][p.pickCopy()]
-	run := c.Run[:min(len(c.Run), 4)]
+	run := ""
+	if n, err := strconv.Atoi(c.Run); err == nil && len(c.Run) <= 6 {
+		run = vibe.Sprintf("ui.cabinet_drawer.ticketWords.04", "   Run %d", n)
+	}
 	a = vibe.Sprintf("ui.cabinet_drawer.ticketWords.02", "Level %d of %d   %s", c.Level, coins.Levels, n)
-	b = vibe.Sprintf("ui.cabinet_drawer.ticketWords.03", "%s   Run %s   Figure %d", time.Unix(c.At, 0).Format("2006-01-02"), run, c.Figure)
+	b = vibe.Sprintf("ui.cabinet_drawer.ticketWords.03", "%s%s   Figure %d", time.Unix(c.At, 0).Format("2006-01-02"), run, c.Figure)
 	return a, b
 }
 
@@ -187,6 +191,9 @@ func (p *cabinetPanel) printPlate(p2 *kit.Painter, r, c image.Rectangle, s strin
 		return
 	}
 	c = c.Add(r.Min)
+	if f := []rune(s); len(f) > c.Dx() {
+		s = string(f[:c.Dx()])
+	}
 	ink, face := cabinet.PlateInk(dim), cabinet.PlateFace(dim)
 	st := kit.Style{}.Foreground(theme.RGB(ink.R, ink.G, ink.B)).Background(theme.RGB(face.R, face.G, face.B))
 	p2.Fill(c, st.Bg)
