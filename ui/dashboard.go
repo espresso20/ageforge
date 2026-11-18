@@ -1198,7 +1198,7 @@ func moraleKind(b moraleBand) xk {
 	return xText
 }
 
-// plainFact is the text a vibe line wrote, without its colour tags and the
+// plainFact is the text a rowid line wrote, without its colour tags and the
 // spaces that set it off from what was beside it.
 func plainFact(s string) string { return strings.TrimSpace(kit.Strip(s)) }
 

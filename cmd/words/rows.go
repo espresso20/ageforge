@@ -151,7 +151,7 @@ func read(root string) (*catalog, error) {
 			switch {
 			case u.near == "mapkey" || u.near == "compare" || u.near == "case" || u.near == "index":
 				why = whyMatched
-			case f.mode == modeData && len(u.structs) > 0 && !u.vibeTable && !u.vibeKey:
+			case f.mode == modeData && len(u.structs) > 0 && !u.rowTable && !u.rowKey:
 				r, why = readField(c, u)
 			}
 			if r == nil && why == "" {

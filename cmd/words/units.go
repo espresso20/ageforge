@@ -33,14 +33,14 @@ type unit struct {
 	caseKey  string       // the first value of the case clause whose body it is in ("default" for a default clause), if any
 	ret      int          // its place among the values a return statement gives back
 
-	vibeID    string // the row id of the vibe call it is the string of (Line, E, Sprintf, Errorf), or of the table entry it is in (vibeTable); "" if neither
-	vibeKey   bool   // it is a row id (the first argument of a vibe call, or a vibeRow field), not text
-	vibeTable bool   // its vibeID is the vibeRow field of the table entry it is in, read by rowid.Line when the entry is drawn
+	rowID    string // the row id of the rowid call it is the string of (Line, E, Sprintf, Errorf), or of the table entry it is in (rowTable); "" if neither
+	rowKey   bool   // it is a row id (the first argument of a rowid call, or a rowID field), not text
+	rowTable bool   // its rowID is the rowID field of the table entry it is in, read by rowid.Line when the entry is drawn
 }
 
-// vibeRowField is the name of the struct field that holds the row id of a
-// table entry (see unit.vibeTable). config's road event templates use it.
-const vibeRowField = "vibeRow"
+// rowIDField is the name of the struct field that holds the row id of a
+// table entry (see unit.rowTable). config's road event templates use it.
+const rowIDField = "rowID"
 
 // callSite is a call the text is an argument of.
 type callSite struct {
@@ -151,8 +151,8 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 				near("compare")
 			}
 		case *ast.CallExpr:
-			if kind, ok := vibeCallKind(f, p); ok && child != p.Fun {
-				// A vibe call is the string it carries, said another way. rowid.Line adds
+			if kind, ok := rowCallKind(f, p); ok && child != p.Fun {
+				// A rowid call is the string it carries, said another way. rowid.Line adds
 				// no call to what is around the text. rowid.Sprintf and rowid.Errorf count
 				// as the fmt call they stand for, with the id left out of the arguments.
 				idx := -1
@@ -166,9 +166,9 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 				}
 				switch {
 				case idx == 0:
-					u.vibeKey = true
+					u.rowKey = true
 				case idx == 1 && j == len(stack)-2:
-					u.vibeID, _ = stringLit(p.Args[0])
+					u.rowID, _ = stringLit(p.Args[0])
 				}
 				if kind != "Line" {
 					near("call")
@@ -232,7 +232,7 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 					// {title} in a row's description reads the same wired or not.
 					sibVal := val
 					if call, ok := val.(*ast.CallExpr); ok {
-						if inner, ok := vibeCarried(call); ok {
+						if inner, ok := rowCarried(call); ok {
 							sibVal = inner
 						}
 					}
@@ -249,10 +249,10 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 				// drawn carries its row id in a field of its own, since a table is
 				// made once and cannot call rowid.Line itself.
 				switch {
-				case site.field == vibeRowField:
-					u.vibeKey = true
-				case site.field != "" && u.vibeID == "" && site.sib[vibeRowField] != "":
-					u.vibeID, u.vibeTable = site.sib[vibeRowField], true
+				case site.field == rowIDField:
+					u.rowKey = true
+				case site.field != "" && u.rowID == "" && site.sib[rowIDField] != "":
+					u.rowID, u.rowTable = site.sib[rowIDField], true
 				}
 				if len(u.structs) == 0 {
 					u.coll = steps
@@ -356,9 +356,9 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 	return u
 }
 
-// isVibeCall reports whether call is, as written, a call of rowid.Line,
+// isRowCall reports whether call is, as written, a call of rowid.Line,
 // rowid.Sprintf, rowid.Errorf or rowid.E with at least two arguments.
-func isVibeCall(call *ast.CallExpr) bool {
+func isRowCall(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || len(call.Args) < 2 {
 		return false
@@ -373,19 +373,19 @@ func isVibeCall(call *ast.CallExpr) bool {
 	return false
 }
 
-// isVibeLine reports whether call is, as written, rowid.Line(id, "text").
-func isVibeLine(call *ast.CallExpr) bool {
+// isRowLine reports whether call is, as written, rowid.Line(id, "text").
+func isRowLine(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
-	return ok && isVibeCall(call) && len(call.Args) == 2 && sel.Sel.Name == "Line"
+	return ok && isRowCall(call) && len(call.Args) == 2 && sel.Sel.Name == "Line"
 }
 
-// vibeCarried is the string a rowid.Line, rowid.E or rowid.Same call carries: the
+// rowCarried is the string a rowid.Line, rowid.E or rowid.Same call carries: the
 // text of the entry it stands for.
-func vibeCarried(call *ast.CallExpr) (ast.Expr, bool) {
+func rowCarried(call *ast.CallExpr) (ast.Expr, bool) {
 	switch {
-	case isVibeSame(call):
+	case isRowSame(call):
 		return call.Args[0], true
-	case isVibeCall(call) && len(call.Args) == 2:
+	case isRowCall(call) && len(call.Args) == 2:
 		if n := call.Fun.(*ast.SelectorExpr).Sel.Name; n == "Line" || n == "E" {
 			return call.Args[1], true
 		}
@@ -393,9 +393,9 @@ func vibeCarried(call *ast.CallExpr) (ast.Expr, bool) {
 	return nil, false
 }
 
-// isVibeSame reports whether call is, as written, rowid.Same("text"): the entry
+// isRowSame reports whether call is, as written, rowid.Same("text"): the entry
 // of a table for a string that has no row.
-func isVibeSame(call *ast.CallExpr) bool {
+func isRowSame(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || len(call.Args) != 1 {
 		return false
@@ -404,10 +404,10 @@ func isVibeSame(call *ast.CallExpr) bool {
 	return ok && x.Name == "rowid" && sel.Sel.Name == "Same"
 }
 
-// vibeCallKind says whether call is a call of the vibe package that carries a
+// rowCallKind says whether call is a call of the rowid package that carries a
 // row id and a string (Line, Sprintf, Errorf), and which. rowid.E counts as
 // Line.
-func vibeCallKind(f *srcFile, call *ast.CallExpr) (string, bool) {
+func rowCallKind(f *srcFile, call *ast.CallExpr) (string, bool) {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || len(call.Args) < 2 {
 		return "", false
@@ -436,7 +436,7 @@ func chainOf(top ast.Expr, at ast.Expr) *chain {
 			flatten(x.X)
 		case *ast.CallExpr:
 			// rowid.Line is the string it carries.
-			if sel, ok := x.Fun.(*ast.SelectorExpr); ok && isVibeCall(x) && sel.Sel.Name == "Line" {
+			if sel, ok := x.Fun.(*ast.SelectorExpr); ok && isRowCall(x) && sel.Sel.Name == "Line" {
 				flatten(x.Args[1])
 				return
 			}

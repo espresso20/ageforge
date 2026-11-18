@@ -297,9 +297,9 @@ var hiddenFields = map[string]string{
 	"config.BadgeFamilyDef.InAge":       "an age key or a slot",
 	"config.BadgeFamilyDef.Set":         "a key",
 	// A table entry that carries its own row id is read as code text, under
-	// that id (see vibeRowField), and never as a field of a definition.
-	"config.roadTemplate.vibeRow": "the row id of the entry's text",
-	"config.roadTemplate.text":    "read as code text, under the row id in vibeRow",
+	// that id (see rowIDField), and never as a field of a definition.
+	"config.roadTemplate.rowID": "the row id of the entry's text",
+	"config.roadTemplate.text":  "read as code text, under the row id in rowID",
 }
 
 // wonderArea moves a wonder's rows to the wonders sheet.
