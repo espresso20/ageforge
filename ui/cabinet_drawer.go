@@ -44,14 +44,14 @@ type cabinetTray struct {
 	slot, well, liftWell, renders int
 	t                             cabinet.Tray
 	cells, cell                   image.Point
-	img, liftImg, fanImg          *image.RGBA
-	liftAt, fanAt                 image.Rectangle
+	img, liftImg, fanImg, pickImg *image.RGBA
+	liftAt, fanAt, pickAt         image.Rectangle
 	// fan is open on the selected well's stack, at copy pick; recs holds the
 	// copies' records and counts every copy ever struck, per well.
-	fan           bool
-	fanWell, pick int
-	recs          [cabinet.Wells][]game.CoinCopy
-	counts        [cabinet.Wells]int
+	fan                   bool
+	fanWell, pick, pickOf int // pick is the selected copy's place from the left; pickOf the copy drawn raised, -1 for none
+	recs                  [cabinet.Wells][]game.CoinCopy
+	counts                [cabinet.Wells]int
 }
 
 // openDrawer opens the drawer of an age in sight.
@@ -81,11 +81,17 @@ func (p *cabinetPanel) openFan() bool {
 	if t.slot < 0 || t.fan || t.well >= cabinet.Wells || len(t.recs[t.well]) == 0 {
 		return false
 	}
-	t.fan, t.pick = true, 0
+	t.fan, t.pick, t.pickOf = true, (min(len(t.recs[t.well]), cabinet.FanMax)-1)/2, -1
 	return true
 }
 
-// stepFan moves the selected copy along the fan; it does not wrap.
+// pickCopy is the index of the selected copy.
+func (p *cabinetPanel) pickCopy() int {
+	t := &p.tray
+	return cabinet.FanOrder(min(len(t.recs[t.well]), cabinet.FanMax))[t.pick]
+}
+
+// stepFan moves the selected copy to its neighbour on screen; it does not wrap.
 func (p *cabinetPanel) stepFan(key kit.KeyCode) {
 	t, n := &p.tray, min(len(p.tray.recs[p.tray.well]), cabinet.FanMax)
 	switch key {
@@ -111,7 +117,7 @@ func (p *cabinetPanel) ticketWords() (a, b string) {
 	if !t.fan {
 		return n, ""
 	}
-	c := t.recs[t.well][min(t.pick, len(t.recs[t.well])-1)]
+	c := t.recs[t.well][p.pickCopy()]
 	run := c.Run[:min(len(c.Run), 4)]
 	a = vibe.Sprintf("ui.cabinet_drawer.ticketWords.02", "Level %d of %d   %s", c.Level, coins.Levels, n)
 	b = vibe.Sprintf("ui.cabinet_drawer.ticketWords.03", "%s   Run %s   Figure %d", time.Unix(c.At, 0).Format("2006-01-02"), run, c.Figure)
@@ -196,7 +202,7 @@ func (p *cabinetPanel) paintTray(p2 *kit.Painter, r image.Rectangle) bool {
 	}
 	t := &p.tray
 	if t.img == nil || l.Cells != t.cells || l.Cell != t.cell {
-		t.cells, t.cell, t.img, t.liftWell, t.fanImg = l.Cells, l.Cell, cabinet.Open(l, t.t, p.mint), -1, nil
+		t.cells, t.cell, t.img, t.liftWell, t.fanImg, t.pickOf = l.Cells, l.Cell, cabinet.Open(l, t.t, p.mint), -1, nil, -1
 		t.renders++
 	}
 	if t.liftWell != t.well {
@@ -206,11 +212,20 @@ func (p *cabinetPanel) paintTray(p2 *kit.Painter, r image.Rectangle) bool {
 	if t.fan && (t.fanImg == nil || t.fanWell != t.well) {
 		t.fanWell = t.well
 		t.fanAt, t.fanImg = cabinet.Fan(l, t.t, t.well, p.mint)
+		t.pickOf = -1
+	}
+	if t.fan && t.pickOf != p.pickCopy() {
+		k := p.pickCopy()
+		t.pickOf = k
+		t.pickAt, t.pickImg = cabinet.FanLift(l, t.t, t.well, k, p.mint)
 	}
 	p2.Picture(r, t.img)
 	p2.Picture(t.liftAt.Add(r.Min), t.liftImg)
 	if t.fan && t.fanImg != nil {
 		p2.Picture(t.fanAt.Add(r.Min), t.fanImg)
+		if t.pickImg != nil {
+			p2.Picture(t.pickAt.Add(r.Min), t.pickImg)
+		}
 	}
 	i, d := t.slot, p.drawers[t.slot]
 	pr := func(c image.Rectangle, s string, dim bool) { p.printPlate(p2, r, c, s, dim) }

@@ -106,14 +106,18 @@ func TestCabinetFanOpensStepsAndCloses(t *testing.T) {
 	}
 	p.tray.well = 2
 	press(p, kit.KeyEnter)
-	if !p.tray.fan || p.tray.pick != 0 {
-		t.Fatalf("Enter on a stack: fan %v pick %d", p.tray.fan, p.tray.pick)
+	if !p.tray.fan || p.pickCopy() != 0 {
+		t.Fatalf("Enter on a stack: fan %v copy %d", p.tray.fan, p.pickCopy())
 	}
 	l, _ := cabinet.PlanTray(160, 44, 12, 24)
 	b := paint()
 	first, img := plateText(b, l.Ticket), p.tray.fanImg
 	if img == nil || !strings.Contains(first, "Level") || !strings.Contains(first, "4 struck") {
 		t.Fatalf("ticket %q, fan picture %v", first, img != nil)
+	}
+	press(p, kit.KeyLeft)
+	if p.pickCopy() != 2 || paint() == nil || p.tray.pickOf != 2 {
+		t.Errorf("Left from the middle chose copy %d", p.pickCopy())
 	}
 	press(p, kit.KeyRight)
 	press(p, kit.KeyRight)

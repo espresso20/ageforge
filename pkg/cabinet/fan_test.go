@@ -104,3 +104,36 @@ func TestLiftIsPlain(t *testing.T) {
 		}
 	}
 }
+
+func TestFanLiftOnlyRaisesOneCopy(t *testing.T) {
+	mint := coins.NewMint(400)
+	l, tr := planTray(t, traySizes[1]), testTray(4)
+	tr.Stacks[2] = stackOf(7)
+	cells, base := Fan(l, tr, 2, mint)
+	lc, lift := FanLift(l, tr, 2, 3, mint)
+	if lc.Empty() || !lc.In(cells) || lc.Dx()*lc.Dy() >= cells.Dx()*cells.Dy() || lift.Rect.Dx() != l.pix(lc).Dx() {
+		t.Fatalf("lift cells %v of fan %v", lc, cells)
+	}
+	r, n := l.pix(lc), 0
+	for y := 0; y < r.Dy(); y++ {
+		for x := 0; x < r.Dx(); x++ {
+			o := l.pix(cells).Min
+			if lift.RGBAAt(x, y) != base.RGBAAt(r.Min.X+x-o.X, r.Min.Y+y-o.Y) {
+				n++
+			}
+		}
+	}
+	if n == 0 {
+		t.Error("the lifted copy looks the same as in the fan")
+	}
+	xs := map[int]int{}
+	for k, p := range l.fanAt(2, 7) {
+		xs[k] = p.X
+	}
+	o := FanOrder(7)
+	for i := 1; i < len(o); i++ {
+		if xs[o[i]] <= xs[o[i-1]] {
+			t.Errorf("order %v is not left to right", o)
+		}
+	}
+}

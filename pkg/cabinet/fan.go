@@ -15,21 +15,62 @@ const FanMax = 9
 // cells of the lining, to lay over Open's picture; it is empty where the stack
 // is empty or the panel leaves no room for copies.
 func Fan(l TrayLayout, t Tray, well int, mint *coins.Mint) (cells image.Rectangle, img *image.RGBA) {
+	return l.fan9(t, well, -1, mint)
+}
+
+// FanLift paints copy k of the fan raised over a hard shadow with a brass lip:
+// the copy's cells and what lies about them, to lay over Fan's picture.
+func FanLift(l TrayLayout, t Tray, well, k int, mint *coins.Mint) (cells image.Rectangle, img *image.RGBA) {
+	return l.fan9(t, well, k, mint)
+}
+
+// FanOrder is the copies' indices from the leftmost on screen to the
+// rightmost, for a fan of n copies.
+func FanOrder(n int) []int {
+	var o []int
+	for k := (n - 1) &^ 1; k > 0; k -= 2 {
+		o = append(o, k)
+	}
+	if n > 0 {
+		o = append(o, 0)
+	}
+	for k := 1; k < n; k += 2 {
+		o = append(o, k)
+	}
+	return o
+}
+
+// fan9 paints the fan; sel >= 0 raises that copy and covers only its cells.
+func (l TrayLayout) fan9(t Tray, well, sel int, mint *coins.Mint) (cells image.Rectangle, img *image.RGBA) {
 	if well < 0 || well >= Wells || len(t.Stacks[well]) == 0 || l.fanSz < 48 {
 		return
 	}
 	st := t.Stacks[well][:min(len(t.Stacks[well]), FanMax)]
 	sz, pts, box := l.fanSz, l.fanAt(well, len(st)), image.Rectangle{}
-	for _, p := range pts {
-		box = box.Union(image.Rect(p.X-sz/2, p.Y-sz/2, p.X-sz/2+sz+l.pad, p.Y-sz/2+sz+l.pad))
+	lift := max(4, int(8*l.s+0.5))
+	for k, p := range pts {
+		if sel < 0 || k == sel {
+			box = box.Union(image.Rect(p.X-sz/2-lift-2, p.Y-sz/2-lift-2, p.X-sz/2+sz+l.pad+2, p.Y-sz/2+sz+l.pad+2))
+		}
 	}
 	cells = image.Rect(box.Min.X/l.Cell.X, box.Min.Y/l.Cell.Y, (box.Max.X+l.Cell.X-1)/l.Cell.X, (box.Max.Y+l.Cell.Y-1)/l.Cell.Y).Intersect(l.fan)
 	c := newCanvas(l.pix(cells), l.s)
 	rp, kind := lining(t.Slot)
 	c.surface(l.pix(cells), l.lining, rp, kind, 7)
 	for k := len(st) - 1; k >= 0; k-- {
-		if im := get(mint, t.Money, t.Types[well], st[k].Level, st[k].Seed, sz); im != nil {
+		im := get(mint, t.Money, t.Types[well], st[k].Level, st[k].Seed, sz)
+		switch {
+		case im == nil:
+		case k != sel:
 			c.cast(im, pts[k].X, pts[k].Y, l.pad-1, 0)
+		default:
+			x, y := pts[k].X-lift, pts[k].Y-lift
+			c.cast(im, x, y, l.pad-1+lift, lift)
+			c.tint = brass[4]
+			for _, d := range [][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
+				c.lay(im, x+d[0], y+d[1], 0, true)
+			}
+			c.lay(im, x, y, 0, false)
 		}
 	}
 	return cells, c.img
