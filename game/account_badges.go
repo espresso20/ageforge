@@ -187,6 +187,10 @@ func (a *Account) adoptBadgeFile() {
 	a.Badges, a.Counters, a.Days, a.BadgesTampered = nil, nil, nil, false
 	a.loadBadgeFile(accountDir(a.AccountID))
 	a.loadRunFile(accountDir(a.AccountID)) // the slot's run file, if any, comes with its badge file
+	held := a.coins
+	a.loadCollectionFile(accountDir(a.AccountID))
+	a.coins = mergeCoinStacks(a.coins, held)
+	a.coinsChanged = a.coinsChanged || len(held) > 0
 	a.Badges = mergeBadges(a.Badges, badges)
 	a.Counters = mergeCounters(a.Counters, counters)
 	a.Days = mergeDays(a.Days, days)

@@ -308,6 +308,11 @@ type Account struct {
 	runs        []RunRecord
 	runsChanged bool
 
+	// coins is the coin collection (collection.go), by type and age, and
+	// coinsChanged that it differs from collection.json. Neither is in account.json.
+	coins        map[string]CoinStack
+	coinsChanged bool
+
 	// mu guards the unlock/prefs reads and writes (and the Save inside the mutating
 	// methods): the account is read from the UI goroutine (HasTheme/ActiveTheme/
 	// UnlockedThemes) while another goroutine writes (UnlockTheme/SetActiveTheme).
@@ -406,6 +411,7 @@ func LoadAccount() (*Account, bool, error) {
 	}
 	acct.loadSavedBadgeFile(filepath.Dir(path))
 	acct.loadRunFile(filepath.Dir(path))
+	acct.loadCollectionFile(filepath.Dir(path))
 	// Confirm the loaded account as active (the loaded id is authoritative over the pointer).
 	setActiveAccountID(acct.AccountID)
 	return &acct, true, nil
@@ -496,6 +502,7 @@ func loadAccountFromSlot(id string) (*Account, bool, error) {
 	}
 	acct.loadSavedBadgeFile(filepath.Dir(path))
 	acct.loadRunFile(filepath.Dir(path))
+	acct.loadCollectionFile(filepath.Dir(path))
 	return &acct, true, nil
 }
 
@@ -877,6 +884,9 @@ func (a *Account) Save() error {
 	if err := a.saveRunFile(dir); err != nil {
 		return err
 	}
+	if err := a.saveCollectionFile(dir); err != nil {
+		return err
+	}
 	a.Format = accountFormat
 	a.Signature = signAccount(a)
 	data, err := json.MarshalIndent(a, "", "  ")
@@ -1234,6 +1244,8 @@ type progressExport struct {
 	// and outside Signature for the same reason. An export without it, or with
 	// one that does not verify, brings no runs.
 	RunStore *runArchiveFile `json:"run_store,omitempty"`
+	// CollectionStore is the account's coin collection, carried the same way.
+	CollectionStore *collectionFile `json:"collection_store,omitempty"`
 }
 
 // signProgressExport returns the HMAC-SHA256 hex of the export payload with Signature
@@ -1278,6 +1290,8 @@ func (a *Account) ExportProgress() ([]byte, error) {
 		Tampered:     a.Tampered,
 		BadgeStore:   a.badgeFileLocked(),
 		RunStore:     a.runArchiveLocked(),
+
+		CollectionStore: a.collectionLocked(),
 	}
 	exp.Signature = signProgressExport(&exp)
 
@@ -1359,6 +1373,9 @@ func decodeAccountExport(blob []byte) (*progressExport, error) {
 	if r := exp.RunStore; r != nil && (r.AccountID != exp.AccountID || !verifyRunArchive(r)) {
 		exp.RunStore = nil
 	}
+	if c := exp.CollectionStore; c != nil && (c.AccountID != exp.AccountID || !verifyCollection(c)) {
+		exp.CollectionStore = nil
+	}
 	return &exp, nil
 }
 
@@ -1393,6 +1410,7 @@ func importExportToSlot(exp *progressExport, merge bool, book *badgeBook) (*Acco
 		target.adoptBadgeFile()
 		target.takeBadgeStoreLocked(exp.BadgeStore, true)
 		target.takeRunStoreLocked(exp.RunStore, true)
+		target.takeCollectionLocked(exp.CollectionStore, true)
 	} else {
 		target.applyExportLocked(exp, merge) // target is private to this call; no lock needed
 	}
@@ -1420,6 +1438,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 		a.Achievements = append([]string(nil), exp.Achievements...)
 		a.takeBadgeStoreLocked(exp.BadgeStore, false)
 		a.takeRunStoreLocked(exp.RunStore, false)
+		a.takeCollectionLocked(exp.CollectionStore, false)
 		a.Prefs = exp.Prefs
 		return
 	}
@@ -1430,6 +1449,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	// of each, never the sum, so importing your own backup doubles nothing.
 	a.takeBadgeStoreLocked(exp.BadgeStore, true)
 	a.takeRunStoreLocked(exp.RunStore, true)
+	a.takeCollectionLocked(exp.CollectionStore, true)
 	// Max each numeric lifetime stat — bests don't regress.
 	a.Stats.TotalPrestiges = max(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
 	for _, age := range sortedKeys(exp.Stats.PrestigesByAge) {
