@@ -27,6 +27,7 @@ var table = [...]entry{
 	{"victorian_age", victorian, victorianLegend},
 	{"modern_age", modern, modernLegend},
 	{"cyberpunk_age", cyberpunk, cyberpunkLegend},
+	{"fusion_age", fusion, fusionLegend},
 }
 
 func find(age string) *entry {
