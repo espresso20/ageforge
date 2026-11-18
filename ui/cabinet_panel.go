@@ -185,7 +185,7 @@ func (p *cabinetPanel) Paint(p2 *kit.Painter) {
 		p.printPlate(p2, r, c, p.names[i], p.dim[i])
 	}
 	p.printPlate(p2, r, lay.Title, p.totals(), false)
-	p.printPlate(p2, r, lay.Hint, vibe.Line("ui.cabinet_panel.Paint.02", "Arrows move   Esc closes"), false)
+	p.printPlate(p2, r, lay.Hint, vibe.Line("ui.cabinet_panel.Paint.02", "Arrows move   Enter opens   Esc closes"), false)
 }
 
 // move changes the selection by a key; the grid does not wrap.
@@ -212,9 +212,18 @@ func (p *cabinetPanel) move(key kit.KeyCode) {
 func (p *cabinetPanel) routeKey(ev *kit.Key, prompt string) bool {
 	switch ev.Code {
 	case kit.KeyEnter:
-		return p.tray.slot < 0 && prompt == "" && p.openDrawer(p.sel)
-	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd:
+		if prompt != "" {
+			return false
+		}
 		if p.tray.slot >= 0 {
+			p.openFan()
+			return true
+		}
+		return p.openDrawer(p.sel)
+	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd:
+		if p.tray.fan {
+			p.stepFan(ev.Code)
+		} else if p.tray.slot >= 0 {
 			p.moveWell(ev.Code)
 		} else {
 			p.move(ev.Code)
@@ -240,7 +249,9 @@ func (p *cabinetPanel) Mouse(m kit.Mouse) bool {
 	if p.tray.slot >= 0 {
 		w := p.wellAt(m.Pt())
 		if m.Kind == kit.MousePress && m.Button == kit.ButtonLeft && w >= 0 {
-			p.tray.well = w
+			if w == p.tray.well && !p.openFan() || w != p.tray.well {
+				p.tray.well, p.tray.fan = w, false
+			}
 		}
 		return m.Kind == kit.MousePress && m.Button == kit.ButtonRight && p.closeDrawer() || w >= 0
 	}

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image"
+	"strings"
 	"testing"
 	"time"
 
@@ -88,5 +89,53 @@ func TestCabinetDrawerCommandAndClicks(t *testing.T) {
 	paint()
 	if p.tray.renders != n+1 {
 		t.Errorf("a new coin drew the tray %d times", p.tray.renders-n)
+	}
+}
+
+func TestCabinetFanOpensStepsAndCloses(t *testing.T) {
+	d, p, paint := trayRig(t)
+	acc, age := d.engine.Account(), config.Ages()[0].Key
+	for i, run := range []string{"run-a", "run-b", "run-c"} {
+		acc.StrikeCoin(config.CoinTechs, age, 10+i*400, 1, run, time.Unix(1700000000+int64(i)*86400, 0), false)
+	}
+	p.update(d.engine.GetState())
+	press(p, kit.KeyEnter)
+	press(p, kit.KeyEnter) // well 0 holds nothing: no fan
+	if p.tray.fan {
+		t.Fatal("an empty stack opened a fan")
+	}
+	p.tray.well = 2
+	press(p, kit.KeyEnter)
+	if !p.tray.fan || p.tray.pick != 0 {
+		t.Fatalf("Enter on a stack: fan %v pick %d", p.tray.fan, p.tray.pick)
+	}
+	l, _ := cabinet.PlanTray(160, 44, 12, 24)
+	b := paint()
+	first, img := plateText(b, l.Ticket), p.tray.fanImg
+	if img == nil || !strings.Contains(first, "Level") || !strings.Contains(first, "4 struck") {
+		t.Fatalf("ticket %q, fan picture %v", first, img != nil)
+	}
+	press(p, kit.KeyRight)
+	press(p, kit.KeyRight)
+	press(p, kit.KeyRight)
+	b = paint()
+	if p.tray.pick != 3 || p.tray.well != 2 || p.tray.fanImg != img {
+		t.Errorf("stepping: pick %d well %d, fan rebuilt %v", p.tray.pick, p.tray.well, p.tray.fanImg != img)
+	}
+	row2 := image.Rect(l.Ticket.Min.X, l.Ticket.Min.Y+1, l.Ticket.Max.X, l.Ticket.Max.Y)
+	if !strings.Contains(plateText(b, row2), "Figure") {
+		t.Errorf("second ticket row %q", plateText(b, row2))
+	}
+	if !p.closeDrawer() || p.tray.fan || p.tray.slot != 0 {
+		t.Error("Esc did not close the fan first")
+	}
+	if !p.closeDrawer() || p.tray.slot != -1 {
+		t.Error("the second Esc did not close the drawer")
+	}
+	p.update(d.engine.GetState())
+	b = paint()
+	lay, _ := p.plan()
+	if got := plateText(b, lay.Hint); !strings.Contains(got, "Enter") {
+		t.Errorf("front hint %q", got)
 	}
 }
