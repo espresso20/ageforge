@@ -147,6 +147,7 @@ All notable changes to AgeForge are documented here.
 - The plain glyph set (`map glyphs ascii`) shows the same coins; it changes only the text around them.
 
 ### Removed
+- **The VibeMode switch.** The `vibemode` command, its row in the Settings page and its saved setting are gone. The game reads in its own words only.
 - Terminal mode. `ageforge --terminal` is gone: AgeForge runs in its own window only. Nothing else a player could do is removed. Saves, accounts and settings are untouched.
 - **The Primitive Age dinosaurs and the asteroid.** The sauropod, raptor and pterodactyl no longer roam the Primitive town, and the asteroid no longer streaks across the sky near the end of the Late Cretaceous.
 - **The old map renderer.** The symbol-chart map, with its district zoom, region plates and city scenes, is gone with its code; the engine draws every age.
