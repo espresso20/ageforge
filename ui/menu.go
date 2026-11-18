@@ -177,7 +177,7 @@ func (m *mainMenu) fingerprint() string {
 		mainGame, last := acct.GameRecord()
 		fmt.Fprintf(&sb, "%s|%s|%s|", acct.AccountID, mainGame, last)
 	}
-	fmt.Fprintf(&sb, "%d|%v|%v|", set.Tier, set.Motion, vibe.On()) // the words follow VibeMode too
+	fmt.Fprintf(&sb, "%d|%v|", set.Tier, set.Motion)
 	entries, _ := os.ReadDir(filepath.Join(game.DataDir(), "saves"))
 	for _, e := range entries {
 		if fi, err := e.Info(); err == nil {
@@ -629,7 +629,7 @@ func (m *mainMenu) open(id string) {
 		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash")
 		m.pages.AddPage(themePickerPage, page, true, true)
 		m.app.SetFocus(page)
-	case miSetVibe, miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord, miSetFont:
+	case miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord, miSetFont:
 		m.changeSetting(id, 1)
 	case miSetBack:
 		m.closeSettings()

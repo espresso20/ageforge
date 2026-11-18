@@ -8,9 +8,8 @@ import (
 )
 
 // TestThePeopleTabsPickLinesByWhatTheyAreAbout: a line written in plain
-// English is picked by its words, as it always was; a line written under
-// VibeMode's script is picked by the tags it was written with, so the script's
-// words do not move it out of a panel (or into one). The colour of a line
+// English is picked by its words, as it always was; a line written with other
+// words is picked by the tags it was written with. The colour of a line
 // follows the same rule.
 func TestThePeopleTabsPickLinesByWhatTheyAreAbout(t *testing.T) {
 	st := game.GameState{Log: []game.LogEntry{

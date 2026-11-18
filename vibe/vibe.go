@@ -9,11 +9,6 @@ import (
 	"fmt"
 )
 
-// TEMPORARY (removed in the switch PR): callers of the removed switch still compile.
-func On() bool                   { return false }
-func Set(bool)                   {}
-func Text(string) (string, bool) { return "", false }
-
 // Line is the string the code writes itself. id is the row id the copy export
 // gives it, and plain the string.
 func Line(id, plain string) string { return plain }

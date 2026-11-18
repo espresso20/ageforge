@@ -34,8 +34,6 @@ type accountSettings struct {
 	Version int `json:"version"`
 	// Motion is the motion setting: "off", or empty for the default (on).
 	Motion string `json:"motion,omitempty"`
-	// Vibe is the VibeMode setting: "on", or empty for the default (off).
-	Vibe string `json:"vibe,omitempty"`
 	// Title is the title the account chose to wear, "" for the title its
 	// badge score holds. A title it no longer holds is not worn.
 	Title string `json:"title,omitempty"`
@@ -118,23 +116,6 @@ func (a *Account) SetMotion(on bool) error {
 		s.Motion = ""
 		if !on {
 			s.Motion = "off"
-		}
-	})
-}
-
-// VibeOn reports whether VibeMode is on for this account: the game's words
-// read in the VibeMode script. Off by default.
-func (a *Account) VibeOn() bool {
-	return a.readSettings().Vibe == "on"
-}
-
-// SetVibe persists the VibeMode setting. It writes settings.json only:
-// account.json is not touched.
-func (a *Account) SetVibe(on bool) error {
-	return a.editSettings(func(s *accountSettings) {
-		s.Vibe = ""
-		if on {
-			s.Vibe = "on"
 		}
 	})
 }

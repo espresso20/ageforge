@@ -19,7 +19,6 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -54,9 +53,6 @@ type CommandResult struct {
 	// the account; with no account loaded the dashboard keeps it for the
 	// session.
 	MapPref mapPref
-	// Vibe says VibeMode was switched: the game's words are now in the other
-	// script, and the dashboard redraws them at once.
-	Vibe bool
 	// MapFlows asks the dashboard to turn the Map's flows overlay "on",
 	// "off" or over ("switch"); it then writes the reply.
 	MapFlows string
@@ -92,7 +88,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		if run == nil {
 			run = runPanel(c.Name)
 		}
-		res := run(vibeArgs(cmd, args, engine), engine)
+		res := run(args, engine)
 		// worldmap is map, opened on the known world.
 		if cmd == "worldmap" && res.OverlayName == "map" {
 			res.MapWorld = true
@@ -301,9 +297,9 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	}
 	switch {
 	case bs.WonderBankFull && bs.NeedsTech != "":
-		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.06", "\n[yellow]Bank full. Research %s, then type 'build %s' to start construction.[-]", game.TechName(bs.NeedsTech), state.Ruleset().Typed(rules.KindBuilding, curWonder.key)))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.06", "\n[yellow]Bank full. Research %s, then type 'build %s' to start construction.[-]", game.TechName(bs.NeedsTech), curWonder.key))
 	case bs.WonderBankFull:
-		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.07", "\n[green]Bank full. Type 'build %s' to start construction.[-]", state.Ruleset().Typed(rules.KindBuilding, curWonder.key)))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.07", "\n[green]Bank full. Type 'build %s' to start construction.[-]", curWonder.key))
 	default:
 		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.08", "\n[gray]Bank resources with 'wonder collect <resource|all> [amount|all|max]'.[-]"))
 	}
@@ -758,7 +754,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable = "[red]✗[-]"
 			}
 			lines = append(lines, vibe.Sprintf("ui.input.cmdBuild.02", "  %s [cyan]%s[-] (%d built) - Cost: %s %s",
-				affordable, state.Ruleset().Typed(rules.KindBuilding, key), b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
+				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
 		}
 		return infoReply(strings.Join(lines, "\n"))
 	}
@@ -2823,39 +2819,6 @@ func cmdMotion(args []string, engine *game.GameEngine) CommandResult {
 	}
 	if err := acct.SetMotion(on); err != nil {
 		return errorResult(fmt.Errorf("the motion setting could not be saved: %w", err))
-	}
-	return res
-}
-
-// cmdVibemode shows or sets VibeMode: whether the game's words read in the
-// VibeMode script. Off by default. It changes words and nothing else, so the
-// run in play carries on exactly as it was.
-func cmdVibemode(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) == 0 {
-		state := "off"
-		if vibe.On() {
-			state = "on"
-		}
-		return infoReply(vibe.Line("ui.input.cmdVibemode.01", "VibeMode: ") + state + vibe.Line("ui.input.cmdVibemode.02", ". Type vibemode on or vibemode off to change it."))
-	}
-	if len(args) > 1 {
-		return usageError(usageFor("vibemode"), vibe.Errorf("ui.input.cmdVibemode.03", "on or off, please"))
-	}
-	val := strings.ToLower(args[0])
-	if val != "on" && val != "off" {
-		return usageError(usageFor("vibemode"), vibe.Errorf("ui.input.cmdVibemode.04", "vibemode takes on or off, not %q", args[0]))
-	}
-	on := val == "on"
-	if err := engine.SetVibeMode(on); err != nil {
-		return errorResult(fmt.Errorf("the VibeMode setting could not be saved: %w", err))
-	}
-	res := CommandResult{Type: game.LogRoutine, Vibe: true,
-		Message: vibe.Line("ui.input.cmdVibemode.06", "VibeMode off. The words are plain again. Type vibemode on to bring it back.")}
-	if on {
-		res.Message = vibe.Line("ui.input.cmdVibemode.07", "VibeMode on. The words of the game read in a second script. Type vibemode off to go back.")
-	}
-	if engine.Account() == nil {
-		res.Type, res.Message = "info", res.Message+mapSessionOnly.String()
 	}
 	return res
 }

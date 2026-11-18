@@ -194,17 +194,11 @@ func (mm *MilestoneManager) titleFor(chains []config.MilestoneChainDef, titles [
 	return title
 }
 
-// savedTitle is the title a save holds: in plain English whatever script the
-// game is read in, so a save made under VibeMode reads the same as one made
-// without it. The title in play is worked out again every tick.
+// savedTitle is the title a save holds, in plain English. The title in play is
+// worked out again every tick.
 func (mm *MilestoneManager) savedTitle() string {
-	if !rules.IsCore(mm.rules) {
-		return mm.currentTitle
-	}
-	// Worked out from what is completed, not read from currentTitle, which
-	// is the other script's until the next tick after a switch.
-	plain := rules.CoreFor(false)
-	return mm.titleFor(plain.MilestoneChains(), plain.MilestoneTitles())
+	// Worked out from what is completed, not read from currentTitle.
+	return mm.titleFor(mm.rules.MilestoneChains(), mm.rules.MilestoneTitles())
 }
 
 // CompletedCount returns how many milestones are completed

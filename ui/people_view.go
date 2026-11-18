@@ -194,8 +194,7 @@ type stackPart struct {
 
 // A log line is picked for a panel by what it is about (LogEntry.About): by
 // its words if it was written in the game's own English, as it always was, and
-// by the tags it was given where it was written if it was written under
-// VibeMode's script, whose words are its own.
+// by the tags it was given where it was written otherwise.
 
 // peopleEvent says whether a log line is about people: someone recruited,
 // moved in, starved or fell.

@@ -546,7 +546,7 @@ func (mm *MilitaryManager) ActiveForSave() []ActiveSlotSave {
 		c.RoadEventsSeen = append([]string(nil), active.RoadEventsSeen...)
 		c.RoadTold = append([]RoadTold(nil), active.RoadTold...)
 		// A save holds the words a text was drawn from, not the text, so it
-		// reads the same whichever script the game was read in (VibeMode).
+		// reads the same under any ruleset.
 		c.MissionOffer = c.MissionOffer.forSave()
 		if len(c.RoadTold) > 0 {
 			c.RoadEventsSeen = nil

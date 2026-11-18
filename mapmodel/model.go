@@ -206,7 +206,6 @@ type Catastrophe struct {
 // none). It is a pure function of its inputs; Builder caches the parts that
 // depend only on the seed.
 func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
-	b.follow()
 	cat := b.cat
 	m := &Model{Seed: st.Seed, Settled: st.Settled, Tick: st.Tick, Age: st.Age, AgeName: st.AgeName, AgeIdx: cat.AgeIdx[st.Age],
 		NextAge: st.NextAge, NextAgeName: st.NextAgeName, AgeReady: st.AgeReady, Catalog: cat,
@@ -234,9 +233,6 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 func layoutKey(m *Model) uint64 {
 	h := Hash(m.Seed, int64(m.AgeIdx), int64(m.Workers.Staffed), int64(m.Workers.Idle), int64(m.Workers.Pop),
 		HashStr(m.Catastrophe.Pending), int64(m.Expeditions.Completed))
-	if vibe.On() { // the model holds words, so a scene built from the other script's is not reused
-		h = Hash(int64(h), 1)
-	}
 	for _, b := range m.Buildings {
 		h = Hash(int64(h), HashStr(b.Key), int64(b.Count), int64(b.Ruins), int64(b.Workers), b2i(b.Legacy), int64(b.Delta))
 	}

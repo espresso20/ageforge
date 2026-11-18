@@ -228,7 +228,7 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 					if name == "" {
 						continue
 					}
-					// A sibling that is wired for VibeMode (vibe.E) is the text it carries:
+					// A sibling that is wired with a row id (vibe.E) is the text it carries:
 					// {title} in a row's description reads the same wired or not.
 					sibVal := val
 					if call, ok := val.(*ast.CallExpr); ok {

@@ -119,21 +119,14 @@ func TestRoadTemplatesCarryTheirRows(t *testing.T) {
 	for _, kind := range []string{"storm", "helpers", "find", "toll", "foes", "ambush", "ambush_haul", "fair", "ruins"} {
 		for i := 0; i < w.RoadTemplateCount(kind); i++ {
 			n++
-			template := w.RoadTemplate(kind, i)
 			row := roadEventTemplates[kind][i].vibeRow
 			if want := fmt.Sprintf("config.mission_words.roadEventTemplates.%02d", n); row != want {
 				t.Errorf("%s template %d has the row %q, want %q", kind, i, row, want)
 			}
 			rows[row] = true
-			if got := w.RoadLine(template); got != template {
-				t.Errorf("%s reads %q, want the template", row, got)
-			}
 		}
 	}
 	if len(rows) != n {
 		t.Errorf("%d road templates with %d rows, want one row each", n, len(rows))
-	}
-	if got := w.RoadLine("A story written by hand."); got != "A story written by hand." {
-		t.Errorf("a story that is no template reads %q", got)
 	}
 }
