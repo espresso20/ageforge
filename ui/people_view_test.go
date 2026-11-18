@@ -8,16 +8,15 @@ import (
 )
 
 // TestThePeopleTabsPickLinesByWhatTheyAreAbout: a line is picked by the words
-// it has, never by the tags it was written with. The colour of a line follows
-// the same rule.
+// it has. The colour of a line follows the same rule.
 func TestThePeopleTabsPickLinesByWhatTheyAreAbout(t *testing.T) {
 	st := game.GameState{Log: []game.LogEntry{
 		{Message: "Recruited 3 workers (population 4/9).", Type: game.LogRoutine},
-		{Message: "Built a Hut (you have 4).", Type: game.LogRoutine, Tags: game.TagPeople}, // tags are not read
-		{Message: "Squad of 3 pulled up, no cap.", Type: game.LogRoutine, Tags: game.TagPeople | game.TagGood},
+		{Message: "Built a Hut (you have 4).", Type: game.LogRoutine},
+		{Message: "Squad of 3 pulled up, no cap.", Type: game.LogRoutine},
 		{Message: "The soldiers lost the plot.", Type: "info"},
-		{Message: "Two of the squad took an L.", Type: "warning", Tags: game.TagPeople | game.TagArmy | game.TagBad},
-		{Message: "A debug line about workers.", Type: "debug", Tags: game.TagPeople},
+		{Message: "Two of the squad took an L.", Type: "warning"},
+		{Message: "A debug line about workers.", Type: "debug"},
 	}}
 	messages := func(lines []game.LogEntry) []string {
 		var out []string

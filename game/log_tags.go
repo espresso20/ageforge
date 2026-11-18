@@ -5,9 +5,9 @@ import "strings"
 // log_tags.go: what a log line is about.
 //
 // The People and Army tabs list the log lines about their subject, and the
-// log colours a loss red and a gain green. They used to find those lines by
-// reading their words ("recruited", "lost", "soldier"). A line now carries tags, set where it is written
-// (addLogAbout), and a panel asks the line what it is about (LogEntry.About).
+// log colours a loss red and a gain green. Both find the lines by the words
+// they have ("recruited", "lost", "soldier"): a panel asks the line what it is
+// about (LogEntry.About). Nothing is stored with a line.
 
 // LogTag says what a log line is about.
 type LogTag uint8

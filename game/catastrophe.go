@@ -439,10 +439,10 @@ func (ge *GameEngine) Endure() error {
 	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.02", "☄ ENDURE: %s. [comment]%s[-]", catName, catFlavor))
 	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.03", "  Buildings destroyed: %d", destroyCount))
 	for _, desc := range names {
-		ge.addLogAbout("warning", TagBad, rowid.Sprintf("game.catastrophe.Endure.04", "  → %s lost", desc))
+		ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.04", "  → %s lost", desc))
 	}
 	if brace > 0 {
-		ge.addLogAbout("info", TagBad, rowid.Sprintf("game.catastrophe.Endure.05", "  Braced (level %d): %d%% of buildings lost instead of %d%%, %.0f%% of stock kept instead of %.0f%%.",
+		ge.addLog("info", rowid.Sprintf("game.catastrophe.Endure.05", "  Braced (level %d): %d%% of buildings lost instead of %d%%, %.0f%% of stock kept instead of %.0f%%.",
 			brace, braceDestroyPct[brace], braceDestroyPct[0], outcome.BracedKeepFrac*100, braceKeepFrac[0]*100))
 	}
 	if line := endureGarrisonLine(outcome); line != "" {
@@ -454,7 +454,7 @@ func (ge *GameEngine) Endure() error {
 		}
 	}
 	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.06", "  All resources reduced to %.0f%% of stored amounts.", keep*100))
-	ge.addLogAbout("warning", TagPeople|TagBad, rowid.Sprintf("game.catastrophe.Endure.07", "  %.0f%% of workers lost.", endureWorkerLoss*100))
+	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.07", "  %.0f%% of workers lost.", endureWorkerLoss*100))
 	ge.addLog("info", rowid.Sprintf("game.catastrophe.Endure.08", "  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
 		endureDebuffProduction*100, approxTicks(debuff, ge.tickIntervalLocked()), endureMoraleHit*100))
 	// Past the all-production cap the surplus absorbs the penalty: say so.

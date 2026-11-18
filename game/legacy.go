@@ -438,7 +438,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 // holds the write lock.
 func (ge *GameEngine) startRunLegacyLocked() {
 	if ge.applyLegacySharesLocked() {
-		ge.addLogAbout("info", TagPeople, rowid.Line("game.legacy.startRunLegacyLocked.01", "Roster: your shares carry over. ")+sharesLine(ge.rules, ge.workerShares)+".")
+		ge.addLog("info", rowid.Line("game.legacy.startRunLegacyLocked.01", "Roster: your shares carry over. ")+sharesLine(ge.rules, ge.workerShares)+".")
 	}
 	ge.applyPlanTemplateLocked()
 	ge.meetOldFriendsLocked()

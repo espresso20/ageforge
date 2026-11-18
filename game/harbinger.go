@@ -280,9 +280,8 @@ type HarbingerSave struct {
 	// Fulfilled from Vindicated at resolution.
 	Invited bool `json:"invited,omitempty"`
 	// Lines are the current figure's arrival and warning lines, in plain
-	// English (a script's words are never kept). LineKeys name each of them
-	// for flavor.Retell, so they can be told in the script's words when they
-	// are read: "" for a line with no key.
+	// English. LineKeys name each of them by its catalog key, "" for a line
+	// with no key. Nothing reads LineKeys yet; it is kept in the save.
 	Lines       []string `json:"lines,omitempty"`
 	LineKeys    []string `json:"line_keys,omitempty"`
 	ArrivedTick int      `json:"arrived_tick,omitempty"`

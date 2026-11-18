@@ -393,7 +393,7 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	}
 	key := ge.Research.currentTech
 	if key == "" {
-		ge.addLogAbout("info", TagPeople|TagBad, rowid.Line("game.scholars.grantResearch.01", "Your scholars had nothing to study, so the insight was lost."))
+		ge.addLog("info", rowid.Line("game.scholars.grantResearch.01", "Your scholars had nothing to study, so the insight was lost."))
 		return ""
 	}
 	def := ge.Research.defs[key]
@@ -401,7 +401,7 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	ge.Stats.ResearchWork += work
 	landed, completed := ge.Research.Grant(work)
 	if landed < work {
-		ge.addLogAbout("info", TagPeople, rowid.Sprintf("game.scholars.grantResearch.02", "Your scholars gained some ground on %s.", def.Name))
+		ge.addLog("info", rowid.Sprintf("game.scholars.grantResearch.02", "Your scholars gained some ground on %s.", def.Name))
 	}
 	if completed != "" {
 		ge.finishResearch(completed)

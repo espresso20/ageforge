@@ -1470,7 +1470,7 @@ func (ge *GameEngine) doTick() {
 	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
-			ge.addLogAbout("warning", TagPeople, rowid.Sprintf("game.engine.doTick.05", "⚠ Food has run out. One worker dies every %s until you have food again.",
+			ge.addLog("warning", rowid.Sprintf("game.engine.doTick.05", "⚠ Food has run out. One worker dies every %s until you have food again.",
 				ge.durationLocked(starvationDeathInterval)))
 			if q := config.PickLogFlavor(config.LogFlavorStarvation, ge.quipRNG()); q != "" {
 				ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
@@ -1480,12 +1480,12 @@ func (ge *GameEngine) doTick() {
 			killed := ge.Workers.KillWorker(1)
 			if killed > 0 {
 				ge.report(Event{Kind: config.BadgeEvStarved, N: float64(killed)})
-				ge.addLogAbout("error", TagPeople|TagBad, rowid.Sprintf("game.engine.doTick.06", "☠ A worker starved to death. Population: %d.", ge.popLocked()))
+				ge.addLog("error", rowid.Sprintf("game.engine.doTick.06", "☠ A worker starved to death. Population: %d.", ge.popLocked()))
 			}
 		}
 	} else if ge.starvationTicks > 0 {
 		ge.starvationTicks = 0
-		ge.addLogAbout("info", TagPeople|TagGood, rowid.Line("game.engine.doTick.07", "✓ Food is back. Workers have stopped starving."))
+		ge.addLog("info", rowid.Line("game.engine.doTick.07", "✓ Food is back. Workers have stopped starving."))
 		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded, ge.quipRNG()); q != "" {
 			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
@@ -1556,15 +1556,8 @@ func (ge *GameEngine) processEvents() {
 	}
 
 	for _, ae := range expired {
-		var about LogTag
-		switch ae.Key {
-		case "worker_lending":
-			about = TagPeople
-		case "war_raid":
-			about = TagArmy
-		}
 		// The script's line for this has a second slot, which stays empty.
-		ge.addLogAbout("info", about, rowid.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, ""))
+		ge.addLog("info", rowid.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, ""))
 	}
 
 	// Morale effects from triggered events
@@ -1599,27 +1592,17 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	// (EventManager.Tick).
 	line := eventLine(def.LogMessage, out, ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
 	// Setbacks log as warnings so they don't read like windfalls.
-	var about LogTag
-	if out.workers > 0 {
-		about |= TagPeople | TagBad
-	}
-	if len(out.lost) > 0 {
-		about |= TagBad
-	}
-	if def.Raid {
-		about |= TagArmy | TagBad
-	}
 	if def.Sentiment == "bad" {
-		ge.addLogAbout("warning", about, line)
+		ge.addLog("warning", line)
 	} else {
-		ge.addLogAbout("event", about, line)
+		ge.addLog("event", line)
 	}
 	if garrison != "" {
-		ge.addLogAbout("success", TagArmy|TagGood, garrison)
+		ge.addLog("success", garrison)
 		// The garrison blunted a raid that landed: some of it fell doing so.
 		if def.Raid {
 			if fall := ge.raidFallLocked(); fall != "" {
-				ge.addLogAbout("warning", TagPeople|TagArmy|TagBad, fall)
+				ge.addLog("warning", fall)
 			}
 		}
 	}
@@ -1644,9 +1627,9 @@ func (ge *GameEngine) processExpeditions() {
 		ge.syncSoldiers()
 		res.Message += ge.casualtyLine(res)
 		ge.Military.recordReturn(res, ge.tick)
-		ge.addLogAbout("event", casualtyTags(res), res.Message)
+		ge.addLog("event", res.Message)
 		if res.Rank > res.RankBefore {
-			ge.addLogAbout("event", TagArmy|TagGood, rowid.Sprintf("game.engine.processExpeditions.03", "Your army is now %s.", config.Term(ge.age, config.ArmyRankKey(res.Rank)).One))
+			ge.addLog("event", rowid.Sprintf("game.engine.processExpeditions.03", "Your army is now %s.", config.Term(ge.age, config.ArmyRankKey(res.Rank)).One))
 		}
 		if res.RoadEvents > 0 {
 			ge.addLog("info", rowid.Sprintf("game.engine.processExpeditions.04", "The mission met %d road events.", res.RoadEvents))
@@ -1733,11 +1716,7 @@ func (ge *GameEngine) processDiplomacy() {
 	ge.meetOldFriendsLocked()
 	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
 	for _, msg := range messages {
-		var about LogTag
-		if slices.Contains(ge.Diplomacy.loanLines, msg) {
-			about = TagPeople | TagGood // workers lent, or home again
-		}
-		ge.addLogAbout("event", about, msg)
+		ge.addLog("event", msg)
 	}
 	// First contact, however it came about this tick: an expedition's
 	// encounter, an old friend, or the age reaching the civilization.
@@ -2675,7 +2654,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		before := ge.Workers.TotalPop()
 		ge.Workers.AddPctAll(0.15)
 		if gained := ge.Workers.TotalPop() - before; gained > 0 {
-			ge.addLogAbout("success", TagPeople|TagGood, rowid.Sprintf("game.engine.applyGoodEpochEvent.01", "  → %s joined (population now %d).",
+			ge.addLog("success", rowid.Sprintf("game.engine.applyGoodEpochEvent.01", "  → %s joined (population now %d).",
 				textfmt.Count(gained, rowid.Line("game.engine.applyGoodEpochEvent.02", "new worker"), rowid.Line("game.engine.applyGoodEpochEvent.03", "new workers")), ge.popLocked()))
 		}
 	case "ancient_cache":
@@ -2803,7 +2782,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		before := ge.Workers.TotalPop()
 		ge.Workers.RemovePct(0.20)
 		if lost := before - ge.Workers.TotalPop(); lost > 0 {
-			ge.addLogAbout("warning", TagPeople|TagBad, rowid.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", countWorkersRealOne(lost)))
+			ge.addLog("warning", rowid.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", countWorkersRealOne(lost)))
 		}
 	case "resource_drought":
 		// Debuff epoch's primary resource
@@ -2900,7 +2879,7 @@ func (ge *GameEngine) loseShare(res string, frac float64) {
 	if loss <= 0 || !ge.Resources.Remove(res, loss) {
 		return
 	}
-	ge.addLogAbout("warning", TagBad, rowid.Sprintf("game.engine.loseShare.01", "  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
+	ge.addLog("warning", rowid.Sprintf("game.engine.loseShare.01", "  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
 }
 
 // gainResource adds to a resource and returns what it added.
@@ -3142,7 +3121,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 		ge.addLog("success", rowid.Sprintf("game.engine.DoBlackMarket.06", "The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
 		return true, reward, nil
 	}
-	ge.addLogAbout("warning", TagBad, rowid.Sprintf("game.engine.DoBlackMarket.07", "The smuggling run failed. You lost %s.", Amount(cost, "culture")))
+	ge.addLog("warning", rowid.Sprintf("game.engine.DoBlackMarket.07", "The smuggling run failed. You lost %s.", Amount(cost, "culture")))
 	return false, 0, nil
 }
 
@@ -3711,7 +3690,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	}
 	ge.Stats.RecordRecruit(available)
 	ge.holdStaffing()
-	ge.addLogAbout(LogRoutine, TagPeople|TagGood, rowid.Sprintf("game.engine.RecruitMax.04", "Recruited %s (population %d/%d).",
+	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.RecruitMax.04", "Recruited %s (population %d/%d).",
 		countWorkersGrinder(available), ge.popLocked(), popCap))
 	return available, nil
 }
@@ -3745,7 +3724,7 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	}
 	ge.Stats.RecordRecruit(count)
 	ge.holdStaffing()
-	ge.addLogAbout(LogRoutine, TagPeople|TagGood, rowid.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
+	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
 		countWorkersNPC(count), ge.popLocked(), popCap))
 	return nil
 }
@@ -3887,7 +3866,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 func (ge *GameEngine) staffingChanged(line string) {
 	ge.holdStaffing()
 	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, line)
+	ge.addLog(LogRoutine, line)
 }
 
 // checkAmount rejects a resource amount no command can mean: NaN, an
@@ -4077,7 +4056,7 @@ func (ge *GameEngine) CancelResearch() error {
 		return rowid.Errorf("game.engine.CancelResearch.01", "No research in progress.")
 	}
 	ge.recalculateRates()
-	ge.addLogAbout("warning", TagBad, rowid.Sprintf("game.engine.CancelResearch.02", "Research on %s canceled. The work done on it is lost.", ge.rules.Name(rules.KindTech, tech)))
+	ge.addLog("warning", rowid.Sprintf("game.engine.CancelResearch.02", "Research on %s canceled. The work done on it is lost.", ge.rules.Name(rules.KindTech, tech)))
 	return nil
 }
 
@@ -4221,7 +4200,7 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	if ticks := ge.researchTicksLeft(); ticks > 0 {
 		ge.addLog("success", rowid.Sprintf("game.engine.AcceptAncientMemory.02", "Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ticks)))
 	} else {
-		ge.addLogAbout("success", TagPeople, rowid.Sprintf("game.engine.AcceptAncientMemory.03", "Recovered the memory of %s. It needs scholars researching to go on.", def.Name))
+		ge.addLog("success", rowid.Sprintf("game.engine.AcceptAncientMemory.03", "Recovered the memory of %s. It needs scholars researching to go on.", def.Name))
 	}
 	ge.note(config.BadgeEvMemoryAccepted, techKey)
 	return nil
@@ -4529,10 +4508,10 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	}
 
 	if offer.Military() {
-		ge.addLogAbout(LogRoutine, TagPeople|TagArmy, rowid.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
+		ge.addLog(LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
 		if soldiers > 0 {
-			ge.addLogAbout(LogRoutine, TagPeople|TagArmy, rowid.Sprintf("game.engine.launchExpeditionLocked.03", "Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
+			ge.addLog(LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.03", "Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
 		} else {
 			ge.addLog(LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.04", "Expedition sent: %s.", offer.Title))
 		}
@@ -5149,18 +5128,10 @@ func buildDoneLog(def config.BuildingDef) string {
 // addLog appends a log entry (must be called with lock held). logType is the
 // entry's category; see LogRoutine for which categories reach which log.
 func (ge *GameEngine) addLog(logType, message string) {
-	ge.addLogAbout(logType, 0, message)
-}
-
-// addLogAbout is addLog for a line that is about something a panel picks
-// lines by (see LogTag): tags say what, whatever words the line is written
-// in. Must be called with the lock held.
-func (ge *GameEngine) addLogAbout(logType string, tags LogTag, message string) {
 	entry := LogEntry{
 		Tick:    ge.tick,
 		Message: message,
 		Type:    logType,
-		Tags:    tags,
 	}
 	ge.log = append(ge.log, entry)
 	if len(ge.log) > MaxLogSize {
@@ -5307,7 +5278,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.addLog("info", rowid.Line("game.engine.applyOfflineProgress.03", "While you were away, your plan ")+starts.describe(ge.rules)+".")
 	}
 	if staffed.any() {
-		ge.addLogAbout("info", TagPeople, rowid.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
+		ge.addLog("info", rowid.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
 	}
 }
 
@@ -5443,9 +5414,9 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 	name := ge.rules.Name(rules.KindCiv, factionKey)
 	ge.noteWars(false)
 	if started {
-		ge.addLogAbout("warning", TagArmy, rowid.Sprintf("game.engine.RaidCivRoute.01", "You raided a %s trade route. They declared war.", name))
+		ge.addLog("warning", rowid.Sprintf("game.engine.RaidCivRoute.01", "You raided a %s trade route. They declared war.", name))
 	} else {
-		ge.addLogAbout("warning", TagArmy, rowid.Sprintf("game.engine.RaidCivRoute.02", "You raided a %s trade route. Opinion %s.",
+		ge.addLog("warning", rowid.Sprintf("game.engine.RaidCivRoute.02", "You raided a %s trade route. Opinion %s.",
 			name, textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	}
 	return nil
