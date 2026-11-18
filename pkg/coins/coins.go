@@ -31,6 +31,7 @@ var table = [...]entry{
 	{"space_age", space, spaceLegend},
 	{"interstellar_age", interstellar, interstellarLegend},
 	{"quantum_age", quantum, quantumLegend},
+	{"transcendent_age", transcendent, transcendentLegend},
 }
 
 func find(age string) *entry {
