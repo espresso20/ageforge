@@ -1,6 +1,8 @@
 package game
 
 import (
+	"math"
+
 	"github.com/espresso20/ageforge/config"
 )
 
@@ -59,7 +61,7 @@ func (ge *GameEngine) judgeFeatOn(ev Event) {
 			ge.Stats.Deeds.KeystoneTick > 0 &&
 			float64(ge.Stats.Deeds.KeystoneTick-entered) <= mark/ge.Prestige.AgeSpeed(age)
 	case "classical_age":
-		done = ev.Kind == config.BadgeEvFestival && ge.Stats.Deeds.Festivals >= max(1, int(mark/ge.Prestige.AgeSpeed(age)))
+		done = ev.Kind == config.BadgeEvFestival && ge.Stats.Deeds.Festivals >= max(1, int(math.Ceil(mark/ge.Prestige.AgeSpeed(age))))
 	case "renaissance_age":
 		done = ev.Kind == config.BadgeEvResearchDone && ge.ageTechsDone(age)
 	}
