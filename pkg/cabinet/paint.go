@@ -73,6 +73,8 @@ type canvas struct {
 	org  image.Point
 	s    float64
 	lamp [2]float64
+	dark color.RGBA // a lifted piece's shadow, in the lining's colours
+	tint color.RGBA // shadow colour in use; black when unset
 }
 
 func newCanvas(r image.Rectangle, s float64) *canvas {

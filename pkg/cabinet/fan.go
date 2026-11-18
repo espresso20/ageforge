@@ -35,23 +35,25 @@ func Fan(l TrayLayout, t Tray, well int, mint *coins.Mint) (cells image.Rectangl
 	return cells, c.img
 }
 
-// fanAt is the centres of n copies fanned from well: a row from the well's
-// own place towards the middle (to the right from the middle), sagging by a
-// whole number of pixels a copy squared so the second differences keep one sign.
+// fanAt is the centres of n copies fanned from well: the finest in the middle,
+// centred on the well's x (kept a copy's width inside the lining), the rest
+// alternating outwards. The row sags in the middle by a whole number of pixels
+// a step squared, so its second differences keep one sign.
 func (l TrayLayout) fanAt(well, n int) []image.Point {
 	z, sz := l.pix(l.fan), l.fanSz
-	half, mid := sz/2, (l.lining.Min.X+l.lining.Max.X)/2
-	x0, dir := max(z.Min.X+l.pad+half, min(l.ctr[well].X, z.Max.X-l.pad-half)), 1
-	room := z.Max.X - l.pad - half - x0
-	if x0 > mid {
-		dir, room = -1, x0-z.Min.X-l.pad-half
-	}
-	step := max(1, min(sz*3/4, room/max(1, n-1)))
+	reach := max(1, n/2) // the farthest copy, in steps
+	step := max(1, min(sz*3/4, (z.Dx()/2-sz-l.pad)/max(1, reach)))
+	span := reach * step
+	cx := max(z.Min.X+span+sz, min(l.ctr[well].X, z.Max.X-span-sz-l.pad))
 	slack := z.Dy() - 2*l.pad - sz
-	q := slack / 64
+	q := 0
+	if slack >= reach*reach {
+		q = max(1, min(slack, sz/3)/(reach*reach))
+	}
 	pts := make([]image.Point, n)
 	for k := range pts {
-		pts[k] = image.Pt(x0+dir*k*step, z.Min.Y+l.pad+half+(slack-64*q)/2+q*k*k)
+		j := (k + 1) / 2
+		pts[k] = image.Pt(cx+(2*(k%2)-1)*j*step*btoi(k > 0), z.Min.Y+l.pad+sz/2+(slack-q*reach*reach)/2+q*(reach*reach-j*j))
 	}
 	return pts
 }

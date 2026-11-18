@@ -191,6 +191,9 @@ func (c *canvas) lay(im *image.RGBA, cx, cy, d int, shadow bool) {
 			p := im.RGBAAt(b.Min.X+x, b.Min.Y+y)
 			if shadow && p.A > 0 {
 				p = black
+				if c.tint.A > 0 {
+					p = c.tint
+				}
 			}
 			if p.A > 0 {
 				c.px(cx-b.Dx()/2+x+d, cy-b.Dy()/2+y+d, p)

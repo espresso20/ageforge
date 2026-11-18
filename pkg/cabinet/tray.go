@@ -220,6 +220,10 @@ func (c *canvas) well(l TrayLayout, t Tray, i int, mint *coins.Mint, sel bool, r
 
 // cast lays a piece over a hard shadow, long when the piece is lifted.
 func (c *canvas) cast(im *image.RGBA, x, y, d, lift int) {
+	c.tint = color.RGBA{}
+	if lift > 0 {
+		c.tint = c.dark
+	}
 	for e := d; e <= d+lift; e += max(1, lift/2) {
 		c.lay(im, x, y, e, true)
 	}
@@ -271,6 +275,7 @@ func (c *canvas) tray(l TrayLayout, t Tray, mint *coins.Mint, sel int) {
 	whole, lin := c.img.Rect.Add(c.org), l.lining
 	w, h := l.Cells.X*l.Cell.X, l.Cells.Y*l.Cell.Y
 	rp, kind := lining(t.Slot)
+	c.dark = mul(rp[1], 0.55)
 	for _, r := range []image.Rectangle{image.Rect(0, 0, w, lin.Min.Y), image.Rect(0, lin.Max.Y, w, h),
 		image.Rect(0, lin.Min.Y, lin.Min.X, lin.Max.Y), image.Rect(lin.Max.X, lin.Min.Y, w, lin.Max.Y)} {
 		par(r.Intersect(whole), func(b image.Rectangle) {

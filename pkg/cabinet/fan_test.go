@@ -2,6 +2,7 @@ package cabinet
 
 import (
 	"image"
+	"sort"
 	"testing"
 
 	"github.com/espresso20/ageforge/pkg/coins"
@@ -49,7 +50,11 @@ func TestFanRowIsOneCurve(t *testing.T) {
 		l := planTray(t, s)
 		for w := 0; w < Wells; w++ {
 			for _, n := range []int{4, FanMax} {
+				if q := l.fanAt(w, n); q[0].Y == q[n/2].Y && n > 2 {
+					t.Errorf("%v well %d, %d copies: the row is flat", s, w, n)
+				}
 				p, sign := l.fanAt(w, n), [2]int{}
+				sort.Slice(p, func(a, b int) bool { return p[a].X < p[b].X })
 				for k := 2; k < n; k++ {
 					for a, d := range []int{p[k].X - 2*p[k-1].X + p[k-2].X, p[k].Y - 2*p[k-1].Y + p[k-2].Y} {
 						if d != 0 && sign[a] != 0 && (d > 0) != (sign[a] > 0) {

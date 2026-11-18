@@ -89,7 +89,7 @@ func PlanTray(cols, rows, cw, ch int) (TrayLayout, bool) {
 	}
 	l.pad = my + 1
 	l.fan = image.Rect((lin.Min.X+cw-1)/cw, (low+2*my+1+ch-1)/ch, lin.Max.X/cw, lin.Max.Y/ch)
-	l.fanSz = min(l.piece, l.pix(l.fan).Dy()-2*l.pad)
+	l.fanSz = min(l.piece, (l.pix(l.fan).Dy()-2*l.pad)*3/4) // leaves room for the sag
 	x0, pr := (sw+cw-1)/cw+2, rows-strip-rail/2-1
 	l.Name = image.Rect(x0, pr, x0+ageGlyphs, pr+1)
 	l.Count = image.Rect(x0+ageGlyphs+3, pr, x0+ageGlyphs+3+freeGlyph, pr+1)
