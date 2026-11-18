@@ -28,6 +28,8 @@ var cabinetKeys = []keyHelp{
 	{"Arrows", vibe.E("ui.cabinet_panel.cabinetKeys.01", "Move from drawer to drawer")},
 	{"Home/End", vibe.E("ui.cabinet_panel.cabinetKeys.02", "The first drawer and the last")},
 	{"Esc", vibe.E("ui.cabinet_panel.cabinetKeys.03", "Close the cabinet")},
+	{"Enter", vibe.E("ui.cabinet_panel.cabinetKeys.04", "Open the drawer; arrows then move between its wells")},
+	{"Esc, right-click", vibe.E("ui.cabinet_panel.cabinetKeys.05", "Close the open drawer")},
 }
 
 // cabinetAgeless are the drawers after the ages: the key a command names
@@ -60,6 +62,7 @@ type cabinetPanel struct {
 	patchSel int
 	patchAt  image.Rectangle
 	patchImg *image.RGBA
+	tray     cabinetTray
 }
 
 // cabinetKey is what the front's picture depends on.
@@ -69,7 +72,7 @@ type cabinetKey struct {
 }
 
 func newCabinetPanel(account func() *game.Account) *cabinetPanel {
-	p := &cabinetPanel{account: account, mint: coins.NewMint(256), patchSel: -1}
+	p := &cabinetPanel{account: account, mint: coins.NewMint(256), patchSel: -1, tray: cabinetTray{slot: -1, liftWell: -1}}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
 }
@@ -80,12 +83,17 @@ func (p *cabinetPanel) open(state game.GameState) Primitive {
 	return overBar(p)
 }
 
-// request selects the drawer a command named, by its key; "" leaves the
-// selection as it was.
+// request selects the drawer a command named, by its key, and opens it when
+// it is an age; a type or "feat" after a space selects that well. "" leaves
+// the selection as it was.
 func (p *cabinetPanel) request(key string) {
+	key, typ, _ := strings.Cut(key, " ")
 	for i, k := range p.keys {
 		if k == key && key != "" {
 			p.sel = i
+			if p.openDrawer(i) && typ != "" {
+				p.tray.well = max(cabinetWell(typ), 0)
+			}
 		}
 	}
 }
@@ -119,6 +127,7 @@ func (p *cabinetPanel) update(state game.GameState) {
 		p.keys[i], p.names[i], p.dim[i], p.drawers[i] = l.key, l.name, false, cabinet.Drawer{}
 	}
 	p.sel = min(p.sel, cabinet.Slots-1)
+	p.loadTray()
 }
 
 // totals is the line on the cornice: the pieces held and the drawers complete.
@@ -153,6 +162,9 @@ func (p *cabinetPanel) Paint(p2 *kit.Painter) {
 		return
 	}
 	lay, ok := p.plan()
+	if ok && p.tray.slot >= 0 && p.paintTray(p2, r) {
+		return
+	}
 	if !ok {
 		ink, face := cabinet.PlateInk(false), cabinet.PlateFace(false)
 		st := kit.Style{}.Foreground(theme.RGB(ink.R, ink.G, ink.B)).Background(theme.RGB(face.R, face.G, face.B))
@@ -170,18 +182,11 @@ func (p *cabinetPanel) Paint(p2 *kit.Painter) {
 	}
 	p2.Picture(r, p.front)
 	p2.Picture(p.patchAt.Add(r.Min), p.patchImg)
-	plate := func(c image.Rectangle, s string, dim bool) {
-		c = c.Add(r.Min)
-		ink, face := cabinet.PlateInk(dim), cabinet.PlateFace(dim)
-		st := kit.Style{}.Foreground(theme.RGB(ink.R, ink.G, ink.B)).Background(theme.RGB(face.R, face.G, face.B))
-		p2.Fill(c, st.Bg)
-		p2.PrintAligned(c.Min.X, c.Min.Y, c.Dx(), kit.Escape(s), st, kit.AlignCenter)
-	}
 	for i, c := range lay.Plates {
-		plate(c, p.names[i], p.dim[i])
+		p.printPlate(p2, r, c, p.names[i], p.dim[i])
 	}
-	plate(lay.Title, p.totals(), false)
-	plate(lay.Hint, vibe.Line("ui.cabinet_panel.Paint.02", "Arrows move   Esc closes"), false)
+	p.printPlate(p2, r, lay.Title, p.totals(), false)
+	p.printPlate(p2, r, lay.Hint, vibe.Line("ui.cabinet_panel.Paint.02", "Arrows move   Esc closes"), false)
 }
 
 // move changes the selection by a key; the grid does not wrap.
@@ -206,7 +211,17 @@ func (p *cabinetPanel) move(key kit.KeyCode) {
 
 // routeKey takes a key if it is one of the cabinet's and reports whether it did.
 func (p *cabinetPanel) routeKey(ev *kit.Key, prompt string) bool {
+	if p.tray.slot >= 0 {
+		switch ev.Code {
+		case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd:
+			p.moveWell(ev.Code)
+			return true
+		}
+		return false
+	}
 	switch ev.Code {
+	case kit.KeyEnter:
+		return prompt == "" && p.openDrawer(p.sel)
 	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyHome, kit.KeyEnd:
 		p.move(ev.Code)
 		return true
@@ -227,6 +242,18 @@ func (p *cabinetPanel) drawerAt(at image.Point) int {
 // Mouse: a click selects the drawer under the pointer; the wheel moves to
 // the next or the previous drawer.
 func (p *cabinetPanel) Mouse(m kit.Mouse) bool {
+	if p.tray.slot >= 0 {
+		switch {
+		case m.Kind == kit.MousePress && m.Button == kit.ButtonRight:
+			return p.closeDrawer()
+		case m.Kind == kit.MousePress && m.Button == kit.ButtonLeft:
+			if w := p.wellAt(m.Pt()); w >= 0 {
+				p.tray.well = w
+				return true
+			}
+		}
+		return false
+	}
 	switch {
 	case m.Kind == kit.MouseWheel && m.Wheel != 0:
 		step := 1
@@ -237,6 +264,9 @@ func (p *cabinetPanel) Mouse(m kit.Mouse) bool {
 		return true
 	case m.Kind == kit.MousePress && m.Button == kit.ButtonLeft:
 		if i := p.drawerAt(m.Pt()); i >= 0 {
+			if i == p.sel {
+				p.openDrawer(i)
+			}
 			p.sel = i
 			return true
 		}
@@ -246,6 +276,9 @@ func (p *cabinetPanel) Mouse(m kit.Mouse) bool {
 
 // PointerAt: the hand over a drawer.
 func (p *cabinetPanel) PointerAt(at image.Point) kit.Pointer {
+	if p.tray.slot >= 0 {
+		return handIf(p.wellAt(at) >= 0)
+	}
 	return handIf(p.drawerAt(at) >= 0)
 }
 
@@ -281,6 +314,9 @@ type menuCabinet struct {
 
 // Key: the cabinet's own keys, and Esc (or q) to close.
 func (c *menuCabinet) Key(k kit.Key) bool {
+	if k.Code == kit.KeyEsc && c.closeDrawer() {
+		return true
+	}
 	if k.Code == kit.KeyEsc || k.Code == kit.KeyRune && (k.Rune == 'q' || k.Rune == 'Q') {
 		c.close()
 	} else {

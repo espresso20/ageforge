@@ -2676,7 +2676,16 @@ func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 		return res
 	}
 	word := strings.Join(args, " ")
-	key, ok := findCabinetDrawer(engine.GetState(), word)
+	state := engine.GetState()
+	key, ok := findCabinetDrawer(state, word)
+	if n := len(args); !ok && n > 1 {
+		// "badges <age> <type>": the last word may name a well.
+		if w := cabinetWell(args[n-1]); w >= 0 {
+			if key, ok = findCabinetDrawer(state, strings.Join(args[:n-1], " ")); ok {
+				key += " " + cabinetWells[w].key
+			}
+		}
+	}
 	if !ok {
 		return errorReply(vibe.Sprintf("ui.input.cmdBadges.02", "No drawer is called %q. Type badges to open the cabinet.", word))
 	}

@@ -80,7 +80,7 @@ func TestCabinetKeys(t *testing.T) {
 			t.Fatalf("key %v: drawer %d, want %d", c.key, p.sel, c.want)
 		}
 	}
-	if p.routeKey(&kit.Key{Code: kit.KeyRune, Rune: 'x'}, "") || p.routeKey(&kit.Key{Code: kit.KeyEnter}, "") {
+	if p.routeKey(&kit.Key{Code: kit.KeyRune, Rune: 'x'}, "") {
 		t.Error("the cabinet took a key that is not its own")
 	}
 }
