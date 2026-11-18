@@ -1576,6 +1576,9 @@ func (ge *GameEngine) finishResearch(completed string) {
 		}
 	}
 	ge.publish(EventResearchDone, payload{"tech": completed})
+	if completed == ge.rules.Keystone(ge.age) {
+		ge.Stats.Deeds.KeystoneTick = ge.tick
+	}
 	ge.note(config.BadgeEvResearchDone, completed)
 }
 
@@ -1730,6 +1733,7 @@ func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
 
 // processTrade handles trade route ticks
 func (ge *GameEngine) processTrade() {
+	ge.Trade.deeds, ge.Trade.now = &ge.Stats.Deeds, ge.tick
 	messages := ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), ge.grantResearch)
 	for _, msg := range messages {
 		ge.addLog("warning", msg)
@@ -2284,6 +2288,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge, ge.tick)
+	ge.Stats.Deeds = AgeDeeds{}
 
 	// Account lifetime stat (Phase 6): record the highest age reached IN-MEMORY only.
 	// advanceAge holds ge.mu, so RecordAgeReached must not do I/O or re-enter the
@@ -3068,6 +3073,7 @@ func (ge *GameEngine) DoFestival() error {
 	})
 	ge.festivalReadyTick = ge.tick + ge.festivalCooldown()
 	ge.useFeature(config.FeatureFestivals)
+	ge.Stats.Deeds.Festivals++
 	ge.note(config.BadgeEvFestival, "")
 	ge.addLog("success", vibe.Sprintf("game.engine.DoFestival.04", "Held a cultural festival for %s: all production %s for %s.",
 		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(buff)))
@@ -5378,6 +5384,7 @@ func (ge *GameEngine) StopTradeRoute(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	ge.Trade.deeds = &ge.Stats.Deeds
 	if err := ge.Trade.StopRoute(key); err != nil {
 		return err
 	}
@@ -5411,6 +5418,7 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 	ge.addLog("info", diplomaticStatusLine(ge.rules.Name(rules.KindCiv, factionKey), status, cost))
 	ge.note(config.BadgeEvCivStatus, status)
 	if status == "allied" {
+		ge.Stats.Deeds.Pacts++
 		met, allied := 0, 0
 		for _, fs := range ge.Diplomacy.factions {
 			if fs.Discovered {
@@ -5446,6 +5454,7 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	ge.Resources.Remove("gold", cost)
 	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.SendGift.01", "Sent the %s a gift: %s, opinion %s.",
 		ge.rules.Name(rules.KindCiv, factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
+	ge.Stats.Deeds.Pacts++
 	ge.note(config.BadgeEvGiftSent, factionKey)
 	return nil
 }
@@ -5547,6 +5556,7 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 	}
 
 	ge.holdStaffing()
+	ge.Stats.Deeds.Upgrades += done
 	ge.report(Event{Kind: config.BadgeEvBuildingUpgraded, Subject: key, N: float64(done)})
 	ge.recalculateRates()
 

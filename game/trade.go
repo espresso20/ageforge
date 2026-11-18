@@ -37,6 +37,11 @@ type TradeManager struct {
 	// the UI copies of Export/Import so nothing outside the lock aliases them.
 	routeList []config.TradeRouteDef
 	routeDefs map[string]config.TradeRouteDef
+
+	// deeds and now are the run's deed counts and the tick, set by the engine
+	// before it runs or stops a route; nil for a manager no engine drives.
+	deeds *AgeDeeds
+	now   int
 }
 
 // ActiveRoute represents a running trade route
@@ -158,6 +163,7 @@ func (tm *TradeManager) StopRoute(key string) error {
 		return vibe.Errorf("game.trade.StopRoute.01", "%s is not running. Type trade route list to see your routes.", tm.rules.Name(rules.KindRoute, key))
 	}
 	delete(tm.activeRoutes, key)
+	tm.deeds.RouteBroken(key)
 	return nil
 }
 
@@ -200,6 +206,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		if buildings.CountFrom(def.RequiredBld) < def.MinCount {
 			messages = append(messages, vibe.Sprintf("game.trade.Tick.01", "Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)))
 			delete(tm.activeRoutes, key)
+			tm.deeds.RouteBroken(key)
 			continue
 		}
 
@@ -213,6 +220,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 			if route.TicksLeft <= 0 {
 				messages = append(messages, vibe.Sprintf("game.trade.Tick.02", "Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)))
 				route.TicksLeft = tm.RunTicks(def.TicksPerRun)
+				tm.deeds.RouteBroken(key)
 			}
 			continue
 		}
@@ -261,6 +269,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 
 				route.CyclesDone++
+				tm.deeds.RouteCycle(key, tm.now)
 				route.Starved = false
 				// A completed cycle warms every civ you have met and are not at war with.
 				if diplomacy != nil {
@@ -276,6 +285,9 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 			}
 
+			if !canAfford {
+				tm.deeds.RouteBroken(key)
+			}
 			// Reset cycle
 			route.TicksLeft = tm.RunTicks(def.TicksPerRun)
 		}

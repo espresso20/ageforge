@@ -28,6 +28,8 @@ type GameStats struct {
 	// AgeLog is when each age of this run was entered: the game tick and the
 	// clock time. Omitted until there is an entry.
 	AgeLog []AgeEntry `json:"age_log,omitempty"`
+	// Deeds counts what this run has done in the age it is in; see deeds.go.
+	Deeds AgeDeeds `json:"deeds"`
 }
 
 // AgeEntry is one age entered this run.
@@ -97,6 +99,7 @@ func (gs *GameStats) clone() *GameStats {
 	}
 	c.AgeLog = slices.Clone(gs.AgeLog)
 	c.Defense = gs.Defense.clone()
+	c.Deeds = gs.Deeds.clone()
 	return &c
 }
 
