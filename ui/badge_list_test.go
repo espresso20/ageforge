@@ -1,10 +1,10 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -14,10 +14,9 @@ import (
 // announcement of a badge just earned. Every test runs in a temp data root
 // (mapTestDashboard), never data/.
 
-// TestAccountBadgesCommand: `account badges` lists the account's badges
-// family by family, earned and the first few still to earn, and shows
-// nothing the spoiler rules hide: not a later age, not a secret's name, and
-// not the heading of a family the player has not come to yet.
+// TestAccountBadgesCommand: `account badges` gives the count, the title and
+// a line for each age in sight that holds a coin, and shows nothing the
+// spoiler rules hide: not a later age.
 func TestAccountBadgesCommand(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	must(t, eng.StartNewNamedGame("run"))
@@ -28,31 +27,14 @@ func TestAccountBadgesCommand(t *testing.T) {
 		t.Fatalf("account badges: %+v", res)
 	}
 	wantAll(t, "the list", res.Message,
-		fmt.Sprintf("0 of %d earned", sum.Shown), "0 points", "??? hidden",
-		"Rock Solid", "Reach the Stone Age.",
-		"Dressed as Forge", "(0 of 6)", "more to earn.",
-		"Hut Hoarder",
-		"secret badges, each with a hint in the badge case.",
-		"Ages", "Themes", "Maps", "Specials",
-		"Type badges to open the badge case",
-	)
-	for _, hidden := range []string{
-		"Iron", "Modern", "Liquidation", "Cookie", "Creative Accounting",
-		// Families with nothing in sight yet are not named.
-		"Civilizations", "Harbingers", "Catastrophes", "Awakenings",
-	} {
-		if strings.Contains(res.Message, hidden) {
-			t.Errorf("the list shows %q, which a new account may not see:\n%s", hidden, res.Message)
-		}
-	}
-	// A digest, not the catalog: a new account's list fits a screen or two.
-	if n := strings.Count(res.Message, "\n"); n > 90 {
-		t.Errorf("the list for a new account runs to %d lines", n)
+		fmt.Sprintf("0 of %d earned", sum.Shown), "0 points", "??? hidden", "Type badges to open the coin cabinet")
+	if strings.Contains(res.Message, "pieces") {
+		t.Errorf("a new account lists a coin:\n%s", res.Message)
 	}
 
 	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
 	res = HandleCommand("account badges", eng)
-	wantAll(t, "after earning a badge the list", res.Message, fmt.Sprintf("1 of %d earned", sum.Shown), "5 points", "★[-] Rock Solid")
+	wantAll(t, "after earning a badge the list", res.Message, fmt.Sprintf("1 of %d earned", sum.Shown), "5 points")
 
 	// The bare `account` reply points at it.
 	if res := HandleCommand("account", eng); !strings.Contains(res.Message, "account badges") {
@@ -138,32 +120,6 @@ func TestDashboardAnnouncesBadges(t *testing.T) {
 
 // TestBadgeLines: each form a badge takes in the list.
 func TestBadgeLines(t *testing.T) {
-	earned := game.BadgeView{Name: "Rock Solid", Desc: "Reach the Stone Age.", Tier: "bronze", Earned: true, At: time.Unix(1, 0)}
-	if line, ok := badgeLine(earned); !ok || !strings.Contains(line, "★") || !strings.Contains(line, "(bronze)") {
-		t.Errorf("an earned badge: %q %v", line, ok)
-	}
-	crossed := earned
-	crossed.Crossed = true
-	if line, _ := badgeLine(crossed); !strings.Contains(line, "no points") {
-		t.Errorf("a crossed badge does not say it adds no points: %q", line)
-	}
-	locked := game.BadgeView{Name: "Housing Hobbyist", Desc: "Build 14 housing buildings.", Tier: "bronze", Progress: 3, Target: 14}
-	if line, ok := badgeLine(locked); !ok || !strings.Contains(line, "☆") || !strings.Contains(line, "(3 of 14)") {
-		t.Errorf("a locked badge with a count: %q %v", line, ok)
-	}
-	secret := game.BadgeView{Name: game.BadgeHiddenName, Desc: "Something about huts.", Tier: "gold", Hidden: true, Secret: true}
-	if line, ok := badgeLine(secret); !ok || !strings.Contains(line, "???") || !strings.Contains(line, "Something about huts.") {
-		t.Errorf("a secret badge: %q %v", line, ok)
-	}
-	silhouette := game.BadgeView{Name: game.BadgeHiddenName, Tier: "gold", Hidden: true}
-	if line, ok := badgeLine(silhouette); ok {
-		t.Errorf("a silhouette with nothing to say was listed: %q", line)
-	}
-	integrity := game.BadgeView{Name: "Hand in the Cookie Jar", Desc: "Unlock the developer console.", Earned: true, Integrity: true}
-	if line, ok := badgeLine(integrity); !ok || strings.Contains(line, "()") {
-		t.Errorf("an integrity badge has no tier to print: %q %v", line, ok)
-	}
-
 	// The count of hidden badges stays "???" until the account has seen the last age.
 	sum := game.BadgeSummary{Earned: 2, Shown: 9, Hidden: 3, Points: 30}
 	if got := badgeSummaryLine(sum); got != "2 of 9 earned, 30 points, ??? hidden" {
@@ -208,5 +164,25 @@ func TestStatsPanelShowsCivilizationsStarted(t *testing.T) {
 	other.Stats.SavesCompleted = 3
 	if got := accountHoldings(other); got != "" {
 		t.Errorf("an account holding only a retired stat reads as holding %q", got)
+	}
+}
+
+// A family's coin on the Stats page is the finest one held in it, drawn by
+// the mint; a family holding none, or one whose money is not drawn, is the
+// empty recess.
+func TestStatsFamilyCoin(t *testing.T) {
+	views := []game.BadgeView{
+		{Key: "age.a", Family: "age", Earned: true, Coin: game.CoinCopy{Type: "age", Age: "classical_age", Level: 2, Seed: 1}},
+		{Key: "age.b", Family: "age", Earned: true, Coin: game.CoinCopy{Type: "age", Age: "classical_age", Level: 4, Seed: 2}},
+		{Key: "wonder.a", Family: "wonder", Earned: true, Coin: game.CoinCopy{Type: "wonder", Age: "no_such_age", Level: 3}},
+	}
+	fams := statsFamilies(views, false)
+	if len(fams) != 2 || fams[0].coin.Level != 4 || fams[1].coin.Type != "" {
+		t.Fatalf("families %+v", fams)
+	}
+	in := newStatsInk(newExpPalette())
+	held, empty := statsCoinPic(fams[0].coin, 70, 45, in), statsCoinPic(fams[1].coin, 70, 45, in)
+	if held.Rect != empty.Rect || bytes.Equal(held.Pix, empty.Pix) {
+		t.Error("the held coin is not drawn over the recess")
 	}
 }

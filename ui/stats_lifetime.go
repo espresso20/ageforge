@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/coins"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -214,71 +218,162 @@ func (pg *statsPage) records(st game.GameState, as *game.AccountStatsView, y, w,
 	return pg.layTiles(tiles, y, w, n, 3+grow), tiles
 }
 
-// families lays the badge families out in a grid: each family's coin at the
-// best tier earned in it (a recess where none is), its name and its count.
+// The size of a coin on the page, in cells.
+const coinCols, coinRows = 7, 3
+
+// statsCoinArt is how many art pixels across the recess of a coin not held is.
+const statsCoinArt = 28
+
+// badgeFamilyTitles are the headings of the badge families, in the order
+// they list. A family not named here lists last, under its own key.
+var badgeFamilyTitles = []struct {
+	key   string
+	title vibe.Entry
+}{
+	{"age", vibe.E("ui.badge_list.badgeFamilyTitles.02", "Ages")},
+	{"swift", vibe.E("ui.badge_list.badgeFamilyTitles.04", "Swift Eras")},
+	{"wonder", vibe.E("ui.badge_list.badgeFamilyTitles.05", "Wonders")},
+	{"maximalist", vibe.E("ui.badge_list.badgeFamilyTitles.07", "Maximalists")},
+	{"techs", vibe.E("ui.badge_list.badgeFamilyTitles.08", "Research")},
+	{"doom", vibe.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
+	{"harbinger", vibe.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
+	{"awakening", vibe.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
+	{"theme", vibe.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
+	{"map", vibe.E("ui.badge_list.badgeFamilyTitles.25", "Maps")},
+	{"special", vibe.E("ui.badge_list.badgeFamilyTitles.27", "Specials")},
+}
+
+// statsFamily is a badge family and its counts.
+type statsFamily struct {
+	key, title      string
+	earned, shown   int
+	inSight, hidden int
+	// coin is the finest coin held in the family; its Type is "" for none.
+	coin game.CoinCopy
+}
+
+// statsFamilies lists the families in the table's order, then any other. A
+// family with nothing in sight has no place and no name: its name alone would
+// say what is ahead. Once the account may know how many badges are withheld
+// (counted), every family is listed.
+func statsFamilies(views []game.BadgeView, counted bool) []statsFamily {
+	stat := map[string]*statsFamily{}
+	var seen []string
+	for _, v := range views {
+		f := stat[v.Family]
+		if f == nil {
+			title := textfmt.Capitalize(strings.ReplaceAll(v.Family, "_", " "))
+			for _, t := range badgeFamilyTitles {
+				if t.key == v.Family {
+					title = t.title.String()
+				}
+			}
+			f = &statsFamily{key: v.Family, title: title}
+			stat[v.Family] = f
+			seen = append(seen, v.Family)
+		}
+		if !v.Hidden || v.Secret {
+			f.inSight++
+		}
+		switch {
+		case v.Integrity:
+		case v.Earned:
+			f.earned++
+			f.shown++
+		case v.Hidden:
+			f.hidden++
+		default:
+			f.shown++
+		}
+		if c := v.Coin; v.Earned && c.Type != "" && coins.Has(c.Age) &&
+			(f.coin.Type == "" || c.Level > f.coin.Level || c.Level == f.coin.Level && c.At < f.coin.At) {
+			f.coin = c
+		}
+	}
+	var out []statsFamily
+	listed := map[string]bool{}
+	add := func(key string) {
+		if f := stat[key]; f != nil && !listed[key] && (f.inSight > 0 || counted) {
+			listed[key] = true
+			out = append(out, *f)
+		}
+	}
+	for _, t := range badgeFamilyTitles {
+		add(t.key)
+	}
+	for _, key := range seen {
+		add(key)
+	}
+	return out
+}
+
+// statsCoinPic is a coin w by h pixels, on a clear ground, for a family
+// of coins: the piece, as large as fits, in the middle. A family holding none,
+// or whose money is not drawn yet, has the empty recess.
+func statsCoinPic(c game.CoinCopy, w, h int, in statsInk) *image.RGBA {
+	side := min(w, h)
+	piece := coins.Render(c.Age, c.Type, c.Level, c.Seed, side)
+	if c.Type == "" || piece == nil {
+		return statsRecessPic(w, h, in)
+	}
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	at := image.Pt((w-side)/2, (h-side)/2)
+	draw.Draw(img, image.Rectangle{Min: at, Max: at.Add(image.Pt(side, side))}, piece, piece.Rect.Min, draw.Src)
+	return img
+}
+
+// families lays the badge families out in a grid: each family's finest coin
+// (a recess where it holds none), its name and its count.
 func (pg *statsPage) families(as *game.AccountStatsView, y, w int) int {
 	pg.heading(0, y, w, txtFamilies.String())
 	y++
-	best := map[string]config.BadgeTier{}
-	for _, v := range as.Badges {
-		if t, ok := best[v.Family]; v.Earned && !v.Integrity && (!ok || v.Level > t) {
-			best[v.Family] = v.Level
-		}
-	}
-	var tabs []caseTab
-	for _, t := range caseTabs(as.Badges, as.BadgeSummary.HiddenCounted) {
-		if t.key != caseTabAll && t.key != caseTabNext {
-			tabs = append(tabs, t)
-		}
-	}
+	fams := statsFamilies(as.Badges, as.BadgeSummary.HiddenCounted)
 	cols := clamp(w/26, 2, 6)
 	pw := w / cols
 	pitch := coinRows + 3
 	if !pg.pic {
 		pitch = 3
 	}
-	for i, t := range tabs {
+	for i, f := range fams {
 		x, ty := i%cols*pw, y+i/cols*pitch
-		tier, got := best[t.key]
-		count := fmt.Sprintf("%d / %d", t.earned, t.shown)
+		count := fmt.Sprintf("%d / %d", f.earned, f.shown)
 		k := xDim
-		if t.earned > 0 {
+		if f.earned > 0 {
 			k = xBright
 		}
 		if !pg.pic {
 			mark := "[ ]"
-			if got {
-				mark = "[" + strings.ToUpper(tier.Name()[:1]) + "]"
+			if f.coin.Type != "" {
+				mark = fmt.Sprintf("[%d]", f.coin.Level)
 			}
 			pg.g.put(x, ty, mark, xAccent)
-			pg.g.put(x+4, ty, fitText(t.title, pw-5), xText)
+			pg.g.put(x+4, ty, fitText(f.title, pw-5), xText)
 			pg.g.put(x+4, ty+1, count, k)
 			continue
 		}
 		cx := x + (pw-coinCols)/2
-		sign := medalSign(t.key)
-		pg.pics = append(pg.pics, statsPic{r: image.Rect(cx, ty, cx+coinCols, ty+coinRows), key: fmt.Sprint("coin", t.key, tier, got),
-			draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
-				if !got {
-					return statsRecessPic(coinCols*cw, coinRows*ch, in)
-				}
-				return coinPicture(lookOf(medal{tier: tier, state: medalEarned}, sign, coinArt), coinCols*cw, coinRows*ch, coinPose{})
-			}})
-		name := fitText(t.title, pw-1)
+		c := f.coin
+		if slices.Contains(config.CoinTypes, f.key) {
+			pg.pics = append(pg.pics, statsPic{r: image.Rect(cx, ty, cx+coinCols, ty+coinRows), key: fmt.Sprint("coin", f.key, c.Type, c.Age, c.Level, c.Seed),
+				draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
+					return statsCoinPic(c, coinCols*cw, coinRows*ch, in)
+				}})
+		}
+		name := fitText(f.title, pw-1)
 		pg.g.put(x+(pw-runeLen(name))/2, ty+coinRows, name, xText)
 		pg.g.put(x+(pw-len(count))/2, ty+coinRows+1, count, k)
 	}
-	return y + (len(tabs)+cols-1)/cols*pitch
+	return y + (len(fams)+cols-1)/cols*pitch
 }
 
 // statsRecessPic is the place of a coin not earned: a round hollow of the
 // coin's size, dark at the upper left and lit at the lower right.
 func statsRecessPic(w, h int, in statsInk) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	k := max(1, min(w, h)/coinArt)
+	k := max(1, min(w, h)/statsCoinArt)
 	a := art{img, k}
 	W, H := w/k, h/k
-	r := float64(coinArt) / 2
+	r := float64(statsCoinArt) / 2
 	for y := 0; y < H; y++ {
 		for x := 0; x < W; x++ {
 			dx, dy := float64(x-W/2)+.5, float64(y-H/2)+.5

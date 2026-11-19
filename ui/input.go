@@ -1174,8 +1174,8 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			return warningReply(vibe.Line("ui.input.cmdAccount.52", "Accounts are unavailable (no account is loaded)."))
 		}
 		// Info, not success: the list must reach the log, and the engine logs nothing here.
-		views, summary := engine.Badges()
-		return infoReply(strings.Join(badgeListLines(views, summary), "\n"))
+		_, summary := engine.Badges()
+		return infoReply(strings.Join(coinListLines(engine.GetState(), acct, summary), "\n"))
 
 	case "wipe":
 		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we

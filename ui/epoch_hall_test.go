@@ -44,8 +44,10 @@ func lateHallState(t *testing.T, age string) game.GameState {
 		{Key: "f", Name: "Unearned Six", Rarity: "mythic", Points: 99},
 		{Key: "g", Name: "Common Seven", Rarity: "common", Points: 1, Earned: true},
 	}}
+	// One coin type each, the last badge sharing the second's coin.
+	levels := []int{1, 6, 4, 5, 3, 2, 6}
 	for i := range st.AccountStats.Badges {
-		st.AccountStats.Badges[i].Coin = game.CoinCopy{Type: "age", Age: "classical_age", Level: 3, Seed: uint32(i + 1)}
+		st.AccountStats.Badges[i].Coin = game.CoinCopy{Type: config.CoinTypes[i%len(config.CoinTypes)], Age: "classical_age", Level: levels[i], Seed: uint32(i + 1)}
 	}
 	return st
 }
@@ -80,19 +82,20 @@ func TestEpochHallFrontPage(t *testing.T) {
 					t.Errorf("%s %dx%d: names the unseen age %q", name, dim[0], dim[1], a)
 				}
 			}
-			wantAll(t, name, txt, "Highlights", "Ages", "Top badges", "Feats", "more to come")
+			wantAll(t, name, txt, "Highlights", "Ages", "Top coins", "Feats", "more to come")
 		}
 	}
 	txt := untag(hallFrontText(early, 120, 40, 0))
-	wantAll(t, "early", txt, "No badges earned yet.")
+	wantAll(t, "early", txt, "No coins held yet.")
 	txt = untag(hallFrontText(late, 120, 40, 0))
 	wantAll(t, "late", txt, "Legend Four", "Epic Two", "Rare Three", "Uncommon Five", "Common One")
 	if strings.Contains(txt, "Unearned Six") || strings.Contains(txt, "Common Seven") {
-		t.Errorf("late: shows more than the five rarest earned:\n%s", txt)
+		t.Errorf("late: shows more than the five finest coins:\n%s", txt)
 	}
-	if strings.Index(txt, "Legend Four") > strings.Index(txt, "Epic Two") {
-		t.Errorf("late: badges are not rarest first")
+	if strings.Index(txt, "Epic Two") > strings.Index(txt, "Legend Four") {
+		t.Errorf("late: coins are not finest first")
 	}
+	wantAll(t, "late", txt, "Level 6 of 6", "Level 1 of 6")
 }
 
 func TestEpochHallTabSwitchesPages(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"image"
 	"testing"
 
-	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 )
 
 // roomCells are the cells (width, height in pixels) the window's font sizes
@@ -95,9 +95,9 @@ func TestCellFilledPicturesStayInTheirCells(t *testing.T) {
 	for name, c := range roomCells {
 		cw, ch := c[0], c[1]
 		w, h := coinCols*cw, coinRows*ch
-		l := lookOf(medal{tier: config.BadgeGold, state: medalEarned}, medalSign("run"), coinArt)
+		held := game.CoinCopy{Type: "age", Age: "classical_age", Level: 3, Seed: 1}
 		for what, img := range map[string]*image.RGBA{
-			"coin":   coinPicture(l, w, h, coinPose{}),
+			"coin":   statsCoinPic(held, w, h, in),
 			"recess": statsRecessPic(w, h, in),
 			"step":   statsStepPic(coinCols, coinRows, cw, ch, 1, 4, true, false, false, in.face, in),
 		} {

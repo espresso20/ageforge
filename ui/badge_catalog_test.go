@@ -66,29 +66,18 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 		hidden("lastpassage.endured", "doom"),
 		secret,
 	}
-	sum := game.BadgeSummary{Shown: 1, Hidden: 5, Title: "Settler"}
-	titles := func(tabs []caseTab) string {
+	titles := func(fams []statsFamily) string {
 		var out []string
-		for _, tb := range tabs {
-			out = append(out, tb.title)
+		for _, f := range fams {
+			out = append(out, f.title)
 		}
 		return strings.Join(out, " ")
 	}
-	if got := titles(caseTabs(views, false)); got != "All Ages Specials Next" {
-		t.Errorf("tabs for a new account: %q", got)
+	if got := titles(statsFamilies(views, false)); got != "Ages Specials" {
+		t.Errorf("families for a new account: %q", got)
 	}
-	list := strings.Join(badgeListLines(views, sum), "\n")
-	for _, leak := range []string{"Harbingers", "Catastrophes"} {
-		if strings.Contains(list, leak) {
-			t.Errorf("the list names %q with nothing of it in sight", leak)
-		}
-	}
-	if !strings.Contains(list, "1 secret badge, each with a hint in the badge case.") || strings.Contains(list, "Something about huts.") {
-		t.Errorf("the list should count the secret and leave its hint to the case:\n%s", list)
-	}
-	sum.HiddenCounted = true
-	if got := titles(caseTabs(views, true)); got != "All Ages Catastrophes Harbingers Specials Next" {
-		t.Errorf("tabs once the hidden badges are counted: %q", got)
+	if got := titles(statsFamilies(views, true)); got != "Ages Catastrophes Harbingers Specials" {
+		t.Errorf("families once the hidden badges are counted: %q", got)
 	}
 }
 
@@ -127,11 +116,11 @@ func TestTitleCommand(t *testing.T) {
 	if v := statusLine(st, ""); v.Name != "Map Tester" || v.Worn != "Survivor" {
 		t.Errorf("the header does not wear the chosen title: %q %q", v.Name, v.Worn)
 	}
-	views, sum := eng.Badges()
+	_, sum = eng.Badges()
 	if wornTitle(sum) != "Survivor" {
 		t.Errorf("the summary wears %q", wornTitle(sum))
 	}
-	if list := strings.Join(badgeListLines(views, sum), "\n"); !strings.Contains(list, "Title:[-] Survivor") {
+	if list := HandleCommand("account badges", eng).Message; !strings.Contains(list, "Title:[-] Survivor") {
 		t.Error("the list does not wear the chosen title")
 	}
 	// The choice is the account's own: it is there on the next load.

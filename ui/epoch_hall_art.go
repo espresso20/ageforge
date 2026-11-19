@@ -9,7 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
@@ -19,7 +19,7 @@ import (
 // (the main menu's mGrid) that the blocks are drawn onto, each centred as a
 // unit, and one pass that turns the canvas into tagged text. The look is
 // the menu's: a banner painted cell by cell over a strip of stars, boxed
-// tiles, badge cards in their rarity's colour.
+// tiles, coin cards.
 
 // hallMaxWidth is the widest the blocks spread; past it they keep their
 // size and the margins grow.
@@ -547,22 +547,14 @@ func (c *hallCtx) track(v hallView) {
 	}
 }
 
-// ---- the badges ----
+// ---- the coins ----
 
-// rarityInk is a rarity's colour: dim for common, up through green, blue
-// and violet to gold.
-func (c *hallCtx) rarityInk(word string) kit.Color {
-	switch word {
-	case "uncommon":
-		return c.hue("#5fc77a")
-	case "rare":
-		return c.hue("#4aa3ff")
-	case "epic":
-		return c.hue("#c05cff")
-	case "legendary", "mythic":
-		return c.hue("#ffb020")
+// coinLevelWord says how fine a coin is.
+func coinLevelWord(level int) string {
+	if level > coins.Levels {
+		return vibe.Line("ui.epoch_hall.coinLevelWord.02", "Legendary")
 	}
-	return c.role(theme.RoleDim)
+	return vibe.Sprintf("ui.epoch_hall.coinLevelWord.01", "Level %d of %d", level, coins.Levels)
 }
 
 // hallCoin is a badge's coin on the page: the cells it covers, in the
@@ -579,10 +571,10 @@ const (
 	hallCoinW, hallCoinH         = 15, 7
 )
 
-// medalOn leaves the room for a badge's coin with its top left corner at
+// coinOn leaves the room for a badge's coin with its top left corner at
 // (x, y), blank, and records the coin: a small one where there is not room
 // for a large one. The page's owner paints it as a picture.
-func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
+func (c *hallCtx) coinOn(v game.BadgeView, x, y int, mini bool) {
 	w, h := hallCoinW, hallCoinH
 	if mini {
 		w, h = hallMiniCoinW, hallMiniCoinH
@@ -590,11 +582,10 @@ func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
 	c.coins = append(c.coins, hallCoin{r: image.Rect(x, y, x+w, y+h), coin: v.Coin})
 }
 
-// badges draws the cards: art, name, and the rarity in its colour, in a
-// frame of that colour.
-func (c *hallCtx) badges(list []game.BadgeView) {
+// coinCards draws the cards: the coin, its badge's name and its level.
+func (c *hallCtx) coinCards(list []game.BadgeView) {
 	if len(list) == 0 {
-		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.05", "No badges earned yet."), c.role(theme.RoleDim))
+		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.05", "No coins held yet."), c.role(theme.RoleDim))
 		return
 	}
 	gap := 2
@@ -608,7 +599,7 @@ func (c *hallCtx) badges(list []game.BadgeView) {
 		for _, wd := range strings.Fields(b.Name) {
 			longest = max(longest, runeLen(wd))
 		}
-		longest = max(longest, runeLen(b.Rarity))
+		longest = max(longest, runeLen(coinLevelWord(b.Coin.Level)))
 	}
 	cardW := max(min((c.cw-(len(list)-1)*gap)/len(list), 28), 14, artW+4, longest+4)
 	per := min(max((c.cw+gap)/(cardW+gap), 1), len(list))
@@ -626,17 +617,15 @@ func (c *hallCtx) badges(list []game.BadgeView) {
 		ch := 1 + 1 + artH + 1 + lines + 1 + 1
 		x := c.left(len(row)*cardW + (len(row)-1)*gap)
 		for i, b := range row {
-			rar := c.rarityInk(b.Rarity)
-			c.box(x, c.y, cardW, ch, rar, &ground, b.Rarity == "legendary" || b.Rarity == "epic")
-			c.medalOn(b, x+(cardW-artW)/2, c.y+2, mini)
+			rar := c.role(theme.RoleHighlight)
+			c.box(x, c.y, cardW, ch, rar, &ground, b.Coin.Level > coins.Levels)
+			c.coinOn(b, x+(cardW-artW)/2, c.y+2, mini)
 			ty := c.y + 2 + artH + 1
 			for k, l := range names[i] {
 				c.g.text(x+(cardW-runeLen(l))/2, ty+k, l, c.role(theme.RoleBright), true)
 			}
-			if b.Rarity != "" {
-				word := textfmt.Capitalize(b.Rarity)
-				c.g.text(x+(cardW-runeLen(word))/2, ty+lines, word, rar, true)
-			}
+			word := coinLevelWord(b.Coin.Level)
+			c.g.text(x+(cardW-runeLen(word))/2, ty+lines, word, rar, true)
 			x += cardW + gap
 		}
 		c.y += ch + 1

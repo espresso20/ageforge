@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
@@ -18,7 +19,7 @@ import (
 // epoch_hall.go is the Epoch screen: a page to open and show off a run. Its
 // front page has the current epoch's name in iron (the arrival screen's
 // lettering, in the epoch's colour), the town under it, the run's headline
-// figures, the ages done and ahead, the account's five rarest badges and the
+// figures, the ages done and ahead, the account's five finest coins and the
 // feats the game already keeps. Tab turns to the details page, which is the
 // panel this screen replaced (epochProvider). The Discord card (epoch_card.go)
 // is a picture of this page.
@@ -167,7 +168,7 @@ type hallStat struct {
 	frac              float64
 }
 
-// hallBadgeCount is how many badges the front page shows.
+// hallBadgeCount is how many coins the front page shows.
 const hallBadgeCount = 5
 
 // hallView is the facts of the screen, shared by the front page and the
@@ -276,7 +277,7 @@ func newHallView(state game.GameState) hallView {
 		}
 	}
 
-	v.badges = rarestBadges(state, hallBadgeCount)
+	v.badges = topCoins(state, hallBadgeCount)
 	for _, f := range hallFeats(state) {
 		v.feats = append(v.feats, f.text)
 		v.featKinds = append(v.featKinds, f.kind)
@@ -284,45 +285,32 @@ func newHallView(state game.GameState) hallView {
 	return v
 }
 
-// badgeRarityRank orders the rarities in words, common lowest. An unknown
-// word ranks below them all.
-func badgeRarityRank(word string) int {
-	for r := config.BadgeMythic; r >= config.BadgeCommon; r-- {
-		if r.Name() == word {
-			return int(r)
-		}
-	}
-	return 0
-}
-
-// rarestBadges are the n rarest badges the account has earned and the
-// player may see: rarity first, then the points they are worth, then the
-// one earned first. Integrity badges are not trophies.
-func rarestBadges(state game.GameState, n int) []game.BadgeView {
+// topCoins are the n finest coins the account holds and the player may see:
+// highest level first, then the one struck first. A badge stands for its coin,
+// so a coin several badges share counts once, and a badge whose coin has no
+// drawn money is passed over.
+func topCoins(state game.GameState, n int) []game.BadgeView {
 	if state.AccountStats == nil {
 		return nil
 	}
 	var got []game.BadgeView
+	seen := map[[2]string]bool{}
 	for _, b := range state.AccountStats.Badges {
-		if b.Earned && !b.Hidden && !b.Integrity {
+		k := [2]string{b.Coin.Type, b.Coin.Age}
+		if b.Earned && !b.Hidden && !b.Integrity && b.Coin.Type != "" && coins.Has(b.Coin.Age) && !seen[k] {
+			seen[k] = true
 			got = append(got, b)
 		}
 	}
 	sort.SliceStable(got, func(i, j int) bool {
-		a, b := got[i], got[j]
-		if ra, rb := badgeRarityRank(a.Rarity), badgeRarityRank(b.Rarity); ra != rb {
-			return ra > rb
+		a, b := got[i].Coin, got[j].Coin
+		if a.Level != b.Level {
+			return a.Level > b.Level
 		}
-		if a.Points != b.Points {
-			return a.Points > b.Points
+		if a.At != b.At {
+			return a.At < b.At
 		}
-		if !a.At.Equal(b.At) {
-			if a.At.IsZero() != b.At.IsZero() {
-				return b.At.IsZero()
-			}
-			return a.At.Before(b.At)
-		}
-		return a.Key < b.Key
+		return got[i].Key < got[j].Key
 	})
 	if len(got) > n {
 		got = got[:n]
@@ -438,8 +426,8 @@ func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hall
 	c.track(v)
 	c.y += c.gap
 
-	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.04", "Top badges"))
-	c.badges(v.badges)
+	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.04", "Top coins"))
+	c.coinCards(v.badges)
 	c.y += c.gap - 1
 
 	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.06", "Feats"))
