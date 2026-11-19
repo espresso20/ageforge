@@ -185,3 +185,20 @@ func TestCabinetAgelessDrawerOpensAndPages(t *testing.T) {
 	}
 	d.overlayMgr.Hide()
 }
+
+// Every plate of an ageless drawer fits the plate, and no two plates of Ledgers read alike.
+func TestAgelessPlatesAreUniqueAndFit(t *testing.T) {
+	_, p, _ := cabinetRig(t)
+	for i := range p.keys {
+		seen := map[string]bool{}
+		for _, w := range p.agelessWells(i) {
+			if n := len([]rune(w.name)); n > 30 {
+				t.Errorf("%s plate %q is %d cells, the plate holds 30", p.keys[i], w.name, n)
+			}
+			if seen[w.name] && p.keys[i] == "ledgers" {
+				t.Errorf("two Ledgers plates read %q", w.name)
+			}
+			seen[w.name] = true
+		}
+	}
+}

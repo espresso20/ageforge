@@ -354,8 +354,8 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 		{"a listed integrity badge that is not one", jar, "integrity", func(src *rules.Source) {
 			special(t, src, jar).Proof = config.StaticProof(config.BadgeRuleGate)
 		}},
-		{"an old achievement no badge keeps", "prestige_x10", "alias", func(src *rules.Source) {
-			family(t, src, "ladder").Aliases = map[string][]string{"ladder.prestiges.1": {"first_prestige"}}
+		{"an old achievement no badge keeps", "reached_iron", "alias", func(src *rules.Source) {
+			family(t, src, "age").Aliases = nil
 		}},
 		{"a family that makes no badges", "", "table", func(src *rules.Source) {
 			family(t, src, "lineage").Only = []string{"basket_weaving"}

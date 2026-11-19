@@ -72,3 +72,40 @@ func TestTallyDomainTakesThePeakFromACensus(t *testing.T) {
 		t.Errorf("peak coin: level %d figure %d, want level %d figure %d", l, f, td.Level(td.Rungs[1]), int(td.Rungs[1]))
 	}
 }
+
+// A rung reached in play is announced like a badge; a catch-up from the record is not,
+// and a coin the record already holds at its finest level gives the badges its strike gives.
+func TestTallyRungIsAnnouncedAndCatchUpIsSilent(t *testing.T) {
+	isolateAccountDir(t)
+	a := testAccount(t)
+	book := coreBook()
+	td := tallyByKey(t, "lineage.housing")
+	a.mu.Lock()
+	a.Counters = map[string]float64{td.Counter: td.Rungs[0]}
+	a.tallyLocked(book, td, badgeCtx{}, true, 0)
+	a.mu.Unlock()
+	if got := a.drainTallies(); len(got) != 0 {
+		t.Fatalf("a silent strike was announced: %v", got)
+	}
+	a.mu.Lock()
+	a.Counters[td.Counter] = td.Rungs[1]
+	a.tallyLocked(book, td, badgeCtx{}, false, 0)
+	a.mu.Unlock()
+	got := a.drainTallies()
+	if len(got) != 1 || got[0] != td.Key {
+		t.Fatalf("announced %v, want [%s]", got, td.Key)
+	}
+	v, ok := a.tallyView(book, td.Key)
+	if !ok || !v.Earned || v.Name != td.Name || v.Tier == "" {
+		t.Errorf("view %+v ok %v", v, ok)
+	}
+
+	a.mu.Lock()
+	a.Counters[td.Counter] = td.Rungs[len(td.Rungs)-1]
+	a.tallyLocked(book, td, badgeCtx{}, true, 0)
+	a.ensureBadgesLocked(book)
+	a.mu.Unlock()
+	if !a.earnedLocked("special.full_set") {
+		t.Error("a lineage coin held at its finest level did not give Full Set on catch-up")
+	}
+}

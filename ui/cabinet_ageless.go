@@ -146,7 +146,7 @@ func (p *cabinetPanel) paintGrid(p2 *kit.Painter, r image.Rectangle) bool {
 	pr := func(c image.Rectangle, s string, dim bool) { p.printPlate(p2, r, c, s, dim) }
 	pr(l.Name, p.names[i], false)
 	pr(l.Count, vibe.Sprintf("ui.cabinet_ageless.paintGrid.01", "%d of %d", held, len(ws)), false)
-	pr(l.Hint, vibe.Line("ui.cabinet_ageless.paintGrid.02", "Arrows move   PgUp PgDn turn   Esc goes back"), false)
+	pr(l.Hint, vibe.Line("ui.cabinet_ageless.paintGrid.02", "Arrows move  PgUp/Dn turn  Esc back"), false)
 	a, b := "", ""
 	if len(ws) > 0 {
 		a = vibe.Sprintf("ui.cabinet_ageless.paintGrid.03", "Page %d of %d", page+1, pages)

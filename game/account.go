@@ -280,6 +280,8 @@ type Account struct {
 	// it (GameEngine.DrainEarnedBadges) and shows the card and writes the log line. Not
 	// saved: a badge earned just before the game closes is simply in the list.
 	pendingEarned []string
+	// pendingTallies is the tallies whose coin was struck finer and not yet announced, drained with the badges.
+	pendingTallies []string
 
 	// pendingCaughtUp is how many badges the last reconciliation gave the
 	// account from its own record (ensureBadges: a rung whose count it had

@@ -579,12 +579,13 @@ func (ge *GameEngine) DrainEarnedBadges() []BadgeView {
 	if acct == nil || book == nil {
 		return nil
 	}
-	keys := acct.drainEarned()
-	if len(keys) == 0 {
-		return nil
+	var out []BadgeView
+	for _, k := range acct.drainTallies() {
+		if v, ok := acct.tallyView(book, k); ok {
+			out = append(out, v)
+		}
 	}
-	out := make([]BadgeView, 0, len(keys))
-	for _, k := range keys {
+	for _, k := range acct.drainEarned() {
 		if v, ok := acct.badgeView(book, k); ok {
 			out = append(out, v)
 		}

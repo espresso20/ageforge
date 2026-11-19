@@ -4,9 +4,11 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/platform/steam"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // tally.go keeps the lifetime tallies: each is one coin, a single record in
@@ -83,6 +85,9 @@ func (a *Account) tallyLocked(book *badgeBook, t config.TallyDef, ctx badgeCtx, 
 		}
 	}
 	steam.Unlock(t.Key + "." + strconv.Itoa(rung))
+	if !silent {
+		a.pendingTallies = append(a.pendingTallies, t.Key)
+	}
 	for _, th := range book.set.BadgeThemes() {
 		if k, l, ok := book.tallies.Gift(th.Badge); ok && k == t.Key && lvl >= l && !slices.Contains(a.Unlocks.Themes, th.Key) {
 			a.Unlocks.Themes = append(a.Unlocks.Themes, th.Key)
@@ -95,6 +100,27 @@ func (a *Account) tallyLocked(book *badgeBook, t config.TallyDef, ctx badgeCtx, 
 		}
 		a.judgeLocked(book, Event{Kind: config.BadgeEvTallyTop, Subject: t.Key, Attrs: map[string]float64{"lineage": top}}, ctx, depth+1)
 	}
+}
+
+// tallyView is a tally's coin as the card and the log announce it: the tally
+// as a badge of its level, its rung in the description.
+func (a *Account) tallyView(book *badgeBook, key string) (BadgeView, bool) {
+	for _, t := range book.tallies {
+		if t.Key != key {
+			continue
+		}
+		lvl, at, fig := a.TallyCoin(key)
+		rung := 0
+		for _, r := range t.Rungs {
+			if float64(fig) >= r {
+				rung++
+			}
+		}
+		tier := config.BadgeTier(min(lvl, int(config.BadgeLegendary)))
+		return BadgeView{Key: key, Family: "ledger", Name: t.Name, Earned: true, At: time.Unix(at, 0),
+			Level: tier, Tier: tier.Name(), Desc: vibe.Sprintf("game.tally.tallyView.01", "Rung %d of %d, at %d.", rung, len(t.Rungs), fig)}, true
+	}
+	return BadgeView{}, false
 }
 
 // tallyCountLocked re-reads the tallies that count on a counter.

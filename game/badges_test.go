@@ -405,8 +405,20 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 	if l, _, _ := acct.TallyCoin("ledger.prestiges"); l != 1 {
 		t.Errorf("the prestiges coin: level %d, want 1", l)
 	}
-	if pending := mainViews(ge.DrainEarnedBadges()); len(pending) != len(want) {
-		t.Errorf("%d toasts queued, want %d", len(pending), len(want))
+	// The two badges, and a toast for each tally coin struck (housing and prestiges among them).
+	pending := ge.DrainEarnedBadges()
+	toasted, badges := map[string]bool{}, 0
+	for _, v := range mainViews(pending) {
+		toasted[v.Key] = true
+		if v.Family != "ledger" && !strings.HasPrefix(v.Key, "lineage.") {
+			badges++
+		}
+	}
+	if badges != len(want) {
+		t.Errorf("%d badge toasts queued, want %d", badges, len(want))
+	}
+	if !toasted["lineage.housing"] || !toasted["ledger.prestiges"] {
+		t.Errorf("toasts %v lack the housing and prestiges coins", toasted)
 	}
 }
 

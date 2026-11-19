@@ -490,6 +490,15 @@ func (a *Account) drainEarned() []string {
 	return out
 }
 
+// drainTallies returns the tallies struck finer since the last call.
+func (a *Account) drainTallies() []string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	out := a.pendingTallies
+	a.pendingTallies = nil
+	return out
+}
+
 // drainCaughtUp returns how many badges reconciliation has given the
 // account since the last call, and forgets the count.
 func (a *Account) drainCaughtUp() int {
@@ -549,6 +558,13 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 		case def.Scope == config.BadgeLifetime:
 			if def.Counter != "" && a.Counters[def.Counter] >= def.Threshold {
 				grant(def)
+			}
+		case def.Scope == config.BadgeMoment && def.Event == config.BadgeEvTallyTop:
+			// A coin the record already struck at its finest proves what its strike gives.
+			for _, t := range book.tallies {
+				if (t.Key == def.Subject || def.Subject == "" && strings.HasPrefix(t.Key, "lineage.")) && a.tallyLevelOf(t.Key) == config.CoinLevels {
+					grant(def)
+				}
 			}
 		case def.Scope == config.BadgeMoment && def.Event == config.BadgeEvAgeReached &&
 			def.Subject != "" && def.InAge == "" && len(def.When) == 0 && def.Pred == "":

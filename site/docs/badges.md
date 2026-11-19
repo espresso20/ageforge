@@ -126,21 +126,21 @@ Each lineage is on its own scale, because lineages differ a great deal in how ma
 
 | Lineage | Rungs |
 |---|---|
-| Culture arts | 310 · 770 · 1,900 · 4,800 · 12,000 |
-| Energy | 200 · 510 · 1,300 · 3,200 · 8,000 |
-| Engineering | 310 · 770 · 1,900 · 4,800 · 12,000 |
-| Faith | 380 · 960 · 2,400 · 6,000 · 15,000 |
-| Food | 380 · 960 · 2,400 · 6,000 · 15,000 |
-| Geological extraction | 410 · 1,000 · 2,600 · 6,400 · 16,000 |
-| Hacker | 140 · 350 · 860 · 2,200 · 5,400 |
-| Harbor | 79 · 200 · 500 · 1,200 · 3,100 |
-| Housing | 610 · 1,500 · 3,800 · 9,600 · 24,000 |
-| Knowledge | 130 · 330 · 830 · 2,100 · 5,200 |
-| Metallurgy | 280 · 700 · 1,800 · 4,400 · 11,000 |
-| Military | 380 · 960 · 2,400 · 6,000 · 15,000 |
-| Organic extraction | 380 · 960 · 2,400 · 6,000 · 15,000 |
-| Storage | 110 · 280 · 690 · 1,700 · 4,300 |
-| Trade | 280 · 700 · 1,800 · 4,400 · 11,000 |
+| Culture arts builds | 310 · 770 · 1,900 · 4,800 · 12,000 |
+| Energy builds | 200 · 510 · 1,300 · 3,200 · 8,000 |
+| Engineering builds | 310 · 770 · 1,900 · 4,800 · 12,000 |
+| Faith builds | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Food builds | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Geological extraction builds | 410 · 1,000 · 2,600 · 6,400 · 16,000 |
+| Hacker builds | 140 · 350 · 860 · 2,200 · 5,400 |
+| Harbor builds | 79 · 200 · 500 · 1,200 · 3,100 |
+| Housing builds | 610 · 1,500 · 3,800 · 9,600 · 24,000 |
+| Knowledge builds | 130 · 330 · 830 · 2,100 · 5,200 |
+| Metallurgy builds | 280 · 700 · 1,800 · 4,400 · 11,000 |
+| Military builds | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Organic extraction builds | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Storage builds | 110 · 280 · 690 · 1,700 · 4,300 |
+| Trade builds | 280 · 700 · 1,800 · 4,400 · 11,000 |
 
 ### Payrolls
 
@@ -148,16 +148,16 @@ A payroll tally asks for that many workers at work in one domain at the same tim
 
 | Domain | Rungs |
 |---|---|
-| Food | 270 · 450 |
-| Lumber | 270 · 468 |
-| Masonry | 270 · 477 |
-| Faith | 160 · 265 |
-| Military | 11,900 · 19,600 |
-| Trade | 170 · 237 |
-| Engineering | 180 · 305 |
-| Metallurgy | 150 · 248 |
-| Energy | 76 · 137 |
-| Hacker | 260 · 520 |
+| Food workers | 270 · 450 |
+| Lumber workers | 270 · 468 |
+| Masonry workers | 270 · 477 |
+| Faith workers | 160 · 265 |
+| Military workers | 11,900 · 19,600 |
+| Trade workers | 170 · 237 |
+| Engineering workers | 180 · 305 |
+| Metallurgy workers | 150 · 248 |
+| Energy workers | 76 · 137 |
+| Hacker workers | 260 · 520 |
 
 ### Resource tallies
 
@@ -167,9 +167,9 @@ Three of them, as examples:
 
 | Resource | Trickle | Stream | River | Flood |
 |---|---|---|---|---|
-| Food | 4.3K | 1.4M | 510M | 170B |
-| Wood | 2.2K | 380K | 67M | 11B |
-| Stone | 44K | 44M | 45B | 46T |
+| Food stores | 4.3K | 1.4M | 510M | 170B |
+| Wood stores | 2.2K | 380K | 67M | 11B |
+| Stone stores | 44K | 44M | 45B | 46T |
 
 ## What stays hidden
 

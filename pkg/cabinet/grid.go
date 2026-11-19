@@ -5,6 +5,9 @@ import "image"
 // grid.go is the plain tray of a drawer with no legendary: wells in rows on
 // the lining, a plate under each, and pages when they do not all fit.
 
+// gridLabelW is the cells under a grid well: wide enough for a tally name.
+const gridLabelW = 30
+
 // Grid is what an open ageless drawer shows: Slot picks the lining and the
 // frame, Held says which of its wells have a coin.
 type Grid struct {
@@ -30,7 +33,7 @@ func PlanGrid(cols, rows, cw, ch int) (GridLayout, bool) {
 	}
 	reach := t.piece/2 + t.grow + 4*t.step + 1
 	my := max(2, int(t.s*3))
-	colW, rowH := max(labelW*cw, 2*reach)+2*my, 2*reach+3*my+ch
+	colW, rowH := max((gridLabelW+2)*cw, 2*reach)+2*my, 2*reach+3*my+ch
 	g := GridLayout{TrayLayout: t, Cols: t.lining.Dx() / colW, reach: reach}
 	rowsN := t.lining.Dy() / rowH
 	if g.Cols < 1 || rowsN < 1 {
@@ -42,9 +45,9 @@ func PlanGrid(cols, rows, cw, ch int) (GridLayout, bool) {
 	for i := 0; i < g.Per; i++ {
 		c := image.Pt(x0+i%g.Cols*colW+colW/2, y0+i/g.Cols*rowH+reach+my)
 		row := (c.Y + reach + my + ch - 1) / ch
-		px := c.X/cw - labelW/2
+		px := c.X/cw - gridLabelW/2
 		g.Spots = append(g.Spots, c)
-		g.Plates = append(g.Plates, image.Rect(px, row, px+labelW, row+1))
+		g.Plates = append(g.Plates, image.Rect(px, row, px+gridLabelW, row+1))
 	}
 	return g, true
 }

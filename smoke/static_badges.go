@@ -61,10 +61,10 @@ var IntegrityBadges = []string{
 	"special.creative_accounting",
 }
 
-// LegacyAchievements are the four account achievements account.json lists
-// (and a build from before badges still earns). Each must stay the alias
-// of a badge, or accounts that hold it would not get the badge.
-var LegacyAchievements = []string{"first_prestige", "prestige_x10", "reached_iron", "reached_modern"}
+// LegacyAchievements are the account achievements account.json lists that
+// still map to a badge (the two prestige ones are tallies now, and no code
+// reads an old achievement). Each must stay the alias of a badge.
+var LegacyAchievements = []string{"reached_iron", "reached_modern"}
 
 // BadgeBotStyles are the play styles a bot-proof may name. They are the
 // styles the retired test bot played, kept as names.
