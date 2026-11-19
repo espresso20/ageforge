@@ -13,7 +13,7 @@ func TestCatalog(t *testing.T) {
 	s := Core()
 	want := map[string]int{
 		"age": s.NumAges() - 1, "swift": len(s.Eras()), "wonder": s.NumAges(), "maximalist": s.NumAges(),
-		"techs": s.NumAges(), "harbinger": s.NumAges(), "doom": 3, "theme": 16, "map": 2,
+		"techs": s.NumAges(), "harbinger": s.NumAges(), "doom": 15, "expedition": 21, "theme": 16, "map": 2,
 		"awakening": 7, "special": 68,
 	}
 	got := map[string]int{}
@@ -37,11 +37,11 @@ func TestCatalog(t *testing.T) {
 			t.Errorf("family %s (%d badges) is not in this test", fam, n)
 		}
 	}
-	if n := len(s.Badges()); n != 212 {
-		t.Errorf("the catalog has %d badges, want 212", n)
+	if n := len(s.Badges()); n != 245 {
+		t.Errorf("the catalog has %d badges, want 245", n)
 	}
-	if points != 4010 {
-		t.Errorf("the badges add up to %d points, want 4,010", points)
+	if points != 4430 {
+		t.Errorf("the badges add up to %d points, want 4,430", points)
 	}
 
 	// The badges accounts have held since the seed catalog keep their keys.

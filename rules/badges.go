@@ -475,6 +475,14 @@ func (s *Set) badgeSubjects(src config.BadgeSource) []badgeSubject {
 				reveal: config.RevealUntilSeen(config.BadgeEvAwakening + "." + a.Key),
 			})
 		}
+	case config.BadgeSourceDooms:
+		for _, e := range s.eras {
+			if !s.CatastropheAllowed(e.Key) || len(e.Ages) == 0 {
+				continue
+			}
+			name, _ := s.Catastrophe(e.Key)
+			out = append(out, badgeSubject{key: e.Key, name: name, age: e.Ages[0], reveal: config.RevealUntilDoomNamed(e.Key)})
+		}
 	case config.BadgeSourceDomains:
 		// A domain a building can be staffed in, with the age of the first
 		// such building. The military domain is the soldiers at their posts
@@ -502,6 +510,10 @@ func (s *Set) badgeSubjects(src config.BadgeSource) []badgeSubject {
 			}
 			age := s.ageKeys[pos]
 			out = append(out, badgeSubject{key: d, name: textfmt.Capitalize(d), age: age, reveal: s.revealAtAge(age)})
+		}
+	case config.BadgeSourceExpeditions:
+		for _, x := range s.badgeExpeditions {
+			out = append(out, badgeSubject{key: x.Key, name: x.Name, age: x.MinAge, reveal: s.revealAtAge(x.MinAge), word: config.MissionKindWord(x.Kind)})
 		}
 	case config.BadgeSourceThemes:
 		for _, t := range s.badgeThemes {

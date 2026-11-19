@@ -6,7 +6,7 @@ import "image"
 // the lining, a plate under each, and pages when they do not all fit.
 
 // gridLabelW is the cells under a grid well: wide enough for a tally name.
-const gridLabelW = 30
+const gridLabelW = 32
 
 // Grid is what an open ageless drawer shows: Slot picks the lining and the
 // frame, Held says which of its wells have a coin.

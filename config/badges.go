@@ -740,9 +740,15 @@ const (
 	BadgeSourceHarbingers
 	// BadgeSourceAwakenings: one per awakening, revealed when it fires.
 	BadgeSourceAwakenings
+	// BadgeSourceDooms: one per era a doom can strike in. {name} is the
+	// catastrophe ("The Great Plague"). Revealed when a warning names it.
+	BadgeSourceDooms
 	// BadgeSourceDomains: one per worker domain a building can be staffed
 	// in, revealed with its first building's age.
 	BadgeSourceDomains
+	// BadgeSourceExpeditions: one per expedition (BadgeExpeditions),
+	// revealed with its age.
+	BadgeSourceExpeditions
 	// BadgeSourceThemes: one per theme (BadgeThemes). A theme a badge
 	// gives shows when that badge is held.
 	BadgeSourceThemes

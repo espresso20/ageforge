@@ -26,7 +26,7 @@ type agelessWell struct {
 func agelessSlot(slot int) bool { return slot >= len(config.Ages()) }
 
 // curioFamilies are the badge families whose coins are the Curios drawer's.
-var curioFamilies = []string{"special", "map", "swift", "awakening", "doom"}
+var curioFamilies = []string{"special", "map", "swift", "awakening", "doom", "expedition"}
 
 // agelessWells lists what an ageless drawer holds, in order.
 func (p *cabinetPanel) agelessWells(slot int) []agelessWell {

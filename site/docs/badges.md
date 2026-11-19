@@ -1,6 +1,6 @@
 # Badges
 
-A badge is a permanent mark on your account for something you did in a game. There are 209 badges to earn, in 11 families: one for every age, wonder, harbinger and awakening, and a set of one-off feats. Alongside them, counts kept across all your runs are not badges but tallies: one coin each that is struck finer as the count climbs. A badge is earned once and kept for good, through every prestige and every new game.
+A badge is a permanent mark on your account for something you did in a game. There are 242 badges to earn, in 12 families: one for every age, wonder, harbinger and awakening, one for each era's catastrophe and expedition kinds, and a set of one-off feats. Alongside them, counts kept across all your runs are not badges but tallies: one coin each that is struck finer as the count climbs. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
@@ -49,7 +49,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a score
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 4,010 points. A tally's coin is worth none: the badge case shows it, but it adds nothing to the score.
+A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 4,430 points. A tally's coin is worth none: the badge case shows it, but it adds nothing to the score.
 
 A legendary coin is gold, with a rim that runs through the colors and turning rays behind it when motion is on. Eight legendary badges carry a sign of their own instead of their family's.
 
@@ -64,7 +64,8 @@ A legendary coin is gold, with a rim that runs through the colors and turning ra
 | **Wonders** | 22 | Raising each age's wonder |
 | **Maximalists** | 22 | Having a set number of an age's buildings built at the same time, before you leave the age. Wonders do not count |
 | **Research** | 22 | Researching every tech of an age in one run |
-| **Catastrophes** | 3 | The three ways the Last Passage can end |
+| **Catastrophes** | 15 | Enduring and succumbing to each era's catastrophe, and the Last Passage |
+| **Expeditions** | 21 | Coming back from a successful scout, long or grand mission in each era |
 | **Harbingers** | 22 | Meeting each of the 22 harbingers |
 | **Awakenings** | 7 | Witnessing each awakening |
 | **Themes** | 16 | Advancing an age while wearing each theme |

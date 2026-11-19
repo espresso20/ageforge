@@ -10,6 +10,41 @@ package config
 
 // ----- the tables a family may be made from that live outside config -----
 
+// BadgeExpeditionDef is a badge subject for the missions: one era and one
+// kind. Key is MissionBadgeKey, Name the era's name, MinAge the era's first
+// age. The missions themselves belong to the game package, which checks this
+// table against its own (TestBadgeExpeditionsMatchTheGame).
+type BadgeExpeditionDef struct{ Key, Name, MinAge, Kind string }
+
+// MissionBadgeKey is the badge subject of an era's mission of one kind.
+func MissionBadgeKey(era, kind string) string { return "expedition_" + era + "_" + kind }
+
+// MissionKindWord is the word a badge uses for a mission kind.
+func MissionKindWord(kind string) string {
+	switch kind {
+	case MissionExpedition:
+		return "long"
+	case MissionCampaign:
+		return "grand"
+	}
+	return "scout"
+}
+
+// BadgeExpeditions lists every era and kind a mission badge exists for, in
+// the catalog's order.
+func BadgeExpeditions() []BadgeExpeditionDef {
+	var out []BadgeExpeditionDef
+	for _, era := range Epochs() {
+		if len(era.Ages) == 0 {
+			continue
+		}
+		for _, kind := range MissionKinds() {
+			out = append(out, BadgeExpeditionDef{MissionBadgeKey(era.Key, kind), era.Name, era.Ages[0], kind})
+		}
+	}
+	return out
+}
+
 // BadgeThemeDef is a theme as the catalog needs it: its key, its name and
 // the badge that gives it ("" for a theme every account has). The themes
 // themselves belong to the theme package; the UI checks this table against
@@ -174,6 +209,29 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Tier:  BadgeBronze, Scope: BadgeMoment, Event: BadgeEvHarbingerMet,
 			RevealBySubject: true, Emblem: "harbinger", Set: "harbinger.met",
 			Proof: Occurs("An era's doom is fated by a roll at the era's first tick, and a fated doom sends the harbinger of the age its warning falls in. Each era rolls again on every run."),
+		},
+		// F11. Each doom, endured and succumbed to.
+		{
+			Family: "doom", Source: BadgeSourceDooms,
+			Key: "doom.{key}.endured", Name: "Endured: {name}", Desc: "Choose Endure against {mid} and keep going with what is left.",
+			Tier: BadgeGold, Scope: BadgeMoment, Event: BadgeEvEndured,
+			RevealBySubject: true, Emblem: "hazard",
+			Proof: Occurs("A doom that strikes waits for the answer, and Endure is always one of the two."),
+		},
+		{
+			Family: "doom", Source: BadgeSourceDooms,
+			Key: "doom.{key}.succumbed", Name: "Succumbed: {name}", Desc: "Succumb to {mid} and start over with its legacy.",
+			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvSuccumbed,
+			RevealBySubject: true, Emblem: "ruin",
+			Proof: Occurs("A doom that strikes waits for the answer, and Succumb is always one of the two."),
+		},
+		// F12. Each era and kind of mission, come back from with a success.
+		{
+			Family: "expedition", Source: BadgeSourceExpeditions,
+			Key: "expedition.{key}", Name: "{name} {Word}", Desc: "Come back from a successful {word} mission in the {name}.",
+			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvExpedition,
+			RevealBySubject: true, Emblem: "military",
+			Proof: Occurs("A mission of every era can be sent whenever its age and its lock are open, and every mission has a chance to succeed."),
 		},
 		// F13. Each theme, worn at an advance.
 		{

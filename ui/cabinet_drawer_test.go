@@ -159,7 +159,7 @@ func TestCabinetAgelessDrawerOpensAndPages(t *testing.T) {
 		}
 		paint()
 		ws := p.agelessWells(slot)
-		if want := []int{74, 87, 16}[j]; len(ws) != want || p.drawers[slot].Total != want {
+		if want := []int{74, 120, 16}[j]; len(ws) != want || p.drawers[slot].Total != want {
 			t.Errorf("%s lists %d wells (drawer total %d), want %d", key, len(ws), p.drawers[slot].Total, want)
 		}
 		if !p.closeDrawer() || p.tray.slot != -1 {
@@ -192,8 +192,8 @@ func TestAgelessPlatesAreUniqueAndFit(t *testing.T) {
 	for i := range p.keys {
 		seen := map[string]bool{}
 		for _, w := range p.agelessWells(i) {
-			if n := len([]rune(w.name)); n > 30 {
-				t.Errorf("%s plate %q is %d cells, the plate holds 30", p.keys[i], w.name, n)
+			if n := len([]rune(w.name)); n > 32 {
+				t.Errorf("%s plate %q is %d cells, the plate holds 32", p.keys[i], w.name, n)
 			}
 			if seen[w.name] && p.keys[i] == "ledgers" {
 				t.Errorf("two Ledgers plates read %q", w.name)
