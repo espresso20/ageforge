@@ -2,7 +2,7 @@
 
 AgeForge's interface colors come from swappable **themes**: 16 themes in all, **dark** and **light**. You can switch at any time and the change applies at once. Your choice is saved with your **account**, not with a game save, so it carries across every save and every new game. Loading an old save never changes your theme.
 
-Themes come in three groups. **Standard** has the default dark **Forge** and the light **Daylight**. **Accessibility** has colorblind-safe and high-contrast themes, in dark and light. **Unlockable** flavor themes each come with a [badge](badges.md): five for reaching an age, five for other badges. Standard and Accessibility themes are always unlocked.
+Themes come in three groups. **Standard** has the default dark **Forge** and the light **Daylight**. **Accessibility** has colorblind-safe and high-contrast themes, in dark and light. **Unlockable** flavor themes each come with a [badge](badges.md): five for reaching an age, five for other badges. Standard and Accessibility themes are always unlocked. The themes you hold are kept in the Themes drawer of the [coin cabinet](account.md#the-coin-cabinet) (`badges themes`).
 
 ---
 
@@ -40,7 +40,7 @@ Themes use exact RGB colors, and the window shows them as designed.
 
 ### Motion
 
-A few things in the game move on their own: the [Map](map.md) and the mini map, the [main menu](how-to-play.md#the-main-menu), the coins of earned badges (in the [badge case](account.md#the-badge-case), on the Epoch screen and on the card for a badge just earned), and the ambient effect of the five themes that have one. One setting turns all of it off:
+A few things in the game move on their own: the [Map](map.md) and the mini map, the [main menu](how-to-play.md#the-main-menu), the coins on the Epoch screen and on the card for a badge just earned, and the ambient effect of the five themes that have one. One setting turns all of it off:
 
 | Command | What it does |
 |---|---|

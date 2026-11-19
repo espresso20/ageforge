@@ -705,6 +705,15 @@ func (w *siteShots) takeIn(s *siteStage, name, themeKey string, cols, rows int) 
 	w.t.Logf("%-18s %3dx%-2d %6d bytes", name, cols, rows, len(raw))
 }
 
+// blankRows is n rows with nothing in them.
+func blankRows(n int) []siteScreenRow {
+	rows := make([]siteScreenRow, n)
+	for i := range rows {
+		rows[i].R = []int{}
+	}
+	return rows
+}
+
 // takeCabinet writes the open cabinet as one picture over a blank grid. The
 // cabinet puts the words of its plates over its own picture, which the
 // wiki's grid cannot hold (a picture there hides the text under it), so the
@@ -714,7 +723,7 @@ func (w *siteShots) takeCabinet(s *siteStage, name string) {
 	was := pictureCell
 	pictureCell = func() (int, int) { return 12, 24 }
 	defer func() { pictureCell = was }()
-	cols, rows := siteDashW, siteDashH
+	cols, rows := 120, 36
 	sim := newSim()
 	must(w.t, sim.Init())
 	defer sim.Fini()
@@ -732,7 +741,7 @@ func (w *siteShots) takeCabinet(s *siteStage, name string) {
 	var buf bytes.Buffer
 	must(w.t, png.Encode(&buf, img))
 	f := siteScreenFile{W: cols, H: rows, Bg: siteHex(theme.Of(theme.RoleBackground)),
-		Palette: []string{"#000000"}, Styles: [][3]int{{0, 0, 0}}, Rows: []siteScreenRow{},
+		Palette: []string{"#000000"}, Styles: [][3]int{{0, 0, 0}}, Rows: blankRows(rows),
 		Pics:   []siteScreenPic{{X: 0, Y: 0, W: cols, H: rows, I: 0}},
 		Images: []string{base64.StdEncoding.EncodeToString(buf.Bytes())}}
 	var out bytes.Buffer
@@ -996,7 +1005,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 
 	// The coin cabinet: strikes held by the made-up account, a few ages
 	// deep, two runs of the same age stacking in one well. The front, then
-	// one open drawer, then the Ledgers.
+	// one open drawer.
 	strike := func(typ, age string, share float64, run string) {
 		ticks := int(config.CoinRefTicks(age, 1) * share)
 		acct.StrikeCoin(typ, age, ticks, 1, run, day, false)
@@ -1021,9 +1030,6 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	s.close()
 	s.open("badges medieval", "")
 	shots.takeCabinet(s, "cabinet-drawer")
-	s.close()
-	s.open("badges ledgers", "")
-	shots.takeCabinet(s, "cabinet-ledgers")
 	s.close()
 
 	// The menu with a game: the town of the first stage, as this account's

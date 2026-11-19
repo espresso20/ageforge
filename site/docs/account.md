@@ -238,7 +238,7 @@ Some progress is account-wide. It builds up across every game you play on that a
 | Civilizations Started | Every civilization you have begun on this account: each new game, and the one that follows each prestige and each Succumb. Loading a game starts nothing |
 | Highest Age Ever | The furthest age any of this account's civilizations has reached. It only goes up |
 
-The Stats panel's Lifetime part is the account's record board. At the top it shows the account's name, its title and a bar toward the next title, with the counts of prestiges, civilizations started and badges earned. Below, a ladder has one step for each age in order: the steps for ages the account has reached are lit in the age's color, a crown marks the highest, and the pointer, moved with Left and Right or by a click, shows the fastest time to that age and the run and date that set it. Under that are the four best single-run counts, and a grid of the badge families, each with its coin at the best tier earned and how many badges of the family are held. The [Accounts panel](#the-accounts-panel) shows the prestiges and highest age for each account, so you can compare your civilizations.
+The Stats panel's Lifetime part is the account's record board. At the top it shows the account's name, its title and a bar toward the next title, with the counts of prestiges, civilizations started and badges earned. Below, a ladder has one step for each age in order: the steps for ages the account has reached are lit in the age's color, a crown marks the highest, and the pointer, moved with Left and Right or by a click, shows the fastest time to that age and the run and date that set it. Under that are the four best single-run counts, and a grid of the badge families, each with its finest coin and that coin's level (`Level 6 of 6`). A family that holds nothing shows no level. The [Accounts panel](#the-accounts-panel) shows the prestiges and highest age for each account, so you can compare your civilizations.
 
 The account also records each prestige under the age it was made from (`prestiges_by_age` in the stats of `account.json`), so an early taste (a prestige from the Medieval Age to the Atomic Age) can be told from a full run (the Modern Age or deeper). See [Early tastes and full runs](prestige.md#early-tastes-and-full-runs). No panel shows this, and Total Prestiges counts every prestige, tastes included. Prestiges made before the account kept this record count only in the total. An export carries it, and an import keeps the higher count for each age.
 
@@ -248,66 +248,41 @@ These stats update the moment you prestige or advance into an age. They are save
 
 ### Badges
 
-A badge is a permanent mark on your account for something you did in a game: reaching an age, building enough of something across all your runs, or pulling off something specific in one run. A badge is earned once and kept for good. It stays with your account through every prestige and every new game, and it travels in an export. The [Badges](badges.md) page lists the families, the tallies and their rungs, the titles and the themes that badges give. This section covers the badge case and how badges are kept.
+A badge is a permanent mark on your account for something you did in a game: reaching an age, building enough of something across all your runs, or pulling off something specific in one run. A badge is earned once and kept for good. It stays with your account through every prestige and every new game, and it travels in an export. The [Badges](badges.md) page lists the families, the tallies and their rungs, the titles and the themes that badges give. This section covers the coin cabinet and how badges are kept.
 
 Badges are separate from [milestones](milestones.md). A milestone belongs to one run, pays a reward inside that run and starts over with the next. A badge belongs to the account and gives nothing inside a run, so the same game plays the same way whatever the account has earned.
 
-When you earn a badge, a card opens at the top right of the dashboard for five seconds, and the log gets one line, such as `Badge earned: Rock Solid (bronze). Reach the Stone Age.` The card shows the badge's coin, which turns in to face you and then plays its tier's show (see below), beside the badge's name, its tier and what it was for. Badges earned together take the card one after another. With `motion off` the card opens whole and its coin stays still. A badge that gives a theme adds a second log line. Badges your account is given all at once when a game loads (rungs whose counts it had already passed) get one notice in the header that says how many, instead of a card each. A card for a badge earned while a panel is open waits, and opens when you close the panel.
+When you earn a badge, a card opens at the top right of the dashboard for five seconds, and the log gets one line, such as `Badge earned: Rock Solid (bronze). Reach the Stone Age.` The card shows the badge's coin beside the badge's name, its tier and what it was for. Badges earned together take the card one after another. With `motion off` the card opens whole and its coin stays still. A badge that gives a theme adds a second log line. Badges your account is given all at once when a game loads (rungs whose counts it had already passed) get one notice in the header that says how many, instead of a card each. A card for a badge earned while a panel is open waits, and opens when you close the panel.
 
 <figure class="screen" data-screen="badge-toast"><figcaption>A badge earned: its card opens at the top right, and the log keeps the same words.</figcaption></figure>
 
-To see your badges, open the badge case:
+To see your badges, open the coin cabinet:
 
 ```
 badges
 ```
 
-The main menu's Badges entry (`b`) opens the same case with no game loaded, and shows your count and your title on the menu itself.
+The main menu's Badges entry (`b`) opens the same cabinet with no game loaded, and shows your count and your title on the menu itself.
 
-#### The badge case
+#### The coin cabinet
 
-The case fills the screen except for the command bar, so the prompt keeps working while it is open. It shows every badge the account holds or can earn as a small coin in a grid, by family, with the selected badge's coin large beside it.
+The cabinet fills the screen except for the command bar, so the prompt keeps working while it is open. Every badge the account earns is a coin, and the cabinet keeps them in drawers: one for each of the 22 ages, then Ledgers, Curios and Themes. [Badges](badges.md#coins-levels-and-stacks) explains what a coin is, its six levels and how copies stack; this section covers what you see and how to move around it.
 
-<figure class="screen" data-screen="badge-case"><figcaption>The badge case, on its Ladders tab. The top bar counts what is earned and gives the score and the title you wear; each ladder says how far its next rung is.</figcaption></figure>
+<figure class="screen" data-screen="cabinet"><figcaption>The cabinet shut: 25 drawers in a grid. A drawer shows the age's money when you have reached the age, and its label otherwise. The top plate counts the pieces held and the sets finished.</figcaption></figure>
 
-Every badge is a coin drawn in real pixels: a small coin for each badge of the grid, set on a shelf under its family's name, and the selected badge's coin large beside the grid. A coin shows what its badge is:
+- **The front.** Each age's drawer carries a plate with the age's name and a row of pips, one for each of its wells. A later age you have not come across is labelled as one and does not name its age. The arrows move from drawer to drawer, `Home` and `End` go to the first and the last, and `Enter` opens the selected one. A command opens a drawer directly: `badges <age>`, or `badges <age> <type>` for one well in it (see [Badges](commands.md#badges)).
+- **An age's drawer.** It opens as a felt-lined tray with a well for each kind of coin: Age, Wonder, Techs, Maximalist and Harbinger, and the age's Legendary in a larger well in the middle. A well with nothing struck is empty. Copies of a kind stack in their well, the finest on top. The arrows move between wells, and `Enter` (or a second click) fans the stack out so that you can step through its copies. Coins stand in a size you can read, drawn in real pixels, and the money differs from age to age.
+- **Ledgers, Curios and Themes.** These hold what belongs to no age: Ledgers the account's tallies, one coin each that is struck finer at each rung, Curios the one-off feats and the other badges that belong to no age, and Themes the themes. They open as a grid of wells and page with `PgUp` and `PgDn` when they do not all fit.
+- **Closing.** `Esc` or a right click closes the open drawer and then the cabinet.
+- **The mouse.** A click selects the drawer under the pointer and a second click opens it. The wheel moves between drawers. In an open drawer a click selects a well and a second click fans out its stack.
 
-| The coin | It is |
-|---|---|
-| Bronze, silver or gold | Earned, in that tier |
-| Cold blue-white, with four blue studs in its rim | Platinum, earned |
-| Gold, with a rim that runs through the colors | Legendary, earned |
-| Dull steel with a keyhole | In sight, not earned yet. The detail says what it asks for |
-| Dull steel with a question mark | Hidden: a secret badge, or one about something you have not come across yet. Until you have reached the last age, a family's hidden badges share one coin; after that each has its own |
-| A strike cut across it | Earned in a modified game. It adds no points |
+<figure class="screen" data-screen="cabinet-drawer"><figcaption>An age's drawer, open. Five wells for the kinds of coin and the legendary in the middle; the plates at the bottom name the age, give a count and tell how many coins are struck.</figcaption></figure>
 
-The sign in the middle of a coin is its family's, and each of the seventeen families has its own. Eleven badges carry a sign of their own instead: eight legendary ones and the three that sit outside the families. The glyph set you chose with `map glyphs` changes the case's text, not its coins.
-
-- Tabs run along the top: All, one for each family you have something in sight of, and Next. Next lists the badges you are closest to, nearest first. `Tab` steps through the tabs, and the row scrolls when the window is too narrow for all of them. Once you have reached the last age, every family has a tab.
-- Ladders sit on a line of their own, lowest rung first, with the ladder's name and how far its next rung is beside them. A ladder with no running count (a payroll) names its next rung instead.
-- `Enter` opens the selected badge's detail: its coin large with everything the case knows about it. `badges <name>` opens a detail directly, and `badges <family>` opens a family's tab.
-- The selected coin sits on a lit plate. On the count line, at the right, a bar shows how far your score is toward the next title.
-- The mouse works too: a click selects the badge under the pointer, a double click opens its detail, a click outside the open detail closes it, and the wheel moves the selection up and down. A click on a tab opens it, and a click on the arrow at an end of the tab row opens the nearest tab that is out of sight that way.
-
-<figure class="screen" data-screen="badge-detail"><figcaption>One badge's detail: its tier, rarity and points, what it asked for, when it was earned and in which game, and its place on its ladder.</figcaption></figure>
-
-Every earned coin moves, and a higher tier moves more. `motion off` holds all of it still (see [Motion](themes.md#motion)).
-
-| Tier | What its coin does |
-|---|---|
-| Bronze | A band of light crosses it now and then. |
-| Silver | The band is brighter, and a sparkle opens on the rim. |
-| Gold | Two sparkles, and a light runs once round the rim. |
-| Platinum | A second band of light, three sparkles and two lights round the rim; the four blue studs in its rim flare as a light goes by. |
-| Legendary | The rim turns through the colors without rest, with three sparkles in its colors; the large coin stands on turning rays. |
-
-The lights set off one coin after another, from the upper left, so they cross the whole case. When you select a badge its large coin turns to face you, and its lights begin there. A coin not earned yet does not move. The same coins, moving the same way, show on the [Epoch screen](epochs.md) and on the card for a badge just earned.
-
-The keys are listed under [Badges](commands.md#badges) on the commands page and in the Help panel.
+The cabinet is a picture, so it needs a window of a fair size and says so when the window is too small. It draws in your theme's colors and does not move: `motion off` changes nothing in it. The keys are listed under [Badges](commands.md#badges) on the commands page and in the Help panel.
 
 #### Titles
 
-Your badge points add up to a score, and the score holds a title. The badge case shows it in its top bar, with the next title and what it asks for when the window is wide enough. Some badges give a title of their own. `title` lists the ones you hold, `title <name>` wears one, and `title default` goes back to the score's. Once you wear anything but Settler, the header's top edge shows the title beside your account's name when the window has room for it. A title changes nothing in a game. [Titles](badges.md#titles) lists them all with the scores they ask for.
+Your badge points add up to a score, and the score holds a title. The Stats panel shows it. Some badges give a title of their own. `title` lists the ones you hold, `title <name>` wears one, and `title default` goes back to the score's. Once you wear anything but Settler, the header's top edge shows the title beside your account's name when the window has room for it. A title changes nothing in a game. [Titles](badges.md#titles) lists them all with the scores they ask for.
 
 #### The plain list
 
@@ -317,13 +292,13 @@ The Stats panel (`stats`) shows the number of badges earned and the title you we
 account badges
 ```
 
-It starts with the count and the title, for example `3 of 127 earned, 15 points, ??? hidden`. Under it, each family you have something in sight of gets a heading with its own count. Below the heading come its earned badges and the first four it has still to earn, then a line saying how many more there are when there are more than four, and how many secrets the family keeps. The badge case shows them all. The marks are:
+It starts with the count and the title, for example `3 of 127 earned, 15 points, ??? hidden`. Under it, each family you have something in sight of gets a heading with its own count. Below the heading come its earned badges and the first four it has still to earn, then a line saying how many more there are when there are more than four, and how many secrets the family keeps. The cabinet shows them all. The marks are:
 
 | Mark | Meaning |
 |---|---|
 | ★ | Earned |
 | ☆ | Not earned yet. The line says what it asks for, and a badge that counts across runs shows how far along you are |
-| ? | Secret badges. The list counts them. The badge case shows each one's hint, and nothing else until you earn it |
+| ? | Secret badges. The list counts them. A secret badge shows nothing but its hint until you earn it |
 
 A badge about something you have not come across yet (an age you have not seen named, for one) stays out of the list and out of the "of" number until you get there. The game does not say how many badges are hidden until an account has reached the last age.
 

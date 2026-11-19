@@ -6,17 +6,51 @@ Badges are cosmetic. A badge gives points, sometimes a title or a theme, and not
 
 ## Seeing your badges
 
-Open the badge case to look through them:
+Open the coin cabinet to look through them:
 
 ```
 badges
 ```
 
-<figure class="screen" data-screen="badge-families"><figcaption>The badge case as it opens: every family you have something in sight of, with the selected badge's coin large beside the grid.</figcaption></figure>
+<figure class="screen" data-screen="cabinet"><figcaption>The coin cabinet as it opens: a drawer for each age, then Ledgers, Curios and Themes. The plate at the top counts the pieces held and the sets finished.</figcaption></figure>
 
-[Accounts & Recovery](account.md#the-badge-case) describes the case itself: what each coin shows, the tabs, the detail card and the plain list. The Stats panel's Lifetime part shows how many you have earned. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
+[Accounts & Recovery](account.md#the-coin-cabinet) describes the cabinet itself: the drawers, the wells, the keys and the mouse. The Stats panel's Lifetime part shows how many you have earned. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
 
 VibeMode rewrites the names and descriptions of badges. The badges, their tiers and their points stay the same.
+
+## Coins, levels and stacks
+
+Every badge you earn is kept as a coin, and the cabinet shows the coins, not a list. The cabinet has 25 drawers: one for each of the 22 ages, then Ledgers, Curios and Themes. Each age's drawer has six wells: one for each kind of coin the age has, and a larger one in the middle for its legendary.
+
+| Well | What strikes its coin |
+|---|---|
+| Age | Reaching the age |
+| Wonder | Raising the age's wonder |
+| Techs | Researching every tech of the age in one run |
+| Maximalist | The age's Maximalist badge |
+| Harbinger | Meeting the age's harbinger |
+| Legendary | The age's one hard feat |
+
+Each age's money is its own: the coins of one age differ from another's in shape, metal and make, and the five kinds within an age are different pieces of that age's money, not one coin with five signs.
+
+**Six levels, by how soon in the age.** A coin is struck at a level from 1 to 6, and the level depends on how soon in the age it was earned, measured against the age's pacing target (the time a first run is expected to spend there, which shortens with the game's speed). The same marks hold in every age:
+
+| Level | Struck within |
+|---|---|
+| Level 6 | 60% of the age's target time |
+| Level 5 | 80% |
+| Level 4 | 100% |
+| Level 3 | 130% |
+| Level 2 | 180% |
+| Level 1 | Later than that |
+
+Luck plays no part: the marks come from the pacing model and the time spent in the age.
+
+**One copy per run, stacked.** A run that earns a coin adds a copy to its well. Two runs make two copies, and the copies stack in the well, the finest on top. Earning the same coin again in the same run only improves that run's copy, if it comes at a finer level. Select a well and press `Enter` to fan the stack out and pick one copy. No two copies are alike: each has its own seed, so its outline, how far off-center the strike sits and where the wear falls are its own.
+
+**One legendary feat per age.** Each age has one hard feat that no other coin asks for. Striking it puts a legendary coin in the age's middle well: a larger, still coin with no level of its own, above level 6. There are 22 of them, one for each age.
+
+**Tallies as one improving coin.** A count that climbs across all your runs does not make a coin for every rung. It keeps one coin, which is struck again one level finer at each rung. See [Tallies](#tallies).
 
 ## How a badge is earned
 
@@ -49,11 +83,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a score
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 4,430 points. A tally's coin is worth none: the badge case shows it, but it adds nothing to the score.
-
-A legendary coin is gold, with a rim that runs through the colors and turning rays behind it when motion is on. Eight legendary badges carry a sign of their own instead of their family's.
-
-<figure class="screen" data-screen="badge-legend"><figcaption>A legendary special at full size, with a sign of its own. Eight legendary badges have one: seven legendary specials and the badge for the last age.</figcaption></figure>
+A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 4,430 points. A tally's coin is worth none: the cabinet shows it, but it adds nothing to the score.
 
 ## The families
 
@@ -80,7 +110,7 @@ Three more badges sit outside the families. They are worth no points, count towa
 
 A tally is a count that climbs across all your runs and keeps one coin. The coin is struck at level 1 when the count reaches the first rung and one level finer at each rung after, up to level 6. A tally with fewer than six rungs skips levels, so its last rung is always level 6: the rung's place in the climb is spread over the six levels, halves up. A level never goes down. A tally's coin is not a badge: it has no tier, no points and no rarity.
 
-The badge case keeps tallies in drawers that belong to no age. The Ledgers drawer holds the 74 tallies below, the Curios drawer the one-off feats and the other badges that belong to no age, and the Themes drawer the themes. Each opens like an age's drawer, with a well for each coin, and pages through them with PgUp and PgDn when they do not all fit.
+The cabinet keeps tallies in drawers that belong to no age. The Ledgers drawer holds the 74 tallies below, the Curios drawer the one-off feats and the other badges that belong to no age, and the Themes drawer the themes. Each opens like an age's drawer, with a well for each coin, and pages through them with `PgUp` and `PgDn` when they do not all fit.
 
 ### Lifetime tallies
 
@@ -162,7 +192,7 @@ A payroll tally asks for that many workers at work in one domain at the same tim
 
 ### Resource tallies
 
-Each resource has a tally of up to four rungs. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is 25 full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. Soldiers have a tally too, and it counts the soldiers who take their posts. The badge case shows each rung's number and how far along you are.
+Each resource has a tally of up to four rungs. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is 25 full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. Soldiers have a tally too, and it counts the soldiers who take their posts. Each has its coin in the Ledgers drawer.
 
 Three of them, as examples:
 
@@ -174,7 +204,7 @@ Three of them, as examples:
 
 ## What stays hidden
 
-The badge case never names something the game has not shown you yet:
+The cabinet never names something the game has not shown you yet:
 
 - A badge for reaching an age shows once that age is your next age, because the long bar in the header already names it. Badges tied to an age (its wonder, its Maximalist and Research badges, and the lineage, resource and payroll tallies that begin in it) stay hidden until you reach that age.
 - A badge about a civilization or a harbinger stays hidden until you have met it, one about an awakening until it happens, and one about a catastrophe until its warning names it or it strikes.
@@ -182,7 +212,7 @@ The badge case never names something the game has not shown you yet:
 - A family with nothing in sight has no tab and no heading until you have reached the last age.
 - The counts cover what you can see. `account badges` starts with a line such as `3 of 127 earned, 15 points, ??? hidden`. The game does not say how many badges are hidden until an account has reached the last age.
 
-**11 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
+**11 badges are secret.** A secret badge shows a one-line hint in the cabinet and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
 
 ## Titles
 
@@ -209,7 +239,7 @@ Six more titles come with badges, not with the score:
 | The Undying | Enduring every catastrophe and the Last Passage |
 | Hut Magnate | A secret badge |
 
-You wear one title at a time. It shows in the badge case's top bar and, once you wear anything but Settler and the window has room, beside your account's name in the header's top edge.
+You wear one title at a time. Once you wear anything but Settler and the window has room, it shows beside your account's name in the header's top edge.
 
 ```
 title

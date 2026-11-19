@@ -523,36 +523,36 @@ See [Saving & Loading](saving-and-loading.md) for branching, the save tree, row 
 
 | Command | Description |
 |---|---|
-| `badges` | Open the badge case: every badge your account holds or can earn. The prompt keeps working while it is open. |
-| `badges <family>` | Open the case on one family's tab, by its name: `ages`, `wonders`, `harbingers`, `specials` and the rest. A family you have nothing in sight of yet has no tab to open. |
-| `badges all` | Open the case on the All tab, which shows every family. |
-| `badges next` | Open the case on the badges you are closest to earning, nearest first. |
-| `badges <name>` | Open one badge's detail by its name, or a part of it (`badges hut hoarder`, `badges rock`). Only badges you can already see are found. |
+| `badges` | Open the coin cabinet: every coin your account holds, a drawer for each age. The prompt keeps working while it is open. |
+| `badges <age>` | Open the cabinet on that age's drawer, by its name (`badges medieval`, `badges victorian age`). An age you have not come across yet has no drawer to open. |
+| `badges <age> <type>` | Open that age's drawer with one well selected: `age`, `wonder`, `techs`, `maximalist`, `harbinger` or `legendary` (`badges medieval wonder`). |
+| `badges ledgers` | Open the Ledgers drawer, which holds the account's tallies. |
+| `badges curios` | Open the Curios drawer, which holds the one-off feats and the other badges that belong to no age. |
+| `badges themes` | Open the Themes drawer. |
 | `title` | List the titles your account holds, and mark the one it wears. |
 | `title <name>` | Wear a title you hold. The start of its name is enough. |
 | `title default` | Go back to the title your badge score holds. |
 
 ```
 badges
-badges lineages
-badges next
-badges rock solid
+badges classical
+badges medieval wonder
+badges ledgers
 title
 title survivor
 ```
 
-The badge case leaves the prompt working and takes only the keys that print nothing:
+`badges` is also `achievements`. The cabinet leaves the prompt working and takes only the keys that print nothing:
 
 | Key | Action |
 |---|---|
-| Arrows | Move from badge to badge; the grid follows |
-| `Tab` / `Shift+Tab` | The next or the previous family's tab |
-| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`) | A page up and down |
-| `Home` / `End` | The first badge and the last |
-| `Enter` | Open the selected badge's detail, and close it |
-| `Esc` | Close the detail, then the case |
+| Arrows | Move from drawer to drawer |
+| `Home` / `End` | The first drawer and the last |
+| `Enter` | Open the selected drawer; in an open drawer, fan out the selected well's stack. Arrows then move between its wells |
+| `PgUp` / `PgDn` | Turn the page of Ledgers, Curios or Themes |
+| `Esc` / right click | Close the open drawer, then the cabinet |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. Every earned badge's coin moves, and `motion off` holds them still. See [Badges](badges.md) for the badges themselves, their ladders, titles and the themes they give, and [the badge case](account.md#the-badge-case) for what the case shows. The title you wear belongs to your account and needs one to be loaded.
+The mouse works too: a click selects a drawer and a second click opens it, the wheel moves between drawers, and in an open drawer a click selects a well and a second click fans out its stack. With something typed, `Enter` acts on the prompt instead. The cabinet is a picture, so it needs a window of a fair size; in a smaller one it says so. It is still: `motion` does not change it. See [Badges](badges.md) for the badges, tallies, titles and the themes they give, and [the coin cabinet](account.md#the-coin-cabinet) for what each drawer shows. The title you wear belongs to your account and needs one to be loaded.
 
 ---
 
@@ -563,7 +563,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. The case draw
 | `account` | Show the active account's short ID and what a backup is (the recovery code restores identity, not progress). |
 | `account show code` | Show the active account's recovery code, and nothing else, in a small window that `Esc` closes. The code is not written to the game log, so it is not in the Logs panel, a save or a dump. |
 | `account list` | List the local accounts on this machine, marking the active one. |
-| `account badges` | List the active account's badges as text, family by family: its points and title, each family's earned badges and the first four still to earn. `badges` opens the badge case, which shows them all. See [Badges](badges.md). |
+| `account badges` | List the active account's badges as text, family by family: its points and title, each family's earned badges and the first four still to earn. `badges` opens the coin cabinet, which shows them all. See [Badges](badges.md). |
 | `account switch <name>` | Switch to a local account by its name (changes which account's saves you see). During a game, it saves the game to its own account and returns to the main menu. |
 | `account recover <code> [confirm]` | Restore your identity from a recovery code on a new machine or after a reinstall, and switch to it. It lands in its own slot and never overwrites an account. Add `confirm` when the game asks for it (when the account in use holds any progress). |
 | `account export [path]` | Write a signed account backup bound to its account ID (unlocks, stats, badges, prefs). The default is `account-<id8>-export.json` inside that account's slot, or a path you give. It also takes a full backup of the account. |
@@ -597,7 +597,7 @@ The Settings page has a Font row (`f`) that switches between Pixel and JetBrains
 | `theme` | Open the Themes picker to browse palettes with live preview (`↑` and `↓` preview, `Enter` keeps, `Esc` or `q` reverts). It is also on the main menu, under Settings. |
 | `theme list` | List every theme by name and key, marking the active one, with each theme's light or dark variant, which are accessible, and how to unlock the ones you haven't. |
 | `theme <key>` | Switch directly to a theme by key (for example `theme high_contrast`). |
-| `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the main menu, the badges that move in the badge case, and a theme's ambient effect. `on` brings it back (default on). Saved per account. |
+| `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the main menu, the coins on the card for a badge just earned, and a theme's ambient effect. `on` brings it back (default on). Saved per account. |
 
 ```
 theme

@@ -26,7 +26,7 @@ import (
 var docScreenFigure = regexp.MustCompile(`^<figure class="screen" data-screen="([a-z0-9][a-z0-9-]*)"><figcaption>([^<]+)</figcaption></figure>$`)
 
 // docScreensBudget is the most the screens folder may weigh.
-const docScreensBudget = 400 << 10
+const docScreensBudget = 3 << 19
 
 func TestDocScreens(t *testing.T) {
 	pages, err := filepath.Glob("../site/docs/*.md")
