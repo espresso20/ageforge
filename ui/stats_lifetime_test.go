@@ -5,6 +5,7 @@ import (
 	"image"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -215,51 +216,31 @@ func TestLifetimeRecordsShowTheLargerOfRecordAndRun(t *testing.T) {
 	}
 }
 
-func TestLifetimeFamilyCoinsFollowTheBestTier(t *testing.T) {
+func TestLifetimeFamilyCoinsAreOnlyForCoinFamilies(t *testing.T) {
 	earn := func(fam, n int) int { return []int{0, 1, 2, 3, 4, 5, 6}[fam%7] }
 	p, st := lifeStats(t, 8, 160, 80, true, earn, nil)
-	as := st.AccountStats
-	byKey := map[string]*statsPic{}
-	for i := range p.page.pics {
-		byKey[p.page.pics[i].key] = &p.page.pics[i]
-	}
-	for fi, f := range badgeFamilyTitles {
-		var best config.BadgeTier
-		got, have, total := false, 0, 0
-		for _, v := range as.Badges {
-			if v.Family != f.key {
-				continue
-			}
-			total++
-			if v.Earned {
-				have++
-				if !got || v.Level > best {
-					best, got = v.Level, true
-				}
+	fams := statsFamilies(st.AccountStats.Badges, st.AccountStats.BadgeSummary.HiddenCounted)
+	for _, f := range fams {
+		var pic statsPic
+		has := false
+		for _, q := range p.page.pics {
+			if strings.HasPrefix(q.key, "coin"+f.key) {
+				pic, has = q, true
 			}
 		}
-		if have != earn(fi, 6) {
-			t.Fatalf("fixture: family %s has %d", f.key, have)
-		}
-		pic := byKey[fmt.Sprint("coin", f.key, best, got)]
-		if pic == nil {
-			t.Errorf("family %s: no picture for tier %v, earned %v", f.key, best, got)
+		if has != slices.Contains(config.CoinTypes, f.key) {
+			t.Errorf("family %s: picture %v, coin family %v", f.key, has, !has)
 			continue
 		}
-		count := fmt.Sprintf("%d / %d", have, total)
+		if !has {
+			continue
+		}
 		lines := gridLines(p.page.g)
-		if !strings.Contains(lines[pic.r.Max.Y], f.title.String()) {
-			t.Errorf("family %s: title %q not under its coin: %q", f.key, f.title.String(), lines[pic.r.Max.Y])
+		if !strings.Contains(lines[pic.r.Max.Y], f.title) {
+			t.Errorf("family %s: title %q not under its coin: %q", f.key, f.title, lines[pic.r.Max.Y])
 		}
-		if !strings.Contains(lines[pic.r.Max.Y+1], count) {
+		if count := fmt.Sprintf("%d / %d", f.earned, f.shown); !strings.Contains(lines[pic.r.Max.Y+1], count) {
 			t.Errorf("family %s: count %q not under its title: %q", f.key, count, lines[pic.r.Max.Y+1])
-		}
-	}
-	// a fresh account has every family as a recess
-	q, _ := lifeStats(t, 1, 160, 80, true, lifeNone, nil)
-	for _, pic := range q.page.pics {
-		if strings.HasPrefix(pic.key, "coin") && !strings.HasSuffix(pic.key, "false") {
-			t.Errorf("new account paints a coin: %s", pic.key)
 		}
 	}
 }

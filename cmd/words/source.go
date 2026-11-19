@@ -54,6 +54,8 @@ var notScanned = map[string]string{
 	"mapgen":                "the map engine: art, hues and internal keys, no player text (the ui reads the game's own words)",
 	"mapmodel/fixture":      "test fixtures",
 	"pkg/sprites":           "pixel art",
+	"pkg/coins":             "coin pixel art, no player text",
+	"pkg/cabinet":           "cabinet pixel art, no player text",
 	"platform/steam":        "the Steamworks door: no player text",
 	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",
 	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
