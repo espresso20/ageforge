@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -18,7 +18,7 @@ type OverlayProvider func(state game.GameState, w int) string
 // The root Flex is the whole screen: the panel's frame (panel_frame.go) over the
 // command bar's rows.
 type overlayEntry struct {
-	title   vibe.Entry
+	title   rowid.Entry
 	tv      *nativeText
 	frame   *panelFrame // the box, name and keys the text is drawn in
 	root    Primitive   // the frame over the command bar — added/removed from pages.Pages
@@ -45,7 +45,7 @@ type overlayEntry struct {
 // map canvas). When refreshFn is set, Refresh calls it in-place instead of
 // rebuilding and replacing the page (used for panels that manage their own state).
 type widgetEntry struct {
-	title     vibe.Entry
+	title     rowid.Entry
 	build     func(state game.GameState) Primitive
 	refreshFn func(state game.GameState) // optional; nil means full rebuild on each Refresh
 }
@@ -103,7 +103,7 @@ func NewOverlayManager(pages *nativePages, app *appLoop, onClose func()) *Overla
 // Register adds a named text overlay backed by a text view. Must be called before Show.
 // The overlay is the whole screen but the command bar: a framed panel (panel_frame.go)
 // with the text view inside it, over the rows the bar keeps.
-func (om *OverlayManager) Register(name string, title vibe.Entry, provide OverlayProvider) {
+func (om *OverlayManager) Register(name string, title rowid.Entry, provide OverlayProvider) {
 	tv := newNativeText().
 		SetDynamicColors(true).
 		SetScrollable(true).
@@ -163,7 +163,7 @@ func (om *OverlayManager) typeHint(e *overlayEntry) string {
 	if e.keys != nil {
 		return ""
 	}
-	return vibe.Line("ui.overlay.typeHint.01", "a command")
+	return rowid.Line("ui.overlay.typeHint.01", "a command")
 }
 
 // footerKeys are the keys on a text panel's foot: what the panel set for
@@ -172,7 +172,7 @@ func (om *OverlayManager) footerKeys(e *overlayEntry) [][2]string {
 	if e.footer != nil {
 		return e.footer()
 	}
-	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", vibe.Line("ui.overlay.footerKeys.03", "page")}, {"Esc", "close"}}
+	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", rowid.Line("ui.overlay.footerKeys.03", "page")}, {"Esc", "close"}}
 }
 
 // scrollKey gives a key that prints nothing to the open text panel when it
@@ -262,7 +262,7 @@ func (om *OverlayManager) seenState() *game.GameState {
 // RegisterWidget registers an overlay backed by any Primitive instead of a text view.
 // The build function receives the current GameState and returns a ready-to-display primitive,
 // which fills the entire screen (the panel leaves the command bar's rows to the dashboard).
-func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) Primitive, refresh func(state game.GameState)) {
+func (om *OverlayManager) RegisterWidget(name string, title rowid.Entry, build func(state game.GameState) Primitive, refresh func(state game.GameState)) {
 	om.widgetEntries[name] = &widgetEntry{
 		title:     title,
 		build:     build,

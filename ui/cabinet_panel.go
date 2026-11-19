@@ -10,9 +10,9 @@ import (
 	"github.com/espresso20/ageforge/pkg/cabinet"
 	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -26,20 +26,20 @@ import (
 
 // cabinetKeys are the cabinet's keys as the Help panel lists them.
 var cabinetKeys = []keyHelp{
-	{"Arrows", vibe.E("ui.cabinet_panel.cabinetKeys.01", "Move from drawer to drawer")},
-	{"Home/End", vibe.E("ui.cabinet_panel.cabinetKeys.02", "The first drawer and the last")},
-	{"Esc", vibe.E("ui.cabinet_panel.cabinetKeys.03", "Close the cabinet")},
-	{"Enter", vibe.E("ui.cabinet_panel.cabinetKeys.04", "Open the drawer; arrows then move between its wells")},
-	{"PgUp/PgDn", vibe.E("ui.cabinet_panel.cabinetKeys.06", "Turn the page of Ledgers, Curios or Themes")},
-	{"Esc, right-click", vibe.E("ui.cabinet_panel.cabinetKeys.05", "Close the open drawer")},
+	{"Arrows", rowid.E("ui.cabinet_panel.cabinetKeys.01", "Move from drawer to drawer")},
+	{"Home/End", rowid.E("ui.cabinet_panel.cabinetKeys.02", "The first drawer and the last")},
+	{"Esc", rowid.E("ui.cabinet_panel.cabinetKeys.03", "Close the cabinet")},
+	{"Enter", rowid.E("ui.cabinet_panel.cabinetKeys.04", "Open the drawer; arrows then move between its wells")},
+	{"PgUp/PgDn", rowid.E("ui.cabinet_panel.cabinetKeys.06", "Turn the page of Ledgers, Curios or Themes")},
+	{"Esc, right-click", rowid.E("ui.cabinet_panel.cabinetKeys.05", "Close the open drawer")},
 }
 
 // cabinetAgeless are the drawers after the ages: the key a command names
 // them by, and the word on the plate.
 var cabinetAgeless = []struct{ key, name string }{
-	{"ledgers", vibe.Line("ui.cabinet_panel.cabinetAgeless.01", "Ledgers")},
-	{"curios", vibe.Line("ui.cabinet_panel.cabinetAgeless.02", "Curios")},
-	{"themes", vibe.Line("ui.cabinet_panel.cabinetAgeless.03", "Themes")},
+	{"ledgers", rowid.Line("ui.cabinet_panel.cabinetAgeless.01", "Ledgers")},
+	{"curios", rowid.Line("ui.cabinet_panel.cabinetAgeless.02", "Curios")},
+	{"themes", rowid.Line("ui.cabinet_panel.cabinetAgeless.03", "Themes")},
 }
 
 // cabinetPanel is the cabinet's overlay primitive.
@@ -152,7 +152,7 @@ func (p *cabinetPanel) totals() string {
 			sets++
 		}
 	}
-	return fmt.Sprintf(vibe.Line("ui.cabinet_panel.totals.01", "Pieces %d of %d   Sets %d of %d"), pieces, all, sets, ages)
+	return fmt.Sprintf(rowid.Line("ui.cabinet_panel.totals.01", "Pieces %d of %d   Sets %d of %d"), pieces, all, sets, ages)
 }
 
 // Layout takes the panel's rectangle.
@@ -179,7 +179,7 @@ func (p *cabinetPanel) Paint(p2 *kit.Painter) {
 		ink, face := cabinet.PlateInk(false), cabinet.PlateFace(false)
 		st := kit.Style{}.Foreground(theme.RGB(ink.R, ink.G, ink.B)).Background(theme.RGB(face.R, face.G, face.B))
 		p2.Fill(r, st.Bg)
-		p2.Print(r.Min.X, r.Min.Y, r.Dx(), kit.Escape(vibe.Line("ui.cabinet_panel.Paint.01", "The window is too small for the cabinet.")), st)
+		p2.Print(r.Min.X, r.Min.Y, r.Dx(), kit.Escape(rowid.Line("ui.cabinet_panel.Paint.01", "The window is too small for the cabinet.")), st)
 		return
 	}
 	if k := (cabinetKey{lay.Cells, lay.Cell, p.drawers}); p.front == nil || k != p.drawn {
@@ -196,7 +196,7 @@ func (p *cabinetPanel) Paint(p2 *kit.Painter) {
 		p.printPlate(p2, r, c, p.names[i], p.dim[i])
 	}
 	p.printPlate(p2, r, lay.Title, p.totals(), false)
-	p.printPlate(p2, r, lay.Hint, vibe.Line("ui.cabinet_panel.Paint.02", "Arrows move   Enter opens   Esc closes"), false)
+	p.printPlate(p2, r, lay.Hint, rowid.Line("ui.cabinet_panel.Paint.02", "Arrows move   Enter opens   Esc closes"), false)
 }
 
 // move changes the selection by a key; the grid does not wrap.

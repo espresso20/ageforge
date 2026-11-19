@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -24,8 +24,8 @@ const (
 
 // The words the buttons say.
 var (
-	txtWonderBuild   = vibe.E("ui.wonder_verbs.build.01", "Build")
-	txtWonderCollect = vibe.E("ui.wonder_verbs.collect.01", "Collect")
+	txtWonderBuild   = rowid.E("ui.wonder_verbs.build.01", "Build")
+	txtWonderCollect = rowid.E("ui.wonder_verbs.collect.01", "Collect")
 )
 
 // wonderBlock is the current wonder's summary and what its buttons need.

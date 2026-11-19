@@ -8,8 +8,8 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -479,7 +479,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 			if !ok || !rs.Unlocked {
 				continue
 			}
-			name := vibe.Sprintf("ui.dash_cards_box.draw.01", "Gather %s", rs.Name)
+			name := rowid.Sprintf("ui.dash_cards_box.draw.01", "Gather %s", rs.Name)
 			cmd := command("gather", res)
 			word := " " + name + " "
 			wide := runeLen(word)
@@ -626,7 +626,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 	if b.hidden > 0 && y < bot {
 		b.more = y
 		g.put(tx, y, "· · ·", xDim)
-		g.put(tx+6, y, vibe.Sprintf("ui.dash_cards_box.draw.02", "%s more later", textfmt.Int(b.hidden)), xDim)
+		g.put(tx+6, y, rowid.Sprintf("ui.dash_cards_box.draw.02", "%s more later", textfmt.Int(b.hidden)), xDim)
 		g.hit(hitMore, 0, 1, y, iw, 1)
 		y++
 	}

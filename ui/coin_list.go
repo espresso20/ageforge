@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // coin_list.go writes the account's coins as plain text for `account badges`:
@@ -34,29 +34,29 @@ func wholeNumber(n int) string {
 // are stays "???" until the account has seen the last age.
 func badgeSummaryLine(sum game.BadgeSummary) string {
 	parts := []string{
-		vibe.Sprintf("ui.badge_list.badgeSummaryLine.01", "%d of %d earned", sum.Earned, sum.Shown),
-		textfmt.Count(sum.Points, vibe.Line("ui.badge_list.badgeSummaryLine.02", "point"), vibe.Line("ui.badge_list.badgeSummaryLine.03", "points")),
+		rowid.Sprintf("ui.badge_list.badgeSummaryLine.01", "%d of %d earned", sum.Earned, sum.Shown),
+		textfmt.Count(sum.Points, rowid.Line("ui.badge_list.badgeSummaryLine.02", "point"), rowid.Line("ui.badge_list.badgeSummaryLine.03", "points")),
 	}
 	if sum.Hidden > 0 {
 		hidden := game.BadgeHiddenName
 		if sum.HiddenCounted {
 			hidden = textfmt.Int(sum.Hidden)
 		}
-		parts = append(parts, hidden+vibe.Line("ui.badge_list.badgeSummaryLine.04", " hidden"))
+		parts = append(parts, hidden+rowid.Line("ui.badge_list.badgeSummaryLine.04", " hidden"))
 	}
 	return strings.Join(parts, ", ")
 }
 
-var coinListHint = vibe.E("ui.badge_list.badgeCaseHint.01", " [gray]Type badges to open the coin cabinet and see them all.[-]")
+var coinListHint = rowid.E("ui.badge_list.badgeCaseHint.01", " [gray]Type badges to open the coin cabinet and see them all.[-]")
 
 // coinListLines is the list: the count, the title worn, then each age in
 // sight with the pieces its drawer holds and its finest level.
 func coinListLines(state game.GameState, acct *game.Account, sum game.BadgeSummary) []string {
-	lines := []string{vibe.Line("ui.badge_list.badgeHeadLines.01", "[gold]Badges:[-] ") + badgeSummaryLine(sum)}
+	lines := []string{rowid.Line("ui.badge_list.badgeHeadLines.01", "[gold]Badges:[-] ") + badgeSummaryLine(sum)}
 	if sum.Title != "" {
-		title := vibe.Line("ui.badge_list.badgeHeadLines.02", " [gold]Title:[-] ") + wornTitle(sum)
+		title := rowid.Line("ui.badge_list.badgeHeadLines.02", " [gold]Title:[-] ") + wornTitle(sum)
 		if sum.NextTitle != "" {
-			title += vibe.Sprintf("ui.badge_list.badgeHeadLines.03", " [gray](%s at %s points)[-]", sum.NextTitle, wholeNumber(sum.NextTitleAt))
+			title += rowid.Sprintf("ui.badge_list.badgeHeadLines.03", " [gray](%s at %s points)[-]", sum.NextTitle, wholeNumber(sum.NextTitleAt))
 		}
 		lines = append(lines, title)
 	}
@@ -69,7 +69,7 @@ func coinListLines(state game.GameState, acct *game.Account, sum game.BadgeSumma
 			}
 		}
 		if held > 0 && sight.Age(a.Key) {
-			lines = append(lines, vibe.Sprintf("ui.badge_list.coinListLines.01", " [yellow]%s[-] [gray](%d of %d pieces, finest level %d)[-]", a.Name, held, len(config.CoinTypes)+1, best))
+			lines = append(lines, rowid.Sprintf("ui.badge_list.coinListLines.01", " [yellow]%s[-] [gray](%d of %d pieces, finest level %d)[-]", a.Name, held, len(config.CoinTypes)+1, best))
 		}
 	}
 	return append(lines, coinListHint.String())

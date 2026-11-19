@@ -8,9 +8,9 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -244,16 +244,16 @@ func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Styl
 		lead = []barPart{{p.note, 1, ""}, {"  ", 0, ""}}
 	}
 	if p.prompt != nil && p.prompt() != "" {
-		word, sep := vibe.Line("ui.map_panel.drawBar.02", " runs the command below · "), ""
+		word, sep := rowid.Line("ui.map_panel.drawBar.02", " runs the command below · "), ""
 		if i := strings.LastIndex(word, "·"); i >= 0 {
 			word, sep = word[:i], word[i:]
 		}
 		cmd = []barPart{{"Enter", 1, strings.TrimSpace(word)}, {sep, 2, ""}}
 	} else if in, ok := st.Inspect(f); ok && in.Command != "" {
-		cmd = []barPart{{"Enter", 1, strings.TrimSpace(vibe.Line("ui.map_panel.drawBar.04", " types "))}, {in.Command, 0, ""}, {" · ", 2, ""}}
+		cmd = []barPart{{"Enter", 1, strings.TrimSpace(rowid.Line("ui.map_panel.drawBar.04", " types "))}, {in.Command, 0, ""}, {" · ", 2, ""}}
 	}
-	full := []barPart{{"map glyphs", 1, ""}, {" " + p.set.Tier.String() + " · ", 2, ""}, {"Esc", 1, strings.TrimSpace(vibe.Line("ui.map_panel.drawBar.06", " close"))}}
-	short := []barPart{{"map glyphs", 1, ""}, {" · ", 2, ""}, {"Esc", 1, strings.TrimSpace(vibe.Line("ui.map_panel.drawBar.08", " close"))}}
+	full := []barPart{{"map glyphs", 1, ""}, {" " + p.set.Tier.String() + " · ", 2, ""}, {"Esc", 1, strings.TrimSpace(rowid.Line("ui.map_panel.drawBar.06", " close"))}}
+	short := []barPart{{"map glyphs", 1, ""}, {" · ", 2, ""}, {"Esc", 1, strings.TrimSpace(rowid.Line("ui.map_panel.drawBar.08", " close"))}}
 	width := func(parts ...[]barPart) int {
 		n := 0
 		for _, ps := range parts {
@@ -358,7 +358,7 @@ func (p *mapPanel) handleKey(ev *kit.Key) bool {
 	if ev.Code == kit.KeyEnter {
 		in, ok := p.current().Inspect(p.frame())
 		if !ok || in.Command == "" {
-			p.note = vibe.Line("ui.map_panel.handleKey.01", "Nothing to type here. Move the cursor onto a building or a civilization.")
+			p.note = rowid.Line("ui.map_panel.handleKey.01", "Nothing to type here. Move the cursor onto a building or a civilization.")
 			return true
 		}
 		if p.stage != nil {
@@ -385,7 +385,7 @@ func (p *mapPanel) reply(cmd string, res CommandResult) {
 	msg, _, _ := strings.Cut(res.Message, "\n")
 	msg = strings.TrimSpace(barTags.ReplaceAllString(msg, ""))
 	if msg == "" {
-		msg = vibe.Line("ui.map_panel.reply.01", "Ran ") + cmd + "."
+		msg = rowid.Line("ui.map_panel.reply.01", "Ran ") + cmd + "."
 	}
 	p.note = msg
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -75,7 +75,7 @@ func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngin
 	title := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
-		SetText(vibe.Line("ui.load_game.newLoadGameBrowser.01", "[gold]═══ Load game ═══[-]"))
+		SetText(rowid.Line("ui.load_game.newLoadGameBrowser.01", "[gold]═══ Load game ═══[-]"))
 
 	b.subtitle = newNativeText().
 		SetDynamicColors(true).
@@ -102,7 +102,7 @@ func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngin
 		SetDynamicColors(true).
 		SetText(legendText())
 	legend.SetBorder(true).
-		SetTitle(vibe.Line("ui.load_game.newLoadGameBrowser.02", " Key "))
+		SetTitle(rowid.Line("ui.load_game.newLoadGameBrowser.02", " Key "))
 	theme.Track(func() {
 		legend.SetBorderColor(theme.Of(theme.RoleAccent)).
 			SetTitleColor(theme.Of(theme.RoleAccent))
@@ -148,8 +148,8 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		// Surface it in the detail pane rather than crashing, and show an empty list.
 		b.saves = nil
 		b.list.Clear()
-		b.subtitle.SetText("[gray]" + savesDirLabel() + vibe.Line("ui.load_game.refresh.01", " · could not read saves[-]"))
-		b.detail.SetText(vibe.Sprintf("ui.load_game.refresh.02", "[red]Could not read saves: %v[-]", err))
+		b.subtitle.SetText("[gray]" + savesDirLabel() + rowid.Line("ui.load_game.refresh.01", " · could not read saves[-]"))
+		b.detail.SetText(rowid.Sprintf("ui.load_game.refresh.02", "[red]Could not read saves: %v[-]", err))
 		return
 	}
 
@@ -176,7 +176,7 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 	b.list.Clear()
 	if len(rows) == 0 {
 		// Empty state — the action keys become no-ops (handleKey guards on len).
-		b.detail.SetText(vibe.Line("ui.load_game.refresh.03", "[gray]This account has no saved games yet.\n\nStart a new game to create one.[-]"))
+		b.detail.SetText(rowid.Line("ui.load_game.refresh.03", "[gray]This account has no saved games yet.\n\nStart a new game to create one.[-]"))
 		return
 	}
 
@@ -204,7 +204,7 @@ func (b *loadGameBrowser) continueNote() string {
 	if !b.hasCur {
 		return ""
 	}
-	return vibe.Line("ui.load_game.continueNote.01", " · Continue opens ") + b.cur.Save.Name
+	return rowid.Line("ui.load_game.continueNote.01", " · Continue opens ") + b.cur.Save.Name
 }
 
 // currentTag is the trailing tag of the row Continue opens: the main game's
@@ -214,9 +214,9 @@ func (b *loadGameBrowser) currentTag(s game.SaveInfo) string {
 	case s.Corrupt:
 		return ""
 	case s.Name == b.mainGame && b.mainGame != "":
-		return vibe.Line("ui.load_game.currentTag.01", "   [accent]◆ main game[-]")
+		return rowid.Line("ui.load_game.currentTag.01", "   [accent]◆ main game[-]")
 	case b.hasCur && s.Name == b.cur.Save.Name:
-		return vibe.Line("ui.load_game.currentTag.02", "   [label]▸ continue[-]")
+		return rowid.Line("ui.load_game.currentTag.02", "   [label]▸ continue[-]")
 	}
 	return ""
 }
@@ -229,11 +229,11 @@ func (b *loadGameBrowser) currentLine(s game.SaveInfo) string {
 	}
 	switch b.cur.Why {
 	case game.CurrentMain:
-		return vibe.Line("ui.load_game.currentLine.01", "[accent]◆ The main game:[-] [gray]Continue opens it. M unmarks it.[-]")
+		return rowid.Line("ui.load_game.currentLine.01", "[accent]◆ The main game:[-] [gray]Continue opens it. M unmarks it.[-]")
 	case game.CurrentLast:
-		return vibe.Line("ui.load_game.currentLine.02", "[label]▸ Continue opens this game,[-] [gray]the one last played. M marks it as the main game.[-]")
+		return rowid.Line("ui.load_game.currentLine.02", "[label]▸ Continue opens this game,[-] [gray]the one last played. M marks it as the main game.[-]")
 	}
-	return vibe.Line("ui.load_game.currentLine.03", "[label]▸ Continue opens this game,[-] [gray]the newest save. M marks it as the main game.[-]")
+	return rowid.Line("ui.load_game.currentLine.03", "[label]▸ Continue opens this game,[-] [gray]the newest save. M marks it as the main game.[-]")
 }
 
 // detailFor is the detail pane's text for a save: its facts, then the line
@@ -326,15 +326,15 @@ func (b *loadGameBrowser) doLoad() {
 		return
 	}
 	if s.Corrupt {
-		b.detail.SetText(b.detailFor(s) + vibe.Line("ui.load_game.doLoad.01", "\n\n[red]Can't load a corrupt save.[-]"))
+		b.detail.SetText(b.detailFor(s) + rowid.Line("ui.load_game.doLoad.01", "\n\n[red]Can't load a corrupt save.[-]"))
 		return
 	}
 	if err := b.engine.LoadGame(s.Name); err != nil {
-		b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doLoad.02", "Load failed: %v", err))
-		b.detail.SetText(b.detailFor(s) + vibe.Sprintf("ui.load_game.doLoad.03", "\n\n[red]Load failed: %v[-]", err))
+		b.engine.AddLog("error", rowid.Sprintf("ui.load_game.doLoad.02", "Load failed: %v", err))
+		b.detail.SetText(b.detailFor(s) + rowid.Sprintf("ui.load_game.doLoad.03", "\n\n[red]Load failed: %v[-]", err))
 		return
 	}
-	b.engine.AddLog("success", vibe.Line("ui.load_game.doLoad.04", "Game loaded."))
+	b.engine.AddLog("success", rowid.Line("ui.load_game.doLoad.04", "Game loaded."))
 	b.pages.RemovePage(loadGamePage)
 	b.pages.SwitchToPage("dashboard")
 	// From the splash this performs the first engine start; mid-game the engine is
@@ -356,10 +356,10 @@ func (b *loadGameBrowser) doMarkMain() {
 	acct := b.engine.Account()
 	switch {
 	case s.Corrupt:
-		b.detail.SetText(b.detailFor(s) + vibe.Line("ui.load_game.doMarkMain.01", "\n\n[red]A corrupt save cannot be the main game.[-]"))
+		b.detail.SetText(b.detailFor(s) + rowid.Line("ui.load_game.doMarkMain.01", "\n\n[red]A corrupt save cannot be the main game.[-]"))
 		return
 	case acct == nil:
-		b.detail.SetText(b.detailFor(s) + vibe.Line("ui.load_game.doMarkMain.02", "\n\n[red]The main game is kept on an account, and none is in use.[-]"))
+		b.detail.SetText(b.detailFor(s) + rowid.Line("ui.load_game.doMarkMain.02", "\n\n[red]The main game is kept on an account, and none is in use.[-]"))
 		return
 	}
 	name := s.Name
@@ -367,7 +367,7 @@ func (b *loadGameBrowser) doMarkMain() {
 		name = ""
 	}
 	if err := acct.SetMainGame(name); err != nil {
-		b.detail.SetText(b.detailFor(s) + vibe.Sprintf("ui.load_game.doMarkMain.03", "\n\n[red]The main game could not be saved to your account: %v[-]", err))
+		b.detail.SetText(b.detailFor(s) + rowid.Sprintf("ui.load_game.doMarkMain.03", "\n\n[red]The main game could not be saved to your account: %v[-]", err))
 		return
 	}
 	b.refresh(b.list.GetCurrentItem())
@@ -381,8 +381,8 @@ func (b *loadGameBrowser) doDelete() {
 	}
 	curIdx := b.list.GetCurrentItem()
 
-	text := vibe.Sprintf("ui.load_game.doDelete.01", "Delete '%s'?\n\nThis can't be undone.", s.Name)
-	buttons := []string{vibe.Line("ui.load_game.doDelete.02", "Cancel"), "Delete"}
+	text := rowid.Sprintf("ui.load_game.doDelete.01", "Delete '%s'?\n\nThis can't be undone.", s.Name)
+	buttons := []string{rowid.Line("ui.load_game.doDelete.02", "Cancel"), "Delete"}
 	// Transient confirm modal (rebuilt per delete): construction-read the danger
 	// background from the Negative role so it tints with the theme.
 	styleDangerModal(showButtonModal(b.app, b.pages, "load_game_delete", text, buttons, func(button int, _ string) {
@@ -391,8 +391,8 @@ func (b *loadGameBrowser) doDelete() {
 			return
 		}
 		if err := game.DeleteSave(s.Name); err != nil {
-			b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doDelete.04", "Delete failed: %v", err))
-			b.detail.SetText(vibe.Sprintf("ui.load_game.doDelete.05", "[red]Delete failed: %v[-]", err))
+			b.engine.AddLog("error", rowid.Sprintf("ui.load_game.doDelete.04", "Delete failed: %v", err))
+			b.detail.SetText(rowid.Sprintf("ui.load_game.doDelete.05", "[red]Delete failed: %v[-]", err))
 			return
 		}
 		// The account's records of its current game let go of the name.
@@ -425,7 +425,7 @@ func (b *loadGameBrowser) doRename() {
 		SetTextAlign(kit.AlignCenter)
 
 	input := newNativeInput().
-		SetLabel(vibe.Line("ui.load_game.doRename.01", "Name: ")).
+		SetLabel(rowid.Line("ui.load_game.doRename.01", "Name: ")).
 		SetText(s.Name).
 		SetFieldWidth(40)
 
@@ -461,9 +461,9 @@ func (b *loadGameBrowser) doRename() {
 		b.selectByName(newName)
 	}
 
-	okBtn := newNativeButton(vibe.Line("ui.load_game.doRename.02", "[ OK ]")).SetSelectedFunc(submit)
+	okBtn := newNativeButton(rowid.Line("ui.load_game.doRename.02", "[ OK ]")).SetSelectedFunc(submit)
 	styleFilledButton(okBtn, theme.RoleAccent)
-	cancelBtn := newNativeButton(vibe.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
+	cancelBtn := newNativeButton(rowid.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
 
 	// Enter in the input field submits.
 	input.SetDoneFunc(func(key kit.KeyCode) {
@@ -485,7 +485,7 @@ func (b *loadGameBrowser) doRename() {
 		AddItem(errTV, 1, 0, false).
 		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, false)
-	framed(inner, vibe.Line("ui.load_game.doRename.04", " Rename save "), theme.RoleAccent)
+	framed(inner, rowid.Line("ui.load_game.doRename.04", " Rename save "), theme.RoleAccent)
 
 	// Tab cycles input → OK → Cancel; Esc cancels from anywhere on the modal.
 	focusOrder := []Primitive{input, okBtn, cancelBtn}
@@ -514,8 +514,8 @@ func (b *loadGameBrowser) doDuplicate() {
 	}
 	newName, err := game.DuplicateSave(s.Name)
 	if err != nil {
-		b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doDuplicate.01", "Duplicate failed: %v", err))
-		b.detail.SetText(vibe.Sprintf("ui.load_game.doDuplicate.02", "[red]Duplicate failed: %v[-]", err))
+		b.engine.AddLog("error", rowid.Sprintf("ui.load_game.doDuplicate.01", "Duplicate failed: %v", err))
+		b.detail.SetText(rowid.Sprintf("ui.load_game.doDuplicate.02", "[red]Duplicate failed: %v[-]", err))
 		return
 	}
 	b.refresh(0)
@@ -541,7 +541,7 @@ func (b *loadGameBrowser) selectByName(name string) {
 // is appended, separate from the gold ★ auto tag.
 func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 	if s.Corrupt {
-		return vibe.Sprintf("ui.load_game.rowLabel.01", "[gray]%s%s   ·   %s   ⚠ corrupt[-]", prefix, s.Name, relativeTime(s.Timestamp))
+		return rowid.Sprintf("ui.load_game.rowLabel.01", "[gray]%s%s   ·   %s   ⚠ corrupt[-]", prefix, s.Name, relativeTime(s.Timestamp))
 	}
 	age := ageDisplay(s.Age)
 	tag := rowTag(s)
@@ -549,7 +549,7 @@ func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 		if tag != "" {
 			tag += " "
 		}
-		tag += vibe.Line("ui.load_game.rowLabel.02", "[label]● active[-]")
+		tag += rowid.Line("ui.load_game.rowLabel.02", "[label]● active[-]")
 	}
 	if tag != "" {
 		tag = "   " + tag
@@ -596,13 +596,13 @@ func capKey(name string) (kit.Key, bool) {
 
 // loadGameKeys are the Load Game browser's actions.
 var loadGameKeys = []footerKey{
-	{"↑↓", vibe.E("ui.load_game.loadGameKeys.01", "Navigate"), vibe.E("ui.load_game.loadGameKeys.02", "Move")},
-	{"Enter", vibe.E("ui.load_game.loadGameKeys.04", "Load"), vibe.Entry{}},
-	{"D", vibe.E("ui.load_game.loadGameKeys.05", "Delete"), vibe.Entry{}},
-	{"R", vibe.E("ui.load_game.loadGameKeys.06", "Rename"), vibe.Entry{}},
-	{"C", vibe.E("ui.load_game.loadGameKeys.07", "Duplicate"), vibe.E("ui.load_game.loadGameKeys.08", "Copy")},
-	{"M", vibe.E("ui.load_game.loadGameKeys.09", "Main game"), vibe.E("ui.load_game.loadGameKeys.10", "Main")},
-	{"Esc", vibe.E("ui.load_game.loadGameKeys.12", "Back"), vibe.Entry{}},
+	{"↑↓", rowid.E("ui.load_game.loadGameKeys.01", "Navigate"), rowid.E("ui.load_game.loadGameKeys.02", "Move")},
+	{"Enter", rowid.E("ui.load_game.loadGameKeys.04", "Load"), rowid.Entry{}},
+	{"D", rowid.E("ui.load_game.loadGameKeys.05", "Delete"), rowid.Entry{}},
+	{"R", rowid.E("ui.load_game.loadGameKeys.06", "Rename"), rowid.Entry{}},
+	{"C", rowid.E("ui.load_game.loadGameKeys.07", "Duplicate"), rowid.E("ui.load_game.loadGameKeys.08", "Copy")},
+	{"M", rowid.E("ui.load_game.loadGameKeys.09", "Main game"), rowid.E("ui.load_game.loadGameKeys.10", "Main")},
+	{"Esc", rowid.E("ui.load_game.loadGameKeys.12", "Back"), rowid.Entry{}},
 }
 
 // legendText returns the static Key-box markup: one row symbol per line with a
@@ -610,25 +610,25 @@ var loadGameKeys = []footerKey{
 // ⚠) so the box reads as a direct legend for what's shown in the list.
 func legendText() string {
 	return strings.Join([]string{
-		vibe.Line("ui.load_game.legendText.01", "[gold]★ auto[-]      automatic save slot (overwritten on autosave)"),
-		vibe.Line("ui.load_game.legendText.02", "[label]● active[-]    the save your game is autosaving into"),
-		vibe.Line("ui.load_game.legendText.03", "[accent]◆ main game[-] Continue on the main menu opens it (M marks one)"),
-		vibe.Line("ui.load_game.legendText.04", "[red]⚠ modified[-]  save file edited outside the game"),
-		vibe.Line("ui.load_game.legendText.05", "[red]⚠ corrupt[-]   file could not be read, so it cannot load"),
+		rowid.Line("ui.load_game.legendText.01", "[gold]★ auto[-]      automatic save slot (overwritten on autosave)"),
+		rowid.Line("ui.load_game.legendText.02", "[label]● active[-]    the save your game is autosaving into"),
+		rowid.Line("ui.load_game.legendText.03", "[accent]◆ main game[-] Continue on the main menu opens it (M marks one)"),
+		rowid.Line("ui.load_game.legendText.04", "[red]⚠ modified[-]  save file edited outside the game"),
+		rowid.Line("ui.load_game.legendText.05", "[red]⚠ corrupt[-]   file could not be read, so it cannot load"),
 	}, "\n")
 }
 
 // txtEliteTag is said the same way on several screens, so it has one id.
-var txtEliteTag = vibe.E("ui.load_game.rowTag.03", "[gold]⭐ elite[-]")
+var txtEliteTag = rowid.E("ui.load_game.rowTag.03", "[gold]⭐ elite[-]")
 
 // txtModifiedTag is said the same way on several screens, so it has one id.
-var txtModifiedTag = vibe.E("ui.load_game.rowTag.02", "[red]⚠ modified[-]")
+var txtModifiedTag = rowid.E("ui.load_game.rowTag.02", "[red]⚠ modified[-]")
 
 // rowTag returns the trailing status tag for a (non-corrupt) save row, or "".
 // Precedence: autosave first, then modified, then elite.
 func rowTag(s game.SaveInfo) string {
 	if s.Name == game.AutosaveName {
-		return vibe.Line("ui.load_game.rowTag.01", "[gold]★ auto[-]")
+		return rowid.Line("ui.load_game.rowTag.01", "[gold]★ auto[-]")
 	}
 	if s.Modified {
 		return txtModifiedTag.String()
@@ -648,7 +648,7 @@ const detailSep = " [gold]·[-] "
 // unloadable notice + file time.
 func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) string {
 	if s.Corrupt {
-		return vibe.Sprintf(
+		return rowid.Sprintf(
 			"ui.load_game.detailText.01", "[red]⚠ Corrupt save. It cannot be loaded.[-]\n[gray]File time: %s[-]",
 			s.Timestamp.Format("Jan 2, 2006 3:04 PM"),
 		)
@@ -670,9 +670,9 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 
 	// Line 2 — civilisation footprint.
 	lines = append(lines, strings.Join([]string{
-		vibe.Sprintf("ui.load_game.detailText.02", "[gray]Population[-] [white]%s[-]", textfmt.Int(s.Population)),
-		vibe.Sprintf("ui.load_game.detailText.03", "[gray]Buildings[-] [white]%s[-]", textfmt.Int(s.Buildings)),
-		vibe.Sprintf("ui.load_game.detailText.04", "[gray]Wonders[-] [white]%s[-]", textfmt.Int(s.Wonders)),
+		rowid.Sprintf("ui.load_game.detailText.02", "[gray]Population[-] [white]%s[-]", textfmt.Int(s.Population)),
+		rowid.Sprintf("ui.load_game.detailText.03", "[gray]Buildings[-] [white]%s[-]", textfmt.Int(s.Buildings)),
+		rowid.Sprintf("ui.load_game.detailText.04", "[gray]Wonders[-] [white]%s[-]", textfmt.Int(s.Wonders)),
 	}, detailSep))
 
 	// Line 3 — progress markers. Milestones show "done/total" only when the total
@@ -682,15 +682,15 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 		milestones = fmt.Sprintf("%s/%s", textfmt.Int(s.MilestonesDone), textfmt.Int(s.MilestonesTotal))
 	}
 	lines = append(lines, strings.Join([]string{
-		vibe.Sprintf("ui.load_game.detailText.05", "[gray]Milestones[-] [white]%s[-]", milestones),
-		vibe.Sprintf("ui.load_game.detailText.06", "[gray]Techs[-] [white]%s[-]", textfmt.Int(s.Techs)),
-		vibe.Sprintf("ui.load_game.detailText.07", "[gray]Soldiers[-] [white]%s[-]", textfmt.Int(s.Soldiers)),
+		rowid.Sprintf("ui.load_game.detailText.05", "[gray]Milestones[-] [white]%s[-]", milestones),
+		rowid.Sprintf("ui.load_game.detailText.06", "[gray]Techs[-] [white]%s[-]", textfmt.Int(s.Techs)),
+		rowid.Sprintf("ui.load_game.detailText.07", "[gray]Soldiers[-] [white]%s[-]", textfmt.Int(s.Soldiers)),
 	}, detailSep))
 
 	// Line 4 — prestige + morale.
 	lines = append(lines, strings.Join([]string{
-		vibe.Sprintf("ui.load_game.detailText.08", "[gray]Prestige[-] [white]level %s[-] [gray](%s points)[-]", textfmt.Int(s.PrestigeLevel), textfmt.Int(s.PrestigeTotal)),
-		vibe.Sprintf("ui.load_game.detailText.09", "[gray]Morale[-] [white]%.0f%%[-]", s.Morale*100),
+		rowid.Sprintf("ui.load_game.detailText.08", "[gray]Prestige[-] [white]level %s[-] [gray](%s points)[-]", textfmt.Int(s.PrestigeLevel), textfmt.Int(s.PrestigeTotal)),
+		rowid.Sprintf("ui.load_game.detailText.09", "[gray]Morale[-] [white]%.0f%%[-]", s.Morale*100),
 	}, detailSep))
 
 	// Line 4b — account attribution. Saves played with no account show a dash; saves
@@ -698,21 +698,21 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	// "(another account)". Only the short id prefix is shown — never the full id.
 	switch {
 	case s.AccountID == "":
-		lines = append(lines, vibe.Line("ui.load_game.detailText.10", "[gray]Account:[-] [gray]none (pre-account save)[-]"))
+		lines = append(lines, rowid.Line("ui.load_game.detailText.10", "[gray]Account:[-] [gray]none (pre-account save)[-]"))
 	case s.AccountID == currentAccountID && currentAccountID != "":
-		lines = append(lines, vibe.Sprintf("ui.load_game.detailText.11", "[gray]Account:[-] [white]%s[-] [gray](this account)[-]", shortAccountID(s.AccountID)))
+		lines = append(lines, rowid.Sprintf("ui.load_game.detailText.11", "[gray]Account:[-] [white]%s[-] [gray](this account)[-]", shortAccountID(s.AccountID)))
 	default:
-		lines = append(lines, vibe.Sprintf("ui.load_game.detailText.12", "[gray]Account:[-] [white]%s[-] [yellow](another account)[-]", shortAccountID(s.AccountID)))
+		lines = append(lines, rowid.Sprintf("ui.load_game.detailText.12", "[gray]Account:[-] [white]%s[-] [yellow](another account)[-]", shortAccountID(s.AccountID)))
 	}
 
 	// Line 5 — looming catastrophe warning (omitted entirely when none pending).
 	if s.PendingCatastrophe != "" {
-		lines = append(lines, vibe.Sprintf("ui.load_game.detailText.13", "[red]⚠ Pending: %s[-]", s.PendingCatastrophe))
+		lines = append(lines, rowid.Sprintf("ui.load_game.detailText.13", "[red]⚠ Pending: %s[-]", s.PendingCatastrophe))
 	}
 
 	// Line 6 — save metadata.
 	// note: the raw tick count used to ride here; ticks mean nothing to a player.
-	lines = append(lines, vibe.Sprintf(
+	lines = append(lines, rowid.Sprintf(
 		"ui.load_game.detailText.14", "[gray]Saved[-] %s",
 		s.Timestamp.Format("Jan 2, 2006 3:04 PM"),
 	))
@@ -721,9 +721,9 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	// present (deleted/renamed) is marked "(detached)" rather than implying a link.
 	if s.ParentName != "" && s.ParentName != s.Name {
 		if parentPresent {
-			lines = append(lines, vibe.Sprintf("ui.load_game.detailText.15", "[gray]Branched from: %s[-]", s.ParentName))
+			lines = append(lines, rowid.Sprintf("ui.load_game.detailText.15", "[gray]Branched from: %s[-]", s.ParentName))
 		} else {
-			lines = append(lines, vibe.Sprintf("ui.load_game.detailText.16", "[gray]Branched from: %s (detached)[-]", s.ParentName))
+			lines = append(lines, rowid.Sprintf("ui.load_game.detailText.16", "[gray]Branched from: %s (detached)[-]", s.ParentName))
 		}
 	}
 
@@ -738,7 +738,7 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 func detailBadges(s game.SaveInfo) string {
 	var parts []string
 	if s.Name == game.AutosaveName {
-		parts = append(parts, vibe.Line("ui.load_game.detailBadges.01", "[gold]★ autosave[-]"))
+		parts = append(parts, rowid.Line("ui.load_game.detailBadges.01", "[gold]★ autosave[-]"))
 	}
 	if s.Elite {
 		parts = append(parts, txtEliteTag.String())
@@ -772,34 +772,34 @@ func relativeTime(t time.Time) string {
 	switch {
 	case d < 0:
 		// Clock skew / future-stamped save — treat as just now.
-		return vibe.Line("ui.load_game.relativeTime.02", "just now")
+		return rowid.Line("ui.load_game.relativeTime.02", "just now")
 	case d < time.Minute:
-		return vibe.Line("ui.load_game.relativeTime.03", "just now")
+		return rowid.Line("ui.load_game.relativeTime.03", "just now")
 	case d < time.Hour:
 		m := int(d / time.Minute)
-		return vibe.Sprintf("ui.load_game.relativeTime.04", "%dm ago", m)
+		return rowid.Sprintf("ui.load_game.relativeTime.04", "%dm ago", m)
 	case d < 24*time.Hour:
 		h := int(d / time.Hour)
-		return vibe.Sprintf("ui.load_game.relativeTime.05", "%dh ago", h)
+		return rowid.Sprintf("ui.load_game.relativeTime.05", "%dh ago", h)
 	case d < 48*time.Hour:
 		return "yesterday"
 	default:
 		days := int(d / (24 * time.Hour))
-		return vibe.Sprintf("ui.load_game.relativeTime.07", "%d days ago", days)
+		return rowid.Sprintf("ui.load_game.relativeTime.07", "%d days ago", days)
 	}
 }
 
 // pluralSaves renders the save-count label ("1 save" / "N saves").
 func pluralSaves(n int) string {
 	if n == 1 {
-		return vibe.Line("ui.load_game.pluralSaves.01", "1 save")
+		return rowid.Line("ui.load_game.pluralSaves.01", "1 save")
 	}
-	return vibe.Sprintf("ui.load_game.pluralSaves.02", "%d saves", n)
+	return rowid.Sprintf("ui.load_game.pluralSaves.02", "%d saves", n)
 }
 
 // savesDirLabel is the subtitle prefix. Saves live in the active account's
 // slot (data/accounts/<id>/saves/), so the label names the account rather than
 // a folder path that would be wrong for every account.
 func savesDirLabel() string {
-	return vibe.Line("ui.load_game.savesDirLabel.01", "This account")
+	return rowid.Line("ui.load_game.savesDirLabel.01", "This account")
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Resource countability — the part of this package that stops the generator
@@ -89,29 +89,17 @@ func isAbstract(key string) bool { return abstractResource[key] }
 
 // countSingular holds the SINGULAR label for each count noun, for the "1 X" case.
 // Mass nouns need no entry — they do not inflect.
-var countSingular = map[string]vibe.Entry{
-	"nanobots":             vibe.E("flavor.resource.countSingular.01", "nanobot"),
-	"dark_matter_crystals": vibe.E("flavor.resource.countSingular.02", "dark matter crystal"),
+var countSingular = map[string]rowid.Entry{
+	"nanobots":             rowid.E("flavor.resource.countSingular.01", "nanobot"),
+	"dark_matter_crystals": rowid.E("flavor.resource.countSingular.02", "dark matter crystal"),
 }
 
-// The pieces of the two frames that are words of the game's own, and so are
-// told in the script's.
+// The pieces of the two frames that are words of the game's own.
 var (
-	storesOpen  = vibe.E("flavor.resource.phraseStores.01", "your ")
-	storesClose = vibe.E("flavor.resource.phraseStores.02", " stores")
-	haulOpen    = vibe.E("flavor.resource.phraseHaul.01", "a haul of ")
+	storesOpen  = rowid.E("flavor.resource.phraseStores.01", "your ")
+	storesClose = rowid.E("flavor.resource.phraseStores.02", " stores")
+	haulOpen    = rowid.E("flavor.resource.phraseHaul.01", "a haul of ")
 )
-
-// say is an entry as it reads now: the script's line when the line is to be
-// told in the script's words (told), else the game's own English. A line is
-// put together in both readings (Result.Text and Result.Plain), so the frames
-// below take the reading they are asked for and never the switch's.
-func say(told bool, e vibe.Entry) string {
-	if told {
-		return e.String()
-	}
-	return e.Plain()
-}
 
 // labelsOnce guards the lazily-built key→label map. config.ResourceByKey()
 // rebuilds its map on every call, and the generator can run thousands of times a
@@ -153,12 +141,6 @@ func loadLabels() {
 	})
 }
 
-// resourceLabelAs is resourceLabel in the reading asked for (see say). There
-// is one reading now, so it is resourceLabel.
-func resourceLabelAs(key string, told bool) string {
-	return resourceLabel(key)
-}
-
 // classOf returns a key's noun class, defaulting to massNoun for anything
 // unclassified (see resourceClass).
 func classOf(key string) nounClass {
@@ -180,29 +162,26 @@ func isMass(key string) bool { return classOf(key) == massNoun }
 // mass and count alike: "took food", "took soldiers"; and {amt_res}); two are
 // mass-only and gated by needMassRes.
 
-// phraseStoresAs is "{res_stores}": MASS ONLY. "your food stores" — a plural head
-// noun, so it takes a plural verb ("your food stores are lighter"). It reads in
-// the reading asked for (see say).
-func phraseStoresAs(key string, told bool) string {
-	return say(told, storesOpen) + resourceLabelAs(key, told) + say(told, storesClose)
+// phraseStores is "{res_stores}": MASS ONLY. "your food stores" — a plural head
+// noun, so it takes a plural verb ("your food stores are lighter").
+func phraseStores(key string) string {
+	return storesOpen.Plain() + resourceLabel(key) + storesClose.Plain()
 }
 
-// phraseHaulAs is "{res_haul}": MASS ONLY. "a haul of food" — the indefinite
-// article attaches to "haul", never to the mass noun itself. It reads in the
-// reading asked for (see say).
-func phraseHaulAs(key string, told bool) string {
-	return say(told, haulOpen) + resourceLabelAs(key, told)
+// phraseHaul is "{res_haul}": MASS ONLY. "a haul of food" — the indefinite
+// article attaches to "haul", never to the mass noun itself.
+func phraseHaul(key string) string {
+	return haulOpen.Plain() + resourceLabel(key)
 }
 
-// phraseQuantityAs is "{amt_res}": a number and a label, correctly inflected.
+// phraseQuantity is "{amt_res}": a number and a label, correctly inflected.
 // Mass nouns never inflect ("40 food"); count nouns take the singular at exactly
-// one ("1 soldier") and the already-plural label otherwise ("12 soldiers"). It
-// reads in the reading asked for (see say).
-func phraseQuantityAs(key string, n int, told bool) string {
-	label := resourceLabelAs(key, told)
+// one ("1 soldier") and the already-plural label otherwise ("12 soldiers").
+func phraseQuantity(key string, n int) string {
+	label := resourceLabel(key)
 	if classOf(key) == countNoun && n == 1 {
 		if s, ok := countSingular[key]; ok {
-			label = say(told, s)
+			label = s.Plain()
 		}
 	}
 	return textfmt.Int(n) + " " + label

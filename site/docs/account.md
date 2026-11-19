@@ -18,7 +18,7 @@ data/
 │       ├── account.json            # identity, theme unlocks, lifetime stats, theme, map glyphs, mini map
 │       ├── badges.json             # badges and the counts behind them (written with every save of the account)
 │       ├── runs.json               # the run archive: a record of each run that ended
-│       ├── settings.json           # motion, VibeMode, worn title and current game
+│       ├── settings.json           # motion, worn title and current game
 │       ├── account-<id8>-export.json   # where `account export` writes by default
 │       └── saves/                  # this account's game saves
 └── backups/
@@ -122,7 +122,7 @@ account export /path/to/my-ageforge-backup.json
 
 An export also takes a full backup of the account (see [Backups](#backups)) and reports its path. If that backup fails, the export still stands.
 
-An export is a snapshot and does not update as you keep playing, so export again after anything you would hate to lose. It does not carry `settings.json`, which holds motion, VibeMode, your worn title and your current game.
+An export is a snapshot and does not update as you keep playing, so export again after anything you would hate to lose. It does not carry `settings.json`, which holds motion, your worn title and your current game.
 
 ### Importing
 
@@ -327,7 +327,6 @@ Some settings belong to the account, not to a save. Switching accounts swaps the
 | Mini map | `minimap on` or `minimap off` | on | `account.json` |
 | Discord status | The Settings page, row **Discord status** | on | `account.json` |
 | Motion | `motion on` or `motion off` | on | `settings.json` |
-| VibeMode | `vibemode on` or `vibemode off` | off | `settings.json` |
 | Worn title | `title <name>` | The title your score holds | `settings.json` |
 | Current game | `m` in the Load Game browser | The game you played last | `settings.json` |
 
@@ -335,13 +334,11 @@ Some settings belong to the account, not to a save. Switching accounts swaps the
 
 The Map's zoom is not saved with the account. With no account loaded, the display settings last for the session only.
 
-VibeMode follows the account, so switching to an account with VibeMode on changes the game's words at once. It changes words and nothing else.
-
 ### The settings file
 
-`settings.json` holds the motion setting, the VibeMode setting, the title you chose to wear (`title`), and which game the main menu's Continue opens: the game you played last, and your [main game](saving-and-loading.md#continue-and-your-main-game) if you marked one. It sits beside `account.json` for the same reason `badges.json` does: `account.json` keeps the shape older versions of the game know, so a newer setting goes in a file of its own.
+`settings.json` holds the motion setting, the title you chose to wear (`title`), and which game the main menu's Continue opens: the game you played last, and your [main game](saving-and-loading.md#continue-and-your-main-game) if you marked one. It sits beside `account.json` for the same reason `badges.json` does: `account.json` keeps the shape older versions of the game know, so a newer setting goes in a file of its own.
 
-The file holds preferences and nothing you earn, so it is plain text and unsigned. The game writes it when one of its settings changes and the first time you play a game. If it is missing or cannot be read, motion is on, VibeMode is off, you wear the title your score holds, and Continue opens the save written most recently. A title is worn only while the account holds it, so writing one into the file by hand gives nothing. A [backup](#backups) copies this file, and an export does not.
+The file holds preferences and nothing you earn, so it is plain text and unsigned. The game writes it when one of its settings changes and the first time you play a game. If it is missing or cannot be read, motion is on, you wear the title your score holds, and Continue opens the save written most recently. A title is worn only while the account holds it, so writing one into the file by hand gives nothing. A [backup](#backups) copies this file, and an export does not.
 
 ---
 

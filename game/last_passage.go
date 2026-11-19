@@ -6,8 +6,8 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // The Last Passage: the Cosmic Era's passage.
@@ -112,7 +112,7 @@ func (ge *GameEngine) lastPassageApplies() bool {
 // is pending.
 func lastPassageBlockErr(set *rules.Set) error {
 	name, _ := set.LastPassage()
-	return vibe.Errorf("game.last_passage.lastPassageBlockErr.01", "%s is upon you. Type 'catastrophe' to choose Endure or Succumb before you prestige.", name)
+	return rowid.Errorf("game.last_passage.lastPassageBlockErr.01", "%s is upon you. Type 'catastrophe' to choose Endure or Succumb before you prestige.", name)
 }
 
 // rollLastPassage rolls the Last Passage at a confirmed prestige and reports
@@ -140,8 +140,8 @@ func (ge *GameEngine) rollLastPassage() bool {
 func (ge *GameEngine) triggerLastPassage(source string) {
 	ge.pendingLastPassage = true
 	name, _ := ge.rules.LastPassage()
-	ge.addLog("warning", vibe.Sprintf("game.last_passage.triggerLastPassage.01", "☄ %s has come. The civilization cannot pass out of this age unmarked.", name))
-	ge.addLog("warning", vibe.Line("game.last_passage.triggerLastPassage.02", "  Type 'catastrophe' to choose Endure or Succumb. Only prestige waits; the run goes on until you choose."))
+	ge.addLog("warning", rowid.Sprintf("game.last_passage.triggerLastPassage.01", "☄ %s has come. The civilization cannot pass out of this age unmarked.", name))
+	ge.addLog("warning", rowid.Line("game.last_passage.triggerLastPassage.02", "  Type 'catastrophe' to choose Endure or Succumb. Only prestige waits; the run goes on until you choose."))
 	ge.publish(EventEpochEventFired, payload{
 		"event_key":  config.LastPassageKey,
 		"event_name": name,
@@ -209,14 +209,14 @@ func (ge *GameEngine) SuccumbLastPassage() error {
 // prestige waited) is answered first.
 func (ge *GameEngine) resolveLastPassage(how prestigeEnding) error {
 	if !ge.pendingLastPassage {
-		return vibe.Errorf("game.last_passage.resolveLastPassage.01", "The Last Passage has not come.")
+		return rowid.Errorf("game.last_passage.resolveLastPassage.01", "The Last Passage has not come.")
 	}
 	if ge.pendingCatastrophe != "" {
 		name, _ := ge.rules.Catastrophe(ge.pendingCatastrophe)
-		return vibe.Errorf("game.last_passage.resolveLastPassage.02", "%s came first. Answer it before the Last Passage.", name)
+		return rowid.Errorf("game.last_passage.resolveLastPassage.02", "%s came first. Answer it before the Last Passage.", name)
 	}
 	if how == lastPassageSuccumbed && ge.cosmicLegacy {
-		return vibe.Errorf("game.last_passage.resolveLastPassage.03", "You already carry the Cosmic Legacy, so the Last Passage can only be endured.")
+		return rowid.Errorf("game.last_passage.resolveLastPassage.03", "You already carry the Cosmic Legacy, so the Last Passage can only be endured.")
 	}
 	ge.pendingLastPassage = false
 	ge.completePrestige(how)
@@ -265,11 +265,11 @@ func (ge *GameEngine) runEndingLines(how prestigeEnding, points, full int) []Log
 	case lastPassageEndured:
 		keep := LastPassageKeepFor(ge.lastPassageBraceLevel())
 		ge.resolveHarbinger("", true)
-		ge.addLog("warning", vibe.Sprintf("game.last_passage.runEndingLines.01", "☄ Endure: %s. %s", name, flavorText))
-		ge.addLog("warning", vibe.Sprintf("game.last_passage.runEndingLines.02", "  You keep %.0f%% of this run's prestige points: %d of %d.", keep*100, points, full))
+		ge.addLog("warning", rowid.Sprintf("game.last_passage.runEndingLines.01", "☄ Endure: %s. %s", name, flavorText))
+		ge.addLog("warning", rowid.Sprintf("game.last_passage.runEndingLines.02", "  You keep %.0f%% of this run's prestige points: %d of %d.", keep*100, points, full))
 	case lastPassageSuccumbed:
 		ge.resolveHarbinger("", true)
-		ge.addLog("event", vibe.Sprintf("game.last_passage.runEndingLines.03", "☄ Succumb: %s took everything this run had. No prestige points from it.", name))
+		ge.addLog("event", rowid.Sprintf("game.last_passage.runEndingLines.03", "☄ Succumb: %s took everything this run had. No prestige points from it.", name))
 	}
 	ge.logRunEnding()
 

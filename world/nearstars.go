@@ -14,7 +14,7 @@ import (
 
 // NearStar is a star of the neighbourhood.
 type NearStar struct {
-	Key     string // the name's key, for the inspect line (vibe: mapstyle starNames)
+	Key     string // the name's key, for the inspect line (row id: mapstyle starNames)
 	Dist100 int    // light-years from Sol, times 100
 	Lon     int    // galactic longitude, degrees
 	Look    Look

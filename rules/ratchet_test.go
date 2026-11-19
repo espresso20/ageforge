@@ -31,7 +31,7 @@ import (
 var lookupBudget = map[string]lookupCount{
 	"game":     {config: 6, core: 12},
 	"ui":       {config: 20, core: 0},
-	"mapmodel": {config: 2, core: 2},
+	"mapmodel": {config: 1, core: 2},
 }
 
 type lookupCount struct{ config, core int }

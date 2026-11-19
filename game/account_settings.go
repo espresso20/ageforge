@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // account_settings.go keeps the account's settings that came after
@@ -34,8 +34,6 @@ type accountSettings struct {
 	Version int `json:"version"`
 	// Motion is the motion setting: "off", or empty for the default (on).
 	Motion string `json:"motion,omitempty"`
-	// Vibe is the VibeMode setting: "on", or empty for the default (off).
-	Vibe string `json:"vibe,omitempty"`
 	// Title is the title the account chose to wear, "" for the title its
 	// badge score holds. A title it no longer holds is not worn.
 	Title string `json:"title,omitempty"`
@@ -73,7 +71,7 @@ func (a *Account) settingsLocked() *accountSettings {
 // atomically. Callers hold a.mu.
 func (a *Account) saveSettingsLocked() error {
 	if !validAccountID(a.AccountID) {
-		return vibe.Errorf("game.account_settings.saveSettingsLocked.01", "cannot save settings for an account with the ID %q", a.AccountID)
+		return rowid.Errorf("game.account_settings.saveSettingsLocked.01", "cannot save settings for an account with the ID %q", a.AccountID)
 	}
 	dir := accountDir(a.AccountID)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -122,23 +120,6 @@ func (a *Account) SetMotion(on bool) error {
 	})
 }
 
-// VibeOn reports whether VibeMode is on for this account: the game's words
-// read in the VibeMode script. Off by default.
-func (a *Account) VibeOn() bool {
-	return a.readSettings().Vibe == "on"
-}
-
-// SetVibe persists the VibeMode setting. It writes settings.json only:
-// account.json is not touched.
-func (a *Account) SetVibe(on bool) error {
-	return a.editSettings(func(s *accountSettings) {
-		s.Vibe = ""
-		if on {
-			s.Vibe = "on"
-		}
-	})
-}
-
 // SetTitle chooses the title the account wears: one it holds, or "" to go
 // back to the title its badge score holds. It writes settings.json only.
 // held is the titles the account holds now (BadgeSummary.Titles).
@@ -151,7 +132,7 @@ func (a *Account) SetTitle(title string, held []string) error {
 			}
 		}
 		if !found {
-			return vibe.Errorf("game.account_settings.SetTitle.01", "You do not hold the title %q.", title)
+			return rowid.Errorf("game.account_settings.SetTitle.01", "You do not hold the title %q.", title)
 		}
 	}
 	return a.editSettings(func(s *accountSettings) {

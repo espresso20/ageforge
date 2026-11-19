@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/espresso20/ageforge/rowid"
 	"image"
 	"math"
 	"regexp"
@@ -11,7 +12,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -537,10 +537,10 @@ func (c *hallCtx) track(v hallView) {
 	c.y++
 	var after []string
 	if len(v.ahead) > 0 {
-		after = append(after, vibe.Sprintf("ui.epoch_hall.hallFrontText.09", "next: %s", v.ahead[0]))
+		after = append(after, rowid.Sprintf("ui.epoch_hall.hallFrontText.09", "next: %s", v.ahead[0]))
 	}
 	if v.unseen > 0 {
-		after = append(after, vibe.Sprintf("ui.epoch_hall.hallFrontText.03", "%d more to come", v.unseen))
+		after = append(after, rowid.Sprintf("ui.epoch_hall.hallFrontText.03", "%d more to come", v.unseen))
 	}
 	if len(after) > 0 {
 		c.paragraph(strings.Join(after, " "+c.mark("·", "-")+" "), dim)
@@ -552,9 +552,9 @@ func (c *hallCtx) track(v hallView) {
 // coinLevelWord says how fine a coin is.
 func coinLevelWord(level int) string {
 	if level > coins.Levels {
-		return vibe.Line("ui.epoch_hall.coinLevelWord.02", "Legendary")
+		return rowid.Line("ui.epoch_hall.coinLevelWord.02", "Legendary")
 	}
-	return vibe.Sprintf("ui.epoch_hall.coinLevelWord.01", "Level %d of %d", level, coins.Levels)
+	return rowid.Sprintf("ui.epoch_hall.coinLevelWord.01", "Level %d of %d", level, coins.Levels)
 }
 
 // hallCoin is a badge's coin on the page: the cells it covers, in the
@@ -585,7 +585,7 @@ func (c *hallCtx) coinOn(v game.BadgeView, x, y int, mini bool) {
 // coinCards draws the cards: the coin, its badge's name and its level.
 func (c *hallCtx) coinCards(list []game.BadgeView) {
 	if len(list) == 0 {
-		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.05", "No coins held yet."), c.role(theme.RoleDim))
+		c.paragraph(rowid.Line("ui.epoch_hall.hallFrontText.05", "No coins held yet."), c.role(theme.RoleDim))
 		return
 	}
 	gap := 2
@@ -649,7 +649,7 @@ var hallTagRe = regexp.MustCompile(`\[[a-zA-Z0-9#:\-]*\]`)
 // feats draws the feats as one block, centred, a coloured icon to a line.
 func (c *hallCtx) feats(v hallView) {
 	if len(v.feats) == 0 {
-		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.07", "No feats yet. They come with the ages."), c.role(theme.RoleDim))
+		c.paragraph(rowid.Line("ui.epoch_hall.hallFrontText.07", "No feats yet. They come with the ages."), c.role(theme.RoleDim))
 		return
 	}
 	icons := [4]string{c.mark("✸", "*"), c.mark("◈", "@"), c.mark("★", "*"), c.mark("»", ">")}

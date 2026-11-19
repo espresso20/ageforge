@@ -223,7 +223,7 @@ func TestHoverAndPickedRowsDiffer(t *testing.T) {
 		r.press('s')
 		r.paint(120, 40)
 		pick := r.entryRect(miSetTheme) // the first row is picked
-		over := r.entryRect(miSetVibe)
+		over := r.entryRect(miSetMotion)
 		r.m.Mouse(kit.Mouse{Kind: kit.MouseMove, X: over.Min.X + 4, Y: over.Min.Y})
 		b := r.paint(120, 40)
 		at := func(x, y int) kit.Cell { return b.Cells[y*b.W+x] }

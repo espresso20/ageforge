@@ -11,8 +11,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/cabinet"
 	"github.com/espresso20/ageforge/pkg/coins"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -21,12 +21,12 @@ import (
 
 // cabinetWells are the wells in order, the legendary last.
 var cabinetWells = [cabinet.Wells + 1]struct{ key, name string }{
-	{config.CoinAge, vibe.Line("ui.cabinet_drawer.cabinetWells.01", "Age")},
-	{config.CoinWonder, vibe.Line("ui.cabinet_drawer.cabinetWells.02", "Wonder")},
-	{config.CoinTechs, vibe.Line("ui.cabinet_drawer.cabinetWells.03", "Techs")},
-	{config.CoinMaximalist, vibe.Line("ui.cabinet_drawer.cabinetWells.04", "Maximalist")},
-	{config.CoinHarbinger, vibe.Line("ui.cabinet_drawer.cabinetWells.05", "Harbinger")},
-	{config.CoinFeat, vibe.Line("ui.cabinet_drawer.cabinetWells.06", "Legendary")},
+	{config.CoinAge, rowid.Line("ui.cabinet_drawer.cabinetWells.01", "Age")},
+	{config.CoinWonder, rowid.Line("ui.cabinet_drawer.cabinetWells.02", "Wonder")},
+	{config.CoinTechs, rowid.Line("ui.cabinet_drawer.cabinetWells.03", "Techs")},
+	{config.CoinMaximalist, rowid.Line("ui.cabinet_drawer.cabinetWells.04", "Maximalist")},
+	{config.CoinHarbinger, rowid.Line("ui.cabinet_drawer.cabinetWells.05", "Harbinger")},
+	{config.CoinFeat, rowid.Line("ui.cabinet_drawer.cabinetWells.06", "Legendary")},
 }
 
 // cabinetWell reads a word as a well, or -1.
@@ -115,17 +115,17 @@ func (p *cabinetPanel) ticketWords() (a, b string) {
 	if t.slot < 0 || t.well >= cabinet.Wells || len(t.recs[t.well]) == 0 {
 		return
 	}
-	n := vibe.Sprintf("ui.cabinet_drawer.ticketWords.01", "%d struck", t.counts[t.well])
+	n := rowid.Sprintf("ui.cabinet_drawer.ticketWords.01", "%d struck", t.counts[t.well])
 	if !t.fan {
 		return n, ""
 	}
 	c := t.recs[t.well][p.pickCopy()]
 	run := ""
 	if n, err := strconv.Atoi(c.Run); err == nil && len(c.Run) <= 6 {
-		run = vibe.Sprintf("ui.cabinet_drawer.ticketWords.04", "   Run %d", n)
+		run = rowid.Sprintf("ui.cabinet_drawer.ticketWords.04", "   Run %d", n)
 	}
-	a = vibe.Sprintf("ui.cabinet_drawer.ticketWords.02", "Level %d of %d   %s", c.Level, coins.Levels, n)
-	b = vibe.Sprintf("ui.cabinet_drawer.ticketWords.03", "%s%s   Figure %d", time.Unix(c.At, 0).Format("2006-01-02"), run, c.Figure)
+	a = rowid.Sprintf("ui.cabinet_drawer.ticketWords.02", "Level %d of %d   %s", c.Level, coins.Levels, n)
+	b = rowid.Sprintf("ui.cabinet_drawer.ticketWords.03", "%s%s   Figure %d", time.Unix(c.At, 0).Format("2006-01-02"), run, c.Figure)
 	return a, b
 }
 
@@ -249,10 +249,10 @@ func (p *cabinetPanel) paintTray(p2 *kit.Painter, r image.Rectangle) bool {
 	i, d := t.slot, p.drawers[t.slot]
 	pr := func(c image.Rectangle, s string, dim bool) { p.printPlate(p2, r, c, s, dim) }
 	pr(l.Name, p.names[i], false)
-	pr(l.Count, vibe.Sprintf("ui.cabinet_drawer.paintTray.01", "%d of %d", d.Held, d.Total), false)
-	hint := vibe.Line("ui.cabinet_drawer.paintTray.02", "Arrows move   Esc goes back")
+	pr(l.Count, rowid.Sprintf("ui.cabinet_drawer.paintTray.01", "%d of %d", d.Held, d.Total), false)
+	hint := rowid.Line("ui.cabinet_drawer.paintTray.02", "Arrows move   Esc goes back")
 	if t.fan {
-		hint = vibe.Line("ui.cabinet_drawer.paintTray.03", "Arrows step   Esc closes the fan")
+		hint = rowid.Line("ui.cabinet_drawer.paintTray.03", "Arrows step   Esc closes the fan")
 	}
 	pr(l.Hint, hint, false)
 	a, b := p.ticketWords()

@@ -5,7 +5,6 @@ import (
 	"slices"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Builder builds models. It owns the catalogue and keeps the last model it
@@ -14,35 +13,16 @@ import (
 type Builder struct {
 	cat *Catalog
 
-	// ownCat says the builder made its catalogue itself, so it makes it again
-	// when VibeMode is switched; vibeOn is the switch as it last looked.
-	ownCat bool
-	vibeOn bool
-
 	lastSig uint64
 	last    *Model
 }
 
 // NewBuilder makes a builder over a catalogue (NewCatalog when nil).
 func NewBuilder(cat *Catalog) *Builder {
-	own := cat == nil
-	if own {
+	if cat == nil {
 		cat = NewCatalog()
 	}
-	return &Builder{cat: cat, ownCat: own, vibeOn: vibe.On()}
-}
-
-// follow lets what the builder holds follow the VibeMode switch: the words of
-// a catalogue it made and the last model are built again when the switch has
-// moved since it last looked.
-func (b *Builder) follow() {
-	if on := vibe.On(); on != b.vibeOn {
-		b.vibeOn = on
-		if b.ownCat {
-			b.cat = NewCatalog()
-		}
-		b.last = nil
-	}
+	return &Builder{cat: cat}
 }
 
 // Catalog returns the builder's catalogue.
@@ -51,7 +31,6 @@ func (b *Builder) Catalog() *Catalog { return b.cat }
 // Model returns the model for a snapshot, reusing the last one when the
 // snapshot has not changed in anything the maps draw.
 func (b *Builder) Model(st *game.GameState, since *Visit) *Model {
-	b.follow()
 	sig := Signature(st, since)
 	if b.last != nil && sig == b.lastSig {
 		return b.last

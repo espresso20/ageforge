@@ -15,9 +15,9 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -27,33 +27,33 @@ import (
 // "Lifetime" (the account's tiles). stats_pix.go draws its pictures.
 
 var (
-	txtStatsTitle  = vibe.E("ui.stats_page.txtStatsTitle.01", "Statistics")
-	txtThisRun     = vibe.E("ui.stats_page.txtThisRun.01", "This run")
-	txtLifetime    = vibe.E("ui.stats_page.txtLifetime.01", "Lifetime")
-	txtPlayTime    = vibe.E("ui.stats_page.txtPlayTime.01", "Play time")
-	txtBuilt       = vibe.E("ui.stats_page.txtBuilt.01", "Buildings built")
-	txtRecruited   = vibe.E("ui.stats_page.txtRecruited.01", "Workers recruited")
-	txtTechs       = vibe.E("ui.stats_page.txtTechs.01", "Techs researched")
-	txtMissions    = vibe.E("ui.stats_page.txtMissions.01", "Expeditions and campaigns done")
-	txtPrestigeLvl = vibe.E("ui.stats_page.txtPrestigeLvl.01", "Prestige level")
-	txtAgesRun     = vibe.E("ui.stats_page.txtAgesRun.01", "Ages this run")
-	txtSoFar       = vibe.E("ui.stats_page.txtSoFar.01", "so far")
-	txtGatheredHd  = vibe.E("ui.stats_page.txtGatheredHd.01", "Total gathered")
-	txtGathered    = vibe.E("ui.stats_page.txtGathered.01", "gathered")
-	txtPerSecond   = vibe.E("ui.stats_page.txtPerSecond.01", "per second")
-	txtMultsHd     = vibe.E("ui.stats_page.txtMultsHd.01", "Active multipliers")
-	txtNoMults     = vibe.E("ui.stats_page.txtNoMults.01", "No active multipliers.")
-	txtPrestigeHd  = vibe.E("ui.stats_page.txtPrestigeHd.01", "Prestige and epoch")
-	txtResearchHd  = vibe.E("ui.stats_page.txtResearchHd.01", "Research bonuses")
-	txtAccount     = vibe.E("ui.stats_page.txtAccount.01", "Account")
-	txtTitleOf     = vibe.E("ui.stats_page.txtTitleOf.01", "Title")
-	txtPrestiges   = vibe.E("ui.stats_page.txtPrestiges.01", "Total prestiges")
-	txtCivs        = vibe.E("ui.stats_page.txtCivs.01", "Civilizations started")
-	txtHighestAge  = vibe.E("ui.stats_page.txtHighestAge.01", "Highest age ever")
-	txtBadgesEarn  = vibe.E("ui.stats_page.txtBadgesEarn.01", "Badges earned")
-	txtOfPoints    = vibe.E("ui.stats_page.txtOfPoints.01", "%d of %d points to %s")
-	txtNoAccount   = vibe.E("ui.stats_page.txtNoAccount.01", "No account loaded.")
-	txtSwitchPart  = vibe.E("ui.stats_page.txtSwitchPart.01", "switch part")
+	txtStatsTitle  = rowid.E("ui.stats_page.txtStatsTitle.01", "Statistics")
+	txtThisRun     = rowid.E("ui.stats_page.txtThisRun.01", "This run")
+	txtLifetime    = rowid.E("ui.stats_page.txtLifetime.01", "Lifetime")
+	txtPlayTime    = rowid.E("ui.stats_page.txtPlayTime.01", "Play time")
+	txtBuilt       = rowid.E("ui.stats_page.txtBuilt.01", "Buildings built")
+	txtRecruited   = rowid.E("ui.stats_page.txtRecruited.01", "Workers recruited")
+	txtTechs       = rowid.E("ui.stats_page.txtTechs.01", "Techs researched")
+	txtMissions    = rowid.E("ui.stats_page.txtMissions.01", "Expeditions and campaigns done")
+	txtPrestigeLvl = rowid.E("ui.stats_page.txtPrestigeLvl.01", "Prestige level")
+	txtAgesRun     = rowid.E("ui.stats_page.txtAgesRun.01", "Ages this run")
+	txtSoFar       = rowid.E("ui.stats_page.txtSoFar.01", "so far")
+	txtGatheredHd  = rowid.E("ui.stats_page.txtGatheredHd.01", "Total gathered")
+	txtGathered    = rowid.E("ui.stats_page.txtGathered.01", "gathered")
+	txtPerSecond   = rowid.E("ui.stats_page.txtPerSecond.01", "per second")
+	txtMultsHd     = rowid.E("ui.stats_page.txtMultsHd.01", "Active multipliers")
+	txtNoMults     = rowid.E("ui.stats_page.txtNoMults.01", "No active multipliers.")
+	txtPrestigeHd  = rowid.E("ui.stats_page.txtPrestigeHd.01", "Prestige and epoch")
+	txtResearchHd  = rowid.E("ui.stats_page.txtResearchHd.01", "Research bonuses")
+	txtAccount     = rowid.E("ui.stats_page.txtAccount.01", "Account")
+	txtTitleOf     = rowid.E("ui.stats_page.txtTitleOf.01", "Title")
+	txtPrestiges   = rowid.E("ui.stats_page.txtPrestiges.01", "Total prestiges")
+	txtCivs        = rowid.E("ui.stats_page.txtCivs.01", "Civilizations started")
+	txtHighestAge  = rowid.E("ui.stats_page.txtHighestAge.01", "Highest age ever")
+	txtBadgesEarn  = rowid.E("ui.stats_page.txtBadgesEarn.01", "Badges earned")
+	txtOfPoints    = rowid.E("ui.stats_page.txtOfPoints.01", "%d of %d points to %s")
+	txtNoAccount   = rowid.E("ui.stats_page.txtNoAccount.01", "No account loaded.")
+	txtSwitchPart  = rowid.E("ui.stats_page.txtSwitchPart.01", "switch part")
 )
 
 // hit kinds on the page.
@@ -648,55 +648,55 @@ func prestigeRows(st game.GameState) []statsRow {
 	p := st.Prestige
 	iv := tickInterval(st)
 	rows := []statsRow{
-		{vibe.Line("ui.stats_page.prestigeRows.01", "Level:"), textfmt.Int(p.Level), xBright},
-		{vibe.Line("ui.stats_page.prestigeRows.02", "Prestige:"), vibe.Sprintf("ui.stats_page.prestigeRows.03", "x%.2f production", p.ProductionMultiplier), xGood},
+		{rowid.Line("ui.stats_page.prestigeRows.01", "Level:"), textfmt.Int(p.Level), xBright},
+		{rowid.Line("ui.stats_page.prestigeRows.02", "Prestige:"), rowid.Sprintf("ui.stats_page.prestigeRows.03", "x%.2f production", p.ProductionMultiplier), xGood},
 	}
 	if cue := st.PrestigeCue; cue.Ready {
-		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.04", "A new run would pass this age in about %s; finishing it takes about %s at today's income.",
+		rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.04", "A new run would pass this age in about %s; finishing it takes about %s at today's income.",
 			game.DurationText(cue.FreshTicks, iv), game.DurationText(cue.FinishTicks, iv)), xDim})
 	}
 	if p.CanPrestige {
-		rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.05", "After this prestige:"), vibe.Sprintf("ui.stats_page.prestigeRows.06", "x%.2f production", p.NextProductionMultiplier), xGood})
+		rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.05", "After this prestige:"), rowid.Sprintf("ui.stats_page.prestigeRows.06", "x%.2f production", p.NextProductionMultiplier), xGood})
 	} else if p.FloorBlocks && p.Floor != "" {
 		floorName := st.Ruleset().Name(rules.KindAge, p.Floor)
 		if !strings.HasPrefix(strings.ToLower(floorName), "the ") {
 			floorName = "the " + floorName
 		}
-		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.07", "Prestige opens once you pass %s, the furthest an earlier run reached.", floorName), xGold})
+		rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.07", "Prestige opens once you pass %s, the furthest an earlier run reached.", floorName), xGold})
 	}
-	rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.08", "Era Mastery:"), masteryNowText(st), xText})
+	rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.08", "Era Mastery:"), masteryNowText(st), xText})
 	if next := masteryNextText(st); next != "" {
-		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.09", "Next prestige: %s.", next), xDim})
+		rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.09", "Next prestige: %s.", next), xDim})
 	}
-	rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.10", "Points earned:"), vibe.Sprintf("ui.stats_page.prestigeRows.11", "%d total", p.TotalEarned), xBright})
+	rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.10", "Points earned:"), rowid.Sprintf("ui.stats_page.prestigeRows.11", "%d total", p.TotalEarned), xBright})
 	switch {
 	case p.CanPrestige:
-		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.12", "Prestige now for %s.", textfmt.Count(p.PendingPoints, vibe.Line("ui.stats_page.prestigeRows.13", "point"), vibe.Line("ui.stats_page.prestigeRows.14", "points"))), xGood})
+		rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.12", "Prestige now for %s.", textfmt.Count(p.PendingPoints, rowid.Line("ui.stats_page.prestigeRows.13", "point"), rowid.Line("ui.stats_page.prestigeRows.14", "points"))), xGood})
 		if p.NextAge != "" {
-			rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.15", "From %s: %s.", ageRef(st, p.NextAge), textfmt.Count(p.NextAgePoints, vibe.Line("ui.stats_page.prestigeRows.16", "point"), vibe.Line("ui.stats_page.prestigeRows.17", "points"))), xDim})
+			rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.15", "From %s: %s.", ageRef(st, p.NextAge), textfmt.Count(p.NextAgePoints, rowid.Line("ui.stats_page.prestigeRows.16", "point"), rowid.Line("ui.stats_page.prestigeRows.17", "points"))), xDim})
 		}
 	case p.Level == 0:
-		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.18", "Reach %s to prestige.", ageRef(st, game.PrestigeMinAge)), xDim})
+		rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.18", "Reach %s to prestige.", ageRef(st, game.PrestigeMinAge)), xDim})
 	default:
-		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.19", "Reach %s to prestige again.", ageRef(st, game.PrestigeMinAge)), xGold})
+		rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.19", "Reach %s to prestige again.", ageRef(st, game.PrestigeMinAge)), xGold})
 	}
 	for _, line := range carryoverStatusLines(st) {
 		rows = append(rows, statsRow{"", strings.TrimSpace(kit.Strip(line)), xText})
 	}
 	epoch := strings.TrimSpace(st.EpochIcon + " " + st.EpochName)
 	if epoch == "" {
-		epoch = vibe.Line("ui.stats_page.prestigeRows.20", "none")
+		epoch = rowid.Line("ui.stats_page.prestigeRows.20", "none")
 	}
-	rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.21", "Current epoch:"), epoch, xText},
-		statsRow{vibe.Line("ui.stats_page.prestigeRows.22", "Catastrophes:"), vibe.Sprintf("ui.stats_page.prestigeRows.23", "%d  (endured %d, succumbed %d)",
+	rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.21", "Current epoch:"), epoch, xText},
+		statsRow{rowid.Line("ui.stats_page.prestigeRows.22", "Catastrophes:"), rowid.Sprintf("ui.stats_page.prestigeRows.23", "%d  (endured %d, succumbed %d)",
 			st.CatastrophesEndured+st.CatastrophesSuccumbed, st.CatastrophesEndured, st.CatastrophesSuccumbed), xText})
 	if st.PendingCatastrophe != "" {
-		rows = append(rows, statsRow{"", vibe.Line("ui.stats_page.prestigeRows.24", "One catastrophe is pending. Type catastrophe to choose."), xBad})
+		rows = append(rows, statsRow{"", rowid.Line("ui.stats_page.prestigeRows.24", "One catastrophe is pending. Type catastrophe to choose."), xBad})
 	} else if st.LastPassage.Pending {
-		rows = append(rows, statsRow{"", vibe.Line("ui.stats_page.prestigeRows.25", "The Last Passage is pending. Type catastrophe to choose."), xBad})
+		rows = append(rows, statsRow{"", rowid.Line("ui.stats_page.prestigeRows.25", "The Last Passage is pending. Type catastrophe to choose."), xBad})
 	}
 	set := st.Ruleset()
-	rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.26", "Legacy bonuses:"), "", xGold})
+	rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.26", "Legacy bonuses:"), "", xGold})
 	legacy := keysWhere(st.LegacyBonuses, func(_ string, on bool) bool { return on })
 	for _, key := range legacy {
 		label := key
@@ -706,19 +706,19 @@ func prestigeRows(st game.GameState) []statsRow {
 		rows = append(rows, statsRow{label + ":", kit.Strip(legacyBonusLine(st, set.LegacyBonus(key))), xText})
 	}
 	if f := st.SuccumbResearchFactor; f > 0 && f < 1 {
-		rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.27", "Ancient Knowledge:"), vibe.Sprintf("ui.stats_page.prestigeRows.28", "research time %s (permanent, %s for each epoch succumbed in)", game.ResearchFactorText(f), game.ResearchFactorText(game.SuccumbResearchTimeFactor)), xText})
+		rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.27", "Ancient Knowledge:"), rowid.Sprintf("ui.stats_page.prestigeRows.28", "research time %s (permanent, %s for each epoch succumbed in)", game.ResearchFactorText(f), game.ResearchFactorText(game.SuccumbResearchTimeFactor)), xText})
 	}
 	if st.LastPassage.CosmicLegacy {
-		rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.29", "Cosmic Legacy:"), vibe.Sprintf("ui.stats_page.prestigeRows.30", "all production %s, counted in full after every other bonus (permanent, through every prestige)", textfmt.SignedPercent(game.CosmicLegacyProductionBonus)), xText})
+		rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.29", "Cosmic Legacy:"), rowid.Sprintf("ui.stats_page.prestigeRows.30", "all production %s, counted in full after every other bonus (permanent, through every prestige)", textfmt.SignedPercent(game.CosmicLegacyProductionBonus)), xText})
 	} else if len(legacy) == 0 && !(st.SuccumbResearchFactor > 0 && st.SuccumbResearchFactor < 1) {
-		rows = append(rows, statsRow{"", vibe.Line("ui.stats_page.prestigeRows.31", "None"), xDim})
+		rows = append(rows, statsRow{"", rowid.Line("ui.stats_page.prestigeRows.31", "None"), xDim})
 	}
-	rows = append(rows, statsRow{vibe.Line("ui.stats_page.prestigeRows.32", "Active events"), "", xGold})
+	rows = append(rows, statsRow{rowid.Line("ui.stats_page.prestigeRows.32", "Active events"), "", xGold})
 	if len(st.ActiveEvents) == 0 {
-		return append(rows, statsRow{"", vibe.Line("ui.stats_page.prestigeRows.33", "No active events."), xDim})
+		return append(rows, statsRow{"", rowid.Line("ui.stats_page.prestigeRows.33", "No active events."), xDim})
 	}
 	for _, evt := range st.ActiveEvents {
-		rows = append(rows, statsRow{"", vibe.Sprintf("ui.stats_page.prestigeRows.34", "%s (%s left)", evt.Name, formatTicks(evt.TicksLeft, st)), xGold})
+		rows = append(rows, statsRow{"", rowid.Sprintf("ui.stats_page.prestigeRows.34", "%s (%s left)", evt.Name, formatTicks(evt.TicksLeft, st)), xGold})
 		for _, eff := range evt.Effects {
 			if plain, _ := effectMagnitude(eff, st.TickIntervalMs); plain != "" {
 				k := xGood

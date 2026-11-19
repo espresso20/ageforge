@@ -7,7 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // stars.go says what the cursor says of the territory on the star map: a
@@ -21,11 +21,11 @@ const topBuildings = 3
 // the buildings it holds the most of.
 func describeSector(m *mapmodel.Model, th mapgen.Thing) Inspection {
 	if th.Key == "border" {
-		return Inspection{Title: vibe.Line("ui.mapstyle.stars.border.01", "Your territory"),
-			Lines: []string{vibe.Line("ui.mapstyle.stars.border.02", "the edge of what you hold")}}
+		return Inspection{Title: rowid.Line("ui.mapstyle.stars.border.01", "Your territory"),
+			Lines: []string{rowid.Line("ui.mapstyle.stars.border.02", "the edge of what you hold")}}
 	}
-	in := Inspection{Title: vibe.Line("ui.mapstyle.stars.sector.01", "Sector: ") + placeName(m, th.Key) + " · " +
-		plural(th.Count, vibe.Line("ui.mapstyle.stars.sector.02", "system"), vibe.Line("ui.mapstyle.stars.sector.03", "systems"))}
+	in := Inspection{Title: rowid.Line("ui.mapstyle.stars.sector.01", "Sector: ") + placeName(m, th.Key) + " · " +
+		plural(th.Count, rowid.Line("ui.mapstyle.stars.sector.02", "system"), rowid.Line("ui.mapstyle.stars.sector.03", "systems"))}
 	for _, l := range m.Lineages {
 		if l.Key != th.Key {
 			continue
@@ -56,6 +56,6 @@ func describeStarLane(m *mapmodel.Model, th mapgen.Thing) Inspection {
 	if th.Ref == 1 { // home to a civilization: the key is the civ
 		th.Key, th.Lineage = th.Lineage, th.Key
 	}
-	return Inspection{Title: vibe.Line("ui.mapstyle.stars.lane.01", "Lane: ") + end(th.Key) + vibe.Line("ui.mapstyle.stars.lane.02", " to ") + end(th.Lineage),
-		Lines: []string{vibe.Line("ui.mapstyle.stars.lane.03", "traffic ") + strconv.Itoa(th.Count) + vibe.Line("ui.mapstyle.stars.lane.04", " of 3")}}
+	return Inspection{Title: rowid.Line("ui.mapstyle.stars.lane.01", "Lane: ") + end(th.Key) + rowid.Line("ui.mapstyle.stars.lane.02", " to ") + end(th.Lineage),
+		Lines: []string{rowid.Line("ui.mapstyle.stars.lane.03", "traffic ") + strconv.Itoa(th.Count) + rowid.Line("ui.mapstyle.stars.lane.04", " of 3")}}
 }

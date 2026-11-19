@@ -16,8 +16,6 @@ badges
 
 [Accounts & Recovery](account.md#the-coin-cabinet) describes the cabinet itself: the drawers, the wells, the keys and the mouse. The Stats panel's Lifetime part shows how many you have earned. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
 
-VibeMode rewrites the names and descriptions of badges. The badges, their tiers and their points stay the same.
-
 ## Coins, levels and stacks
 
 Every badge you earn is kept as a coin, and the cabinet shows the coins, not a list. The cabinet has 25 drawers: one for each of the 22 ages, then Ledgers, Curios and Themes. Each age's drawer has six wells: one for each kind of coin the age has, and a larger one in the middle for its legendary.

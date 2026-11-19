@@ -4,7 +4,7 @@ import (
 	"image"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // harbinger_verbs.go is what the Harbinger panel does by click: Appease and
@@ -21,9 +21,9 @@ const (
 
 // The words the buttons say.
 var (
-	txtVerbAppease = vibe.E("ui.harbinger_verbs.appease.01", "Appease")
-	txtVerbBrace   = vibe.E("ui.harbinger_verbs.brace.01", "Brace")
-	txtVerbInvite  = vibe.E("ui.harbinger_verbs.invite.01", "Invite")
+	txtVerbAppease = rowid.E("ui.harbinger_verbs.appease.01", "Appease")
+	txtVerbBrace   = rowid.E("ui.harbinger_verbs.brace.01", "Brace")
+	txtVerbInvite  = rowid.E("ui.harbinger_verbs.invite.01", "Invite")
 )
 
 // harbingerBuyable is whether state holds every resource in cost.
@@ -48,7 +48,7 @@ func harbingerPayBtn(state game.GameState, label, key, sub, blocked string, cost
 // harbingerInviteBtn is the button for Invite, which asks first.
 func harbingerInviteBtn(h *game.HarbingerView) []actionSpec {
 	return []actionSpec{{label: txtVerbInvite.String(), key: "I", kind: keyDanger, cmd: harbingerCmd + "invite",
-		ask: vibe.Sprintf("ui.harbinger_verbs.inviteAsk.01", "Invite %s?\n\nThis cannot be undone.", h.Name),
+		ask: rowid.Sprintf("ui.harbinger_verbs.inviteAsk.01", "Invite %s?\n\nThis cannot be undone.", h.Name),
 		yes: txtVerbInvite.String(), off: h.InviteBlocked != ""}}
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/cabinet"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -145,11 +145,11 @@ func (p *cabinetPanel) paintGrid(p2 *kit.Painter, r image.Rectangle) bool {
 	}
 	pr := func(c image.Rectangle, s string, dim bool) { p.printPlate(p2, r, c, s, dim) }
 	pr(l.Name, p.names[i], false)
-	pr(l.Count, vibe.Sprintf("ui.cabinet_ageless.paintGrid.01", "%d of %d", held, len(ws)), false)
-	pr(l.Hint, vibe.Line("ui.cabinet_ageless.paintGrid.02", "Arrows move  PgUp/Dn turn  Esc back"), false)
+	pr(l.Count, rowid.Sprintf("ui.cabinet_ageless.paintGrid.01", "%d of %d", held, len(ws)), false)
+	pr(l.Hint, rowid.Line("ui.cabinet_ageless.paintGrid.02", "Arrows move  PgUp/Dn turn  Esc back"), false)
 	a, b := "", ""
 	if len(ws) > 0 {
-		a = vibe.Sprintf("ui.cabinet_ageless.paintGrid.03", "Page %d of %d", page+1, pages)
+		a = rowid.Sprintf("ui.cabinet_ageless.paintGrid.03", "Page %d of %d", page+1, pages)
 		b = ws[t.well].name
 	}
 	pr(image.Rect(l.Ticket.Min.X, l.Ticket.Min.Y, l.Ticket.Max.X, l.Ticket.Min.Y+1), a, false)

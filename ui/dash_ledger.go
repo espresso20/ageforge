@@ -7,8 +7,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // dash_ledger.go is what the header's way to the next age reads: the Ledger.
@@ -189,21 +189,21 @@ func (l *ledger) blockers(state game.GameState) {
 
 // leadText is the long bar's label.
 func (m *ledgerData) leadText() string {
-	return vibe.Sprintf("ui.dash_ledger.leadText.01", "To the %s", m.v.NextName)
+	return rowid.Sprintf("ui.dash_ledger.leadText.01", "To the %s", m.v.NextName)
 }
 
 // finalRow is what the bar's row says in the last age.
 func (m *ledgerData) finalRow() string {
-	return vibe.Line("ui.dash_ledger.finalRow.01", "You have reached the final age.")
+	return rowid.Line("ui.dash_ledger.finalRow.01", "You have reached the final age.")
 }
 
 // readyText is what the waiting line says once every pillar stands, and
 // whether it is good news (advancing is open) or a warning.
 func (m *ledgerData) readyText() (good bool, text string) {
 	if m.v.Ready {
-		return true, vibe.Line("ui.dash_ledger.readyText.01", "Every pillar stands. Type advance to go on.")
+		return true, rowid.Line("ui.dash_ledger.readyText.01", "Every pillar stands. Type advance to go on.")
 	}
-	return false, vibe.Line("ui.dash_ledger.readyText.02", "Every pillar stands. Answer the catastrophe first (type catastrophe).")
+	return false, rowid.Line("ui.dash_ledger.readyText.02", "Every pillar stands. Answer the catastrophe first (type catastrophe).")
 }
 
 // waitText is the line of what the gate waits on, in at most room cells: as
@@ -215,7 +215,7 @@ func (m *ledgerData) waitText(room int) []xseg {
 	if len(m.Waits) == 0 {
 		return nil
 	}
-	lead := vibe.Line("ui.dash_ledger.waitText.02", "Waiting on: ")
+	lead := rowid.Line("ui.dash_ledger.waitText.02", "Waiting on: ")
 	parts, shown := m.waitParts(lead, room)
 	if shown == 0 {
 		parts, shown = m.waitParts("", room)
@@ -232,7 +232,7 @@ func (m *ledgerData) waitText(room int) []xseg {
 
 // waitMore says how many requirements a line leaves out after the first i.
 func (m *ledgerData) waitMore(i int) string {
-	return vibe.Sprintf("ui.dash_ledger.waitText.04", "+%d more", len(m.Waits)-i)
+	return rowid.Sprintf("ui.dash_ledger.waitText.04", "+%d more", len(m.Waits)-i)
 }
 
 // waitParts is the waiting line after lead in room cells, and how many
@@ -267,7 +267,7 @@ func (m *ledgerData) waitParts(lead string, room int) (parts []xseg, shown int) 
 		x += runeLen(it)
 	}
 	if m.Then != "" {
-		if then := vibe.Sprintf("ui.dash_ledger.waitText.01", "then %s", m.Then); x+sepW+runeLen(then) <= room {
+		if then := rowid.Sprintf("ui.dash_ledger.waitText.01", "then %s", m.Then); x+sepW+runeLen(then) <= room {
 			parts = append(parts, xseg{sep, xFaint}, xseg{then, xDim})
 		}
 	}
@@ -276,5 +276,5 @@ func (m *ledgerData) waitParts(lead string, room int) (parts []xseg, shown int) 
 
 // shortText is the label of the resources a blocker is short of.
 func (m *ledgerData) shortText() string {
-	return strings.TrimSpace(vibe.Line("ui.dash_ledger.shortText.01", "Short of: "))
+	return strings.TrimSpace(rowid.Line("ui.dash_ledger.shortText.01", "Short of: "))
 }

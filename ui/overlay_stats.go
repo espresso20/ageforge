@@ -9,7 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -156,27 +156,27 @@ func multiplierTargetLabel(target string) string {
 // Known sources are title-cased; "event:<name>" becomes "Event: <name>".
 func multiplierSourceLabel(src string) string {
 	if name, ok := strings.CutPrefix(src, "event:"); ok {
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.01", "Event: ") + name
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.01", "Event: ") + name
 	}
 	switch src {
 	case "research":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.02", "Research")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.02", "Research")
 	case "prestige":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.03", "Prestige")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.03", "Prestige")
 	case "wonders":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.04", "Wonders")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.04", "Wonders")
 	case "permanent":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.05", "Permanent")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.05", "Permanent")
 	case "morale":
 		return txtMorale.String()
 	case "event":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.07", "Event")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.07", "Event")
 	case "diplomacy":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.08", "Diplomacy")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.08", "Diplomacy")
 	case "legacy":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.09", "Legacy")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.09", "Legacy")
 	case "cosmic_legacy":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.10", "Cosmic Legacy")
+		return rowid.Line("ui.overlay_stats.multiplierSourceLabel.10", "Cosmic Legacy")
 	}
 	return textfmt.Capitalize(src)
 }

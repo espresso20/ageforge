@@ -6,7 +6,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // people_festival.go is the Festival card on the People overview: what a
@@ -27,9 +27,9 @@ const (
 
 // The words the card and the header chip say.
 var (
-	txtFestival     = vibe.E("ui.people_festival.title.01", "Festival")
-	txtFestivalHold = vibe.E("ui.people_festival.hold.01", "Hold festival")
-	txtFestivalAsk  = vibe.E("ui.people_festival.ask.01", "Hold a festival?")
+	txtFestival     = rowid.E("ui.people_festival.title.01", "Festival")
+	txtFestivalHold = rowid.E("ui.people_festival.hold.01", "Hold festival")
+	txtFestivalAsk  = rowid.E("ui.people_festival.ask.01", "Hold a festival?")
 )
 
 // festivalRows is the fewest rows the card needs: one more when the buff is
@@ -59,7 +59,7 @@ func festivalUnlocked(st game.GameState) bool {
 
 // festivalAsk is the question before a festival is held: it names the cost.
 func festivalAsk(st game.GameState) string {
-	return vibe.Sprintf("ui.people_festival.ask.02", "%s\n\nIt costs %s culture.", txtFestivalAsk.String(), textfmt.Number(st.Festival.Cost))
+	return rowid.Sprintf("ui.people_festival.ask.02", "%s\n\nIt costs %s culture.", txtFestivalAsk.String(), textfmt.Number(st.Festival.Cost))
 }
 
 // festivalWidth is the width the card takes from a row c.w wide, 0 for none.
@@ -81,7 +81,7 @@ func (c peopleBody) festivalCard(x, y, w, h int) {
 	g.box(x, y, w, h, xBorder, txtFestival.String(), xTitle, false)
 	rx, ri := x+2, w-4
 	row := y + 1
-	g.putFit(rx, row, ri, vibe.Sprintf("ui.people_festival.card.01", "+%.0f%% production for %s", f.BuffPercent*100, formatTicks(f.BuffTicks, st)), xBright)
+	g.putFit(rx, row, ri, rowid.Sprintf("ui.people_festival.card.01", "+%.0f%% production for %s", f.BuffPercent*100, formatTicks(f.BuffTicks, st)), xBright)
 	row++
 	// How much of the buff would count sits under the claim, before the price.
 	if f.CapNote != "" {
@@ -92,17 +92,17 @@ func (c peopleBody) festivalCard(x, y, w, h int) {
 	if f.Culture < f.Cost {
 		haveK = xBad
 	}
-	g.segsFit(rx, row, ri, xseg{vibe.Line("ui.people_festival.card.02", "Cost "), xDim}, xseg{textfmt.Number(f.Cost), xText},
-		xseg{vibe.Line("ui.people_festival.card.03", "  have "), xDim}, xseg{textfmt.Number(f.Culture), haveK})
+	g.segsFit(rx, row, ri, xseg{rowid.Line("ui.people_festival.card.02", "Cost "), xDim}, xseg{textfmt.Number(f.Cost), xText},
+		xseg{rowid.Line("ui.people_festival.card.03", "  have "), xDim}, xseg{textfmt.Number(f.Culture), haveK})
 	row++
 	left, running := festivalRunning(st)
 	switch {
 	case running:
-		g.segsFit(rx, row, ri, xseg{vibe.Line("ui.people_festival.card.04", "Running "), xGood}, xseg{formatTicks(left, st), xText})
+		g.segsFit(rx, row, ri, xseg{rowid.Line("ui.people_festival.card.04", "Running "), xGood}, xseg{formatTicks(left, st), xText})
 	case !f.Ready:
-		g.segsFit(rx, row, ri, xseg{vibe.Line("ui.people_festival.card.05", "Cooling down "), xGold}, xseg{formatTicks(f.CooldownLeft, st), xText})
+		g.segsFit(rx, row, ri, xseg{rowid.Line("ui.people_festival.card.05", "Cooling down "), xGold}, xseg{formatTicks(f.CooldownLeft, st), xText})
 	default:
-		g.putFit(rx, row, ri, vibe.Line("ui.people_festival.card.06", "Ready"), xGood)
+		g.putFit(rx, row, ri, rowid.Line("ui.people_festival.card.06", "Ready"), xGood)
 	}
 	word := txtFestivalHold.String()
 	off := running || !f.Ready || f.Culture < f.Cost
@@ -121,5 +121,5 @@ func festivalChip(st game.GameState) string {
 	if !ok {
 		return ""
 	}
-	return strings.TrimSpace(vibe.Sprintf("ui.people_festival.chip.01", "%s +%.0f%% %s", txtFestival.String(), st.Festival.BuffPercent*100, formatTicks(left, st)))
+	return strings.TrimSpace(rowid.Sprintf("ui.people_festival.chip.01", "%s +%.0f%% %s", txtFestival.String(), st.Festival.BuffPercent*100, formatTicks(left, st)))
 }

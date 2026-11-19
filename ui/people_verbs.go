@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -40,15 +40,15 @@ func goOf(k kit.Key) (int, bool) {
 
 // The words the buttons say.
 var (
-	txtDismiss = vibe.E("ui.people_verbs.dismiss.01", "Dismiss")
-	txtRecruit = vibe.E("ui.people_verbs.recruit.01", "Recruit")
-	txtSplit   = vibe.E("ui.people_verbs.split.01", "Split")
-	txtAuto    = vibe.E("ui.people_verbs.auto.01", "Auto")
+	txtDismiss = rowid.E("ui.people_verbs.dismiss.01", "Dismiss")
+	txtRecruit = rowid.E("ui.people_verbs.recruit.01", "Recruit")
+	txtSplit   = rowid.E("ui.people_verbs.split.01", "Split")
+	txtAuto    = rowid.E("ui.people_verbs.auto.01", "Auto")
 )
 
 // dismissAsk is the question before a worker is dismissed from a building.
 func dismissAsk(name string) string {
-	return vibe.Sprintf("ui.people_verbs.dismissAsk.01", "Dismiss a worker from %s?\n\nThey leave your population.", name)
+	return rowid.Sprintf("ui.people_verbs.dismissAsk.01", "Dismiss a worker from %s?\n\nThey leave your population.", name)
 }
 
 // chip draws a one-row key of kind at (x, y) holding word, records that a click
@@ -90,7 +90,7 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 	}
 	for i, b := range bs {
 		if y+1 > end {
-			g.putFit(rx, y, ri, vibe.Sprintf("ui.people_verbs.workList.01", "and %d more", len(bs)-i), xFaint)
+			g.putFit(rx, y, ri, rowid.Sprintf("ui.people_verbs.workList.01", "and %d more", len(bs)-i), xFaint)
 			return y + 1
 		}
 		count := fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))
@@ -151,7 +151,7 @@ func (c peopleBody) recruitBlock(x, y, w int) {
 		cx = r.Max.X + 1
 	}
 	if room := x + w - cx; room > 8 {
-		g.putFit(cx+1, cy, room-1, vibe.Sprintf("ui.people_verbs.recruitBlock.01", "%d homes empty", free), xDim)
+		g.putFit(cx+1, cy, room-1, rowid.Sprintf("ui.people_verbs.recruitBlock.01", "%d homes empty", free), xDim)
 	}
 }
 
@@ -167,7 +167,7 @@ func (c peopleBody) splitRow(x, y, w int) {
 	minus.off = minus.off || s.Share <= 0
 	plus.off = plus.off || s.Share >= 100
 	nx := g.stepper(x+10, y, minus, plus) + 1
-	g.putFit(nx, y, x+w-nx, vibe.Sprintf("ui.people_verbs.splitRow.01", "%d%% research", s.Share), xText)
+	g.putFit(nx, y, x+w-nx, rowid.Sprintf("ui.people_verbs.splitRow.01", "%d%% research", s.Share), xText)
 }
 
 // shareRow draws the picked area's Share line at (x, y): the stepper that
@@ -176,7 +176,7 @@ func (c peopleBody) splitRow(x, y, w int) {
 // share rounded to ten.
 func (c peopleBody) shareRow(x, y, w int, r game.ShareRow) {
 	g := c.g
-	g.put(x, y, vibe.Line("ui.people_verbs.shareRow.01", "Share  "), xDim)
+	g.put(x, y, rowid.Line("ui.people_verbs.shareRow.01", "Share  "), xDim)
 	base := int(r.Percent + 0.5)
 	if !r.Set {
 		base = (base + 5) / 10 * 10
@@ -193,9 +193,9 @@ func (c peopleBody) shareRow(x, y, w int, r game.ShareRow) {
 		kind = keyAccent
 	}
 	nx = g.chip(nx, y, txtAuto.String(), kind, command(verbRoster, r.Domain, "auto"), "", "", false) + 1
-	text := vibe.Line("ui.people_verbs.shareRow.02", "auto, by its buildings' slots")
+	text := rowid.Line("ui.people_verbs.shareRow.02", "auto, by its buildings' slots")
 	if r.Set {
-		text = vibe.Line("ui.people_verbs.shareRow.03", "set to ") + game.SharePercent(float64(base))
+		text = rowid.Line("ui.people_verbs.shareRow.03", "set to ") + game.SharePercent(float64(base))
 	}
 	g.putFit(nx, y, x+w-nx, text, xText)
 }

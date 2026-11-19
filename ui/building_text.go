@@ -5,14 +5,14 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // txtCopies is said the same way on several screens, so it has one id.
-var txtCopies = vibe.E("ui.building_text.buildingText.06", "copies")
+var txtCopies = rowid.E("ui.building_text.buildingText.06", "copies")
 
 // txtCopy is said the same way on several screens, so it has one id.
-var txtCopy = vibe.E("ui.building_text.buildingText.05", "copy")
+var txtCopy = rowid.E("ui.building_text.buildingText.05", "copy")
 
 // buildingText is a building's description as the lists show it (its rates
 // are already per second). A knowledge building also says where its research halves ("Past 5 copies, each
@@ -24,16 +24,16 @@ func buildingText(bs game.BuildingState) string {
 	if bs.Scholars <= 0 {
 		return desc
 	}
-	count := textfmt.Count(bs.Scholars, vibe.Line("ui.building_text.buildingText.01", "scholar"), vibe.Line("ui.building_text.buildingText.02", "scholars"))
+	count := textfmt.Count(bs.Scholars, rowid.Line("ui.building_text.buildingText.01", "scholar"), rowid.Line("ui.building_text.buildingText.02", "scholars"))
 	line := ""
 	if !strings.Contains(desc, count) {
-		line = textfmt.Capitalize(count+vibe.Line("ui.building_text.buildingText.03", " a copy")) + "."
+		line = textfmt.Capitalize(count+rowid.Line("ui.building_text.buildingText.03", " a copy")) + "."
 	}
 	if bs.FullRateCopies > 0 {
 		if line != "" {
 			line += " "
 		}
-		line += vibe.Sprintf("ui.building_text.buildingText.07", "Past %s, each researches at half rate.", textfmt.Count(bs.FullRateCopies, txtCopy.String(), txtCopies.String()))
+		line += rowid.Sprintf("ui.building_text.buildingText.07", "Past %s, each researches at half rate.", textfmt.Count(bs.FullRateCopies, txtCopy.String(), txtCopies.String()))
 	}
 	if line == "" {
 		return desc

@@ -49,7 +49,7 @@ var notScanned = map[string]string{
 	"window/mapview":        "the window map renderer: pixels from the world model, no player text",
 	"window/kit":            "the UI kit: widgets that paint cells, no player text (screens in ui give it their words)",
 	"world":                 "the space model for the map: catalogues and internal keys, no player text (the ui reads the game's own words)",
-	"vibe":                  "the row-id wrapper, no text of its own",
+	"rowid":                 "the row-id wrapper, no text of its own",
 	"detmath":               "arithmetic, no text",
 	"mapgen":                "the map engine: art, hues and internal keys, no player text (the ui reads the game's own words)",
 	"mapmodel/fixture":      "test fixtures",

@@ -11,7 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 	"github.com/espresso20/ageforge/world"
 )
@@ -52,20 +52,20 @@ func zoomStep(z, dir int, sc *mapgen.Scene) int {
 	return ladder[max(0, min(at+dir, len(ladder)-1))]
 }
 
-var zoomNames = [4]vibe.Entry{
-	zOverview: vibe.E("ui.mapstyle.roguelike.view.zoomNames.01", "REGION"),
-	zCloseUp:  vibe.E("ui.mapstyle.roguelike.view.zoomNames.02", "SETTLEMENT"),
-	zDistrict: vibe.E("ui.mapstyle.roguelike.view.zoomNames.03", "DISTRICT"),
+var zoomNames = [4]rowid.Entry{
+	zOverview: rowid.E("ui.mapstyle.roguelike.view.zoomNames.01", "REGION"),
+	zCloseUp:  rowid.E("ui.mapstyle.roguelike.view.zoomNames.02", "SETTLEMENT"),
+	zDistrict: rowid.E("ui.mapstyle.roguelike.view.zoomNames.03", "DISTRICT"),
 }
 
-func zoomName(z int) vibe.Entry {
+func zoomName(z int) rowid.Entry {
 	switch z {
 	case zCosmos:
-		return vibe.E("ui.mapstyle.roguelike.view.zoomNames.cosmos", "COSMOS")
+		return rowid.E("ui.mapstyle.roguelike.view.zoomNames.cosmos", "COSMOS")
 	case zOverview:
 		return zoomNames[zOverview]
 	case zInner:
-		return vibe.E("ui.mapstyle.roguelike.view.zoomNames.inner", "INNER")
+		return rowid.E("ui.mapstyle.roguelike.view.zoomNames.inner", "INNER")
 	case zCloseUp:
 		return zoomNames[zCloseUp]
 	case zDistrict:

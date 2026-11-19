@@ -14,7 +14,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // stats_lifetime.go is the Stats page's Lifetime part: the account as a
@@ -22,10 +22,10 @@ import (
 // best run of each count and the badge families.
 
 var (
-	txtFamilies = vibe.E("ui.stats_lifetime.txtFamilies.01", "Badge families")
-	txtFastest  = vibe.E("ui.stats_lifetime.txtFastest.01", "Fastest")
-	txtBestRun  = vibe.E("ui.stats_lifetime.txtBestRun.01", "Best run")
-	txtPickAge  = vibe.E("ui.stats_lifetime.txtPickAge.01", "pick age")
+	txtFamilies = rowid.E("ui.stats_lifetime.txtFamilies.01", "Badge families")
+	txtFastest  = rowid.E("ui.stats_lifetime.txtFastest.01", "Fastest")
+	txtBestRun  = rowid.E("ui.stats_lifetime.txtBestRun.01", "Best run")
+	txtPickAge  = rowid.E("ui.stats_lifetime.txtPickAge.01", "pick age")
 )
 
 // statsPlaque is the account's plaque: its name, title and progress toward
@@ -228,20 +228,20 @@ const statsCoinArt = 28
 // they list. A family not named here lists last, under its own key.
 var badgeFamilyTitles = []struct {
 	key   string
-	title vibe.Entry
+	title rowid.Entry
 }{
-	{"age", vibe.E("ui.badge_list.badgeFamilyTitles.02", "Ages")},
-	{"swift", vibe.E("ui.badge_list.badgeFamilyTitles.04", "Swift Eras")},
-	{"wonder", vibe.E("ui.badge_list.badgeFamilyTitles.05", "Wonders")},
-	{"maximalist", vibe.E("ui.badge_list.badgeFamilyTitles.07", "Maximalists")},
-	{"techs", vibe.E("ui.badge_list.badgeFamilyTitles.08", "Research")},
-	{"doom", vibe.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
+	{"age", rowid.E("ui.badge_list.badgeFamilyTitles.02", "Ages")},
+	{"swift", rowid.E("ui.badge_list.badgeFamilyTitles.04", "Swift Eras")},
+	{"wonder", rowid.E("ui.badge_list.badgeFamilyTitles.05", "Wonders")},
+	{"maximalist", rowid.E("ui.badge_list.badgeFamilyTitles.07", "Maximalists")},
+	{"techs", rowid.E("ui.badge_list.badgeFamilyTitles.08", "Research")},
+	{"doom", rowid.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
 	{"expedition", txtExpeditions},
-	{"harbinger", vibe.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
-	{"awakening", vibe.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
-	{"theme", vibe.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
-	{"map", vibe.E("ui.badge_list.badgeFamilyTitles.25", "Maps")},
-	{"special", vibe.E("ui.badge_list.badgeFamilyTitles.27", "Specials")},
+	{"harbinger", rowid.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
+	{"awakening", rowid.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
+	{"theme", rowid.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
+	{"map", rowid.E("ui.badge_list.badgeFamilyTitles.25", "Maps")},
+	{"special", rowid.E("ui.badge_list.badgeFamilyTitles.27", "Specials")},
 }
 
 // statsFamily is a badge family and its counts.

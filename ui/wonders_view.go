@@ -6,7 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -79,14 +79,14 @@ func (wv *wondersView) footer() [][2]string {
 	if wv.gallery {
 		tab, esc = "list", "back"
 	}
-	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", vibe.Line("ui.wonders_view.footer.09", "page")}, {"Tab", tab}, {"Esc", esc}}
+	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", rowid.Line("ui.wonders_view.footer.09", "page")}, {"Tab", tab}, {"Esc", esc}}
 }
 
 // galleryText is the gallery: each built wonder, oldest first, with the age
 // it belongs to and its description.
 func (wv *wondersView) galleryText(state game.GameState) string {
 	var sb strings.Builder
-	sb.WriteString(vibe.Line("ui.wonders_view.galleryText.01", "[gold]═══ Wonder gallery ═══[-]"))
+	sb.WriteString(rowid.Line("ui.wonders_view.galleryText.01", "[gold]═══ Wonder gallery ═══[-]"))
 	sb.WriteString("\n\n")
 	set := state.Ruleset()
 	for _, w := range builtWonders(state) {
@@ -96,7 +96,7 @@ func (wv *wondersView) galleryText(state game.GameState) string {
 			if label == "" {
 				label = config.YearLabel(yr)
 			}
-			when = vibe.Sprintf("ui.wonders_view.galleryText.04", "  [gray]the age began %s[-]", label)
+			when = rowid.Sprintf("ui.wonders_view.galleryText.04", "  [gray]the age began %s[-]", label)
 		}
 		fmt.Fprintf(&sb, "[gold]★ %s[-]  [gray]%s[-]%s\n", lit(w.name), lit(w.ageName), when)
 		if w.def.Description != "" {
@@ -104,7 +104,7 @@ func (wv *wondersView) galleryText(state game.GameState) string {
 		}
 		sb.WriteString("\n")
 	}
-	sb.WriteString(vibe.Line("ui.wonders_view.galleryKeys.01", "[gray]Tab or G the list   Esc back[-]"))
+	sb.WriteString(rowid.Line("ui.wonders_view.galleryKeys.01", "[gray]Tab or G the list   Esc back[-]"))
 	sb.WriteString("\n")
 	return sb.String()
 }

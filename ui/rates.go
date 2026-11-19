@@ -8,7 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // rates.go is the one way a rate is said on screen. The engine's rates are
@@ -116,19 +116,19 @@ func rateSources(b game.RateBreakdown, tickMs int) []rateSource {
 		}
 	}
 	rt := func(v float64) string { return rateText(v, tickMs) }
-	add(b.BuildingRate, vibe.Sprintf("ui.input.cmdRates.03", "Buildings: %s", rt(b.BuildingRate)))
+	add(b.BuildingRate, rowid.Sprintf("ui.input.cmdRates.03", "Buildings: %s", rt(b.BuildingRate)))
 	// What worker output bonuses add (game/engine.go, gather_rate).
-	add(b.WorkerRate, vibe.Sprintf("ui.input.cmdRates.04", "Worker bonus: %s", rt(b.WorkerRate)))
+	add(b.WorkerRate, rowid.Sprintf("ui.input.cmdRates.04", "Worker bonus: %s", rt(b.WorkerRate)))
 	// What the techs add: their bonus on what the resource's buildings make,
 	// counted after the pools, and the flat output of a tech that is its
 	// first source.
-	add(b.ResearchRate, vibe.Sprintf("ui.input.cmdRates.05", "Research: %s", rt(b.ResearchRate)))
-	add(b.EventRate, vibe.Sprintf("ui.input.cmdRates.06", "Events: %s", rt(b.EventRate)))
-	add(b.TradeRate, vibe.Sprintf("ui.input.cmdRates.07", "Trade: %s", rt(b.TradeRate)))
-	add(b.BonusRate, vibe.Sprintf("ui.input.cmdRates.08", "Bonuses: %s", rt(b.BonusRate)))
-	add(b.LegacyRate, vibe.Sprintf("ui.input.cmdRates.09", "Cosmic Legacy: %s", rt(b.LegacyRate)))
-	add(b.MasteryRate, vibe.Sprintf("ui.input.cmdRates.10", "Era Mastery: %s", rt(b.MasteryRate)))
-	add(b.PrestigeRate, vibe.Sprintf("ui.input.cmdRates.11", "Prestige: %s", rt(b.PrestigeRate)))
-	add(b.FoodDrain, vibe.Sprintf("ui.input.cmdRates.12", "Drain: %s", rt(b.FoodDrain)))
+	add(b.ResearchRate, rowid.Sprintf("ui.input.cmdRates.05", "Research: %s", rt(b.ResearchRate)))
+	add(b.EventRate, rowid.Sprintf("ui.input.cmdRates.06", "Events: %s", rt(b.EventRate)))
+	add(b.TradeRate, rowid.Sprintf("ui.input.cmdRates.07", "Trade: %s", rt(b.TradeRate)))
+	add(b.BonusRate, rowid.Sprintf("ui.input.cmdRates.08", "Bonuses: %s", rt(b.BonusRate)))
+	add(b.LegacyRate, rowid.Sprintf("ui.input.cmdRates.09", "Cosmic Legacy: %s", rt(b.LegacyRate)))
+	add(b.MasteryRate, rowid.Sprintf("ui.input.cmdRates.10", "Era Mastery: %s", rt(b.MasteryRate)))
+	add(b.PrestigeRate, rowid.Sprintf("ui.input.cmdRates.11", "Prestige: %s", rt(b.PrestigeRate)))
+	add(b.FoodDrain, rowid.Sprintf("ui.input.cmdRates.12", "Drain: %s", rt(b.FoodDrain)))
 	return out
 }

@@ -3,7 +3,7 @@ package ui
 import (
 	"image"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -16,7 +16,7 @@ import (
 // name for a bar with little room ("" when the name is short already).
 type footerKey struct {
 	key          string
-	label, short vibe.Entry
+	label, short rowid.Entry
 }
 
 // name is the key's word on a bar: the short one when short is set and

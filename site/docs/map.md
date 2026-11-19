@@ -29,7 +29,7 @@ Once you have typed something, `Tab`, `Shift-Tab` and `Enter` act on the prompt 
 
 A few keys that print are the Map's too, while the prompt is empty (no command begins with one): `+` and `=` zoom in, `-` and `_` zoom out. A keyboard with no Page keys (a Mac's, for one) can zoom with `-` and `=` alone. `Option+↑` and `Option+↓` also work as `PgUp` and `PgDn` here, and `Option+←` and `Option+→` as `Home` and `End` (see [Commands](commands.md#the-prompt)).
 
-The settings are commands you can type with the Map open: `map glyphs`, `map flows` and `minimap` (see [Settings](#settings)). With VibeMode on, the words on the Map come in its second script too (see [VibeMode](commands.md#vibemode)).
+The settings are commands you can type with the Map open: `map glyphs`, `map flows` and `minimap` (see [Settings](#settings)).
 
 The top row names your town, its age and era, the weather and the time of day, your people, your idle workers, how many civilizations you have met and the zoom you are in. The rows at the foot hold the news line, what the cursor is on, the command to type for it and the keys. Below them is a key bar. It shows what `Enter` will do, the current glyph set, and the reply to the last command you typed (the log is hidden behind the Map).
 

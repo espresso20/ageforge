@@ -10,10 +10,10 @@ import (
 )
 
 // widths.go: the longest a label of the screens may be, from the width the
-// code lays it out in. A VibeMode line can be longer than the plain one, and
+// code lays it out in. A rewritten line can be longer than the plain one, and
 // where the code gives a label a fixed width it does not make room: the value
 // after it moves, or a table's column spills. So the export carries the width
-// as the row's max, and vibe-lint holds a line to it.
+// as the row's max, and the row-id lint holds a line to it.
 //
 // The width comes from the code, one of three ways:
 //   - the label is padded by the code to a width (padRight(label, 12)), or by
@@ -102,7 +102,7 @@ func (c *catalog) verbWidth(u *unit) int {
 		switch pkg.Name + "." + sel.Sel.Name {
 		case "fmt.Sprintf", "fmt.Errorf":
 			format = 0
-		case "fmt.Fprintf", "vibe.Sprintf", "vibe.Errorf":
+		case "fmt.Fprintf", "rowid.Sprintf", "rowid.Errorf":
 			format = 1
 		}
 		if format < 0 || format >= len(call.Args) {
@@ -138,12 +138,12 @@ func (c *catalog) verbWidth(u *unit) int {
 }
 
 // whollyTheText says whether an argument is the unit's text and nothing else:
-// the literal, or a vibe call that carries it.
+// the literal, or a rowid call that carries it.
 func whollyTheText(arg ast.Expr, lo, hi int, u *unit) bool {
 	if lo == u.start && hi == u.end {
 		return true
 	}
-	if call, ok := arg.(*ast.CallExpr); ok && isVibeCall(call) && len(call.Args) == 2 {
+	if call, ok := arg.(*ast.CallExpr); ok && isRowCall(call) && len(call.Args) == 2 {
 		return true
 	}
 	return false

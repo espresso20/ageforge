@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // build_refusals.go holds the engine's reasons for refusing a build, a sale
@@ -16,7 +16,7 @@ import (
 // underConstructionErr is the refusal for a unique building that is already
 // being built; left is how long the copy has still to go.
 func underConstructionErr(name, left string) error {
-	return vibe.Errorf("game.engine.startBuildPaid.02", "%s is already under construction (%s left).", name, left)
+	return rowid.Errorf("game.engine.startBuildPaid.02", "%s is already under construction (%s left).", name, left)
 }
 
 // QueuedRefusal is the engine's refusal to queue another copy of key while one
@@ -38,7 +38,7 @@ func (s GameState) QueuedRefusal(key string) string {
 // sellAgeErr is the refusal to sell in the first age.
 func sellAgeErr(set *rules.Set, age string) error {
 	if age == "primitive_age" {
-		return vibe.Errorf("game.engine.SellBuilding.02", "You cannot sell buildings in the %s.", set.Name(rules.KindAge, "primitive_age"))
+		return rowid.Errorf("game.engine.SellBuilding.02", "You cannot sell buildings in the %s.", set.Name(rules.KindAge, "primitive_age"))
 	}
 	return nil
 }
@@ -48,21 +48,21 @@ func sellAgeErr(set *rules.Set, age string) error {
 func sellBlockErr(def config.BuildingDef, count int, queued bool) error {
 	switch {
 	case def.Category == "wonder":
-		return vibe.Errorf("game.engine.SellBuilding.03", "Wonders cannot be sold.")
+		return rowid.Errorf("game.engine.SellBuilding.03", "Wonders cannot be sold.")
 	case def.Category == "storage":
 		// Storage is permanent, like wonders (see isDestroyable). Once its age
 		// has passed the age lock never lets it be rebuilt, and an age's first
 		// storage copy can cost more than the storage left after a sale, so a
 		// sold copy could leave no way to raise a cap ever again.
-		return vibe.Errorf("game.engine.SellBuilding.04", "Storage cannot be sold: once its age has passed, it can never be rebuilt.")
+		return rowid.Errorf("game.engine.SellBuilding.04", "Storage cannot be sold: once its age has passed, it can never be rebuilt.")
 	case def.Scholars > 0:
 		// Knowledge buildings are the knowledge store, spared the same way: a
 		// tech priced over the smaller store could never be started.
-		return vibe.Errorf("game.engine.SellBuilding.05", "Knowledge buildings cannot be sold: once its age has passed, it can never be rebuilt.")
+		return rowid.Errorf("game.engine.SellBuilding.05", "Knowledge buildings cannot be sold: once its age has passed, it can never be rebuilt.")
 	case count == 0:
-		return vibe.Errorf("game.engine.SellBuilding.06", "You have no %s to sell.", def.Name)
+		return rowid.Errorf("game.engine.SellBuilding.06", "You have no %s to sell.", def.Name)
 	case queued:
-		return vibe.Errorf("game.engine.SellBuilding.07", "A %s is still under construction. Sell after it is finished.", def.Name)
+		return rowid.Errorf("game.engine.SellBuilding.07", "A %s is still under construction. Sell after it is finished.", def.Name)
 	}
 	return nil
 }
@@ -86,12 +86,12 @@ func (s GameState) SellRefusal(key string) string {
 
 // noUpgradeErr is the refusal to upgrade a building that is not an older one.
 func noUpgradeErr(name string) error {
-	return vibe.Errorf("game.engine.upgradeBuildingLocked.01", "%s has no upgrade this age. Type 'upgrade' to list the ones that do.", name)
+	return rowid.Errorf("game.engine.upgradeBuildingLocked.01", "%s has no upgrade this age. Type 'upgrade' to list the ones that do.", name)
 }
 
 // noneToUpgradeErr is the refusal to upgrade a building the town does not hold.
 func noneToUpgradeErr(name string) error {
-	return vibe.Errorf("game.engine.upgradeBuildingLocked.02", "You have no %s to upgrade.", name)
+	return rowid.Errorf("game.engine.upgradeBuildingLocked.02", "You have no %s to upgrade.", name)
 }
 
 // UpgradeOffer is what upgrading the next copy of an older building comes to:

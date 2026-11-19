@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/espresso20/ageforge/rowid"
 	"image"
 	"strings"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -129,7 +129,7 @@ func (m *badgeMoment) draw(p *kit.Painter, card image.Rectangle, v game.BadgeVie
 // badgeToastWords are the card's head and the badge's tier text (" (gold)",
 // or nothing).
 func badgeToastWords(v game.BadgeView) (head, tierText string) {
-	head = vibe.Line("ui.badge_list.badgeToast.01", "Badge earned:")
+	head = rowid.Line("ui.badge_list.badgeToast.01", "Badge earned:")
 	if v.Tier != "" {
 		tierText = " (" + v.Tier + ")"
 	}

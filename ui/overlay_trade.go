@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -16,8 +16,8 @@ import (
 func tradePage(state game.GameState) deckPage {
 	trade := state.Trade
 	pg := deckPage{
-		Title: vibe.Line("ui.overlay_trade.tradePage.01", "Trade routes"),
-		Hint:  vibe.Line("ui.overlay_trade.tradePage.02", "trade route start/stop <key>"),
+		Title: rowid.Line("ui.overlay_trade.tradePage.01", "Trade routes"),
+		Hint:  rowid.Line("ui.overlay_trade.tradePage.02", "trade route start/stop <key>"),
 	}
 	// The black market's lock is said on its own stop, not here.
 	pg.Notes = append(pg.Notes, noteLinesOf(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce), xGold)...)
@@ -30,8 +30,8 @@ func tradePage(state game.GameState) deckPage {
 			names[i] = game.ResourceName(r)
 		}
 		pg.Notes = append(pg.Notes,
-			deckLine{Value: vibe.Sprintf("ui.overlay_trade.tradePage.03", "⚠ Routes importing %s are suspended (a war, or your embargo).", textfmt.List(names)), K: xBad},
-			deckLine{Value: vibe.Line("ui.overlay_trade.tradePage.04", "Lift your embargo with: diplomacy neutral <civ>")})
+			deckLine{Value: rowid.Sprintf("ui.overlay_trade.tradePage.03", "⚠ Routes importing %s are suspended (a war, or your embargo).", textfmt.List(names)), K: xBad},
+			deckLine{Value: rowid.Line("ui.overlay_trade.tradePage.04", "Lift your embargo with: diplomacy neutral <civ>")})
 	}
 
 	// With trade routes themselves still locked, no route can start: its
@@ -46,10 +46,10 @@ func tradePage(state game.GameState) deckPage {
 		}
 	}
 	pg.Head = []xseg{
-		{vibe.Line("ui.overlay_trade.tradePage.05", "Routes "), xDim},
-		{vibe.Sprintf("ui.overlay_trade.tradePage.06", "%d running", len(trade.ActiveRoutes)), xGood}, {" · ", xFaint},
-		{vibe.Sprintf("ui.overlay_trade.tradePage.07", "%d open", open), xText}, {" · ", xFaint},
-		{vibe.Sprintf("ui.overlay_trade.tradePage.08", "%d locked", locked), xDim},
+		{rowid.Line("ui.overlay_trade.tradePage.05", "Routes "), xDim},
+		{rowid.Sprintf("ui.overlay_trade.tradePage.06", "%d running", len(trade.ActiveRoutes)), xGood}, {" · ", xFaint},
+		{rowid.Sprintf("ui.overlay_trade.tradePage.07", "%d open", open), xText}, {" · ", xFaint},
+		{rowid.Sprintf("ui.overlay_trade.tradePage.08", "%d locked", locked), xDim},
 	}
 	pg.Notes = append(pg.Notes, allyTradeNotes(state.Diplomacy)...)
 
@@ -58,23 +58,23 @@ func tradePage(state game.GameState) deckPage {
 		// not reshuffle on every refresh.
 		active := append([]game.ActiveRouteInfo(nil), trade.ActiveRoutes...)
 		sort.Slice(active, func(i, j int) bool { return active[i].Key < active[j].Key })
-		sec := deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.09", "Running"), MinW: 50}
+		sec := deckSection{Title: rowid.Line("ui.overlay_trade.tradePage.09", "Running"), MinW: 50}
 		for _, route := range active {
 			c := deckCard{
-				Title: route.Name, Chip: vibe.Line("ui.overlay_trade.tradePage.10", "running"), ChipK: xChipShort,
-				Lines:  []deckLine{{vibe.Line("ui.overlay_trade.tradePage.11", "Export"), game.Amounts(route.Export), 0}, {vibe.Line("ui.overlay_trade.tradePage.12", "Import"), game.Amounts(route.Import), xGood}},
+				Title: route.Name, Chip: rowid.Line("ui.overlay_trade.tradePage.10", "running"), ChipK: xChipShort,
+				Lines:  []deckLine{{rowid.Line("ui.overlay_trade.tradePage.11", "Export"), game.Amounts(route.Export), 0}, {rowid.Line("ui.overlay_trade.tradePage.12", "Import"), game.Amounts(route.Import), xGood}},
 				Action: "stop", Command: "trade route stop " + route.Key, Danger: true,
 			}
 			if route.Disrupted {
-				c.Chip, c.ChipK = vibe.Line("ui.overlay_trade.tradePage.14", "suspended"), xChipMil
+				c.Chip, c.ChipK = rowid.Line("ui.overlay_trade.tradePage.14", "suspended"), xChipMil
 				c.Lines[1].K = xBad
-				c.Why = vibe.Sprintf("ui.overlay_trade.tradePage.15", "Suspended: %s imports are blockaded", game.ResourceName(route.DisruptedBy))
+				c.Why = rowid.Sprintf("ui.overlay_trade.tradePage.15", "Suspended: %s imports are blockaded", game.ResourceName(route.DisruptedBy))
 			} else {
 				c.Meter = true
 				if route.CycleTicks > 0 {
 					c.Share = max(0, min(1, 1-float64(route.TicksLeft)/float64(route.CycleTicks)))
 				}
-				c.MeterText = vibe.Sprintf("ui.overlay_trade.tradePage.16", "%s left in this cycle (%s done)",
+				c.MeterText = rowid.Sprintf("ui.overlay_trade.tradePage.16", "%s left in this cycle (%s done)",
 					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, txtCycle.String(), txtCycles.String()))
 			}
 			sec.Cards = append(sec.Cards, c)
@@ -83,20 +83,20 @@ func tradePage(state game.GameState) deckPage {
 	}
 
 	if len(trade.AvailableRoutes) > 0 {
-		sec := deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.17", "Open routes"), MinW: 46}
+		sec := deckSection{Title: rowid.Line("ui.overlay_trade.tradePage.17", "Open routes"), MinW: 46}
 		for _, route := range trade.AvailableRoutes {
 			c := deckCard{
 				Title: route.Name, Desc: route.Description,
-				Lines: []deckLine{{vibe.Line("ui.overlay_trade.tradePage.18", "Export"), game.Amounts(route.Export), 0}, {vibe.Line("ui.overlay_trade.tradePage.19", "Import"), game.Amounts(route.Import), xGood}},
+				Lines: []deckLine{{rowid.Line("ui.overlay_trade.tradePage.18", "Export"), game.Amounts(route.Export), 0}, {rowid.Line("ui.overlay_trade.tradePage.19", "Import"), game.Amounts(route.Import), xGood}},
 			}
 			if route.CanStart && !routesLocked {
-				c.Chip, c.ChipK = vibe.Line("ui.overlay_trade.tradePage.20", "ready"), xChipCivic
+				c.Chip, c.ChipK = rowid.Line("ui.overlay_trade.tradePage.20", "ready"), xChipCivic
 				c.Action, c.Command = "start", "trade route start "+route.Key
 			} else {
-				c.Chip, c.ChipK, c.Quiet = vibe.Line("ui.overlay_trade.tradePage.22", "locked"), xKeyName, true
+				c.Chip, c.ChipK, c.Quiet = rowid.Line("ui.overlay_trade.tradePage.22", "locked"), xKeyName, true
 				c.Why = refusal
 				if !route.CanStart {
-					c.Why = vibe.Sprintf("ui.overlay_trade.tradePage.23", "needs %s (have %s)",
+					c.Why = rowid.Sprintf("ui.overlay_trade.tradePage.23", "needs %s (have %s)",
 						game.BuildingCount(route.MinCount, route.RequiredBld),
 						textfmt.Int(max(state.Buildings[route.RequiredBld].Count, state.Buildings[route.RequiredBld].HeldWithLater)))
 				}
@@ -107,7 +107,7 @@ func tradePage(state game.GameState) deckPage {
 	}
 
 	if len(trade.ActiveRoutes) == 0 && len(trade.AvailableRoutes) == 0 {
-		pg.Notes = append(pg.Notes, deckLine{Value: vibe.Line("ui.overlay_trade.tradePage.24", "No trade routes in this age yet.")})
+		pg.Notes = append(pg.Notes, deckLine{Value: rowid.Line("ui.overlay_trade.tradePage.24", "No trade routes in this age yet.")})
 	}
 
 	if sec, ok := blackMarketSection(state); ok {
@@ -116,9 +116,9 @@ func tradePage(state game.GameState) deckPage {
 
 	// Civilization opinion lives on the Factions panel only. This panel used
 	// to carry its own copy, which went stale.
-	pg.Sections = append(pg.Sections, deckSection{Title: vibe.Line("ui.overlay_trade.tradePage.25", "Factions"), Cards: []deckCard{{
-		Title: vibe.Line("ui.overlay_trade.tradePage.26", "Factions"), Desc: vibe.Line("ui.overlay_trade.tradePage.27", "Opinion and deals with other civilizations: type factions"),
-		Action: vibe.Line("ui.overlay_trade.tradePage.28", "open"), Command: "factions",
+	pg.Sections = append(pg.Sections, deckSection{Title: rowid.Line("ui.overlay_trade.tradePage.25", "Factions"), Cards: []deckCard{{
+		Title: rowid.Line("ui.overlay_trade.tradePage.26", "Factions"), Desc: rowid.Line("ui.overlay_trade.tradePage.27", "Opinion and deals with other civilizations: type factions"),
+		Action: rowid.Line("ui.overlay_trade.tradePage.28", "open"), Command: "factions",
 	}}})
 	return pg
 }
@@ -149,9 +149,9 @@ func allyTradeNotes(dip game.DiplomacyState) []deckLine {
 		f := dip.Factions[k]
 		head := ""
 		if i == 0 {
-			head = vibe.Line("ui.overlay_trade.allyTradeNotes.01", "Allied bonuses: ")
+			head = rowid.Line("ui.overlay_trade.allyTradeNotes.01", "Allied bonuses: ")
 		}
-		out = append(out, deckLine{Value: head + vibe.Sprintf("ui.overlay_trade.allyTradeNotes.02", "%s: %s %s (route imports and production)",
+		out = append(out, deckLine{Value: head + rowid.Sprintf("ui.overlay_trade.allyTradeNotes.02", "%s: %s %s (route imports and production)",
 			f.Name, textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty)), K: xGood})
 	}
 	return out

@@ -6,7 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // fieldMax is the longest text Discord takes in one field, in characters.
@@ -30,7 +30,7 @@ func Provider(engine *game.GameEngine, started time.Time) func() *Activity {
 
 // MenuActivity is the line for the main menu.
 func MenuActivity(started time.Time) *Activity {
-	return base(started, vibe.Line("presence.MenuActivity.01", "In the main menu"), "")
+	return base(started, rowid.Line("presence.MenuActivity.01", "In the main menu"), "")
 }
 
 // FromState is the line for a run: the age and its year, then the town and its epoch,
@@ -51,7 +51,7 @@ func FromState(st game.GameState, started time.Time) *Activity {
 		state = town
 	}
 	if st.Prestige.Level > 0 {
-		with := state + vibe.Sprintf("presence.FromState.03", " · Prestige %d", st.Prestige.Level)
+		with := state + rowid.Sprintf("presence.FromState.03", " · Prestige %d", st.Prestige.Level)
 		if len([]rune(with)) <= fieldMax {
 			state = with
 		}

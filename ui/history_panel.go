@@ -11,9 +11,9 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -23,23 +23,23 @@ import (
 // chart is history_plot.go; the data is history_data.go.
 
 var (
-	txtHistoryTitle = vibe.E("ui.dashboard.NewDashboard.16", "Civilization History")
-	txtThisAge      = vibe.E("ui.history_panel.words.01", "This age")
-	txtAllRuns      = vibe.E("ui.history_panel.words.03", "All runs")
-	txtLinear       = vibe.E("ui.history_panel.words.04", "Linear")
-	txtLog          = vibe.E("ui.history_panel.words.05", "Log")
-	txtPeople       = vibe.E("ui.history_panel.words.06", "People")
-	txtProgress     = vibe.E("ui.history_panel.words.07", "Progress")
-	txtRates        = vibe.E("ui.history_panel.words.08", "Rates")
-	txtOwnScale     = vibe.E("ui.history_panel.words.09", "each measure on its own scale")
-	txtStaysLinear  = vibe.E("ui.history_panel.words.10", "stays linear")
-	txtKeyPointer   = vibe.E("ui.history_panel.words.11", "pointer")
-	txtKeyMeasure   = vibe.E("ui.history_panel.words.12", "measure")
-	txtKeyShow      = vibe.E("ui.history_panel.words.13", "show")
-	txtKeyRange     = vibe.E("ui.history_panel.words.14", "range")
-	txtKeyLog       = vibe.E("ui.history_panel.words.15", "log scale")
-	txtKeyRun       = vibe.E("ui.history_panel.words.16", "run")
-	txtKeyGhost     = vibe.E("ui.history_panel.words.17", "ghost")
+	txtHistoryTitle = rowid.E("ui.dashboard.NewDashboard.16", "Civilization History")
+	txtThisAge      = rowid.E("ui.history_panel.words.01", "This age")
+	txtAllRuns      = rowid.E("ui.history_panel.words.03", "All runs")
+	txtLinear       = rowid.E("ui.history_panel.words.04", "Linear")
+	txtLog          = rowid.E("ui.history_panel.words.05", "Log")
+	txtPeople       = rowid.E("ui.history_panel.words.06", "People")
+	txtProgress     = rowid.E("ui.history_panel.words.07", "Progress")
+	txtRates        = rowid.E("ui.history_panel.words.08", "Rates")
+	txtOwnScale     = rowid.E("ui.history_panel.words.09", "each measure on its own scale")
+	txtStaysLinear  = rowid.E("ui.history_panel.words.10", "stays linear")
+	txtKeyPointer   = rowid.E("ui.history_panel.words.11", "pointer")
+	txtKeyMeasure   = rowid.E("ui.history_panel.words.12", "measure")
+	txtKeyShow      = rowid.E("ui.history_panel.words.13", "show")
+	txtKeyRange     = rowid.E("ui.history_panel.words.14", "range")
+	txtKeyLog       = rowid.E("ui.history_panel.words.15", "log scale")
+	txtKeyRun       = rowid.E("ui.history_panel.words.16", "run")
+	txtKeyGhost     = rowid.E("ui.history_panel.words.17", "ghost")
 )
 
 // The chart's hit ids, on the panel's own grid.
@@ -108,7 +108,7 @@ func (p *historyPanel) load() {
 		p.hist, p.arch, p.name = p.src()
 	}
 	p.ms = histMeasures(p.hist, func(k string) string {
-		return vibe.Sprintf("ui.history_panel.load.01", "%s rate", p.set.Name(rules.KindResource, k))
+		return rowid.Sprintf("ui.history_panel.load.01", "%s rate", p.set.Name(rules.KindResource, k))
 	})
 	if p.runByID(p.ghost) == nil {
 		p.ghost = ""
@@ -670,11 +670,11 @@ func (p *historyPanel) legend(p2 *kit.Painter, org image.Point) {
 		var rng string
 		switch {
 		case l.lg:
-			rng = vibe.Sprintf("ui.history_panel.legend.01", "log, %s to %s", l.m.text(l.lo, false), l.m.text(l.hi, true))
+			rng = rowid.Sprintf("ui.history_panel.legend.01", "log, %s to %s", l.m.text(l.lo, false), l.m.text(l.hi, true))
 		case l.m.Cap > 0 && p.logs[p.rng]:
-			rng = vibe.Sprintf("ui.history_panel.legend.02", "0 to %s, %s", l.m.text(l.hi, true), txtStaysLinear.String())
+			rng = rowid.Sprintf("ui.history_panel.legend.02", "0 to %s, %s", l.m.text(l.hi, true), txtStaysLinear.String())
 		default:
-			rng = vibe.Sprintf("ui.history_panel.legend.03", "0 to %s", l.m.text(l.hi, true))
+			rng = rowid.Sprintf("ui.history_panel.legend.03", "0 to %s", l.m.text(l.hi, true))
 		}
 		s := l.m.Label + "  " + rng
 		if x+2+runeLen(s) > g.w-2 {
@@ -729,7 +729,7 @@ func (p *historyPanel) readout(p2 *kit.Painter, org image.Point) {
 	put := func(x, y int, s string, col color.RGBA, bold bool) {
 		p2.Print(org.X+x, org.Y+y, runeLen(s), kit.Escape(s), kit.Style{}.Foreground(theme.RGB(col.R, col.G, col.B)).Background(surf).Bold(bold))
 	}
-	head := vibe.Sprintf("ui.history_panel.readout.01", "At %s", histTime(v.ptr))
+	head := rowid.Sprintf("ui.history_panel.readout.01", "At %s", histTime(v.ptr))
 	put(bx+2, by+1, head, c.bright, true)
 	if !v.all && len(v.spans) > 0 {
 		age := v.spans[len(v.spans)-1]

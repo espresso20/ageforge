@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // buildingsProvider generates the buildings overlay text from the current game
@@ -45,8 +45,8 @@ func buildingsProvider(state game.GameState, screenW int) string {
 		}
 	}
 
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_buildings.buildingsProvider.01", "[gold]═══ Buildings: %d built, %d unlocked ═══[-]\n", totalBuilt, totalUnlocked))
-	sb.WriteString(vibe.Line("ui.overlay_buildings.buildingsProvider.02", " [gray]Every age so far. Build with: build <key> (current age only).[-]\n\n"))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_buildings.buildingsProvider.01", "[gold]═══ Buildings: %d built, %d unlocked ═══[-]\n", totalBuilt, totalUnlocked))
+	sb.WriteString(rowid.Line("ui.overlay_buildings.buildingsProvider.02", " [gray]Every age so far. Build with: build <key> (current age only).[-]\n\n"))
 
 	for i := 0; i <= currentIdx; i++ {
 		ageKey := ageOrder[i]
@@ -87,7 +87,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 		// Age header.
 		isCurrent := (ageKey == state.Age)
 		if isCurrent {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_buildings.buildingsProvider.03", "[gold]── %s (current) ──[-]\n", ageDef.Name))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_buildings.buildingsProvider.03", "[gold]── %s (current) ──[-]\n", ageDef.Name))
 		} else {
 			fmt.Fprintf(&sb, "[gray]── %s ──[-]\n", ageDef.Name)
 		}
@@ -120,7 +120,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 			// Legacy indicator.
 			legacyPart := ""
 			if bs.IsLegacy {
-				legacyPart = vibe.Line("ui.overlay_buildings.buildingsProvider.05", " [gray](legacy)[-]")
+				legacyPart = rowid.Line("ui.overlay_buildings.buildingsProvider.05", " [gray](legacy)[-]")
 			}
 
 			// Worker info.
@@ -159,7 +159,7 @@ func workersText(bs game.BuildingState) string {
 		return ""
 	}
 	if bs.Count == 0 {
-		return vibe.Sprintf("ui.overlay_buildings.workersText.02", " [gray]workers: up to %d each[-]", bs.WorkerCapacity)
+		return rowid.Sprintf("ui.overlay_buildings.workersText.02", " [gray]workers: up to %d each[-]", bs.WorkerCapacity)
 	}
-	return vibe.Sprintf("ui.overlay_buildings.workersText.01", " [cyan]workers: %d/%d[-]", bs.WorkersAssigned, bs.WorkerCapacity*bs.Count)
+	return rowid.Sprintf("ui.overlay_buildings.workersText.01", " [cyan]workers: %d/%d[-]", bs.WorkersAssigned, bs.WorkerCapacity*bs.Count)
 }

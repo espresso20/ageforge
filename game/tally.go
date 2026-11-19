@@ -8,7 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/platform/steam"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // tally.go keeps the lifetime tallies: each is one coin, a single record in
@@ -118,7 +118,7 @@ func (a *Account) tallyView(book *badgeBook, key string) (BadgeView, bool) {
 		}
 		tier := config.BadgeTier(min(lvl, int(config.BadgeLegendary)))
 		return BadgeView{Key: key, Family: "ledger", Name: t.Name, Earned: true, At: time.Unix(at, 0),
-			Level: tier, Tier: tier.Name(), Desc: vibe.Sprintf("game.tally.tallyView.01", "Rung %d of %d, at %d.", rung, len(t.Rungs), fig)}, true
+			Level: tier, Tier: tier.Name(), Desc: rowid.Sprintf("game.tally.tallyView.01", "Rung %d of %d, at %d.", rung, len(t.Rungs), fig)}, true
 	}
 	return BadgeView{}, false
 }

@@ -5,44 +5,43 @@ import (
 	"strconv"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // menu_settings.go is the main menu's Settings page: the entries are swapped
 // for one row per display setting, each with its value at the right. A change
-// is made through the calls the commands make (the account's setters,
-// SetVibeMode), so a command and the menu always agree. Esc, or Back, returns
+// is made through the calls the commands make (the account's setters), so a
+// command and the menu always agree. Esc, or Back, returns
 // to the main menu.
 
 // settingsItems are the Settings page's rows.
 func (m *mainMenu) settingsItems() []menuItem {
 	items := []menuItem{
-		{id: miSetTheme, label: vibe.Line("ui.menu.buildViewWith.05", "Themes"), key: 't', extras: []string{theme.Active().Name.String()}},
-		{id: miSetVibe, label: "VibeMode", key: 'v', extras: []string{settingOnOff(vibe.On())}, sw: true, on: vibe.On()},
-		{id: miSetGlyphs, label: vibe.Line("ui.menu.settings.02", "Map glyphs"), key: 'g', extras: []string{m.set.Tier.String()}},
-		{id: miSetMotion, label: vibe.Line("ui.menu.settings.03", "Motion"), key: 'm', extras: []string{settingOnOff(m.set.Motion)}, sw: true, on: m.set.Motion},
-		{id: miSetMinimap, label: vibe.Line("ui.menu.settings.04", "Minimap"), key: 'i', extras: []string{settingOnOff(m.set.Minimap)}, sw: true, on: m.set.Minimap},
+		{id: miSetTheme, label: rowid.Line("ui.menu.buildViewWith.05", "Themes"), key: 't', extras: []string{theme.Active().Name.String()}},
+		{id: miSetGlyphs, label: rowid.Line("ui.menu.settings.02", "Map glyphs"), key: 'g', extras: []string{m.set.Tier.String()}},
+		{id: miSetMotion, label: rowid.Line("ui.menu.settings.03", "Motion"), key: 'm', extras: []string{settingOnOff(m.set.Motion)}, sw: true, on: m.set.Motion},
+		{id: miSetMinimap, label: rowid.Line("ui.menu.settings.04", "Minimap"), key: 'i', extras: []string{settingOnOff(m.set.Minimap)}, sw: true, on: m.set.Minimap},
 	}
 	// The font, the text size and fullscreen are rows only when the game is
 	// in its own window.
 	if m.window != nil {
 		items = append(items,
 			menuItem{id: miSetFont, label: txtFont.String(), key: 'f', extras: []string{fontName(m.window.FontChoice())}},
-			menuItem{id: miSetSize, label: vibe.Line("ui.menu.settings.09", "Text size"), key: 'z', extras: []string{strconv.Itoa(m.window.TextSize())}, size: true, hint: zoomKeysHint()},
-			menuItem{id: miSetFull, label: vibe.Line("ui.menu.settings.10", "Fullscreen"), key: 'u', extras: []string{settingOnOff(m.window.Fullscreen())}, sw: true, on: m.window.Fullscreen(), hint: keyF11})
+			menuItem{id: miSetSize, label: rowid.Line("ui.menu.settings.09", "Text size"), key: 'z', extras: []string{strconv.Itoa(m.window.TextSize())}, size: true, hint: zoomKeysHint()},
+			menuItem{id: miSetFull, label: rowid.Line("ui.menu.settings.10", "Fullscreen"), key: 'u', extras: []string{settingOnOff(m.window.Fullscreen())}, sw: true, on: m.window.Fullscreen(), hint: keyF11})
 	}
 	// Discord status is a row only in a build that has a Discord application id.
 	if m.appID != "" {
-		items = append(items, menuItem{id: miSetDiscord, label: vibe.Line("ui.menu.settings.08", "Discord status"), key: 'd', extras: []string{settingOnOff(m.discordOn())}, sw: true, on: m.discordOn(), off: m.acct == nil})
+		items = append(items, menuItem{id: miSetDiscord, label: rowid.Line("ui.menu.settings.08", "Discord status"), key: 'd', extras: []string{settingOnOff(m.discordOn())}, sw: true, on: m.discordOn(), off: m.acct == nil})
 	}
-	return append(items, menuItem{id: miSetBack, label: vibe.Line("ui.menu.settings.05", "Back"), key: 'b'})
+	return append(items, menuItem{id: miSetBack, label: rowid.Line("ui.menu.settings.05", "Back"), key: 'b'})
 }
 
 var (
-	txtFont      = vibe.E("ui.window.font.title", "Font")
-	txtFontPixel = vibe.E("ui.window.font.pixel", "Pixel")
-	txtFontMono  = vibe.E("ui.window.font.mono", "JetBrains Mono")
+	txtFont      = rowid.E("ui.window.font.title", "Font")
+	txtFontPixel = rowid.E("ui.window.font.pixel", "Pixel")
+	txtFontMono  = rowid.E("ui.window.font.mono", "JetBrains Mono")
 )
 
 func fontName(choice string) string {
@@ -59,9 +58,9 @@ func (m *mainMenu) discordOn() bool {
 
 func settingOnOff(on bool) string {
 	if on {
-		return vibe.Line("ui.menu.settings.06", "On")
+		return rowid.Line("ui.menu.settings.06", "On")
 	}
-	return vibe.Line("ui.menu.settings.07", "Off")
+	return rowid.Line("ui.menu.settings.07", "Off")
 }
 
 // changeSetting changes the setting of row id: a switch flips; the glyph
@@ -71,11 +70,6 @@ func (m *mainMenu) changeSetting(id string, dir int) {
 	set := m.set
 	m.settingsSel = m.view.sel // refresh rebuilds the rows on this one
 	switch id {
-	case miSetVibe:
-		// The same call the vibemode command makes.
-		if err := m.engine.SetVibeMode(!vibe.On()); err != nil {
-			return
-		}
 	case miSetGlyphs:
 		n := len(mapmodel.TierNames)
 		cur := 0
@@ -139,7 +133,7 @@ func (m *mainMenu) changeSetting(id string, dir int) {
 	default:
 		return
 	}
-	if m.acct == nil && id != miSetVibe {
+	if m.acct == nil {
 		m.local = &set
 	}
 	m.refresh(false)
