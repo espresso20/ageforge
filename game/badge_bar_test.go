@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"testing"
-
 )
 
 // A badge remembers the bar it was earned at (card s3NHfReX). Every test

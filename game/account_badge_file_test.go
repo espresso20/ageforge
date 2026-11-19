@@ -278,7 +278,7 @@ func TestImportMergesBadges(t *testing.T) {
 		BadgeStore: &badgeFile{
 			Version: badgeFileVersion, AccountID: acct.AccountID,
 			Badges: map[string]BadgeEarned{
-				badgeStone:     {At: 100, Run: "first"},
+				badgeStone:  {At: 100, Run: "first"},
 				badgeModern: {At: 150},
 			},
 			Counters: map[string]float64{"prestige": 5, "built.lineage.housing": 10},

@@ -46,7 +46,7 @@ var pureConfig = map[string]bool{
 	"MilitaryScales": true, "MilitaryScaleIn": true,
 	"MissionKindTuning": true, "MissionKinds": true, "MissionBoardLongestMinutes": true,
 	"RareTitleWord": true,
-	"DurationText": true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,
+	"DurationText":  true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,
 	"PickLogFlavor": true, "PriceLevelsByAge": true, "Incomes": true, "FlowDealLevels": true,
 	"DealPriceLevelAt": true, "PricedResourcesAt": true,
 	"TechTerms": true, "RouteFeature": true, "TechCodeFor": true,
