@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/espresso20/ageforge/rules"
 	"image"
 	"image/png"
 	"os"
@@ -1007,8 +1008,8 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	// deep, two runs of the same age stacking in one well. The front, then
 	// one open drawer.
 	strike := func(typ, age string, share float64, run string) {
-		ticks := int(config.CoinRefTicks(age, 1) * share)
-		acct.StrikeCoin(typ, age, ticks, 1, run, day, false)
+		ticks := int(rules.Core().CoinRefTicks(age, 1) * share)
+		acct.StrikeCoin(rules.Core(), typ, age, ticks, 1, run, day, false)
 	}
 	for _, age := range []string{"classical_age", "medieval_age", "victorian_age"} {
 		for _, typ := range config.CoinTypes {
@@ -1017,7 +1018,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		strike(config.CoinAge, age, 0.9, "run-2")
 		strike(config.CoinAge, age, 1.5, "run-3")
 		strike(config.CoinWonder, age, 1.2, "run-2")
-		acct.StrikeFeat(age, int(config.CoinRefTicks(age, 1)*0.5), "run-2", day, false)
+		acct.StrikeFeat(age, int(rules.Core().CoinRefTicks(age, 1)*0.5), "run-2", day, false)
 	}
 	for i, a := range config.Ages() {
 		if a.Key == "victorian_age" {

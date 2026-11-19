@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/espresso20/ageforge/rules"
 	"image"
 	"strings"
 	"testing"
@@ -133,7 +134,7 @@ func TestCabinetPictureIsKept(t *testing.T) {
 		t.Fatalf("the front was drawn %d times after %d, for moves only", p.renders, n)
 	}
 	acct := d.engine.Account()
-	acct.StrikeCoin(config.CoinAge, config.Ages()[0].Key, 10, 1, "run", time.Unix(1700000000, 0), false)
+	acct.StrikeCoin(rules.Core(), config.CoinAge, config.Ages()[0].Key, 10, 1, "run", time.Unix(1700000000, 0), false)
 	p.update(d.engine.GetState())
 	if b := paint(); p.renders != n+1 || !strings.Contains(plateText(b, mustPlan(t, p).Title), "Pieces 1 of 132") {
 		t.Errorf("a coin held: %d draws, title %q", p.renders, plateText(b, mustPlan(t, p).Title))

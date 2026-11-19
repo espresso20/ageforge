@@ -31,7 +31,7 @@ func (ge *GameEngine) ticksIn(age string) float64 {
 // within reports whether the run has spent fewer ticks than share of age's
 // reference time at the run's speed for it.
 func (ge *GameEngine) within(age string, share float64) bool {
-	return ge.ticksIn(age) < float64(share*config.CoinRefTicks(age, ge.Prestige.AgeSpeed(age)))
+	return ge.ticksIn(age) < float64(share*ge.rules.CoinRefTicks(age, ge.Prestige.AgeSpeed(age)))
 }
 
 // ageTechsDone reports whether every tech of age is researched.
@@ -71,7 +71,7 @@ func (ge *GameEngine) judgeFeatOn(ev Event) {
 	if age == "" || ge.coinHeldLocked(config.CoinFeat, age) {
 		return
 	}
-	mark, d, done := config.FeatMarks[age], ge.Stats.Deeds, false
+	mark, d, done := ge.rules.FeatMark(age), ge.Stats.Deeds, false
 	switch age {
 	case "primitive_age":
 		done = ev.Kind == config.BadgeEvBuildingBuilt && ge.Buildings.GetCount("hut") >= int(mark)
@@ -126,7 +126,7 @@ func (ge *GameEngine) judgeFeatLeaving(age string) {
 	if age == "" || ge.coinHeldLocked(config.CoinFeat, age) {
 		return
 	}
-	mark, d, done := config.FeatMarks[age], ge.Stats.Deeds, false
+	mark, d, done := ge.rules.FeatMark(age), ge.Stats.Deeds, false
 	switch age {
 	case "stone_age":
 		done = ge.within(age, mark)
@@ -141,7 +141,7 @@ func (ge *GameEngine) judgeFeatLeaving(age string) {
 	case "modern_age":
 		sum := 0.0
 		for _, a := range ge.rules.AgeKeys() {
-			sum += config.CoinRefTicks(a, ge.Prestige.AgeSpeed(a))
+			sum += ge.rules.CoinRefTicks(a, ge.Prestige.AgeSpeed(a))
 			if a == age {
 				break
 			}

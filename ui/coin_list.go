@@ -61,7 +61,7 @@ func coinListLines(state game.GameState, acct *game.Account, sum game.BadgeSumma
 		lines = append(lines, title)
 	}
 	sight := game.SightOf(&state)
-	for _, a := range config.Ages() {
+	for _, a := range state.Ruleset().Ages() {
 		held, best := 0, 0
 		for _, typ := range append([]string{config.CoinFeat}, config.CoinTypes...) {
 			if b := acct.CoinBest(typ, a.Key); b > 0 {

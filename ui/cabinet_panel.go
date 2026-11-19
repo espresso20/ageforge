@@ -107,7 +107,8 @@ func (p *cabinetPanel) update(state game.GameState) {
 	if p.account != nil {
 		acct = p.account()
 	}
-	for i, a := range config.Ages() {
+	ages := state.Ruleset().Ages()
+	for i, a := range ages {
 		d := cabinet.Drawer{Money: a.Key, Reached: sight.Age(a.Key), Total: len(config.CoinTypes) + 1}
 		if acct != nil {
 			for _, typ := range config.CoinTypes {
@@ -125,7 +126,7 @@ func (p *cabinetPanel) update(state game.GameState) {
 		}
 	}
 	for j, l := range cabinetAgeless {
-		i := len(config.Ages()) + j
+		i := len(ages) + j
 		d := cabinet.Drawer{Reached: true}
 		p.keys[i], p.names[i], p.dim[i] = l.key, l.name, false
 		for _, w := range p.agelessWells(i) {
@@ -304,7 +305,7 @@ func (p *cabinetPanel) PointerAt(at image.Point) kit.Pointer {
 func findCabinetDrawer(state game.GameState, word string) (string, bool) {
 	word = strings.ToLower(strings.TrimSpace(word))
 	sight := game.SightOf(&state)
-	for _, a := range config.Ages() {
+	for _, a := range state.Ruleset().Ages() {
 		n := strings.ToLower(a.Name)
 		if sight.Age(a.Key) && (word == a.Key || word == strings.ReplaceAll(a.Key, "_", " ") || word == n || word+" age" == n) {
 			return a.Key, true

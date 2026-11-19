@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/espresso20/ageforge/rules"
 	"image"
 	"strings"
 	"testing"
@@ -94,7 +95,7 @@ func TestBadgeMomentOnTheLiveScreen(t *testing.T) {
 		// coins are drawn. The age is reported alone: an age entered for
 		// real raises its splash.
 		for _, age := range []string{"classical_age", "medieval_age"} {
-			eng.Account().StrikeCoin(config.CoinAge, age, 100, 1, "run", clock, false)
+			eng.Account().StrikeCoin(rules.Core(), config.CoinAge, age, 100, 1, "run", clock, false)
 			eng.ReportForTest(config.BadgeEvAgeReached, age)
 		}
 		d.refresh()
@@ -207,7 +208,7 @@ func TestBadgeMomentWaitsUnderAPanel(t *testing.T) {
 	if !d.overlayMgr.Show("techs", eng.GetState()) {
 		t.Fatal("the Research panel did not open")
 	}
-	eng.Account().StrikeCoin(config.CoinAge, "classical_age", 100, 1, "run", clock, false)
+	eng.Account().StrikeCoin(rules.Core(), config.CoinAge, "classical_age", 100, 1, "run", clock, false)
 	eng.ReportForTest(config.BadgeEvAgeReached, "classical_age")
 	d.refresh()
 	if len(d.moment.queue) != 1 {

@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/espresso20/ageforge/rules"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,7 +15,7 @@ import (
 // strikeAt strikes a coin whose figure is the given share of the age's reference time.
 func strikeAt(a *Account, typ, age string, share float64, run string, at int64) (CoinCopy, bool) {
 	ticks := int(share * config.AgeTargetTicks(age))
-	return a.StrikeCoin(typ, age, ticks, 1, run, time.Unix(at, 0), false)
+	return a.StrikeCoin(rules.Core(), typ, age, ticks, 1, run, time.Unix(at, 0), false)
 }
 
 func TestCoinOneCopyForEachRun(t *testing.T) {
@@ -49,7 +50,7 @@ func TestCoinOneCopyForEachRun(t *testing.T) {
 		t.Errorf("stacks of the age: %+v", got)
 	}
 	// Bad input strikes nothing.
-	if _, ok := a.StrikeCoin("swift", "stone_age", 1, 1, "r1", time.Now(), false); ok {
+	if _, ok := a.StrikeCoin(rules.Core(), "swift", "stone_age", 1, 1, "r1", time.Now(), false); ok {
 		t.Error("an unknown type was struck")
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/cabinet"
 	"github.com/espresso20/ageforge/rowid"
@@ -23,7 +22,7 @@ type agelessWell struct {
 }
 
 // agelessSlot reports whether a drawer is Ledgers, Curios or Themes.
-func agelessSlot(slot int) bool { return slot >= len(config.Ages()) }
+func agelessSlot(slot int) bool { return slot >= cabinet.Slots-len(cabinetAgeless) }
 
 // curioFamilies are the badge families whose coins are the Curios drawer's.
 var curioFamilies = []string{"special", "map", "swift", "awakening", "doom", "expedition"}

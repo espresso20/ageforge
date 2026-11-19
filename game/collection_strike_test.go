@@ -181,7 +181,7 @@ func TestCoinCopyCarriesTheEditedMark(t *testing.T) {
 	if c, _ := strikeAt(a, "age", "stone_age", 1.5, "r1", 10); c.Flags != 0 {
 		t.Errorf("a clean strike is marked: %+v", c)
 	}
-	if c, _ := a.StrikeCoin("age", "iron_age", 1, 1, "r1", time.Unix(10, 0), true); c.Flags&BadgeFlagCrossed == 0 {
+	if c, _ := a.StrikeCoin(rules.Core(), "age", "iron_age", 1, 1, "r1", time.Unix(10, 0), true); c.Flags&BadgeFlagCrossed == 0 {
 		t.Errorf("a strike on an edited run is not marked: %+v", c)
 	}
 	a.Tampered = true
@@ -190,9 +190,9 @@ func TestCoinCopyCarriesTheEditedMark(t *testing.T) {
 	}
 	// The earlier copy of a run keeps its mark through a merge, as a badge does.
 	theirs := &Account{AccountID: a.AccountID}
-	theirs.StrikeCoin("age", "bronze_age", 1, 1, "r1", time.Unix(5, 0), false)
+	theirs.StrikeCoin(rules.Core(), "age", "bronze_age", 1, 1, "r1", time.Unix(5, 0), false)
 	mine := testAccount(t)
-	mine.StrikeCoin("age", "bronze_age", 1, 1, "r1", time.Unix(9, 0), true)
+	mine.StrikeCoin(rules.Core(), "age", "bronze_age", 1, 1, "r1", time.Unix(9, 0), true)
 	mine.mu.Lock()
 	mine.takeCollectionLocked(theirs.collectionLocked(), true)
 	mine.mu.Unlock()

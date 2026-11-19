@@ -101,7 +101,7 @@ func TestFeatsDecidedByAnEvent(t *testing.T) {
 func TestFeatsDecidedOnLeavingTheAge(t *testing.T) {
 	var through float64 // the summed reference times through Modern
 	for _, a := range rules.Core().AgeKeys() {
-		through += config.CoinRefTicks(a, 1)
+		through += rules.Core().CoinRefTicks(a, 1)
 		if a == "modern_age" {
 			break
 		}
@@ -325,8 +325,8 @@ func TestColonialFeatNeedsNineRoutes(t *testing.T) {
 			}
 		}
 	}
-	if n != int(config.FeatMarks["colonial_age"]) {
-		t.Errorf("%d routes open by the Colonial Age, the feat asks for %d", n, int(config.FeatMarks["colonial_age"]))
+	if n != int(rules.Core().FeatMark("colonial_age")) {
+		t.Errorf("%d routes open by the Colonial Age, the feat asks for %d", n, int(rules.Core().FeatMark("colonial_age")))
 	}
 }
 

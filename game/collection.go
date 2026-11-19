@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // collection.go keeps the coin collection on the account: one copy of a coin
@@ -146,8 +147,8 @@ func (a *Account) putCoinStackLocked(key string, s CoinStack) {
 // whether the strike added a copy or bettered one. crossed is the run's own
 // edited-save mark, as a badge's. IN-MEMORY ONLY, like the
 // Record* hooks: the engine calls it under its write lock.
-func (a *Account) StrikeCoin(typ, age string, ticksInAge int, speed float64, run string, at time.Time, crossed bool) (CoinCopy, bool) {
-	return a.strike(typ, age, config.CoinLevel(age, float64(ticksInAge), speed), ticksInAge, run, at, crossed)
+func (a *Account) StrikeCoin(set *rules.Set, typ, age string, ticksInAge int, speed float64, run string, at time.Time, crossed bool) (CoinCopy, bool) {
+	return a.strike(typ, age, set.CoinLevel(age, float64(ticksInAge), speed), ticksInAge, run, at, crossed)
 }
 
 // StrikeFeat strikes the feat coin of age for run, at the one level it has.

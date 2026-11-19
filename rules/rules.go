@@ -93,7 +93,10 @@ type Source struct {
 	// Stretch the factor each age's tick clocks run at (an age it leaves
 	// out runs at 1).
 	Targets map[string]time.Duration
-	Stretch map[string]float64
+
+	// FeatMarks is each age's legendary feat number.
+	FeatMarks map[string]float64
+	Stretch   map[string]float64
 
 	// Catastrophes is each era's doom, by era key; UnknownCatastrophe what
 	// an unknown key reads as; LastPassage the final era's passage. Legacy
@@ -157,6 +160,7 @@ func FromConfig() Source {
 		GatesV2:              config.GatesV2(),
 		GateMeasures:         config.GateMeasures(),
 		Targets:              maps.Clone(config.AgeTargets),
+		FeatMarks:            maps.Clone(config.FeatMarks),
 		Stretch:              map[string]float64{},
 		Catastrophes:         map[string]Catastrophe{},
 		Legacy:               map[string]map[string]float64{},

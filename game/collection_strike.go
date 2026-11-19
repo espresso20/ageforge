@@ -29,7 +29,7 @@ func (ge *GameEngine) strikeCoin(typ, age string) {
 		return
 	}
 	entered, _ := ge.ageEntryTick(age)
-	acct.StrikeCoin(typ, age, max(0, ge.tick-entered), ge.Prestige.AgeSpeed(age), ge.activeSaveName, badgeClock(), ge.cheaterBadge)
+	acct.StrikeCoin(ge.rules, typ, age, max(0, ge.tick-entered), ge.Prestige.AgeSpeed(age), ge.activeSaveName, badgeClock(), ge.cheaterBadge)
 }
 
 // strikeLastAgeCoin strikes the age coin of the last age when a run ends by a

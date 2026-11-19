@@ -49,16 +49,6 @@ func CoinLevelOK(typ string, level int) bool {
 	return level >= 1 && level <= CoinLevels
 }
 
-// CoinRefTicks is the reference time of age for a run that plays it at speed
-// times the base rate: the age's pacing target at 1x divided by speed (a speed
-// of 0 or less counts as 1). Every time mark on a coin or a feat is a share of it.
-func CoinRefTicks(age string, speed float64) float64 {
-	if speed <= 0 {
-		speed = 1
-	}
-	return AgeTargetTicks(age) / speed
-}
-
 // coinMarks are the level marks as shares of an age's reference time, finest
 // first: a coin struck at or under the share has at least that level. Every
 // age uses the same shares. They are first figures, kept in one place to be
@@ -74,17 +64,15 @@ var coinMarks = [CoinLevels - 1]struct {
 	{2, 1.80},
 }
 
-// CoinLevel is the level of a coin struck after ticksInAge ticks in age, by a
-// run that plays the age at speed times the base rate. The reference time is
-// the age's pacing target at 1x divided by speed (a speed of 0 or less counts
-// as 1). An unknown age, or one with no target, gives level 1.
-func CoinLevel(age string, ticksInAge, speed float64) int {
-	ref := CoinRefTicks(age, speed)
+// CoinLevelAt is the level of a coin struck after ticks ticks in an age whose
+// reference time is ref ticks: the finest level whose share of ref the time
+// stays under, and 1 when ref is not positive or none holds.
+func CoinLevelAt(ref, ticks float64) int {
 	if ref <= 0 {
 		return 1
 	}
 	for _, m := range coinMarks {
-		if ticksInAge <= m.Share*ref {
+		if ticks <= m.Share*ref {
 			return m.Level
 		}
 	}

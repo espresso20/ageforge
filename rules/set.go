@@ -103,6 +103,7 @@ type Set struct {
 	kit      []string
 
 	targets     map[string]time.Duration
+	featMarks   map[string]float64
 	targetTicks map[string]float64
 	stretch     map[string]float64
 	teaching    []config.TeachingStep
@@ -165,6 +166,7 @@ func Compile(src Source) *Set {
 		upgrades:   slices.Clone(src.PrestigeUpgrades),
 		kit:        slices.Clone(src.LegacyKit),
 		targets:    maps.Clone(src.Targets),
+		featMarks:  maps.Clone(src.FeatMarks),
 		stretch:    maps.Clone(src.Stretch),
 		teaching:   slices.Clone(src.Teaching),
 		dooms:      maps.Clone(src.Catastrophes),

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/espresso20/ageforge/rules"
 	"image"
 	"strings"
 	"testing"
@@ -15,7 +16,7 @@ func trayRig(t *testing.T) (*Dashboard, *cabinetPanel, func() *kit.Buffer) {
 	t.Helper()
 	d, p, paint := cabinetRig(t)
 	age := config.Ages()[0].Key
-	d.engine.Account().StrikeCoin(config.CoinTechs, age, 10, 1, "run", time.Unix(1700000000, 0), false)
+	d.engine.Account().StrikeCoin(rules.Core(), config.CoinTechs, age, 10, 1, "run", time.Unix(1700000000, 0), false)
 	p.update(d.engine.GetState())
 	return d, p, paint
 }
@@ -80,7 +81,7 @@ func TestCabinetDrawerCommandAndClicks(t *testing.T) {
 	if p.tray.renders != n || n != 1 {
 		t.Errorf("the tray was drawn %d times, %d after moves", n, p.tray.renders)
 	}
-	d.engine.Account().StrikeCoin(config.CoinAge, config.Ages()[1].Key, 10, 1, "run", time.Unix(1700000000, 0), false)
+	d.engine.Account().StrikeCoin(rules.Core(), config.CoinAge, config.Ages()[1].Key, 10, 1, "run", time.Unix(1700000000, 0), false)
 	p.update(d.engine.GetState())
 	paint()
 	if p.tray.renders != n+1 {
@@ -92,7 +93,7 @@ func TestCabinetFanOpensStepsAndCloses(t *testing.T) {
 	d, p, paint := trayRig(t)
 	acc, age := d.engine.Account(), config.Ages()[0].Key
 	for i, run := range []string{"run-a", "run-b", "run-c"} {
-		acc.StrikeCoin(config.CoinTechs, age, 10+i*400, 1, run, time.Unix(1700000000+int64(i)*86400, 0), false)
+		acc.StrikeCoin(rules.Core(), config.CoinTechs, age, 10+i*400, 1, run, time.Unix(1700000000+int64(i)*86400, 0), false)
 	}
 	p.update(d.engine.GetState())
 	press(p, kit.KeyEnter)

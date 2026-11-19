@@ -60,6 +60,10 @@ var pureConfig = map[string]bool{
 	"GatePillar": true, "GatePillars": true, "PillarName": true,
 	"YearBetween": true, "YearLabel": true,
 	"IsResourceEnded": true, "AlwaysAvailableResources": true,
+	// The coin types in their order, and the two tests on them: the six
+	// levels and the feat's one are structure, not a tuned number. The level
+	// marks and the reference times are read from the set (Set.CoinLevel).
+	"CoinTypes": true, "IsCoinType": true, "CoinLevelOK": true,
 }
 
 const (
