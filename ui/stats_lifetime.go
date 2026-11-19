@@ -236,6 +236,7 @@ var badgeFamilyTitles = []struct {
 	{"maximalist", vibe.E("ui.badge_list.badgeFamilyTitles.07", "Maximalists")},
 	{"techs", vibe.E("ui.badge_list.badgeFamilyTitles.08", "Research")},
 	{"doom", vibe.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
+	{"expedition", txtExpeditions},
 	{"harbinger", vibe.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
 	{"awakening", vibe.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
 	{"theme", vibe.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
@@ -323,7 +324,8 @@ func statsCoinPic(c game.CoinCopy, w, h int, in statsInk) *image.RGBA {
 }
 
 // families lays the badge families out in a grid: each family's finest coin
-// (a recess where it holds none), its name and its count.
+// (nothing where it holds none), its name and its finest level, or its
+// count where it has no coin.
 func (pg *statsPage) families(as *game.AccountStatsView, y, w int) int {
 	pg.heading(0, y, w, txtFamilies.String())
 	y++
@@ -337,6 +339,9 @@ func (pg *statsPage) families(as *game.AccountStatsView, y, w int) int {
 	for i, f := range fams {
 		x, ty := i%cols*pw, y+i/cols*pitch
 		count := fmt.Sprintf("%d / %d", f.earned, f.shown)
+		if f.coin.Type != "" {
+			count = coinLevelWord(f.coin.Level)
+		}
 		k := xDim
 		if f.earned > 0 {
 			k = xBright
@@ -353,7 +358,7 @@ func (pg *statsPage) families(as *game.AccountStatsView, y, w int) int {
 		}
 		cx := x + (pw-coinCols)/2
 		c := f.coin
-		if slices.Contains(config.CoinTypes, f.key) {
+		if f.coin.Type != "" && slices.Contains(config.CoinTypes, f.key) {
 			pg.pics = append(pg.pics, statsPic{r: image.Rect(cx, ty, cx+coinCols, ty+coinRows), key: fmt.Sprint("coin", f.key, c.Type, c.Age, c.Level, c.Seed),
 				draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
 					return statsCoinPic(c, coinCols*cw, coinRows*ch, in)

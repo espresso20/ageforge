@@ -228,7 +228,7 @@ func TestLifetimeFamilyCoinsAreOnlyForCoinFamilies(t *testing.T) {
 				pic, has = q, true
 			}
 		}
-		if has != slices.Contains(config.CoinTypes, f.key) {
+		if has != (slices.Contains(config.CoinTypes, f.key) && f.coin.Type != "") {
 			t.Errorf("family %s: picture %v, coin family %v", f.key, has, !has)
 			continue
 		}
