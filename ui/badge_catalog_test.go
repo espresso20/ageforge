@@ -77,13 +77,6 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 	if got := titles(caseTabs(views, false)); got != "All Ages Specials Next" {
 		t.Errorf("tabs for a new account: %q", got)
 	}
-	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode})
-	text := g.String()
-	for _, leak := range []string{"Harbingers", "Catastrophes"} {
-		if strings.Contains(text, leak) {
-			t.Errorf("the case names %q with nothing of it in sight", leak)
-		}
-	}
 	list := strings.Join(badgeListLines(views, sum), "\n")
 	for _, leak := range []string{"Harbingers", "Catastrophes"} {
 		if strings.Contains(list, leak) {
@@ -96,24 +89,6 @@ func TestCaseNamesOnlyFamiliesInSight(t *testing.T) {
 	sum.HiddenCounted = true
 	if got := titles(caseTabs(views, true)); got != "All Ages Catastrophes Harbingers Specials Next" {
 		t.Errorf("tabs once the hidden badges are counted: %q", got)
-	}
-}
-
-// TestPayrollLadderNamesItsNextRung: a ladder that is not climbed by a
-// lifetime count has no count to show, so its label names the next rung.
-func TestPayrollLadderNamesItsNextRung(t *testing.T) {
-	rung := func(n int, name string) game.BadgeView {
-		return game.BadgeView{Key: fmt.Sprintf("domain.food.%d", n), Family: "domain", Name: name, Desc: "Have workers at work.",
-			Level: config.BadgeSilver, Tier: "silver", Emblem: "lineage.food", Ladder: "Food", Rung: n, Rungs: 2}
-	}
-	views := []game.BadgeView{rung(1, "Food Payroll"), rung(2, "Food Payroll II")}
-	_, _, g := drawCase(views, game.BadgeSummary{Shown: 2, Title: "Settler"}, 120, 40, caseView{tab: "domain", tier: mapmodel.TierUnicode})
-	text := g.String()
-	if !strings.Contains(text, "next: Food Payroll") {
-		t.Errorf("the payroll ladder does not name its next rung:\n%s", text)
-	}
-	if strings.Contains(text, "0 of 0") {
-		t.Error("the payroll ladder shows a count of nothing")
 	}
 }
 
@@ -155,10 +130,6 @@ func TestTitleCommand(t *testing.T) {
 	views, sum := eng.Badges()
 	if wornTitle(sum) != "Survivor" {
 		t.Errorf("the summary wears %q", wornTitle(sum))
-	}
-	_, _, g := drawCase(views, sum, 120, 40, caseView{tier: mapmodel.TierUnicode})
-	if !strings.Contains(strings.Split(g.String(), "\n")[0], "Survivor") {
-		t.Errorf("the badge case's title bar does not wear it: %q", strings.Split(g.String(), "\n")[0])
 	}
 	if list := strings.Join(badgeListLines(views, sum), "\n"); !strings.Contains(list, "Title:[-] Survivor") {
 		t.Error("the list does not wear the chosen title")
@@ -347,7 +318,7 @@ func TestBadgeLooksMatchTheGame(t *testing.T) {
 		t.Errorf("the catalog lists the theme %s, which the game does not have", key)
 	}
 	var tiers []string
-	for _, tier := range caseTiers {
+	for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 		tiers = append(tiers, tier.String())
 	}
 	for _, g := range config.BadgeMapGlyphs {

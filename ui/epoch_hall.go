@@ -86,10 +86,9 @@ func (h *epochHall) makeCard() {
 }
 
 // paintCoins is the screen's picture layer (see nativeText.over): the coins
-// of the page, in the pose of the clock when the motion setting is on.
+// of the page.
 func (h *epochHall) paintCoins(p *kit.Painter, text image.Rectangle, top int) {
-	on := h.motion != nil && h.motion()
-	h.pics.paint(p, text, top, hallFrame(on, h.clock()))
+	h.pics.paint(p, text, top)
 }
 
 // open starts the screen on the front page.

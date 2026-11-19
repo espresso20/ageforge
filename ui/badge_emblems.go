@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 )
 
@@ -124,19 +123,6 @@ type medal struct {
 	crossed bool
 	// special names a sign of medalIcons (medal_pix.go), "" for none.
 	special string
-}
-
-// medalOf is a badge as the renderer draws it.
-func medalOf(v game.BadgeView) medal {
-	e, _ := emblemOf(v.Emblem)
-	m := medal{tier: v.Level, crossed: v.Crossed, special: e.special}
-	switch {
-	case v.Hidden:
-		m.state = medalHidden
-	case !v.Earned:
-		m.state = medalLocked
-	}
-	return m
 }
 
 // animated reports whether a badge's coin moves: platinum glints, the

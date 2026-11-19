@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/coins"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
@@ -24,13 +25,13 @@ const (
 )
 
 // badgeMoment is the card for the moment a badge is earned: a small card in
-// the top right with the badge's coin, which turns in and plays its show,
-// and the badge's name, tier and description. Badges earned in a row wait in
+// the top right with the badge's coin, held still, and the badge's name, tier
+// and description. Badges earned in a row wait in
 // a queue and take the card one after another.
 type badgeMoment struct {
 	queue []game.BadgeView
 	start time.Time // when the card on show began; zero when none is
-	coins *coinCache
+	mint  *coins.Mint
 }
 
 // add queues a badge for the card.
@@ -62,21 +63,19 @@ func (m *badgeMoment) paint(p *kit.Painter, area image.Rectangle, now time.Time,
 		rows = 2 * (momentLife - steps)
 	}
 	v := m.queue[0]
-	if m.coins == nil {
-		m.coins = &coinCache{}
+	if m.mint == nil {
+		m.mint = coins.NewMint(16)
 	}
 	card := image.Rect(area.Max.X-momentW-1, area.Min.Y, area.Max.X-1, area.Min.Y+rows)
-	m.draw(p, card, v, tier, steps, motion, steps >= momentOpen, steps >= momentOpen && steps < momentLife-momentOpen)
+	m.draw(p, card, v, tier, steps >= momentOpen, steps >= momentOpen && steps < momentLife-momentOpen)
 	return motion
 }
 
 // draw paints the card's top rows (the rectangle card), with its text when
 // withText is set and the coin when withCoin is.
-func (m *badgeMoment) draw(p *kit.Painter, card image.Rectangle, v game.BadgeView, tier mapmodel.GlyphTier, steps int, motion, withText, withCoin bool) {
+func (m *badgeMoment) draw(p *kit.Painter, card image.Rectangle, v game.BadgeView, tier mapmodel.GlyphTier, withText, withCoin bool) {
 	plain := tier == mapmodel.TierASCII
-	look := lookOf(medalOf(v), medalSign(v.Family), medalArt)
-	pale := metalOf(look).pale
-	paleC := kit.RGB(pale.R, pale.G, pale.B)
+	paleC := kit.Role(theme.RoleBright)
 	ground := kit.Role(theme.RoleSurface)
 
 	p.Fill(card, ground)
@@ -90,11 +89,8 @@ func (m *badgeMoment) draw(p *kit.Painter, card image.Rectangle, v game.BadgeVie
 	p = p.Clip(card.Inset(1))
 	if withCoin {
 		coin := image.Rect(org.X+2, org.Y+1, org.X+2+momentCoinW, org.Y+1+momentCoinH)
-		pose := coinPose{}
-		if motion {
-			pose = pickedPoseAt(look, steps-momentOpen)
-		}
-		p.Picture(coin, m.coins.image(look, coin.Size(), pose))
+		cw, ch := cellPixels()
+		paintCoin(p, m.mint, v.Coin, coin, cw, ch)
 	}
 	if !withText {
 		return

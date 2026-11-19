@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/window/kit"
+	"github.com/espresso20/ageforge/pkg/coins"
 )
 
 // The page records a coin for each badge it shows: large in the full
@@ -15,18 +15,18 @@ func TestEpochHallRecordsCoins(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		cols, rows int
-		w, h, art  int
+		w, h       int
 	}{
-		{"full", 200, 50, hallCoinW, hallCoinH, medalArt},
-		{"small", 200, 30, hallMiniCoinW, hallMiniCoinH, coinArt},
+		{"full", 200, 50, hallCoinW, hallCoinH},
+		{"small", 200, 30, hallMiniCoinW, hallMiniCoinH},
 	} {
 		page := hallFrontPage(st, tc.cols, tc.rows, mapmodel.TierUnicode, hallMotion{}, true)
 		if len(page.coins) != hallBadgeCount {
 			t.Fatalf("%s: %d coins, want %d", tc.name, len(page.coins), hallBadgeCount)
 		}
 		for i, c := range page.coins {
-			if c.r.Dx() != tc.w || c.r.Dy() != tc.h || c.look.art != tc.art || c.i != i {
-				t.Errorf("%s: coin %d is %v art %d order %d, want %dx%d art %d", tc.name, i, c.r, c.look.art, c.i, tc.w, tc.h, tc.art)
+			if c.r.Dx() != tc.w || c.r.Dy() != tc.h || c.coin.Type == "" {
+				t.Errorf("%s: coin %d is %v of %q, want %dx%d with a coin", tc.name, i, c.r, c.coin.Type, tc.w, tc.h)
 			}
 		}
 	}
@@ -42,8 +42,8 @@ func TestEpochHallPaintsCoinsOverTheText(t *testing.T) {
 	page := hallFrontPage(st, 120, 50, mapmodel.TierUnicode, hallMotion{}, true)
 	tv := newNativeText().SetDynamicColors(true).SetWrap(true)
 	tv.SetText(safeTags(page.text))
-	pics := &hallCoins{list: page.coins}
-	tv.over = func(p *kit.Painter, text image.Rectangle, top int) { pics.paint(p, text, top, atRest) }
+	pics := &hallCoins{list: page.coins, mint: coins.NewMint(16)}
+	tv.over = pics.paint
 	b := paintAlone(tv, 120, 200)
 	if len(b.Pics) != len(page.coins) || len(b.Pics) == 0 {
 		t.Fatalf("%d pictures for %d coins", len(b.Pics), len(page.coins))
@@ -53,12 +53,9 @@ func TestEpochHallPaintsCoinsOverTheText(t *testing.T) {
 		if got, want := b.Pics[i].Rect, c.r.Add(org); got != want {
 			t.Errorf("coin %d is on %v, want %v", i, got, want)
 		}
-		if b.Pics[i].Img.Bounds().Dx() != c.r.Dx()*10 {
-			t.Errorf("coin %d picture is %v wide", i, b.Pics[i].Img.Bounds())
+		if b.Pics[i].Img.Bounds().Dx() > c.r.Dx()*10 || b.Pics[i].Img.Bounds().Dx() != b.Pics[i].Img.Bounds().Dy() {
+			t.Errorf("coin %d picture is %v, not a square that fits", i, b.Pics[i].Img.Bounds())
 		}
-	}
-	if pics.moving.Load() {
-		t.Error("coins at rest say they move")
 	}
 }
 

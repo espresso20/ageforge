@@ -16,21 +16,21 @@ import (
 func TestMedalPicture(t *testing.T) {
 	bronze := medal{tier: config.BadgeBronze, state: medalEarned}
 	const w, h = 180, 189
-	img := medalPicture(bronze, "age", w, h)
+	img := coinPicture(lookOf(bronze, medalSign("age"), medalArt), w, h, coinPose{})
 	if img.Bounds() != image.Rect(0, 0, w, h) {
 		t.Fatalf("the picture is %v, want %dx%d", img.Bounds(), w, h)
 	}
 	if img.RGBAAt(w/2, h/2).A != 255 || img.RGBAAt(2, 2).A != 0 || img.RGBAAt(w-3, h-3).A != 0 {
 		t.Errorf("the coin should be solid in the middle and clear in the corners: %v %v %v", img.RGBAAt(w/2, h/2), img.RGBAAt(2, 2), img.RGBAAt(w-3, h-3))
 	}
-	if again := medalPicture(bronze, "age", w, h); !bytes.Equal(img.Pix, again.Pix) {
+	if again := coinPicture(lookOf(bronze, medalSign("age"), medalArt), w, h, coinPose{}); !bytes.Equal(img.Pix, again.Pix) {
 		t.Error("the same medal drew two different pictures")
 	}
 	for what, other := range map[string]*image.RGBA{
-		"a medal not earned": medalPicture(medal{tier: config.BadgeBronze, state: medalLocked}, "age", w, h),
-		"a silver medal":     medalPicture(medal{tier: config.BadgeSilver, state: medalEarned}, "age", w, h),
-		"another family":     medalPicture(bronze, "research", w, h),
-		"a legendary medal":  medalPicture(medal{tier: config.BadgeLegendary, state: medalEarned}, "age", w, h),
+		"a medal not earned": coinPicture(lookOf(medal{tier: config.BadgeBronze, state: medalLocked}, medalSign("age"), medalArt), w, h, coinPose{}),
+		"a silver medal":     coinPicture(lookOf(medal{tier: config.BadgeSilver, state: medalEarned}, medalSign("age"), medalArt), w, h, coinPose{}),
+		"another family":     coinPicture(lookOf(bronze, medalSign("research"), medalArt), w, h, coinPose{}),
+		"a legendary medal":  coinPicture(lookOf(medal{tier: config.BadgeLegendary, state: medalEarned}, medalSign("age"), medalArt), w, h, coinPose{}),
 	} {
 		if bytes.Equal(img.Pix, other.Pix) {
 			t.Errorf("%s drew the same picture as an earned bronze one", what)

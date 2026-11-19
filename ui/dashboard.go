@@ -264,7 +264,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
 	d.epochHall.card = func(st game.GameState) (epochCardResult, error) { return makeEpochCard(st, copyImageToClipboard) }
 	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
-	d.epochHall.pics.cache = &coinCache{}
+	d.epochHall.pics.mint, d.moment.mint = d.cabinet.mint, d.cabinet.mint
 	d.overlayMgr.SetOver("epoch", d.epochHall.paintCoins)
 	d.overlayMgr.SetNotice("epoch", d.epochHall.notice)
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
@@ -867,14 +867,11 @@ func (d *Dashboard) StartUpdates() {
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.momentOn.Load() || d.epochHall.pics.moving.Load() || d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.momentOn.Load() || d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
 							d.mapPanel.hide()
-						}
-						if d.overlayMgr.ActiveName() != "epoch" {
-							d.epochHall.pics.moving.Store(false)
 						}
 						if d.overlayMgr.ActiveName() != "expedition" {
 							d.expPanel.moving.Store(false)

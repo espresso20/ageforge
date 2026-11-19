@@ -566,12 +566,10 @@ func (c *hallCtx) rarityInk(word string) kit.Color {
 }
 
 // hallCoin is a badge's coin on the page: the cells it covers, in the
-// page's own coordinates, its look, and its place in the order of the
-// page, which sets off its show after the ones before it.
+// page's own coordinates, and the copy to draw there.
 type hallCoin struct {
 	r    image.Rectangle
-	look coinLook
-	i    int
+	coin game.CoinCopy
 }
 
 // The sizes of a coin on the page, in cells: the small layout's, which is
@@ -585,12 +583,11 @@ const (
 // (x, y), blank, and records the coin: a small one where there is not room
 // for a large one. The page's owner paints it as a picture.
 func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
-	w, h, art := hallCoinW, hallCoinH, medalArt
+	w, h := hallCoinW, hallCoinH
 	if mini {
-		w, h, art = hallMiniCoinW, hallMiniCoinH, coinArt
+		w, h = hallMiniCoinW, hallMiniCoinH
 	}
-	look := lookOf(medalOf(v), medalSign(v.Family), art)
-	c.coins = append(c.coins, hallCoin{r: image.Rect(x, y, x+w, y+h), look: look, i: len(c.coins)})
+	c.coins = append(c.coins, hallCoin{r: image.Rect(x, y, x+w, y+h), coin: v.Coin})
 }
 
 // badges draws the cards: art, name, and the rarity in its colour, in a

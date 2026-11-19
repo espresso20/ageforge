@@ -16,18 +16,9 @@ import (
 // The earned-badge card draws its coin as a picture in every glyph tier, and
 // in the plain tier folds its frame and text to ASCII.
 func TestBadgeMomentDrawsItsCoinInEveryTier(t *testing.T) {
-	views, _ := caseFixture()
-	var earned game.BadgeView
-	for _, v := range views {
-		if v.Earned {
-			earned = v
-			break
-		}
-	}
-	if earned.Key == "" {
-		t.Fatal("the fixture has no earned badge")
-	}
-	for _, tier := range caseTiers {
+	earned := game.BadgeView{Key: "age.classical_age", Family: "age", Name: "Classical", Desc: "Reach the Classical Age.",
+		Earned: true, Coin: game.CoinCopy{Type: config.CoinAge, Age: "classical_age", Level: 3, Seed: 5}}
+	for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 		m := &badgeMoment{}
 		m.add(earned)
 		b := kit.NewBuffer(80, 24)
@@ -99,10 +90,13 @@ func TestBadgeMomentOnTheLiveScreen(t *testing.T) {
 		}
 		card := image.Rect(w-momentW-1, 1, w-1, 1+momentH)
 
-		// Two badges together: the Stone Age and the Bronze Age. The age is
-		// reported alone: an age entered for real raises its splash.
-		eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
-		eng.ReportForTest(config.BadgeEvAgeReached, "bronze_age")
+		// Two badges together: the Classical Age and the Medieval Age, whose
+		// coins are drawn. The age is reported alone: an age entered for
+		// real raises its splash.
+		for _, age := range []string{"classical_age", "medieval_age"} {
+			eng.Account().StrikeCoin(config.CoinAge, age, 100, 1, "run", clock, false)
+			eng.ReportForTest(config.BadgeEvAgeReached, age)
+		}
 		d.refresh()
 		var names []string
 		views, _ := eng.Badges()
@@ -213,7 +207,8 @@ func TestBadgeMomentWaitsUnderAPanel(t *testing.T) {
 	if !d.overlayMgr.Show("techs", eng.GetState()) {
 		t.Fatal("the Research panel did not open")
 	}
-	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
+	eng.Account().StrikeCoin(config.CoinAge, "classical_age", 100, 1, "run", clock, false)
+	eng.ReportForTest(config.BadgeEvAgeReached, "classical_age")
 	d.refresh()
 	if len(d.moment.queue) != 1 {
 		t.Fatalf("%d badges wait for the card, want 1", len(d.moment.queue))

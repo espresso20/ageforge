@@ -212,11 +212,6 @@ func (cv *coinCanvas) at(x, y int) color.RGBA {
 	return cv.px[y*cv.w+x]
 }
 
-// medalPicture is a medal at rest w by h pixels, at the large size.
-func medalPicture(md medal, family string, w, h int) *image.RGBA {
-	return coinPicture(lookOf(md, medalSign(family), medalArt), w, h, coinPose{})
-}
-
 // lookOf is the look of a medal at a size of art: it carries its family's
 // sign, or its own when it is one of the badges that have one, and one not
 // earned carries a keyhole or a question mark.

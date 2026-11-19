@@ -44,6 +44,9 @@ func lateHallState(t *testing.T, age string) game.GameState {
 		{Key: "f", Name: "Unearned Six", Rarity: "mythic", Points: 99},
 		{Key: "g", Name: "Common Seven", Rarity: "common", Points: 1, Earned: true},
 	}}
+	for i := range st.AccountStats.Badges {
+		st.AccountStats.Badges[i].Coin = game.CoinCopy{Type: "age", Age: "classical_age", Level: 3, Seed: uint32(i + 1)}
+	}
 	return st
 }
 
