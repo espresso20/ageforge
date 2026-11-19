@@ -732,6 +732,9 @@ type BadgeView struct {
 	// Level is the tier as a number, for the frame the badge case draws;
 	// config.BadgeNoTier for an integrity badge.
 	Level config.BadgeTier
+	// Coin is the finest copy held of the coin the badge is the moment of;
+	// the zero copy (Type "") for a badge with no coin, or none struck yet.
+	Coin CoinCopy
 	// Emblem names the symbol the badge case draws (config.BadgeDef.Emblem).
 	// A silhouette has none: a symbol would say what the badge is about.
 	Emblem string
@@ -829,6 +832,7 @@ func (a *Account) viewLocked(book *badgeBook, def *config.BadgeDef, shown bool) 
 		}
 	}
 	v.Emblem = def.Emblem
+	v.Coin = a.finestCoinLocked(book.set, def)
 	v.RewardTheme, v.RewardTitle = def.Reward.Theme, def.Reward.Title
 	if !v.Earned && def.Scope == config.BadgeLifetime && def.Counter != "" && def.Threshold > 0 {
 		v.Progress, v.Target = a.Counters[def.Counter], def.Threshold
