@@ -203,3 +203,38 @@ func TestAgelessPlatesAreUniqueAndFit(t *testing.T) {
 		}
 	}
 }
+
+// The open drawer with no fan names its age's money on the ticket plate; a fan
+// swaps in the copy's ticket, and closing the fan brings the name back. Every
+// age has both placeholder lines.
+func TestCabinetTicketNamesTheAgeMoney(t *testing.T) {
+	d, p, paint := trayRig(t)
+	defer d.overlayMgr.Hide()
+	press(p, kit.KeyEnter)
+	l, _ := cabinet.PlanTray(160, 44, 12, 24)
+	second := image.Rect(l.Ticket.Min.X, l.Ticket.Min.Y+1, l.Ticket.Max.X, l.Ticket.Max.Y)
+	want := ageLabels[config.Ages()[0].Key]
+	if got := plateText(paint(), l.Ticket); got != want[0] {
+		t.Errorf("ticket names %q, want %q", got, want[0])
+	}
+	if got := plateText(paint(), second); got != want[1] {
+		t.Errorf("ticket line %q, want %q", got, want[1])
+	}
+	p.tray.well = 2
+	press(p, kit.KeyEnter)
+	if got := plateText(paint(), l.Ticket); !strings.Contains(got, "Level") {
+		t.Errorf("fan open: ticket %q", got)
+	}
+	p.closeDrawer()
+	if got := plateText(paint(), l.Ticket); got != want[0] {
+		t.Errorf("closing the fan: ticket %q, want %q", got, want[0])
+	}
+	if len(ageLabels) != len(config.Ages()) {
+		t.Errorf("%d age labels for %d ages", len(ageLabels), len(config.Ages()))
+	}
+	for _, a := range config.Ages() {
+		if w := ageLabels[a.Key]; w[0] == "" || w[1] == "" {
+			t.Errorf("%s has no age label", a.Key)
+		}
+	}
+}

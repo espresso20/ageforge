@@ -53,7 +53,8 @@ type cabinetTray struct {
 	fanWell, pick, pickOf int // pick is the selected copy's place from the left; pickOf the copy drawn raised, -1 for none
 	recs                  [cabinet.Wells][]game.CoinCopy
 	counts                [cabinet.Wells]int
-	gridKey               gridKey // the ageless drawer's kept picture
+	gridKey               gridKey   // the ageless drawer's kept picture
+	label                 [2]string // the open drawer's age label, built once when it opens
 }
 
 // openDrawer opens the drawer of an age in sight.
@@ -63,6 +64,7 @@ func (p *cabinetPanel) openDrawer(i int) bool {
 	}
 	p.tray.slot, p.tray.well, p.tray.fan = i, 0, false
 	p.loadTray()
+	p.tray.label = ageLabels[p.keys[i]]
 	return true
 }
 
@@ -108,17 +110,47 @@ func (p *cabinetPanel) stepFan(key kit.KeyCode) {
 	}
 }
 
-// ticketWords are the two lines on the ticket plate: the selected copy's
-// record while the fan is open, else how many copies the well's stack holds.
+// ageLabels are the ticket's label per age while no fan is open: the money's
+// name, then a line about it. Placeholder copy until the copy is written.
+var ageLabels = map[string][2]string{
+	"primitive_age":    {rowid.Line("ui.cabinet_drawer.ageLabel.primitive_age.name", "Primitive money: cowrie shell"), rowid.Line("ui.cabinet_drawer.ageLabel.primitive_age.line", "About this money (placeholder).")},
+	"stone_age":        {rowid.Line("ui.cabinet_drawer.ageLabel.stone_age.name", "Stone money: bead string"), rowid.Line("ui.cabinet_drawer.ageLabel.stone_age.line", "About this money (placeholder).")},
+	"bronze_age":       {rowid.Line("ui.cabinet_drawer.ageLabel.bronze_age.name", "Bronze money: oxhide ingot"), rowid.Line("ui.cabinet_drawer.ageLabel.bronze_age.line", "About this money (placeholder).")},
+	"iron_age":         {rowid.Line("ui.cabinet_drawer.ageLabel.iron_age.name", "Iron money: cup coin"), rowid.Line("ui.cabinet_drawer.ageLabel.iron_age.line", "About this money (placeholder).")},
+	"classical_age":    {rowid.Line("ui.cabinet_drawer.ageLabel.classical_age.name", "Classical money: drachma"), rowid.Line("ui.cabinet_drawer.ageLabel.classical_age.line", "About this money (placeholder).")},
+	"medieval_age":     {rowid.Line("ui.cabinet_drawer.ageLabel.medieval_age.name", "Medieval money: silver penny"), rowid.Line("ui.cabinet_drawer.ageLabel.medieval_age.line", "About this money (placeholder).")},
+	"renaissance_age":  {rowid.Line("ui.cabinet_drawer.ageLabel.renaissance_age.name", "Renaissance money: gold ducat"), rowid.Line("ui.cabinet_drawer.ageLabel.renaissance_age.line", "About this money (placeholder).")},
+	"colonial_age":     {rowid.Line("ui.cabinet_drawer.ageLabel.colonial_age.name", "Colonial money: piece of eight"), rowid.Line("ui.cabinet_drawer.ageLabel.colonial_age.line", "About this money (placeholder).")},
+	"industrial_age":   {rowid.Line("ui.cabinet_drawer.ageLabel.industrial_age.name", "Industrial money: copper token"), rowid.Line("ui.cabinet_drawer.ageLabel.industrial_age.line", "About this money (placeholder).")},
+	"victorian_age":    {rowid.Line("ui.cabinet_drawer.ageLabel.victorian_age.name", "Victorian money: sovereign"), rowid.Line("ui.cabinet_drawer.ageLabel.victorian_age.line", "About this money (placeholder).")},
+	"electric_age":     {rowid.Line("ui.cabinet_drawer.ageLabel.electric_age.name", "Electric money: silver dollar"), rowid.Line("ui.cabinet_drawer.ageLabel.electric_age.line", "About this money (placeholder).")},
+	"atomic_age":       {rowid.Line("ui.cabinet_drawer.ageLabel.atomic_age.name", "Atomic money: alloy coin"), rowid.Line("ui.cabinet_drawer.ageLabel.atomic_age.line", "About this money (placeholder).")},
+	"modern_age":       {rowid.Line("ui.cabinet_drawer.ageLabel.modern_age.name", "Modern money: bank card"), rowid.Line("ui.cabinet_drawer.ageLabel.modern_age.line", "About this money (placeholder).")},
+	"information_age":  {rowid.Line("ui.cabinet_drawer.ageLabel.information_age.name", "Information money: phone wallet"), rowid.Line("ui.cabinet_drawer.ageLabel.information_age.line", "About this money (placeholder).")},
+	"digital_age":      {rowid.Line("ui.cabinet_drawer.ageLabel.digital_age.name", "Digital money: key stick"), rowid.Line("ui.cabinet_drawer.ageLabel.digital_age.line", "About this money (placeholder).")},
+	"cyberpunk_age":    {rowid.Line("ui.cabinet_drawer.ageLabel.cyberpunk_age.name", "Cyberpunk money: chip"), rowid.Line("ui.cabinet_drawer.ageLabel.cyberpunk_age.line", "About this money (placeholder).")},
+	"fusion_age":       {rowid.Line("ui.cabinet_drawer.ageLabel.fusion_age.name", "Fusion money: energy token"), rowid.Line("ui.cabinet_drawer.ageLabel.fusion_age.line", "About this money (placeholder).")},
+	"space_age":        {rowid.Line("ui.cabinet_drawer.ageLabel.space_age.name", "Space money: credit chit"), rowid.Line("ui.cabinet_drawer.ageLabel.space_age.line", "About this money (placeholder).")},
+	"interstellar_age": {rowid.Line("ui.cabinet_drawer.ageLabel.interstellar_age.name", "Interstellar money: jump scrip"), rowid.Line("ui.cabinet_drawer.ageLabel.interstellar_age.line", "About this money (placeholder).")},
+	"galactic_age":     {rowid.Line("ui.cabinet_drawer.ageLabel.galactic_age.name", "Galactic money: star mark"), rowid.Line("ui.cabinet_drawer.ageLabel.galactic_age.line", "About this money (placeholder).")},
+	"quantum_age":      {rowid.Line("ui.cabinet_drawer.ageLabel.quantum_age.name", "Quantum money: qubit coin"), rowid.Line("ui.cabinet_drawer.ageLabel.quantum_age.line", "About this money (placeholder).")},
+	"transcendent_age": {rowid.Line("ui.cabinet_drawer.ageLabel.transcendent_age.name", "Transcendent money: thought sigil"), rowid.Line("ui.cabinet_drawer.ageLabel.transcendent_age.line", "About this money (placeholder).")},
+}
+
+// ticketWords are the two lines on the ticket plate: the open drawer's age
+// label while no fan is open; with the fan open, the selected copy's record.
 func (p *cabinetPanel) ticketWords() (a, b string) {
 	t := &p.tray
-	if t.slot < 0 || t.well >= cabinet.Wells || len(t.recs[t.well]) == 0 {
+	if t.slot < 0 {
+		return
+	}
+	if !t.fan {
+		return t.label[0], t.label[1]
+	}
+	if t.well >= cabinet.Wells || len(t.recs[t.well]) == 0 {
 		return
 	}
 	n := rowid.Sprintf("ui.cabinet_drawer.ticketWords.01", "%d struck", t.counts[t.well])
-	if !t.fan {
-		return n, ""
-	}
 	c := t.recs[t.well][p.pickCopy()]
 	run := ""
 	if n, err := strconv.Atoi(c.Run); err == nil && len(c.Run) <= 6 {
