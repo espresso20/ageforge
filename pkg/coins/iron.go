@@ -2,286 +2,169 @@ package coins
 
 import "math"
 
-// The Iron Age: spits bound into a bundle, with a clasp at the top.
+// The Iron Age: a thick gold coin in a shallow cup, abstract relief only.
 
 var (
-	ironRough  = newRamp(0x1a1410, 0x342a22, 0x524438, 0x76655a, 0xa08e80) // levels 1-2: brown raw iron
-	ironGrey   = newRamp(0x14161a, 0x2a2d33, 0x464a52, 0x6a6f78, 0x9aa0aa) // levels 3-5: forged iron
-	ironSteel  = newRamp(0x0c1018, 0x1c2434, 0x2e3a52, 0x4a5a78, 0x8a9cc0) // level 6 and legendary
-	ironCord   = newRamp(0x1e140a, 0x3e2c18, 0x5e4628, 0x80663e, 0xa88e60) // levels 1-4 bindings
-	ironBright = newRamp(0x1c1e22, 0x3a3e46, 0x5e646e, 0x8c929c, 0xc4cad2)
-	ironWire   = newRamp(0x2a1a08, 0x5c3a14, 0x8e5e22, 0xc08a3c, 0xe8c070) // levels 5-6 bindings and clasp
+	celtPale = newRamp(0x2e2a14, 0x5e5428, 0x9a8c48, 0xcabc7a, 0xf0e6b8) // levels 1-2
+	celtGold = newRamp(0x3a2408, 0x7a5414, 0xc08a20, 0xe8b840, 0xfde488) // levels 3-5
+	celtRed  = newRamp(0x3a1608, 0x7a3412, 0xb8621e, 0xe0943e, 0xf8cc80) // level 6, legendary
 )
 
-// ironLie is how far a copy may lie off the -45 degree axis, in degrees.
-const ironLie = 11.0
-
-// ironRod is one spit: across offset, centre and length along the axis, bend.
-type ironRod struct{ off, c, ln, b float64 }
-
-// ironBand is a binding w wide at axis position tb, leaning tilt across.
-type ironBand struct{ tb, w, tilt float64 }
-
-// ironBundle is spits on one axis from origin (ox, oy). head: 0 round, 1 paddle, 2 eye, 3 leaf.
-type ironBundle struct {
-	ang, ox, oy, splay, tb0, fan, r, taper, W, clasp float64
-	hasClasp                                         bool
-	head                                             int
-	rods                                             []ironRod
-	bands                                            []ironBand
+// celtCoin is one piece: outline, cup and relief. dots are pellets (x, y, r).
+type celtCoin struct {
+	r0, a1, a2, depth, p1, p2 float64
+	rot, sx, sy               float64
+	dots                      [][3]float64
+	crescent, outer           float64 // ring half-widths, 0 none
+	torc, twist               bool
+	rt, tw, kr, gap, gapHalf  float64 // torc radius, half-width, knob radius, gap centre and half-width
+	ra, aw, er                float64 // whorl arm radius, half-width, end pellet radius
+	beads                     int
+	br                        float64
 }
 
-func ironPick(a []float64, i int) float64 { return a[min(i, len(a)-1)] }
+// celtRing is the height of a ring of radius rt and half-width tw, 0 off it.
+func celtRing(rad, rt, tw float64) float64 {
+	d := math.Abs(rad - rt)
+	return 1.6 * math.Sqrt(math.Max(0, 1-(d/tw)*(d/tw))) // 0 off the ring
+}
 
-func (b *ironBundle) width() float64 {
-	m := 0.0
-	for _, rd := range b.rods {
-		m = math.Max(m, math.Abs(rd.off))
+// celtTri is a three-armed whorl through the origin, with a pellet at each far end.
+func celtTri(x, y, ra, aw, er float64) float64 {
+	h := 0.0
+	for k := 0.0; k < 3; k++ {
+		phi := -math.Pi/2 + 2*math.Pi/3*k
+		cx, cy := ra*math.Cos(phi), ra*math.Sin(phi)
+		ux, uy := x-cx, y-cy
+		a, d := math.Mod(angle(ux, uy)-phi-math.Pi+4*math.Pi, 2*math.Pi), math.Abs(math.Hypot(ux, uy)-ra)
+		if a <= 220*math.Pi/180 && d < aw {
+			h = math.Max(h, 1.6*math.Sqrt(1-(d/aw)*(d/aw)))
+		}
+		h = math.Max(h, dome(x, y, cx+ra*math.Cos(phi+40*math.Pi/180), cy+ra*math.Sin(phi+40*math.Pi/180), er, 1.8))
 	}
-	return m + b.r
+	return h
 }
 
-// span holds t within rod i.
-func (b *ironBundle) span(i int, t float64) float64 {
-	r := b.rods[i]
-	return clamp(t, r.c-r.ln/2, r.c+r.ln/2)
-}
-
-// centre is rod i's centre line across, at t.
-func (b *ironBundle) centre(i int, t float64) float64 {
-	r := b.rods[i]
-	k := (t - r.c) / (r.ln / 2)
-	return r.off + r.b*(1-k*k) + r.off*(b.splay*math.Max(0, b.tb0-10-t)/10+b.fan*math.Max(0, t-30)/10)
-}
-
-// radius tapers rod i from r to a 0.8 tip over the points.
-func (b *ironBundle) radius(i int, t float64) float64 {
-	if b.taper == 0 {
-		return b.r
+// relief is the height above the cup at a point of the design frame, 0 off it.
+func (c *celtCoin) relief(dx, dy float64) float64 {
+	h, rad, a := 0.0, math.Hypot(dx, dy), angle(dx, dy)
+	for _, p := range c.dots {
+		h = math.Max(h, dome(dx, dy, p[0], p[1], p[2], 1.8))
 	}
-	t0 := b.rods[i].c - b.rods[i].ln/2
-	return 0.8 + (b.r-0.8)*clamp((t-t0)/b.taper, 0, 1)
-}
-
-func (b *ironBundle) dome(o float64) float64 {
-	return ground + 2.8*math.Cos(math.Pi/2*clamp(o/b.W, -1, 1))
-}
-
-// eye is the centre of rod i's eye, 2 past its end on the rod line.
-func (b *ironBundle) eye(i int) (float64, float64) {
-	ec := b.rods[i].c + b.rods[i].ln/2 + 2
-	return ec, b.centre(i, ec)
-}
-
-func (b *ironBundle) rodSd(i int, t, o float64) float64 {
-	tt := b.span(i, t)
-	return math.Hypot(t-tt, o-b.centre(i, tt)) - b.radius(i, tt)
-}
-
-// headSd is the distance to rod i's head, negative inside.
-func (b *ironBundle) headSd(i int, t, o float64) float64 {
-	t1 := b.rods[i].c + b.rods[i].ln/2
-	switch b.head {
-	case 1:
-		return sdEllipse(t, o, t1-2.5, b.centre(i, t1-2.5), 5, 1.8*b.r, 0)
-	case 2:
-		ec, eo := b.eye(i)
-		return sdSub(sdCircle(t, o, ec, eo, 4.2), sdCircle(t, o, ec, eo, 2))
-	case 3:
-		return sdEllipse(t, o, t1+3, b.centre(i, t1+3), 9, 4.6, 0)
+	if c.crescent > 0 && a > -8*math.Pi/9 && a < -math.Pi/9 {
+		h = math.Max(h, celtRing(rad, 26, c.crescent))
 	}
-	return 1e9
-}
-
-func (b *ironBundle) bandSd(bd ironBand, t, o float64) float64 {
-	return sdBox(t-bd.tb-bd.tilt*o, o, 0, 0, bd.w/2, b.W+1)
-}
-
-func (b *ironBundle) claspSd(t, o float64) float64 {
-	return sdRoundBox(t, o, b.clasp, 0, 5, b.W+1.5, 2)
-}
-
-// sd is the outline, negative inside. Each eye's opening is cut out of it.
-func (b *ironBundle) sd(t, o float64) float64 {
-	d := 1e9
-	for i := range b.rods {
-		d = math.Min(d, math.Min(b.rodSd(i, t, o), b.headSd(i, t, o)))
-		if b.head == 2 {
-			ec, eo := b.eye(i)
-			d = sdSub(d, sdCircle(t, o, ec, eo, 2))
+	if c.torc {
+		t := 0.0
+		if math.Abs(wrap(a-c.gap)) >= c.gapHalf {
+			t = celtRing(rad, c.rt, c.tw)
+		}
+		if c.twist && t > 0 && frac(a*30/4.5+(rad-c.rt)/(2*c.tw)) < 0.3 {
+			t = math.Max(t-0.8, 0.2)
+		}
+		h = math.Max(h, t)
+		for _, s := range []float64{-1, 1} { // knobs at the two ends of the gap
+			k := c.gap + s*c.gapHalf
+			h = math.Max(h, dome(dx, dy, c.rt*math.Cos(k), c.rt*math.Sin(k), c.kr, 2.2))
 		}
 	}
-	for _, bd := range b.bands {
-		d = math.Min(d, b.bandSd(bd, t, o))
+	if c.outer > 0 {
+		h = math.Max(h, celtRing(rad, 41, c.outer))
 	}
-	if b.hasClasp {
-		d = math.Min(d, b.claspSd(t, o))
+	if c.ra > 0 {
+		h = math.Max(h, celtTri(dx, dy, c.ra, c.aw, c.er))
 	}
-	return d
+	return h
 }
 
-// dist is the outline at (x, y).
-func (b *ironBundle) dist(x, y float64) float64 {
-	t, o := rotate(x-b.ox, y-b.oy, b.ang)
-	return b.sd(t, o)
-}
-
-// headFace: a paddle 0.4 above the bundle, an eye as a torus, a leaf as a rounded blade.
-func (b *ironBundle) headFace(i int, t, o float64) float64 {
-	switch b.head {
-	case 1:
-		return b.dome(o) + 0.4
-	case 2:
-		ec, eo := b.eye(i)
-		s := (math.Hypot(t-ec, o-eo) - 3.1) / 1.1
-		return b.dome(o) + math.Sqrt(math.Max(0, 1-s*s))
-	}
-	d := (o - b.centre(i, b.rods[i].c+b.rods[i].ln/2+3)) / 3.4
-	return b.dome(o) + math.Sqrt(math.Max(0, 1-d*d))
-}
-
-// face is what the bundle shows at (x, y), and whether (x, y) is inside it.
-func (b *ironBundle) face(x, y float64) (sample, bool) {
-	t, o := rotate(x-b.ox, y-b.oy, b.ang)
-	if b.sd(t, o) >= 0 {
-		return sample{h: ground}, false
-	}
-	if b.hasClasp && b.claspSd(t, o) < 0 {
-		return sample{h: ground + 5.8, z: 1}, true
-	}
-	for _, bd := range b.bands {
-		if b.bandSd(bd, t, o) < 0 {
-			return sample{h: b.dome(o) + 1.2, z: 1}, true
-		}
-	}
-	for i := range b.rods {
-		if b.headSd(i, t, o) < 0 {
-			return sample{h: b.headFace(i, t, o)}, true
-		}
-	}
-	top := ground
-	for i := range b.rods {
-		if b.rodSd(i, t, o) < 0 {
-			tt := b.span(i, t)
-			d := (o - b.centre(i, tt)) / b.radius(i, tt)
-			top = math.Max(top, b.dome(o)+math.Sqrt(math.Max(0, 1-d*d)))
-		}
-	}
-	return sample{h: top}, true
-}
-
-// ironVary gives a copy its seed's variation. tbs is shifted in place.
-func ironVary(b *ironBundle, l, lod int, seed uint32, tbs []float64) {
-	if l >= 2 && lod == 0 {
-		n := len(b.rods)
-		if rnd(seed, 1) < 0.35 {
-			b.rods = b.rods[:n-1]
-		} else if rnd(seed, 1) > 0.70 {
-			last, prev := b.rods[n-1], b.rods[n-2]
-			last.off += last.off - prev.off
-			b.rods = append(b.rods, last)
-		}
-	}
-	for i := range b.rods {
-		b.rods[i].ln += rs(seed, 10+i) * level(l, 9, 9, 6, 6, 5, 4)
-		if l <= 2 {
-			b.rods[i].b += rs(seed, 20+i) * 1.5
-		}
-	}
-	if l >= 3 {
-		k := int(rnd(seed, 30) * float64(len(b.rods)))
-		b.rods[k].b = rs(seed, 31) * level(l, 0, 0, 1.6, 1.4, 1.2, 0.8)
-	}
-	shift := rs(seed, 40) * 6
-	for i := range tbs {
-		tbs[i] += shift
-	}
-	b.splay *= 0.6 + 0.8*rnd(seed, 50)
-	b.ang += rs(seed, 60) * ironLie * math.Pi / 180
-}
-
-// iron is the Iron Age spit bundle at level l (1 to 6), lod 0 or 1. Seed 0 is the plain table.
-func iron(l, lod int, seed uint32) *spec {
-	tbs := [][]float64{{6}, {0}, {10}, {-8, 16}, {-8, 4, 16}, {-8, 16}}[l-1]
-	wide := []float64{-12.5, -7.5, -2.5, 2.5, 7.5, 12.5}
-	offs := [2][][]float64{
-		{{-7.5, 0, 6.5}, {-11, -5.5, 0, 5.5, 11}, wide, wide, wide, {-13.5, -9, -4.5, 0, 4.5, 9, 13.5}},
-		{{-8, 0, 8}, {-9, -3, 3, 9}, {-9, -3, 3, 9}, {-9, -3, 3, 9}, {-9, -3, 3, 9}, {-10, -5, 0, 5, 10}},
-	}[lod][l-1]
-	rad := [][2]float64{{3.4, 4.2}, {3.0, 3.6}, {2.6, 3.2}, {2.6, 3.2}, {2.6, 3.2}, {2.2, 2.8}}[l-1][lod]
-	lens := [][]float64{{70, 60, 78}, {84, 76, 88, 80, 82}, {96}, {96}, {96}, {100}}[l-1]
-	cs := [][]float64{{4, -6, 0}, {0, -4, 2, -2, 3}, {0}, {0}, {0}, {0}}[l-1]
-	bends := [][]float64{{2.5, -1.8, 1.2}, {1.2, -0.8, 0.6, -1.0, 0.9}, {0}, {0}, {0}, {0}}[l-1]
-
-	b := &ironBundle{ang: -math.Pi / 4, r: rad, hasClasp: l == 6, head: []int{0, 0, 0, 1, 2, 2}[l-1],
-		taper: level(l, 0, 10, 14, 16, 16, 18), splay: level(l, 0, 0, 0.10, 0.14, 0.16, 0.18)}
-	for i, o := range offs {
-		b.rods = append(b.rods, ironRod{off: o, c: ironPick(cs, i), ln: ironPick(lens, i), b: ironPick(bends, i)})
-	}
-	if seed != 0 {
-		ironVary(b, l, lod, seed, tbs)
-	}
-	b.tb0, b.W, b.clasp = tbs[0], b.width(), tbs[len(tbs)-1]+7
-	bf := 1.0
-	if lod == 1 {
-		bf = 1.6
-	}
-	tie, wrap := math.Tan(12*math.Pi/180), 1.6*bf
-	for _, tb := range tbs {
-		switch {
-		case l == 1:
-			b.bands = append(b.bands, ironBand{tb, 4 * bf, tie})
-		case l <= 4:
-			b.bands = append(b.bands, ironBand{tb, level(l, 0, 5, 6, 6) * bf, 0})
-		case l == 5:
-			for k := -1.0; k <= 1; k++ {
-				b.bands = append(b.bands, ironBand{tb + k*(wrap+0.6), wrap, 0})
-			}
-		default:
-			b.bands = append(b.bands, ironBand{tb - 2.5, 3 * bf, 0}, ironBand{tb + 2.5, 3 * bf, 0})
-		}
-	}
-	body := []ramp{ironRough, ironRough, ironGrey, ironBright, ironBright, ironSteel}[l-1]
-	bind := ironCord
-	if l >= 4 {
-		bind = ironWire
-	}
-	sc := 1.15
-	if lod == 1 {
-		sc = 1.40
-	}
-	sp := &spec{seed: 307, edge: 2.2, rimW: 0, rimH: 0, field: 3, ramp: [4]ramp{body, bind, body, bind}}
-	if l == 6 {
-		sp.bright = 0.08
-	}
-	sp.sd = func(x, y float64) float64 { return sc * b.dist(x/sc, y/sc) }
-	sp.face = func(x, y float64) sample { s, _ := b.face(x/sc, y/sc); return s }
-	return sp
-}
-
-// ironLegend is two crossed steel bundles: a small one at +30 degrees with a
-// gold band, and the larger on top with fanned leaf heads and three gold bands.
-func ironLegend() *spec {
-	sec := &ironBundle{ang: math.Pi / 6, ox: 6, oy: 14, r: 2.2}
-	for _, o := range []float64{-6, -2, 2, 6} {
-		sec.rods = append(sec.rods, ironRod{off: o, ln: 64})
-	}
-	sec.bands, sec.W = []ironBand{{tb: 0, w: 4}}, sec.width()
-	main := &ironBundle{ang: -math.Pi / 4, r: 2.2, taper: 18, splay: 0.22, fan: 0.25, head: 3, tb0: -10}
-	for _, o := range []float64{-13.5, -9, -4.5, 0, 4.5, 9, 13.5} {
-		main.rods = append(main.rods, ironRod{off: o, ln: 104})
-	}
-	main.bands = []ironBand{{tb: -10, w: 3.5}, {tb: 6, w: 3.5}, {tb: 22, w: 3.5}}
-	main.W = main.width()
-
-	sp := &spec{seed: 307, edge: 2.6, field: 3, bright: 0.10, ramp: [4]ramp{ironSteel, gilt, ironSteel, gilt}}
-	sp.sd = func(x, y float64) float64 { return math.Min(main.dist(x, y), sec.dist(x, y)) }
+// build sets the outline, cup and relief on sp.
+func (c *celtCoin) build(sp *spec) *spec {
+	rAt := func(a float64) float64 { return c.r0 + c.a1*math.Sin(3*a+c.p1) + c.a2*math.Sin(5*a+c.p2) }
+	sp.sd = func(x, y float64) float64 { return math.Hypot(x, y) - rAt(angle(x, y)) }
 	sp.face = func(x, y float64) sample {
-		if s, ok := main.face(x, y); ok {
-			return s
+		s := clamp(math.Hypot(x, y)/rAt(angle(x, y)), 0, 1)
+		h := c.relief(rotate(x-c.sx, y-c.sy, -c.rot))
+		for i := 0; i < c.beads; i++ { // beads follow the outline, not the design frame
+			a := 2*math.Pi*float64(i)/float64(c.beads) + 0.1
+			br := rAt(a) - 6.5
+			h = math.Max(h, dome(x, y, br*math.Cos(a), br*math.Sin(a), c.br, 1.4))
 		}
-		s, _ := sec.face(x, y)
-		return s
+		if h > 0 {
+			return sample{h: ground + c.depth*s*s + h, z: 1}
+		}
+		return sample{h: ground + c.depth*s*s}
 	}
 	return sp
+}
+
+// celtTable is the plain table for level l at lod, before any seed variation.
+func celtTable(l, lod int) *celtCoin {
+	big := lod == 1
+	pr := level(l, 4.5, 4.5, 4, 3.4)
+	c := &celtCoin{
+		r0: level(l, 52, 53, 54, 55, 56, 57), a1: level(l, 3.5, 2.5, 1.8, 1.2, 0.8, 0.3),
+		a2: level(l, 2, 1.2, 0.8, 0.5, 0.3, 0), depth: level(l, 3, 4, 5, 5, 5.5, 5.5),
+		rt: 30, tw: 3.2, kr: 5, gapHalf: 28 * math.Pi / 180, torc: l >= 3, twist: l >= 5 && !big,
+		beads: int(level(l, 0, 0, 0, 12, 16, 20)), br: 2,
+	}
+	if big {
+		c.tw, c.kr, c.br, c.beads, pr = 4.2, 6, 3, int(level(l, 0, 0, 0, 8, 10, 12)), level(l, 5.5, 5.5, 5, 4.5)
+	}
+	switch l {
+	case 1:
+		c.dots = [][3]float64{{-8, -6, pr}, {6, -9, pr}, {0, 7, pr}}
+	case 2:
+		c.dots = [][3]float64{{-9, 4, pr}, {9, 4, pr}, {0, 14, pr}}
+		c.crescent = lineWidth(lod)(3)
+		if big {
+			c.crescent = 3.6
+		}
+	case 3:
+		c.dots = [][3]float64{{-9, -4, pr}, {9, -4, pr}, {0, 8, pr}}
+	case 4:
+		c.dots = [][3]float64{{0, 0, pr}}
+		for i := 0; i < 6; i++ {
+			if a := (30 + 60*float64(i)) * math.Pi / 180; !big || i%2 == 0 {
+				c.dots = append(c.dots, [3]float64{14 * math.Cos(a), 14 * math.Sin(a), pr})
+			}
+		}
+	case 5:
+		c.ra, c.aw = 9, 2
+	case 6:
+		c.ra, c.aw, c.outer = 11, 2.4, 2.4
+	}
+	if big && l >= 5 {
+		c.aw = 3
+	}
+	if big && l == 6 {
+		c.outer = 3.2
+	}
+	c.er = c.aw + 1.2
+	if big {
+		c.er = 4.5
+	}
+	return c
+}
+
+// iron is the Iron Age cup coin at level l (1 to 6), lod 0 or 1. Seed 0 is the plain table.
+func iron(l, lod int, seed uint32) *spec {
+	c := celtTable(l, lod)
+	v := float64(min(seed, 1)) // 0 for the plain copy, 1 for every other seed
+	c.p1, c.p2, c.a1 = 1+v*rs(seed, 1)*3.1, 2+v*rs(seed, 2)*3.1, math.Max(0, c.a1+v*rs(seed, 3))
+	c.rot, c.sx, c.sy = v*rs(seed, 4)*25*math.Pi/180, v*rs(seed, 5)*4, v*rs(seed, 6)*4
+	for i := range c.dots {
+		c.dots[i][0] += v * rs(seed, 10+i) * 1.5
+		c.dots[i][1] += v * rs(seed, 20+i) * 1.5
+	}
+	c.gap = math.Pi/2 + v*rs(seed, 30)*15*math.Pi/180
+	b := [6]ramp{celtPale, celtPale, celtGold, celtGold, celtGold, celtRed}[l-1]
+	sp := c.build(&spec{seed: 401, field: 3, edge: level(l, 5.5, 5, 5, 4.5, 4.5, 4), ramp: [4]ramp{b, b, b, b}, bright: 0.06 * float64(l/6)})
+	handStruck(sp, l)
+	return sp
+}
+
+// ironLegend is the gilt relief on red gold: a large whorl, a torc gapped at the top, beads.
+func ironLegend() *spec {
+	c := &celtCoin{r0: 58, depth: 6, rt: 42, tw: 3, kr: 5.5, torc: true, twist: true, gap: -math.Pi / 2, gapHalf: 22 * math.Pi / 180, ra: 20, aw: 3.2, er: 5, beads: 24, br: 2.2}
+	return c.build(&spec{seed: 401, field: 3, edge: 5, bright: 0.08, ramp: [4]ramp{celtRed, gilt, celtRed, gilt}})
 }
