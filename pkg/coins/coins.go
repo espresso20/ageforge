@@ -22,6 +22,7 @@ type entry struct {
 
 // table is the fixed list of ages with drawn money, in display order.
 var table = [...]entry{
+	{"bronze_age", bronze, bronzeLegend},
 	{"iron_age", iron, ironLegend},
 	{"classical_age", classical, classicalLegend},
 	{"medieval_age", medieval, medievalLegend},
