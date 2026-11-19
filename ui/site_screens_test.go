@@ -705,6 +705,48 @@ func (w *siteShots) takeIn(s *siteStage, name, themeKey string, cols, rows int) 
 	w.t.Logf("%-18s %3dx%-2d %6d bytes", name, cols, rows, len(raw))
 }
 
+// takeCabinet writes the open cabinet as one picture over a blank grid. The
+// cabinet puts the words of its plates over its own picture, which the
+// wiki's grid cannot hold (a picture there hides the text under it), so the
+// whole screen is drawn to pixels instead, in the test's 12 by 24 cells.
+func (w *siteShots) takeCabinet(s *siteStage, name string) {
+	w.t.Helper()
+	was := pictureCell
+	pictureCell = func() (int, int) { return 12, 24 }
+	defer func() { pictureCell = was }()
+	cols, rows := siteDashW, siteDashH
+	sim := newSim()
+	must(w.t, sim.Init())
+	defer sim.Fini()
+	sim.SetSize(cols, rows)
+	s.d.overlayMgr.screenW = cols
+	for i := 0; i < 2; i++ {
+		s.d.refresh()
+		sim.Clear()
+		s.pages.SetRect(0, 0, cols, rows)
+		drawOn(sim, s.pages)
+		sim.Show()
+	}
+	full := ScreenImage(&sim.buf, 12, 24)
+	img := full.SubImage(image.Rect(shotPad, shotPad, full.Bounds().Dx()-shotPad, full.Bounds().Dy()-shotPad))
+	var buf bytes.Buffer
+	must(w.t, png.Encode(&buf, img))
+	f := siteScreenFile{W: cols, H: rows, Bg: siteHex(theme.Of(theme.RoleBackground)),
+		Palette: []string{"#000000"}, Styles: [][3]int{{0, 0, 0}}, Rows: []siteScreenRow{},
+		Pics:   []siteScreenPic{{X: 0, Y: 0, W: cols, H: rows, I: 0}},
+		Images: []string{base64.StdEncoding.EncodeToString(buf.Bytes())}}
+	var out bytes.Buffer
+	enc := json.NewEncoder(&out)
+	enc.SetEscapeHTML(false)
+	must(w.t, enc.Encode(f))
+	if _, dup := w.bytes[name]; dup {
+		w.t.Fatalf("two screens are named %q", name)
+	}
+	w.bytes[name] = out.Len()
+	must(w.t, os.WriteFile(filepath.Join(w.out, name+".json"), out.Bytes(), 0o644))
+	w.t.Logf("%-18s %3dx%-2d %6d bytes", name, cols, rows, out.Len())
+}
+
 func TestWriteSiteScreens(t *testing.T) {
 	out := os.Getenv("SITE_SCREENS_OUT")
 	if out == "" {
@@ -951,6 +993,38 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		t.Fatal(err)
 	}
 	s.d.moment = badgeMoment{}
+
+	// The coin cabinet: strikes held by the made-up account, a few ages
+	// deep, two runs of the same age stacking in one well. The front, then
+	// one open drawer, then the Ledgers.
+	strike := func(typ, age string, share float64, run string) {
+		ticks := int(config.CoinRefTicks(age, 1) * share)
+		acct.StrikeCoin(typ, age, ticks, 1, run, day, false)
+	}
+	for _, age := range []string{"classical_age", "medieval_age", "victorian_age"} {
+		for _, typ := range config.CoinTypes {
+			strike(typ, age, 0.55, "run-1")
+		}
+		strike(config.CoinAge, age, 0.9, "run-2")
+		strike(config.CoinAge, age, 1.5, "run-3")
+		strike(config.CoinWonder, age, 1.2, "run-2")
+		acct.StrikeFeat(age, int(config.CoinRefTicks(age, 1)*0.5), "run-2", day, false)
+	}
+	for i, a := range config.Ages() {
+		if a.Key == "victorian_age" {
+			acct.RecordAgeReached(a.Key, i)
+		}
+	}
+	s.eng.StepTicks(1)
+	s.open("badges", "")
+	shots.takeCabinet(s, "cabinet")
+	s.close()
+	s.open("badges medieval", "")
+	shots.takeCabinet(s, "cabinet-drawer")
+	s.close()
+	s.open("badges ledgers", "")
+	shots.takeCabinet(s, "cabinet-ledgers")
+	s.close()
 
 	// The menu with a game: the town of the first stage, as this account's
 	// main game.
