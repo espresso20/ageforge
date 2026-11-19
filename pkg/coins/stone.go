@@ -13,7 +13,7 @@ var (
 	stCord  = newRamp(0x20150c, 0x3e2a18, 0x6a4a2a, 0x96703e, 0xc09a5c)
 )
 
-// stBead is one bead: a half-width across the cord, b half its length along it; ribs > 0 makes a carved scallop.
+// stBead is one bead: a half-width across the cord, b half its length along it; ribs > 0 makes a ribbed oval shell.
 type stBead struct {
 	x, y, rot, a, b, wob float64
 	z, ribs              int
@@ -23,9 +23,6 @@ type stBead struct {
 func (b *stBead) sd(x, y float64) float64 {
 	p, q := rotate(x-b.x, y-b.y, b.rot)
 	d := sdTrueEllipse(p, q, b.b, b.a, 0)
-	if b.ribs > 0 {
-		d = math.Max(d, -p-0.8*b.b)
-	}
 	if b.wob > 0 {
 		d += b.wob * (math.Sin(3*math.Atan2(q, p)+b.a) + 0.6*math.Sin(5*math.Atan2(q, p)+7*b.b))
 	}
@@ -95,9 +92,8 @@ func stSpec(bs []stBead, lines [][]vec, knots []stBead, ramps [4]ramp, w float64
 		}
 		mn := math.Min(b.a, b.b)
 		h := ground + 2.6*bevel(best, mn*0.9)
-		if b.ribs > 0 { // ribs fanning from the hinge
-			ang := math.Atan2(q, p+0.8*b.b+0.01)
-			h += 1.1 * math.Cos(ang*2.9*float64(b.ribs)) * (1 - smooth(1.0, 1.35, math.Abs(ang))) * smooth(1, 5, math.Hypot(q, p+0.8*b.b))
+		if b.ribs > 0 { // ribs across the width
+			h += 0.4 * math.Cos(float64(b.ribs)*math.Pi*q/b.a) * smooth(0, 3, -best)
 		}
 		if b.hi && best < -1 && math.Hypot(x-b.x+0.32*mn, y-b.y+0.36*mn) < 0.8+0.14*mn { // hard highlight
 			return sample{h: h, z: b.z, tone: 0.97, seal: true}
@@ -171,7 +167,7 @@ func stone(l, lod int, seed uint32) *spec {
 			bs[k].z, bs[k].a, bs[k].b = 2, bs[k].a*0.9, bs[k].b*1.35
 		}
 	}
-	rx, ry := level(l, 43, 43, 38, 37, 44, 40)*(1+R(10, 0.05)), level(l, 33, 33, 29, 31, 30, 26)*(1+R(11, 0.07))
+	rx, ry := level(l, 43, 43, 38, 37, 44, 40)*(1+R(10, 0.05)), level(l, 33, 33, 29, 31, 30, 26)*(1+R(11, 0.07))*(1+0.22*small)
 	cy, tilt, th0, ph1, ph2 := level(l, 2, 0, 0, 0, 0, -10), 0.22+R(1, 0.3), -1.2+R(2, 0.8), 1+R(12, 3.5), R(13, 3.5)
 	pt := func(th float64) vec { return stEll(0, cy, rx, ry, tilt, th, ph1, ph2) }
 	gw := func(i int) float64 {
@@ -194,7 +190,7 @@ func stone(l, lod int, seed uint32) *spec {
 		nu, d := math.Atan2(o.y-cy, o.x), 24+4*small
 		c := vec{o.x + d*math.Cos(nu), o.y + d*math.Sin(nu)}
 		lines = append(lines, []vec{o, c})
-		bs = append(bs, stBead{x: c.x, y: c.y, rot: nu, a: 15 + 3*small + R(14, 0.8), b: 10 + 2*small, z: 1, ribs: 5, hi: true})
+		bs = append(bs, stBead{x: c.x, y: c.y, rot: nu, a: 10 + 2*small + R(14, 0.6), b: 14 + 2*small, z: 1, ribs: 5, hi: true})
 	}
 	sp := stSpec(bs, lines, knots, [4]ramp{stGreen, stChalk, stRed, stCord}, lineWidth(lod)(1.9))
 	if l >= 4 {
@@ -208,7 +204,7 @@ func stone(l, lod int, seed uint32) *spec {
 func stoneLegend() *spec {
 	hs := func(i, k int) float64 { return hash(i, k, 977) }
 	var bs []stBead
-	pts := stPath(240, func(t float64) vec { return stEll(0, 0, 51*(1-0.5*t), 40*(1-0.5*t), 0.2, -0.9+4*math.Pi*t, 1, 0.4) })
+	pts := stPath(240, func(t float64) vec { return stEll(0, 0, 51*(1-0.5*t), 56*(1-0.5*t), 0.2, -0.9+4*math.Pi*t, 1, 0.4) })
 	for i := 0; i < 44; i++ {
 		a := 5.6 - 2.2*float64(i)/44 + 0.4*hs(i, 1)
 		b := stBead{a: a, b: a*0.72 + 0.4*hs(i, 4), rot: (hs(i, 7) - 0.5) * 0.2, z: 1, hi: true}
@@ -222,7 +218,7 @@ func stoneLegend() *spec {
 	}
 	stLay(bs, pts, 8, 1, func(i int) float64 { return 0.5 + 0.5*hs(i, 7) })
 	end := pts[240]
-	bs = append(bs, stBead{x: 0, y: 1, rot: math.Atan2(end.y, end.x) + math.Pi, a: 15, b: 11.5, z: 1, ribs: 5, hi: true})
+	bs = append(bs, stBead{x: 0, y: 1, rot: math.Atan2(end.y, end.x) + math.Pi, a: 11, b: 15, z: 1, ribs: 5, hi: true})
 	lines := append([][]vec{pts, {end, {0, 1}}}, stTails(pts[0], math.Atan2(pts[0].y, pts[0].x), 0)...)
 	sp := stSpec(bs, lines, []stBead{stKnot(pts[0], 4.6)}, [4]ramp{stDark, stBone, stRed, stCord}, 2.4)
 	sp.field, sp.gain, sp.edge = 1, 1.25, 4.5
