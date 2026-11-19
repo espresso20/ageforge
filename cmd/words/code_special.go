@@ -112,9 +112,9 @@ var fileNotes = map[string]fileNote{
 	"config/mechanics.go":      {place: "in what a tech's card says it does", area: areaTechs, age: "primitive_age"},
 	"config/feature_locks.go":  {place: "in the refusal when a command waits for a tech", area: areaTechs, age: "primitive_age", seen: seenNews},
 	"config/milestones.go":     {place: "in the Milestones panel", area: areaMilestones, age: "primitive_age"},
-	"config/badge_catalog.go":  {place: "in the badge case", area: areaBadges},
-	"config/badge_specials.go": {place: "in the badge case", area: areaBadges},
-	"config/badges.go":         {place: "in the badge case", area: areaBadges},
+	"config/badge_catalog.go":  {place: "in the coin cabinet", area: areaBadges},
+	"config/badge_specials.go": {place: "in the coin cabinet", area: areaBadges},
+	"config/badges.go":         {place: "in the coin cabinet", area: areaBadges},
 	"config/epochs.go":         {place: "about eras and catastrophes", area: areaEvents, age: "iron_age"},
 	"config/events.go":         {place: "about events", area: areaEvents},
 	"config/tech_tree.go":      {place: "in the Research panel", area: areaTechs, age: "primitive_age"},
@@ -149,11 +149,18 @@ var fileNotes = map[string]fileNote{
 	"ui/app.go":                  {place: "when the game starts", age: "menu", seen: seenAlways},
 	"ui/arrival.go":              {place: "on the screen shown when you reach a new age", age: "stone_age", seen: seenRare},
 	"ui/arrival_page.go":         {place: "on the screen shown when you reach a new age", age: "stone_age", seen: seenRare},
-	"ui/badge_case.go":           {place: "in the badge case", age: "primitive_age"},
 	"ui/badge_emblems.go":        {skip: whyArt},
 	"ui/badge_list.go":           {place: "in the list of badges on the Stats panel and in the badge commands", age: "primitive_age"},
 	"ui/badge_moment.go":         {place: "on the card shown when a badge is earned", age: "primitive_age"},
-	"ui/badge_panel.go":          {place: "in the badge case", age: "primitive_age"},
+	"ui/cabinet_panel.go":        {place: "in the coin cabinet: the drawers, the totals and the key hints. Placeholder text", age: "primitive_age"},
+	"ui/cabinet_drawer.go":       {place: "in an open drawer of the coin cabinet: the names of the wells, the ticket for a coin and the hints. Placeholder text", age: "primitive_age"},
+	"ui/cabinet_ageless.go":      {place: "in the Ledgers, Curios and Themes drawers of the coin cabinet. Placeholder text", age: "primitive_age"},
+	"ui/coin_list.go":            {place: "in the list of coins the badge commands print", age: "primitive_age"},
+	"ui/epoch_hall_art.go":       {place: "under a coin on the Epoch hall: its level", age: "primitive_age"},
+	"ui/stats_lifetime.go":       {place: "in the Stats panel's Lifetime part, including the coin of each badge family", age: "primitive_age"},
+	"config/tally.go":            {place: "as the name of a tally coin in the Ledgers drawer of the coin cabinet. Placeholder text", area: areaBadges},
+	"rules/tally.go":             {place: "as the ending of a tally coin's name in the Ledgers drawer of the coin cabinet. Placeholder text", area: areaBadges},
+	"game/tally.go":              {place: "in the card and log line when a tally coin reaches a rung. Placeholder text", area: areaBadges},
 	"ui/braille.go":              {skip: whyArt},
 	"ui/catastrophe_modal.go":    {place: "in the window where you choose to endure or succumb to a catastrophe", age: "iron_age", seen: seenRare, voice: true},
 	"ui/command_input.go":        {place: "at the command prompt", age: "primitive_age", seen: seenAlways},
@@ -374,30 +381,10 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 			r.area, r.seen, r.age = areaAges, seenRegular, w.ageOf(arg(1))
 			r.rules = rulesConfig | rulesDocs
 			return r, "", true
-		case len(u.calls) > 0 && cs.fn == "ladder" && cs.arg == 6 && u.near == "elem":
-			r := newRow(fmt.Sprintf("badge_ladder.%s.rung.%d", words.IDSafe(arg(0)), u.coll[0].index+1), kindName,
-				fmt.Sprintf("The name of badge %d of the ladder “%s”: in the badge case, and in the toast and log line when it is earned.", u.coll[0].index+1, arg(1)))
-			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
-			return r, "", true
-		case inCall && cs.fn == "ladder":
-			key := words.IDSafe(arg(0))
-			var r *row
-			switch cs.arg {
-			case 1:
-				r = newRow("badge_ladder."+key+".heading", kindLabel, "The heading the badge case puts over the ladder “"+arg(1)+"”.")
-			case 3:
-				r = newRow("badge_ladder."+key+".description", kindVoice, "What the badge case says each badge of the ladder “"+arg(1)+"” is for. {count} is the number that rung asks for.")
-			case 4:
-				r = newRow("badge_ladder."+key+".first", kindVoice, "What the badge case says the first badge of the ladder “"+arg(1)+"” is for, when it asks for just one.")
-			default:
-				return nil, whyKey, true
-			}
-			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
-			return r, "", true
 		case inCall && cs.fn == "mapLook" && (cs.arg == 1 || cs.arg == 2):
-			r := newRow("badge."+words.IDSafe(arg(0))+".name", kindName, "The name of a badge: in the badge case, and in the toast and log line when it is earned.")
+			r := newRow("badge."+words.IDSafe(arg(0))+".name", kindName, "The name of a badge: in the coin cabinet, and in the toast and log line when it is earned.")
 			if cs.arg == 2 {
-				r = newRow("badge."+words.IDSafe(arg(0))+".description", kindVoice, "What the badge case says the badge “"+arg(1)+"” is for.")
+				r = newRow("badge."+words.IDSafe(arg(0))+".description", kindVoice, "What the coin cabinet says the badge “"+arg(1)+"” is for.")
 			}
 			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
 			return r, "", true
