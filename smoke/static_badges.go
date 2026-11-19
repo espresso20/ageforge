@@ -138,7 +138,7 @@ func staticBadgesAll(set *rules.Set, written []config.BadgeDef, families []confi
 			seenRung[rung] = def.Key
 		}
 	}
-	first := c.firstRungs(badges)
+	first := c.firstRungs(badges, set.Tallies())
 	for _, key := range IntegrityBadges {
 		if def, ok := set.Badge(key); !ok || !def.Integrity() {
 			c.fail(key, "integrity", fmt.Sprintf("%s is on the list of integrity badges but is not one in the catalog.", key))

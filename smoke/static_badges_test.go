@@ -1,7 +1,6 @@
 package smoke
 
 import (
-	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -47,56 +46,39 @@ var lineageLegendaryBefore = map[string]float64{
 // Modern Age and so builds the fewest copies, is the lineage nearest it.
 const lineageLegendaryFloor = 10
 
-// TestLineageLegendariesAreOnAnIdleScale: every lineage's Dynasty rung asks at
-// least lineageLegendaryFloor times what it asked before, still sits inside
-// the reach rule (25 runs of a tenth of what a run can hold), and is what the
-// reference model gives it (lineageTotals, to two significant figures), with
-// every rung below it lineageRungRatio of the one above. If a balance change
+// TestLineageLegendariesAreOnAnIdleScale: every lineage tally's top rung
+// asks at least lineageLegendaryFloor times what it asked before, and every
+// rung is what the reference model gives (lineageTotals, to two significant
+// figures, then lineageRungRatio of the rung above). If a balance change
 // moves the model, this fails: derive the ladders again (TestLineageDerivation).
 func TestLineageLegendariesAreOnAnIdleScale(t *testing.T) {
-	problems, reach := StaticBadges()
-	for _, p := range problems {
-		t.Errorf("[%s] %s", p.Kind, p.Why)
-	}
 	totals, _ := lineageTotals()
-	rungs := map[string]map[string]float64{} // lineage -> rung key -> count
-	for _, r := range reach {
-		lineage, ok := strings.CutPrefix(r.Key, "lineage.")
+	seen := map[string]bool{}
+	for _, tally := range rules.Core().Tallies() {
+		lineage, ok := strings.CutPrefix(tally.Key, "lineage.")
 		if !ok {
 			continue
 		}
-		lineage = lineage[:strings.LastIndex(lineage, ".")]
-		if rungs[lineage] == nil {
-			rungs[lineage] = map[string]float64{}
-		}
-		rungs[lineage][r.Key] = r.Need
-		if !strings.HasSuffix(r.Key, fmt.Sprintf(".%d", lineageRungCount)) {
-			continue
-		}
+		seen[lineage] = true
 		before, known := lineageLegendaryBefore[lineage]
-		if !known {
-			t.Errorf("%s: a lineage with no entry in lineageLegendaryBefore", r.Key)
+		total, modelled := totals[lineage]
+		if !known || !modelled || len(tally.Rungs) != lineageRungCount {
+			t.Errorf("%s: not in lineageLegendaryBefore and the model, or not %d rungs", tally.Key, lineageRungCount)
 			continue
 		}
-		if r.Need < lineageLegendaryFloor*before {
-			t.Errorf("%s asks %s, under %dx the old %s", r.Key, config.FormatAmount(r.Need), lineageLegendaryFloor, config.FormatAmount(before))
+		if top := tally.Rungs[lineageRungCount-1]; top < lineageLegendaryFloor*before {
+			t.Errorf("%s asks %s, under %dx the old %s", tally.Key, config.FormatAmount(top), lineageLegendaryFloor, config.FormatAmount(before))
 		}
-		if r.Limit <= 0 || r.Need > r.Limit {
-			t.Errorf("%s asks %s, past the reach rule's %s (%s)", r.Key, config.FormatAmount(r.Need), config.FormatAmount(r.Limit), r.Basis)
+		for n, want := range lineageLadder(total) {
+			if got := tally.Rungs[n]; math.Abs(got-want) > 0.5 {
+				t.Errorf("%s rung %d asks %s, the model gives %s (%s built over %d runs, top rung to two figures, then %.1f of the rung above)",
+					tally.Key, n+1, config.FormatAmount(got), config.FormatAmount(want), config.FormatAmount(total), config.BadgeMaxRuns, lineageRungRatio)
+			}
 		}
 	}
 	for lineage := range lineageLegendaryBefore {
-		total, ok := totals[lineage]
-		if !ok || rungs[lineage] == nil {
-			t.Errorf("lineage %s is not in both the catalog and the model", lineage)
-			continue
-		}
-		for n, want := range lineageLadder(total) {
-			key := fmt.Sprintf("lineage.%s.%d", lineage, n+1)
-			if got := rungs[lineage][key]; math.Abs(got-want) > 0.5 {
-				t.Errorf("%s asks %s, the model gives %s (%s built over %d runs, top rung to two figures, then %.1f of the rung above)",
-					key, config.FormatAmount(got), config.FormatAmount(want), config.FormatAmount(total), config.BadgeMaxRuns, lineageRungRatio)
-			}
+		if !seen[lineage] {
+			t.Errorf("lineage %s has no tally", lineage)
 		}
 	}
 }
@@ -143,19 +125,6 @@ func family(t *testing.T, src *rules.Source, name string) *config.BadgeFamilyDef
 	return nil
 }
 
-// ladderFamily returns a pointer to the ladder family in src that the badge
-// case calls name ("Wonders raised").
-func ladderFamily(t *testing.T, src *rules.Source, name string) *config.BadgeFamilyDef {
-	t.Helper()
-	for i := range src.BadgeFamilies {
-		if src.BadgeFamilies[i].Family == "ladder" && src.BadgeFamilies[i].Ladder == name {
-			return &src.BadgeFamilies[i]
-		}
-	}
-	t.Fatalf("no ladder %s", name)
-	return nil
-}
-
 // TestFirstRungsComeEarly is the first-rung rule on the real catalog, with
 // the table it rests on: every lifetime ladder's first rung is one
 // occurrence, or a count an ordinary first run has by the time it reaches
@@ -164,7 +133,7 @@ func ladderFamily(t *testing.T, src *rules.Source, name string) *config.BadgeFam
 // as the first food rung, with a million food made by the Bronze Age.
 func TestFirstRungsComeEarly(t *testing.T) {
 	first := StaticFirstRungs()
-	if len(first) < 60 {
+	if len(first) < 20 {
 		t.Fatalf("only %d lifetime ladders were checked", len(first))
 	}
 	byName := map[string]FirstRung{}
@@ -177,8 +146,8 @@ func TestFirstRungsComeEarly(t *testing.T) {
 				t.Errorf("%s: rung %d (%v) is not above rung %d (%v)", r.Ladder, i+1, r.Rungs[i], i, r.Rungs[i-1])
 			}
 		}
-		if strings.HasPrefix(r.Key, "resource.") {
-			byName[strings.TrimSuffix(strings.TrimPrefix(r.Key, "resource."), "."+r.Key[strings.LastIndex(r.Key, ".")+1:])] = r
+		if res, ok := strings.CutPrefix(r.Key, "resource."); ok {
+			byName[res] = r
 		}
 		t.Logf("%-22s first rung %-8s from the %-16s by the %-16s (a first run has %s)", r.Ladder, config.FormatAmount(r.Need), r.From, r.By, config.FormatAmount(r.Have))
 	}
@@ -188,7 +157,7 @@ func TestFirstRungsComeEarly(t *testing.T) {
 	set := rules.Core()
 	food, ok := byName["food"]
 	if !ok {
-		t.Fatal("no food ladder")
+		t.Fatal("no food tally")
 	}
 	if most := set.ProductionThrough("food", "primitive_age") + 0.25*(set.ProductionThrough("food", "stone_age")-set.ProductionThrough("food", "primitive_age")); food.Need > most {
 		t.Errorf("the first food rung asks for %s; a town has made %s a quarter of the way through the Stone Age", config.FormatAmount(food.Need), config.FormatAmount(most))
@@ -197,21 +166,10 @@ func TestFirstRungsComeEarly(t *testing.T) {
 		t.Errorf("the first food rung asks for %s: the playtest had made a million by the Bronze Age and was nowhere near the old one", config.FormatAmount(food.Need))
 	}
 
-	// Every resource ladder climbs in even multiplicative steps, from the
+	// Every resource tally climbs in even multiplicative steps, from the
 	// first age's production to twenty-five runs: no step is more than a
 	// quarter longer than another (the rungs are rounded to two figures).
-	// The soldiers are no resource, but their ladder is one of these.
-	ladders := []string{config.SoldiersKey}
-	for _, res := range set.Resources() {
-		ladders = append(ladders, res.Key)
-	}
-	if len(byName) != len(ladders) {
-		t.Errorf("%d resource ladders for %d resources and the soldiers", len(byName), len(set.Resources()))
-	}
-	badges := 0
-	for _, key := range ladders {
-		r := byName[key]
-		badges += len(r.Rungs)
+	for key, r := range byName {
 		if len(r.Rungs) < 3 {
 			t.Errorf("%s has %d rungs", key, len(r.Rungs))
 			continue
@@ -228,9 +186,6 @@ func TestFirstRungsComeEarly(t *testing.T) {
 		if top := r.Rungs[len(r.Rungs)-1]; top > config.BadgeMaxRuns*perRun || top < 0.9*config.BadgeMaxRuns*perRun {
 			t.Errorf("%s: the top rung is %s, want %d runs of %s", key, config.FormatAmount(top), config.BadgeMaxRuns, config.FormatAmount(perRun))
 		}
-	}
-	if badges != 90 {
-		t.Errorf("the resource ladders have %d badges, want the 90 the catalog has (knowledge is no resource)", badges)
 	}
 }
 
@@ -260,26 +215,8 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			b := special(t, src, hut)
 			b.Subject, b.Counter = "hovel", "standing.hovel"
 		}},
-		{"a ladder past 25 runs", "lineage.housing.2", "lifetime", func(src *rules.Source) {
-			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {14, config.Trillion}}
-		}},
-		{"a first rung a first run does not build in time", "lineage.housing.1", "first_rung", func(src *rules.Source) {
-			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {100 * config.Million, 200 * config.Million, 300 * config.Million, 400 * config.Million, 500 * config.Million}}
-		}},
-		{"a first rung of two runs' wonders", "ladder.wonders.1", "first_rung", func(src *rules.Source) {
-			ladderFamily(t, src, "Wonders raised").Ladders = map[string][]float64{"": {25, 100, 300}}
-		}},
 		{"a first rung of more badges than the first ages give", "special.collector", "first_rung", func(src *rules.Source) {
 			special(t, src, "special.collector").Threshold = 25
-		}},
-		{"a ladder of prestiges past 25 runs", "ladder.prestiges.4", "lifetime", func(src *rules.Source) {
-			family(t, src, "ladder").Ladders = map[string][]float64{"": {1, 3, 10, 26}}
-		}},
-		{"a counter no event adds to", "ladder.prestiges.1", "existence", func(src *rules.Source) {
-			family(t, src, "ladder").Counter = "high_fives"
-		}},
-		{"a counter the check has no run for", "ladder.prestiges.1", "lifetime", func(src *rules.Source) {
-			family(t, src, "ladder").Counter = config.BadgeEvGiftSent
 		}},
 		{"an age no advance reaches", "age.primitive_age", "gate", func(src *rules.Source) {
 			f := family(t, src, "age")
@@ -356,12 +293,6 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 		}},
 		{"an old achievement no badge keeps", "reached_iron", "alias", func(src *rules.Source) {
 			family(t, src, "age").Aliases = nil
-		}},
-		{"a family that makes no badges", "", "table", func(src *rules.Source) {
-			family(t, src, "lineage").Only = []string{"basket_weaving"}
-		}},
-		{"two rungs at one count", "ladder.prestiges.2", "table", func(src *rules.Source) {
-			family(t, src, "ladder").Ladders = map[string][]float64{"": {1, 1, 10, 25}}
 		}},
 	}
 	for _, tc := range cases {

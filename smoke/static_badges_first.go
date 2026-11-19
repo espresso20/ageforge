@@ -130,15 +130,22 @@ func (c *badgeCheck) firstAge(counter string) int {
 	return 0
 }
 
-// firstRungs checks the first rung of every lifetime ladder in badges and
-// returns each ladder's verdict, in catalog order.
-func (c *badgeCheck) firstRungs(badges []config.BadgeDef) []FirstRung {
+// firstRungs checks the first rung of every lifetime tally and of the badge
+// ladders still written by hand, and returns each one's verdict, in ledger
+// order.
+func (c *badgeCheck) firstRungs(badges []config.BadgeDef, tallies config.Tallies) []FirstRung {
 	type ladder struct {
-		name, counter string
-		rungs         []config.BadgeDef
+		name, key, counter string
+		rungs              []float64
 	}
 	var ladders []*ladder
 	byKey := map[string]*ladder{}
+	for _, t := range tallies {
+		if t.Counter == "" || len(t.Subjects) > 0 || len(t.Rungs) == 0 {
+			continue
+		}
+		ladders = append(ladders, &ladder{name: t.Name, key: t.Key, counter: t.Counter, rungs: slices.Clone(t.Rungs)})
+	}
 	for _, def := range badges {
 		if def.Ladder == "" || def.Scope != config.BadgeLifetime || def.Integrity() {
 			continue
@@ -146,11 +153,11 @@ func (c *badgeCheck) firstRungs(badges []config.BadgeDef) []FirstRung {
 		k := def.Ladder + "\x00" + def.Counter
 		l, ok := byKey[k]
 		if !ok {
-			l = &ladder{name: def.Ladder, counter: def.Counter}
+			l = &ladder{name: def.Ladder, key: def.Key, counter: def.Counter}
 			byKey[k] = l
 			ladders = append(ladders, l)
 		}
-		l.rungs = append(l.rungs, def)
+		l.rungs = append(l.rungs, def.Threshold)
 	}
 
 	// The badges an ordinary first run is proven to hold on reaching
@@ -176,24 +183,13 @@ func (c *badgeCheck) firstRungs(badges []config.BadgeDef) []FirstRung {
 
 	var out, counted []FirstRung
 	check := func(l *ladder, have float64, first, through int, basis string) FirstRung {
-		slices.SortStableFunc(l.rungs, func(a, b config.BadgeDef) int {
-			switch {
-			case a.Threshold < b.Threshold:
-				return -1
-			case a.Threshold > b.Threshold:
-				return 1
-			}
-			return 0
-		})
-		low := l.rungs[0]
-		r := FirstRung{Ladder: l.name, Key: low.Key, Need: low.Threshold, Have: have,
+		slices.Sort(l.rungs)
+		need := l.rungs[0]
+		r := FirstRung{Ladder: l.name, Key: l.key, Need: need, Have: have, Rungs: l.rungs,
 			From: c.m.ageName(first), By: c.m.ageName(min(through+1, len(c.m.ages)-1))}
-		for _, d := range l.rungs {
-			r.Rungs = append(r.Rungs, d.Threshold)
-		}
-		if low.Threshold > 1 && low.Threshold > have {
-			c.fail(low.Key, "first_rung", fmt.Sprintf("%s (%s) is the first rung of the %s ladder and asks for %s, but an ordinary first run has %s by the time it reaches the %s (%s). A first rung must be earned by the %s, or by the second age after its subject first appears (the %s).",
-				low.Name, low.Key, l.name, config.FormatAmount(low.Threshold), config.FormatAmount(have), r.By, basis,
+		if need > 1 && need > have {
+			c.fail(l.key, "first_rung", fmt.Sprintf("%s (%s) is the first rung of the %s ladder and asks for %s, but an ordinary first run has %s by the time it reaches the %s (%s). A first rung must be earned by the %s, or by the second age after its subject first appears (the %s).",
+				l.name, l.key, l.name, config.FormatAmount(need), config.FormatAmount(have), r.By, basis,
 				c.m.ageName(early), r.From))
 		}
 		return r
