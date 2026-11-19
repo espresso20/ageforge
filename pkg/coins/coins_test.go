@@ -77,7 +77,7 @@ func TestSameArgumentsSamePicture(t *testing.T) {
 
 // varied lists the ages whose copies differ from one another; the others draw
 // every copy alike.
-var varied = map[string]bool{"primitive_age": true, "classical_age": true, "medieval_age": true, "victorian_age": true, "iron_age": true, "bronze_age": true}
+var varied = map[string]bool{"primitive_age": true, "classical_age": true, "medieval_age": true, "victorian_age": true, "iron_age": true, "bronze_age": true, "stone_age": true}
 
 func TestSeedsAndLevelsDiffer(t *testing.T) {
 	for _, age := range coins.Ages() {
