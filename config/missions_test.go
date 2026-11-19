@@ -120,7 +120,7 @@ func TestRoadTemplatesCarryTheirRows(t *testing.T) {
 		for i := 0; i < w.RoadTemplateCount(kind); i++ {
 			n++
 			template := w.RoadTemplate(kind, i)
-			row := roadEventTemplates[kind][i].vibeRow
+			row := roadEventTemplates[kind][i].rowID
 			if want := fmt.Sprintf("config.mission_words.roadEventTemplates.%02d", n); row != want {
 				t.Errorf("%s template %d has the row %q, want %q", kind, i, row, want)
 			}

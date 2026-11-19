@@ -8,7 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -37,15 +37,15 @@ var (
 
 // The other words the box says.
 var (
-	txtBuy      = vibe.E("ui.dash_cards.txtBuy.01", "Buy")
-	txtBuild    = vibe.E("ui.dash_cards.txtBuild.01", "Build")
-	txtNoIncome = vibe.E("ui.dash_cards.txtNoIncome.01", "no income")
+	txtBuy      = rowid.E("ui.dash_cards.txtBuy.01", "Buy")
+	txtBuild    = rowid.E("ui.dash_cards.txtBuild.01", "Build")
+	txtNoIncome = rowid.E("ui.dash_cards.txtNoIncome.01", "no income")
 	// txtLimit is the card's reason at its count limit.
-	txtLimit = vibe.E("ui.dash_cards.txtLimit.01", "Building limit reached.")
+	txtLimit = rowid.E("ui.dash_cards.txtLimit.01", "Building limit reached.")
 	// The detail box's buttons, and the row that counts the older buildings.
-	txtSell    = vibe.E("ui.dash_cards.txtSell.01", "Sell")
-	txtUpgrade = vibe.E("ui.dash_cards.txtUpgrade.01", "Upgrade")
-	txtOlder   = vibe.E("ui.dash_cards.txtOlder.01", "older buildings")
+	txtSell    = rowid.E("ui.dash_cards.txtSell.01", "Sell")
+	txtUpgrade = rowid.E("ui.dash_cards.txtUpgrade.01", "Upgrade")
+	txtOlder   = rowid.E("ui.dash_cards.txtOlder.01", "older buildings")
 )
 
 // nearShare is the share of a price in hand from which a card that cannot be
@@ -77,7 +77,7 @@ func priceTip(price []costPart) kit.TipText {
 		if !p.ok {
 			mark = "! "
 		}
-		t.Lines = append(t.Lines, mark+vibe.Sprintf("ui.dash_cards.priceTip.01", "%s: have %s, need %s", game.ResourceName(p.res), textfmt.Number(p.have), textfmt.Number(p.need)))
+		t.Lines = append(t.Lines, mark+rowid.Sprintf("ui.dash_cards.priceTip.01", "%s: have %s, need %s", game.ResourceName(p.res), textfmt.Number(p.have), textfmt.Number(p.need)))
 	}
 	return t
 }
@@ -258,11 +258,11 @@ func shortOf(state game.GameState, cost map[string]float64) (reason, wait string
 	if worst == "" {
 		return "", ""
 	}
-	reason = vibe.Sprintf("ui.dash_cards.shortOf.01", "short of %s", game.Amount(cost[worst]-state.Resources[worst].Amount, worst))
+	reason = rowid.Sprintf("ui.dash_cards.shortOf.01", "short of %s", game.Amount(cost[worst]-state.Resources[worst].Amount, worst))
 	if math.IsInf(worstWait, 1) {
 		return reason, txtNoIncome.String()
 	}
-	return reason, vibe.Sprintf("ui.dash_cards.shortOf.02", "in %s", textfmt.Duration(time.Duration(worstWait*float64(time.Second))))
+	return reason, rowid.Sprintf("ui.dash_cards.shortOf.02", "in %s", textfmt.Duration(time.Duration(worstWait*float64(time.Second))))
 }
 
 // orderCards sorts cards into the order the box lists them: the ones that can

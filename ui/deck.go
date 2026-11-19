@@ -3,7 +3,7 @@ package ui
 import (
 	"image"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // deck.go draws a deck: a panel of cards in sections. It is the look the
@@ -343,13 +343,13 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deck
 func deckKeys(pg *deckPage, sel int, pages bool) [][2]string {
 	var keys [][2]string
 	if pg.count() > 1 {
-		keys = append(keys, [2]string{"←↑↓→", vibe.Line("ui.deck.deckKeys.01", "move")})
+		keys = append(keys, [2]string{"←↑↓→", rowid.Line("ui.deck.deckKeys.01", "move")})
 	}
 	if c, ok := pg.card(sel); ok && c.Command != "" {
 		keys = append(keys, [2]string{"Enter", c.Action})
 	}
 	if pages {
-		keys = append(keys, [2]string{"PgUp PgDn", vibe.Line("ui.deck.deckKeys.04", "page")})
+		keys = append(keys, [2]string{"PgUp PgDn", rowid.Line("ui.deck.deckKeys.04", "page")})
 	}
 	return append(keys, [2]string{"Esc", "close"})
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -75,7 +75,7 @@ func sellCount(buy buyChoice, owned int) int {
 
 // sellAsk is the question before a sale of n copies of the building name.
 func sellAsk(name string, n int) string {
-	return vibe.Sprintf("ui.dash_detail.sellAsk.01", "Sell %d x %s?", n, name)
+	return rowid.Sprintf("ui.dash_detail.sellAsk.01", "Sell %d x %s?", n, name)
 }
 
 // sellCommand is the sell command for the amount chosen: one copy, ten, or

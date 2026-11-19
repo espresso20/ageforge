@@ -4,8 +4,8 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // The plan as a research queue (the tech tree, part 5).
@@ -119,11 +119,11 @@ func (ge *GameEngine) errTechOutOfSight(key string, sight AgeSight) error {
 			seen[t.Key] = true
 		}
 	}
-	msg := vibe.Sprintf("game.plan_research.errTechOutOfSight.01", "No tech '%s' in sight.", key)
+	msg := rowid.Sprintf("game.plan_research.errTechOutOfSight.01", "No tech '%s' in sight.", key)
 	if s := closestKey(key, seen); s != "" {
-		msg += vibe.Sprintf("game.plan_research.errTechOutOfSight.02", " Did you mean '%s'?", ge.rules.Typed(rules.KindTech, s))
+		msg += rowid.Sprintf("game.plan_research.errTechOutOfSight.02", " Did you mean '%s'?", ge.rules.Typed(rules.KindTech, s))
 	}
-	return vibe.Errorf("game.plan_research.errTechOutOfSight.03", "%s Type research to see the tree.", msg)
+	return rowid.Errorf("game.plan_research.errTechOutOfSight.03", "%s Type research to see the tree.", msg)
 }
 
 // PlanAddResearchChain plans tech key and, before it, everything it still
@@ -139,10 +139,10 @@ func (ge *GameEngine) PlanAddResearchChain(key string) ([]string, error) {
 		return nil, ge.errTechOutOfSight(key, sight)
 	}
 	if plannedCount(ge.plan, PlanResearch, key) > 0 {
-		return nil, vibe.Errorf("game.plan_research.PlanAddResearchChain.01", "%s is already in the plan.", def.Name)
+		return nil, rowid.Errorf("game.plan_research.PlanAddResearchChain.01", "%s is already in the plan.", def.Name)
 	}
 	if reason := ge.planResearchInvalid(key); reason != "" {
-		return nil, vibe.Errorf("game.plan_research.PlanAddResearchChain.02", "Can't plan %s: %s.", def.Name, reason)
+		return nil, rowid.Errorf("game.plan_research.PlanAddResearchChain.02", "Can't plan %s: %s.", def.Name, reason)
 	}
 	chain := researchChain(ge.rules, key, ge.researchOnWay)
 	for _, k := range chain {

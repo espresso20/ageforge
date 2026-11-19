@@ -21,7 +21,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Model is one snapshot laid out for the maps.
@@ -152,7 +152,7 @@ const (
 )
 
 func (r Relation) String() string {
-	return [...]string{"neutral", "friendly", "allied", "rival", "embargo", vibe.Line("mapmodel.model.String.06", "at war")}[r]
+	return [...]string{"neutral", "friendly", "allied", "rival", "embargo", rowid.Line("mapmodel.model.String.06", "at war")}[r]
 }
 
 // Faction is a civilization.
@@ -234,7 +234,7 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 func layoutKey(m *Model) uint64 {
 	h := Hash(m.Seed, int64(m.AgeIdx), int64(m.Workers.Staffed), int64(m.Workers.Idle), int64(m.Workers.Pop),
 		HashStr(m.Catastrophe.Pending), int64(m.Expeditions.Completed))
-	if vibe.On() { // the model holds words, so a scene built from the other script's is not reused
+	if rowid.On() { // the model holds words, so a scene built from the other script's is not reused
 		h = Hash(int64(h), 1)
 	}
 	for _, b := range m.Buildings {
@@ -521,7 +521,7 @@ func (m *Model) world(st *game.GameState) {
 		c.Pending = st.PendingCatastrophe
 		c.PendingName = cat.Catastrophes[st.PendingCatastrophe]
 		if c.PendingName == "" {
-			c.PendingName = vibe.Line("mapmodel.model.world.01", "Catastrophe")
+			c.PendingName = rowid.Line("mapmodel.model.world.01", "Catastrophe")
 		}
 		c.Pressure = 1
 	} else {

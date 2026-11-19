@@ -3,8 +3,8 @@ package game
 import (
 	"math"
 
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Automatic expedition dispatch (Phase 3 of the faction redesign).
@@ -260,7 +260,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 		// this is checked every tick and would otherwise bury the log.
 		if !ge.autoExpeditionStarved {
 			ge.autoExpeditionStarved = true
-			ge.addLog("warning", vibe.Sprintf("game.auto_expedition.processAutoExpeditions.01", "%s: a survey party stands ready, but there are no supplies to outfit it.",
+			ge.addLog("warning", rowid.Sprintf("game.auto_expedition.processAutoExpeditions.01", "%s: a survey party stands ready, but there are no supplies to outfit it.",
 				ge.autoExpeditionBuildingName()))
 		}
 		return
@@ -275,7 +275,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 
 	ge.autoExpeditionStarved = false
 	ge.autoExpeditionTicksLeft = interval
-	ge.addLog(LogRoutine, vibe.Sprintf("game.auto_expedition.processAutoExpeditions.03", "%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), offer.Title))
+	ge.addLog(LogRoutine, rowid.Sprintf("game.auto_expedition.processAutoExpeditions.03", "%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), offer.Title))
 }
 
 // autoExpeditionBuildingName is the society's player-facing name, read from the
@@ -284,5 +284,5 @@ func (ge *GameEngine) autoExpeditionBuildingName() string {
 	if def, ok := ge.Buildings.defs[autoExpeditionBuildingKey]; ok && def.Name != "" {
 		return def.Name
 	}
-	return vibe.Line("game.auto_expedition.autoExpeditionBuildingName.01", "The survey office")
+	return rowid.Line("game.auto_expedition.autoExpeditionBuildingName.01", "The survey office")
 }

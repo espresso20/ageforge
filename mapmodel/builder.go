@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Builder builds models. It owns the catalogue and keeps the last model it
@@ -29,14 +29,14 @@ func NewBuilder(cat *Catalog) *Builder {
 	if own {
 		cat = NewCatalog()
 	}
-	return &Builder{cat: cat, ownCat: own, vibeOn: vibe.On()}
+	return &Builder{cat: cat, ownCat: own, vibeOn: rowid.On()}
 }
 
 // follow lets what the builder holds follow the VibeMode switch: the words of
 // a catalogue it made and the last model are built again when the switch has
 // moved since it last looked.
 func (b *Builder) follow() {
-	if on := vibe.On(); on != b.vibeOn {
+	if on := rowid.On(); on != b.vibeOn {
 		b.vibeOn = on
 		if b.ownCat {
 			b.cat = NewCatalog()

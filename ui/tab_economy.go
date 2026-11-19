@@ -9,8 +9,8 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -21,16 +21,16 @@ var cultureThresholds = []float64{
 }
 
 // txtResearchSpeed is said the same way on several screens, so it has one id.
-var txtResearchSpeed = vibe.E("ui.tab_economy.cultureThresholdLabels.07", "+research speed")
+var txtResearchSpeed = rowid.E("ui.tab_economy.cultureThresholdLabels.07", "+research speed")
 
 // cultureThresholdLabels are short effect labels for each threshold (parallel to cultureThresholds).
-var cultureThresholdLabels = []vibe.Entry{
-	vibe.E("ui.tab_economy.cultureThresholdLabels.01", "+5% research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.02", "+10% research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.03", "+15% research speed, unlock wonder tier"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.04", "+20% research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.05", "+25% research speed, culture events"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.06", "+30% research speed"),
+var cultureThresholdLabels = []rowid.Entry{
+	rowid.E("ui.tab_economy.cultureThresholdLabels.01", "+5% research speed"),
+	rowid.E("ui.tab_economy.cultureThresholdLabels.02", "+10% research speed"),
+	rowid.E("ui.tab_economy.cultureThresholdLabels.03", "+15% research speed, unlock wonder tier"),
+	rowid.E("ui.tab_economy.cultureThresholdLabels.04", "+20% research speed"),
+	rowid.E("ui.tab_economy.cultureThresholdLabels.05", "+25% research speed, culture events"),
+	rowid.E("ui.tab_economy.cultureThresholdLabels.06", "+30% research speed"),
 	txtResearchSpeed,
 	txtResearchSpeed,
 	txtResearchSpeed,
@@ -69,15 +69,15 @@ type EconomyTab struct {
 }
 
 // txtResourcesTitle is said the same way on several screens, so it has one id.
-var txtResourcesTitle = vibe.E("ui.tab_economy.NewEconomyTab.01", " Resources ")
+var txtResourcesTitle = rowid.E("ui.tab_economy.NewEconomyTab.01", " Resources ")
 
 // retitle writes the titles on the borders of the tab's three boxes, in the
 // script now in force.
 func (t *EconomyTab) retitle() {
 	t.resourceTV.SetTitle(txtResourcesTitle.String())
-	t.buildBox.title = vibe.Line("ui.tab_economy.NewEconomyTab.02", " Buildings ")
+	t.buildBox.title = rowid.Line("ui.tab_economy.NewEconomyTab.02", " Buildings ")
 	t.buildBox.dirty = true
-	t.constructionTV.SetTitle(vibe.Line("ui.tab_economy.NewEconomyTab.03", " Under construction "))
+	t.constructionTV.SetTitle(rowid.Line("ui.tab_economy.NewEconomyTab.03", " Under construction "))
 }
 
 // NewEconomyTab constructs the economy tab widget tree: the left column
@@ -299,7 +299,7 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 		return nil
 	}
 	if len(state.BuildQueue) == 0 {
-		for _, s := range []string{vibe.Line("ui.tab_economy.layoutConstruction.01", " (nothing under construction)"), vibe.Line("ui.tab_economy.layoutConstruction.02", " (nothing building)"), vibe.Line("ui.tab_economy.layoutConstruction.03", " (none)")} {
+		for _, s := range []string{rowid.Line("ui.tab_economy.layoutConstruction.01", " (nothing under construction)"), rowid.Line("ui.tab_economy.layoutConstruction.02", " (nothing building)"), rowid.Line("ui.tab_economy.layoutConstruction.03", " (none)")} {
 			if runeLen(s) <= w {
 				return []string{theme.Paint(theme.RoleDim, s)}
 			}
@@ -379,9 +379,9 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 			}
 		}
 		for _, s := range []string{
-			vibe.Sprintf("ui.tab_economy.layoutConstruction.07", " %d under way, the first in %s", len(state.BuildQueue), times[soonest]),
-			vibe.Sprintf("ui.tab_economy.layoutConstruction.08", " %d under way, %s", len(state.BuildQueue), times[soonest]),
-			vibe.Sprintf("ui.tab_economy.layoutConstruction.09", " %d under way", len(state.BuildQueue)),
+			rowid.Sprintf("ui.tab_economy.layoutConstruction.07", " %d under way, the first in %s", len(state.BuildQueue), times[soonest]),
+			rowid.Sprintf("ui.tab_economy.layoutConstruction.08", " %d under way, %s", len(state.BuildQueue), times[soonest]),
+			rowid.Sprintf("ui.tab_economy.layoutConstruction.09", " %d under way", len(state.BuildQueue)),
 		} {
 			if lines = []string{theme.Paint(theme.RoleHighlight, s)}; runeLen(s) <= w {
 				break
@@ -389,7 +389,7 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 		}
 	default:
 		more := len(lines) - (h - 1)
-		lines = append(lines[:h-1], theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutConstruction.10", " +%d more under way", more), w)))
+		lines = append(lines[:h-1], theme.Paint(theme.RoleDim, truncate(rowid.Sprintf("ui.tab_economy.layoutConstruction.10", " +%d more under way", more), w)))
 	}
 	return lines
 }
@@ -490,7 +490,7 @@ func (t *EconomyTab) rateTip(i int) (any, kit.TipText, bool) {
 		lines = append(lines, "  "+s.text)
 	}
 	if more := len(src) - len(shown); more > 0 {
-		lines = append(lines, vibe.Sprintf("ui.tab_economy.rateTip.01", "  and %d more", more))
+		lines = append(lines, rowid.Sprintf("ui.tab_economy.rateTip.01", "  and %d more", more))
 	}
 	return tipRate{key}, kit.TipText{Lines: lines, Wide: true}, true
 }

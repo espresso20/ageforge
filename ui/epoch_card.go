@@ -11,8 +11,8 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -58,7 +58,7 @@ func epochCardFrame(state game.GameState) (*panelFrame, *nativeText, int) {
 	// The coins stand still, struck for the picture's own cell size.
 	pics := &hallCoins{list: page.coins, cache: &coinCache{px: image.Pt(shotCellW, shotCellH)}}
 	tv.over = func(p *kit.Painter, text image.Rectangle, top int) { pics.paint(p, text, top, atRest) }
-	return newPanelFrame(vibe.E("ui.epoch_card.epochPicture.01", "Epoch"), tv), tv, picRows
+	return newPanelFrame(rowid.E("ui.epoch_card.epochPicture.01", "Epoch"), tv), tv, picRows
 }
 
 // epochCardResult is what making the card did: the file it was saved to
@@ -75,16 +75,16 @@ type epochCardResult struct {
 func makeEpochCard(state game.GameState, copy func(path string) error) (epochCardResult, error) {
 	dir := game.DataDir()
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return epochCardResult{}, errors.New(vibe.Line("ui.epoch_card.cmdEpoch.02", "Could not create the data folder: ") + shortIOError(err) + ".")
+		return epochCardResult{}, errors.New(rowid.Line("ui.epoch_card.cmdEpoch.02", "Could not create the data folder: ") + shortIOError(err) + ".")
 	}
 	img := epochPicture(state)
 	var buf bytes.Buffer
 	if img == nil || png.Encode(&buf, img) != nil {
-		return epochCardResult{}, errors.New(vibe.Line("ui.epoch_card.makeEpochCard.01", "Could not draw the picture."))
+		return epochCardResult{}, errors.New(rowid.Line("ui.epoch_card.makeEpochCard.01", "Could not draw the picture."))
 	}
 	path := filepath.Join(dir, epochCardFile)
 	if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
-		return epochCardResult{}, errors.New(vibe.Line("ui.epoch_card.cmdEpoch.03", "Could not save the picture: ") + shortIOError(err) + ".")
+		return epochCardResult{}, errors.New(rowid.Line("ui.epoch_card.cmdEpoch.03", "Could not save the picture: ") + shortIOError(err) + ".")
 	}
 	res := epochCardResult{Path: path}
 	if copy != nil && copy(path) == nil {
@@ -100,7 +100,7 @@ func epochCardReply(res epochCardResult, err error) CommandResult {
 		return errorReply(err.Error())
 	}
 	if res.Copied {
-		return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.05", "Picture copied (also saved to %s). Paste it into Discord.", res.Path), Type: "success"}
+		return CommandResult{Message: rowid.Sprintf("ui.epoch_card.cmdEpoch.05", "Picture copied (also saved to %s). Paste it into Discord.", res.Path), Type: "success"}
 	}
-	return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.04", "Picture saved to %s.", res.Path), Type: "success"}
+	return CommandResult{Message: rowid.Sprintf("ui.epoch_card.cmdEpoch.04", "Picture saved to %s.", res.Path), Type: "success"}
 }

@@ -9,8 +9,8 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/presence"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/ui"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window"
 )
 
@@ -29,7 +29,7 @@ func main() {
 	acct, found, loadErr := game.LoadAccount()
 	loaded := found && acct.Established()
 	if loaded {
-		vibe.Set(acct.VibeOn())
+		rowid.Set(acct.VibeOn())
 	}
 
 	engine := game.NewGameEngine()

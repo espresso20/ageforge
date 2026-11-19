@@ -6,9 +6,9 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -110,7 +110,7 @@ func (m *miniMap) Paint(p *kit.Painter) {
 	}
 	scr := cellsFor(p, m, m.Bounds())
 	cv := &mapstyle.Canvas{Scr: scr, R: mapstyle.Rect{X: x, Y: y, W: w, H: h}, Tier: m.set.Tier}
-	drawMapFrame(cv, w, h, vibe.Line("ui.map_mini.miniMap.Draw.01", " Map "))
+	drawMapFrame(cv, w, h, rowid.Line("ui.map_mini.miniMap.Draw.01", " Map "))
 
 	f := mapFrame(m.model, m.set, m.now().Sub(m.start))
 	m.view.DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)

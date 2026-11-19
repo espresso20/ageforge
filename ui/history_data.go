@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // history_data.go turns the recorder and the account's run archive into what
@@ -260,12 +260,12 @@ func histMeasures(h *game.RunHistory, label func(resKey string) string) []histMe
 
 // Measure names. The ones already said on other screens keep their rows.
 var (
-	txtPopulation    = vibe.E("ui.overlay_history.renderHistoryOverlay.02", "Population")
-	txtWorkers       = vibe.E("ui.overlay_history.renderHistoryOverlay.03", " workers")
-	txtFoodRate      = vibe.E("ui.overlay_history.renderHistoryOverlay.04", "Food rate")
-	txtResearchRate  = vibe.E("ui.overlay_history.renderHistoryOverlay.05", "Research rate")
-	txtFaith         = vibe.E("ui.overlay_history.renderHistoryOverlay.06", "Faith")
-	txtMorale        = vibe.E("ui.overlay_history.renderHistoryOverlay.07", "Morale")
-	txtAllProduction = vibe.E("ui.overlay_history.renderHistoryOverlay.08", "All production")
-	txtGameSpeed     = vibe.E("ui.overlay_history.renderHistoryOverlay.09", "Game speed")
+	txtPopulation    = rowid.E("ui.overlay_history.renderHistoryOverlay.02", "Population")
+	txtWorkers       = rowid.E("ui.overlay_history.renderHistoryOverlay.03", " workers")
+	txtFoodRate      = rowid.E("ui.overlay_history.renderHistoryOverlay.04", "Food rate")
+	txtResearchRate  = rowid.E("ui.overlay_history.renderHistoryOverlay.05", "Research rate")
+	txtFaith         = rowid.E("ui.overlay_history.renderHistoryOverlay.06", "Faith")
+	txtMorale        = rowid.E("ui.overlay_history.renderHistoryOverlay.07", "Morale")
+	txtAllProduction = rowid.E("ui.overlay_history.renderHistoryOverlay.08", "All production")
+	txtGameSpeed     = rowid.E("ui.overlay_history.renderHistoryOverlay.09", "Game speed")
 )

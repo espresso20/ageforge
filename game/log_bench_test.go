@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // The log and the refusals are the paths VibeMode reaches into: every line
@@ -57,7 +57,7 @@ func BenchmarkRefusalSeveralValues(b *testing.B) {
 // vibeOffB puts the VibeMode switch off for a benchmark, and back.
 func vibeOffB(tb testing.TB) {
 	tb.Helper()
-	was := vibe.On()
-	tb.Cleanup(func() { vibe.Set(was) })
-	vibe.Set(false)
+	was := rowid.On()
+	tb.Cleanup(func() { rowid.Set(was) })
+	rowid.Set(false)
 }

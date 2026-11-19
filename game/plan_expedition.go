@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Expedition items: `plan expedition <mission>` sends a mission off the
@@ -28,10 +28,10 @@ func (ge *GameEngine) PlanAddExpedition(title string) error {
 	defer ge.mu.Unlock()
 	ge.ensureMissionBoardLocked()
 	if ge.planOfferNumber(title) == 0 {
-		return vibe.Errorf("game.plan_expedition.PlanAddExpedition.01", "No offer called %q is on the board.", title)
+		return rowid.Errorf("game.plan_expedition.PlanAddExpedition.01", "No offer called %q is on the board.", title)
 	}
 	if plannedCount(ge.plan, PlanExpedition, title) > 0 {
-		return vibe.Errorf("game.plan_expedition.PlanAddExpedition.02", "The plan already sends that expedition.")
+		return rowid.Errorf("game.plan_expedition.PlanAddExpedition.02", "The plan already sends that expedition.")
 	}
 	if planLoad(ge.plan) >= MaxPlanItems {
 		return errPlanFull()
@@ -56,7 +56,7 @@ func (ge *GameEngine) planOfferNumber(title string) int {
 // it can).
 func (ge *GameEngine) planExpeditionGone(it PlanItem) string {
 	if ge.planOfferNumber(it.Key) == 0 {
-		return vibe.Line("game.plan_expedition.planExpeditionGone.01", "the offer is gone")
+		return rowid.Line("game.plan_expedition.planExpeditionGone.01", "the offer is gone")
 	}
 	return ""
 }
@@ -88,7 +88,7 @@ func (ge *GameEngine) planExpeditionCheck(it PlanItem) planCheck {
 func (ge *GameEngine) launchPlanExpedition(it PlanItem) error {
 	n := ge.planOfferNumber(it.Key)
 	if n == 0 {
-		return vibe.Errorf("game.plan_expedition.launchPlanExpedition.01", "No offer called %q is on the board.", it.Key)
+		return rowid.Errorf("game.plan_expedition.launchPlanExpedition.01", "No offer called %q is on the board.", it.Key)
 	}
 	return ge.launchExpeditionLocked(n)
 }
@@ -104,12 +104,12 @@ func (ge *GameEngine) PlanAdjust(n, delta int) (int, error) {
 	}
 	it := &ge.plan[n-1]
 	if it.Kind != PlanBuild && it.Kind != PlanUpgrade {
-		return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.01", "Only builds and upgrades have a count.")
+		return 0, rowid.Errorf("game.plan_expedition.PlanAdjust.01", "Only builds and upgrades have a count.")
 	}
 	if delta < 0 {
 		next := max(it.Count+delta, 1)
 		if next == it.Count {
-			return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.02", "The count is already 1. Remove the item to drop it.")
+			return 0, rowid.Errorf("game.plan_expedition.PlanAdjust.02", "The count is already 1. Remove the item to drop it.")
 		}
 		it.Count = next
 		return next, nil
@@ -125,13 +125,13 @@ func (ge *GameEngine) PlanAdjust(n, delta int) (int, error) {
 	} else {
 		newDef, pending := ge.Buildings.UpgradeTarget(it.Key)
 		if !pending {
-			return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.03", "That upgrade is no longer available.")
+			return 0, rowid.Errorf("game.plan_expedition.PlanAdjust.03", "That upgrade is no longer available.")
 		}
 		room = min(room, ge.Buildings.GetCount(it.Key)-planned, ge.planRoom(newDef, planned))
 	}
 	add := min(delta, room)
 	if add <= 0 {
-		return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.04", "That is the most the plan can take.")
+		return 0, rowid.Errorf("game.plan_expedition.PlanAdjust.04", "That is the most the plan can take.")
 	}
 	it.Count += add
 	ge.logPlanAddLocked(*it, add)

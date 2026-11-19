@@ -7,7 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // faction_verbs.go is what the Factions panel does by click: each civilization
@@ -24,14 +24,14 @@ const (
 
 // The words the buttons say.
 var (
-	txtVerbGift    = vibe.E("ui.faction_verbs.gift.01", "Gift")
-	txtVerbAlly    = vibe.E("ui.faction_verbs.ally.01", "Ally")
-	txtVerbRival   = vibe.E("ui.faction_verbs.rival.01", "Rival")
-	txtVerbEmbargo = vibe.E("ui.faction_verbs.embargo.01", "Embargo")
-	txtVerbNeutral = vibe.E("ui.faction_verbs.neutral.01", "Neutral")
-	txtVerbTribute = vibe.E("ui.faction_verbs.tribute.01", "Tribute")
-	txtVerbRaid    = vibe.E("ui.faction_verbs.raid.01", "Raid")
-	txtVerbAccept  = vibe.E("ui.faction_verbs.accept.01", "Accept")
+	txtVerbGift    = rowid.E("ui.faction_verbs.gift.01", "Gift")
+	txtVerbAlly    = rowid.E("ui.faction_verbs.ally.01", "Ally")
+	txtVerbRival   = rowid.E("ui.faction_verbs.rival.01", "Rival")
+	txtVerbEmbargo = rowid.E("ui.faction_verbs.embargo.01", "Embargo")
+	txtVerbNeutral = rowid.E("ui.faction_verbs.neutral.01", "Neutral")
+	txtVerbTribute = rowid.E("ui.faction_verbs.tribute.01", "Tribute")
+	txtVerbRaid    = rowid.E("ui.faction_verbs.raid.01", "Raid")
+	txtVerbAccept  = rowid.E("ui.faction_verbs.accept.01", "Accept")
 )
 
 // factionsView is the panel's buttons: the slots its text last reserved for
@@ -61,7 +61,7 @@ func (fv *factionsView) wire(om *OverlayManager) {
 
 // raidAsk is the question a Raid asks, naming the civilization.
 func raidAsk(name string) string {
-	return vibe.Sprintf("ui.faction_verbs.raidAsk.01", "Raid the %s trade route?\n\nTheir opinion falls at once, and it may start a war.", name)
+	return rowid.Sprintf("ui.faction_verbs.raidAsk.01", "Raid the %s trade route?\n\nTheir opinion falls at once, and it may start a war.", name)
 }
 
 // factionVerbs is a civilization's buttons: Gift, the most used, leads, and

@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Inspect reports what the cursor is on; ok is false while it is hidden. It
@@ -113,7 +113,7 @@ func tripOf(m *mapmodel.Model, key string) *mapmodel.Trip {
 func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspection {
 	b := m.Building(key)
 	if b == nil {
-		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.01", "Ruins")}
+		return Inspection{Title: rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.01", "Ruins")}
 	}
 	command := m.BuildingCommand(b)
 	if command == "" {
@@ -122,13 +122,13 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspect
 	line := placeName(m, lineage)
 	if ruin {
 		return Inspection{
-			Title:   vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.02", "Ruins of ") + b.Name,
+			Title:   rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.02", "Ruins of ") + b.Name,
 			Command: command,
-			Lines:   []string{strconv.Itoa(b.Ruins) + vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.03", " in ruins"), line},
+			Lines:   []string{strconv.Itoa(b.Ruins) + rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.03", " in ruins"), line},
 		}
 	}
 	if b.Legacy {
-		line += vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.04", ", legacy")
+		line += rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.04", ", legacy")
 	}
 	in := Inspection{Title: b.Name + " ×" + strconv.Itoa(b.Count), Command: command, Lines: []string{line}}
 	add := func(ok bool, text string) {
@@ -136,9 +136,9 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspect
 			in.Lines = append(in.Lines, text)
 		}
 	}
-	staff := strconv.Itoa(b.Workers) + "/" + strconv.Itoa(b.Capacity) + vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.05", " workers")
+	staff := strconv.Itoa(b.Workers) + "/" + strconv.Itoa(b.Capacity) + rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.05", " workers")
 	if b.Understaffed() {
-		staff += vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.06", ", short of hands")
+		staff += rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.06", ", short of hands")
 	}
 	add(b.Capacity > 0, staff)
 	if b.Rate > 0 && b.RateName != "" {
@@ -146,13 +146,13 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspect
 		add(true, textfmt.RateNumber(v)+" "+strings.ToLower(b.RateName)+unit)
 	}
 	if upgrade := m.Catalog.Defs[b.Upgrade]; upgrade != nil {
-		add(true, vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.07", "upgrades to ")+upgrade.Name)
+		add(true, rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.07", "upgrades to ")+upgrade.Name)
 	} else {
-		add(b.Legacy, vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.08", "superseded: kept in the old town"))
+		add(b.Legacy, rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.08", "superseded: kept in the old town"))
 	}
-	add(b.Delta > 0, "+"+strconv.Itoa(b.Delta)+vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.09", " since your last visit"))
-	add(b.Delta < 0, strconv.Itoa(-b.Delta)+vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.10", " fewer since your last visit"))
-	add(b.Ruins > 0, strconv.Itoa(b.Ruins)+vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.11", " in ruins"))
+	add(b.Delta > 0, "+"+strconv.Itoa(b.Delta)+rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.09", " since your last visit"))
+	add(b.Delta < 0, strconv.Itoa(-b.Delta)+rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.10", " fewer since your last visit"))
+	add(b.Ruins > 0, strconv.Itoa(b.Ruins)+rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.11", " in ruins"))
 	return in
 }
 
@@ -166,16 +166,16 @@ func describeWonder(m *mapmodel.Model, key string) Inspection {
 		}
 		in.Title, in.Command = wonder.Name, m.WonderCommand(wonder)
 		if wonder.Age >= 0 && wonder.Age < len(m.Catalog.AgeNames) {
-			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.roguelike.inspect.describeWonder.01", "wonder of the ")+m.Catalog.AgeNames[wonder.Age])
+			in.Lines = append(in.Lines, rowid.Line("ui.mapstyle.roguelike.inspect.describeWonder.01", "wonder of the ")+m.Catalog.AgeNames[wonder.Age])
 		}
 		if wonder.Built {
 			in.Lines = append(in.Lines, "standing")
 		} else {
-			in.Title += vibe.Line("ui.mapstyle.roguelike.inspect.describeWonder.03", " (rising)")
-			in.Lines = append(in.Lines, strconv.Itoa(int(float64(wonder.Progress*100)))+vibe.Line("ui.mapstyle.roguelike.inspect.describeWonder.04", "% of its cost banked"))
+			in.Title += rowid.Line("ui.mapstyle.roguelike.inspect.describeWonder.03", " (rising)")
+			in.Lines = append(in.Lines, strconv.Itoa(int(float64(wonder.Progress*100)))+rowid.Line("ui.mapstyle.roguelike.inspect.describeWonder.04", "% of its cost banked"))
 		}
 		if wonder.Delta {
-			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.roguelike.inspect.describeWonder.05", "completed since your last visit"))
+			in.Lines = append(in.Lines, rowid.Line("ui.mapstyle.roguelike.inspect.describeWonder.05", "completed since your last visit"))
 		}
 	}
 	return in
@@ -188,31 +188,31 @@ func describeRoad(m *mapmodel.Model, key string) Inspection {
 	case "square":
 		return describeSquare(m, town)
 	case "bridge":
-		return roadIn(vibe.Line("ui.mapstyle.roguelike.inspect.describe.19", "Bridge"), town)
+		return roadIn(rowid.Line("ui.mapstyle.roguelike.inspect.describe.19", "Bridge"), town)
 	case "main road":
-		return roadIn(vibe.Line("ui.mapstyle.roguelike.inspect.describe.21", "Avenue"), town)
+		return roadIn(rowid.Line("ui.mapstyle.roguelike.inspect.describe.21", "Avenue"), town)
 	}
-	return roadIn(vibe.Line("ui.mapstyle.roguelike.inspect.describe.22", "Street"), town)
+	return roadIn(rowid.Line("ui.mapstyle.roguelike.inspect.describe.22", "Street"), town)
 }
 
 func roadIn(name, town string) Inspection {
-	return Inspection{Title: name, Lines: []string{vibe.Line("ui.mapstyle.roguelike.inspect.describe.23", "in ") + town}}
+	return Inspection{Title: name, Lines: []string{rowid.Line("ui.mapstyle.roguelike.inspect.describe.23", "in ") + town}}
 }
 
 // describeSquare is the town square: its people, the next age if it is in
 // reach, and what is stuck.
 func describeSquare(m *mapmodel.Model, town string) Inspection {
-	people := plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.inspect.describe.14", "person"), vibe.Line("ui.mapstyle.roguelike.inspect.describe.15", "people"))
+	people := plural(m.Workers.Pop, rowid.Line("ui.mapstyle.roguelike.inspect.describe.14", "person"), rowid.Line("ui.mapstyle.roguelike.inspect.describe.15", "people"))
 	in := Inspection{
-		Title:   vibe.Line("ui.mapstyle.roguelike.inspect.describe.13", "Town square of ") + town,
+		Title:   rowid.Line("ui.mapstyle.roguelike.inspect.describe.13", "Town square of ") + town,
 		Command: m.SquareCommand(),
-		Lines:   []string{people + ", " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.roguelike.inspect.describe.16", " idle")},
+		Lines:   []string{people + ", " + strconv.Itoa(m.Workers.Idle) + rowid.Line("ui.mapstyle.roguelike.inspect.describe.16", " idle")},
 	}
 	if m.Epoch == 0 {
-		in.Title = vibe.Line("ui.mapstyle.roguelike.inspect.describe.17", "The hearth of ") + town
+		in.Title = rowid.Line("ui.mapstyle.roguelike.inspect.describe.17", "The hearth of ") + town
 	}
 	if m.AgeReady && m.NextAgeName != "" {
-		in.Lines = append(in.Lines, m.NextAgeName+vibe.Line("ui.mapstyle.roguelike.inspect.describe.18", " is within reach"))
+		in.Lines = append(in.Lines, m.NextAgeName+rowid.Line("ui.mapstyle.roguelike.inspect.describe.18", " is within reach"))
 	}
 	if m.Flows.Worst != "" {
 		in.Lines = append(in.Lines, m.Flows.Worst)
@@ -220,22 +220,22 @@ func describeSquare(m *mapmodel.Model, town string) Inspection {
 	return in
 }
 
-var terrainNames = [8]vibe.Entry{
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.01", "Open water"),
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.02", "Shallows"),
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.03", "River"),
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.04", "Shore"),
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.05", "Grassland"),
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.06", "Forest"),
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.07", "Hills"),
-	vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.08", "Mountains"),
+var terrainNames = [8]rowid.Entry{
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.01", "Open water"),
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.02", "Shallows"),
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.03", "River"),
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.04", "Shore"),
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.05", "Grassland"),
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.06", "Forest"),
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.07", "Hills"),
+	rowid.E("ui.mapstyle.roguelike.inspect.terrainNames.08", "Mountains"),
 }
 
-var terrainNotes = [8]vibe.Entry{
-	2: vibe.E("ui.mapstyle.roguelike.inspect.terrainNotes.01", "harbors and mills settle on its banks"),
-	5: vibe.E("ui.mapstyle.roguelike.inspect.terrainNotes.02", "wood: woodcutters settle at its edge"),
-	6: vibe.E("ui.mapstyle.roguelike.inspect.terrainNotes.03", "stone and ore: quarries dig here"),
-	7: vibe.E("ui.mapstyle.roguelike.inspect.terrainNotes.04", "stone and ore: mines dig here"),
+var terrainNotes = [8]rowid.Entry{
+	2: rowid.E("ui.mapstyle.roguelike.inspect.terrainNotes.01", "harbors and mills settle on its banks"),
+	5: rowid.E("ui.mapstyle.roguelike.inspect.terrainNotes.02", "wood: woodcutters settle at its edge"),
+	6: rowid.E("ui.mapstyle.roguelike.inspect.terrainNotes.03", "stone and ore: quarries dig here"),
+	7: rowid.E("ui.mapstyle.roguelike.inspect.terrainNotes.04", "stone and ore: mines dig here"),
 }
 
 // describeTerrain says what the cursor is on when it is on open ground of a
@@ -245,13 +245,13 @@ func describeTerrain(t mapmodel.Terrain, m *mapmodel.Model) Inspection {
 	if m != nil && skyOf(m) >= 0 {
 		switch t {
 		case mapmodel.TForest:
-			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.forest.space", "the world's green canopy, seen from orbit"))
+			in.Lines = append(in.Lines, rowid.Line("ui.mapstyle.terrain.forest.space", "the world's green canopy, seen from orbit"))
 		case mapmodel.TRiver:
-			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.river.space", "veins of blue water crossing the cradle world"))
+			in.Lines = append(in.Lines, rowid.Line("ui.mapstyle.terrain.river.space", "veins of blue water crossing the cradle world"))
 		case mapmodel.THills, mapmodel.TMountain:
-			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.mountains.space", "ridges rising toward the atmosphere"))
+			in.Lines = append(in.Lines, rowid.Line("ui.mapstyle.terrain.mountains.space", "ridges rising toward the atmosphere"))
 		case mapmodel.TDeep, mapmodel.TShallow, mapmodel.TBeach:
-			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.water.space", "oceans of the home world"))
+			in.Lines = append(in.Lines, rowid.Line("ui.mapstyle.terrain.water.space", "oceans of the home world"))
 		}
 		return in
 	}

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -27,12 +27,12 @@ import (
 // badgeKeys are the badge case's keys as the Help panel lists them: the
 // key, then what it does.
 var badgeKeys = []keyHelp{
-	{"Arrows", vibe.E("ui.badge_panel.badgeKeys.02", "Move from badge to badge; the grid follows")},
-	{"Tab", vibe.E("ui.badge_panel.badgeKeys.04", "The next family's tab (Shift-Tab: the one before)")},
-	{"PgUp/PgDn", vibe.E("ui.badge_panel.badgeKeys.05", "A page up and down")},
-	{"Home/End", vibe.E("ui.badge_panel.badgeKeys.06", "The first badge and the last")},
-	{"Enter", vibe.E("ui.badge_panel.badgeKeys.08", "Open the selected badge's detail, and close it (with something typed, Tab and Enter act on the prompt instead)")},
-	{"Esc", vibe.E("ui.badge_panel.badgeKeys.10", "Close the detail, then the panel")},
+	{"Arrows", rowid.E("ui.badge_panel.badgeKeys.02", "Move from badge to badge; the grid follows")},
+	{"Tab", rowid.E("ui.badge_panel.badgeKeys.04", "The next family's tab (Shift-Tab: the one before)")},
+	{"PgUp/PgDn", rowid.E("ui.badge_panel.badgeKeys.05", "A page up and down")},
+	{"Home/End", rowid.E("ui.badge_panel.badgeKeys.06", "The first badge and the last")},
+	{"Enter", rowid.E("ui.badge_panel.badgeKeys.08", "Open the selected badge's detail, and close it (with something typed, Tab and Enter act on the prompt instead)")},
+	{"Esc", rowid.E("ui.badge_panel.badgeKeys.10", "Close the detail, then the panel")},
 }
 
 // badgeRequest is how a command asks the case to open: on a tab, or on a

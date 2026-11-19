@@ -10,7 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // stats_lifetime.go is the Stats page's Lifetime part: the account as a
@@ -18,10 +18,10 @@ import (
 // best run of each count and the badge families.
 
 var (
-	txtFamilies = vibe.E("ui.stats_lifetime.txtFamilies.01", "Badge families")
-	txtFastest  = vibe.E("ui.stats_lifetime.txtFastest.01", "Fastest")
-	txtBestRun  = vibe.E("ui.stats_lifetime.txtBestRun.01", "Best run")
-	txtPickAge  = vibe.E("ui.stats_lifetime.txtPickAge.01", "pick age")
+	txtFamilies = rowid.E("ui.stats_lifetime.txtFamilies.01", "Badge families")
+	txtFastest  = rowid.E("ui.stats_lifetime.txtFastest.01", "Fastest")
+	txtBestRun  = rowid.E("ui.stats_lifetime.txtBestRun.01", "Best run")
+	txtPickAge  = rowid.E("ui.stats_lifetime.txtPickAge.01", "pick age")
 )
 
 // statsPlaque is the account's plaque: its name, title and progress toward

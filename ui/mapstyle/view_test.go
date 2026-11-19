@@ -15,9 +15,9 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -484,16 +484,16 @@ func BenchmarkMapFrame(b *testing.B) {
 	for _, age := range []string{"medieval_age", "modern_age", "fusion_age", "space_age", "galactic_age"} {
 		for _, name := range []string{"off", "on"} {
 			b.Run(age+"/vibemode_"+name, func(b *testing.B) {
-				was := vibe.On()
-				b.Cleanup(func() { vibe.Set(was) })
-				vibe.Set(false)
+				was := rowid.On()
+				b.Cleanup(func() { rowid.Set(was) })
+				rowid.Set(false)
 				m := grown(b, fixture.Options{Age: age, Seed: 7, Harbinger: true, Wars: 1})
 				v := New()
 				scr := capture.NewScreen(200, 60)
 				defer scr.Fini()
 				r := Rect{W: 200, H: 60}
 				v.Draw(scr, r, Frame{Model: m})
-				vibe.Set(name == "on")
+				rowid.Set(name == "on")
 				b.ReportAllocs()
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {

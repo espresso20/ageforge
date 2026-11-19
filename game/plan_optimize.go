@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/detmath"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // plan optimize (card 6PEgLKVM): reorder the plan's builds so the town grows
@@ -234,7 +234,7 @@ func (c previewCache) fresh(plan []PlanItem, tick int) bool {
 // order (false for a preview). Caller holds the write lock.
 func (ge *GameEngine) planOptimizeLocked(apply bool) (PlanOptimizeResult, error) {
 	if len(ge.plan) == 0 {
-		return PlanOptimizeResult{}, vibe.Errorf("game.plan_optimize.PlanOptimize.01", "The plan is empty.")
+		return PlanOptimizeResult{}, rowid.Errorf("game.plan_optimize.PlanOptimize.01", "The plan is empty.")
 	}
 	ge.recalculateRates()
 

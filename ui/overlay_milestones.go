@@ -7,15 +7,15 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // milestonesPage is the Milestones panel: the progress and title, and a
 // section for each chain, a card for each milestone you can see.
 func milestonesPage(state game.GameState) deckPage {
 	ms := state.Milestones
-	pg := deckPage{Title: vibe.Line("ui.overlay_milestones.milestonesPage.01", "Milestones")}
-	pg.Head = []xseg{{vibe.Sprintf("ui.overlay_milestones.milestonesPage.02", "Progress: %d/%d", ms.CompletedCount, ms.TotalCount), xBright}}
+	pg := deckPage{Title: rowid.Line("ui.overlay_milestones.milestonesPage.01", "Milestones")}
+	pg.Head = []xseg{{rowid.Sprintf("ui.overlay_milestones.milestonesPage.02", "Progress: %d/%d", ms.CompletedCount, ms.TotalCount), xBright}}
 	if ms.CurrentTitle != "" {
 		pg.Head = append(pg.Head, xseg{"  \"" + ms.CurrentTitle + "\"", xTitle})
 	}
@@ -43,11 +43,11 @@ func milestonesPage(state game.GameState) deckPage {
 		}
 		sec := deckSection{Title: catNames[cat], MinW: 34}
 		if chain, ok := chainByCategory[cat]; ok {
-			sec.Meta = vibe.Sprintf("ui.overlay_milestones.milestonesPage.03", "%d of %d", chain.CompletedCount, chain.TotalCount)
+			sec.Meta = rowid.Sprintf("ui.overlay_milestones.milestonesPage.03", "%d of %d", chain.CompletedCount, chain.TotalCount)
 			if chain.Complete {
 				sec.Notes = append(sec.Notes, deckLine{Value: "✓ " + chain.Title, K: xGood})
 				if chain.BoostActive {
-					sec.Notes = append(sec.Notes, deckLine{Value: vibe.Line("ui.overlay_milestones.milestonesPage.04", "⚡ boost active"), K: xGood})
+					sec.Notes = append(sec.Notes, deckLine{Value: rowid.Line("ui.overlay_milestones.milestonesPage.04", "⚡ boost active"), K: xGood})
 				}
 			}
 		}
@@ -69,7 +69,7 @@ func milestonesPage(state game.GameState) deckPage {
 			c := deckCard{Title: m.Name}
 			reward := m.RewardText + rewardCapNotes(state, m.Rewards, m.Completed)
 			if m.Completed {
-				c.Chip, c.ChipK, c.Quiet = vibe.Line("ui.overlay_milestones.milestonesPage.05", "✓ done"), xChipShort, true
+				c.Chip, c.ChipK, c.Quiet = rowid.Line("ui.overlay_milestones.milestonesPage.05", "✓ done"), xChipShort, true
 			} else {
 				c.Desc = m.Description
 				// The first condition not yet met is the meter; the rest are lines.
@@ -97,15 +97,15 @@ func milestonesPage(state game.GameState) deckPage {
 				}
 			}
 			if m.RewardText != "" {
-				c.Lines = append(c.Lines, deckLine{vibe.Line("ui.overlay_milestones.milestonesPage.06", "Reward"), reward, xGood})
+				c.Lines = append(c.Lines, deckLine{rowid.Line("ui.overlay_milestones.milestonesPage.06", "Reward"), reward, xGood})
 			}
 			sec.Cards = append(sec.Cards, c)
 		}
 		if now >= 0 {
-			sec.Cards[now].Chip, sec.Cards[now].ChipK = vibe.Line("ui.overlay_milestones.milestonesPage.07", "now"), xChipCivic
+			sec.Cards[now].Chip, sec.Cards[now].ChipK = rowid.Line("ui.overlay_milestones.milestonesPage.07", "now"), xChipCivic
 		}
 		if hiddenCount > 0 {
-			sec.Notes = append(sec.Notes, deckLine{Value: "+ " + textfmt.Count(hiddenCount, vibe.Line("ui.overlay_milestones.milestonesPage.08", "hidden milestone"), vibe.Line("ui.overlay_milestones.milestonesPage.09", "hidden milestones")), K: xDim})
+			sec.Notes = append(sec.Notes, deckLine{Value: "+ " + textfmt.Count(hiddenCount, rowid.Line("ui.overlay_milestones.milestonesPage.08", "hidden milestone"), rowid.Line("ui.overlay_milestones.milestonesPage.09", "hidden milestones")), K: xDim})
 		}
 		pg.Sections = append(pg.Sections, sec)
 	}

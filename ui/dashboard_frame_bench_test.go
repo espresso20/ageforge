@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // BenchmarkDashboardFrame is one frame of the dashboard as the app draws it:
@@ -21,9 +21,9 @@ func BenchmarkDashboardFrame(b *testing.B) {
 		b.Run("vibemode_"+name, func(b *testing.B) {
 			b.Cleanup(game.SetDataDirForTest(b.TempDir()))
 			b.Cleanup(func() { _ = theme.SetActive(theme.DefaultKey) })
-			was := vibe.On()
-			b.Cleanup(func() { vibe.Set(was) })
-			vibe.Set(false)
+			was := rowid.On()
+			b.Cleanup(func() { rowid.Set(was) })
+			rowid.Set(false)
 			d, pages := newMiniDashboard(b)
 			sim := newSimScreen(b, 160, 48)
 			scr := sim
@@ -34,7 +34,7 @@ func BenchmarkDashboardFrame(b *testing.B) {
 				scr.Show()
 			}
 			frame()
-			vibe.Set(on)
+			rowid.Set(on)
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {

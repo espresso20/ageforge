@@ -19,8 +19,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/platform/steam"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // saveHMACKey is the HMAC signing key for save integrity. Its presence in the
@@ -39,7 +39,7 @@ const saveFormat = 4
 type beforeFourError struct{ error }
 
 func errBeforeFour() error {
-	return beforeFourError{vibe.Errorf("game.save.errBeforeFour.01", "This was saved before 4.0 and can no longer be loaded.")}
+	return beforeFourError{rowid.Errorf("game.save.errBeforeFour.01", "This was saved before 4.0 and can no longer be loaded.")}
 }
 
 // GameSave is the serialised on-disk representation of a game state.
@@ -502,7 +502,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	ge.mu.RLock()
 	if ge.runOrphaned {
 		ge.mu.RUnlock()
-		return vibe.Errorf("game.save.SaveGame.01", "the account this game belongs to was wiped, so the game was not saved")
+		return rowid.Errorf("game.save.SaveGame.01", "the account this game belongs to was wiped, so the game was not saved")
 	}
 	dir := ge.saveDirLocked()
 	// A save of the game in play is the game last played (current_game.go).
@@ -712,7 +712,7 @@ func (ge *GameEngine) BranchSave(newName string) error {
 		return err
 	}
 	if SaveExists(clean) {
-		return vibe.Errorf("game.save.BranchSave.01", "A save named '%s' already exists. Pick another name.", clean)
+		return rowid.Errorf("game.save.BranchSave.01", "A save named '%s' already exists. Pick another name.", clean)
 	}
 	parent := ge.ActiveSaveName()
 	ge.SetActiveParentName(parent)
@@ -1305,22 +1305,22 @@ func sanitizeSaveName(name string) (string, error) {
 	name = strings.TrimSpace(name)
 
 	if name == "" {
-		return "", vibe.Errorf("game.save.sanitizeSaveName.01", "The save name is empty. Give the save a name.")
+		return "", rowid.Errorf("game.save.sanitizeSaveName.01", "The save name is empty. Give the save a name.")
 	}
 	if len(name) > maxSaveNameLen {
-		return "", vibe.Errorf("game.save.sanitizeSaveName.02", "That save name is too long (the most is %d characters).", maxSaveNameLen)
+		return "", rowid.Errorf("game.save.sanitizeSaveName.02", "That save name is too long (the most is %d characters).", maxSaveNameLen)
 	}
 	if strings.ContainsRune(name, 0) {
-		return "", vibe.Errorf("game.save.sanitizeSaveName.03", "That save name has a character a file name cannot use.")
+		return "", rowid.Errorf("game.save.sanitizeSaveName.03", "That save name has a character a file name cannot use.")
 	}
 	if strings.ContainsAny(name, `/\`) {
-		return "", vibe.Errorf("game.save.sanitizeSaveName.04", "Save names cannot contain / or \\.")
+		return "", rowid.Errorf("game.save.sanitizeSaveName.04", "Save names cannot contain / or \\.")
 	}
 	if strings.Contains(name, "..") {
-		return "", vibe.Errorf("game.save.sanitizeSaveName.05", "Save names cannot contain '..'.")
+		return "", rowid.Errorf("game.save.sanitizeSaveName.05", "Save names cannot contain '..'.")
 	}
 	if strings.HasPrefix(name, ".") {
-		return "", vibe.Errorf("game.save.sanitizeSaveName.06", "Save names cannot start with a dot.")
+		return "", rowid.Errorf("game.save.sanitizeSaveName.06", "Save names cannot start with a dot.")
 	}
 	return name, nil
 }
@@ -1334,7 +1334,7 @@ type noSaveError struct {
 }
 
 func (e noSaveError) Error() string {
-	return vibe.Sprintf("game.save.Error.01", "No save named '%s'. Type saves to list them.", e.name)
+	return rowid.Sprintf("game.save.Error.01", "No save named '%s'. Type saves to list them.", e.name)
 }
 
 func (e noSaveError) Unwrap() error { return e.err }
@@ -1376,16 +1376,16 @@ func RenameSave(oldName, newName string) error {
 	}
 	dst, err := sanitizeSaveName(newName)
 	if err != nil {
-		return vibe.Errorf("game.save.RenameSave.01", "New name: %w", err)
+		return rowid.Errorf("game.save.RenameSave.01", "New name: %w", err)
 	}
 	if !SaveExists(src) {
 		return noSaveError{name: src, err: fs.ErrNotExist}
 	}
 	if src == dst {
-		return vibe.Errorf("game.save.RenameSave.02", "The new name is the same as the current one.")
+		return rowid.Errorf("game.save.RenameSave.02", "The new name is the same as the current one.")
 	}
 	if SaveExists(dst) {
-		return vibe.Errorf("game.save.RenameSave.03", "A save named '%s' already exists. Pick another name.", dst)
+		return rowid.Errorf("game.save.RenameSave.03", "A save named '%s' already exists. Pick another name.", dst)
 	}
 	srcPath := savePath(src)
 	// Write the renamed file into the same directory the source lives in so a

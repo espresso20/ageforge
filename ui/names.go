@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // names.go: the command line and the names VibeMode shows.
@@ -42,7 +42,7 @@ func typedName(set *rules.Set, k ArgKind, key string) string {
 		return set.Typed(kind, key)
 	}
 	if k == ArgTheme {
-		if t, ok := theme.ByKey(key); ok && vibe.On() {
+		if t, ok := theme.ByKey(key); ok && rowid.On() {
 			if s := rules.Slug(t.Name.String()); s != "" {
 				return s
 			}
@@ -53,7 +53,7 @@ func typedName(set *rules.Set, k ArgKind, key string) string {
 
 // typedNames is keys as typedName spells each one.
 func typedNames(set *rules.Set, k ArgKind, keys []string) []string {
-	if !vibe.On() {
+	if !rowid.On() {
 		return keys
 	}
 	out := make([]string, len(keys))
@@ -96,7 +96,7 @@ func keyOfTyped(set *rules.Set, k ArgKind, w string, prefix bool) (string, bool)
 // command says what is wrong with them. With VibeMode off the args are as
 // they came.
 func vibeArgs(cmd string, args []string, engine *game.GameEngine) []string {
-	if !vibe.On() || engine == nil || len(args) == 0 {
+	if !rowid.On() || engine == nil || len(args) == 0 {
 		return args
 	}
 	p, ok := parse(registry(), append([]string{cmd}, args...))

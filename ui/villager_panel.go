@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // villager_panel.go holds the morale band the status bar and the People panel
@@ -45,7 +45,7 @@ func computeMoraleBand(moralePct, mult float64) moraleBand {
 		}
 		return moraleBand{
 			Color:      "green",
-			Status:     vibe.Sprintf("ui.villager_panel.computeMoraleBand.01", "▲ Morale %.0f%% (production %s)", moralePct*100, label),
+			Status:     rowid.Sprintf("ui.villager_panel.computeMoraleBand.01", "▲ Morale %.0f%% (production %s)", moralePct*100, label),
 			Bonus:      true,
 			DeltaPct:   delta,
 			DeltaLabel: label,
@@ -58,7 +58,7 @@ func computeMoraleBand(moralePct, mult float64) moraleBand {
 		}
 		return moraleBand{
 			Color:      "red",
-			Status:     vibe.Sprintf("ui.villager_panel.computeMoraleBand.02", "▼ Morale %.0f%% (production %s)", moralePct*100, label),
+			Status:     rowid.Sprintf("ui.villager_panel.computeMoraleBand.02", "▼ Morale %.0f%% (production %s)", moralePct*100, label),
 			Penalty:    true,
 			DeltaPct:   delta,
 			DeltaLabel: label,
@@ -66,7 +66,7 @@ func computeMoraleBand(moralePct, mult float64) moraleBand {
 	default:
 		return moraleBand{
 			Color:    "white",
-			Status:   vibe.Sprintf("ui.villager_panel.computeMoraleBand.03", "Morale %.0f%% (production steady)", moralePct*100),
+			Status:   rowid.Sprintf("ui.villager_panel.computeMoraleBand.03", "Morale %.0f%% (production steady)", moralePct*100),
 			DeltaPct: 0,
 		}
 	}

@@ -7,9 +7,9 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -34,11 +34,11 @@ func wonderSummary(state game.GameState) wonderBlock {
 	bs, hasBs := state.Buildings[current.key]
 	built := hasBs && bs.Count > 0
 
-	sb.WriteString(vibe.Line("ui.overlay_wonders.renderCurrentWonderSummary.01", "[gold]═══ This age's wonder ═══[-]\n"))
+	sb.WriteString(rowid.Line("ui.overlay_wonders.renderCurrentWonderSummary.01", "[gold]═══ This age's wonder ═══[-]\n"))
 	if built {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.02", " %s [gold]★ %s[-]  [green]Built[-]  [gray]%s[-]\n", WonderSpriteIcon(current.key), current.name, current.ageName))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.02", " %s [gold]★ %s[-]  [green]Built[-]  [gray]%s[-]\n", WonderSpriteIcon(current.key), current.name, current.ageName))
 	} else {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.03", " [yellow]○ %s[-]  [gray]%s, not built yet[-]\n", current.name, current.ageName))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.03", " [yellow]○ %s[-]  [gray]%s, not built yet[-]\n", current.name, current.ageName))
 	}
 
 	// Effects
@@ -54,7 +54,7 @@ func wonderSummary(state game.GameState) wonderBlock {
 	// Bank progress if not built
 	if !built && hasBs {
 		blk.bank = sb.Len() + 1
-		head := vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n")
+		head := rowid.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n")
 		blk.bankCol = runeLen(kit.Strip(strings.Trim(head, "\n"))) + 2
 		fmt.Fprint(&sb, head)
 		// The bars share a column: the longest name sets it.
@@ -131,9 +131,9 @@ func wondersProvider(state game.GameState, _ int) string {
 	}
 
 	// Header
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.01", "[gold]═══ Wonders: %d / %d ═══[-]\n", builtCount, totalCount))
+	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.wondersProvider.01", "[gold]═══ Wonders: %d / %d ═══[-]\n", builtCount, totalCount))
 	if builtCount > 0 {
-		sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.15", "[gray]Press G for a gallery of the wonders you have built.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.15", "[gray]Press G for a gallery of the wonders you have built.[-]\n"))
 	}
 
 	// List each wonder. A locked wonder of an age the player cannot see named
@@ -151,27 +151,27 @@ func wondersProvider(state game.GameState, _ int) string {
 
 		if built {
 			fmt.Fprintf(&sb, " %s [gold]★ %s[-]   [gray]%s[-]\n", WonderSpriteIcon(w.key), w.name, w.ageName)
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.02", "   [green]Built[-]\n"))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.wondersProvider.02", "   [green]Built[-]\n"))
 			if w.def.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
 			}
 			if len(w.def.Effects) > 0 {
-				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.03", "   [cyan]Effects:[-]\n"))
+				sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.03", "   [cyan]Effects:[-]\n"))
 				for _, eff := range w.def.Effects {
 					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, true, "-"))
 				}
 			}
 		} else if unlocked {
 			if bs.WonderBankFull {
-				ready := vibe.Line("ui.overlay_wonders.wondersProvider.04", "[green](bank full, ready to build)[-]")
+				ready := rowid.Line("ui.overlay_wonders.wondersProvider.04", "[green](bank full, ready to build)[-]")
 				if bs.NeedsTech != "" {
-					ready = vibe.Line("ui.overlay_wonders.wondersProvider.05", "[yellow](bank full, waiting for its keystone)[-]")
+					ready = rowid.Line("ui.overlay_wonders.wondersProvider.05", "[yellow](bank full, waiting for its keystone)[-]")
 				}
 				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   %s\n", w.name, w.ageName, ready)
 			} else {
 				pct := wonderBankPercent(state, w.key)
 				if pct > 0 {
-					fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.06", " [yellow]○ %s[-]   [gray]%s[-]   [yellow](%.0f%% banked)[-]\n",
+					fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.wondersProvider.06", " [yellow]○ %s[-]   [gray]%s[-]   [yellow](%.0f%% banked)[-]\n",
 						w.name, w.ageName, pct))
 				} else {
 					fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]\n", w.name, w.ageName)
@@ -182,7 +182,7 @@ func wondersProvider(state game.GameState, _ int) string {
 					fmt.Fprintf(&sb, "     [%s]%s: %s / %s[-]\n",
 						r.color, game.ResourceName(r.res), textfmt.Number(r.banked), textfmt.Number(r.need))
 				}
-				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.07", "   [gray]Bank resources to build it: ") + wonderCollectHint() + "[-]\n")
+				sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.07", "   [gray]Bank resources to build it: ") + wonderCollectHint() + "[-]\n")
 			}
 			if line := wonderKeystoneLine(state, w.key); line != "" {
 				fmt.Fprintf(&sb, "   %s\n", line)
@@ -191,24 +191,24 @@ func wondersProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
 			}
 			if len(w.def.Effects) > 0 {
-				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.08", "   [cyan]Effects when built:[-]\n"))
+				sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.08", "   [cyan]Effects when built:[-]\n"))
 				for _, eff := range w.def.Effects {
 					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, false, "-"))
 				}
 			}
 		} else {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.09", " [gray]? ???[-]   [gray]%s, locked[-]\n", w.ageName))
+			fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.wondersProvider.09", " [gray]? ???[-]   [gray]%s, locked[-]\n", w.ageName))
 		}
 
 		sb.WriteString("\n")
 	}
 	if laterLocked > 0 {
-		sb.WriteString(" " + theme.Paint(theme.RoleDim, vibe.Sprintf("ui.overlay_wonders.wondersProvider.10", "? ???   %s in ages still to come, locked", textfmt.Count(laterLocked, vibe.Line("ui.overlay_wonders.wondersProvider.11", "more wonder"), vibe.Line("ui.overlay_wonders.wondersProvider.12", "more wonders")))) + "\n\n")
+		sb.WriteString(" " + theme.Paint(theme.RoleDim, rowid.Sprintf("ui.overlay_wonders.wondersProvider.10", "? ???   %s in ages still to come, locked", textfmt.Count(laterLocked, rowid.Line("ui.overlay_wonders.wondersProvider.11", "more wonder"), rowid.Line("ui.overlay_wonders.wondersProvider.12", "more wonders")))) + "\n\n")
 	}
 
 	// Summary footer
 	if builtCount == 0 {
-		sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.13", "[gray]No wonders built yet.[-]\n"))
+		sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.13", "[gray]No wonders built yet.[-]\n"))
 	} else {
 		var builtNames []string
 		for _, w := range wonders {
@@ -216,7 +216,7 @@ func wondersProvider(state game.GameState, _ int) string {
 				builtNames = append(builtNames, w.name)
 			}
 		}
-		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.14", "[gold]Built:[-] %s\n", strings.Join(builtNames, ", ")))
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.wondersProvider.14", "[gold]Built:[-] %s\n", strings.Join(builtNames, ", ")))
 	}
 
 	return sb.String()

@@ -4,7 +4,7 @@ import (
 	"image"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -16,8 +16,8 @@ import (
 const prestigeCmd = "prestige confirm yes"
 
 var (
-	txtPrestigeVerb = vibe.E("ui.stats_verbs.prestige.01", "Prestige")
-	txtPrestigeAsk  = vibe.E("ui.stats_verbs.ask.01", "Prestige and begin a new run?\n\nYour points, carry-overs and Era Mastery are kept.")
+	txtPrestigeVerb = rowid.E("ui.stats_verbs.prestige.01", "Prestige")
+	txtPrestigeAsk  = rowid.E("ui.stats_verbs.ask.01", "Prestige and begin a new run?\n\nYour points, carry-overs and Era Mastery are kept.")
 )
 
 // prestigeButton draws Prestige at (x, y), off until a prestige is open, and

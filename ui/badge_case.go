@@ -11,8 +11,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // badge_case.go draws the badge case: the account's badges as a grid of
@@ -209,7 +209,7 @@ func familyTitle(key string) string {
 }
 
 // txtNext is said the same way on several screens, so it has one id.
-var txtNext = vibe.E("ui.badge_case.caseTabs.02", "Next")
+var txtNext = rowid.E("ui.badge_case.caseTabs.02", "Next")
 
 // caseTabs lists the tabs: All, each family in sight in the families' own
 // order, and Next. A family with nothing in sight has no tab and no
@@ -239,7 +239,7 @@ func caseTabs(views []game.BadgeView, counted bool) []caseTab {
 			t.shown++
 		}
 	}
-	tabs := []caseTab{{key: caseTabAll, title: vibe.Line("ui.badge_case.caseTabs.01", "All")}}
+	tabs := []caseTab{{key: caseTabAll, title: rowid.Line("ui.badge_case.caseTabs.01", "All")}}
 	listed := map[string]bool{}
 	add := func(key string) {
 		if t := stat[key]; t != nil && !listed[key] && (t.sight > 0 || counted) {
@@ -389,15 +389,15 @@ func hiddenText(n int, sum game.BadgeSummary) string {
 	case n <= 0:
 		return ""
 	case sum.HiddenCounted:
-		return wholeNumber(n) + vibe.Line("ui.badge_case.hiddenText.01", " hidden")
+		return wholeNumber(n) + rowid.Line("ui.badge_case.hiddenText.01", " hidden")
 	}
-	return game.BadgeHiddenName + vibe.Line("ui.badge_case.hiddenText.02", " hidden")
+	return game.BadgeHiddenName + rowid.Line("ui.badge_case.hiddenText.02", " hidden")
 }
 
 // familyCount is a family's count: "2 of 3", then its withheld badges.
 // earned is the word after the count, if any ("2 of 3 earned").
 func familyCount(t caseTab, sum game.BadgeSummary, earned string) string {
-	s := vibe.Sprintf("ui.badge_case.familyCount.01", "%d of %d%s", t.earned, t.shown, earned)
+	s := rowid.Sprintf("ui.badge_case.familyCount.01", "%d of %d%s", t.earned, t.shown, earned)
 	if hidden := hiddenText(t.hidden, sum); hidden != "" {
 		s += " · " + hidden
 	}
@@ -569,7 +569,7 @@ func countText(progress, target float64) string {
 }
 
 // txtPts is said the same way on several screens, so it has one id.
-var txtPts = vibe.E("ui.badge_case.metaLine.06", " pts")
+var txtPts = rowid.E("ui.badge_case.metaLine.06", " pts")
 
 // metaLine is a badge's tier, rarity and points on one line.
 func metaLine(it *caseItem) []seg {
@@ -577,13 +577,13 @@ func metaLine(it *caseItem) []seg {
 	dot := seg{text: " · ", st: tsDim}
 	switch {
 	case it.group:
-		return []seg{{text: vibe.Line("ui.badge_case.metaLine.01", "Hidden badges"), st: tsDim}}
+		return []seg{{text: rowid.Line("ui.badge_case.metaLine.01", "Hidden badges"), st: tsDim}}
 	case v.Hidden && v.Secret:
-		return []seg{{text: vibe.Line("ui.badge_case.metaLine.02", "Secret"), st: tsDim}}
+		return []seg{{text: rowid.Line("ui.badge_case.metaLine.02", "Secret"), st: tsDim}}
 	case v.Hidden:
-		return []seg{{text: vibe.Line("ui.badge_case.metaLine.03", "Hidden"), st: tsDim}}
+		return []seg{{text: rowid.Line("ui.badge_case.metaLine.03", "Hidden"), st: tsDim}}
 	case v.Integrity:
-		return []seg{{text: vibe.Line("ui.badge_case.metaLine.04", "Integrity"), st: tsLabel}, dot, {text: vibe.Line("ui.badge_case.metaLine.05", "no points"), st: tsDim}}
+		return []seg{{text: rowid.Line("ui.badge_case.metaLine.04", "Integrity"), st: tsLabel}, dot, {text: rowid.Line("ui.badge_case.metaLine.05", "no points"), st: tsDim}}
 	}
 	out := []seg{{text: textfmt.Capitalize(v.Tier), st: tsText, ink: tierInk(v.Level), bold: true}}
 	if v.Rarity != "" {
@@ -598,11 +598,11 @@ func descText(it *caseItem) string {
 	v := it.v
 	switch {
 	case it.group:
-		return vibe.Line("ui.badge_case.descText.01", "More badges of this family show as you play on.")
+		return rowid.Line("ui.badge_case.descText.01", "More badges of this family show as you play on.")
 	case v.Hidden && v.Desc != "":
 		return v.Desc
 	case v.Hidden:
-		return vibe.Line("ui.badge_case.descText.02", "Not revealed yet.")
+		return rowid.Line("ui.badge_case.descText.02", "Not revealed yet.")
 	}
 	return v.Desc
 }
@@ -616,16 +616,16 @@ func statusLines(it *caseItem, room, bar int) [][]seg {
 	switch {
 	case it.group, v.Hidden:
 	case v.Earned:
-		line := []seg{{text: vibe.Line("ui.badge_case.statusLines.01", "Earned"), st: tsGood}}
+		line := []seg{{text: rowid.Line("ui.badge_case.statusLines.01", "Earned"), st: tsGood}}
 		if !v.At.IsZero() {
 			line = append(line, seg{text: " " + v.At.Format("2 Jan 2006"), st: tsText})
 		}
 		if v.Run != "" {
-			line = append(line, seg{text: vibe.Line("ui.badge_case.statusLines.02", " · run "), st: tsDim}, seg{text: v.Run, st: tsLabel})
+			line = append(line, seg{text: rowid.Line("ui.badge_case.statusLines.02", " · run "), st: tsDim}, seg{text: v.Run, st: tsLabel})
 		}
 		out = append(out, line)
 		if v.Crossed {
-			for _, l := range wrapCells(vibe.Line("ui.badge_case.statusLines.03", "Earned in a modified game: no points."), room) {
+			for _, l := range wrapCells(rowid.Line("ui.badge_case.statusLines.03", "Earned in a modified game: no points."), room) {
 				out = append(out, []seg{{text: l, st: tsBad}})
 			}
 		}
@@ -636,10 +636,10 @@ func statusLines(it *caseItem, room, bar int) [][]seg {
 		}
 		out = append(out, append(line, seg{text: countText(v.Progress, v.Target), st: tsHi}))
 	default:
-		out = append(out, []seg{{text: vibe.Line("ui.badge_case.statusLines.04", "Not earned yet."), st: tsDim}})
+		out = append(out, []seg{{text: rowid.Line("ui.badge_case.statusLines.04", "Not earned yet."), st: tsDim}})
 	}
 	if v.Ladder != "" && v.Rungs > 0 && !v.Hidden {
-		out = append(out, []seg{{text: vibe.Sprintf("ui.badge_case.statusLines.05", "Rung %d of %d · %s", v.Rung, v.Rungs, v.Ladder), st: tsDim}})
+		out = append(out, []seg{{text: rowid.Sprintf("ui.badge_case.statusLines.05", "Rung %d of %d · %s", v.Rung, v.Rungs, v.Ladder), st: tsDim}})
 	}
 	if !v.Hidden {
 		if v.RewardTheme != "" {
@@ -647,10 +647,10 @@ func statusLines(it *caseItem, room, bar int) [][]seg {
 			if t, ok := theme.ByKey(v.RewardTheme); ok {
 				name = t.Name.String()
 			}
-			out = append(out, []seg{{text: vibe.Line("ui.badge_case.statusLines.06", "Gives the "), st: tsDim}, {text: name, st: tsHi}, {text: vibe.Line("ui.badge_case.statusLines.07", " theme."), st: tsDim}})
+			out = append(out, []seg{{text: rowid.Line("ui.badge_case.statusLines.06", "Gives the "), st: tsDim}, {text: name, st: tsHi}, {text: rowid.Line("ui.badge_case.statusLines.07", " theme."), st: tsDim}})
 		}
 		if v.RewardTitle != "" {
-			out = append(out, []seg{{text: vibe.Line("ui.badge_case.statusLines.08", "Gives the title "), st: tsDim}, {text: v.RewardTitle, st: tsHi}, {text: ".", st: tsDim}})
+			out = append(out, []seg{{text: rowid.Line("ui.badge_case.statusLines.08", "Gives the title "), st: tsDim}, {text: v.RewardTitle, st: tsHi}, {text: ".", st: tsDim}})
 		}
 	}
 	return out
@@ -710,7 +710,7 @@ func renderCase(m *caseModel, v caseView) *tGrid {
 	out := newTGrid(w, h)
 	m.cardAt, m.medalRoom, m.medalFor, m.coins = image.Rectangle{}, image.Rectangle{}, nil, m.coins[:0]
 	if w < caseMinW || h < caseMinH {
-		out.text(0, 0, clipRunes(vibe.Line("ui.badge_case.renderCase.01", "Badges: make the window larger."), w), tsText, -1)
+		out.text(0, 0, clipRunes(rowid.Line("ui.badge_case.renderCase.01", "Badges: make the window larger."), w), tsText, -1)
 		return out
 	}
 	for x := 0; x < w; x++ {
@@ -721,7 +721,7 @@ func renderCase(m *caseModel, v caseView) *tGrid {
 	m.keys.closeButton(w, func(x, y int, text string, _ bool) { out.text(x, y, text, tsChip, -1) })
 	m.drawKeys(out, v)
 	if !m.account {
-		out.text(1, caseTop, clipRunes(vibe.Line("ui.badge_case.renderCase.02", "No account is loaded, so there are no badges to show."), w-2), tsDim, -1)
+		out.text(1, caseTop, clipRunes(rowid.Line("ui.badge_case.renderCase.02", "No account is loaded, so there are no badges to show."), w-2), tsDim, -1)
 		return out
 	}
 	m.drawTabs(out, v)
@@ -748,9 +748,9 @@ func renderCase(m *caseModel, v caseView) *tGrid {
 		}
 	}
 	if len(m.items) == 0 {
-		text := vibe.Line("ui.badge_case.renderCase.03", "No badges to show here yet.")
+		text := rowid.Line("ui.badge_case.renderCase.03", "No badges to show here yet.")
 		if v.tab == caseTabNext {
-			text = vibe.Line("ui.badge_case.renderCase.04", "No counted badge is in sight yet.")
+			text = rowid.Line("ui.badge_case.renderCase.04", "No counted badge is in sight yet.")
 		}
 		out.text(lay.gx, lay.gy, clipRunes(text, lay.gw), tsDim, -1)
 	}
@@ -849,7 +849,7 @@ func (m *caseModel) drawShelf(out *tGrid, ln caseLine, y int, sel *caseItem) {
 }
 
 // txtCountOfTotal is said the same way on several screens, so it has one id.
-var txtCountOfTotal = vibe.E("ui.badge_case.drawTitle.02", "%d of %d")
+var txtCountOfTotal = rowid.E("ui.badge_case.drawTitle.02", "%d of %d")
 
 // drawTitle writes the title bar: the counts, the score and the title it
 // holds.
@@ -858,7 +858,7 @@ func (m *caseModel) drawTitle(out *tGrid) {
 	if w >= closeButtonMinW {
 		w -= closeButtonCols // the close button's end of the bar
 	}
-	x := out.text(0, 0, vibe.Line("ui.badge_case.drawTitle.01", " BADGES"), tsChipKey, -1)
+	x := out.text(0, 0, rowid.Line("ui.badge_case.drawTitle.01", " BADGES"), tsChipKey, -1)
 	if !m.account {
 		return
 	}
@@ -875,10 +875,10 @@ func (m *caseModel) drawTitle(out *tGrid) {
 	worn := wornTitle(sum)
 	right := worn + " "
 	if sum.NextTitle != "" && w >= 100 {
-		right = vibe.Sprintf("ui.badge_case.drawTitle.04", "%s · %s at %s ", worn, sum.NextTitle, wholeNumber(sum.NextTitleAt))
+		right = rowid.Sprintf("ui.badge_case.drawTitle.04", "%s · %s at %s ", worn, sum.NextTitle, wholeNumber(sum.NextTitleAt))
 	}
 	if x+runeLen(left)+2+runeLen(right) > w {
-		left = vibe.Sprintf("ui.badge_case.drawTitle.05", "  %d/%d · %s pts", sum.Earned, sum.Shown, wholeNumber(sum.Points))
+		left = rowid.Sprintf("ui.badge_case.drawTitle.05", "  %d/%d · %s pts", sum.Earned, sum.Shown, wholeNumber(sum.Points))
 	}
 	x = out.text(x, 0, clipRunes(left, max(w-x, 0)), tsChip, -1)
 	if rx := w - runeLen(right); rx > x+1 {
@@ -969,7 +969,7 @@ func (m *caseModel) tabAt(x int, v caseView) (key string, ok bool) {
 }
 
 // txtEarned is said the same way on several screens, so it has one id.
-var txtEarned = vibe.E("ui.badge_case.drawCounts.02", " earned")
+var txtEarned = rowid.E("ui.badge_case.drawCounts.02", " earned")
 
 // drawCounts writes the line under the tabs: what the account holds by
 // rarity on All, a family's count on its tab.
@@ -994,7 +994,7 @@ func (m *caseModel) drawCounts(out *tGrid, v caseView) {
 			}
 		}
 	case caseTabNext:
-		line = []seg{{text: vibe.Line("ui.badge_case.drawCounts.01", "The badges you are closest to, nearest first."), st: tsDim}}
+		line = []seg{{text: rowid.Line("ui.badge_case.drawCounts.01", "The badges you are closest to, nearest first."), st: tsDim}}
 	default:
 		for _, t := range m.tabs {
 			if t.key == v.tab {
@@ -1038,7 +1038,7 @@ func (m *caseModel) drawLadderLabel(out *tGrid, ln caseLine, x, y int) {
 	if ln.next.Target <= 0 {
 		// A ladder that is not climbed by a lifetime count (a payroll is
 		// judged on the workers at work at one time): name the next rung.
-		out.text(x, y+1, clipRunes(vibe.Line("ui.badge_case.drawLadderLabel.02", "next: ")+ln.next.Name, room), tsDim, -1)
+		out.text(x, y+1, clipRunes(rowid.Line("ui.badge_case.drawLadderLabel.02", "next: ")+ln.next.Name, room), tsDim, -1)
 		return
 	}
 	out.text(x, y+1, clipRunes(countText(ln.next.Progress, ln.next.Target), room), tsHi, -1)
@@ -1087,7 +1087,7 @@ func (m *caseModel) drawRow(out *tGrid, it *caseItem, y int, selected bool, v ca
 	}
 	name := bv.Name
 	if it.group {
-		name = vibe.Line("ui.badge_case.drawRow.02", "Hidden badges")
+		name = rowid.Line("ui.badge_case.drawRow.02", "Hidden badges")
 	}
 	nameRoom := lay.gw - 2 - segsLen(right) - 1
 	if nameRoom < 8 {
@@ -1152,7 +1152,7 @@ func (m *caseModel) statusLine(sel *caseItem, v caseView, room int) []seg {
 	if sel != nil && !sel.group && !sel.v.Hidden {
 		switch {
 		case sel.v.Ladder != "":
-			label = vibe.Line("ui.badge_case.statusLine.01", "Next rung: ")
+			label = rowid.Line("ui.badge_case.statusLine.01", "Next rung: ")
 			for i := range m.items {
 				if o := &m.items[i]; o.v.Ladder == sel.v.Ladder && o.family == sel.family && !o.v.Earned && !o.v.Hidden {
 					target = &o.v
@@ -1160,14 +1160,14 @@ func (m *caseModel) statusLine(sel *caseItem, v caseView, room int) []seg {
 				}
 			}
 			if target == nil {
-				return []seg{{text: clipRunes(vibe.Line("ui.badge_case.statusLine.02", "Every rung of ")+sel.v.Ladder+vibe.Line("ui.badge_case.statusLine.03", " is earned."), room), st: tsGood}}
+				return []seg{{text: clipRunes(rowid.Line("ui.badge_case.statusLine.02", "Every rung of ")+sel.v.Ladder+rowid.Line("ui.badge_case.statusLine.03", " is earned."), room), st: tsGood}}
 			}
 		case !sel.v.Earned && sel.v.Target > 0:
-			label, target = vibe.Line("ui.badge_case.statusLine.04", "Progress: "), &sel.v
+			label, target = rowid.Line("ui.badge_case.statusLine.04", "Progress: "), &sel.v
 		}
 	}
 	if target == nil && m.closest != nil {
-		label, target = vibe.Line("ui.badge_case.statusLine.05", "Closest: "), m.closest
+		label, target = rowid.Line("ui.badge_case.statusLine.05", "Closest: "), m.closest
 	}
 	if target == nil {
 		return nil
@@ -1183,18 +1183,18 @@ func (m *caseModel) statusLine(sel *caseItem, v caseView, room int) []seg {
 }
 
 // txtRunsCommandBelow is said the same way on several screens, so it has one id.
-var txtRunsCommandBelow = vibe.E("ui.badge_case.drawKeys.15", "runs the command below")
+var txtRunsCommandBelow = rowid.E("ui.badge_case.drawKeys.15", "runs the command below")
 
 // drawKeys draws the key bar on the panel's buttons: as many of the keys as
 // the bar holds, each a button a click presses, and Esc the last to go.
 func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	w, h := m.lay.w, m.lay.h
 	move := [2]string{"←↑↓→", "move"}
-	card := [2]string{"←→", vibe.Line("ui.badge_case.drawKeys.02", "the badge before, the next")}
+	card := [2]string{"←→", rowid.Line("ui.badge_case.drawKeys.02", "the badge before, the next")}
 	if v.plain() {
 		move[0], card[0] = "Arrows", "Left Right"
 	}
-	tab, enter, page, ends, esc := [2]string{"Tab", "family"}, [2]string{"Enter", "detail"}, [2]string{"PgUp PgDn (" + pageKeysHint(v.plain()) + ")", vibe.Line("ui.badge_case.drawKeys.10", "page")}, [2]string{"Home End", vibe.Line("ui.badge_case.drawKeys.12", "first, last")}, [2]string{"Esc", "close"}
+	tab, enter, page, ends, esc := [2]string{"Tab", "family"}, [2]string{"Enter", "detail"}, [2]string{"PgUp PgDn (" + pageKeysHint(v.plain()) + ")", rowid.Line("ui.badge_case.drawKeys.10", "page")}, [2]string{"Home End", rowid.Line("ui.badge_case.drawKeys.12", "first, last")}, [2]string{"Esc", "close"}
 	// Each set gives up one more key; the first that fits is drawn.
 	sets := [][][2]string{
 		{move, tab, enter, page, ends, esc},
@@ -1208,8 +1208,8 @@ func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	case v.prompt:
 		sets = [][][2]string{{{"Enter", txtRunsCommandBelow.String()}, esc}, {esc}}
 	case v.card:
-		closes := [2]string{"Esc", vibe.Line("ui.badge_case.drawKeys.17", "closes the detail")}
-		sets = [][][2]string{{{"Enter", vibe.Line("ui.badge_case.drawKeys.19", "closes the detail")}, card, closes}, {card, closes}, {closes}, {esc}}
+		closes := [2]string{"Esc", rowid.Line("ui.badge_case.drawKeys.17", "closes the detail")}
+		sets = [][][2]string{{{"Enter", rowid.Line("ui.badge_case.drawKeys.19", "closes the detail")}, card, closes}, {card, closes}, {closes}, {esc}}
 	}
 	width := func(keys [][2]string) int {
 		n := 1
@@ -1239,7 +1239,7 @@ func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 }
 
 // txtEscCloses is said the same way on several screens, so it has one id.
-var txtEscCloses = vibe.E("ui.badge_case.drawCard.01", " Esc closes ")
+var txtEscCloses = rowid.E("ui.badge_case.drawCard.01", " Esc closes ")
 
 // drawCard draws the selected badge's detail in place of the grid: the
 // badge at full size and everything the case says of it, nothing cut.

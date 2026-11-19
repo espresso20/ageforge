@@ -4,7 +4,7 @@ import (
 	"image"
 	"strings"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -323,11 +323,11 @@ func (k *keyPresser) fire(b xkey) {
 
 // txtDangerYes is the word on the danger button of the question a click on a
 // Dangerous command asks without one of its own.
-var txtDangerYes = vibe.E("ui.key_bar.dangerYes.01", "Run")
+var txtDangerYes = rowid.E("ui.key_bar.dangerYes.01", "Run")
 
 // dangerAsk is the question for a Dangerous command line a button gave none for.
 func dangerAsk(line string) string {
-	return vibe.Sprintf("ui.key_bar.dangerAsk.01", "Run \"%s\"?", line)
+	return rowid.Sprintf("ui.key_bar.dangerAsk.01", "Run \"%s\"?", line)
 }
 
 // lineDangerous reports whether line runs a command the command table marks

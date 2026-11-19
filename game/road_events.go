@@ -13,7 +13,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 var roadKinds = weightedRoadKinds()
@@ -111,7 +111,7 @@ func (a *ActiveExpedition) roadPlace() string {
 // tellRoadStory fills the words of an age into a story told by roadEventTold:
 // the place and the foe, helper, weather and find the event drew by index.
 func tellRoadStory(words config.MissionWords, place string, e RoadEvent, told string) string {
-	if vibe.On() {
+	if rowid.On() {
 		told = vibeRoadTold(words, e, told)
 	}
 	return strings.NewReplacer(
@@ -241,9 +241,9 @@ func sayRoadDuration(kept string) string {
 	}
 	n, _ := strconv.Atoi(m[1])
 	if m[2] == "seconds" {
-		return vibe.Sprintf("game.road_events.expRoadDuration.01", "%d seconds", n)
+		return rowid.Sprintf("game.road_events.expRoadDuration.01", "%d seconds", n)
 	}
-	return vibe.Sprintf("game.road_events.expRoadDuration.02", "%d minutes", n)
+	return rowid.Sprintf("game.road_events.expRoadDuration.02", "%d minutes", n)
 }
 
 // roadSlotRe finds the numbers roadEventTold writes into a story's template.

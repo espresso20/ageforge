@@ -4,7 +4,7 @@ import (
 	"image"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // army_field.go draws the Army panel as a field: the defense set against the
@@ -25,7 +25,7 @@ const (
 
 // musterLegend says how many soldiers a mark of the muster stands for.
 func musterLegend(unit int) string {
-	return vibe.Sprintf("ui.army_field.musterLegend.01", "each ▲ is %d", unit)
+	return rowid.Sprintf("ui.army_field.musterLegend.01", "each ▲ is %d", unit)
 }
 
 // musterUnit is how many soldiers a mark stands for, so the largest post

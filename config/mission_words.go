@@ -3,7 +3,7 @@ package config
 import (
 	"sync"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // mission_words.go is the words the mission board builds its offers from.
@@ -38,12 +38,12 @@ const (
 )
 
 // roadTemplate is a road event story and the row id of the copy export it is
-// told by (vibeRow). The table is made once, so the story cannot follow
+// told by (rowID). The table is made once, so the story cannot follow
 // VibeMode where it is written: whoever tells a story drawn from it reads it
-// through vibe.Line with this id (RoadLine), after the draw.
+// through rowid.Line with this id (RoadLine), after the draw.
 type roadTemplate struct {
-	vibeRow string
-	text    string
+	rowID string
+	text  string
 }
 
 // roadEventTemplates are short player-facing stories, selected by kind.
@@ -112,7 +112,7 @@ var roadRow = sync.OnceValue(func() map[string]string {
 	rows := map[string]string{}
 	for _, pool := range roadEventTemplates {
 		for _, t := range pool {
-			rows[t.text] = t.vibeRow
+			rows[t.text] = t.rowID
 		}
 	}
 	return rows
@@ -125,7 +125,7 @@ var roadRow = sync.OnceValue(func() map[string]string {
 // the table (one written by hand) is given back as it is.
 func (MissionWords) RoadLine(template string) string {
 	if row, ok := roadRow()[template]; ok {
-		return vibe.Line(row, template)
+		return rowid.Line(row, template)
 	}
 	return template
 }

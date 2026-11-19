@@ -10,7 +10,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // research_tree.go draws the Research panel: the tech tree as a map.
@@ -69,13 +69,13 @@ func (m techMark) words() string {
 	case markDone:
 		return "researched"
 	case markRunning:
-		return vibe.Line("ui.research_tree.words.02", "in progress")
+		return rowid.Line("ui.research_tree.words.02", "in progress")
 	case markReady:
-		return vibe.Line("ui.research_tree.words.03", "you can start it")
+		return rowid.Line("ui.research_tree.words.03", "you can start it")
 	case markLocked:
-		return vibe.Line("ui.research_tree.words.04", "waits for what it needs")
+		return rowid.Line("ui.research_tree.words.04", "waits for what it needs")
 	}
-	return vibe.Line("ui.research_tree.words.05", "in the next age")
+	return rowid.Line("ui.research_tree.words.05", "in the next age")
 }
 
 // standing is a tech's state in the status line's words. A tech of an age
@@ -83,7 +83,7 @@ func (m techMark) words() string {
 // waits for.
 func (m *treeModel) standing(n *treeNode) string {
 	if b := m.bandOf(n); n.mark == markNext && b.ahead > 1 {
-		return vibe.Line("ui.research_tree.standing.01", "waits for the ") + b.name
+		return rowid.Line("ui.research_tree.standing.01", "waits for the ") + b.name
 	}
 	return n.mark.words()
 }
@@ -604,7 +604,7 @@ func (m *treeModel) canvas(state game.GameState, sel string) *tGrid {
 			run++
 		}
 		if run >= 6 {
-			g.text(l.x+run/2-2, l.y, vibe.Line("ui.research_tree.canvas.01", " or "), tsText, -1)
+			g.text(l.x+run/2-2, l.y, rowid.Line("ui.research_tree.canvas.01", " or "), tsText, -1)
 		}
 	}
 	for _, n := range m.nodes {
@@ -747,7 +747,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	m.cardAt = image.Rectangle{}
 	m.keys = keySet{plain: v.ascii, glyph: func(x, y int) rune { return out.c[y*out.w+x].r }}
 	if w < 20 || h < 8 {
-		out.text(0, 0, vibe.Line("ui.research_tree.renderTree.01", "Research: make the window larger."), tsText, -1)
+		out.text(0, 0, rowid.Line("ui.research_tree.renderTree.01", "Research: make the window larger."), tsText, -1)
 		return out
 	}
 	geom := m.geom
@@ -773,21 +773,21 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 		out.put(x, h-1, ' ', tsChip, -1)
 	}
 	right := ""
-	title := vibe.Sprintf("ui.research_tree.renderTree.02", " RESEARCH  %d of %d known", m.known, m.inReach)
+	title := rowid.Sprintf("ui.research_tree.renderTree.02", " RESEARCH  %d of %d known", m.known, m.inReach)
 	if w >= 100 {
 		if m.nextAge > 0 {
 			// On known ground more than the next age is in sight.
 			if last := m.bands[len(m.bands)-1]; last.ahead > 1 {
-				title += vibe.Sprintf("ui.research_tree.renderTree.03", " · %d ahead", m.nextAge)
+				title += rowid.Sprintf("ui.research_tree.renderTree.03", " · %d ahead", m.nextAge)
 			} else {
-				title += vibe.Sprintf("ui.research_tree.renderTree.04", " · %d next age", m.nextAge)
+				title += rowid.Sprintf("ui.research_tree.renderTree.04", " · %d next age", m.nextAge)
 			}
 		}
 		if m.later > 0 {
-			title += vibe.Sprintf("ui.research_tree.renderTree.05", " · %d beyond", m.later)
+			title += rowid.Sprintf("ui.research_tree.renderTree.05", " · %d beyond", m.later)
 		}
 	} else {
-		title = vibe.Sprintf("ui.research_tree.renderTree.06", " RESEARCH %d/%d", m.known, m.inReach)
+		title = rowid.Sprintf("ui.research_tree.renderTree.06", " RESEARCH %d/%d", m.known, m.inReach)
 	}
 	x := 0
 	if cur := state.Research.CurrentTech; cur != "" {
@@ -797,7 +797,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 		bar, pct := plainBar(researchFraction(state), 10), researchPercent(state)
 		name := state.Research.CurrentTechName
 		left := researchLeft(state)
-		short := vibe.Sprintf("ui.research_tree.renderTree.07", " RESEARCH %d/%d", m.known, m.inReach)
+		short := rowid.Sprintf("ui.research_tree.renderTree.07", " RESEARCH %d/%d", m.known, m.inReach)
 		placed := false
 		for _, ttl := range []string{short} {
 			for _, run := range []string{
@@ -826,8 +826,8 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	}
 	for _, form := range []string{
 		scholarsShort(state),
-		vibe.Sprintf("ui.research_tree.renderTree.08", "%d research, %d teach, %s", state.Scholars.Researching, state.Scholars.Teaching, textfmt.SignedPercent(state.Scholars.TeachingBonus)),
-		vibe.Sprintf("ui.research_tree.renderTree.09", "%d research, %d teach", state.Scholars.Researching, state.Scholars.Teaching),
+		rowid.Sprintf("ui.research_tree.renderTree.08", "%d research, %d teach, %s", state.Scholars.Researching, state.Scholars.Teaching, textfmt.SignedPercent(state.Scholars.TeachingBonus)),
+		rowid.Sprintf("ui.research_tree.renderTree.09", "%d research, %d teach", state.Scholars.Researching, state.Scholars.Teaching),
 	} {
 		if state.Scholars.Total <= 0 {
 			break
@@ -910,7 +910,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 		tally := fmt.Sprintf("%d/%d", b.have, b.total)
 		switch {
 		case b.here && ox >= 8:
-			tally += vibe.Line("ui.research_tree.renderTree.10", " now")
+			tally += rowid.Line("ui.research_tree.renderTree.10", " now")
 		case b.ahead == 1 && ox >= 8:
 			tally = "next"
 		}
@@ -943,7 +943,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	// The status line and the key bar.
 	status := clipRunes(m.statusLine(state, v), w)
 	out.text(0, h-2, status, tsText, -1)
-	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", vibe.Line("ui.research_tree.renderTree.13", "next you can start")}, {"PgUp PgDn " + pageKeysHint(v.ascii), vibe.Line("ui.research_tree.renderTree.15", "zoom")}, {"Home", vibe.Line("ui.research_tree.renderTree.17", "your age")}, {"Enter", "card"}, {"Esc", "close"}}
+	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", rowid.Line("ui.research_tree.renderTree.13", "next you can start")}, {"PgUp PgDn " + pageKeysHint(v.ascii), rowid.Line("ui.research_tree.renderTree.15", "zoom")}, {"Home", rowid.Line("ui.research_tree.renderTree.17", "your age")}, {"Enter", "card"}, {"Esc", "close"}}
 	if v.ascii {
 		keys[0][0] = "Arrows"
 	}
@@ -954,7 +954,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	case v.prompt:
 		keys = [][2]string{{"Enter", txtRunsCommandBelow.String()}, {"Esc", "close"}}
 	case v.card:
-		keys = [][2]string{{"Enter", vibe.Line("ui.research_tree.renderTree.26", "does what the card says")}, {"Esc", vibe.Line("ui.research_tree.renderTree.28", "closes the card")}}
+		keys = [][2]string{{"Enter", rowid.Line("ui.research_tree.renderTree.26", "does what the card says")}, {"Esc", rowid.Line("ui.research_tree.renderTree.28", "closes the card")}}
 	}
 	x = 1
 	for _, k := range keys {
@@ -1012,7 +1012,7 @@ func (m *treeModel) beyondLine() string {
 	if m.later == 0 {
 		return ""
 	}
-	return vibe.Sprintf("ui.research_tree.beyondLine.01", "┄┄┄ %s in later ages ┄┄┄", textfmt.Count(m.later, vibe.Line("ui.research_tree.beyondLine.02", "more tech waits"), vibe.Line("ui.research_tree.beyondLine.03", "more techs wait")))
+	return rowid.Sprintf("ui.research_tree.beyondLine.01", "┄┄┄ %s in later ages ┄┄┄", textfmt.Count(m.later, rowid.Line("ui.research_tree.beyondLine.02", "more tech waits"), rowid.Line("ui.research_tree.beyondLine.03", "more techs wait")))
 }
 
 // statusLine names the selected tech, its state, its price and what it
@@ -1020,7 +1020,7 @@ func (m *treeModel) beyondLine() string {
 func (m *treeModel) statusLine(state game.GameState, v treeView) string {
 	n := m.by[v.sel]
 	if n == nil {
-		return vibe.Line("ui.research_tree.statusLine.01", " No tech in sight yet.")
+		return rowid.Line("ui.research_tree.statusLine.01", " No tech in sight yet.")
 	}
 	parts := []string{" ▸ " + n.def.Name, m.standing(n)}
 	if n.ts.Kind == config.TechKeystone {
@@ -1030,13 +1030,13 @@ func (m *treeModel) statusLine(state game.GameState, v treeView) string {
 		parts = append(parts, techTime(n.ts, state))
 	}
 	if n.plan > 0 {
-		parts = append(parts, vibe.Sprintf("ui.research_tree.statusLine.03", "item %d in your plan", n.plan))
+		parts = append(parts, rowid.Sprintf("ui.research_tree.statusLine.03", "item %d in your plan", n.plan))
 	}
 	if what := opensText(state, n.def); what != "" {
 		parts = append(parts, what)
 	}
 	if !v.card {
-		parts = append(parts, vibe.Line("ui.research_tree.statusLine.04", "Enter opens its card"))
+		parts = append(parts, rowid.Line("ui.research_tree.statusLine.04", "Enter opens its card"))
 	}
 	s := strings.Join(parts, " · ")
 	if v.ascii {
@@ -1067,10 +1067,10 @@ func opensText(state game.GameState, def config.TechDef) string {
 	}
 	if len(blds) > 0 {
 		sort.Strings(blds)
-		out = append(out, vibe.Line("ui.research_tree.opensText.02", "opens ")+joinAnd(blds))
+		out = append(out, rowid.Line("ui.research_tree.opensText.02", "opens ")+joinAnd(blds))
 	}
 	if wonder != "" {
-		out = append(out, txtThe.String()+wonder+vibe.Line("ui.research_tree.opensText.04", " needs it"))
+		out = append(out, txtThe.String()+wonder+rowid.Line("ui.research_tree.opensText.04", " needs it"))
 	}
 	return strings.Join(out, ", ")
 }
@@ -1080,7 +1080,7 @@ func joinAnd(names []string) string {
 	if len(names) < 2 {
 		return strings.Join(names, "")
 	}
-	return strings.Join(names[:len(names)-1], ", ") + vibe.Line("ui.research_tree.joinAnd.01", " and ") + names[len(names)-1]
+	return strings.Join(names[:len(names)-1], ", ") + rowid.Line("ui.research_tree.joinAnd.01", " and ") + names[len(names)-1]
 }
 
 // ----- the card -----
@@ -1162,40 +1162,40 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	}
 	blurb := strings.TrimSpace(n.def.Description)
 	if len(gives) > 0 {
-		blurb += " " + sw(swEffect, n.def.Name+vibe.Line("ui.research_tree.cardSentences.01", " gives ")+joinAnd(gives)+".")
+		blurb += " " + sw(swEffect, n.def.Name+rowid.Line("ui.research_tree.cardSentences.01", " gives ")+joinAnd(gives)+".")
 	}
 	if len(with) > 0 {
-		blurb += " " + sw(swEffect, vibe.Line("ui.research_tree.cardSentences.02", "With it, ")+joinAnd(with)+".")
+		blurb += " " + sw(swEffect, rowid.Line("ui.research_tree.cardSentences.02", "With it, ")+joinAnd(with)+".")
 	}
 	for _, l := range set.FeaturesOpenedBy(n.key) {
-		blurb += " " + sw(swEffect, vibe.Line("ui.research_tree.cardSentences.03", "It ")+l.Opens+".")
+		blurb += " " + sw(swEffect, rowid.Line("ui.research_tree.cardSentences.03", "It ")+l.Opens+".")
 	}
 	var blds []string
 	for _, b := range set.Buildings() {
 		switch {
 		case b.RequiredTech != n.key:
 		case b.Category == "wonder":
-			blurb += " " + sw(swEffect, vibe.Line("ui.research_tree.cardSentences.04", "It is this age's keystone: the ")+b.Name+vibe.Line("ui.research_tree.cardSentences.05", " cannot be built without it."))
+			blurb += " " + sw(swEffect, rowid.Line("ui.research_tree.cardSentences.04", "It is this age's keystone: the ")+b.Name+rowid.Line("ui.research_tree.cardSentences.05", " cannot be built without it."))
 		default:
 			blds = append(blds, txtThe.String()+b.Name)
 		}
 	}
 	if len(blds) > 0 {
 		sort.Strings(blds)
-		blurb += " " + sw(swEffect, vibe.Line("ui.research_tree.cardSentences.07", "It opens ")+joinAnd(blds)+".")
+		blurb += " " + sw(swEffect, rowid.Line("ui.research_tree.cardSentences.07", "It opens ")+joinAnd(blds)+".")
 	}
 	out = append(out, strings.TrimSpace(blurb))
 
 	// What it costs.
 	switch n.mark {
 	case markDone:
-		out = append(out, vibe.Line("ui.research_tree.cardSentences.08", "You already hold this."))
+		out = append(out, rowid.Line("ui.research_tree.cardSentences.08", "You already hold this."))
 	case markRunning:
 		if state.Research.NeedsScholars {
-			out = append(out, vibe.Sprintf("ui.research_tree.cardSentences.09", "It is being researched: %s done. %s",
+			out = append(out, rowid.Sprintf("ui.research_tree.cardSentences.09", "It is being researched: %s done. %s",
 				sw(swHi, fmt.Sprintf("%d%%", researchPercent(state))), needsScholars.String()))
 		} else {
-			out = append(out, vibe.Sprintf("ui.research_tree.cardSentences.10", "It is being researched: %s done, %s left.",
+			out = append(out, rowid.Sprintf("ui.research_tree.cardSentences.10", "It is being researched: %s done, %s left.",
 				sw(swHi, fmt.Sprintf("%d%%", researchPercent(state))), sw(swHi, formatTicks(state.Research.TicksLeft, state))))
 		}
 		out = append(out, sw(swHi, plainBar(researchFraction(state), 20)+fmt.Sprintf(" %d%%", researchPercent(state))))
@@ -1203,7 +1203,7 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 		if n.ts.TicksNeeded <= 0 {
 			out = append(out, needsScholars.String())
 		} else {
-			out = append(out, vibe.Sprintf("ui.research_tree.cardSentences.11", "It takes %s.", sw(swHi, formatTicks(n.ts.TicksNeeded, state))))
+			out = append(out, rowid.Sprintf("ui.research_tree.cardSentences.11", "It takes %s.", sw(swHi, formatTicks(n.ts.TicksNeeded, state))))
 		}
 	}
 	out = append(out, scholarsLine(state))
@@ -1215,7 +1215,7 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 		} else if p != nil {
 			return sw(swDim, p.def.Name)
 		}
-		return vibe.Line("ui.research_tree.cardSentences.12", "a tech of a later age")
+		return rowid.Line("ui.research_tree.cardSentences.12", "a tech of a later age")
 	}
 	var path string
 	var all []string
@@ -1224,9 +1224,9 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	}
 	switch {
 	case len(all) == 0 && len(n.def.AnyOf) == 0:
-		path = vibe.Line("ui.research_tree.cardSentences.13", "It needs nothing before it.")
+		path = rowid.Line("ui.research_tree.cardSentences.13", "It needs nothing before it.")
 	case len(all) > 0:
-		path = vibe.Line("ui.research_tree.cardSentences.14", "It builds on ") + joinAnd(all) + "."
+		path = rowid.Line("ui.research_tree.cardSentences.14", "It builds on ") + joinAnd(all) + "."
 	}
 	if len(n.def.AnyOf) > 0 {
 		var any, held []string
@@ -1236,9 +1236,9 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 				held = append(held, p.def.Name)
 			}
 		}
-		path = strings.TrimSpace(path + vibe.Line("ui.research_tree.cardSentences.15", " It needs one of ") + strings.Join(any, " or ") + ".")
+		path = strings.TrimSpace(path + rowid.Line("ui.research_tree.cardSentences.15", " It needs one of ") + strings.Join(any, " or ") + ".")
 		if len(held) > 0 {
-			path += vibe.Line("ui.research_tree.cardSentences.16", " You hold ") + held[0] + "."
+			path += rowid.Line("ui.research_tree.cardSentences.16", " You hold ") + held[0] + "."
 		}
 	}
 	later := 0
@@ -1253,9 +1253,9 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	switch later {
 	case 0:
 	case 1:
-		path += vibe.Line("ui.research_tree.cardSentences.17", " One later tech builds on it.")
+		path += rowid.Line("ui.research_tree.cardSentences.17", " One later tech builds on it.")
 	default:
-		path += vibe.Sprintf("ui.research_tree.cardSentences.18", " %s later techs build on it.", textfmt.Capitalize(numberWord(later)))
+		path += rowid.Sprintf("ui.research_tree.cardSentences.18", " %s later techs build on it.", textfmt.Capitalize(numberWord(later)))
 	}
 	out = append(out, path)
 
@@ -1263,7 +1263,7 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	var act string
 	switch cardActionFor(state, n) {
 	case actStart:
-		act = sw(swHi, " Enter ") + vibe.Line("ui.research_tree.cardSentences.20", "  starts the research.")
+		act = sw(swHi, " Enter ") + rowid.Line("ui.research_tree.cardSentences.20", "  starts the research.")
 	case actPlan:
 		// What it still needs goes into the plan before it.
 		var first []string
@@ -1273,28 +1273,28 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 				first = append(first, def.Name)
 			}
 		}
-		act = sw(swHi, " Enter ") + vibe.Line("ui.research_tree.cardSentences.22", "  adds it to your plan.")
+		act = sw(swHi, " Enter ") + rowid.Line("ui.research_tree.cardSentences.22", "  adds it to your plan.")
 		if len(first) > 0 {
-			act = sw(swHi, " Enter ") + vibe.Line("ui.research_tree.cardSentences.24", "  adds it to your plan, after ") + neededFirst(first) + "."
+			act = sw(swHi, " Enter ") + rowid.Line("ui.research_tree.cardSentences.24", "  adds it to your plan, after ") + neededFirst(first) + "."
 		}
 		switch {
 		case n.mark == markNext && len(first) > 0:
-			act += vibe.Line("ui.research_tree.cardSentences.25", " They run in that order, and it starts once you reach the ") + m.bandOf(n).name + "."
+			act += rowid.Line("ui.research_tree.cardSentences.25", " They run in that order, and it starts once you reach the ") + m.bandOf(n).name + "."
 		case n.mark == markNext:
-			act += vibe.Line("ui.research_tree.cardSentences.26", " It starts once you reach the ") + m.bandOf(n).name + vibe.Line("ui.research_tree.cardSentences.27", " and hold what it needs.")
+			act += rowid.Line("ui.research_tree.cardSentences.26", " It starts once you reach the ") + m.bandOf(n).name + rowid.Line("ui.research_tree.cardSentences.27", " and hold what it needs.")
 		case len(first) > 0:
-			act += vibe.Line("ui.research_tree.cardSentences.28", " They run in that order, one at a time.")
+			act += rowid.Line("ui.research_tree.cardSentences.28", " They run in that order, one at a time.")
 		case n.mark == markLocked:
-			act += vibe.Line("ui.research_tree.cardSentences.29", " It starts once you hold what it needs.")
+			act += rowid.Line("ui.research_tree.cardSentences.29", " It starts once you hold what it needs.")
 		case state.Research.CurrentTech != "":
-			act += vibe.Sprintf("ui.research_tree.cardSentences.30", " %s is running, so it starts in %s.", state.Research.CurrentTechName, formatTicks(state.Research.TicksLeft, state))
+			act += rowid.Sprintf("ui.research_tree.cardSentences.30", " %s is running, so it starts in %s.", state.Research.CurrentTechName, formatTicks(state.Research.TicksLeft, state))
 		}
 	default:
 		switch {
 		case n.plan > 0:
-			act = vibe.Sprintf("ui.research_tree.cardSentences.31", "It is item %d in your plan.", n.plan)
+			act = rowid.Sprintf("ui.research_tree.cardSentences.31", "It is item %d in your plan.", n.plan)
 		case n.mark == markRunning:
-			act = vibe.Line("ui.research_tree.cardSentences.32", "Type research cancel to stop it; the work done on it is lost.")
+			act = rowid.Line("ui.research_tree.cardSentences.32", "Type research cancel to stop it; the work done on it is lost.")
 		}
 	}
 	if note != "" {
@@ -1316,11 +1316,11 @@ func neededFirst(names []string) string {
 	case n == 0:
 		return ""
 	case n == 1:
-		return names[0] + vibe.Line("ui.research_tree.neededFirst.01", ", which it needs first")
+		return names[0] + rowid.Line("ui.research_tree.neededFirst.01", ", which it needs first")
 	case n <= 4:
-		return vibe.Sprintf("ui.research_tree.neededFirst.02", "the %d techs it needs first (%s, then %s)", n, strings.Join(names[:n-1], ", "), names[n-1])
+		return rowid.Sprintf("ui.research_tree.neededFirst.02", "the %d techs it needs first (%s, then %s)", n, strings.Join(names[:n-1], ", "), names[n-1])
 	default:
-		return vibe.Sprintf("ui.research_tree.neededFirst.03", "the %d techs it needs first (%s and %d more)", n, strings.Join(names[:3], ", "), n-3)
+		return rowid.Sprintf("ui.research_tree.neededFirst.03", "the %d techs it needs first (%s and %d more)", n, strings.Join(names[:3], ", "), n-3)
 	}
 }
 
@@ -1411,7 +1411,7 @@ func kindWords(n *treeNode) string {
 	case n.ts.Kind == config.TechKeystone:
 		return "keystone"
 	case n.ts.Kind == config.TechSpine:
-		return vibe.Line("ui.research_tree.kindWords.03", "on the spine")
+		return rowid.Line("ui.research_tree.kindWords.03", "on the spine")
 	}
 	return "optional"
 }

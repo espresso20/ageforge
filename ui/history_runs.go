@@ -8,20 +8,20 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
 var (
-	txtRunCol      = vibe.E("ui.history_runs.words.01", "Run")
-	txtEndCol      = vibe.E("ui.history_runs.words.02", "End")
-	txtHighestRun  = vibe.E("ui.history_runs.words.03", "Highest age")
-	txtLengthCol   = vibe.E("ui.history_runs.words.04", "Length")
-	txtPaceCol     = vibe.E("ui.history_runs.words.05", "Pace")
-	txtInPlay      = vibe.E("ui.history_runs.words.06", "In play")
-	txtNoRuns      = vibe.E("ui.history_runs.words.07", "No finished runs yet")
-	txtWorkersCol  = vibe.E("ui.history_runs.words.08", "Workers")
+	txtRunCol      = rowid.E("ui.history_runs.words.01", "Run")
+	txtEndCol      = rowid.E("ui.history_runs.words.02", "End")
+	txtHighestRun  = rowid.E("ui.history_runs.words.03", "Highest age")
+	txtLengthCol   = rowid.E("ui.history_runs.words.04", "Length")
+	txtPaceCol     = rowid.E("ui.history_runs.words.05", "Pace")
+	txtInPlay      = rowid.E("ui.history_runs.words.06", "In play")
+	txtNoRuns      = rowid.E("ui.history_runs.words.07", "No finished runs yet")
+	txtWorkersCol  = rowid.E("ui.history_runs.words.08", "Workers")
 	histRunWheel   = 3
 	histCountsFrom = 120 // the panel width from which the list shows its four counts
 )

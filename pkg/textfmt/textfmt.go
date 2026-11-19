@@ -15,7 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // units are the suffixes Number prints, smallest first, each a thousand of the
@@ -280,7 +280,7 @@ func List(items []string) string {
 	case 1:
 		return items[0]
 	}
-	return strings.Join(items[:len(items)-1], ", ") + vibe.Line("pkg.textfmt.textfmt.List.01", " and ") + items[len(items)-1]
+	return strings.Join(items[:len(items)-1], ", ") + rowid.Line("pkg.textfmt.textfmt.List.01", " and ") + items[len(items)-1]
 }
 
 func trimZeros(s string) string {

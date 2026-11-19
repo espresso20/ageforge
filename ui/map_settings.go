@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // map_settings.go holds the display settings a command sets: "map glyphs",
@@ -83,7 +83,7 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 		err = acct.SetMotion(s.Motion)
 	}
 	if err != nil {
-		d.engine.AddLog("warning", vibe.Line("ui.map_settings.saveMapSettings.01", "The setting could not be saved to your account: ")+err.Error())
+		d.engine.AddLog("warning", rowid.Line("ui.map_settings.saveMapSettings.01", "The setting could not be saved to your account: ")+err.Error())
 	}
 }
 

@@ -7,8 +7,8 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -274,7 +274,7 @@ func (a *arrival) feed(prev, cur *game.GameState) {
 	}
 	a.view.passed = ""
 	if len(passed) > 0 {
-		a.view.passed = vibe.Line("ui.arrival.feed.01", "Ages passed: ") + strings.Join(passed, ", ")
+		a.view.passed = rowid.Line("ui.arrival.feed.01", "Ages passed: ") + strings.Join(passed, ", ")
 	}
 	a.say(cur)
 

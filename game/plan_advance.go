@@ -1,6 +1,6 @@
 package game
 
-import "github.com/espresso20/ageforge/vibe"
+import "github.com/espresso20/ageforge/rowid"
 
 // Advance items: `plan advance` advances to the next age as soon as its
 // requirements are met, instead of when the player next looks in. It is the
@@ -17,10 +17,10 @@ func (ge *GameEngine) PlanAddAdvance() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if plannedCount(ge.plan, PlanAdvance, "") > 0 {
-		return vibe.Errorf("game.plan_advance.PlanAddAdvance.01", "The plan already advances when ready.")
+		return rowid.Errorf("game.plan_advance.PlanAddAdvance.01", "The plan already advances when ready.")
 	}
 	if ge.progress.GetNextAge(ge.age) == "" {
-		return vibe.Errorf("game.plan_advance.PlanAddAdvance.02", "This is the final age. There is nothing to advance to.")
+		return rowid.Errorf("game.plan_advance.PlanAddAdvance.02", "This is the final age. There is nothing to advance to.")
 	}
 	if planLoad(ge.plan) >= MaxPlanItems {
 		return errPlanFull()
@@ -36,11 +36,11 @@ func (ge *GameEngine) PlanAddAdvance() error {
 func (ge *GameEngine) planAdvanceBlocker() string {
 	switch {
 	case ge.progress.GetNextAge(ge.age) == "":
-		return vibe.Line("game.plan_advance.planAdvanceBlocker.01", "this is the final age")
+		return rowid.Line("game.plan_advance.planAdvanceBlocker.01", "this is the final age")
 	case ge.pendingCatastrophe != "":
-		return vibe.Line("game.plan_advance.planAdvanceBlocker.02", "a catastrophe is pending")
+		return rowid.Line("game.plan_advance.planAdvanceBlocker.02", "a catastrophe is pending")
 	case ge.progress.CheckAdvancement(ge.age, ge.Buildings) == "":
-		return vibe.Line("game.plan_advance.planAdvanceBlocker.03", "waiting for the requirements")
+		return rowid.Line("game.plan_advance.planAdvanceBlocker.03", "waiting for the requirements")
 	}
 	return ""
 }
@@ -49,7 +49,7 @@ func (ge *GameEngine) planAdvanceBlocker() string {
 func (ge *GameEngine) planAdvanceView(it PlanItem) PlanItemView {
 	v := PlanItemView{Kind: it.Kind, Count: it.Count, Name: txtAdvanceWhenReady.String()}
 	if next := ge.progress.GetNextAge(ge.age); next != "" {
-		v.Name = vibe.Line("game.plan_advance.planAdvanceView.02", "advance to the ") + ge.progress.GetAgeName(next)
+		v.Name = rowid.Line("game.plan_advance.planAdvanceView.02", "advance to the ") + ge.progress.GetAgeName(next)
 	}
 	if b := ge.planAdvanceBlocker(); b != "" {
 		v.Status, v.Note, v.When = PlanStatusBlocked, b, PlanWhenUnknown
@@ -101,7 +101,7 @@ func (st *GameState) fillPlanPillars() {
 	// it), so the view can be edited in place.
 	st.Plan[at].Pillars = pillars
 	if v := st.Plan[at]; v.Status == PlanStatusBlocked && view.Blockers == nil {
-		st.Plan[at].Note = vibe.Sprintf("game.plan_advance.fillPlanPillars.01", "%d of %d pillars", view.Stand, len(view.Pillars))
+		st.Plan[at].Note = rowid.Sprintf("game.plan_advance.fillPlanPillars.01", "%d of %d pillars", view.Stand, len(view.Pillars))
 	}
 }
 

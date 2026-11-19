@@ -7,7 +7,7 @@ import (
 	"unicode"
 
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // Kind says what a key names, for Name.
@@ -142,7 +142,7 @@ func Slug(name string) string {
 // name the screen shows. With VibeMode off, or for a key the set has no name
 // for, it is the key as it is.
 func (s *Set) Typed(kind Kind, key string) string {
-	if s == nil || !vibe.On() || kind >= numKinds {
+	if s == nil || !rowid.On() || kind >= numKinds {
 		return key
 	}
 	if n := s.names[kind][key]; n != "" {
