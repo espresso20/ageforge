@@ -1696,7 +1696,7 @@ func (ge *GameEngine) processExpeditions() {
 		// Add rewards to resources
 		ge.applyExpeditionRewards(res.Rewards)
 		if res.Success {
-			ge.note(config.BadgeEvExpedition, config.MissionBadgeKey(ge.rules.EraOf(res.Offer.Age), res.Offer.Kind()))
+			ge.note(config.BadgeEvExpedition, ge.rules.MissionBadgeKey(res.Offer.Age, res.Offer.Kind()))
 			if res.Offer.Rare {
 				ge.note(config.BadgeEvLegendaryReturned, "")
 			}

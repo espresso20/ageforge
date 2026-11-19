@@ -286,7 +286,7 @@ func statsFamilies(views []game.BadgeView, counted bool) []statsFamily {
 		default:
 			f.shown++
 		}
-		if c := v.Coin; v.Earned && c.Type != "" && coins.Has(c.Age) &&
+		if c := v.Coin; v.Earned && c.Type != "" &&
 			(f.coin.Type == "" || c.Level > f.coin.Level || c.Level == f.coin.Level && c.At < f.coin.At) {
 			f.coin = c
 		}
@@ -338,7 +338,7 @@ func (pg *statsPage) families(as *game.AccountStatsView, y, w int) int {
 	}
 	for i, f := range fams {
 		x, ty := i%cols*pw, y+i/cols*pitch
-		count := fmt.Sprintf("%d / %d", f.earned, f.shown)
+		count := ""
 		if f.coin.Type != "" {
 			count = coinLevelWord(f.coin.Level)
 		}
@@ -358,7 +358,7 @@ func (pg *statsPage) families(as *game.AccountStatsView, y, w int) int {
 		}
 		cx := x + (pw-coinCols)/2
 		c := f.coin
-		if f.coin.Type != "" && slices.Contains(config.CoinTypes, f.key) {
+		if f.coin.Type != "" && coins.Has(f.coin.Age) && slices.Contains(config.CoinTypes, f.key) {
 			pg.pics = append(pg.pics, statsPic{r: image.Rect(cx, ty, cx+coinCols, ty+coinRows), key: fmt.Sprint("coin", f.key, c.Type, c.Age, c.Level, c.Seed),
 				draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
 					return statsCoinPic(c, coinCols*cw, coinRows*ch, in)

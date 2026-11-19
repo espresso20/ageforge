@@ -177,11 +177,14 @@ func TestStatsFamilyCoin(t *testing.T) {
 		{Key: "wonder.a", Family: "wonder", Earned: true, Coin: game.CoinCopy{Type: "wonder", Age: "no_such_age", Level: 3}},
 	}
 	fams := statsFamilies(views, false)
-	if len(fams) != 2 || fams[0].coin.Level != 4 || fams[1].coin.Type != "" {
+	if len(fams) != 2 || fams[0].coin.Level != 4 || fams[1].coin.Level != 3 {
 		t.Fatalf("families %+v", fams)
 	}
 	in := newStatsInk(newExpPalette())
 	held, empty := statsCoinPic(fams[0].coin, 70, 45, in), statsCoinPic(fams[1].coin, 70, 45, in)
+	if coinLevelWord(fams[1].coin.Level) != "Level 3 of 6" {
+		t.Errorf("level line %q", coinLevelWord(fams[1].coin.Level))
+	}
 	if held.Rect != empty.Rect || bytes.Equal(held.Pix, empty.Pix) {
 		t.Error("the held coin is not drawn over the recess")
 	}

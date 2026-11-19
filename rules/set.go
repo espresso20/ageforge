@@ -418,6 +418,11 @@ func (s *Set) Era(key string) (config.EpochDef, bool) {
 	return e, ok
 }
 
+// MissionBadgeKey is the badge subject of a mission of one kind in age.
+func (s *Set) MissionBadgeKey(age, kind string) string {
+	return config.MissionBadgeKey(s.EraOf(age), kind)
+}
+
 // EraOf returns the key of the era age belongs to. An unknown age reads as
 // the first era ("" in a set with no eras).
 func (s *Set) EraOf(age string) string {
