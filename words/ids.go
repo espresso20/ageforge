@@ -78,6 +78,7 @@ var FieldIDs = map[string]string{
 	"config.BadgeReward.Title":               "badge_reward.{k}{^Key}.title",
 	"config.BadgeTitleDef.Title":             "badge_title.{Badge}{Set}",
 	"config.BadgeScoreTitle.Title":           "badge_score_title.{sn}",
+	"config.BadgeExpeditionDef.Name":         "badge_expedition.{Key}.name",
 	"config.TallyDef.Name":                   "tally.{Key}.name",
 	"config.MissionWords.Tiers":              "mission.{Age}.tier.{n}",
 	"config.MissionWords.Places":             "mission.{Age}.place.{n}",
