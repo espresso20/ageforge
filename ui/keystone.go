@@ -4,7 +4,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rowid"
-	"github.com/espresso20/ageforge/rules"
 )
 
 // The tech tree's lock, as the panels show it. An age's wonder needs one
@@ -39,16 +38,16 @@ func wonderKeystoneLine(state game.GameState, key string) string {
 	if researched {
 		return rowid.Sprintf("ui.keystone.wonderKeystoneLine.01", "[green]✓ Keystone: %s, researched[-]", name)
 	}
-	return rowid.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, state.Ruleset().Typed(rules.KindTech, def.RequiredTech))
+	return rowid.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, def.RequiredTech)
 }
 
 // wonderBuildLine is what a full wonder bank says to do next: build it, or
 // research its keystone first.
 func wonderBuildLine(state game.GameState, key string) string {
 	if name, researched, ok := wonderKeystone(state, key); ok && !researched {
-		return rowid.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, state.Ruleset().Typed(rules.KindBuilding, key))
+		return rowid.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, key)
 	}
-	return rowid.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", state.Ruleset().Typed(rules.KindBuilding, key))
+	return rowid.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", key)
 }
 
 // keystoneMark is the tag a tech carries in the research lists when a

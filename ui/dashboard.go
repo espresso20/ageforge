@@ -51,9 +51,6 @@ type Dashboard struct {
 	pages  *nativePages
 	root   *nativeFlex
 
-	// vibeSeen is the VibeMode switch as the dashboard last drew it.
-	vibeSeen bool
-
 	// Tabs (only economy is permanent background)
 	economyTab *EconomyTab
 
@@ -317,7 +314,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.historyPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("history", txtHistoryTitle, d.historyPanel.open, d.historyPanel.update)
 	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
-	d.vibeSeen = rowid.On()
 	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
 
 	// The Map panel: the map full screen (map, and its aliases citymap and
@@ -907,27 +903,6 @@ func (d *Dashboard) StopUpdates() {
 	}
 }
 
-// syncVibe writes again the text the dashboard set once, when VibeMode has
-// been switched since (by the command, or by an account that was switched to):
-// the titles on the borders of its boxes and of the panels. The text the panels
-// draw from the game's state follows on its own: the engine moved onto the other
-// ruleset when the switch changed, and what the panels write each frame reads
-// the script then.
-func (d *Dashboard) syncVibe() {
-	if on := rowid.On(); on != d.vibeSeen {
-		d.vibeSeen = on
-		d.retitle()
-		d.economyTab.retitle()
-		// A box that keeps the text it wrote for its size writes it again.
-		for _, v := range []*fitView{d.sidebar, d.workerMiniTV,
-			d.economyTab.resourceTV.fitView, d.economyTab.constructionTV} {
-			v.changed()
-		}
-		d.economyTab.buildBox.recompute()
-		d.headerTV.changed()
-	}
-}
-
 // retitle writes the titles on the borders of the dashboard's own boxes, in the
 // script now in force. The People box's title is also written each frame, with
 // the headcount in it when there is room.
@@ -943,7 +918,6 @@ func (d *Dashboard) retitle() {
 // Order matters: catastrophe modal and age splash are checked first because they may
 // swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {
-	d.syncVibe()
 	// Check for pending age splash (set by bus handler under engine lock)
 	if d.pendingAgeSplash != "" {
 		newAge := d.pendingAgeSplash
@@ -1262,7 +1236,7 @@ func moraleKind(b moraleBand) xk {
 	return xText
 }
 
-// plainFact is the text a vibe line wrote, without its colour tags and the
+// plainFact is the text a rowid line wrote, without its colour tags and the
 // spaces that set it off from what was beside it.
 func plainFact(s string) string { return strings.TrimSpace(kit.Strip(s)) }
 
@@ -1623,10 +1597,6 @@ func (d *Dashboard) runLine(text string) {
 	}
 	if result.OverlayName == "badges" {
 		d.badgePanel.request(result.Badges)
-	}
-	if result.Vibe {
-		d.syncVibe()
-		d.refresh()
 	}
 	if result.MapPref.Key != "" {
 		d.applyMapPref(result.MapPref)

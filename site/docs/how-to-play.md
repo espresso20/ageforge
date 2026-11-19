@@ -22,7 +22,7 @@ An account with no game yet sees the forge and a title page, with **New game** f
 | **New game** | `n` | Asks you to name a civilization, then starts it (see [Starting a new game](saving-and-loading.md#starting-a-new-game)) |
 | **Load game** | `l` | Opens the [Load Game browser](saving-and-loading.md#the-load-game-browser), where you can also mark your main game |
 | **Badges** | `b` | Shows how many badges you hold and the title you wear, and opens the [badge case](account.md#the-badge-case). No game needs to be loaded |
-| **Settings** | `s` | Opens a page of display settings, one row each with its value at the right: **Themes** (opens the [theme](themes.md) picker), **VibeMode**, **Map glyphs**, **Motion**, **Minimap** and **Discord status**, and in the game's own window **Font**, **Text size** (a key each way, the same as `Ctrl` or `Cmd` with `+` and `-`) and **Fullscreen** (the same as `F11`) (your age and town on your Discord profile while Discord is running; see [Account settings](account.md#account-settings)). A setting that is on or off is a slide switch: a click on the row flips it, and so does `Enter` on the picked row. The pointer lights the row under it and the picked row has a bar at its left. Each row's letter is drawn as a key at its right. `Enter` flips a switch, and `←` and `→` step the map glyphs through ascii and unicode. A change applies and saves at once, as the matching command does. `Esc` returns to the menu |
+| **Settings** | `s` | Opens a page of display settings, one row each with its value at the right: **Themes** (opens the [theme](themes.md) picker), **Map glyphs**, **Motion**, **Minimap** and **Discord status**, and in the game's own window **Font**, **Text size** (a key each way, the same as `Ctrl` or `Cmd` with `+` and `-`) and **Fullscreen** (the same as `F11`) (your age and town on your Discord profile while Discord is running; see [Account settings](account.md#account-settings)). A setting that is on or off is a slide switch: a click on the row flips it, and so does `Enter` on the picked row. The pointer lights the row under it and the picked row has a bar at its left. Each row's letter is drawn as a key at its right. `Enter` flips a switch, and `←` and `→` step the map glyphs through ascii and unicode. A change applies and saves at once, as the matching command does. `Esc` returns to the menu |
 | **Accounts** | `a` | Opens the [Accounts panel](account.md#the-accounts-panel): switch, create, back up and wipe accounts, and delete an account's saves |
 | **Check for updates** | `u` | Asks for the latest release (see [Updating](getting-started.md#updating)) |
 | **Quit** | `q` | Leaves the game |
@@ -120,7 +120,7 @@ Resting the pointer on a thing for about half a second shows a small tooltip, wh
 - **↑ / ↓** step through your last 50 commands (with a text panel open and the prompt empty, they scroll the panel).
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the [main menu](#the-main-menu), where **Continue** takes you back in.
 - Common commands have short names: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade`. See [Command shortcuts](commands.md#command-shortcuts) for the full list.
-- Display settings you can change at any time are `theme`, `motion`, `minimap`, `map glyphs` and `vibemode` (see [Themes](themes.md) and [VibeMode](commands.md#vibemode)).
+- Display settings you can change at any time are `theme`, `motion`, `minimap` and `map glyphs` (see [Themes](themes.md)).
 
 ---
 

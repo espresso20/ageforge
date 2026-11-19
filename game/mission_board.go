@@ -78,7 +78,7 @@ type MissionOffer struct {
 	// Words are the words the three texts above were drawn from, by place in
 	// their age's lists. An offer the game made holds them, and a save holds
 	// them in place of the texts, so what a save says does not depend on the
-	// script the game was read in (VibeMode); draw writes the texts again
+	// ruleset the game was read in; draw writes the texts again
 	// from the words of the script in force. An offer with no Words is
 	// written by hand (a test's) and its texts are what they are.
 	Words OfferWords `json:"words,omitzero"`

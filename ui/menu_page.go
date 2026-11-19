@@ -38,7 +38,6 @@ const (
 
 	// The Settings page's rows.
 	miSetTheme   = "set_theme"
-	miSetVibe    = "set_vibe"
 	miSetGlyphs  = "set_glyphs"
 	miSetMotion  = "set_motion"
 	miSetMinimap = "set_minimap"

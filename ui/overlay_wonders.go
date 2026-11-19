@@ -8,7 +8,6 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
-	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -75,7 +74,7 @@ func wonderSummary(state game.GameState) wonderBlock {
 		}
 		blk.build = sb.Len()
 		sb.WriteString(strings.Repeat("\n", actionRows))
-		blk.buildCmd = buildLine(state.Ruleset().Typed(rules.KindBuilding, current.key))
+		blk.buildCmd = buildLine(current.key)
 		blk.buildOff = !bs.CanBuild || wonderQueued(state, current.key)
 		blk.collectCmd = wonderCollectCmd
 		blk.collectOff = !wonderBankable(state, current.def.BaseCost, bs)

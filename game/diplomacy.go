@@ -74,7 +74,7 @@ func (dm *DiplomacyManager) errUnknownCiv(key string) error {
 		}
 	}
 	if s := closestKey(key, met); s != "" && s != key {
-		msg += rowid.Sprintf("game.diplomacy.errUnknownCiv.02", " Did you mean '%s'?", dm.rules.Typed(rules.KindCiv, s))
+		msg += rowid.Sprintf("game.diplomacy.errUnknownCiv.02", " Did you mean '%s'?", s)
 	}
 	return rowid.Errorf("game.diplomacy.errUnknownCiv.03", "%s Scouting expeditions make first contact; type diplomacy deals to see the ones you have met.", msg)
 }
@@ -109,9 +109,6 @@ type DiplomacyManager struct {
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
-	// loanLines are the log lines of the last Tick that are about workers
-	// lent or returned, so the engine can say what they are about. Not saved.
-	loanLines []string
 
 	// boonLoans are the crews faction boons lent (faction_boon.go). They live
 	// here so a new run, which builds a new DiplomacyManager along with a new
@@ -713,8 +710,7 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 	}
 
 	// Worker-lending lifecycle: return due batches, then maybe lend new ones.
-	dm.loanLines = dm.processLending(rng, tick, age)
-	messages = append(messages, dm.loanLines...)
+	messages = append(messages, dm.processLending(rng, tick, age)...)
 
 	// War: raids + auto-end (wait-them-out) timer.
 	messages = append(messages, dm.processWar(tick, age)...)

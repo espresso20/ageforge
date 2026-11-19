@@ -1,11 +1,5 @@
 package config
 
-import (
-	"sync"
-
-	"github.com/espresso20/ageforge/rowid"
-)
-
 // mission_words.go is the words the mission board builds its offers from.
 // Every age has the names of its four tiers, six places, four objectives for
 // each tier and six twists. An offer's title is
@@ -38,9 +32,7 @@ const (
 )
 
 // roadTemplate is a road event story and the row id of the copy export it is
-// told by (rowID). The table is made once, so the story cannot follow
-// VibeMode where it is written: whoever tells a story drawn from it reads it
-// through rowid.Line with this id (RoadLine), after the draw.
+// told by (rowID).
 type roadTemplate struct {
 	rowID string
 	text  string
@@ -106,29 +98,6 @@ func (MissionWords) RoadTemplate(kind string, n int) string {
 
 // RoadTemplateCount is the number of story templates for kind.
 func (MissionWords) RoadTemplateCount(kind string) int { return len(roadEventTemplates[kind]) }
-
-// roadRow is the row id of each road event template, by its text.
-var roadRow = sync.OnceValue(func() map[string]string {
-	rows := map[string]string{}
-	for _, pool := range roadEventTemplates {
-		for _, t := range pool {
-			rows[t.text] = t.rowID
-		}
-	}
-	return rows
-})
-
-// RoadLine is the line a road event's story template is told by: the script's
-// line for it while VibeMode is on and the script has one, else the template
-// itself. template is a text RoadTemplate gave (a RoadEvent keeps it in plain
-// English), and the line has the same <slots>. A text that is no template of
-// the table (one written by hand) is given back as it is.
-func (MissionWords) RoadLine(template string) string {
-	if row, ok := roadRow()[template]; ok {
-		return rowid.Line(row, template)
-	}
-	return template
-}
 
 // MissionWords is one age's words for the mission board.
 type MissionWords struct {

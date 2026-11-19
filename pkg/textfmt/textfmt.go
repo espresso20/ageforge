@@ -2,7 +2,7 @@
 // are formatted. ui, game, boon and flavor all import it, so a panel, a log line
 // and a flavor sentence print the same amount the same way: 950, 12.5K, 1.23M.
 //
-// It imports only the standard library and vibe (for the one word List adds), and
+// It imports only the standard library and rowid (for the one word List adds), and
 // nothing of the game, so any package may import it.
 package textfmt
 

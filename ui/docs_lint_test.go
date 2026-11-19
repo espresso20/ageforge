@@ -176,7 +176,7 @@ var goIdent = []*regexp.Regexp{
 }
 
 // camelOK are CamelCase words that are names, not code.
-var camelOK = map[string]bool{"AgeForge": true, "PgUp": true, "PgDn": true, "GitHub": true, "PowerShell": true, "WezTerm": true, "MacOS": true, "JavaScript": true, "JetBrains": true, "VibeMode": true}
+var camelOK = map[string]bool{"AgeForge": true, "PgUp": true, "PgDn": true, "GitHub": true, "PowerShell": true, "WezTerm": true, "MacOS": true, "JavaScript": true, "JetBrains": true}
 
 func TestDocsNoGoIdentifiers(t *testing.T) {
 	files, err := filepath.Glob("../site/docs/*.md")

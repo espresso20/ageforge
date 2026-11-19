@@ -54,7 +54,7 @@ const advancePanelName = "charter"
 // command bar, and registers it as an overlay. Like the other panels it
 // leaves the keyboard with the command bar. (It is a method of its own and
 // not part of NewDashboard so that the panel's title does not move the
-// numbers of NewDashboard's text rows, which the VibeMode script names.)
+// numbers of NewDashboard's text rows.)
 func (d *Dashboard) registerAdvancePanel() {
 	d.advancePanel.engine = d.engine
 	d.advancePanel.settings = d.mapSettings

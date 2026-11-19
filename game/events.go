@@ -19,7 +19,7 @@ type ActiveEvent struct {
 	// chain's speed boost (Ref the chain), an awakening or an era event (Ref
 	// its key) or a civilization's boon (Ref the civilization, Tail the
 	// boon's name). A save holds them in place of the Name, so it reads the
-	// same in any script (VibeMode), and nameOf draws the Name again from the
+	// same in any ruleset, and nameOf draws the Name again from the
 	// words of the script in force. An event with no Src has a Name that is
 	// just what it is.
 	Src       string `json:",omitempty"`

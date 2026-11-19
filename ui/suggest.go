@@ -8,7 +8,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -77,12 +76,6 @@ func (c *completer) valid(a Arg, w string) bool {
 	}
 	if c.universe[a.Kind][w] {
 		return true
-	}
-	if rowid.On() {
-		// A name VibeMode shows is as good as the key.
-		if key, ok := keyOfTyped(c.state().Ruleset(), a.Kind, w, true); ok {
-			return c.universe[a.Kind][key]
-		}
 	}
 	return false
 }
@@ -236,10 +229,6 @@ func (c *completer) candidates(text string) []string {
 			}
 		}
 		for _, w := range sortedWords(a.Words) {
-			// The names VibeMode shows stand in for the plain words of a name slot.
-			if _, named := nameKind(a.Kind); named && rowid.On() {
-				break
-			}
 			if strings.HasPrefix(w, lp) {
 				add(w, more)
 			}
@@ -345,16 +334,13 @@ func sortedWords(ws []string) []string {
 func (c *completer) values(k ArgKind, prev []string) []string {
 	st := c.state()
 	key := strconv.Itoa(int(k))
-	if rowid.On() {
-		key += "v"
-	}
 	if k == ArgDeal && len(prev) > 0 {
 		key += ":" + strings.ToLower(prev[0])
 	}
 	if v, ok := c.cache[key]; ok {
 		return v
 	}
-	v := typedNames(st.Ruleset(), k, c.compute(k, prev, *st))
+	v := c.compute(k, prev, *st)
 	c.cache[key] = v
 	return v
 }

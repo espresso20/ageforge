@@ -11,15 +11,14 @@ import (
 
 // menu_settings.go is the main menu's Settings page: the entries are swapped
 // for one row per display setting, each with its value at the right. A change
-// is made through the calls the commands make (the account's setters,
-// SetVibeMode), so a command and the menu always agree. Esc, or Back, returns
+// is made through the calls the commands make (the account's setters), so a
+// command and the menu always agree. Esc, or Back, returns
 // to the main menu.
 
 // settingsItems are the Settings page's rows.
 func (m *mainMenu) settingsItems() []menuItem {
 	items := []menuItem{
 		{id: miSetTheme, label: rowid.Line("ui.menu.buildViewWith.05", "Themes"), key: 't', extras: []string{theme.Active().Name.String()}},
-		{id: miSetVibe, label: "VibeMode", key: 'v', extras: []string{settingOnOff(rowid.On())}, sw: true, on: rowid.On()},
 		{id: miSetGlyphs, label: rowid.Line("ui.menu.settings.02", "Map glyphs"), key: 'g', extras: []string{m.set.Tier.String()}},
 		{id: miSetMotion, label: rowid.Line("ui.menu.settings.03", "Motion"), key: 'm', extras: []string{settingOnOff(m.set.Motion)}, sw: true, on: m.set.Motion},
 		{id: miSetMinimap, label: rowid.Line("ui.menu.settings.04", "Minimap"), key: 'i', extras: []string{settingOnOff(m.set.Minimap)}, sw: true, on: m.set.Minimap},
@@ -71,11 +70,6 @@ func (m *mainMenu) changeSetting(id string, dir int) {
 	set := m.set
 	m.settingsSel = m.view.sel // refresh rebuilds the rows on this one
 	switch id {
-	case miSetVibe:
-		// The same call the vibemode command makes.
-		if err := m.engine.SetVibeMode(!rowid.On()); err != nil {
-			return
-		}
 	case miSetGlyphs:
 		n := len(mapmodel.TierNames)
 		cur := 0
@@ -139,7 +133,7 @@ func (m *mainMenu) changeSetting(id string, dir int) {
 	default:
 		return
 	}
-	if m.acct == nil && id != miSetVibe {
+	if m.acct == nil {
 		m.local = &set
 	}
 	m.refresh(false)

@@ -57,8 +57,6 @@ Type `harbinger` (or `harb`) to open the Harbinger panel. It opens full screen a
 
 A harbinger never names an era you haven't reached. It warns of impending doom in the era you are in (in the Cosmic Era, also of the Last Passage), and the only era it ever names is your current one.
 
-With VibeMode on, a harbinger's lines come in the second script's words. Prices, odds and rules do not change. See [VibeMode](commands.md#vibemode).
-
 ---
 
 ## The roster

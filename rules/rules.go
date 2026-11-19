@@ -196,17 +196,7 @@ func (l *lazySet) get() *Set {
 	return l.set.Load()
 }
 
-// is reports whether s is this set, without building it.
-func (l *lazySet) is(s *Set) bool { return s != nil && l.set.Load() == s }
-
 var plainCore = &lazySet{build: func() *Set { return Compile(FromConfig()) }}
-
-// CoreFor is the core set. TEMPORARY: its argument is ignored; callers of the
-// removed switch are removed in the next PR.
-func CoreFor(bool) *Set { return plainCore.get() }
-
-// IsCore reports whether s is the core set.
-func IsCore(s *Set) bool { return plainCore.is(s) }
 
 // Digest is a hash of everything the set holds. A set never changes, so its
 // digest never does: tests take one before and after a run to prove that

@@ -610,21 +610,6 @@ Your theme is saved per account, not in any game save, so it carries across ever
 
 ---
 
-## VibeMode
-
-| Command | Description |
-|---|---|
-| `vibemode [on\|off]` | Bare, show whether VibeMode is on. `on` swaps the game's words for a second script, written in GenZ. `off` brings the plain words back. The words change at once, with no restart (default off). Saved per account. |
-
-```
-vibemode on
-vibemode off
-```
-
-VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are the same with it on or off, and a save made in one script loads in the other. The script covers the names and descriptions of buildings, techs, civilizations, wonders and ages, events, milestones and badges, the names of your people, the log and the refusals, the panels and the help, the map, and the stories the log tells (encounters, expeditions, raids, harbinger warnings and the end of a run). A line that has no VibeMode version reads in plain words. A line already in the log keeps the words it was written in, and new lines come in the script you have on. The setting is saved per account. With no account loaded it lasts for the session.
-
----
-
 ## Command shortcuts
 
 These commands have a shorter name. The short name takes everything the full one does: `b hut 3` is `build hut 3`, `r max` is `recruit max`.

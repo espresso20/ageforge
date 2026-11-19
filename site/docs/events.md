@@ -52,7 +52,7 @@ Every duration and cooldown is set as a base length, which is exact in the Primi
 
 ### Seeing what happened
 
-The main log reports each event as it fires: a sentence of its own, then what it did, in the amounts that were applied. For example `Lost 800 food and 1K wood.`, `Gained 2.4K food.` or `Food -8.2/tick for ~52s.` A loss counts only what actually left your stock. A research gain reads as a share of the tech in progress. With VibeMode on, the names and the sentences read in a different script, and the numbers, odds and durations stay the same (see [VibeMode](commands.md#vibemode)).
+The main log reports each event as it fires: a sentence of its own, then what it did, in the amounts that were applied. For example `Lost 800 food and 1K wood.`, `Gained 2.4K food.` or `Food -8.2/tick for ~52s.` A loss counts only what actually left your stock. A research gain reads as a share of the tech in progress.
 
 A timed event's log line says how long it lasts in the age it fired in. A Drought reads `for ~20s` in the Stone Age and `for ~52s` from the Bronze Age on.
 
