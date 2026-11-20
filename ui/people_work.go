@@ -50,7 +50,7 @@ func (c peopleBody) workBand(rows []game.ShareRow) {
 		total += peopledash.BlockCount(r.Slots) + 1
 	}
 	if total > 0 && room > 4 {
-		pitch := min(14, max(2, room*s.cw/total))
+		pitch := min(14, max(1, room*s.cw/total))
 		at := 0
 		for _, r := range rows {
 			n := peopledash.BlockCount(r.Slots)
