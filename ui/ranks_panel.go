@@ -344,7 +344,7 @@ func (p *ranksPanel) paintDetail(s rankPaint, d *rankDom, rx, rw, h int) {
 		for i, g := range [][2]string{
 			{"Each rank", fmt.Sprintf("+%d%% output from the domain's workers", int(config.RankBonus*100))},
 			{"Rank 3 " + config.RankTitles[2], "the domain's title beside the town name"},
-			{"Rank 6 " + config.RankTitles[5], "a color for the theme list"},
+			{"Rank 6 " + config.RankTitles[5], "a theme color (not in yet)"},
 		} {
 			s.text(rx, y+1+i, g[0], bright, true)
 			s.text(rx+21, y+1+i, g[1], txt, false)
