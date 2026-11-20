@@ -446,6 +446,7 @@ func TestGifts_KnowhowOncePerCiv(t *testing.T) {
 
 	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealKnowhow, Give: "stone", GiveAmt: 10, Res: def.Specialty})
 	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Opinion = dealStandingCap
 	ge.Buildings.counts["wood_camp"] = 20
 	base := ge.Resources.resources[def.Specialty].Rate
 	ge.mu.Unlock()
@@ -655,5 +656,73 @@ func TestDeals_Wording(t *testing.T) {
 		if got := DealTerms(c.kind, "coal", 876*config.Million, c.res, c.amt, num, dur); got != c.want {
 			t.Errorf("DealTerms(%s) = %q, want %q", c.kind, got, c.want)
 		}
+	}
+}
+
+// TestGifts_KnowhowRefusedWhenStandingFell: the opinion gate holds at accept,
+// not only when the offer is rolled.
+func TestGifts_KnowhowRefusedWhenStandingFell(t *testing.T) {
+	def := factionDef(t, "merchant_guild")
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealKnowhow, Give: "stone", GiveAmt: 10, Res: def.Specialty})
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Opinion = dealStandingCap - 1
+	ge.mu.Unlock()
+	stone := ge.Resources.Get("stone")
+	if err := ge.takeOffer("merchant_guild", 1); err == nil || !strings.Contains(err.Error(), "trust") {
+		t.Fatalf("know-how below the opinion gate: %v", err)
+	}
+	if ge.Resources.Get("stone") != stone {
+		t.Error("a refused know-how was paid for")
+	}
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Status = "allied"
+	ge.mu.Unlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+}
+
+// TestGifts_ResearchPaidInProportion: a research gift that lands for less than
+// offered costs less, and an unaffordable one is refused with nothing spent.
+func TestGifts_ResearchPaidInProportion(t *testing.T) {
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealResearch, Give: "stone", GiveAmt: 100, Res: config.ResearchTarget, Amt: 1e18})
+	ge.mu.Lock()
+	keys := ge.Research.StartableTechs(ge.age, ge.progress.GetAgeOrder())
+	ge.mu.Unlock()
+	noErr(t, ge.StartResearch(keys[0]))
+	ge.mu.Lock()
+	cost := ge.Research.defs[keys[0]].Cost
+	ge.Research.progress = cost - cost/10 // a tenth left
+	ge.Diplomacy.factions["merchant_guild"].Deals[0].Amt = cost / 2
+	stone := ge.Resources.Get("stone")
+	ge.mu.Unlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	ge.mu.RLock()
+	paid := stone - ge.Resources.Get("stone")
+	ge.mu.RUnlock()
+	if math.Abs(paid-20) > 0.5 { // a tenth of the tech of a half-tech lot: 100 * 0.1/0.5
+		t.Errorf("paid %v for a fifth of the lot, want about 20", paid)
+	}
+}
+
+// TestGifts_BoostLastsItsTicksLive: a boost of 10 ticks adds 10 ticks of a
+// quarter of the rate, as time away does, no more and no less.
+func TestGifts_BoostLastsItsTicksLive(t *testing.T) {
+	run := func(take bool) float64 {
+		ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 10})
+		if take {
+			noErr(t, ge.takeOffer("merchant_guild", 1))
+		}
+		ge.mu.Lock()
+		ge.Resources.resources["wood"].Amount = 0
+		ge.mu.Unlock()
+		for range 14 {
+			ge.doTick()
+		}
+		ge.mu.RLock()
+		defer ge.mu.RUnlock()
+		return ge.Resources.resources["wood"].Amount
+	}
+	base := woodRate(giftEngine(t))
+	if extra, want := run(true)-run(false), float64(0.25*base*10); math.Abs(extra-want) > 0.01*want {
+		t.Errorf("a 10-tick boost added %v wood, want %v", extra, want)
 	}
 }

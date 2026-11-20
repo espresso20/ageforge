@@ -1456,9 +1456,6 @@ func (ge *GameEngine) doTick() {
 	defer ge.mu.Unlock()
 
 	ge.tick++
-	if ge.expireBoosts() {
-		ge.recalculateRates()
-	}
 	if ge.tick%60 == 0 {
 		ge.prestigeCue = ge.prestigeCueLocked()
 	}
@@ -1492,6 +1489,10 @@ func (ge *GameEngine) doTick() {
 	// Apply resource rates (production - consumption).
 	ge.noteProduced(1)
 	ge.Resources.ApplyRates()
+	// A boost's last tick is paid with the boost, as time away pays it.
+	if ge.expireBoosts() {
+		ge.recalculateRates()
+	}
 	// The faith and culture measures follow the tick's income (faith.go,
 	// culture.go).
 	ge.accrueFaith(1)

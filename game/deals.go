@@ -538,6 +538,8 @@ func (ge *GameEngine) dealProblem(fs *FactionState, d FactionDeal) (blocked, sho
 		return ResourceName(d.Give) + rowid.Line("game.deals.dealProblem.04", " is not unlocked yet"), ""
 	case d.Kind == DealKnowhow && fs.Knowhow:
 		return rowid.Line("game.deals.dealProblem.05", "you already have their know-how"), ""
+	case d.Kind == DealKnowhow && fs.Status != "allied" && fs.Opinion < dealStandingCap:
+		return rowid.Line("game.deals.dealProblem.08", "they do not trust you enough for their know-how"), ""
 	case d.Kind == DealResearch && ge.Research.currentTech == "":
 		return rowid.Line("game.deals.dealProblem.06", "nothing is being researched"), ""
 	case d.Kind == DealPeople && ge.workerCapLocked()-ge.Workers.TotalPop() < int(d.Amt):
@@ -570,14 +572,21 @@ func (ge *GameEngine) findDeal(key string, id int) (*FactionState, int) {
 func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) FactionDeal {
 	d := &fs.Deals[i]
 	ge.useFeature(config.FeatureDiplomacy)
-	ge.Resources.Remove(d.Give, d.GiveAmt)
+	// A research gift that now lands for less than offered (the tech needs
+	// less than it did) is paid for in proportion.
+	pay, amt := d.GiveAmt, d.Amt
+	if d.Kind == DealResearch {
+		if amt = min(d.Amt, ge.researchLeftLocked()); amt < d.Amt {
+			pay = min(d.GiveAmt, roundDeal(float64(d.GiveAmt*amt)/d.Amt, true))
+		}
+	}
+	ge.Resources.Remove(d.Give, pay)
 	switch d.Kind {
 	case DealBoost:
 		ge.addBoost(d.Res, int(d.Amt))
 	case DealResearch:
-		landed := min(d.Amt, ge.researchLeftLocked())
-		ge.Stats.ResearchWork += landed
-		ge.Research.progress += landed
+		ge.Stats.ResearchWork += amt
+		ge.Research.progress += amt
 		if done := ge.Research.CompleteIfFull(); done != "" {
 			ge.finishResearch(done)
 		}
@@ -599,7 +608,7 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 	}
 	d.Taken = true
 	ge.note(config.BadgeEvDeal, def.Key)
-	ge.addLog(OfficeTrade, "success", rowid.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, DealTerms(d.Kind, d.Give, d.GiveAmt, d.Res, d.Amt, textfmt.Number, ge.durationLocked)), logSubj(def.Key), logPaid(LogAmt{d.Give, d.GiveAmt}))
+	ge.addLog(OfficeTrade, "success", rowid.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, DealTerms(d.Kind, d.Give, pay, d.Res, amt, textfmt.Number, ge.durationLocked)), logSubj(def.Key), logPaid(LogAmt{d.Give, pay}))
 	return *d
 }
 
