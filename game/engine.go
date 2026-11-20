@@ -1738,6 +1738,7 @@ func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
 
 // processTrade handles trade route ticks
 func (ge *GameEngine) processTrade() {
+	ge.startReadyRoutes()
 	ge.logNotes(OfficeTrade, "warning", ge.Trade.Tick(ge.tick, ge.Diplomacy, ge.grantResearch))
 }
 
@@ -5367,6 +5368,25 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 	if staffed.any() {
 		ge.addLog(OfficeStores, "info", rowid.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
+	}
+}
+
+// startReadyRoutes starts each ready route the player has not stopped (write
+// lock held). A town loaded with one starts it on its first tick; routes that
+// became ready during time away start when it ends.
+func (ge *GameEngine) startReadyRoutes() {
+	ageOrder := ge.progress.GetAgeOrder()
+	started := false
+	for _, key := range ge.Trade.readyKeys(ge.Buildings, ge.age, ageOrder) {
+		if ge.featureErr(routeFeatures(key)...) != nil || ge.Trade.StartRoute(key, ge.Buildings, ge.age, ageOrder) != nil {
+			continue
+		}
+		ge.useFeature(routeFeatures(key)...)
+		ge.addLog(OfficeTrade, LogRoutine, rowid.Sprintf("game.engine.startReadyRoutes.01", "Route started: %s", ge.rules.Name(rules.KindRoute, key)))
+		started = true
+	}
+	if started {
+		ge.recalculateRates()
 	}
 }
 

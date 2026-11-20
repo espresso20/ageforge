@@ -81,7 +81,6 @@ func tradeTownMake(st game.GameState, res string, tpm float64) float64 {
 func tradeRoutes(st game.GameState) []tradeRoute {
 	set := st.Ruleset()
 	tpm := 60 / tickInterval(st).Seconds()
-	_, locked := featureRefusal(st, config.FeatureTradeRoutes)
 	active := map[string]game.ActiveRouteInfo{}
 	for _, a := range st.Trade.ActiveRoutes {
 		active[a.Key] = a
@@ -155,8 +154,6 @@ func tradeRoutes(st game.GameState) []tradeRoute {
 			}
 		case on:
 			r.state, r.cmd = "running", "trade route stop "+def.Key
-		case v.CanStart && !locked:
-			r.state, r.cmd = "ready", "trade route start "+def.Key
 		default:
 			r.state = "locked"
 			if !v.CanStart {
@@ -177,8 +174,6 @@ func tradeLook(state string) (word string, k, plate xk) {
 	switch state {
 	case "running":
 		return rowid.Line("ui.overlay_trade.tradePage.10", "running"), xGood, xChipShort
-	case "ready":
-		return rowid.Line("ui.overlay_trade.tradePage.20", "ready"), xAccent, xChipCivic
 	case "short":
 		return rowid.Line("ui.trade_board.tradeLook.01", "short"), xGold, xChipLong
 	case "suspended":
@@ -310,7 +305,7 @@ func tradeExtras(st game.GameState, r tradeRoute, lim int) (ex []tradeExtra) {
 		}
 		ex = append(ex, tradeExtra{rowid.Line("ui.trade_board.tradeExtras.04", "time"), tradeWrap(text(append(ss, rowid.Sprintf("ui.trade_board.tradeExtras.12", "= flow x%.2f", r.speed))...), tcSends, lim, 2)})
 	}
-	if r.size > 0 && r.state != "ready" && r.state != "locked" {
+	if r.size > 0 && r.state != "locked" {
 		ex = append(ex, tradeExtra{rowid.Line("ui.trade_board.tradeExtras.11", "size"), [][]xseg{{{rowid.Sprintf("ui.trade_board.tradeExtras.13", "%d of the %d needed: flow x%.1f", r.size, r.minCount, r.scale), xText}}}})
 	}
 	var cells [][]xseg
@@ -379,7 +374,7 @@ func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex 
 	}
 	if r.cmd != "" {
 		word, pk := rowid.Line("ui.trade_board.drawTradeEntry.01", "stop"), xKeyName
-		if r.state == "ready" || r.state == "paused" {
+		if r.state == "paused" {
 			word, pk = rowid.Line("ui.trade_board.drawTradeEntry.02", "start"), xChipCivic
 		}
 		bx := end - 1 - runeLen(word) - 2
@@ -390,7 +385,7 @@ func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex 
 	}
 	ms := st.TickIntervalMs
 	switch r.state {
-	case "running", "ready":
+	case "running":
 		g.put(tcName, y+1, rowid.Line("ui.trade_board.drawTradeEntry.03", "per minute"), xDim)
 		g.putFit(tcSends, y+1, tcBrings-tcSends-3, tradeJoin(r.out, true, -1, ms), xDim)
 		g.putFit(tcBrings, y+1, tcShare-tcBrings-1, tradeJoin(r.in, true, 1, ms), xDim)
@@ -528,13 +523,13 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 	g.closeButton(w)
 	lay := deckLayout{total: h - deckChrome, viewH: h - deckChrome}
 
-	// The count of each state, and a button that starts every ready route.
+	// The count of each state.
 	count := map[string]int{}
 	for _, r := range routes {
 		count[r.state]++
 	}
 	x := g.put(2, 1, rowid.Line("ui.trade_board.renderTradeBoard.01", "Routes"), xBright) + 2
-	for _, s := range []string{"running", "ready", "short", "paused", "suspended", "locked"} {
+	for _, s := range []string{"running", "short", "paused", "suspended", "locked"} {
 		if count[s] > 0 {
 			if x > 10 {
 				x = g.put(x, 1, " · ", xDim)
@@ -542,10 +537,6 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 			word, k, _ := tradeLook(s)
 			x = g.put(x, 1, fmt.Sprintf("%d %s", count[s], word), k)
 		}
-	}
-	if n := count["ready"]; n >= 2 {
-		word := rowid.Sprintf("ui.trade_board.renderTradeBoard.02", "start all ready (%d)", n)
-		g.plate(end-1-runeLen(word)-2, 1, word, xChipCivic, "trade route start all")
 	}
 	g.put(2, 4, strings.Repeat("─", end-2), xDim)
 	for _, hd := range []struct {
