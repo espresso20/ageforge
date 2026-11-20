@@ -17,9 +17,9 @@ plan expedition <mission>      # send a mission from the board once a party is h
 plan optimize                  # reorder the buildings for the fastest growth
 ```
 
-`plan list` prints it. `plan remove <n>` (or `plan rm <n>`), `plan up <n>`, `plan down <n>` and `plan clear` edit it, and the panel does the same with keys. `plan optimize` (or `plan reorder`) reorders the buildings for you (see [Optimizing the order](#optimizing-the-order)). `plan research` can be written `plan res`. `plan expedition` is [below](#planned-expeditions). See [Commands](commands.md#build-plan).
+`plan list` prints it. `plan remove <n>` (or `plan rm <n>`), `plan up <n>`, `plan down <n>`, `plan top <n>`, `plan bottom <n>`, `plan move <n> <place>`, `plan count <n> <count>`, `plan pause`, `plan resume` and `plan clear` edit it, and the panel does the same with keys and the mouse. `plan optimize` (or `plan reorder`) reorders the buildings for you (see [Optimizing the order](#optimizing-the-order)). `plan research` can be written `plan res`. `plan expedition` is [below](#planned-expeditions). See [Commands](commands.md#build-plan).
 
-The plan holds at most 60 items. A full plan refuses a new one until you remove one, but adding more of the building at the end of the plan still adds to that item. Research takes no room: the 60 are for builds, upgrades, deals and the advance, and a research queue is bounded by the tree, each tech once. One build or upgrade item holds at most 1,000 copies. You can plan a building of your current age or of the next age. A wonder, or a building with a limit, is planned only while it has room.
+The plan holds at most 60 items. A full plan refuses a new one until you remove one, but adding more of the building at the end of the plan still adds to that item. The commands merge a repeat into the last item when it is the same building; the panel's `A` lands the new item below the selection instead. Research takes no room: the 60 are for builds, upgrades, deals and the advance, and a research queue is bounded by the tree, each tech once. One build or upgrade item holds at most 1,000 copies. You can plan a building of your current age or of the next age. A wonder, or a building with a limit, is planned only while it has room.
 
 ---
 
@@ -29,7 +29,7 @@ The plan holds at most 60 items. A full plan refuses a new one until you remove 
 - **In order, every tick.** After each tick's production the game walks the plan from the top and starts everything it can afford. A build item with a count starts as many copies as the resources cover.
 - **Waiting items hold their price.** An item that can't start yet doesn't block the items after it, but it holds back the price of its next copy. A later item only starts if it can be paid from what is left, so a cheap item lower down can never delay one above it, and resources the top items don't need aren't left idle. The order is your priority.
 - **Some items hold nothing.** An item that can't start for a reason money won't fix holds nothing back: a resource the current income won't bring in within a day (it needs a producer first), or the next age's building before the advance.
-- **A wonder pays its bank from what you hold.** A wonder's price in the plan is what its bank still lacks. Once what you hold (after what the items above it hold back) covers all of that, the plan banks it and starts construction, so you don't need to `wonder collect` for it. While it waits it holds nothing back: it is a big bill, and holding it would stall everything below it. Stock has no limit, so the whole price can build up in your stores. A wonder whose [keystone tech](wonders.md#the-keystone-tech) is not researched yet waits for it (`waits for Stoneworking`) and starts once it is.
+- **A wonder pays its bank from what you hold.** A wonder in the plan pays itself; it does not need you. Its price in the plan is what its bank still lacks. Once what you hold (after what the items above it hold back) covers all of that, the plan banks it and starts construction, so you don't need to `wonder collect` for it. While it waits it holds nothing back: it is a big bill, and holding it would stall everything below it. Stock has no limit, so the whole price can build up in your stores. A wonder whose [keystone tech](wonders.md#the-keystone-tech) is not researched yet waits for it (`waits for Stoneworking`) and starts once it is.
 - **Techs queue.** Only the first research item in the plan can take the research slot when it frees up, and a tech has no price to hold. See [The research queue](#the-research-queue) for what `plan research` adds and which techs it takes.
 - **Deals wait for their price.** A deal item (`plan deal <civ> <n>`, see [Trade deals](factions.md#trade-deals)) is a one-off purchase at a fixed price, so it runs like a single build: it holds its price back while it waits and takes the deal once what is left covers it. It holds nothing while the civilization won't trade (war, embargo, rivalry, hostility). It drops out once taken, or when the offer is gone because the civilization's offers rotated or you took it by hand. Offers don't rotate while you are away, so a deal planned before you leave is still there for the plan to take.
 - **Upgrades wait for their price.** `plan upgrade <building> [count|all]` adds upgrades for copies you hold. The plan upgrades one copy at a time, as soon as each can be paid, and drops the item if the upgrade is no longer available.
@@ -95,33 +95,38 @@ Research is never held up by stock. It starts in plan order, so the techs behind
 
 `plan expedition <mission>` queues a mission that is on the expedition board. It leaves when its price is covered and a party of soldiers is at home, the same as sending it yourself, and it holds back its price from the items below it. While the party is away the item waits and holds nothing back. If the offer leaves the board before the plan reaches it, the item drops out and the log says so. It behaves the same while you are away.
 
-Every item also reports when it starts: the amount it needs, what you hold, what the items above hold back, the income, and how long until the slowest resource is ready. A resource with no income reads `never`, and a wonder reads `needs you`, since it is paid by hand.
+Every item also reports when it starts: the amount it needs, what you hold, what the items above hold back, the income, and how long until the slowest resource is ready. A resource with no income reads `never`.
 
 ## The Plan panel
 
-Type `plan` to open the Build Plan panel. It takes the whole screen but the command bar, and its keys are letters, so press `Esc` before you type a command.
+Type `plan` to open the Plan panel, a board of the whole plan. Its keys are letters, so press `Esc` before you type a command.
 
-The header says when the whole plan finishes, and, when [optimizing](#optimizing-the-order) would save a minute or more, how much. The queue lists one line for each item with its number, a short title, its status and when it starts. The detail beside it (under the queue on a narrow window) is for the item you picked:
+- **The queue** runs down the left, one row for each item with its number, a picture, a short title, its count and when it starts. A paused plan says so at the top.
+- **The schedule** is a bar for each item laid along a time axis: when it starts and how long it takes. A gate marks the advance, with the age it opens.
+- **The sheet** is for the item you picked, in tabs (`Tab` and `Shift+Tab` switch them): what the item needs against what you hold and what the items above hold back, what it holds back from the items below, and what it waits for. The tray beside it lists what can be added.
+- **Waits** shows how far each resource is from covering the next start, with its income.
+- **Optimize** previews the new order beside the current one, with the moved items marked, before anything changes.
 
-- **Resources.** What the item needs, what you hold, what the items above it hold back, your income and how long until each is ready. The slowest one is marked. `never` means there is no income of it, and a wonder reads `needs you`, since you deposit its bank by hand.
-- **Holding back.** What the item keeps from the items below it, and which of them.
-- **Advance.** The pillars as bars, each with what it still lacks and the number of the plan item that provides it.
-- **Research and expeditions.** What holds the research slot and when it frees, or a mission's price and whether a party is home.
+Each item shows one of three states. **ready** starts on the next tick. **waiting** is saving up. **blocked** says what the item is waiting for. Each item also carries its cause: what put it in the plan (you, the Plan Template, or a chain such as a tech's prerequisites).
 
-Each item shows one of three states. **ready** starts on the next tick. **waiting** is saving up. **blocked** says what the item is waiting for.
+**Pause** stops the plan from starting anything. Items keep their place and what they hold back is released, so you can spend freely, and `Resume` (or `plan resume`) lets it run again. The pause is saved with the game and also holds while you are away.
+
+The mouse does what the keys do: click an item to pick it, drag one to a new place (a line shows where it will land), click a button to press it. A window too small for the board shows one line with the plan's size.
 
 | Key | What it does |
 |---|---|
-| `↑` `↓` (or `k` `j`), `PgUp` `PgDn` | Select an item, or page through the queue |
+| `↑` `↓`, `PgUp` `PgDn`, `Home` `End` | Select an item, or page through the queue |
+| `Tab` / `Shift+Tab` | Switch the sheet's tab |
 | `A` | Add an item by name. Type part of a building, tech or mission; `Enter` adds it below the selection, and asks which kind when the name fits several. `Esc` cancels |
 | `+` / `-` | Change the count of a build or upgrade item |
+| `N` or a digit | Type the count of the picked item |
 | `U` / `D` | Move the selected item up or down |
+| `T` / `B` | Move the selected item to the top or the bottom |
 | `X` (or `Delete`) | Remove the selected item |
+| `P` | Pause or resume the plan |
 | `O` | Preview [optimizing](#optimizing-the-order): the plan now and after, side by side, with what moves marked. `Enter` keeps the new order, `Esc` closes |
-| `C` | Clear the plan. It asks for a second press, and the key is the capital letter |
+| `C` | Clear the plan. It asks for a second press |
 | `Esc` | Close the panel |
-
-<figure class="screen" data-screen="plan"><figcaption>The Plan panel with four items: a tech waiting for the research slot, two builds saving up for wood, and an advance waiting for the age's requirements.</figcaption></figure>
 
 ## Offline
 
@@ -129,7 +134,7 @@ Offline progress covers up to **24 hours**. Time away beyond that isn't credited
 
 ## The Plan Template
 
-The game remembers the plan you write, age by age, for [Plan Template](prestige.md#plan-template) after your first prestige. Each item is recorded with the age you added it in: builds, upgrades, techs and advances. A build counts the copies you added, and removing an item takes back the copies it never started. Deals aren't recorded, since a civilization's offers end with the run.
+The game remembers the plan you write, age by age, for [Plan Template](prestige.md#plan-template) after your first prestige. Each item is recorded with the age you added it in: builds, upgrades, techs and advances. A build counts the copies you added, and removing an item takes back the copies it never started. Deals and expeditions aren't recorded, since a civilization's offers and the mission board end with the run.
 
 At each prestige and Succumb the record becomes the **template**. An age the run wrote in takes this run's part. An age the run never reached keeps what an older run wrote there, so a short run never wipes a deeper one.
 

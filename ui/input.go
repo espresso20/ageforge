@@ -2586,7 +2586,53 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return routineReply(rowid.Sprintf("ui.input.cmdPlan.11", "Plan item %d is now number %d.", n, to))
+		return planMovedReply(n, to)
+	case "pause", "resume":
+		if len(rest) != 0 {
+			return errorReply(usageFor("plan " + sub))
+		}
+		engine.PlanSetPaused(sub == "pause")
+		if sub == "pause" {
+			return routineReply(rowid.Line("ui.input.cmdPlan.21", "Plan paused. It starts nothing until you resume it."))
+		}
+		return routineReply(rowid.Line("ui.input.cmdPlan.22", "Plan resumed."))
+	case "count", "move":
+		if len(rest) != 2 {
+			return errorReply(usageFor("plan " + sub))
+		}
+		n, err := parseCount(rest[0])
+		if err == nil {
+			var to int
+			if to, err = parseCount(rest[1]); err == nil {
+				if sub == "count" {
+					var got int
+					if got, err = engine.PlanSetCount(n, to); err == nil {
+						return routineReply(rowid.Sprintf("ui.input.cmdPlan.23", "Plan item %d now holds %d.", n, got))
+					}
+					return errorResult(err)
+				}
+				var at int
+				if at, err = engine.PlanMove(n, to-n); err == nil {
+					return planMovedReply(n, at)
+				}
+				return errorResult(err)
+			}
+		}
+		return usageError(usageFor("plan "+sub), err)
+	case "top", "bottom":
+		n, err := planIndexArg(rest, sub)
+		if err != nil {
+			return usageError(usageFor("plan "+sub), err)
+		}
+		delta := 1 - n
+		if sub == "bottom" {
+			delta = maxCommandCount
+		}
+		to, err := engine.PlanMove(n, delta)
+		if err != nil {
+			return errorResult(err)
+		}
+		return planMovedReply(n, to)
 	case "optimize", "reorder":
 		if len(rest) != 0 {
 			return errorReply(usageFor("plan optimize"))
@@ -2652,6 +2698,11 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		return routineReply(rowid.Line("ui.input.cmdPlan.16", "Planned: advance as soon as the next age's requirements are met."))
 	}
 	return errorReply(subUsage("plan"))
+}
+
+// planMovedReply says where plan item n went.
+func planMovedReply(n, to int) CommandResult {
+	return routineReply(rowid.Sprintf("ui.input.cmdPlan.11", "Plan item %d is now number %d.", n, to))
 }
 
 // planIndexArg reads the one item number a plan subcommand takes.

@@ -426,6 +426,8 @@ type GameEngine struct {
 	// plan is the build plan the engine works through as resources come in
 	// (plan.go). Saved; cleared by prestige, Succumb and Reset.
 	plan []PlanItem
+	// planPaused holds the plan: it starts and drops nothing (plan.go).
+	planPaused bool
 	// previewCache and estimateCache keep the last optimize preview and plan
 	// estimate (plan_estimate.go, plan_optimize.go) for a few ticks. Not saved.
 	previewCache  previewCache
@@ -4860,7 +4862,7 @@ func (ge *GameEngine) resetRunLocked(morale float64, outcome string, level int) 
 	// override does not carry into it.
 	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
-	ge.plan = nil
+	ge.plan, ge.planPaused = nil, false
 	ge.log = nil
 	// The history is this run's: the recorder starts over with the run.
 	ge.history = NewRunHistory()
@@ -5131,6 +5133,7 @@ func (ge *GameEngine) GetState() GameState {
 		MoraleMultiplier:      ge.moraleMultiplier(),
 		Festival:              ge.festivalStatusLocked(resolver),
 		Plan:                  ge.planViews(),
+		PlanPaused:            ge.planPaused,
 		PermanentBonuses:      maps.Clone(ge.permanentBonuses),
 		// Snapshot the resolver's aggregated modifiers for the UI's Active
 		// Multipliers panel. buildResolver reads only already-held state and

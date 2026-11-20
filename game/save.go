@@ -166,6 +166,8 @@ type GameSave struct {
 	AccountID string `json:"account_id,omitempty"`
 	// Plan is the build plan (plan.go), in order.
 	Plan []PlanItem `json:"plan,omitempty"`
+	// PlanPaused is whether the plan was held.
+	PlanPaused bool `json:"plan_paused,omitempty"`
 	// WorkerShares, AutoRecruitOff and StaffHoldUntil are the worker shares
 	// (shares.go): the split the player set (domain → percent; none means
 	// every domain is on auto), auto-recruit turned off (it is on by
@@ -658,6 +660,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		RunID:              ge.runID,
 		AccountID:          ge.saveAccountIDLocked(),
 		Plan:               cloneSlice(ge.plan),
+		PlanPaused:         ge.planPaused,
 		WorkerShares:       cloneMap(ge.workerShares),
 		AutoRecruitOff:     ge.autoRecruitOff,
 		StaffHoldUntil:     ge.staffHoldUntil,
@@ -956,6 +959,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// to what the plan accepts; items that can no longer start drop out, with
 	// a log line, on the next tick.
 	ge.plan = loadPlanIn(ge.rules, save.Plan)
+	ge.planPaused = save.PlanPaused && len(ge.plan) > 0
 	ge.planLog = loadPlanTemplate(ge.rules, save.PlanLog)
 	// The worker shares: a hand-edited map keeps its known domains, each
 	// percent from 0 to 100, and the wait can't outlast one worker command.

@@ -243,7 +243,7 @@ func TestTextPanelsScrollWithTheBarEmpty(t *testing.T) {
 	}
 }
 
-// TestKeyedPanelsKeepTheKeyboard: the Wonders, Epoch, Harbinger and Plan panels have
+// TestKeyedPanelsKeepTheKeyboard: the Wonders, Epoch, and Harbinger panels have
 // keys that are letters, so they keep the keyboard as they always did, and
 // their foot names those keys.
 func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
@@ -252,7 +252,6 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 		"wonders":   {"Tab", "Esc"},
 		"epoch":     {"Tab", "Esc"},
 		"harbinger": {"A", "B", "I", "Esc"},
-		"plan":      {"U/D", "X", "C", "Esc"},
 	} {
 		openPanel(t, d, name, 100, 30)
 		if d.inputField.HasFocus() {

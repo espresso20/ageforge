@@ -54,6 +54,7 @@ var notScanned = map[string]string{
 	"detmath":               "arithmetic, no text",
 	"mapgen":                "the map engine: art, hues and internal keys, no player text (the ui reads the game's own words)",
 	"mapmodel/fixture":      "test fixtures",
+	"pkg/planboard":         "pixel pictures for the Plan panel, no text of its own",
 	"pkg/sprites":           "pixel art",
 	"pkg/logroll":           "pixel art for the Logs panel, no player text",
 	"platform/steam":        "the Steamworks door: no player text",
