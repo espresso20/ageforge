@@ -53,6 +53,8 @@ type EconomyTab struct {
 	resourceTV     *resourceView
 	buildBox       *buildBox
 	constructionTV *fitView
+	// richLeft is the Left column's width in the rich layout (richCols).
+	richLeft func() int
 
 	state game.GameState
 	// trend is the amounts of the last few minutes, for the Resources box's
@@ -82,7 +84,7 @@ func (t *EconomyTab) retitle() {
 
 // NewEconomyTab constructs the economy tab widget tree: the left column
 // (econColumn: resources, construction and, once the Dashboard adds it, the
-// log) and the build cards, side by side (econLeftW shares the width).
+// log) and the build cards, side by side.
 // app is what the cards' buttons press through.
 func NewEconomyTab(app *appLoop) *EconomyTab {
 	t := &EconomyTab{resPages: 1}
@@ -125,22 +127,28 @@ func NewEconomyTab(app *appLoop) *EconomyTab {
 	t.leftCol.nativeGroup = newNativeGroup(t.leftCol.arrange)
 
 	t.root = newNativeGroup(func(x, y, w, h int) {
-		left := econLeftW(w)
+		if !t.leftCol.richLayout() {
+			// The classic cut: the Buildings box has the rest.
+			left := min(46, w/2)
+			t.root.put(t.leftCol, x, y, left, h)
+			t.root.put(t.buildBox, x+left, y, w-left, h)
+			return
+		}
+		// Rich: Resources over the Log on the left; Buildings over a foot
+		// strip in the middle, People on the strip's left and Under
+		// construction on its right.
+		left := t.richLeft()
+		mid := w - left
+		foot := min(14, max(t.leftCol.peopleHeight(), h/4))
+		people := min(max(20, (43*mid+50)/100), mid)
 		t.root.put(t.leftCol, x, y, left, h)
-		t.root.put(t.buildBox, x+left, y, w-left, h)
+		t.root.put(t.buildBox, x+left, y, mid, h-foot)
+		t.root.put(t.leftCol.people, x+left, y+h-foot, people, foot)
+		t.root.put(t.constructionTV, x+left+people, y+h-foot, mid-people, foot)
 	})
 
 	return t
 }
-
-// econLeftMax is the left column's width in a wide layout: the Buildings box
-// has the rest.
-const econLeftMax = 46
-
-// econLeftW is the left column's width in an economy tab w cells wide: half of
-// it while that is under econLeftMax, as the two boxes always shared a narrow
-// terminal, and econLeftMax from there up.
-func econLeftW(w int) int { return min(econLeftMax, w/2) }
 
 // AddToLeftColumn puts the Dashboard's log panel at the foot of the left column.
 func (t *EconomyTab) AddToLeftColumn(item Primitive) {
@@ -198,9 +206,8 @@ func (t *EconomyTab) NextResourcePage() bool {
 // not fit that share, as far as a floor for the two boxes under it: late
 // ages hold many more resources than the first ones.
 //
-// In the rich layout (dash_layout.go) the Under construction row is shared
-// by two boxes, Under construction on the left and the People box on the
-// right, and is as tall as the People box.
+// In the rich layout (dash_layout.go) the column is Resources over the Log;
+// the Under construction and People boxes are the middle column's foot strip.
 type econColumn struct {
 	*nativeGroup
 	resources, construction Primitive
@@ -235,34 +242,26 @@ func econHeights(h, want int) (resources, construction, log int) {
 	return resources, construction, rest - construction
 }
 
-// econHeightsRich is econHeights for the rich layout, where the row under
-// the Resources box is the People box's height, people rows. The Resources
-// box gives way before the People box or the log do, down to a floor.
-func econHeightsRich(h, want, people int) (resources, construction, log int) {
-	const minLog, minResources = 5, 6
-	construction = max(3, people)
-	resources = h * 3 / 6
-	most := max(minResources, h-construction-minLog)
-	if want > resources {
-		resources = want
-	}
-	resources = min(resources, most)
-	if construction > h-resources {
-		construction = h - resources
-	}
-	return resources, construction, h - resources - construction
+// econHeightsRich shares the rich layout's Left column between the Resources
+// box and the Log: Resources has half, or what its rows want when that is
+// more, and the Log keeps at least 8 rows.
+func econHeightsRich(h, want int) (resources, log int) {
+	const minLog = 8
+	resources = min(max(h/2, want), h-minLog)
+	return resources, h - resources
 }
 
 // heights shares a column h rows tall out between its boxes, for the layout
 // it is drawn in.
 func (c *econColumn) heights(h int) (resources, construction, log int) {
 	want := c.resourceRows() + 2
+	if c.richLayout() {
+		resources, log = econHeightsRich(h, want)
+		return resources, 0, log
+	}
 	if c.log == nil {
 		resources, _, _ = econHeights(h, want)
 		return resources, h - resources, 0
-	}
-	if c.richLayout() {
-		return econHeightsRich(h, want, c.peopleHeight())
 	}
 	return econHeights(h, want)
 }
@@ -275,15 +274,15 @@ func (c *econColumn) richLayout() bool {
 func (c *econColumn) arrange(x, y, w, h int) {
 	rh, ch, lh := c.heights(h)
 	c.put(c.resources, x, y, w, rh)
-	if c.log != nil && c.richLayout() {
-		// Under construction has the wider half when the width is odd: its
-		// title is 22 cells with the border.
-		half := w - w/2
-		c.put(c.construction, x, y+rh, half, ch)
-		c.put(c.people, x+half, y+rh, w-half, ch)
-	} else {
-		c.put(c.construction, x, y+rh, w, ch)
+	if c.richLayout() {
+		// The rich layout's Under construction and People boxes are the
+		// middle column's foot strip (EconomyTab's root).
+		if c.log != nil {
+			c.put(c.log, x, y+rh, w, lh)
+		}
+		return
 	}
+	c.put(c.construction, x, y+rh, w, ch)
 	if c.log != nil {
 		c.put(c.log, x, y+rh+ch, w, lh)
 	}

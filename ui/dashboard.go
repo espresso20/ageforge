@@ -556,7 +556,7 @@ func (d *Dashboard) build() {
 
 	// People box: the population and its four kinds. In the classic layout it
 	// is below the Panels list in the right column, as tall as its lines; in
-	// the rich layout it is the right half of the Under construction row
+	// the rich layout it is the left of the middle column's foot strip
 	// (dash_layout.go).
 	d.workerMiniTV = newFitView(func(w, h int) string {
 		if d.lastState == nil {
@@ -577,6 +577,11 @@ func (d *Dashboard) build() {
 		_, th := d.screenSize()
 		return richPeopleHeight(th)
 	})
+	d.economyTab.richLeft = func() int {
+		w, _ := d.screenSize()
+		left, _, _ := richCols(w)
+		return left
+	}
 
 	// Main horizontal: the economy tab (the full height) and the Panels
 	// column, with the People box under the list unless the layout is rich.

@@ -28,7 +28,6 @@ const (
 	resourcePageKey     = 'r' // with Ctrl
 	resourcePageKeyName = "Ctrl+R"
 
-	resBarMax  = 12 // a bar is never wider than this
 	resBarGood = 8  // the box gives up spacing before it lets the bar under this
 	resBarMin  = 4  // under this a bar says nothing: it goes
 	resNameCap = 14 // names are shortened to this before the bar is given up
@@ -264,7 +263,7 @@ func fitResourceGrid(rows []resRow, w int) resFormat {
 	}
 	barIn := func(f resFormat) int {
 		f.bar = 0
-		return min(resBarMax, w-f.width()-f.gap)
+		return w - f.width() - f.gap
 	}
 	try := func(nameW, least int) bool {
 		f.nameW = nameW
