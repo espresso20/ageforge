@@ -195,3 +195,69 @@ func TestMenuFirstRunInTheRunningApp(t *testing.T) {
 		t.Errorf("after a first game the menu selects %q and Continue opens %q (the game was %q)", first, name, h.eng.ActiveSaveName())
 	}
 }
+
+// TestARightClickGoesBackInTheRunningApp: a right click does what Esc does on
+// a page, a Settings page and a panel, and nothing where Esc would leave: the
+// main menu's first page and the dashboard with no panel open.
+func TestARightClickGoesBackInTheRunningApp(t *testing.T) {
+	h, _ := bootMenuApp(t, 120, 40, "ashford")
+	var m *mainMenu
+	h.onUI(func() {
+		_, p := h.a.pages.GetFrontPage()
+		m, _ = p.(*mainMenu)
+	})
+	if m == nil {
+		t.Fatal("the page in front is not the main menu")
+	}
+	rightClick := func() {
+		h.a.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonRight, X: 2, Y: 2})
+		h.a.Mouse(kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonRight, X: 2, Y: 2})
+		h.onUI(func() {}) // the click has run
+		h.onUI(func() {}) // and so has the key it pressed
+	}
+	inSettings := func() (on bool) {
+		h.onUI(func() { on = m.settings })
+		return on
+	}
+
+	rightClick()
+	if h.frontPage() != "splash" || inSettings() {
+		t.Fatalf("a right click on the main menu's first page did something: front page %q, in Settings %v", h.frontPage(), inSettings())
+	}
+	h.key(kit.KeyRune, 's')
+	h.waitFor("the Settings page", 5*time.Second, inSettings)
+	rightClick()
+	if inSettings() {
+		t.Error("a right click on the Settings page did not go back")
+	}
+	h.key(kit.KeyRune, 'l')
+	h.waitFor("the Load game page in front", 5*time.Second, func() bool { return h.frontPage() == loadGamePage })
+	rightClick()
+	h.waitFor("the menu after a right click on Load game", 5*time.Second, func() bool { return h.frontPage() == "splash" })
+
+	// Into the game: on the bare dashboard a right click must not leave it.
+	h.key(kit.KeyHome, 0)
+	h.key(kit.KeyEnter, 0)
+	h.waitFor("the dashboard in front", 10*time.Second, func() bool { return h.frontPage() == "dashboard" })
+	rightClick() // returns once the click, and any key it pressed, have run
+	if h.frontPage() != "dashboard" {
+		t.Fatalf("a right click on the dashboard with no panel open left it for %q", h.frontPage())
+	}
+	// With a panel open it closes the panel and stays in the game.
+	h.submit("help")
+	open := func() (on bool) {
+		h.onUI(func() { on = h.a.dashboard.overlayMgr.HasActive() })
+		return on
+	}
+	h.waitFor("the Help panel open", 5*time.Second, open)
+	rightClick()
+	h.waitFor("the Help panel closed by a right click", 5*time.Second, func() bool { return !open() })
+	if h.frontPage() != "dashboard" {
+		t.Errorf("after the right click the page in front is %q, want the dashboard", h.frontPage())
+	}
+	// On the pause card it resumes, as Esc does.
+	h.key(kit.KeyEsc, 0)
+	h.waitFor("the pause card", 5*time.Second, func() bool { return h.frontPage() == pausePage })
+	rightClick()
+	h.waitFor("the dashboard after a right click on the pause card", 5*time.Second, func() bool { return h.frontPage() == "dashboard" })
+}

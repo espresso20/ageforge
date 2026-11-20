@@ -65,6 +65,9 @@ func (a *App) setup() {
 		return k
 	})
 
+	// A right click is Back wherever Esc closes or leaves something.
+	a.loop.SetBack(a.rightClickIsBack)
+
 	splash := CreateSplashPage(a.loop, a.pages, a.engine, a.version)
 	a.menu, _ = splash.(*mainMenu)
 
@@ -94,6 +97,22 @@ func (a *App) setup() {
 			applyAccountTheme(a.engine)
 		})
 	}
+}
+
+// rightClickIsBack says whether a right click may press Esc now: where Esc
+// closes or leaves a panel, a dialog, a floating window or a page. It may
+// not where Esc means something else: on the dashboard with no panel or
+// pause card open Esc opens the pause card, and on the first-run name page Esc accepts
+// the name on offer. (On the main menu's first page Esc does nothing, so a
+// right click does nothing there either.)
+func (a *App) rightClickIsBack() bool {
+	switch name, _ := a.pages.GetFrontPage(); name {
+	case "dashboard":
+		return a.dashboard.overlayMgr.HasActive() || a.dashboard.pages.HasPage(pausePage)
+	case accountNamePage:
+		return false
+	}
+	return true
 }
 
 // OnDiscordChange sets what is called when the player changes the Discord status setting,

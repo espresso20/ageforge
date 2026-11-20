@@ -32,6 +32,7 @@ type Root struct {
 	at      image.Point
 	in      bool    // the pointer is on the screen, at at
 	shape   Pointer // the shape it was last given
+	took    bool    // a widget took the last mouse event
 	press   struct {
 		at time.Time
 		pt image.Point
@@ -262,6 +263,7 @@ func (r *Root) dropPointer() {
 // look different for it (something used it, the hover moved, or the pointer
 // takes another shape). A MouseLeave says the pointer has left the screen.
 func (r *Root) Mouse(m Mouse) bool {
+	r.took = false
 	changed := r.mouse(m)
 	if r.in = m.Kind != MouseLeave; r.in {
 		r.at = m.Pt()
@@ -324,11 +326,16 @@ func (r *Root) mouse(m Mouse) bool {
 			if m.Kind == MousePress {
 				r.capture = path[i]
 			}
+			r.took = true
 			return true
 		}
 	}
 	return changed
 }
+
+// Took reports whether a widget took the last mouse event, as opposed to the
+// screen merely looking different for it (the hover moved).
+func (r *Root) Took() bool { return r.took }
 
 // Modal is a layer over the screen: its child in the middle, the screen
 // behind it dimmed, and all the input its own. Push it on the Root to show
