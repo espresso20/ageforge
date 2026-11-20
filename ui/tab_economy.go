@@ -288,6 +288,10 @@ func (c *econColumn) arrange(x, y, w, h int) {
 	}
 }
 
+// A bar here is the lower half of its row (a half block in the fill's colour
+// and in the track's), so that the bars of rows under one another read as
+// bars and not as one block.
+//
 // layoutConstruction lays the Under construction box out for an inner area
 // w cells wide and h rows tall: one line per building under way (copies of
 // one building share a line), its bar and the time left. A narrow box
@@ -336,16 +340,19 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 		labelW, timeW = max(labelW, runeLen(g.label)), max(timeW, runeLen(times[i]))
 	}
 	const barMax, barMin = 20, 6
-	left := " left"
+	left, gap := " left", 2 // gap: the blanks between name and time when there is no bar
 	bar := min(barMax, w-(1+labelW+1+1+timeW+runeLen(left)))
 	if bar < barMin {
 		left = ""
 		if bar = min(barMax, w-(1+labelW+1+1+timeW)); bar < barMin {
 			bar = 0
-			if 1+labelW+2+timeW+len(" left") <= w {
+			if 1+labelW+gap+timeW > w {
+				gap = 1 // names stay whole before they are cut
+			}
+			if 1+labelW+gap+timeW+len(" left") <= w {
 				left = " left"
 			}
-			if over := 1 + labelW + 2 + timeW - w; over > 0 {
+			if over := 1 + labelW + gap + timeW - w; over > 0 {
 				labelW = max(3, labelW-over)
 			}
 		}
@@ -360,9 +367,9 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 				ratio := float64(g.totalTicks-g.minTicks) / float64(g.totalTicks)
 				filled = min(bar, max(0, int(math.Round(float64(bar)*ratio))))
 			}
-			line += " " + BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", bar-filled) + "[-] "
+			line += " " + BarFillColor() + strings.Repeat("▄", filled) + BarEmptyColor() + strings.Repeat("▄", bar-filled) + "[-] "
 		} else {
-			line += "  "
+			line += strings.Repeat(" ", gap)
 		}
 		line += "[gray]" + strings.Repeat(" ", timeW-runeLen(times[i])) + times[i] + left + "[-]"
 		lines = append(lines, line)
