@@ -212,3 +212,28 @@ func TestRanksPicture(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// TestRanksKeysAreButtons: the screen's typed keys are buttons; a click on
+// one presses its key.
+func TestRanksKeysAreButtons(t *testing.T) {
+	p := ranksPanelOn(ranksViews(2), 120, 37)
+	paintAlone(p, 120, 37)
+	var got []kit.KeyCode
+	p.buttons.press = func(k kit.Key) { got = append(got, k.Code) }
+	for _, want := range []kit.KeyCode{kit.KeyEnter, kit.KeyTab, kit.KeyEsc} {
+		hit := false
+		for _, k := range p.keys.keyset().keys {
+			if k.key.Code == want && !k.r.Empty() {
+				p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: k.r.Min.X, Y: k.r.Min.Y, Clicks: 1})
+				hit = true
+				break
+			}
+		}
+		if !hit {
+			t.Errorf("no button for key %v", want)
+		}
+	}
+	if len(got) != 3 {
+		t.Errorf("clicks pressed %v, want Enter, Tab and Esc", got)
+	}
+}

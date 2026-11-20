@@ -249,6 +249,8 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// the command bar too.
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
+	d.badgePanel.buttons.wire(d.app)
+	d.researchPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("badges", rowid.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
 	d.registerDeck("army", rowid.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
