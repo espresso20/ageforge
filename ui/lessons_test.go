@@ -198,3 +198,35 @@ func TestLessonsRoundTripAndBand(t *testing.T) {
 		t.Errorf("lessons read back as %v", got)
 	}
 }
+
+// TestPanelLessonBandRow: a panel that teaches its own lesson is handed 67
+// rows at 279x74, with the band on the row under it and the Command box
+// below; with no lesson it has 68.
+func TestPanelLessonBandRow(t *testing.T) {
+	d, _, _ := accountDash(t)
+	pages := d.pages
+	for _, l := range lessonTable {
+		if l.view == lessonMain {
+			continue
+		}
+		name := l.view
+		if !d.overlayMgr.Show(name, *d.lastState) {
+			t.Errorf("%s: panel did not open", name)
+			continue
+		}
+		d.lessons.now = l.key
+		var rows []string
+		for i := 0; i < 3; i++ {
+			rows = strings.Split(drawDashboard(t, d, pages, 279, 74), "\n")
+		}
+		if !strings.Contains(rows[67], "NEW") || !strings.Contains(rows[67], "Later") {
+			t.Errorf("%s: row 67 is %q: want the band", name, rows[67])
+		}
+		d.lessons.now = ""
+		rows = strings.Split(drawDashboard(t, d, pages, 279, 74), "\n")
+		if strings.Contains(rows[67], "NEW") {
+			t.Errorf("%s: with no lesson row 67 is %q, want no band", name, rows[67])
+		}
+		d.overlayMgr.Hide()
+	}
+}
