@@ -34,7 +34,7 @@ xattr -dr com.apple.quarantine /Applications/AgeForge.app
 1. Right-click the zip and choose Extract All.
 2. Open the `AgeForge` folder and run `AgeForge.exe`.
 
-The game is not code-signed, so Windows SmartScreen may show "Windows protected your PC". Choose More info, then Run anyway. It asks once. Do not run it from inside the zip.
+The game is not code-signed, so Windows may show "Windows protected your PC". Choose More info, then Run anyway. It asks once. Do not run it from inside the zip.
 
 ---
 
@@ -82,7 +82,7 @@ AgeForge draws a text interface in its own window, on a grid of character cells.
 Download the new version and replace the old app or folder. Your accounts and saves are not in the download. They live in your user folder and stay put:
 
 - macOS: `~/Library/Application Support/AgeForge`
-- Windows: `%AppData%\AgeForge`
+- Windows: `%APPDATA%\AgeForge`
 - Linux: `~/.config/AgeForge`
 
 A build from source keeps them in `data/` beside the binary. Update it with `git pull` and `go build -o ageforge .` again.

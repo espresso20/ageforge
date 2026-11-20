@@ -134,7 +134,7 @@ balance: stash now has max count of 50, all buildings in primitive take longer t
 
 Releases are built by `.github/workflows/release.yml` when a `v*` tag is pushed.
 
-1. On a PR, rename `## [Unreleased]` in CHANGELOG.md to `## [vX.Y.Z] — YYYY-MM-DD` and add a fresh empty `## [Unreleased]` above it. Merge.
+1. On a PR, rename `## [Unreleased]` in CHANGELOG.md to `## [vX.Y.Z]` with the date after it, as the sections below have, and add a fresh empty `## [Unreleased]` above it. Merge.
 2. `git tag vX.Y.Z` on that master commit, then `git push origin vX.Y.Z`.
 
 The job fails if CHANGELOG.md has no section for the tag.
