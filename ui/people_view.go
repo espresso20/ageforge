@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 )
 
@@ -98,22 +97,26 @@ func knowledgeBuildings(st game.GameState) []peopleBuilding {
 	return builtWhere(st, func(b game.BuildingState) bool { return b.Scholars > 0 })
 }
 
-// renderPeople draws the panel w by h.
-func renderPeople(st game.GameState, v peopleView, w, h int) *xgrid {
+// renderPeople draws the panel w by h. The Overview comes back with its
+// picture; the other tabs are cells alone.
+func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h int) (*xgrid, *peopleOverview) {
 	g := newXGrid(w, h)
 	g.box(0, 0, w, h, xBorder, rowid.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, xTitle, false)
 	g.closeButton(w)
-	if w < 60 || h < 14 {
-		g.put(2, 2, fitText(rowid.Line("ui.people_view.renderPeople.02", "The window is too small for the People panel. Esc closes it."), w-4), xBad)
-		return g
+	if v.tab == tabOverview && (w < peopleMinW || h < peopleMinH) || w < 60 || h < 14 {
+		msg := fitText(rowid.Line("ui.people_view.renderPeople.02", "The window is too small for the People panel. Esc closes it."), w-4)
+		g.put((w-runeLen(msg))/2, h/2, msg, xBad)
+		return g, nil
 	}
 	v.tab = clamp(v.tab, 0, len(peopleTabs)-1)
 	v.row = clamp(v.row, 0, peopleRows(st, v.tab)-1)
 	peopleHeader(g, st, v)
+	if v.tab == tabOverview {
+		expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, [][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
+		return g, newOverview(g, st, hist, v.row, 3)
+	}
 	c := peopleBody{g: g, st: st, v: v, x: 1, y: 2, w: w - 2, h: h - 4}
 	switch v.tab {
-	case tabOverview:
-		c.overview()
 	case tabWork:
 		c.work()
 	case tabArmy:
@@ -121,36 +124,34 @@ func renderPeople(st game.GameState, v peopleView, w, h int) *xgrid {
 	case tabScholars:
 		c.scholars()
 	}
-	return g
+	return g, nil
 }
 
 // peopleHeader is the tab row and the headcount.
 func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 	x := 2
+	squares := [...]xk{xGold, xWork, xArmy, xLore}
 	for i, tabName := range peopleTabs {
 		name := tabName.String()
 		k := xDim
 		if i == v.tab {
 			k = xSel
 		}
-		end := g.put(x, 1, " "+name+" ", k)
+		end := g.put(g.put(x, 1, "■", squares[i]), 1, " "+name+" ", k)
 		g.tab(image.Rect(x, 1, end, 2), name, i, i == v.tab)
 		x = end + 1
 	}
 	// The key that steps through the tabs, once, at the end of the row.
-	x = g.keyButton(x, 1, "←→", "tabs")
-	ws := st.Workers
-	pop := textfmt.Number(float64(ws.TotalPop))
-	homes := textfmt.Number(float64(ws.MaxPop))
-	people, of, homesWord := rowid.Line("ui.people_view.peopleHeader.04", "People "), txtOf.String(), rowid.Line("ui.people_view.peopleHeader.06", " homes")
-	n := runeLen(people + pop + of + homes + homesWord)
-	if start := g.w - 3 - n + 1; start > x+1 {
-		k := xBright
-		if ws.TotalPop > ws.MaxPop {
-			k = xBad
-		}
-		g.segs(start, 1, xseg{people, xDim}, xseg{pop, k}, xseg{of + homes + homesWord, xText})
+	g.keyButton(x, 1, "←→", "tabs")
+	if !festivalUnlocked(st) {
+		return
 	}
+	word, f := txtFestivalHold.String(), st.Festival
+	off := !f.Ready || f.Culture < f.Cost
+	if note := festivalChip(st); note != "" {
+		word, off = note, true
+	}
+	g.chip(g.w-3-runeLen(word)-2, 1, word, keyPrimary, festivalCmd, festivalAsk(st), txtFestivalHold.String(), off)
 }
 
 // peopleBody is the part of the panel under the tabs: the rectangle the tab
@@ -165,36 +166,6 @@ type peopleBody struct {
 // footer writes the key bar on the panel's last row.
 func (c peopleBody) footer(keys [][2]string, hint string) {
 	expKeyBar(c.g, expLayout{w: c.g.w, h: c.g.h, footY: c.g.h - 2}, keys, hint)
-}
-
-// stackBar draws the homes as one bar: each kind of person in its colour,
-// the empty homes dim. It scales to the larger of the homes and the
-// population, so a town with more people than homes still fits.
-func stackBar(g *xgrid, x, y, w int, parts []stackPart, homes int) {
-	counts := make([]int, len(parts))
-	total := 0
-	for i, p := range parts {
-		counts[i] = p.n
-		total += p.n
-	}
-	if max(homes, total) <= 0 || w <= 0 {
-		return
-	}
-	used := 0
-	for i, cells := range stackWidths(counts, homes, w) {
-		for j := 0; j < cells; j++ {
-			g.set(x+used+j, y, '█', parts[i].kind)
-		}
-		used += cells
-	}
-	for i := used; i < w; i++ {
-		g.set(x+i, y, '░', xFaint)
-	}
-}
-
-type stackPart struct {
-	n    int
-	kind xk
 }
 
 // A log line is picked for a panel by what it is about (LogEntry.About): by

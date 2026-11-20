@@ -163,6 +163,9 @@ func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error
 		}
 	}
 
+	// Pictures go under the letters, as in the window: a label keeps its
+	// cell's picture and writes its glyph over it.
+	drawShotPics(img, b, cellW, cellH)
 	for cy := 0; cy < rows; cy++ {
 		for cx := 0; cx < cols; cx++ {
 			c := cells[cy*cols+cx]
@@ -193,7 +196,6 @@ func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error
 			}
 		}
 	}
-	drawShotPics(img, b, cellW, cellH)
 	return img
 }
 

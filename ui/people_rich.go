@@ -32,7 +32,7 @@ import (
 const peopleRichMaxW = 64
 
 // stackWidths shares w cells out between counts as the People panel's bar
-// does (stackBar): each count its share of the homes (or of the people, when
+// does (the Overview's blocks): each count its share of the homes (or of the people, when
 // there are more people than homes), every non-zero count at least one cell.
 func stackWidths(counts []int, homes, w int) []int {
 	total := 0

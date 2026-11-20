@@ -321,6 +321,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		return nil
 	})
 	d.historyPanel.settings = d.mapSettings
+	d.peoplePanel.hist = d.engine.History
 	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
 		return d.engine.History(), d.engine.RunArchive(), d.engine.ActiveSaveName()
 	}

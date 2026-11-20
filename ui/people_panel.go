@@ -21,12 +21,14 @@ type peoplePanel struct {
 	// host paints the panel's kit cells and takes the mouse; the keys stay
 	// with barPanel.
 	grid  *xgrid // what the panel last laid out, and where its rows are
+	over  *peopleOverview
 	state game.GameState
 	view  peopleView
 	w, h  int // the last size drawn at
 
-	// settings reads the glyph tier.
+	// settings reads the glyph tier; hist reads the run's recorder.
 	settings func() mapSettings
+	hist     func() *game.RunHistory
 }
 
 // wire makes the panel's keys press: its own (a count for Recruit, a link to a
@@ -83,14 +85,28 @@ func (p *peoplePanel) Layout(r image.Rectangle) {
 		return
 	}
 	p.w, p.h = r.Dx(), r.Dy()
-	p.grid = renderPeople(p.state, p.view, p.w, p.h)
+	var hist *game.RunHistory
+	if p.hist != nil {
+		hist = p.hist()
+	}
+	p.grid, p.over = renderPeople(p.state, p.view, hist, p.w, p.h)
 	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
 		p.grid.fold()
 	}
 }
 
 // Paint puts the panel on the kit's painter in theme colors.
-func (p *peoplePanel) Paint(p2 *kit.Painter) { p.paintGrid(p2, p.grid, p.Bounds()) }
+func (p *peoplePanel) Paint(p2 *kit.Painter) {
+	r := p.Bounds()
+	if p.over == nil || p.grid == nil || r.Empty() {
+		p.paintGrid(p2, p.grid, r)
+		return
+	}
+	pal := newExpPalette()
+	paintExpeditionKit(p2, p.grid, r.Min, pal)
+	p.over.s.paint(p2, r.Min, pictureCell == nil || p.settings != nil && p.settings().Tier == mapmodel.TierASCII)
+	p.buttons.paint(p2, p.grid, r.Min, pal)
+}
 
 // Mouse: a click on a tab switches to it, as Left and Right do; a click on a
 // card, a work area or a building picks it, as Up and Down do; the wheel

@@ -42,3 +42,21 @@ func TestThePeopleTabsPickLinesByWhatTheyAreAbout(t *testing.T) {
 		}
 	}
 }
+
+// renderPeopleGrid is the panel's cells with no recorder.
+func renderPeopleGrid(st game.GameState, v peopleView, w, h int) *xgrid {
+	g, _ := renderPeople(st, v, nil, w, h)
+	return g
+}
+
+// peopleText is every word of the panel: its cells and the Overview's scene.
+func peopleText(st game.GameState, v peopleView, w, h int) string {
+	g, o := renderPeople(st, v, nil, w, h)
+	s := g.String()
+	if o != nil {
+		for _, wd := range o.s.words {
+			s += "\n" + wd.s
+		}
+	}
+	return s
+}
