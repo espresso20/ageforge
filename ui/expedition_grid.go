@@ -58,6 +58,8 @@ const (
 	xChipGoalHi
 	xKeycap  // a key's cap, as a chip
 	xKeyName // a chip of the key's neutral colour
+	xPulse    // a trade lane's goods while the route runs, bold
+	xPulseLow // the same while it is held back
 	xCount
 )
 
@@ -262,6 +264,8 @@ func newExpPalette() *expPalette {
 	s[xAccent] = role(theme.RoleAccent, 3).Bold(true)
 	s[xBright] = role(theme.RoleBright, 4.5).Bold(true)
 	s[xGood] = role(theme.RolePositive, 4.5)
+	s[xPulse] = role(theme.RolePositive, 4.5).Bold(true)
+	s[xPulseLow] = role(theme.RoleHighlight, 4.5).Bold(true)
 	s[xBad] = role(theme.RoleNegative, 4.5)
 	s[xGold] = role(theme.RoleHighlight, 4.5)
 	gold := theme.Mix(theme.Of(theme.RoleHighlight), theme.MapHueColor(theme.HueGold), 0.6)

@@ -6,10 +6,10 @@ import "math"
 const laneW = 9
 
 // laneSpeed is how fast goods cross a lane, in cells a second, for an import
-// flow of perSec: 1 + 1.5 * log10(1 + flow), held between 1 and 12.
+// flow of perSec: 2 + 1.5 * log10(1 + flow), held between 2 and 14.
 func laneSpeed(perSec float64) float64 {
 	l := math.Log10(1 + math.Max(perSec, 0))
-	return math.Min(math.Max(1+float64(1.5*l), 1), 12)
+	return math.Min(math.Max(2+float64(1.5*l), 2), 14)
 }
 
 // laneCell is the glyph of cell i of a lane at clock seconds: a pulse every
@@ -28,12 +28,17 @@ func laneCell(i int, clock, speed, run float64) rune {
 	if frac >= run {
 		return '·'
 	}
-	return '●'
+	return '■'
 }
 
 // laneAt draws a lane at (x, y): goods in transit in k while moving, and a
 // still dim row of dots when not.
 func laneAt(g *xgrid, x, y int, moving bool, perSec, run, clock float64, k xk) {
+	if k == xGood {
+		k = xPulse
+	} else if k == xGold {
+		k = xPulseLow
+	}
 	for i := 0; i < laneW; i++ {
 		if r := '·'; !moving {
 			g.set(x+i, y, r, xDim)
