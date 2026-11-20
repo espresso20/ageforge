@@ -144,7 +144,7 @@ var lessonTable = []lesson{
 	{key: "first_building", view: lessonMain,
 		name:   rowid.E("ui.lessons.first_building.01", "First building"),
 		text:   rowid.E("ui.lessons.first_building.02", "Build to make the town grow by itself."),
-		clause: rowid.E("ui.lessons.first_building.03", "learned when a building stands"),
+		clause: rowid.E("ui.lessons.first_building.03", "learned when a building is started"),
 		when: func(c *lessonCtx) bool {
 			card, ok := c.next().pick(func(game.BuildingState, config.BuildingDef) bool { return true })
 			return ok && c.built() == 0 && card.canBuild

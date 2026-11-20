@@ -255,13 +255,8 @@ func nextBoxText(s nextStep, w, h int, rich bool) string {
 	if !rich {
 		return strings.Join(panelRows(formWords, w-1, s.view), "\n")
 	}
-	tail := ""
-	if n := s.view.newCount(); n > 0 {
-		tail = rowid.Sprintf("ui.next_card.txtNew.01", " %d new ", n)
-	}
 	rule := " " + theme.Paint(theme.RoleBorder, "─") + theme.Paint(theme.RoleAccent, txtPanels.String()) +
-		theme.Paint(theme.RoleBorder, strings.Repeat("─", max(w-2-runeLen(txtPanels.String())-runeLen(tail), 0))) +
-		theme.TagFgBgAttr(theme.RoleLabel, theme.RoleBackground, "b") + tail + theme.Reset
+		theme.Paint(theme.RoleBorder, strings.Repeat("─", max(w-2-runeLen(txtPanels.String()), 0)))
 	type step struct {
 		cut  cardCut
 		form int
