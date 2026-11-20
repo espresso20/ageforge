@@ -173,11 +173,11 @@ func TestLogsRollAndSlate(t *testing.T) {
 	}
 	if err := ge.StartResearch("pottery"); err == nil {
 		p.update(ge.GetState())
-		if d := p.slate(); len(d.under) == 0 || !strings.Contains(d.under[len(d.under)-1], "%") {
+		if d := p.slate(); len(d.under) == 0 || d.under[len(d.under)-1].kind != srBar {
 			t.Errorf("the slate's Under way lacks the research: %v", d.under)
 		}
 	}
-	if d := p.slate(); len(d.tallies) != 8 || d.tallies[0].n == 0 {
+	if d := p.slate(); len(d.tallies) != 8 || d.tallies[0].n == "0" {
 		t.Errorf("the sitting's tally is %+v", d.tallies)
 	}
 }

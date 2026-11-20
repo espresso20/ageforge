@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // logs_slate.go is what the Logs panel's slate says: the town as it stands
@@ -22,6 +24,8 @@ var (
 	txtSlateComing  = rowid.E("ui.logs_slate.words.03", "Coming up")
 	txtSlateStores  = rowid.E("ui.logs_slate.words.04", "Stores")
 	txtSlateSitting = rowid.E("ui.logs_slate.words.05", "This sitting")
+	txtSlateSince   = rowid.E("ui.logs_slate.words.07", "since %s, %s")
+	txtSlateNow     = rowid.E("ui.logs_slate.words.08", "Right now")
 	txtSlateTally   = [...]rowid.Entry{rowid.E("ui.logs_slate.tally.01", "Built"), rowid.E("ui.logs_slate.tally.02", "Techs"),
 		rowid.E("ui.logs_slate.tally.03", "Milestones"), rowid.E("ui.logs_slate.tally.04", "Deals taken"),
 		rowid.E("ui.logs_slate.tally.05", "Parties back"), rowid.E("ui.logs_slate.tally.06", "Workers gained"),
@@ -34,46 +38,88 @@ const (
 	slateFoodWarn   = time.Hour
 )
 
-// slateTally is one line of "This sitting": a count drawn as strokes, or for
-// the biggest build its name.
-type slateTally struct {
-	name string
-	n    int
-	text string
+// slateKind says how a slate row is chalked.
+type slateKind int
+
+const (
+	srText  slateKind = iota // text, with right-aligned text
+	srBar                    // text, a bar at frac, right-aligned text
+	srWarn                   // a warning mark and text
+	srStore                  // text, an arrow at dir, right-aligned text
+)
+
+type slateRow struct {
+	kind        slateKind
+	text, right string
+	frac        float64
+	dir         int
 }
 
+// slateTally is one of "This sitting": a name and its figure.
+type slateTally struct{ name, n string }
+
 type slateData struct {
-	under, trouble, coming []string
-	stores                 []string
-	tallies                []slateTally
+	under, trouble, coming []slateRow
+	stores                 []slateRow
+	tallies                []slateTally // two columns of four, column-major
+	since                  string
 }
+
+var txtSlateBuilding = rowid.E("ui.logs_slate.words.06", "%s \u00b7 %d building")
 
 // slate reads the state the panel holds.
 func (p *logsPanel) slate() slateData {
 	st, d := p.state, slateData{}
+	type group struct {
+		name    string
+		n, soon int
+		total   int
+	}
+	var gs []*group
 	for _, b := range st.BuildQueue {
-		d.under = append(d.under, b.Name+"  "+formatTicks(b.TicksLeft, st))
+		i := slices.IndexFunc(gs, func(g *group) bool { return g.name == b.Name })
+		if i < 0 {
+			gs = append(gs, &group{name: b.Name, soon: b.TicksLeft, total: b.TotalTicks})
+			i = len(gs) - 1
+		}
+		g := gs[i]
+		g.n++
+		if b.TicksLeft < g.soon {
+			g.soon, g.total = b.TicksLeft, b.TotalTicks
+		}
+	}
+	for _, g := range gs {
+		r := slateRow{kind: srBar, text: g.name, right: formatTicks(g.soon, st)}
+		if g.total > 0 {
+			r.frac = 1 - float64(g.soon)/float64(g.total)
+		}
+		if g.n > 1 {
+			r.text = fmt.Sprintf(txtSlateBuilding.String(), g.name, g.n)
+		}
+		d.under = append(d.under, r)
 	}
 	if st.Research.CurrentTech != "" {
-		d.under = append(d.under, rowid.Sprintf("ui.logs_slate.research.01", "%s  %d%%, %s", st.Research.CurrentTechName, researchPercent(st), researchLeft(st)))
+		d.under = append(d.under, slateRow{kind: srBar, text: st.Research.CurrentTechName, right: researchLeft(st), frac: researchFraction(st)})
 	}
 	if f, ok := st.Resources["food"]; ok && f.Rate < 0 {
 		if left := time.Duration(f.Amount/-f.Rate) * tickInterval(st); left < slateFoodWarn {
-			d.trouble = append(d.trouble, rowid.Sprintf("ui.logs_slate.food.01", "Food gone in %s", textfmt.Duration(left)))
+			d.trouble = append(d.trouble, slateRow{kind: srWarn, text: rowid.Sprintf("ui.logs_slate.food.01", "Food gone in %s", textfmt.Duration(left))})
 		}
 	}
 	sitting := p.sitting()
 	for i := len(sitting) - 1; i >= 0 && len(d.trouble) < slateTroubleMax; i-- {
-		if e := sitting[i]; e.Trouble && !slices.Contains(d.trouble, e.Message) {
-			d.trouble = append(d.trouble, e.Message)
+		if e := sitting[i]; e.Trouble && !slices.ContainsFunc(d.trouble, func(r slateRow) bool { return r.text == e.Message }) {
+			d.trouble = append(d.trouble, slateRow{kind: srWarn, text: kit.Strip(e.Message)})
 		}
 	}
-	d.coming = queueLines(st)
+	for _, s := range queueLines(st) {
+		d.coming = append(d.coming, slateRow{text: kit.Strip(s)})
+	}
 
 	type store struct {
 		name string
 		rate float64
-		text string
+		row  slateRow
 		fall bool
 	}
 	var ss []store
@@ -82,9 +128,13 @@ func (p *logsPanel) slate() slateData {
 			continue
 		}
 		s := store{name: p.resName(k), rate: r.Rate, fall: r.Rate < 0}
-		s.text = s.name + "  " + rateText(r.Rate, st.TickIntervalMs)
-		if s.fall {
-			s.text += rowid.Sprintf("ui.logs_slate.gone.01", ", gone in %s", textfmt.Duration(time.Duration(r.Amount/-r.Rate)*tickInterval(st)))
+		s.row = slateRow{kind: srStore, text: s.name + "  " + commas(r.Amount), right: rateText(r.Rate, st.TickIntervalMs), dir: 0}
+		switch {
+		case s.fall:
+			s.row.dir = -1
+			s.row.right += rowid.Sprintf("ui.logs_slate.gone.01", ", gone in %s", textfmt.Duration(time.Duration(r.Amount/-r.Rate)*tickInterval(st)))
+		case r.Rate > 0:
+			s.row.dir = 1
 		}
 		ss = append(ss, s)
 	}
@@ -104,10 +154,10 @@ func (p *logsPanel) slate() slateData {
 		return strings.Compare(a.name, b.name)
 	})
 	for _, s := range ss[:min(slateStoresMax, len(ss))] {
-		d.stores = append(d.stores, s.text)
+		d.stores = append(d.stores, s.row)
 	}
 
-	var n [8]int
+	var n [7]int
 	var big float64
 	bigName := ""
 	for _, e := range sitting {
@@ -120,7 +170,7 @@ func (p *logsPanel) slate() slateData {
 			n[0] += c
 		case e.Office == game.OfficeResearch && e.Type == "success":
 			n[1] += c
-		case e.Office == game.OfficeGame && e.Level == game.LevelHeadline:
+		case e.Office == game.OfficeWorld && e.Type == "success" && e.Level == game.LevelHeadline && e.Subject != "":
 			n[2] += c
 		case e.Office == game.OfficeTrade && len(e.Paid) > 0 && len(e.Gained) > 0:
 			n[3] += c
@@ -139,9 +189,13 @@ func (p *logsPanel) slate() slateData {
 		}
 	}
 	for i := range n {
-		d.tallies = append(d.tallies, slateTally{name: txtSlateTally[i].String(), n: n[i]})
+		d.tallies = append(d.tallies, slateTally{txtSlateTally[i].String(), commas(float64(n[i]))})
 	}
-	d.tallies[7] = slateTally{name: txtSlateTally[7].String(), text: bigName}
+	d.tallies = append(d.tallies, slateTally{txtSlateTally[7].String(), bigName})
+	if len(sitting) > 0 {
+		at := time.Unix(sitting[0].At, 0)
+		d.since = fmt.Sprintf(txtSlateSince.String(), at.Format("15:04"), textfmt.Duration(time.Since(at)))
+	}
 	return d
 }
 

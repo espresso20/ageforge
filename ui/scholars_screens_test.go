@@ -224,7 +224,7 @@ func TestScholarsLineWhereResearchIsShown(t *testing.T) {
 	if row := headerRow(st, 80, 24); !strings.Contains(row, "Primitive Writing") || !strings.Contains(row, "░") {
 		t.Errorf("80x24: the header lost the bar: %q", row)
 	}
-	if logs := slateText(st); !strings.Contains(logs, fmt.Sprintf("%d%%", researchPercent(st))) {
+	if logs := slateText(st); !strings.Contains(logs, researchLeft(st)) {
 		t.Errorf("the Logs slate does not show the research:\n%s", logs)
 	}
 }
@@ -526,5 +526,9 @@ func TestKnowledgeBuildingPastItsCapShowsNoLimitInThePanel(t *testing.T) {
 func slateText(st game.GameState) string {
 	p := newLogsPanel()
 	p.state = st
-	return strings.Join(p.slate().under, "\n")
+	var out []string
+	for _, r := range p.slate().under {
+		out = append(out, r.text+"  "+r.right)
+	}
+	return strings.Join(out, "\n")
 }

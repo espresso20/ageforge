@@ -92,7 +92,7 @@ func TestNoTwoCardsAlike(t *testing.T) {
 	}
 }
 
-func TestSlateSwipesVisible(t *testing.T) {
+func TestSlateSmudges(t *testing.T) {
 	img := SlateBare(400, 300, 11)
 	n := 0
 	for p := 0; p < len(img.Pix); p += 4 {
@@ -100,8 +100,8 @@ func TestSlateSwipesVisible(t *testing.T) {
 			n++
 		}
 	}
-	if n < 400*300/12 {
-		t.Errorf("swipes cover only %d of %d pixels", n, 400*300)
+	if n < 400*300/200 || n > 400*300/4 {
+		t.Errorf("smudges cover %d of %d pixels", n, 400*300)
 	}
 }
 

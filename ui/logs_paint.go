@@ -356,46 +356,82 @@ func (p *logsPanel) paintLine(p2 *kit.Painter, org image.Point, y, i int, row lo
 }
 
 // paintSlate chalks the town's state, then the sitting's tally at the foot.
+// A compact slate holds only what is wrong and what is under way.
 func (p *logsPanel) paintSlate(p2 *kit.Painter, org image.Point, cw, ch int) {
 	l, d := p.lay, p.slate()
-	b := l.SlateBody
+	b, full := l.SlateBody, p.lay.Mode == logroll.Full
 	say := func(x, y int, s string, c color.RGBA, bold bool) {
 		p2.Label(org.X+x, org.Y+y, kit.Escape(s), style(c, bold))
 	}
-	y, foot := b.Y, b.Bottom()-(1+len(d.tallies))
-	section := func(title string, lines []string, max int, c color.RGBA) {
-		if len(lines) == 0 || y+2 > foot {
+	pic := func(x, y, w int, mk func() *image.RGBA, parts ...any) {
+		p2.Picture(image.Rect(org.X+x, org.Y+y, org.X+x+w, org.Y+y+1), p.pic(mk, append(parts, w)...))
+	}
+	foot := b.Bottom()
+	if full {
+		foot -= 6
+	}
+	y, barW := b.Y, 20
+	if !full {
+		barW = 10
+	}
+	right := b.Right() - 2
+	say(b.X+1, y, txtSlateNow.String(), logroll.Chalk, true)
+	y += 2
+	section := func(title string, rows []slateRow, limit int, c color.RGBA) {
+		if len(rows) == 0 || y+2 > foot {
 			return
 		}
 		say(b.X+1, y, title, logroll.ChalkY, true)
 		y++
-		for _, s := range lines[:min(len(lines), max)] {
-			if y < foot {
-				say(b.X+2, y, fit(s, b.W-3), c, false)
-				y++
+		for _, r := range rows[:min(len(rows), limit)] {
+			if y >= foot {
+				break
 			}
+			rw := len([]rune(r.right))
+			room := b.W - 4 - rw
+			switch r.kind {
+			case srBar:
+				room -= barW + 1
+				pic(right-rw-barW-1, y, barW, func() *image.RGBA { return logroll.Bar(barW*cw, ch, r.frac, uint64(len(r.text))) }, "bar", int(r.frac*100), len(r.text))
+			case srWarn:
+				room -= 3
+				pic(b.X+2, y, 2, func() *image.RGBA { return logroll.Warn(2*cw, ch, logroll.Hit) }, "warn")
+			case srStore:
+				room -= 3
+				col := map[int]color.RGBA{1: logroll.Chalk, 0: logroll.ChalkD, -1: logroll.Hit}[r.dir]
+				pic(b.X+2, y, 2, func() *image.RGBA { return logroll.Arrow(r.dir, ch, col) }, "arr", r.dir)
+			}
+			x := b.X + 2
+			if r.kind == srWarn || r.kind == srStore {
+				x += 3
+			}
+			say(x, y, fit(r.text, max(room, 4)), c, false)
+			if rw > 0 {
+				say(right-rw, y, r.right, logroll.ChalkD, false)
+			}
+			y++
 		}
 		y++
 	}
-	section(txtSlateUnder.String(), d.under, 4, logroll.Chalk)
 	section(txtSlateTrouble.String(), d.trouble, slateTroubleMax, logroll.Hit)
+	section(txtSlateUnder.String(), d.under, 5, logroll.Chalk)
+	if !full {
+		return
+	}
 	section(txtSlateComing.String(), d.coming, 3, logroll.Chalk)
-	section(txtSlateStores.String(), d.stores, slateStoresMax, logroll.ChalkD)
+	section(txtSlateStores.String(), d.stores, slateStoresMax, logroll.Chalk)
 	if foot-y >= 2 {
 		at := image.Rect(org.X+b.X, org.Y+y, org.X+b.Right(), org.Y+foot)
 		p2.Picture(at, p.pic(func() *image.RGBA { return logroll.SlateBare(at.Dx()*cw, at.Dy()*ch, logsSeed) }, "bare", at.Dx(), at.Dy()))
 	}
 	say(b.X+1, foot, txtSlateSitting.String(), logroll.ChalkY, true)
+	if d.since != "" {
+		say(right-len([]rune(d.since)), foot, d.since, logroll.ChalkD, false)
+	}
+	col := (b.W - 2) / 2
 	for i, t := range d.tallies {
-		ty := foot + 1 + i
-		say(b.X+2, ty, fit(t.name, 16), logroll.Chalk, false)
-		if t.text != "" || i == 7 {
-			say(b.X+19, ty, fit(t.text, b.W-21), logroll.ChalkD, false)
-			continue
-		}
-		p2.Picture(image.Rect(org.X+b.X+19, org.Y+ty, org.X+b.X+19+14, org.Y+ty+1), p.pic(func() *image.RGBA {
-			return logroll.Tally(min(t.n, 15), uint64(i), 14*cw, ch, logroll.Chalk, logroll.Slate)
-		}, "stk", min(t.n, 15), i))
-		say(b.X+34, ty, textfmt.Number(float64(t.n)), logroll.ChalkD, false)
+		x, ty := b.X+2+(i/4)*col, foot+1+i%4
+		say(x, ty, fit(t.name, 16), logroll.Chalk, false)
+		say(x+17, ty, fit(t.n, col-19), logroll.ChalkD, false)
 	}
 }

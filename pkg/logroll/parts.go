@@ -211,19 +211,27 @@ func Arrow(dir, h int, col color.RGBA) *image.RGBA {
 	return c.RGBA
 }
 
-// SlateBare is the slate's unused part, w by h pixels: four to six broad rag
-// swipes of different size and angle, plainly visible, and no text.
+// Warn is a chalk warning triangle with a bar and a dot, w by h pixels.
+func Warn(w, h int, col color.RGBA) *image.RGBA {
+	c := newCanvas(w, h, Slate)
+	x, y := (w-12)/2, (h-11)/2
+	c.tri(x+6, y, x, y+10, x+12, y+10, col)
+	c.rect(x+5, y+4, 2, 3, Slate)
+	c.rect(x+5, y+8, 2, 1, Slate)
+	return c.RGBA
+}
+
+// SlateBare is the slate's unused part, w by h pixels: faint small smudges of
+// chalk dust and no text.
 func SlateBare(w, h int, seed uint64) *image.RGBA {
 	r := rng(seedOf(seed, 19))
 	c := newCanvas(w, h, Slate)
-	for i, n := 0, 4+r.n(3); i < n; i++ {
-		th, ln := 14+r.n(24), w/3+r.n(2*w/3)
-		x0, y0 := r.n(max(w-ln, 1)), r.n(max(h, 1))
-		slope := float64(r.n(9)-4) / 10
-		col := mix(Slate, Chalk, .12+.1*r.f())
-		for x := 0; x < ln; x++ {
-			c.rect(x0+x, y0+int(slope*float64(x)), 1, th, col)
-		}
+	for i, n := 0, 6+r.n(5); i < n; i++ {
+		sw, sh := 10+r.n(24), 3+r.n(5)
+		x0, y0 := r.n(max(w-sw, 1)), r.n(max(h-sh, 1))
+		col := mix(Slate, Chalk, .04+.04*r.f())
+		c.rect(x0, y0, sw, sh, col)
+		c.rect(x0+3, y0+sh, sw-6, 1, col)
 	}
 	return c.RGBA
 }
