@@ -366,6 +366,9 @@ type GameEngine struct {
 	produced     map[string]float64
 	producedTick int
 	away         bool
+	// tradeHorizon is the ticks the rates are about to be applied for when
+	// that is more than one (an offline step); 0 reads as 1.
+	tradeHorizon float64
 	// ageTold is the age the account was last told the run is in ("" when it
 	// has not been told yet: a run just loaded or begun). An age the run is in
 	// without an advance having reported it is told from here (noteAgeJump).
@@ -1729,7 +1732,7 @@ func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
 
 // processTrade handles trade route ticks
 func (ge *GameEngine) processTrade() {
-	ge.logNotes(OfficeTrade, "warning", ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), ge.grantResearch))
+	ge.logNotes(OfficeTrade, "warning", ge.Trade.Tick(ge.tick, ge.Diplomacy, ge.grantResearch))
 }
 
 // harborRouteBonus sums the "trade_route_income" effect across all built harbour
@@ -2182,12 +2185,16 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	// The running trade routes (trade.go): their flows go in last, so no
+	// multiplier above touches them and a route moves what it lists.
+	ge.Trade.Flows(ge.Resources, ge.Buildings, ge.Diplomacy, ge.routeTerms(), ge.tradeHorizon)
+
 	// Calculate bonus rates (the difference from the named rate sources).
 	for _, def := range ge.Resources.defs {
 		r := ge.Resources.resources[def.Key]
 		if r != nil {
 			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
-				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain +
+				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.TradeFlow + r.Breakdown.FoodDrain +
 				r.Breakdown.LegacyRate + r.Breakdown.PrestigeRate + r.Breakdown.MasteryRate
 			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
@@ -5260,6 +5267,13 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		// strikes at its own tick while the player is away.
 		if k := ge.fateNextEventIn(); k > 0 && k < n {
 			n = k
+		}
+		// The routes spend the stock once for the whole step, so their share
+		// is worked out for it.
+		if ge.Trade.ActiveRouteCount() > 0 {
+			ge.tradeHorizon = float64(n) * OfflineEfficiency
+			ge.recalculateRates()
+			ge.tradeHorizon = 0
 		}
 		ge.noteProduced(float64(n) * OfflineEfficiency)
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,

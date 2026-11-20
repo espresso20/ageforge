@@ -283,9 +283,8 @@ func TestUncapped_DealIntoAFullStoreIsTaken(t *testing.T) {
 	}
 }
 
-// A trade route's run moves its whole import and export however full the
-// import's store is.
-func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
+// A trade route's flow runs into a full store: the import is not capped away.
+func TestUncapped_RouteFlowIntoAFullStoreStillComesIn(t *testing.T) {
 	ge := newSeededEngine(9)
 	for _, a := range []string{"stone_age", "bronze_age"} {
 		noErr(t, ge.EnterAgeForTest(a))
@@ -294,7 +293,6 @@ func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
 	defer ge.mu.Unlock()
 	def := ge.Trade.routeDefs["local_barter"]
 	ge.Buildings.counts[def.RequiredBld] = def.MinCount
-	ge.recalculateRates()
 	var imp, exp string
 	for imp = range def.Import {
 	}
@@ -304,21 +302,14 @@ func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
 	ge.Resources.resources[exp].Amount = config.Million
 	ge.Resources.resources[imp].Amount = baseStore(imp) // a base store's worth
 	full := ge.Resources.Get(imp)
-	ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
-	msgs := ge.Trade.Tick(ge.Resources, ge.Buildings, nil, 0, nil)
-	if want := full + ge.Trade.RoutePay(def.Import[imp]); math.Abs(ge.Resources.Get(imp)-want) > 1e-6 {
-		t.Errorf("%s = %v after a run into a full store, want %v", imp, ge.Resources.Get(imp), want)
+	ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}
+	ge.recalculateRates()
+	ge.Resources.ApplyRates()
+	per := float64(def.TicksPerRun)
+	if want := full + ge.Trade.RoutePay(def.Import[imp])/per; math.Abs(ge.Resources.Get(imp)-want) > 1e-6 {
+		t.Errorf("%s = %v after a tick into a full store, want %v", imp, ge.Resources.Get(imp), want)
 	}
-	if got := config.Million - ge.Resources.Get(exp); math.Abs(got-def.Export[exp]) > 1e-6 {
-		t.Errorf("%s taken = %v, want the whole export %v", exp, got, def.Export[exp])
-	}
-	ge.logNotes(OfficeTrade, "warning", msgs)
-	for _, e := range ge.log {
-		if e.Trouble {
-			t.Errorf("the run raised trouble: %q", e.Message)
-		}
-	}
-	if r := ge.Trade.activeRoutes["local_barter"]; r.CyclesDone != 1 || r.Starved {
-		t.Errorf("cycles %d, starved %v, want 1 and false", r.CyclesDone, r.Starved)
+	if got := ge.Resources.resources[exp].Breakdown.TradeFlow; math.Abs(got+def.Export[exp]/per) > 1e-6 {
+		t.Errorf("%s taken = %v, want the export's flow %v", exp, -got, def.Export[exp]/per)
 	}
 }

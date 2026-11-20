@@ -296,12 +296,15 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 		t.Errorf("a gift costs %v with Telecommunications, want 150", got)
 	}
 
-	// A route started now takes the shorter run.
+	// A route started now moves faster: its flow is 1/(0.85 x 0.85) the gate's.
 	def := ge.Trade.routeDefs["local_barter"]
 	ge.Buildings.counts[def.RequiredBld] = def.MinCount
 	noErr(t, ge.StartTradeRoute("local_barter"))
-	if got, want := ge.Trade.activeRoutes["local_barter"].TicksLeft, int(float64(def.TicksPerRun)*0.85*0.85); got != want {
-		t.Errorf("Local Barter runs every %d ticks with both route techs, want %d (listed %d)", got, want, def.TicksPerRun)
+	out, _, _ := ge.Trade.flows(def, RouteTerms{})
+	for res, a := range def.Export {
+		if got, want := out[res]*float64(def.TicksPerRun)/a, 1/(0.85*0.85); math.Abs(got-want) > 1e-9 {
+			t.Errorf("Local Barter moves %v of its listed run a run with both route techs, want %v", got, want)
+		}
 	}
 
 	// A campaign keeps its time: the cut is for scouting expeditions.

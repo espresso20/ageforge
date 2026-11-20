@@ -1,8 +1,9 @@
 package config
 
-// TradeRouteDef defines a passive recurring trade route. Once started, the
-// engine automatically exports Export resources and adds Import resources every
-// TicksPerRun ticks. The route stops if Export resources are insufficient.
+// TradeRouteDef defines a trade route. A running route is a flow: at its gate
+// (MinCount of RequiredBld) it takes Export and brings Import every
+// TicksPerRun ticks' worth, spread over the ticks, and the flow grows with the
+// buildings past the gate. A shortage of an export slows the route.
 //
 // TicksPerRun is typed for the base curve and stretched for the route's
 // MinAge (StretchTicks), so an age runs as many cycles as it did before the

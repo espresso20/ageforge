@@ -245,8 +245,11 @@ type RateBreakdown struct {
 	ResearchRate float64
 	EventRate    float64
 	TradeRate    float64
-	FoodDrain    float64
-	BonusRate    float64
+	// TradeFlow is what the running trade routes add (imports) and take
+	// (exports), after every multiplier.
+	TradeFlow float64
+	FoodDrain float64
+	BonusRate float64
 	// LegacyRate is what the Cosmic Legacy adds: a tenth of everything the
 	// resource makes, after the caps and before the food drain
 	// (last_passage.go). 0 without the legacy.
@@ -827,29 +830,31 @@ type TradeState struct {
 	// DisruptedResources lists resources currently blockaded by war/embargo; any
 	// active route importing one is suspended until the conflict ends.
 	DisruptedResources []string
+	// Speed is the techs' multiplier on every route's flow (1 with none).
+	Speed float64
 }
 
-// ActiveRouteInfo represents an active trade route for UI
+// ActiveRouteInfo represents a started trade route for UI. Export and Import
+// are what it moves a tick at its gate with the techs and bonuses; Scale is
+// the count of its building line over the gate, Run the share of the flow it
+// moves now, so what it really moves is Import x Scale x Run.
 type ActiveRouteInfo struct {
 	Name        string
 	Key         string
-	TicksLeft   int
-	CycleTicks  int // the whole cycle, for a meter of TicksLeft
-	CyclesDone  int
 	Export      map[string]float64
 	Import      map[string]float64
-	Disrupted   bool   // true when blockaded by war/embargo (income suspended)
+	Scale, Run  float64
+	Paused      bool   // stopped by the player; it keeps its place on the list
+	NoBuilding  bool   // held at 0 for want of its building line
+	Disrupted   bool   // true when blockaded by war/embargo (flow held at 0)
 	DisruptedBy string // the imported resource that is blockaded (if Disrupted)
-	// Starved is true after a run was skipped for want of the export.
-	Starved bool
-	// Pay is what a run really brings in of each import, and Shares what it
-	// is made of (the techs, harbor buildings, allies); Pay is the listed
-	// amount times 1 plus the shares.
-	Pay    map[string]float64
+	// Shares is what each import's flow is made of (the techs, harbor
+	// buildings, allies), each a share of the listed amount.
 	Shares map[string][]PayShare
 }
 
-// TradeRouteInfo represents an available trade route for UI
+// TradeRouteInfo represents an available trade route for UI; Export and
+// Import are the flow a tick at the gate, as in ActiveRouteInfo.
 type TradeRouteInfo struct {
 	Name        string
 	Key         string
@@ -859,10 +864,7 @@ type TradeRouteInfo struct {
 	RequiredBld string
 	MinCount    int
 	Description string
-	// CycleTicks is the run's period as it would be once started.
-	CycleTicks int
-	Pay        map[string]float64
-	Shares     map[string][]PayShare
+	Shares      map[string][]PayShare
 }
 
 // === Diplomacy Types ===

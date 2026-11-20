@@ -1,7 +1,6 @@
 package game
 
 import (
-	"maps"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
@@ -10,14 +9,14 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// TradeManager runs the repeating trade routes. (The market no longer swaps
-// one resource for another: a town makes what it needs, and the save keeps
-// the old swap's fields only so a signed save still verifies.)
-//
-// Trade routes: run on a configurable interval (TicksPerRun), automatically
-// consuming Export resources and adding Import resources each cycle. Allied
-// faction bonuses are applied to imported amounts via DiplomacyManager.
-// A route is suspended mid-cycle if its required building is demolished.
+// TradeManager runs the standing trade routes. A running route is a flow: it
+// takes its Export out of the resource rates and puts its Import into them,
+// every tick, until it is paused. Listed at the route's gate (MinCount of its
+// building line) a route moves Export and Import once per TicksPerRun ticks;
+// the flow grows with the count of the line. A route that cannot pay its
+// export runs at a share of it (Flows). Allied faction bonuses are applied to
+// the import via DiplomacyManager. A route whose building is demolished is
+// held at 0 until the building is back.
 type TradeManager struct {
 	rules *rules.Set
 
@@ -39,20 +38,19 @@ type TradeManager struct {
 	routeDefs map[string]config.TradeRouteDef
 }
 
-// ActiveRoute represents a running trade route
+// ActiveRoute is a route the player has started.
 type ActiveRoute struct {
-	Key        string
-	TicksLeft  int
-	CyclesDone int
-	// Disrupted is transient runtime state (recomputed every tick from diplomacy
-	// war/embargo) — not persisted. True when the route's imports are blockaded.
-	Disrupted bool `json:"-"`
-	// Starved is transient: true after a run was skipped because the exports
-	// were short, so the warning logs once per shortage, not every run.
-	Starved bool `json:"-"`
-	// Lost counts the runs a disruption or a shortage cost since the route
-	// last delivered: the log says so when it runs again.
-	Lost int `json:"-"`
+	Key    string
+	Paused bool
+	// The rest is recomputed by Flows every time the rates are, not saved.
+	// Run is the share of its flow the route moves now (0 to 1): 0 when
+	// paused, blockaded or short of its building, less than 1 when the
+	// export is short. Scale is the count of the building line over the
+	// route's gate; Research is the research a tick the route brings.
+	Run, Scale, Research float64 `json:"-"`
+	Disrupted            bool    `json:"-"`
+	NoBuilding           bool    `json:"-"`
+	said                 string
 }
 
 // routeDisruptedBy returns the first imported resource of def that appears in the
@@ -98,16 +96,6 @@ func (tm *TradeManager) SetTechTerms(routeTime, routePay float64) {
 	tm.routeTime, tm.routePay = routeTime, routePay
 }
 
-// routeImports is a copy of what one run of def brings in, with the techs'
-// term on trade route income: what the panels show.
-func (tm *TradeManager) routeImports(def config.TradeRouteDef) map[string]float64 {
-	out := maps.Clone(def.Import)
-	for res, amount := range out {
-		out[res] = tm.RoutePay(amount)
-	}
-	return out
-}
-
 // RoutePay is what one run of a route brings in of an import listed at
 // amount, with the techs' term on trade route income: the panels and the
 // engine read a route's imports through it. The ally and harbor bonuses
@@ -150,11 +138,25 @@ type RouteTerms struct {
 	Ally         func(res string) (float64, []PayShare)
 }
 
-// payFor works out what a run of def pays for each import and the shares
-// behind it, through RunPay.
-func (tm *TradeManager) payFor(def config.TradeRouteDef, terms RouteTerms) (map[string]float64, map[string][]PayShare) {
-	pay := make(map[string]float64, len(def.Import))
-	shares := make(map[string][]PayShare, len(def.Import))
+// timeFactor is how much faster the techs make a route move: its flow is
+// multiplied by it (1 with no tech on route time).
+func (tm *TradeManager) timeFactor() float64 {
+	if tm.routeTime > 0 && tm.routeTime < 1 {
+		return 1 / tm.routeTime
+	}
+	return 1
+}
+
+// flows is what def moves a tick at its gate, with the count of the building
+// line making it more: what it takes of each export, and what it brings of
+// each import with the techs' term, the harbor bonus and the allies' shares.
+// payFor adds the shares for the state view.
+func (tm *TradeManager) flows(def config.TradeRouteDef, terms RouteTerms) (out, in map[string]float64, shares map[string][]PayShare) {
+	k := float64(tm.timeFactor() / float64(max(def.TicksPerRun, 1)))
+	out, in, shares = make(map[string]float64, len(def.Export)), make(map[string]float64, len(def.Import)), make(map[string][]PayShare, len(def.Import))
+	for res, amount := range def.Export {
+		out[res] = float64(amount * k)
+	}
 	for res, amount := range def.Import {
 		bonus := terms.Harbor
 		list := []PayShare{}
@@ -167,16 +169,9 @@ func (tm *TradeManager) payFor(def config.TradeRouteDef, terms RouteTerms) (map[
 			bonus += b
 			list = append(list, ally...)
 		}
-		pay[res] = tm.RunPay(amount, bonus)
-		shares[res] = list
+		in[res], shares[res] = float64(tm.RunPay(amount, bonus)*k), list
 	}
-	return pay, shares
-}
-
-// RunTicks is how long one run of a route listed at ticks takes with the
-// techs' cut of route time: rounded down, one tick at least.
-func (tm *TradeManager) RunTicks(ticks int) int {
-	return techTimeTicks(ticks, tm.routeTime)
+	return out, in, shares
 }
 
 // StartRoute activates a trade route
@@ -197,24 +192,25 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 		return rowid.Errorf("game.trade.StartRoute.04", "%s needs %s (you have %s).", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld), textfmt.Int(buildings.CountFrom(def.RequiredBld)))
 	}
 
-	// Check not already active
-	if _, active := tm.activeRoutes[key]; active {
-		return rowid.Errorf("game.trade.StartRoute.05", "%s is already running.", def.Name)
+	// A paused route starts again; a running one is already running.
+	if r, active := tm.activeRoutes[key]; active {
+		if !r.Paused {
+			return rowid.Errorf("game.trade.StartRoute.05", "%s is already running.", def.Name)
+		}
+		r.Paused = false
+		return nil
 	}
 
-	tm.activeRoutes[key] = &ActiveRoute{
-		Key:       key,
-		TicksLeft: tm.RunTicks(def.TicksPerRun),
-	}
+	tm.activeRoutes[key] = &ActiveRoute{Key: key}
 	return nil
 }
 
-// StopRoute deactivates a trade route
+// StopRoute pauses a trade route: it stays on the list at 0 until started.
 func (tm *TradeManager) StopRoute(key string) error {
-	if _, active := tm.activeRoutes[key]; !active {
+	if r, active := tm.activeRoutes[key]; !active || r.Paused {
 		return rowid.Errorf("game.trade.StopRoute.01", "%s is not running. Type trade route list to see your routes.", tm.rules.Name(rules.KindRoute, key))
 	}
-	delete(tm.activeRoutes, key)
+	tm.activeRoutes[key].Paused = true
 	return nil
 }
 
@@ -225,131 +221,120 @@ func (tm *TradeManager) ActiveRouteCount() int {
 	return len(tm.activeRoutes)
 }
 
-// Tick processes trade routes.
-//
-// harborBonus is the additive trade-route income multiplier from built harbour
-// buildings (e.g. 0.15 = +15%); the engine computes it from the harbor lineage
-// and passes it in. Disrupted routes (those importing a resource a hostile civ
-// specialises in — see DiplomacyManager.DisruptedResources) are skipped for the
-// cycle with a log line.
-func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64, research func(work float64) string) []logNote {
-	var messages []logNote
-
-	routes := tm.routeDefs
-
-	// Resources currently blockaded by war/embargo. A route whose imports touch
-	// any of these is disrupted (income blocked) until the conflict ends.
+// Flows puts the running routes into the resource rates, after production:
+// each export is a consumer and each import a producer, with its own line in
+// the breakdown. Routes compete for a resource: with D the routes' demand for
+// it a tick and S its stock plus what the town makes of it, every route
+// exporting it runs at min(1, S/D), both legs, so a shortage slows the routes
+// and never skips one. horizon is the ticks the rates will be applied for
+// (1 on a live tick; an offline step's ticks), so a long step spends the
+// stock once.
+func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, terms RouteTerms, horizon float64) {
+	if len(tm.activeRoutes) == 0 {
+		return
+	}
+	horizon = max(horizon, 1)
 	var disrupted map[string]bool
 	if diplomacy != nil {
 		disrupted = diplomacy.DisruptedResources()
 	}
-
-	// Process active trade routes in key order: routes can compete for the
-	// same export, so which one runs first decides which one is starved.
+	type leg struct {
+		route   *ActiveRoute
+		out, in map[string]float64
+	}
+	var legs []leg
+	demand := map[string]float64{}
 	for _, key := range sortedKeys(tm.activeRoutes) {
-		route := tm.activeRoutes[key]
-		def, ok := routes[key]
-		if !ok {
+		route, def := tm.activeRoutes[key], tm.routeDefs[key]
+		owned := buildings.CountFrom(def.RequiredBld)
+		route.Run, route.Research = 0, 0
+		route.Scale = float64(owned) / float64(max(def.MinCount, 1))
+		route.NoBuilding = owned < def.MinCount
+		route.Disrupted = tm.routeDisruptedBy(def, disrupted) != ""
+		if route.Paused || route.NoBuilding || route.Disrupted {
 			continue
 		}
-
-		// Check building still meets requirements
-		if buildings.CountFrom(def.RequiredBld) < def.MinCount {
-			messages = append(messages, note(rowid.Sprintf("game.trade.Tick.01", "Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)), logSubj(key), logTrouble))
-			delete(tm.activeRoutes, key)
-			continue
+		out, in, _ := tm.flows(def, terms)
+		for res, a := range out {
+			out[res] = float64(a * route.Scale)
+			demand[res] += out[res]
 		}
-
-		// Disruption: if any imported resource is blockaded, the route is dead
-		// in the water this cycle — no export consumed, no income, timer still
-		// ticks so it resumes automatically once peace returns.
-		blockedRes := tm.routeDisruptedBy(def, disrupted)
-		route.Disrupted = blockedRes != ""
-		if route.Disrupted {
-			route.TicksLeft--
-			if route.TicksLeft <= 0 {
-				route.Lost++
-				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.02", "Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)), logSubj(key), logTrouble))
-				route.TicksLeft = tm.RunTicks(def.TicksPerRun)
-			}
-			continue
+		for res, a := range in {
+			in[res] = float64(a * route.Scale)
 		}
-
-		route.TicksLeft--
-		if route.TicksLeft <= 0 {
-			// Check if we can afford the exports
-			canAfford := true
-			for res, amount := range def.Export {
-				if resources.Get(res) < amount {
-					canAfford = false
-					break
-				}
-			}
-
-			// What a run brings in, with the diplomacy ally bonus and the
-			// harbor bonus. The techs' term and those bonuses are each a
-			// share of the listed import, so each delivers what it says
-			// whatever the others are.
-			imports := make(map[string]float64, len(def.Import))
-			for res, amount := range def.Import {
-				bonus := harborBonus
-				if diplomacy != nil {
-					bonus += diplomacy.GetTradeBonus(res)
-				}
-				imports[res] = tm.RunPay(amount, bonus)
-			}
-
-			if canAfford {
-				// Consume exports
-				for res, amount := range def.Export {
-					resources.Remove(res, amount)
-				}
-
-				// Add imports
-				got := make(map[string]float64, len(imports))
-				for res, actual := range imports {
-					if res == config.ResearchTarget {
-						if research != nil {
-							if said := research(actual); said != "" {
-								messages = append(messages, note("  → "+def.Name+rowid.Line("game.trade.Tick.03", " gave ")+said+".", logSubj(key)))
-							}
-						}
-						continue
-					}
-					resources.Add(res, actual)
-					got[res] = actual
-				}
-
-				route.CyclesDone++
-				route.Starved = false
-				if route.Lost > 0 {
-					messages = append(messages, note(rowid.Sprintf("game.trade.Tick.05", "Trade route %s is running again after %s lost.", def.Name, textfmt.Count(route.Lost, rowid.Line("game.trade.Tick.06", "run"), rowid.Line("game.trade.Tick.07", "runs"))), logSubj(key), logAs("info")))
-					route.Lost = 0
-				}
-				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.08", "%s delivered %s.", def.Name, Amounts(got)), logSubj(key), logID("game.trade.Tick.08"), logAs(LogRoutine),
-					logLevel(LevelEverything), logPaid(amts(def.Export)...), logGot(amts(got)...)))
-				// A completed cycle warms every civ you have met and are not at war with.
-				if diplomacy != nil {
-					diplomacy.RecordTrade()
-				}
-			} else {
-				route.Lost++
-			}
-			if !canAfford && !route.Starved {
-				route.Starved = true
-				for _, res := range sortedKeys(def.Export) {
-					if resources.Get(res) < def.Export[res] {
-						messages = append(messages, note(rowid.Sprintf("game.trade.Tick.04", "%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)), logSubj(key), logTrouble))
-						break
-					}
-				}
-			}
-
-			// Reset cycle
-			route.TicksLeft = tm.RunTicks(def.TicksPerRun)
+		legs = append(legs, leg{route, out, in})
+	}
+	share := make(map[string]float64, len(demand))
+	for res, d := range demand {
+		if r := rm.resources[res]; r != nil {
+			share[res] = min(1, (r.Amount+max(r.Rate, 0)*horizon)/float64(d*horizon))
 		}
 	}
+	for _, l := range legs {
+		l.route.Run = 1
+		for res := range l.out {
+			l.route.Run = min(l.route.Run, share[res])
+		}
+		for res, a := range l.out {
+			if r := rm.resources[res]; r != nil {
+				r.Rate -= float64(a * l.route.Run)
+				r.Breakdown.TradeFlow -= float64(a * l.route.Run)
+			}
+		}
+		for res, a := range l.in {
+			if res == config.ResearchTarget {
+				l.route.Research = float64(a * l.route.Run)
+			} else if r := rm.resources[res]; r != nil {
+				r.Rate += float64(a * l.route.Run)
+				r.Breakdown.TradeFlow += float64(a * l.route.Run)
+			}
+		}
+	}
+}
 
+// Tick is a live tick's trade: the research the routes bring, a word in the
+// log when a route stops running or runs again, and once a minute a warmer
+// opinion among the civilizations for each route that runs. The goods
+// themselves move in Flows.
+func (tm *TradeManager) Tick(tick int, diplomacy *DiplomacyManager, research func(work float64) string) []logNote {
+	var messages []logNote
+	minute := tick%max(minutesToTicks(1), 1) == 0
+	for _, key := range sortedKeys(tm.activeRoutes) {
+		route, def := tm.activeRoutes[key], tm.routeDefs[key]
+		state := ""
+		switch {
+		case route.Paused:
+			state = "paused"
+		case route.NoBuilding:
+			state = "building"
+			if route.said != state {
+				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.01", "Trade route %s is held: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)), logSubj(key), logTrouble))
+			}
+		case route.Disrupted:
+			state = "war"
+			if route.said != state {
+				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.02", "Trade route %s is held: a war or embargo is blocking %s shipments.", def.Name, ResourceName(tm.routeDisruptedBy(def, diplomacy.DisruptedResources()))), logSubj(key), logTrouble))
+			}
+		case route.Run < 1:
+			state = "short"
+			if route.said != state {
+				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.04", "Trade route %s is slowed: the town is short of what it exports.", def.Name), logSubj(key), logTrouble))
+			}
+		}
+		if state == "" && route.said != "" && route.said != "paused" {
+			messages = append(messages, note(rowid.Sprintf("game.trade.Tick.05", "Trade route %s is running at full again.", def.Name), logSubj(key), logAs("info")))
+		}
+		route.said = state
+		if route.Run <= 0 {
+			continue
+		}
+		if route.Research > 0 && research != nil {
+			research(route.Research)
+		}
+		if minute && diplomacy != nil {
+			diplomacy.RecordTrade()
+		}
+	}
 	return messages
 }
 
@@ -370,19 +355,18 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		route := tm.activeRoutes[key]
 		def := allRoutes[key]
 		blockedBy := tm.routeDisruptedBy(def, disrupted)
-		pay, shares := tm.payFor(def, terms)
+		out, in, shares := tm.flows(def, terms)
 		activeRoutes = append(activeRoutes, ActiveRouteInfo{
 			Name:        def.Name,
 			Key:         key,
-			TicksLeft:   route.TicksLeft,
-			CycleTicks:  tm.RunTicks(def.TicksPerRun),
-			CyclesDone:  route.CyclesDone,
-			Export:      maps.Clone(def.Export),
-			Import:      tm.routeImports(def),
+			Export:      out,
+			Import:      in,
 			Disrupted:   blockedBy != "",
 			DisruptedBy: blockedBy,
-			Starved:     route.Starved,
-			Pay:         pay,
+			Paused:      route.Paused,
+			NoBuilding:  route.NoBuilding,
+			Run:         route.Run,
+			Scale:       route.Scale,
 			Shares:      shares,
 		})
 		if blockedBy != "" && !seenDisrupt[blockedBy] {
@@ -413,18 +397,16 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			continue
 		}
 		canStart := buildings.CountFrom(def.RequiredBld) >= def.MinCount
-		pay, shares := tm.payFor(def, terms)
+		out, in, shares := tm.flows(def, terms)
 		availableRoutes = append(availableRoutes, TradeRouteInfo{
 			Name:        def.Name,
 			Key:         def.Key,
-			Export:      maps.Clone(def.Export),
-			Import:      tm.routeImports(def),
+			Export:      out,
+			Import:      in,
 			CanStart:    canStart,
 			RequiredBld: def.RequiredBld,
 			MinCount:    def.MinCount,
 			Description: def.Description,
-			CycleTicks:  tm.RunTicks(def.TicksPerRun),
-			Pay:         pay,
 			Shares:      shares,
 		})
 	}
@@ -434,6 +416,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		ActiveRoutes:       activeRoutes,
 		AvailableRoutes:    availableRoutes,
 		DisruptedResources: disruptedResources,
+		Speed:              tm.timeFactor(),
 	}
 }
 

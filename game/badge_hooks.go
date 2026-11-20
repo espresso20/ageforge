@@ -163,7 +163,7 @@ func (ge *GameEngine) noteProduced(scale float64) {
 		if !ge.Resources.unlocked[key] {
 			continue
 		}
-		made := r.Rate
+		made := r.Rate - r.Breakdown.TradeFlow // trade moves goods; it makes none
 		if r.Breakdown.FoodDrain < 0 {
 			// The drain is taken off before Era Mastery scales the rate.
 			made -= float64(r.Breakdown.FoodDrain * ge.speedK())

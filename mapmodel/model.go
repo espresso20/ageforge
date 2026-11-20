@@ -133,7 +133,6 @@ type Route struct {
 	Key, Name string
 	Disrupted bool
 	Imports   []string
-	Cycles    int
 	// Civ is the civ the route's caravans travel to: a cosmetic,
 	// deterministic pick among the civs you trade with ("" when you have
 	// met none).
@@ -501,7 +500,10 @@ func (m *Model) world(st *game.GameState) {
 		}
 	}
 	for _, r := range st.Trade.ActiveRoutes {
-		rt := Route{Key: r.Key, Name: r.Name, Disrupted: r.Disrupted, Cycles: r.CyclesDone}
+		if r.Paused {
+			continue
+		}
+		rt := Route{Key: r.Key, Name: r.Name, Disrupted: r.Disrupted}
 		rt.Imports = slices.Sorted(maps.Keys(r.Import))
 		if len(partners) > 0 {
 			rt.Civ = partners[Hash(m.Seed, HashStr(r.Key))%uint64(len(partners))]

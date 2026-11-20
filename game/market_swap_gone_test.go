@@ -25,7 +25,8 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 		}
 	}
 
-	// Routes still pay: a run takes its export and brings its import.
+	// Routes still pay: a running route takes its export and brings its
+	// import as a flow in the rates.
 	re := newSeededEngine(9)
 	learn(re, "the_wheel")
 	def := re.Trade.routeDefs["local_barter"]
@@ -35,19 +36,19 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 		r.Amount = config.Million
 	}
 	re.Resources.UnlockResource("gold")
-	re.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
+	re.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}
 	var exp, imp string
 	for exp = range def.Export {
 	}
 	for imp = range def.Import {
 	}
-	exp0, imp0 := re.Resources.Get(exp), re.Resources.Get(imp)
-	re.Trade.Tick(re.Resources, re.Buildings, nil, 0, nil)
-	paid := re.Resources.Get(imp) - imp0
-	took := exp0 - re.Resources.Get(exp)
+	re.recalculateRates()
+	paid := re.Resources.resources[imp].Breakdown.TradeFlow
+	took := -re.Resources.resources[exp].Breakdown.TradeFlow
 	re.mu.Unlock()
-	if math.Abs(paid-re.Trade.RoutePay(def.Import[imp])) > 1e-9 || math.Abs(took-def.Export[exp]) > 1e-9 {
-		t.Errorf("a route run took %v %s and paid %v %s, want %v and %v", took, exp, paid, imp, def.Export[exp], re.Trade.RoutePay(def.Import[imp]))
+	per := float64(def.TicksPerRun)
+	if math.Abs(paid*per-re.Trade.RoutePay(def.Import[imp])) > 1e-9 || math.Abs(took*per-def.Export[exp]) > 1e-9 {
+		t.Errorf("a route took %v %s and paid %v %s a run, want %v and %v", took*per, exp, paid*per, imp, def.Export[exp], re.Trade.RoutePay(def.Import[imp]))
 	}
 
 	// Deals still pay: the offer's goods for its price, once.

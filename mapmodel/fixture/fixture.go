@@ -211,7 +211,7 @@ func State(o Options) game.GameState {
 			continue
 		}
 		st.Trade.ActiveRoutes = append(st.Trade.ActiveRoutes, game.ActiveRouteInfo{Name: r.Name, Key: r.Key,
-			Import: maps.Clone(r.Import), Export: maps.Clone(r.Export), CyclesDone: 3})
+			Import: maps.Clone(r.Import), Export: maps.Clone(r.Export), Scale: 1, Run: 1})
 		n--
 	}
 
