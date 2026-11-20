@@ -51,3 +51,29 @@ func (ge *GameEngine) domainRankLocked(domain string) int {
 func (ge *GameEngine) rankOutputBonus(domain string) float64 {
 	return config.RankBonus * float64(ge.domainRankLocked(domain))
 }
+
+// TownTitle is the title the town wears beside its name: the best rank of
+// three or more the badges in view reach in a domain, as "Adept Farmer". ""
+// when no domain is that far. Points count the earned badges, as the bonus
+// does.
+func (s GameState) TownTitle() string {
+	if s.AccountStats == nil {
+		return ""
+	}
+	pts := map[string]int{}
+	for _, v := range s.AccountStats.Badges {
+		if v.Earned && !v.Integrity && v.Domain != "" {
+			pts[v.Domain] += v.Points
+		}
+	}
+	best, rank, top := "", 0, 0
+	for _, key := range config.WorkerDomains() {
+		if r := config.RankFor(pts[key]); r > rank || (r == rank && r > 0 && pts[key] > top) {
+			best, rank, top = key, r, pts[key]
+		}
+	}
+	if rank < 3 {
+		return ""
+	}
+	return config.RankTitles[rank-1] + " " + DomainName(best)
+}

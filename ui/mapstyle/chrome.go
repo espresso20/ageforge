@@ -77,7 +77,11 @@ func (v *view) drawHeader(cv *Canvas, width int, m *mapmodel.Model, zoom string)
 	ink := v.ink.Chrome
 	_, background, _ := ink.Decompose()
 	cv.Fill(0, 0, width, 1, ' ', ink)
-	x := cv.Text(1, 0, width-2, "◆ "+m.TownName, ink.Foreground(theme.Legible(theme.Of(theme.RoleAccent), background, 3)).Bold(true))
+	town := "◆ " + m.TownName
+	if m.TownTitle != "" {
+		town += ", " + m.TownTitle
+	}
+	x := cv.Text(1, 0, width-2, town, ink.Foreground(theme.Legible(theme.Of(theme.RoleAccent), background, 3)).Bold(true))
 	x = cv.Text(x, 0, width-x-1, " · "+m.AgeName+" · "+m.EpochName, ink)
 	idle := ink
 	if m.Workers.Idle > 0 {

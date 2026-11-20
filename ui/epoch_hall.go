@@ -207,6 +207,9 @@ func newHallView(state game.GameState) hallView {
 		v.name = game.AgeName(state.Age)
 	}
 	v.town = mapmodel.TownNameOf(state.Seed)
+	if t := state.TownTitle(); t != "" {
+		v.town += ", " + t
+	}
 	v.cur = game.AgeName(state.Age)
 	v.age = v.cur
 	if yr, ok := set.AgeYear(state.Age); ok {
