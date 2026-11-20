@@ -721,8 +721,8 @@ func TestMenuCaptionAndTheLinesThatComeAndGo(t *testing.T) {
 	if len(m.view.captions) == 0 || m.view.captions[0] != want {
 		t.Errorf("the caption is %q, want %q first", m.view.captions, want)
 	}
-	if scr := r.draw(120, 40); scr.has("Prestige") || scr.has("update available") || scr.has(eliteLines[m.eliteAt].words.String()) {
-		t.Error("a first game shows a prestige level, an update or the forge master's line")
+	if scr := r.draw(120, 40); scr.has("Prestige") || scr.has(eliteLines[m.eliteAt].words.String()) {
+		t.Error("a first game shows a prestige level or the forge master's line")
 	}
 
 	// A game with prestige behind it.

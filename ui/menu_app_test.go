@@ -29,7 +29,7 @@ func bootMenuApp(t *testing.T, w, h int, games ...string) (*reproHarness, *game.
 	}
 	eng := game.NewGameEngine()
 	eng.SetAccount(acct)
-	a := NewApp(eng, "dev") // "dev" skips the network update check
+	a := NewApp(eng, "dev")
 	sim := newSim()
 	a.SetScreen(sim)
 	sim.SetSize(w, h)

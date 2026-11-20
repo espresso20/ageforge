@@ -280,7 +280,7 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	m.view.plain = m.set.Tier == mapmodel.TierASCII
 	m.view.ages = len(m.engine.Rules().AgeKeys())
 	m.view.edition = menuEdition(m.version)
-	m.view.versions = []string{m.version}
+	m.view.version = m.version
 }
 
 // mainItems are the main menu's entries after Continue.

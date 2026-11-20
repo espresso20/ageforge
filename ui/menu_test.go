@@ -278,7 +278,7 @@ func checkMenuPage(t *testing.T, where string, sc *menuScene, v *menuView, town 
 		row += L.gap - 1
 	}
 
-	if !pageHas(g, v.versions[len(v.versions)-1]) {
+	if !pageHas(g, v.version) {
 		t.Errorf("%s: the version is not on the page", where)
 	}
 	if !pageHas(g, "choose") {
@@ -372,8 +372,7 @@ func checkMenuPage(t *testing.T, where string, sc *menuScene, v *menuView, town 
 
 // TestMenuPagesFitEverySize draws both pages from 80x24 to 144x46 (and at
 // 200x60), in an early, a middle and a late age, in both glyph sets, with
-// and without the lines that come and go (an update notice, the forge
-// master's line), and fails on anything cut off, broken or out of place.
+// and without the lines that come and go (the forge master's line), and fails on anything cut off, broken or out of place.
 func TestMenuPagesFitEverySize(t *testing.T) {
 	for _, size := range menuSizes {
 		for _, st := range menuStages() {
@@ -385,10 +384,9 @@ func TestMenuPagesFitEverySize(t *testing.T) {
 					v, town := stagedMenuView(st.age, st.forge, tier)
 					where := fmt.Sprintf("%s at %dx%d, %s glyphs", st.name, size[0], size[1], tier)
 					if more {
-						v.versions = []string{"v4.0.0 · update available (u)", "v4.0.0 · update (u)", "v4.0.0"}
 						v.elite = eliteLines[2].strings()
 						v.sel = len(v.items) - 1
-						where += ", with an update and the forge master's line"
+						where += ", with the forge master's line"
 					}
 					sc := newMenuScene(menuLayoutFor(size[0], size[1], v))
 					checkMenuPage(t, where, sc, v, town)
@@ -396,9 +394,6 @@ func TestMenuPagesFitEverySize(t *testing.T) {
 						g := sc.render(newMenuPalette(theme.Active()), v, town, mapstyle.Frame{Tier: tier})
 						if !strings.Contains(g.row(sc.L.py), eliteLines[2].words.String()) {
 							t.Errorf("%s: the forge master's line is not on the box", where)
-						}
-						if !strings.Contains(g.row(sc.L.py+sc.L.ph-1), "update") {
-							t.Errorf("%s: the update notice is not on the box", where)
 						}
 					}
 				}
