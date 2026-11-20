@@ -140,17 +140,17 @@ func TestNarrowDropsTrendThenBar(t *testing.T) {
 }
 
 func TestRisingHistoryDrawsRisingLine(t *testing.T) {
-	line := untag(trendCells([]float64{1, 2, 3, 4, 5, 6, 7, 8}, false, "green"))
+	line := untag(trendCells([]float64{1, 2, 3, 4, 5, 6, 7, 8}, false, "green", resTrendCells))
 	if line != "▁▂▃▄▅▆▇█" {
 		t.Errorf("rising line is %q", line)
 	}
-	if got := untag(trendCells([]float64{8, 4, 1}, false, "red")); got != "     █▄▁" {
+	if got := untag(trendCells([]float64{8, 4, 1}, false, "red", resTrendCells)); got != "     █▄▁" {
 		t.Errorf("falling line is %q", got)
 	}
-	if got := untag(trendCells([]float64{3, 3, 3}, true, "gray")); got != "     ---" {
+	if got := untag(trendCells([]float64{3, 3, 3}, true, "gray", resTrendCells)); got != "     ---" {
 		t.Errorf("flat ASCII line is %q", got)
 	}
-	if got := untag(trendCells([]float64{5}, false, "gray")); strings.TrimSpace(got) != "" {
+	if got := untag(trendCells([]float64{5}, false, "gray", resTrendCells)); strings.TrimSpace(got) != "" {
 		t.Errorf("one point should be blank, got %q", got)
 	}
 }

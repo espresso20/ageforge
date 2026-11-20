@@ -227,13 +227,15 @@ func (f resFormat) width() int {
 // fullest one that fits.
 func fitResourceFormat(rows []resRow, w int) resFormat {
 	// The trend line goes first: with it, the bar must still be a good one.
-	needTrend := false
+	// The line is as wide as the longest history so far (at most
+	// resTrendCells), so that the bar has the cells it does not use.
+	cells := 0
 	for _, r := range rows {
-		needTrend = needTrend || r.trend != nil
+		cells = max(cells, min(len(r.trend), resTrendCells))
 	}
-	if needTrend {
-		if f := fitResourceGrid(rows, w-2-resTrendCells); f.bar >= resBarGood {
-			f.trend = resTrendCells
+	if cells >= 2 {
+		if f := fitResourceGrid(rows, w-2-cells); f.bar >= resBarGood {
+			f.trend = cells
 			if f.width() <= w {
 				return f
 			}
@@ -375,7 +377,7 @@ func (f resFormat) line(r resRow) string {
 	if f.trend > 0 {
 		b.WriteString(gap)
 		if r.magnitude {
-			b.WriteString(trendCells(r.trend, r.plain, r.amtColor))
+			b.WriteString(trendCells(r.trend, r.plain, r.amtColor, f.trend))
 		} else {
 			b.WriteString(strings.Repeat(" ", f.trend))
 		}
