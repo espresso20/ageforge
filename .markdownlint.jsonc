@@ -19,7 +19,7 @@
   "MD024": { "siblings_only": true },
 
   // Blank lines around headings and lists. CHANGELOG.md is written compact by
-  // scripts/release.sh and make commit, and the wiki follows the same layout.
+  // make commit, and the wiki follows the same layout.
   "MD022": false,
   "MD032": false,
 
