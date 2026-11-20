@@ -69,8 +69,8 @@ type planPanel struct {
 	input, note              string
 	good, armed              bool
 	drag                     struct {
-		down, on bool
-		from, to int
+		down, on    bool
+		from, to, y int
 	}
 
 	l     planboard.Layout
@@ -455,8 +455,12 @@ func (p *planPanel) Mouse(m kit.Mouse) bool {
 		return true
 	case kit.MouseMove:
 		if p.drag.down {
-			if i := p.rowAt(pt); i >= 0 && i != p.drag.to {
-				p.drag.on, p.drag.to = true, i
+			i := p.rowAt(pt)
+			if i >= 0 && i != p.drag.to || p.drag.on && pt.Y != p.drag.y {
+				p.drag.on, p.drag.y = true, pt.Y
+				if i >= 0 {
+					p.drag.to = i
+				}
 				p.relayout()
 			}
 			return true

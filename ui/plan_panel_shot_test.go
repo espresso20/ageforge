@@ -71,7 +71,7 @@ func TestPlanPictures(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer f.Close()
-		if err := png.Encode(f, ScreenImagePixel(paintAlone(p, w, h))); err != nil {
+		if err := png.Encode(f, ScreenImagePixel(paintAlone(overBar(p), w, h+6))); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -83,29 +83,29 @@ func TestPlanPictures(t *testing.T) {
 		return p
 	}
 	ge := planShotGame(t)
-	p := open(ge, 279, 67)
+	p := open(ge, 279, 68)
 	p.selectTo(2)
-	save("main", p, 279, 67)
-	p.drag.on, p.drag.down, p.drag.from, p.drag.to = true, true, 2, 5
+	save("main", p, 279, 68)
+	p.drag.on, p.drag.down, p.drag.from, p.drag.to, p.drag.y = true, true, 2, 5, 18
 	p.relayout()
-	save("drag", p, 279, 67)
+	save("drag", p, 279, 68)
 	p.drag.on, p.drag.down = false, false
 	oe := optimizeCommandEngine(t) // a small town whose plan has a faster order
 	for _, c := range []string{"plan build hut 10", "plan build wood_camp 10", "plan build gathering_camp 10"} {
 		HandleCommand(c, oe)
 	}
-	p = open(oe, 279, 67)
+	p = open(oe, 279, 68)
 	p.optimize()
 	if p.mode != planPreview {
 		t.Fatal("no preview to picture")
 	}
-	save("optimize", p, 279, 67)
-	p.closeFirst()
+	save("optimize", p, 279, 68)
 	ge.PlanSetPaused(true)
-	p.update(ge.GetState())
-	save("paused", p, 279, 67)
+	p = open(ge, 279, 68)
+	p.selectTo(1)
+	save("paused", p, 279, 68)
 	ge.PlanSetPaused(false)
-	q := open(ge, 157, 40)
+	q := open(ge, 157, 38)
 	q.selectTo(1)
-	save("compact", q, 157, 40)
+	save("compact", q, 157, 38)
 }

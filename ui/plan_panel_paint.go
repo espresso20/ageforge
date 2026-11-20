@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/planboard"
@@ -39,7 +41,11 @@ var (
 	txtPlanMore    = rowid.E("ui.plan_panel.words.17", "more")
 	txtPlanNumber  = rowid.E("ui.plan_panel.words.18", "type a number")
 	txtPlanName    = rowid.E("ui.plan_panel.words.19", "type a name")
-	txtPlanHint    = rowid.E("ui.plan_panel.words.20", "click or type; drag a row to change the order")
+	txtPlanPaused  = rowid.E("ui.plan_panel.words.20", "paused")
+	txtPlanPlace   = rowid.E("ui.plan_panel.words.44", "Place")
+	txtPlanNowFin  = rowid.E("ui.plan_panel.words.45", "Now")
+	txtPlanNewFin  = rowid.E("ui.plan_panel.words.46", "New")
+	txtPlanSaves   = rowid.E("ui.plan_panel.words.47", "Saves")
 	txtPlanStarts  = rowid.E("ui.plan_panel.words.21", "Starts in")
 	txtPlanEnds    = rowid.E("ui.plan_panel.words.22", "Ends in")
 	txtPlanHolding = rowid.E("ui.plan_panel.words.23", "Holding back")
@@ -321,9 +327,14 @@ func (p *planPanel) relayout() {
 
 	// Title block and header.
 	n := len(p.st.Plan)
-	p.say(4, 2, txtPlanPlan.String(), planboard.Ink, true)
-	p.say(14, 2, rowid.Sprintf("ui.plan_panel.count.01", "%d of %d", n, game.MaxPlanItems), planboard.Dim, false)
-	p.say(4, 3, p.st.AgeName, planboard.Dim, false)
+	p.say(5, 2, txtPlanPlan.String(), planboard.PInk, true)
+	p.sayR(31, 2, rowid.Sprintf("ui.plan_panel.count.01", "%d of %d", n, game.MaxPlanItems), planboard.PDim)
+	if p.st.PlanPaused {
+		p.say(5, 3, fitText(p.st.AgeName, 17), planboard.PDim, false)
+		p.sayR(31, 3, txtPlanPaused.String(), planboard.PInk)
+	} else {
+		p.say(5, 3, fitText(p.st.AgeName, 25), planboard.PDim, false)
+	}
 	x := l.Lanes.Min.X + 1
 	if finish != "" {
 		p.say(x+1, 2, finish, planboard.Ink, false)
@@ -342,7 +353,11 @@ func (p *planPanel) relayout() {
 
 	// The list.
 	hdr := []string{strings.ToUpper(p.st.AgeName), strings.ToUpper(p.st.NextAgeName), txtPlanLater.String()}
+	gy := clamp(p.drag.y, l.ListY, l.SchedEnd-l.RowH)
 	for _, sl := range p.drawn.Slots {
+		if p.drag.on && sl.Y+l.RowH > gy && sl.Y < gy+l.RowH {
+			continue
+		}
 		if sl.Item < 0 {
 			p.say(l.ListX+1, sl.Y, hdr[min(sl.Age, 2)], planboard.Brass, true)
 			continue
@@ -357,17 +372,40 @@ func (p *planPanel) relayout() {
 		p.say(l.ListX+1, l.SchedEnd-1, rowid.Sprintf("ui.plan_panel.more.01", "%d more below", p.drawn.More), planboard.Dim, false)
 	}
 
+	if p.drag.on && p.drag.from < len(titles) {
+		p.ghost(titles[p.drag.from])
+	}
 	p.right(adv)
 	p.waits()
 	p.tray()
-	hint, c := txtPlanHint.String(), planboard.HintInk
 	if p.note != "" {
-		hint = p.note
+		c := planboard.HintInk
 		if !p.good {
 			c = planboard.Bad
 		}
+		p.say(3, l.Hint, p.note, c, true)
 	}
-	p.say(3, l.Hint, hint, c, p.note != "")
+}
+
+// ghost is the lifted row, following the pointer down the list.
+func (p *planPanel) ghost(title string) {
+	l := p.l
+	y := clamp(p.drag.y, l.ListY, l.SchedEnd-l.RowH)
+	r := image.Rect(l.ListX, y, l.ListX+l.ListW, y+l.RowH)
+	cw, ch := l.CW, l.CH
+	img := image.NewRGBA(image.Rect(0, 0, r.Dx()*cw, r.Dy()*ch))
+	fill, edge := planboard.Mix(planboard.Band, planboard.Brass, .35), planboard.Brass
+	for py := 0; py < img.Rect.Dy(); py++ {
+		for px := 0; px < img.Rect.Dx(); px++ {
+			c := fill
+			if py < 2 || py >= img.Rect.Dy()-2 || px < 2 || px >= img.Rect.Dx()-2 {
+				c = edge
+			}
+			img.SetRGBA(px, py, c)
+		}
+	}
+	p.pic(r, img)
+	p.say(r.Min.X+2, y+(l.RowH-1)/2, fitText(title, l.ListW-4), planboard.Ink, true)
 }
 
 // header is the buttons at the top right.
@@ -405,12 +443,91 @@ func (p *planPanel) right(adv []int) {
 	}
 	jobH := min(34, l.Right.Dy()-14)
 	job, gate := l.Cards(jobH)
+	if p.mode == planPreview {
+		p.chips(job)
+		return
+	}
 	if has && !(l.Compact && gateAt == p.sel) {
 		p.job(v, job)
 	}
 	if gateAt >= 0 && gate.Dy() > 4 && (!l.Compact || gateAt == p.sel) {
 		p.gate(p.st.Plan[gateAt], gate)
 	}
+}
+
+// chips is the job sheet while a preview shows: the picked piece old to new,
+// the plan's finish old to new and the biggest moves.
+func (p *planPanel) chips(r image.Rectangle) {
+	if p.sel < 0 || p.sel >= len(p.opt.Rows) {
+		return
+	}
+	row, jx, y := p.opt.Rows[p.sel], r.Min.X+2, r.Min.Y+2
+	kind := ""
+	if row.From >= 1 && row.From <= len(p.st.Plan) {
+		kind = p.st.Plan[row.From-1].Kind
+	}
+	line := func(label, s string) {
+		if y < r.Max.Y-1 && s != "" {
+			p.say(jx, y, label, planboard.PDim, false)
+			p.say(jx+12, y, fitText(s, r.Dx()-16), planboard.PInk, false)
+		}
+		y++
+	}
+	p.say(r.Min.X+10, y, fitText(p.opt.Order[p.sel], r.Dx()-12), planboard.PInk, true)
+	p.say(r.Min.X+10, y+1, txtPlanOptim.String(), planboard.PDim, false)
+	y += 4
+	var o *game.PlanItemEstimate
+	if i := row.From - 1; i >= 0 && i < len(p.old) && p.old[i].Modeled && !p.old[i].Never {
+		o = &p.old[i]
+	}
+	span := func(old, now time.Duration) string {
+		if o == nil || row.Never {
+			return planTimeText(now)
+		}
+		return planTimeText(old) + " -> " + planTimeText(now)
+	}
+	line(txtPlanCopies.String(), fmt.Sprint(row.Count))
+	line(txtPlanPlace.String(), fmt.Sprintf("%d -> %d", row.From, p.sel+1))
+	if o != nil {
+		line(txtPlanStarts.String(), span(o.Start, row.Start))
+		line(txtPlanEnds.String(), span(o.End, row.End))
+	} else {
+		line(txtPlanStarts.String(), planTimeText(row.Start))
+		line(txtPlanEnds.String(), planTimeText(row.End))
+	}
+	if p.sel > 0 {
+		line(txtPlanAbove.String(), p.opt.Order[p.sel-1])
+	}
+	if p.sel+1 < len(p.opt.Order) {
+		line(txtPlanBelow.String(), p.opt.Order[p.sel+1])
+	}
+	y++
+	line(txtPlanNowFin.String(), textfmt.Duration(p.opt.Before))
+	line(txtPlanNewFin.String(), textfmt.Duration(p.opt.After))
+	line(txtPlanSaves.String(), textfmt.Duration(p.opt.Before-p.opt.After))
+	y++
+	type mv struct{ j, d int }
+	var ms []mv
+	for j, rw := range p.opt.Rows {
+		if d := rw.From - 1 - j; d != 0 {
+			ms = append(ms, mv{j, d})
+		}
+	}
+	sort.SliceStable(ms, func(a, b int) bool { return abs(ms[a].d) > abs(ms[b].d) })
+	for i := 0; i < len(ms) && i < 8; i++ {
+		tag := rowid.Sprintf("ui.plan_panel.rows.03", ", up %d", ms[i].d)
+		if ms[i].d < 0 {
+			tag = rowid.Sprintf("ui.plan_panel.rows.04", ", down %d", -ms[i].d)
+		}
+		if y < r.Max.Y-1 {
+			p.say(jx, y, fitText(p.opt.Order[ms[i].j]+tag, r.Dx()-4), planboard.PInk, false)
+		}
+		y++
+	}
+	p.pic(r, p.picM[0].get(struct {
+		R image.Rectangle
+		K string
+	}{r, kind}, func() *image.RGBA { return p.l.Slip(r, kind, 0, 0, 1, nil) }))
 }
 
 func (p *planPanel) job(v game.PlanItemView, r image.Rectangle) {
@@ -582,10 +699,15 @@ func (p *planPanel) waits() {
 		x := gx + gw + 1
 		p.say(x, y, rowid.Sprintf("ui.plan_panel.waits.01", "%s of %s", textfmt.Number(nd.Have), textfmt.Number(nd.Need)), planboard.Dim, false)
 		x += 17
+		if l.Compact {
+			x -= 2
+		}
 		switch {
 		case nd.Never:
 			p.say(x, y, txtPlanNoInc.String(), planboard.Bad, false)
-		case nd.CoverIn > 0 && !l.Compact:
+		case nd.CoverIn > 0 && l.Compact:
+			p.say(x, y, rowid.Sprintf("ui.plan_panel.waits.04", "in %s", textfmt.Duration(nd.CoverIn)), planboard.Dim, false)
+		case nd.CoverIn > 0:
 			p.say(x, y, rowid.Sprintf("ui.plan_panel.waits.02", "covered in %s", textfmt.Duration(nd.CoverIn)), planboard.Dim, false)
 		}
 		if nd.Waiting > 0 {

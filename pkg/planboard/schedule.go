@@ -116,8 +116,13 @@ func (l Layout) Schedule(s Sched) Drawn {
 	end := ax.end()
 	// Title block rules: the plate and the age box, the finish and the untimed count.
 	line := Mix(Sheet, Ink, .4)
-	c.frame(image.Rect(3, 2, 32, 4), line)
-	c.vline(13*cw-1, 2*ch, 2*ch, line)
+	plate := image.Rect(3, 2, 32, 4)
+	c.cells(plate, Brass)
+	c.frame(plate, Mix(Brass, black, .45))
+	for _, rx := range []int{plate.Min.X*cw + 3, plate.Max.X*cw - 5} {
+		c.rect(rx, plate.Min.Y*ch+3, 2, 2, Mix(Brass, black, .5))
+		c.rect(rx, plate.Max.Y*ch-5, 2, 2, Mix(Brass, black, .5))
+	}
 	if s.FinishW > 0 {
 		x := l.Lanes.Min.X + 1
 		c.frame(image.Rect(x, 2, x+s.FinishW, 3), line)
