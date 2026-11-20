@@ -177,8 +177,8 @@ func tradeOfferGive(d game.DealInfo) string {
 	return textfmt.Number(d.GiveAmt) + " " + game.ResourceName(d.Give)
 }
 
-func tradeOfferGet(d game.DealInfo) string {
-	return game.DealGets(d.Get, d.GetAmt, d.Standing, textfmt.Number)
+func tradeOfferGet(st game.GameState, d game.DealInfo) string {
+	return game.DealGift(d.Kind, d.Res, d.Amt, textfmt.Number, func(t int) string { return formatTicks(t, st) })
 }
 
 // tradeOfferCmd is the command that accepts an offer.
@@ -405,7 +405,7 @@ func tradeDrawOffer(g *xgrid, st game.GameState, c tradeCiv, d game.DealInfo, ok
 	g.put(cols[0], y, game.DealKindLabel(d.Kind), xDim)
 	x := g.put(cols[1], y, tradeOfferGive(d), k)
 	g.put(max(x+1, cols[2]-3), y, "►", xDim)
-	g.put(cols[2], y, tradeOfferGet(d), xText)
+	g.put(cols[2], y, tradeOfferGet(st, d), xText)
 	g.rput(sx+68, y, textfmt.Number(st.Resources[d.Give].Amount), k)
 	if picked {
 		g.plate(sx+71-1, y, rowid.Line("ui.trade_side.tradeDrawOffer.01", "Enter"), xKeycap, "")

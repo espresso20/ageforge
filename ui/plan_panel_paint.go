@@ -157,19 +157,6 @@ func (p *planPanel) entries() {
 				es = append(es, planEntry{kind, s.Offer.Name, s.Offer.Name, "", 0})
 			}
 		}
-	case game.PlanDeal:
-		for _, civ := range sortedKeysOf(st.Diplomacy.Factions) {
-			f := st.Diplomacy.Factions[civ]
-			if f.DealsBlocked != "" {
-				continue
-			}
-			for _, d := range f.Deals {
-				if !d.Taken {
-					label := fmt.Sprintf("%s: %s / %s", game.CivName(civ), game.Amount(d.GiveAmt, d.Give), game.Amount(d.GetAmt, d.Get))
-					es = append(es, planEntry{kind, civ, label, "", d.Num})
-				}
-			}
-		}
 	}
 	p.all = es
 }

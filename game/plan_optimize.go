@@ -121,7 +121,7 @@ func (ge *GameEngine) planOptimizeRows(after []PlanItem) []PlanOptimizeRow {
 			continue
 		}
 		for _, j := range others {
-			if o := ge.plan[j]; !used[j] && o.Kind == it.Kind && o.Key == it.Key && o.Deal == it.Deal {
+			if o := ge.plan[j]; !used[j] && o.Kind == it.Kind && o.Key == it.Key {
 				used[j], rows[i].From = true, j+1
 				break
 			}
@@ -368,7 +368,7 @@ func (ge *GameEngine) planOptimizeLocked(apply bool) (PlanOptimizeResult, error)
 func planMoved(before, after []PlanItem) []bool {
 	moved := make([]bool, len(after))
 	for i, it := range after {
-		moved[i] = i >= len(before) || before[i].Kind != it.Kind || before[i].Key != it.Key || before[i].Count != it.Count || before[i].Deal != it.Deal
+		moved[i] = i >= len(before) || before[i].Kind != it.Kind || before[i].Key != it.Key || before[i].Count != it.Count
 	}
 	return moved
 }
@@ -386,7 +386,7 @@ func (ge *GameEngine) planLabels(plan []PlanItem) []string {
 // order.
 func planItemsEqual(a, b []PlanItem) bool {
 	return slices.EqualFunc(a, b, func(x, y PlanItem) bool {
-		return x.Kind == y.Kind && x.Key == y.Key && x.Count == y.Count && x.Deal == y.Deal
+		return x.Kind == y.Kind && x.Key == y.Key && x.Count == y.Count
 	})
 }
 

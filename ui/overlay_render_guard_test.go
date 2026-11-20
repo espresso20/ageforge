@@ -146,10 +146,10 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	guild := s.Diplomacy.Factions["merchant_guild"]
 	guild.DealRefreshIn = 90
 	guild.Deals = []game.DealInfo{
-		{Num: 1, Kind: game.DealWant, Give: "iron_ore", GiveAmt: 2100, Get: "food", GetAmt: 3000},
-		{Num: 2, Kind: game.DealFavor, Give: "iron_ore", GiveAmt: 727, Standing: 5},
-		{Num: 3, Kind: game.DealRare, Give: "gold", GiveAmt: 10, Get: "dark_matter", GetAmt: 1},
-		{Num: 4, Kind: "", Give: "wood", GiveAmt: 10, Get: "iron_ore", GetAmt: 12, Taken: true},
+		{Num: 1, Kind: game.DealBoost, Give: "iron_ore", GiveAmt: 2100, Res: "food", Amt: 3000},
+		{Num: 2, Kind: game.DealKnowhow, Give: "iron_ore", GiveAmt: 727, Res: "food"},
+		{Num: 3, Kind: game.DealBoost, Give: "gold", GiveAmt: 10, Res: "dark_matter", Amt: 1},
+		{Num: 4, Kind: "", Give: "wood", GiveAmt: 10, Res: "iron_ore", Amt: 12, Taken: true},
 	}
 	s.Diplomacy.Factions["merchant_guild"] = guild
 	river := s.Diplomacy.Factions["riverlands_tribes"]
@@ -245,7 +245,7 @@ var guardKeyEchoes = []*regexp.Regexp{
 	// build/research command takes beside each name.
 	regexp.MustCompile(`\($`),
 	// Command hints that end in the key they act on.
-	regexp.MustCompile(`\b(build|research|expedition|campaign|trade route start|trade route stop|plan deal|diplomacy [a-z/]+|ally/rival/embargo/neutral)\s+$`),
+	regexp.MustCompile(`\b(build|research|expedition|campaign|trade route start|trade route stop|diplomacy [a-z/]+|ally/rival/embargo/neutral)\s+$`),
 }
 
 // TestPanelsShowNoRawKeys: the tag-stripped panel text carries no config key

@@ -568,15 +568,13 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	// Raw keys go in; game.DealGets and DealTerms name the resources, so the
 	// painted skeleton below and plain use the same words ("iron ore").
 	give := textfmt.Number(d.GiveAmt) + " " + game.ResourceName(d.Give)
-	get := game.DealGets(d.Get, d.GetAmt, d.Standing, textfmt.Number)
+	get := game.DealGift(d.Kind, d.Res, d.Amt, textfmt.Number, func(t int) string { return formatTicks(t, state) })
 	note := ""
 	switch {
 	case d.Taken:
 		note = "taken"
-	case d.Kind == game.DealRare:
-		note = rowid.Line("ui.overlay_factions.dealLine.02", "next age's goods")
 	}
-	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, textfmt.Number))
+	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Res, d.Amt, textfmt.Number, func(t int) string { return formatTicks(t, state) }))
 	if d.Taken {
 		return theme.Paint(theme.RoleDim, truncate(plain+"  "+note, width))
 	}
@@ -593,6 +591,6 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 		theme.Paint(theme.RoleLabel, fmt.Sprintf("%d.", d.Num)),
 		theme.Paint(theme.RoleAccent, game.DealKindLabel(d.Kind)+":"),
 		theme.Paint(theme.RoleDim, "give"), theme.Paint(giveRole, give),
-		theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_factions.dealLine.04", "→ get")), theme.Paint(theme.RolePositive, get),
+		theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_factions.dealLine.04", "→")), theme.Paint(theme.RolePositive, get),
 		gap, theme.Paint(theme.RoleDim, note))
 }

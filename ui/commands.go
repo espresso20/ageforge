@@ -190,8 +190,6 @@ func registry() []*Command {
 					Help: []Usage{{"plan research <tech>", rowid.Line("ui.help.commands.plan.research", "Add a tech and, before it, the techs it still needs (techs start one at a time, in order)")}}},
 				sub("expedition", "plan expedition <mission>", rowid.Line("ui.help.commands.plan.expedition", "Send a mission from the board once its price is there and a party is home (a part of the name will do)"), Arg{Kind: ArgText}),
 				sub("advance", "plan advance", rowid.Line("ui.help.commands.plan.advance", "Advance as soon as the next age is ready")),
-				sub("deal", "plan deal <civ> <n>", rowid.Line("ui.help.commands.plan.deal", "Take a civilization's trade deal n once its price is there"),
-					Arg{Kind: ArgFaction}, Arg{Kind: ArgDeal}),
 				sub("list", "plan list", rowid.Line("ui.help.commands.plan.list", "Print the plan with each item's status and when it starts")),
 				{Name: "remove", Aliases: []string{"rm"}, Args: []Arg{{Kind: ArgPlanItem}},
 					Help: []Usage{{"plan remove <n>", rowid.Line("ui.help.commands.plan.remove", "Remove item n")}}},

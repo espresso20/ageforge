@@ -25,7 +25,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 - `sell` offers the buildings you have that it takes (not wonders, storage or knowledge buildings, and nothing in the Primitive Age).
 - `wonder collect` offers the resources the wonder still needs.
 - `trade route start` and `trade route stop` offer the routes you can start and the routes running.
-- `diplomacy` offers the civilizations you have met. `diplomacy accept` and `plan deal` offer the open deal numbers of the civilization you typed.
+- `diplomacy` offers the civilizations you have met. `diplomacy accept` offers the open offer numbers of the civilization you typed.
 - `theme` offers the themes you have unlocked.
 - `load` offers your saves, and `account switch` your local accounts.
 
@@ -113,7 +113,6 @@ The plan is a list of builds and techs that the game starts for you, in order, a
 | `plan research <tech>` (or `plan res`) | Add a tech and, before it, the techs it still needs (see [The research queue](plan.md#the-research-queue)). Techs start one at a time, in plan order. It takes any tech you can see on your tech tree: a tech of a later age waits for its age. |
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too. They wait for the advance. |
 | `plan expedition <mission>` | Send a mission from the [board](military.md) as soon as its price is there and a party is home (a part of the name will do). It holds its price back from the items below while it waits, and drops out with a log line if the offer leaves the board. |
-| `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Factions & Diplomacy](factions.md). |
 | `plan list` | Print the plan with each item's status and when it starts. |
 | `plan remove <n>` (or `plan rm`) | Remove item `n`. |
 | `plan optimize` (or `plan reorder`) | Reorder the planned buildings for the fastest growth, mixing homes and producers, and say how much sooner the plan finishes. It only keeps an order that is faster. See [Optimizing the order](plan.md#optimizing-the-order). |
@@ -132,7 +131,6 @@ plan build hut 10
 plan build gathering_camp 5
 plan res tool_making
 plan advance
-plan deal merchant_guild 2
 plan up 3
 plan rm 4
 plan optimize

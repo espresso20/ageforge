@@ -39,8 +39,6 @@ import (
 //     town's worth of price units of its age, and holding that back would
 //     stall everything below it for hours. Deposits (by hand) fill the bank.
 //   - Nothing is built that was not queued.
-//   - Deal items (plan_deal.go) take a civilization's trade deal once its
-//     fixed price is free, reserving it while they wait, like one build.
 //   - Techs start in plan order: only the first research item can take the
 //     research slot when it frees up. A tech has no price: it waits for the
 //     slot, and the scholars take it up when it starts.
@@ -115,8 +113,6 @@ type PlanItem struct {
 	Key     string `json:"key"`
 	Count   int    `json:"count"`
 	Started int    `json:"started,omitempty"`
-	// Deal items (plan_deal.go): Key is the civilization, Deal the offer's ID.
-	Deal int `json:"deal,omitempty"`
 }
 
 // Plan item statuses, for the UI.
@@ -181,13 +177,13 @@ type PlanItemView struct {
 func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 	var out []PlanItem
 	for _, it := range saved {
-		if (it.Kind != PlanBuild && it.Kind != PlanUpgrade && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal && it.Kind != PlanExpedition) || it.Count <= 0 {
+		if (it.Kind != PlanBuild && it.Kind != PlanUpgrade && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanExpedition) || it.Count <= 0 {
 			continue
 		}
 		if load := planLoad(out); it.Kind != PlanResearch && load >= MaxPlanItems || it.Kind == PlanResearch && len(out)-load >= set.TechCount() {
 			continue
 		}
-		if it.Kind == PlanDeal && (it.Key == "" || it.Deal <= 0) || it.Kind == PlanExpedition && it.Key == "" {
+		if it.Kind == PlanExpedition && it.Key == "" {
 			continue
 		}
 		if it.Kind != PlanBuild && it.Kind != PlanUpgrade {
@@ -375,9 +371,6 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	if it.Kind == PlanAdvance {
 		return txtAdvanceWhenReady.String()
 	}
-	if it.Kind == PlanDeal {
-		return ge.planDealLabel(it)
-	}
 	if it.Kind == PlanExpedition {
 		return rowid.Line("game.plan.planItemLabel.04", "expedition ") + it.Key
 	}
@@ -516,8 +509,6 @@ type planStarts struct {
 	techs  []string
 	// advanced is the age an advance item moved to ("" if none).
 	advanced string
-	// deals are the deal items taken, as labels.
-	deals []string
 	// expeditions are the titles of the missions the plan sent.
 	expeditions []string
 }
@@ -533,7 +524,7 @@ func (s *planStarts) addBuild(key string) {
 }
 
 func (s *planStarts) empty() bool {
-	return len(s.order) == 0 && len(s.techs) == 0 && s.advanced == "" && len(s.deals) == 0 && len(s.expeditions) == 0
+	return len(s.order) == 0 && len(s.techs) == 0 && s.advanced == "" && len(s.expeditions) == 0
 }
 
 // describe renders the starts as verb-led clauses: "started building 2 Huts
@@ -556,7 +547,6 @@ func (s *planStarts) describe(set *rules.Set) string {
 		}
 		parts = append(parts, rowid.Line("game.plan.describe.02", "started researching ")+textfmt.List(names))
 	}
-	parts = append(parts, s.deals...)
 	if len(s.expeditions) > 0 {
 		parts = append(parts, rowid.Line("game.plan.describe.04", "sent ")+textfmt.List(s.expeditions))
 	}
@@ -760,20 +750,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 				advanceAt, advanceIdx = i, len(out)
 				out = append(out, ge.plan[i+1:]...)
 				break
-			}
-			out = append(out, it)
-			continue
-		}
-		if it.Kind == PlanDeal {
-			if gone := ge.planDealGone(it); gone != "" {
-				ge.addLog(OfficePlan, "warning", rowid.Sprintf("game.plan.runPlan.01", "Plan: dropped %s (%s).", ge.planItemLabel(it), gone))
-				continue
-			}
-			if ge.runPlanDeal(it, reserved) {
-				started = true
-				ge.note(config.BadgeEvPlanStarted, PlanDeal)
-				starts.deals = append(starts.deals, rowid.Line("game.plan.runPlan.02", "took a ")+ge.planItemLabel(it))
-				continue
 			}
 			out = append(out, it)
 			continue
@@ -1004,10 +980,6 @@ func (ge *GameEngine) planViews() []PlanItemView {
 			out = append(out, ge.planAdvanceView(it))
 			continue
 		}
-		if it.Kind == PlanDeal {
-			out = append(out, ge.planDealView(it, reserved))
-			continue
-		}
 		v := PlanItemView{Kind: it.Kind, Key: it.Key, Count: it.Count, Started: it.Started}
 		if it.Kind == PlanResearch {
 			v.Name = techDefName(ge.rules, it.Key)
@@ -1116,7 +1088,7 @@ func (ge *GameEngine) planCauseOf(it PlanItem, v PlanItemView) string {
 		return PlanCauseFunds
 	case v.Status == PlanStatusWaiting:
 		return PlanCauseFunds
-	case it.Kind == PlanAdvance || it.Kind == PlanDeal:
+	case it.Kind == PlanAdvance:
 		return PlanCauseHand
 	case it.Kind == PlanResearch:
 		if def, ok := ge.rules.Tech(it.Key); ok && ge.progress.GetAgeOrder()[def.Age] > ge.progress.GetAgeOrder()[ge.age] {

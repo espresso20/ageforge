@@ -60,7 +60,6 @@ Gifts, alliances, rivalries, embargoes and deals wait for **Envoys**, a Classica
 | `diplomacy raid <civ>` | Raid its trade route: -20 opinion, and a provocation |
 | `diplomacy deals [civ]` | List trade deals (one civilization, or every one you have met) |
 | `diplomacy accept <civ> <n>` | Take deal `n` |
-| `plan deal <civ> <n>` | Take deal `n` in the [build plan](plan.md), once you can pay for it |
 
 `dip` works in place of `diplomacy` everywhere. Name a civilization by its key (`riverlands_tribes`) or as separate words (`merchant guild`). Only the ones you have met are accepted.
 

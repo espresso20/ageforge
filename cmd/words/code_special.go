@@ -78,7 +78,6 @@ var fileNotes = map[string]fileNote{
 	"game/names.go":             {place: "where the game names a thing it has no name for", age: "primitive_age"},
 	"game/plan.go":              {place: "about the build plan", age: "primitive_age", seen: seenNews},
 	"game/plan_advance.go":      {place: "about the build plan's advance item", age: "primitive_age", seen: seenNews},
-	"game/plan_deal.go":         {place: "about the build plan's deal items", age: "bronze_age", seen: seenNews},
 	"game/plan_research.go":     {place: "about techs in the build plan", age: "primitive_age", seen: seenNews},
 	"game/plan_trade.go":        {place: "about the build plan's trade items", age: "bronze_age", seen: seenNews},
 	"game/prestige.go":          {place: "about prestige", age: "medieval_age", seen: seenRare},

@@ -209,8 +209,8 @@ func TestFactionOffersLineOpensTrade(t *testing.T) {
 	s := stageFactions(t, 0, func(st *game.GameState, key string) {
 		setFaction(st, key, func(f *game.FactionInfo) {
 			f.Deals = []game.DealInfo{
-				{Num: 1, Kind: game.DealWant, Give: "gold", GiveAmt: 1, Get: "gold", GetAmt: 2},
-				{Num: 2, Kind: game.DealWant, Give: "gold", GiveAmt: 1, Get: "gold", GetAmt: 2, Taken: true},
+				{Num: 1, Kind: game.DealBoost, Give: "gold", GiveAmt: 1, Res: "gold", Amt: 2},
+				{Num: 2, Kind: game.DealBoost, Give: "gold", GiveAmt: 1, Res: "gold", Amt: 2, Taken: true},
 			}
 			f.DealsBlocked = ""
 		})

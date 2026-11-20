@@ -612,7 +612,7 @@ func discoveredFactionKeys(state game.GameState) []string {
 	return keysWhere(state.Diplomacy.Factions, func(_ string, f game.FactionInfo) bool { return f.Discovered })
 }
 
-// dealNumbers is what `diplomacy accept <civ>` and `plan deal <civ>` suggest:
+// dealNumbers is what `diplomacy accept <civ>` suggests:
 // the numbers of the civ's offers still open.
 func dealNumbers(state game.GameState, civ string) []string {
 	var nums []string

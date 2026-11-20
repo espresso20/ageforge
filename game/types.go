@@ -257,6 +257,8 @@ type RateBreakdown struct {
 	// MasteryRate is what Era Mastery adds: the net rate × (k − 1) on known
 	// ground (mastery.go), 0 on new ground.
 	MasteryRate float64
+	// GiftRate is what the running boosts from civilizations' offers add (gifts.go).
+	GiftRate float64
 	// PrestigeRate is what lifetime prestige points add after production pools,
 	// at the same final stage as Era Mastery.
 	PrestigeRate float64

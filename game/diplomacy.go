@@ -171,6 +171,8 @@ type FactionState struct {
 	DealRound int           `json:"deal_round,omitempty"`
 	DealTicks int           `json:"deal_ticks,omitempty"`
 	DealsFor  string        `json:"deals_for,omitempty"`
+	// Knowhow is set once the civ's know-how is earned: its perk (gifts.go).
+	Knowhow bool `json:"knowhow,omitempty"`
 }
 
 // LentWorkerBatch records one outstanding worker loan from a civilization.

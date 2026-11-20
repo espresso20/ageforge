@@ -150,7 +150,7 @@ After the first prestige, three carry-overs are free and remain on: **Plan Templ
 
 ### Plan Template
 
-As you write your [build plan](plan.md), the game records each item with the age you added it in: builds, upgrades, techs and advances (`plan build`, `plan upgrade`, `plan research`, `plan advance`). A build counts the copies you added, and removing an item takes back the copies it never started, so a build's count ends as what you started plus what is still waiting. Deals (`plan deal`) are not recorded, because a civilization's offers end with the run. Each age records up to 60 items, not counting research.
+As you write your [build plan](plan.md), the game records each item with the age you added it in: builds, upgrades, techs and advances (`plan build`, `plan upgrade`, `plan research`, `plan advance`). A build counts the copies you added, and removing an item takes back the copies it never started, so a build's count ends as what you started plus what is still waiting. Each age records up to 60 items, not counting research.
 
 The plan you wrote becomes the template at each prestige and Succumb, age by age. An age the run wrote in takes this run's part (with the Plan Template owned, so does every age the run entered). Ages the run never reached keep the part an older run wrote, so a short run never wipes a deeper one: a run that falls in the Iron Age leaves the Medieval Age's part, and every later age's, as an earlier run wrote it.
 

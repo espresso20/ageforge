@@ -498,7 +498,6 @@ func TestCivCommandsRefuseACivNotMet(t *testing.T) {
 		"SendTribute":       func(k string) error { _, _, err := dm.SendTribute(k, 0, 0); return err },
 		"SendGift":          func(k string) error { _, err := dm.SendGift(k, 0); return err },
 		"AcceptFactionDeal": func(k string) error { _, err := ge.AcceptFactionDeal(k, 1); return err },
-		"PlanAddDeal":       func(k string) error { return ge.PlanAddDeal(k, 1) },
 	}
 	for name, call := range calls {
 		for _, key := range []string{unmet, hidden, "no_such_civ"} {
