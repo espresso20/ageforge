@@ -5,6 +5,7 @@ import (
 	"image/png"
 	"os"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -137,6 +138,22 @@ func TestRanksPaintsAtTheWindowSize(t *testing.T) {
 		b := paintAlone(p, 279, 74)
 		if b.W != 279 || b.H != 74 {
 			t.Fatal("size")
+		}
+	}
+}
+
+// TestRanksRowsNeverOverlap: a domain's badge count and the note at the right
+// of its row share one line, and at a narrow width the note is cut or dropped
+// rather than drawn over the count.
+func TestRanksRowsNeverOverlap(t *testing.T) {
+	for _, w := range []int{80, 90, 100, 157, 279} {
+		for _, every := range []int{2, 7} {
+			p := ranksPanelOn(ranksViews(every), w, 46)
+			for y, line := range paintAlone(p, w, 46).Lines() {
+				if i := strings.Index(line, " badges"); i >= 0 && !strings.HasPrefix(line[i+7:], " ") && line[i+7:] != "" {
+					t.Errorf("width %d, row %d: %q", w, y, strings.TrimSpace(line))
+				}
+			}
 		}
 	}
 }
