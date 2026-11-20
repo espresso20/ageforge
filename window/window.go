@@ -377,7 +377,11 @@ func (g *Game) cursor(screen *ebiten.Image, ox, oy float64) {
 	}
 	w := float32(max(2, g.cw/8))
 	fg, _ := cellColors(f.At(at.X, at.Y))
-	vector.FillRect(screen, float32(ox)+float32(at.X*g.cw), float32(oy)+float32(at.Y*g.ch), w, float32(g.ch), fg, false)
+	h := float32(g.ch)
+	if f.CursorBig {
+		h *= 2
+	}
+	vector.FillRect(screen, float32(ox)+float32(at.X*g.cw), float32(oy)+float32(at.Y*g.ch), w, h, fg, false)
 }
 
 // paint takes the game's cells and draws the ones that changed onto the

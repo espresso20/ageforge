@@ -31,6 +31,11 @@ type Input struct {
 	// Ghost, when set, is asked for the text to show dim after the line
 	// while the cursor is at its end: a completion on offer.
 	Ghost func(text string) string
+	// Big draws the line at twice the size (Painter.PrintBig): the prompt,
+	// the text, the ghost and the cursor, two rows high, with a pad column
+	// before the prompt. It is centred in the rows it is given. Width and the
+	// mouse stay in cells.
+	Big bool
 	// OnChange is called when the player changes the text, OnEnter with the
 	// text on Enter.
 	OnChange func(text string)
@@ -62,8 +67,16 @@ func (in *Input) CanFocus() bool { return true }
 
 func (in *Input) Layout(r image.Rectangle) { in.Place(r) }
 
-// Size is the whole width, one row high.
-func (in *Input) Size(most image.Point) image.Point { return image.Pt(most.X, min(1, most.Y)) }
+// Size is the whole width, one row high (two when Big).
+func (in *Input) Size(most image.Point) image.Point { return image.Pt(most.X, min(in.unit(), most.Y)) }
+
+// unit is the cells a character column takes across and a text row down.
+func (in *Input) unit() int {
+	if in.Big {
+		return 2
+	}
+	return 1
+}
 
 func runeWidth(r rune) int { return uniseg.StringWidth(string(r)) }
 
@@ -76,7 +89,10 @@ func runesWidth(rs []rune) (w int) {
 
 // field is where the text starts and how many cells it has.
 func (in *Input) field() (x, w int) {
-	pw := Width(in.Prompt)
+	pw := in.unit() * Width(in.Prompt)
+	if in.Big {
+		pw += 2 // a pad column before the prompt
+	}
 	x, w = in.rect.Min.X+pw, in.rect.Dx()-pw
 	if in.Width > 0 {
 		w = min(w, in.Width)
@@ -94,35 +110,61 @@ func (in *Input) Paint(p *Painter) {
 	if !ps.Fg.IsSet() {
 		ps.Fg = Role(theme.RoleHighlight)
 	}
-	p.Print(r.Min.X, r.Min.Y, r.Dx(), in.Prompt, ps)
+	u := in.unit()
+	y := r.Min.Y
+	if in.Big {
+		y += (r.Dy() - 2) / 2
+		p.PrintBig(r.Min.X+2, y, r.Dx()-2, in.Prompt, ps)
+	} else {
+		p.Print(r.Min.X, y, r.Dx(), in.Prompt, ps)
+	}
 	x, w := in.field()
 	if w <= 0 {
 		return
 	}
-	p.Fill(image.Rect(x, r.Min.Y, x+w, r.Min.Y+1), in.Style.Bg)
-	// Scroll so the cursor has a cell in view.
+	if in.Big {
+		p.Fill(image.Rect(x, r.Min.Y, x+w, r.Max.Y), in.Style.Bg)
+	} else {
+		p.Fill(image.Rect(x, y, x+w, y+1), in.Style.Bg)
+	}
+	cols := w / u
+	// Scroll so the cursor has a column in view.
 	in.off = min(in.off, in.cur)
-	for in.off < in.cur && runesWidth(in.text[in.off:in.cur]) >= w {
+	for in.off < in.cur && runesWidth(in.text[in.off:in.cur]) >= cols {
 		in.off++
 	}
-	at := x
-	for i := in.off; i < len(in.text) && at+runeWidth(in.text[i]) <= x+w; i++ {
+	at := 0 // columns
+	for i := in.off; i < len(in.text) && at+runeWidth(in.text[i]) <= cols; i++ {
 		ch := in.text[i]
 		if in.Mask != 0 {
 			ch = in.Mask
 		}
-		p.Put(at, r.Min.Y, ch, in.Style)
-		if rw := runeWidth(ch); rw == 2 {
-			p.put(at, r.Min.Y, &glyph{s: string(ch), w: 2}, in.Style)
+		rw := runeWidth(ch)
+		if in.Big {
+			p.PrintBig(x+u*at, y, u*rw, Escape(string(ch)), in.Style)
+		} else {
+			p.Put(x+at, y, ch, in.Style)
+			if rw == 2 {
+				p.put(x+at, y, &glyph{s: string(ch), w: 2}, in.Style)
+			}
 		}
-		at += runeWidth(ch)
+		at += rw
 	}
-	curX := x + runesWidth(in.text[in.off:in.cur])
+	curX := x + u*runesWidth(in.text[in.off:in.cur])
 	if in.AtEnd() && in.Ghost != nil {
-		p.Print(curX, r.Min.Y, x+w-curX, Escape(in.Ghost(string(in.text))), Style{Fg: Role(theme.RoleDim), Bg: in.Style.Bg})
+		gs := Style{Fg: Role(theme.RoleDim), Bg: in.Style.Bg}
+		if in.Big {
+			p.PrintBig(curX, y, x+w-curX, Escape(in.Ghost(string(in.text))), gs)
+		} else {
+			p.Print(curX, y, x+w-curX, Escape(in.Ghost(string(in.text))), gs)
+		}
 	}
 	if in.focused {
-		p.Cursor(curX, r.Min.Y)
+		if in.Big {
+			p.CursorBig(curX, y)
+		} else {
+			p.Cursor(curX, y)
+		}
 	}
 }
 
@@ -209,8 +251,8 @@ func (in *Input) Mouse(m Mouse) bool {
 	}
 	x, _ := in.field()
 	in.cur = in.off
-	for in.cur < len(in.text) && x+runeWidth(in.text[in.cur]) <= m.X {
-		x += runeWidth(in.text[in.cur])
+	for in.cur < len(in.text) && x+in.unit()*runeWidth(in.text[in.cur]) <= m.X {
+		x += in.unit() * runeWidth(in.text[in.cur])
 		in.cur++
 	}
 	return true
