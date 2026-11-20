@@ -9,7 +9,7 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// research_panel.go is the Research panel: the tech tree as a map over the
+// tree_panel.go is the tree panel: the tech tree as a map over the
 // whole screen but the command bar (research_tree.go draws it). Like the
 // Map panel it leaves the keyboard with the command bar and takes only the
 // keys that print nothing: the arrows move from tech to tech and the view
@@ -18,19 +18,19 @@ import (
 // selected tech's card and, on the card, does what the card says. Esc
 // closes the card, then the panel.
 
-// researchKeys are the Research panel's keys as the Help panel lists them:
+// treeKeys are the tree panel's keys as the Help panel lists them:
 // the key, then what it does.
-var researchKeys = []keyHelp{
-	{"Arrows", rowid.E("ui.research_panel.researchKeys.02", "Move to the nearest tech that way; the view follows")},
-	{"Tab", rowid.E("ui.research_panel.researchKeys.04", "Next tech you can start (Shift-Tab: the one before)")},
-	{"PgUp/PgDn", rowid.E("ui.research_panel.researchKeys.05", "Zoom out to a tech a line, and back in")},
-	{"Home", rowid.E("ui.research_panel.researchKeys.07", "Back to your current age")},
-	{"Enter", rowid.E("ui.research_panel.researchKeys.09", "Open the selected tech's card; on the card, do what its last line says (with something typed, Tab and Enter act on the prompt instead)")},
-	{"Esc", rowid.E("ui.research_panel.researchKeys.11", "Close the card, then the panel")},
+var treeKeys = []keyHelp{
+	{"Arrows", rowid.E("ui.research_panel.treeKeys.02", "Move to the nearest tech that way; the view follows")},
+	{"Tab", rowid.E("ui.research_panel.treeKeys.04", "Next tech you can start (Shift-Tab: the one before)")},
+	{"PgUp/PgDn", rowid.E("ui.research_panel.treeKeys.05", "Zoom out to a tech a line, and back in")},
+	{"Home", rowid.E("ui.research_panel.treeKeys.07", "Back to your current age")},
+	{"Enter", rowid.E("ui.research_panel.treeKeys.09", "Open the selected tech's card; on the card, do what its last line says (with something typed, Tab and Enter act on the prompt instead)")},
+	{"Esc", rowid.E("ui.research_panel.treeKeys.11", "Close the card, then the panel")},
 }
 
-// researchPanel is the Research overlay primitive.
-type researchPanel struct {
+// treePanel is the Research overlay primitive.
+type treePanel struct {
 	barPanel
 	kit.Base
 	// host paints the panel's kit cells and takes the mouse; the keys stay
@@ -44,23 +44,25 @@ type researchPanel struct {
 	engine *game.GameEngine
 	// tier reads the glyph tier (the map glyphs setting).
 	tier func() mapmodel.GlyphTier
+	// back returns to the Research board: Esc does it once the card is closed.
+	back func()
 }
 
-func newResearchPanel() *researchPanel {
-	p := &researchPanel{w: 120, h: 37}
+func newTreePanel() *treePanel {
+	p := &treePanel{w: 120, h: 37}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
 }
 
 // open is the overlay's build: it runs on every Show.
-func (p *researchPanel) open(state game.GameState) Primitive {
+func (p *treePanel) open(state game.GameState) Primitive {
 	p.update(state)
 	return overBar(p)
 }
 
 // request sets what the next open shows: a zoom ("close", "far" or "" to
 // keep it) and a tech whose card to open ("" for none).
-func (p *researchPanel) request(zoom, card string) {
+func (p *treePanel) request(zoom, card string) {
 	switch zoom {
 	case "close":
 		p.view.far = false
@@ -73,8 +75,29 @@ func (p *researchPanel) request(zoom, card string) {
 	}
 }
 
+// show sets the tech the next open is on, with no card.
+func (p *treePanel) show(key string) {
+	p.view.card, p.view.note = false, ""
+	if key != "" {
+		p.view.sel = key
+	}
+}
+
+// closeBack closes the card, and with none open goes back to the board:
+// Esc does this before it would close the panel.
+func (p *treePanel) closeBack() bool {
+	if p.closeCard() {
+		return true
+	}
+	if p.back == nil {
+		return false
+	}
+	p.back()
+	return true
+}
+
 // update takes a new snapshot and lays the tree out again.
-func (p *researchPanel) update(state game.GameState) {
+func (p *treePanel) update(state game.GameState) {
 	p.state = state
 	p.view.ascii = p.tier != nil && p.tier() == mapmodel.TierASCII
 	p.layout()
@@ -82,7 +105,7 @@ func (p *researchPanel) update(state game.GameState) {
 
 // layout rebuilds the model for the current size and zoom, keeps the
 // selection on a tech that is on the map, and scrolls it into view.
-func (p *researchPanel) layout() {
+func (p *treePanel) layout() {
 	geom := treeGeomFor(p.w, p.view.far)
 	p.model = buildTree(p.state, geom, p.view.ascii, p.view.sel)
 	if p.model.by[p.view.sel] == nil {
@@ -121,7 +144,7 @@ func (m *treeModel) home() string {
 
 // Layout takes the panel's rectangle and lays the tree out again when its
 // size has changed.
-func (p *researchPanel) Layout(r image.Rectangle) {
+func (p *treePanel) Layout(r image.Rectangle) {
 	p.Place(r)
 	if w, h := r.Dx(), r.Dy(); w > 0 && h > 0 && (w != p.w || h != p.h) {
 		p.w, p.h = w, h
@@ -134,7 +157,7 @@ func (p *researchPanel) Layout(r image.Rectangle) {
 // Paint puts the tree on the kit's painter in theme colors (the shared grid
 // painter, cell_grid.go). Lane hues go through the contrast rule for art;
 // text roles are the theme's own.
-func (p *researchPanel) Paint(p2 *kit.Painter) {
+func (p *treePanel) Paint(p2 *kit.Painter) {
 	r := p.Bounds()
 	if r.Empty() || p.model == nil {
 		return
@@ -151,7 +174,7 @@ func (p *researchPanel) Paint(p2 *kit.Painter) {
 // Mouse: a click picks the tech under the pointer and opens its card, as
 // Enter on it does; a click outside an open card closes it, as Esc does;
 // the wheel moves the selection a tech a notch, as the arrows do.
-func (p *researchPanel) Mouse(m kit.Mouse) bool {
+func (p *treePanel) Mouse(m kit.Mouse) bool {
 	if p.model == nil {
 		return false
 	}
@@ -183,14 +206,14 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 }
 
 // PointerAt: the hand over a tech.
-func (p *researchPanel) PointerAt(at image.Point) kit.Pointer {
+func (p *treePanel) PointerAt(at image.Point) kit.Pointer {
 	return handIf(p.model != nil && !p.view.card && p.model.techAt(at.Sub(p.Bounds().Min), p.view, p.w, p.h) != "")
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt, Tab and Enter belong to the
 // prompt.
-func (p *researchPanel) routeKey(ev *kit.Key, prompt string) bool {
+func (p *treePanel) routeKey(ev *kit.Key, prompt string) bool {
 	switch ev.Code {
 	case kit.KeyUp, kit.KeyDown, kit.KeyLeft, kit.KeyRight, kit.KeyPgUp, kit.KeyPgDn, kit.KeyHome:
 	case kit.KeyTab, kit.KeyBacktab, kit.KeyEnter:
@@ -206,7 +229,7 @@ func (p *researchPanel) routeKey(ev *kit.Key, prompt string) bool {
 
 // closeCard closes the open card and reports whether there was one: Esc
 // closes the card first, then the panel.
-func (p *researchPanel) closeCard() bool {
+func (p *treePanel) closeCard() bool {
 	if !p.view.card {
 		return false
 	}
@@ -214,7 +237,7 @@ func (p *researchPanel) closeCard() bool {
 	return true
 }
 
-func (p *researchPanel) handleKey(key kit.KeyCode) {
+func (p *treePanel) handleKey(key kit.KeyCode) {
 	if p.model == nil {
 		p.layout()
 	}
@@ -251,7 +274,7 @@ func (p *researchPanel) handleKey(key kit.KeyCode) {
 
 // move selects the nearest tech in a direction: along the row first for
 // left and right, down or up the lane first for up and down.
-func (p *researchPanel) move(dx, dy int) {
+func (p *treePanel) move(dx, dy int) {
 	cur := p.model.by[p.view.sel]
 	if cur == nil {
 		return
@@ -283,7 +306,7 @@ func (p *researchPanel) move(dx, dy int) {
 
 // step selects the next (or the previous) tech that can start, in reading
 // order, and wraps round.
-func (p *researchPanel) step(dir int) {
+func (p *treePanel) step(dir int) {
 	var ready []string
 	at := -1
 	for _, n := range p.model.nodes {
@@ -309,7 +332,7 @@ func (p *researchPanel) step(dir int) {
 // act does what the open card says: it starts the tech, or adds it to the
 // build plan. Research spends knowledge for good, so this is the second
 // Enter, never the first. What the game answers goes on the card.
-func (p *researchPanel) act() {
+func (p *treePanel) act() {
 	n := p.model.by[p.view.sel]
 	if n == nil || p.engine == nil {
 		return
