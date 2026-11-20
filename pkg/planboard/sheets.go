@@ -2,7 +2,6 @@ package planboard
 
 import (
 	"image"
-	"image/color"
 )
 
 // A Bar is one gauge: a label row's bar, full when Have reaches Need. Held
@@ -77,15 +76,14 @@ func (l Layout) Gate(r image.Rectangle, gx, gy, step int, pillars []Bar) *image.
 // A WaitRow is one resource the plan waits on, as a gauge row.
 type WaitRow struct{ Have, Need float64 }
 
-// WaitsPic draws the gauges of the "waits on" box, one per row from row gy, with
-// the colour chosen by how much of the need is covered.
-func (l Layout) WaitsPic(r image.Rectangle, gx, gy int, w []WaitRow) *image.RGBA {
+// WaitsPic draws the gauges of the "waits on" box: gw cells wide from column
+// gx, one per row from row gy, step rows apart, coloured by how much of the
+// need is covered.
+func (l Layout) WaitsPic(r image.Rectangle, gx, gw, gy, step int, w []WaitRow) *image.RGBA {
 	c := part(r, l.CW, l.CH)
 	cw, ch := l.CW, l.CH
-	c.cells(r, Card)
-	c.frame(r, PDim)
 	for i, v := range w {
-		c.fill(gx*cw, (gy+i)*ch+ch/2-4, (r.Max.X-1-gx)*cw, 8, Bar{Have: v.Have, Need: v.Need, Short: v.Have < v.Need})
+		c.fill(gx*cw, (gy+i*step)*ch+ch/2-4, gw*cw, 8, Bar{Have: v.Have, Need: v.Need, Short: v.Have < v.Need})
 	}
 	return c.img
 }
@@ -97,48 +95,78 @@ type Entry struct {
 	Dim  bool
 }
 
-// TrayPic draws the tab strip and the entry list. Tabs are tabW cells wide on the
-// strip's first row; the selected tab is underlined in brass. Entries sit one
-// per row from row ey (two rows each when the layout's rows are tall), with a
-// brass plus button in the last column.
-func (l Layout) TrayPic(r image.Rectangle, tabs, sel, ey int, es []Entry) *image.RGBA {
+// TabRect is tray tab i, a cell tall.
+func (l Layout) TabRect(i int) image.Rectangle {
+	x := l.Tray.Min.X + 1 + i*l.TabW
+	return image.Rect(x, l.Tray.Min.Y, x+l.TabW-1, l.Tray.Min.Y+1)
+}
+
+// EntryRect is the cells of tray entry i: two columns, filled down the left
+// one first, each row RowH tall under the search row.
+func (l Layout) EntryRect(i int) (image.Rectangle, bool) {
+	top := l.Tray.Min.Y + 2
+	per := (l.Tray.Max.Y - top) / l.RowH
+	if per <= 0 || i < 0 || i >= 2*per {
+		return image.Rectangle{}, false
+	}
+	half := l.Tray.Dx() / 2
+	x := l.Tray.Min.X + i/per*half
+	y := top + i%per*l.RowH
+	return image.Rect(x, y, x+half-1+i/per, y+l.RowH), true
+}
+
+// EntryCount is how many entries the tray's two columns hold.
+func (l Layout) EntryCount() int {
+	_, ok := l.EntryRect(0)
+	if !ok {
+		return 0
+	}
+	return 2 * ((l.Tray.Max.Y - l.Tray.Min.Y - 2) / l.RowH)
+}
+
+// TrayPic draws the tab strip, the search row and the entries. The selected
+// tab is underlined in brass; each entry has a brass plus button at the
+// right of its column.
+func (l Layout) TrayPic(r image.Rectangle, signs []string, sel int, es []Entry) *image.RGBA {
 	c := part(r, l.CW, l.CH)
 	cw, ch := l.CW, l.CH
 	c.cells(r, Card)
-	for i := 0; i < tabs; i++ {
-		x := r.Min.X + 1 + i*l.TabW
-		c.cells(image.Rect(x, r.Min.Y, x+l.TabW-1, r.Min.Y+1), Mix(Card, Wood[2], .25))
+	for i, sg := range signs {
+		t := l.TabRect(i)
+		bg := Mix(Card, Wood[2], .25)
 		if i == sel {
-			c.cells(image.Rect(x, r.Min.Y, x+l.TabW-1, r.Min.Y+1), Paper)
-			c.rect(x*cw, (r.Min.Y+1)*ch-3, (l.TabW-1)*cw, 3, Brass)
+			bg = Paper
+		}
+		c.cells(t, bg)
+		c.signSmall(sg, t.Min.X*cw, t.Min.Y*ch, 0, bg)
+		if i == sel {
+			c.rect(t.Min.X*cw, t.Max.Y*ch-3, t.Dx()*cw, 3, Brass)
 		}
 	}
 	for i, e := range es {
-		y := ey + i*l.RowH
-		if y+l.RowH > r.Max.Y {
+		er, ok := l.EntryRect(i)
+		if !ok {
 			break
 		}
+		bg := Card
 		if i%2 == 0 {
-			c.cells(image.Rect(r.Min.X+1, y, r.Max.X-1, y+l.RowH), Mix(Card, Paper, .35))
+			bg = Mix(Card, Paper, .35)
 		}
+		c.cells(er, bg)
 		rn := rng(seed(e.Sign))
-		bg := color.RGBA(Mix(Card, Paper, .35))
-		if i%2 == 1 {
-			bg = Card
-		}
 		if l.RowH == 2 {
-			c.sign(e.Sign, (r.Min.X+2)*cw, y*ch, rn.n(3), bg)
+			c.sign(e.Sign, er.Min.X*cw+2, er.Min.Y*ch, rn.n(3), bg)
 		} else {
-			c.signSmall(e.Sign, (r.Min.X+2)*cw, y*ch, rn.n(3), bg)
+			c.signSmall(e.Sign, er.Min.X*cw+2, er.Min.Y*ch, rn.n(3), bg)
 		}
-		bx := (r.Max.X-3)*cw + rn.jit()
 		col := Brass
 		if e.Dim {
 			col = Mix(Card, PDim, .5)
 		}
-		c.rect(bx, y*ch+l.RowH*ch/2-5, 14, 10, col)
-		c.rect(bx+6, y*ch+l.RowH*ch/2-3, 2, 6, PInk)
-		c.rect(bx+3, y*ch+l.RowH*ch/2-1, 8, 2, PInk)
+		bx, by := (er.Max.X-2)*cw+rn.jit(), er.Min.Y*ch+l.RowH*ch/2-5
+		c.rect(bx, by, 14, 10, col)
+		c.rect(bx+6, by+2, 2, 6, PInk)
+		c.rect(bx+3, by+4, 8, 2, PInk)
 	}
 	return c.img
 }
