@@ -22,7 +22,7 @@ import (
 const poisonRune = 'א'
 
 // fullSizes are the terminal sizes the panels are drawn at.
-var fullSizes = [][2]int{{80, 24}, {100, 30}, {160, 45}}
+var fullSizes = [][2]int{{80, 24}, {100, 30}, {160, 45}, {120, 36}, {157, 46}, {279, 74}}
 
 // panelCommands are the commands that open the panels of the Panels list, and
 // the one more overlay a command opens (the Buildings list).
@@ -61,7 +61,7 @@ func openPanel(t *testing.T, d *Dashboard, cmd string, w, h int) {
 // TestEveryPanelOpensFullScreen: each panel of the Panels list, and the
 // others a command opens, fills the screen above the command bar at 80x24,
 // 100x30 and 160x45 (nothing of the dashboard shows round it, and the bar's
-// three rows are left to the dashboard), and Esc closes it back to the
+// rows are left to the dashboard: three, or six on a window of 120x39 and up), and Esc closes it back to the
 // dashboard with the command bar holding the keyboard.
 func TestEveryPanelOpensFullScreen(t *testing.T) {
 	d, pages := poisonedStage(t)
@@ -75,10 +75,10 @@ func TestEveryPanelOpensFullScreen(t *testing.T) {
 				for x := 0; x < w; x++ {
 					c := cells[y*w+x]
 					poisoned := len(c.Runes) > 0 && c.Runes[0] == poisonRune
-					if y < h-promptRows && poisoned {
+					if y < h-barRows(w, h) && poisoned {
 						t.Errorf("%s: the dashboard shows at (%d,%d), above the command bar", where, x, y)
 						x, y = w, h // one report a panel
-					} else if y >= h-promptRows && !poisoned {
+					} else if y >= h-barRows(w, h) && !poisoned {
 						t.Errorf("%s: the panel covers the command bar at (%d,%d)", where, x, y)
 						x, y = w, h
 					}
@@ -108,7 +108,7 @@ func frameLooks(t *testing.T, where string, cells []simCell, w, h int, title str
 		}
 		return r
 	}
-	rows := rectText(cells, w, 0, 0, w, h-promptRows)
+	rows := rectText(cells, w, 0, 0, w, h-barRows(w, h))
 	last := len(rows) - 1
 	for y, row := range rows {
 		cs := []rune(row)
@@ -259,7 +259,7 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 			t.Errorf("%s: the command bar has the keyboard, so a letter would print instead of acting", name)
 		}
 		cells := drawnDashboard(t, d, pages, 100, 30)
-		foot := rectText(cells, 100, 0, 30-promptRows-2, 100, 1)[0]
+		foot := rectText(cells, 100, 0, 30-barSmallRows-2, 100, 1)[0]
 		for _, k := range keys {
 			if !strings.Contains(foot, k) {
 				t.Errorf("%s: the foot does not name %q: %q", name, k, foot)
@@ -282,7 +282,7 @@ func TestPanelFooterOffersTheBar(t *testing.T) {
 	for _, name := range []string{"factions", "logs", "buildings", "help"} {
 		openPanel(t, d, name, 100, 30)
 		cells := drawnDashboard(t, d, pages, 100, 30)
-		foot := rectText(cells, 100, 0, 30-promptRows-2, 100, 1)[0]
+		foot := rectText(cells, 100, 0, 30-barSmallRows-2, 100, 1)[0]
 		for _, want := range []string{"scroll", "Esc", "or type"} {
 			if !strings.Contains(foot, want) {
 				t.Errorf("%s: the foot does not say %q: %q", name, want, foot)

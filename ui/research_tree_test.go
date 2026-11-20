@@ -197,7 +197,7 @@ func TestResearchTreeAtEverySize(t *testing.T) {
 func treeAtEverySize(t *testing.T, st game.GameState, sels ...string) {
 	t.Helper()
 	for _, size := range treeSizes {
-		w, h := size[0], size[1]-promptRows
+		w, h := size[0], size[1]-barRows(size[0], size[1])
 		for _, far := range []bool{false, true} {
 			for _, ascii := range []bool{false, true} {
 				for _, sel := range sels {
@@ -253,7 +253,7 @@ func treeAtEverySize(t *testing.T, st game.GameState, sels ...string) {
 func TestResearchTreeLaneRow(t *testing.T) {
 	st := classicalGame(t).GetState()
 	for _, size := range treeSizes {
-		w, h := size[0], size[1]-promptRows
+		w, h := size[0], size[1]-barRows(size[0], size[1])
 		for _, far := range []bool{false, true} {
 			for _, sel := range []string{"primitive_writing", "philosophy", "siege_warfare"} {
 				m, v, g := drawTree(st, w, h, treeView{sel: sel, far: far})
@@ -346,7 +346,7 @@ func TestResearchTreePaintsInEveryTheme(t *testing.T) {
 	st := classicalGame(t).GetState()
 	eachThemeInline(t, func(th theme.Theme) {
 		for _, size := range treeSizes {
-			w, h := size[0], size[1]-promptRows
+			w, h := size[0], size[1]-barRows(size[0], size[1])
 			p := newTreePanel()
 			p.view.sel = "road_building"
 			p.SetRect(0, 0, w, h)

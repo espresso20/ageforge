@@ -171,9 +171,9 @@ func TestStatsPictureCountsAndPlainCells(t *testing.T) {
 	// plate that only the first part holds balances the plate of the
 	// Left/Right key that only the second does. So the parts differ by
 	// exactly the page's pictures, all of which are in view
-	run := len(paintAlone(overBar(p), 160, 40).Pics)
+	run := len(paintAlone(overBar(p), 160, 40+barBigRows).Pics)
 	keyOf(p, kit.KeyTab)
-	life := len(paintAlone(overBar(p), 160, 40).Pics)
+	life := len(paintAlone(overBar(p), 160, 40+barBigRows).Pics)
 	if got, want := run-life, 24-len(p.page.pics); got != want {
 		t.Errorf("painted pictures differ by %d, want %d", got, want)
 	}
@@ -184,7 +184,7 @@ func TestStatsPictureCountsAndPlainCells(t *testing.T) {
 	for _, part := range []int{partRun, partLifetime} {
 		pl.part = part
 		pl.Layout(pl.Bounds())
-		b := paintAlone(overBar(pl), 160, 40)
+		b := paintAlone(overBar(pl), 160, 40+barBigRows)
 		if len(b.Pics) != 0 {
 			t.Errorf("part %d: pictures in the plain tier", part)
 		}

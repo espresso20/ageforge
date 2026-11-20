@@ -40,42 +40,46 @@ func cellColors(c kit.Cell) (fg, bg color.RGBA) {
 	return fg, bg
 }
 
-func (g *Game) advance(f *fontFile, r rune) float64 {
-	k := advKey{f, g.size, r}
+// advance is the width of r in f at sc times the cell's type size.
+func (g *Game) advance(f *fontFile, r rune, sc float64) float64 {
+	k := advKey{f, g.size * sc, r}
 	if a, ok := g.adv[k]; ok {
 		return a
 	}
-	a := text.Advance(string(r), g.goFace(f, g.size))
+	a := text.Advance(string(r), g.goFace(f, g.size*sc))
 	g.adv[k] = a
 	return a
 }
 
 // drawCell paints one cell, or the two cells of a wide rune, onto the buffer.
 func (g *Game) drawCell(x, y int, c kit.Cell) {
-	cw := g.cw
+	cw, ch, sc := g.cw, g.ch, 1
+	if c.Big != 0 {
+		cw, ch, sc = 2*cw, 2*ch, 2 // the top left of a group drawn at twice the size
+	}
 	if c.Wide {
 		cw *= 2
 	}
 	px, py := float32(x*g.cw), float32(y*g.ch)
 	fg, bg := cellColors(c)
 	if c.Clear() {
-		g.buf.SubImage(image.Rect(int(px), int(py), int(px)+cw, int(py)+g.ch)).(*ebiten.Image).Clear() // an image shows through
+		g.buf.SubImage(image.Rect(int(px), int(py), int(px)+cw, int(py)+ch)).(*ebiten.Image).Clear() // an image shows through
 	} else {
-		vector.FillRect(g.buf, px, py, float32(cw), float32(g.ch), bg, false)
+		vector.FillRect(g.buf, px, py, float32(cw), float32(ch), bg, false)
 	}
 	if c.Pic != 0 {
 		g.drawPic(x, y, c) // a picture's cell: its pixels, on the cell's ground; a glyph is drawn over them
 	}
 	if c.R != ' ' && c.R != 0 {
-		if sh, ok := procedural(c.R, g.cw, g.ch); ok {
+		if sh, ok := procedural(c.R, cw/(1+b2i(c.Wide)), ch); ok {
 			g.drawShape(sh, px, py, fg, bg)
 		} else {
-			g.drawText(c, px, py, cw, fg)
+			g.drawText(c, px, py, cw, float64(sc), fg)
 		}
 	}
 	if c.Attr&kit.Underline != 0 {
-		t := float32(max(1, g.ch/16))
-		vector.FillRect(g.buf, px, py+float32(g.ch)-2*t, float32(cw), t, fg, false)
+		t := float32(max(1, g.ch/16) * sc)
+		vector.FillRect(g.buf, px, py+float32(ch)-2*t, float32(cw), t, fg, false)
 	}
 }
 
@@ -100,7 +104,15 @@ func (g *Game) drawShape(sh shape, px, py float32, fg, bg color.RGBA) {
 	}
 }
 
-func (g *Game) drawText(k kit.Cell, px, py float32, cw int, fg color.RGBA) {
+// b2i is 1 for true.
+func b2i(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func (g *Game) drawText(k kit.Cell, px, py float32, cw int, sc float64, fg color.RGBA) {
 	g.mu.Lock()
 	s := g.set.Font
 	g.mu.Unlock()
@@ -111,8 +123,8 @@ func (g *Game) drawText(k kit.Cell, px, py float32, cw int, fg color.RGBA) {
 		}
 		k.R, k.Comb = '?', ""
 	}
-	face := g.goFace(f, g.size)
-	adv := g.advance(f, k.R)
+	face := g.goFace(f, g.size*sc)
+	adv := g.advance(f, k.R, sc)
 	op := &text.DrawOptions{}
 	sx := 1.0
 	if adv > float64(cw) && adv > 0 {
@@ -120,7 +132,7 @@ func (g *Game) drawText(k kit.Cell, px, py float32, cw int, fg color.RGBA) {
 		adv = float64(cw)
 	}
 	op.GeoM.Scale(sx, 1)
-	op.GeoM.Translate(float64(px)+(float64(cw)-adv)/2, float64(py)+g.asc-face.Metrics().HAscent)
+	op.GeoM.Translate(float64(px)+(float64(cw)-adv)/2, float64(py)+g.asc*sc-face.Metrics().HAscent)
 	op.ColorScale.ScaleWithColor(fg)
 	if s == FontPixel {
 		op.Filter = ebiten.FilterNearest

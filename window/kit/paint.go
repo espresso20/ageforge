@@ -42,6 +42,9 @@ func (p *Painter) cell(x, y int) *Cell {
 // unpair blanks the other half of a wide glyph that a write to x, y cuts in
 // two.
 func (p *Painter) unpair(x, y int, c *Cell) {
+	if c.Big != 0 {
+		p.unbig(x, y, c)
+	}
 	if c.Cont && x > 0 {
 		l := &p.buf.Cells[y*p.buf.W+x-1]
 		l.R, l.Comb, l.Wide = ' ', "", false
@@ -51,6 +54,32 @@ func (p *Painter) unpair(x, y int, c *Cell) {
 		r.R, r.Comb, r.Cont = ' ', "", false
 	}
 	c.Wide, c.Cont = false, false
+}
+
+// unbig blanks the whole 2x2 group (both groups of a wide glyph) that a write
+// to the cell at x, y, c, cuts.
+func (p *Painter) unbig(x, y int, c *Cell) {
+	ox, oy := x-int(c.Big-1)&1, y-int(c.Big-1)>>1
+	at := func(x, y int) *Cell {
+		if x < 0 || y < 0 || x >= p.buf.W || y >= p.buf.H {
+			return nil
+		}
+		return &p.buf.Cells[y*p.buf.W+x]
+	}
+	if o := at(ox, oy); o != nil && o.Cont {
+		ox -= 2 // the second group of a wide glyph
+	}
+	n := 2
+	if o := at(ox, oy); o != nil && o.Wide {
+		n = 4
+	}
+	for dy := 0; dy < 2; dy++ {
+		for dx := 0; dx < n; dx++ {
+			if k := at(ox+dx, oy+dy); k != nil {
+				k.R, k.Comb, k.Big, k.Wide, k.Cont = ' ', "", 0, false, false
+			}
+		}
+	}
 }
 
 // ink sets a cell's colors and attributes from a style: an unset foreground
@@ -140,6 +169,60 @@ func (p *Painter) put(x, y int, g *glyph, st Style) {
 	p.unpair(x+1, y, r)
 	c.R, c.Comb, c.Wide = rs[0], string(rs[1:]), true
 	*r = Cell{R: ' ', Fg: c.Fg, Bg: c.Bg, Attr: c.Attr, Cont: true}
+}
+
+// putBig writes one cluster at twice the size: a 2x2 group of cells, or two
+// side by side for a wide one. A group with no room for all its cells is not
+// written.
+func (p *Painter) putBig(x, y int, g *glyph, st Style) {
+	n := min(max(g.w, 1), 2)
+	for dy := 0; dy < 2; dy++ {
+		for dx := 0; dx < 2*n; dx++ {
+			if p.cell(x+dx, y+dy) == nil {
+				return
+			}
+		}
+	}
+	for dy := 0; dy < 2; dy++ { // first cut every group this one lands on
+		for dx := 0; dx < 2*n; dx++ {
+			p.unpair(x+dx, y+dy, p.cell(x+dx, y+dy))
+		}
+	}
+	rs := []rune(g.s)
+	for dy := 0; dy < 2; dy++ {
+		for dx := 0; dx < 2*n; dx++ {
+			c := p.cell(x+dx, y+dy)
+			ink(c, st)
+			c.R, c.Comb, c.Wide, c.Cont = ' ', "", false, true
+			c.Big = uint8(1 + dx&1 + 2*dy)
+		}
+	}
+	c := p.cell(x, y)
+	c.R, c.Comb, c.Cont, c.Wide = rs[0], string(rs[1:]), false, n == 2
+}
+
+// PrintBig paints tagged text on two rows from x, y at twice the size, each
+// glyph a 2x2 group of cells (a wide one two groups), cut after maxW cells
+// (below 0: no limit). It returns the cells it took across.
+func (p *Painter) PrintBig(x, y, maxW int, s string, st Style) int {
+	if s == "" {
+		return 0
+	}
+	ps := parse(s, st)
+	l := Line{g: glyphs(&ps, st)}
+	n := 0
+	for i := range l.g {
+		g := &l.g[i]
+		if !printable(g) || g.w == 0 {
+			continue
+		}
+		if maxW >= 0 && n+2*g.w > maxW {
+			break
+		}
+		p.putBig(x+n, y, g, g.st)
+		n += 2 * g.w
+	}
+	return n
 }
 
 // line paints a laid-out line from x, leaving out the clusters in its first
@@ -322,7 +405,14 @@ func (p *Painter) Reground(r image.Rectangle, from, to Color) {
 // Cursor shows the text cursor at x, y, when the painter may touch it.
 func (p *Painter) Cursor(x, y int) {
 	if image.Pt(x, y).In(p.clip) {
-		p.buf.Cursor, p.buf.CursorOn = image.Pt(x, y), true
+		p.buf.Cursor, p.buf.CursorOn, p.buf.CursorBig = image.Pt(x, y), true, false
+	}
+}
+
+// CursorBig shows the text cursor at x, y twice as tall, for a Big line.
+func (p *Painter) CursorBig(x, y int) {
+	if image.Pt(x, y).In(p.clip) {
+		p.buf.Cursor, p.buf.CursorOn, p.buf.CursorBig = image.Pt(x, y), true, true
 	}
 }
 

@@ -33,7 +33,7 @@ func pointerTo(d *Dashboard, st *stage, pt image.Point) {
 func tipRows(d *Dashboard, st *stage) []string {
 	st.paint()
 	b := d.rootFx.Bounds()
-	r := d.app.feel.tip.Rect(image.Rect(b.Min.X, b.Min.Y, b.Max.X, b.Max.Y-promptRows))
+	r := d.app.feel.tip.Rect(image.Rect(b.Min.X, b.Min.Y, b.Max.X, b.Max.Y-d.bar()))
 	var rows []string
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		row := make([]rune, 0, r.Dx())
@@ -238,7 +238,7 @@ func TestTooltipGoesAndStaysInside(t *testing.T) {
 	clock.wait(kit.TipDelay)
 	st.paint()
 	b := d.rootFx.Bounds()
-	area := image.Rect(b.Min.X, b.Min.Y, b.Max.X, b.Max.Y-promptRows)
+	area := image.Rect(b.Min.X, b.Min.Y, b.Max.X, b.Max.Y-d.bar())
 	r := d.app.feel.tip.Rect(area)
 	if r.Empty() || !r.In(area) || r.Overlaps(tr) {
 		t.Errorf("the plate %v is outside %v or covers its target %v", r, area, tr)
