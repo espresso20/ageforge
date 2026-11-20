@@ -176,7 +176,7 @@ func TestPeopleTabsFitAt80x24And100x30(t *testing.T) {
 func TestPeopleOverviewContent(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "bronze_age")
-	eng.AddLog(game.OfficeGame, game.LevelEverything, "success", "3 scribes moved in with the Scriptorium.")
+	eng.AddLog(game.OfficePeople, game.LevelEverything, "success", "3 scribes moved in with the Scriptorium.")
 	eng.AddLog(game.OfficeGame, game.LevelEverything, "info", "Something about trade that is not about people.")
 	st := eng.GetState()
 	text := renderPeople(st, peopleView{}, 100, 30).String()
