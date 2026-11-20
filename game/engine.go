@@ -727,96 +727,118 @@ func (ge *GameEngine) moraleMultiplier() float64 {
 	return 1.0 // exactly neutral
 }
 
-// updateMoraleTick applies per-tick morale changes: starvation penalty,
-// over-militarization drain, idle-worker drain, morale-building contribution,
-// and a gentle drift back toward neutral. Must be called with the write lock
-// held (inside doTick).
-func (ge *GameEngine) updateMoraleTick() {
+// Morale mover keys (MoraleMover.Key).
+const (
+	MoverStarving  = "starving"  // the food ran out
+	MoverScouting  = "scouting"  // too many workers in the scouting work area
+	MoverWaiting   = "waiting"   // more than half the workforce waits
+	MoverBuildings = "buildings" // buildings that lift spirits
+	MoverFaith     = "faith"     // the faith economy
+	MoverSettling  = "settling"  // morale settling toward 50%
+)
+
+// MoraleMover is one term of the morale tick and what it moves morale by in a
+// minute (a point is 1.0).
+type MoraleMover struct {
+	Key       string
+	PerMinute float64
+}
+
+type moraleTerm struct {
+	key   string
+	delta float64
+}
+
+// moraleTermsLocked is the terms the morale tick applies, in order, as the
+// change each makes in one tick; terms that are zero are left out. The tick
+// applies them and the snapshot reports them, so the two cannot differ. Caller
+// holds the lock.
+func (ge *GameEngine) moraleTermsLocked() []moraleTerm {
+	var out []moraleTerm
+	add := func(key string, v float64) {
+		if v != 0 {
+			out = append(out, moraleTerm{key, v})
+		}
+	}
 	foodRate := 0.0
 	if fr, ok := ge.Resources.resources["food"]; ok {
 		foodRate = fr.Rate
 	}
 	totalPop := ge.Workers.TotalPop()
 
-	// Food deficit penalty. (No generic food-surplus boost any more — being fed
-	// is the baseline, not a reward. High morale must be EARNED via buildings
+	// Food deficit penalty. (No generic food-surplus boost any more: being fed
+	// is the baseline, not a reward. High morale must be earned via buildings
 	// and events; this only punishes outright starvation.)
 	if foodRate < 0 && ge.Resources.Get("food") <= 0 {
-		ge.applyMorale(-0.005)
+		add(MoverStarving, -0.005)
 	}
 
-	// Military ratio — if military workers > 30% of pop, drain morale
+	// Scouting ratio: if workers in the scouting work area pass 30% of the
+	// pool, morale drains.
 	if totalPop > 0 {
-		militaryAssigned := 0
+		assigned := 0
 		for key, bs := range ge.Buildings.counts {
 			if bs == 0 {
 				continue
 			}
-			def, ok := ge.Buildings.defs[key]
-			if ok && def.WorkerDomain == "military" {
-				militaryAssigned += ge.Workers.GetAssignedCount(key)
+			if def, ok := ge.Buildings.defs[key]; ok && def.WorkerDomain == "military" {
+				assigned += ge.Workers.GetAssignedCount(key)
 			}
 		}
-		ratio := float64(militaryAssigned) / float64(totalPop)
-		if ratio > 0.30 {
-			over := (ratio - 0.30) * 10
-			ge.applyMorale(-0.003 * over)
+		if ratio := float64(assigned) / float64(totalPop); ratio > 0.30 {
+			add(MoverScouting, -0.003*((ratio-0.30)*10))
 		}
 	}
 
-	// Idle workers > 50% of pop
-	if totalPop > 0 {
-		idle := ge.Workers.IdleCount()
-		if float64(idle)/float64(totalPop) > 0.50 {
-			ge.applyMorale(-0.002)
-		}
+	// Waiting workers > 50% of the pool.
+	if totalPop > 0 && float64(ge.Workers.IdleCount())/float64(totalPop) > 0.50 {
+		add(MoverWaiting, -0.002)
 	}
 
-	// Morale-building contribution: each BUILT building with a "morale" effect
-	// lifts spirits by existing (FLAT — not worker-scaled). Sum across all built
-	// buildings and apply once. Read straight from the building manager's counts
-	// and defs (lock-free; we already hold the engine write lock — do NOT call
-	// GetState()).
-	moraleFromBuildings := 0.0
+	// Morale buildings: each built building with a "morale" effect lifts
+	// spirits by existing (flat, not worker-scaled). Read straight from the
+	// building manager (lock-free; the caller holds the engine lock: never
+	// call GetState here).
+	fromBuildings := 0.0
 	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "morale" {
-				moraleFromBuildings += float64(eff.Value * float64(count))
+				fromBuildings += float64(eff.Value * float64(count))
 			}
 		}
 	})
-	if moraleFromBuildings != 0 {
-		ge.applyMorale(moraleFromBuildings)
+	add(MoverBuildings, fromBuildings)
+
+	// Faith: an active faith economy keeps spirits up, by its production rate
+	// (not the stock), capped per tick (faithMoraleFactor, faithMoraleCap).
+	if fr, ok := ge.Resources.resources["faith"]; ok && fr.Rate > 0 {
+		add(MoverFaith, math.Min(fr.Rate*faithMoraleFactor, faithMoraleCap))
 	}
 
-	// Faith-rate morale lift: an active faith economy keeps spirits up. Scales with
-	// faith PRODUCTION rate (not hoarded stock), capped per tick so a late-game
-	// faith firehose can't peg morale in one step. Tunable via the consts above.
-	faithRate := 0.0
-	if fr, ok := ge.Resources.resources["faith"]; ok {
-		faithRate = fr.Rate
-	}
-	if faithRate > 0 {
-		ge.applyMorale(math.Min(faithRate*faithMoraleFactor, faithMoraleCap))
-	}
-
-	// Drift gently toward neutral. A stable, fed, non-over-militarized civ with
-	// no morale buildings settles at moraleNeutral (~0.50). This makes neutral
-	// the resting state: you must keep earning to hold the high-morale bonus,
-	// and recover deliberately to escape the low-morale penalty. Move by at most
-	// the remaining distance so drift never overshoots/oscillates past neutral.
+	// Drift toward neutral: a stable, fed town with no morale buildings
+	// settles at moraleNeutral. Never more than the distance left.
 	if ge.morale > moraleNeutral {
-		step := moraleDrift
-		if step > ge.morale-moraleNeutral {
-			step = ge.morale - moraleNeutral
-		}
-		ge.applyMorale(-step)
+		add(MoverSettling, -math.Min(moraleDrift, ge.morale-moraleNeutral))
 	} else if ge.morale < moraleNeutral {
-		step := moraleDrift
-		if step > moraleNeutral-ge.morale {
-			step = moraleNeutral - ge.morale
-		}
-		ge.applyMorale(step)
+		add(MoverSettling, math.Min(moraleDrift, moraleNeutral-ge.morale))
+	}
+	return out
+}
+
+// moraleMovers is moraleTermsLocked with each term a minute long (30 ticks).
+func (ge *GameEngine) moraleMoversLocked() []MoraleMover {
+	var out []MoraleMover
+	for _, t := range ge.moraleTermsLocked() {
+		out = append(out, MoraleMover{Key: t.key, PerMinute: float64(t.delta * 30)})
+	}
+	return out
+}
+
+// updateMoraleTick applies the morale terms for one tick. Must be called with
+// the write lock held (inside doTick).
+func (ge *GameEngine) updateMoraleTick() {
+	for _, t := range ge.moraleTermsLocked() {
+		ge.applyMorale(t.delta)
 	}
 
 	// Low morale warning (fires once, resets when morale recovers above 0.40)
@@ -5038,6 +5060,7 @@ func (ge *GameEngine) GetState() GameState {
 	workers.SoldiersAway = min(ge.soldiersAway(), workers.Soldiers)
 	workers.TotalPop += workers.Scholars + workers.Soldiers
 	workers.FoodDrain = ge.foodDrainLocked()
+	moraleMovers := ge.moraleMoversLocked()
 
 	milestoneParams := ge.milestoneParamsLocked(ageOrder)
 	milestoneParams.Sight = &sight
@@ -5055,10 +5078,11 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:           nextAgeName,
 		NextAgeBldReqs:        nextAgeBldReqs,
 		Resources:             ge.Resources.Snapshot(),
-		Buildings:             ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras),
+		Buildings:             ge.oneMoreLocked(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras)),
 		Scholars:              ge.scholarsStateLocked(),
 		BuildQueue:            queue,
 		Workers:               workers,
+		MoraleMovers:          moraleMovers,
 		Research:              ge.withResearchTimes(ge.Research.Snapshot(ge.age, ageOrder)),
 		Military:              militarySnap,
 		Milestones:            ge.Milestones.Snapshot(milestoneParams),

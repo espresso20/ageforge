@@ -145,8 +145,8 @@ func TestShares_OfflineRecruitsAndAssigns(t *testing.T) {
 func TestShares_NewBuildingsGetStaffed(t *testing.T) {
 	ge := sharesEngine(t, 3, map[string]int{"gathering_camp": 2, "wood_camp": 2})
 	growFully(ge)
-	if pop, idle := ge.Workers.TotalPop(), ge.Workers.IdleCount(); pop != 30 || idle != 18 {
-		t.Fatalf("setup: population %d with %d in the reserve, want the housing's 30 and 18 waiting", pop, idle)
+	if pop, idle := ge.Workers.TotalPop(), ge.Workers.IdleCount(); pop != 24 || idle != 12 {
+		t.Fatalf("setup: population %d with %d waiting, want growth to pause at 24 with 12 waiting", pop, idle)
 	}
 	setAmount(ge, "wood", 1000)
 	noErr(t, ge.BuildBuilding("shrine"))
@@ -157,8 +157,8 @@ func TestShares_NewBuildingsGetStaffed(t *testing.T) {
 	if got, want := ge.Workers.GetAssignedCount("shrine"), slotsOf(ge, "shrine"); got != want {
 		t.Errorf("the new story circle has %d of its %d workers", got, want)
 	}
-	if pop := ge.Workers.TotalPop(); pop != 30 {
-		t.Errorf("population %d: the shrine's workers came from the reserve, not from new villagers", pop)
+	if pop := ge.Workers.TotalPop(); pop > 24+2*popGrowthStep(24) {
+		t.Errorf("population %d: the shrine's workers came from the waiting, not from new villagers", pop)
 	}
 }
 

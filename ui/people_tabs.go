@@ -222,6 +222,8 @@ func recruitText(st game.GameState) string {
 		return rowid.Line("ui.people_tabs.recruitText.04", "Auto-recruit is held by housing: build more homes for more people.")
 	case game.RecruitFood:
 		return rowid.Line("ui.people_tabs.recruitText.05", "Auto-recruit is held by food: build or staff food buildings.")
+	case game.RecruitWork:
+		return rowid.Line("ui.people_tabs.recruitText.08", "Auto-recruit is paused: no work for more people.")
 	case game.RecruitStarve:
 		return rowid.Line("ui.people_tabs.recruitText.06", "Auto-recruit is paused: food has run out.")
 	}

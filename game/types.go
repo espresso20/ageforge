@@ -31,9 +31,12 @@ type GameState struct {
 	NextAgeBldReqs       map[string]int
 	Resources            map[string]ResourceState
 	Buildings            map[string]BuildingState
-	BuildQueue           []BuildQueueSnapshot
-	Workers              WorkerState
-	Research             ResearchState
+	// MoraleMovers is what moves morale a minute, one entry per term that is
+	// not zero (the terms updateMoraleTick applies).
+	MoraleMovers []MoraleMover
+	BuildQueue   []BuildQueueSnapshot
+	Workers      WorkerState
+	Research     ResearchState
 	// Scholars is the town's scholars and what they do (scholars.go).
 	Scholars       ScholarsState
 	Military       MilitaryState
@@ -300,6 +303,10 @@ type BuildingState struct {
 	WorkerDomain    string
 	WorkerCapacity  int // per-building-instance capacity
 	WorkersAssigned int // total workers assigned across all instances
+	// OneMore is what one more worker in this building adds to each resource's
+	// rate (a rate as Resources gives it); nil when the building is full or
+	// has no jobs.
+	OneMore map[string]float64
 	// PendingUpgrade is the building an older building held in copies can be
 	// upgraded to; "" if none.
 	PendingUpgrade string
