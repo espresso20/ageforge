@@ -147,6 +147,8 @@ type Dashboard struct {
 	statsPanel *statsPanel
 	// historyPanel is the History panel: the metrics of the run.
 	historyPanel *historyPanel
+	// logsPanel is the Logs panel: the roll and the slate.
+	logsPanel *logsPanel
 
 	// decks are the panels drawn as decks of cards (deck_panel.go), by
 	// overlay name.
@@ -193,6 +195,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),
 		historyPanel:  newHistoryPanel(),
+		logsPanel:     newLogsPanel(),
 		decks:         map[string]*deckPanel{},
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
@@ -256,7 +259,11 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.peoplePanel.wire(d.app)
 	d.overlayMgr.RegisterWidget("people", rowid.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
-	d.overlayMgr.Register("logs", rowid.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
+	d.logsPanel.prompt = d.researchPanel.prompt
+	d.logsPanel.toPrompt = d.handToPrompt
+	d.logsPanel.buttons.wire(d.app)
+	d.logsPanel.focus = func() { d.overlayMgr.FocusOn(d.logsPanel) }
+	d.overlayMgr.RegisterWidget("logs", txtLogsTitle, d.logsPanel.open, d.logsPanel.update)
 	d.epochHall = &epochHall{
 		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
 		height: func() int { return d.overlayMgr.screenH },
@@ -1320,11 +1327,11 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
-	// Every line but debug ones, routine confirmations included, so the
-	// player sees what each command did (log_routing.go).
+	// The town level of the log plus the game office's replies, folded, with
+	// a count after a line that happened more than once.
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
-		if mainLogShows(entry) {
+		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame) {
 			visible = append(visible, entry)
 		}
 	}
@@ -1350,7 +1357,11 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 		case "info":
 			color = "cyan"
 		}
-		fmt.Fprintf(&sb, "[%s]%s[-]\n", color, entry.Message)
+		times := ""
+		if entry.Count > 1 {
+			times = fmt.Sprintf(" ×%d", entry.Count)
+		}
+		fmt.Fprintf(&sb, "[%s]%s%s[-]\n", color, entry.Message, times)
 	}
 	d.logTV.SetText(safeTags(sb.String()))
 	d.logTV.ScrollToEnd()
@@ -1594,6 +1605,9 @@ func (d *Dashboard) runLine(text string) {
 	}
 	if result.OverlayName == "tree" {
 		d.treePanel.request(result.ResearchZoom, result.ResearchCard)
+	}
+	if result.OverlayName == "logs" {
+		d.logsPanel.request(result.Logs)
 	}
 	if result.OverlayName == "badges" {
 		d.badgePanel.request(result.Badges)

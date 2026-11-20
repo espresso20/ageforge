@@ -70,11 +70,11 @@ var replyGuardCases = []struct{ age, cmd string }{
 }
 
 // playerLogCount is the number of log entries the main window's log shows
-// (debug lines are for dumps only). The logs panel shows the same lines.
+// (debug lines are for dumps only).
 func playerLogCount(ge *game.GameEngine) int {
 	n := 0
 	for _, e := range ge.GetLogs() {
-		if mainLogShows(e) {
+		if e.Type != "debug" {
 			n += max(1, e.Count) // a fold counts each line it stands for
 		}
 	}
