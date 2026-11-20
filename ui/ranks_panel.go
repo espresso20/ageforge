@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"strings"
 	"unicode/utf8"
 
@@ -93,7 +94,7 @@ func (p *ranksPanel) update(state game.GameState) {
 	if state.AccountStats != nil {
 		views = state.AccountStats.Badges
 	}
-	p.model = buildRanks(views)
+	p.model = buildRanks(state.Ruleset(), views)
 	p.settle()
 }
 
@@ -102,6 +103,9 @@ func (p *ranksPanel) settle() {
 	m := p.model
 	if m.by[p.view.dom] == nil {
 		p.view.dom = m.doms[0].key
+		if near := m.closest(); len(near) > 0 {
+			p.view.dom = near[0].key
+		}
 	}
 	p.rows = nil
 	switch {
@@ -158,14 +162,14 @@ func (s rankPaint) rule(x, y, w int, col kit.Color) {
 }
 
 // bar is a thin bar of w cells, frac of it filled.
-func (s rankPaint) bar(x, y, w int, frac float64, on, off kit.Color) {
+func (s rankPaint) bar(x, y, w int, frac float64, on, off kit.Color, r rune) {
 	n := int(min(max(frac, 0), 1)*float64(w) + 0.5)
 	for i := 0; i < w; i++ {
 		col := off
 		if i < n {
 			col = on
 		}
-		s.p.Put(s.o.X+x+i, s.o.Y+y, '▀', kit.Style{}.Foreground(col))
+		s.p.Put(s.o.X+x+i, s.o.Y+y, r, kit.Style{}.Foreground(col))
 	}
 }
 
@@ -176,41 +180,43 @@ func (p *ranksPanel) Paint(pt *kit.Painter) {
 		return
 	}
 	s := rankPaint{pt.Clip(r), r.Min, r.Dx()}
-	bg := theme.Of(theme.RoleBackground)
-	s.fill(0, 0, r.Dx(), r.Dy(), bg)
+	s.fill(0, 0, r.Dx(), r.Dy(), theme.Of(theme.RoleBackground))
 	txt, dim := kit.Role(theme.RoleText), kit.Role(theme.RoleDim)
 	p.hits = p.hits[:0]
 	m, w, h := p.model, r.Dx(), r.Dy()
 
-	hw := paintHeading(s.p, r.Min.X+2, r.Min.Y, "Ranks", theme.RGBA(theme.RoleAccent)) - r.Min.X
-	x := hw + 4
+	s.text(2, 0, "BADGES", kit.Role(theme.RoleAccent), true)
+	x := 10
 	for i, name := range rankTabNames {
 		col, bold := dim, false
 		if i == p.view.tab {
-			col, bold = kit.Role(theme.RoleAccent), true
+			col, bold = kit.Role(theme.RoleBright), true
 		}
-		end := s.text(x, 1, name, col, bold)
-		p.tabs[i] = image.Rect(x, 1, end, 2)
+		end := s.text(x, 0, strings.ToLower(name), col, bold)
+		p.tabs[i] = image.Rect(x, 0, end, 1)
 		x = end + 3
 	}
-	held := len(m.doms) * len(config.RankThresholds)
-	s.text(2, 3, fmt.Sprintf("%d of %d badges earned   %s points   %d of %d ranks",
-		m.earned, m.total, config.FormatAmount(float64(m.pts)), m.held, held), txt, false)
-	if p.view.tab == tabAll && p.view.list {
-		s.right(w-3, 3, "only "+m.by[p.view.dom].name, kit.Role(theme.RoleAccent), true)
-	}
+	s.text(w-8, 0, " Esc ", kit.Role(theme.RoleOnAccent), false)
+	s.p.Fill(image.Rect(r.Min.X+w-8, r.Min.Y, r.Min.X+w-3, r.Min.Y+1), theme.Of(theme.RoleAccent))
+	s.text(w-8, 0, " Esc ", kit.Role(theme.RoleOnAccent), false)
 
 	if p.view.tab == tabRanks {
 		p.paintRanks(s, w, h)
 	} else {
+		held := len(m.doms) * len(m.thr)
+		s.text(2, 3, fmt.Sprintf("%d of %d badges earned   %s points   %d of %d ranks",
+			m.earned, m.total, config.FormatAmount(float64(m.pts)), m.held, held), txt, false)
+		if p.view.tab == tabAll && p.view.list {
+			s.right(w-3, 3, "only "+m.by[p.view.dom].name, kit.Role(theme.RoleAccent), true)
+		}
 		p.paintList(s, w, h)
 	}
-	s.rule(2, h-2, w-4, dim)
-	hint := "↑ ↓ domain    Enter its badges    Tab ranks / all badges / recent    Esc close"
+	s.rule(2, h-3, w-4, faintCol())
+	hint := "↑ ↓ domain    Enter open the list    Tab ranks / all badges / recent    Esc close"
 	if p.view.tab != tabRanks {
 		hint = "↑ ↓ badge    PgUp PgDn page    Tab ranks / all badges / recent    Esc back"
 	}
-	s.text(2, h-1, hint, dim, false)
+	s.text(2, h-2, hint, dim, false)
 }
 
 // domCol is a domain's colour on the background; a domain with no rank is
@@ -224,132 +230,436 @@ func domCol(d *rankDom) kit.Color {
 	return col
 }
 
+// inkOf is a color as the pixels of a picture take it.
+func inkOf(c kit.Color) color.RGBA {
+	v, _ := c.RGBA()
+	return v
+}
+
+// tierCol is a tier's color; legendary takes the accent.
+func tierCol(t config.BadgeTier) kit.Color {
+	var h theme.BadgeHue
+	switch t {
+	case config.BadgeBronze:
+		h = theme.BadgeBronze
+	case config.BadgeSilver:
+		h = theme.BadgeSilver
+	case config.BadgeGold:
+		h = theme.BadgeGold
+	case config.BadgePlatinum:
+		h = theme.BadgePlatinum
+	default:
+		return kit.Role(theme.RoleAccent)
+	}
+	return theme.Legible(theme.BadgeHueColor(h, theme.IsLight()), theme.Of(theme.RoleBackground), 3)
+}
+
+var rankTiers = [...]config.BadgeTier{config.BadgeBronze, config.BadgeSilver, config.BadgeGold,
+	config.BadgePlatinum, config.BadgeLegendary}
+
+// ranksGeo is where the Ranks tab's columns fall for a panel of w by h.
+type ranksGeo struct {
+	w, h         int
+	bx, segW     int  // the bars start here, each segW cells wide
+	bxEnd        int  // the last cell of the six bars
+	detail       bool // the selected domain's column is shown
+	rx, rw       int  // its left edge and width
+	y0, pitch    int  // the first row and the rows a domain takes
+	rowsEnd, top int  // the row under the last domain; the first one shown
+	band         bool // the bottom band fits
+}
+
+func (p *ranksPanel) geometry(w, h int) ranksGeo {
+	m := p.model
+	g := ranksGeo{w: w, h: h, bx: 34, y0: 9}
+	g.detail = w >= 140
+	right := w - 8
+	if g.detail {
+		g.rw = min(max((w*30+50)/100, 50), 90)
+		g.rx = w - 3 - g.rw
+		right = g.rx - 9
+	}
+	g.segW = max((right-g.bx+1)/len(m.thr)-1, 2)
+	g.bxEnd = g.bx + len(m.thr)*(g.segW+1) - 1
+	div := 0
+	if m.doms[0].rank > 0 && m.doms[len(m.doms)-1].rank == 0 {
+		div = 2
+	}
+	avail := h - 3 - g.y0
+	g.pitch = 3
+	if 4*len(m.doms)+div <= avail+1 {
+		g.pitch = 4
+	}
+	g.rowsEnd = g.y0 + g.pitch*len(m.doms) + div
+	g.band = g.bxEnd >= 144 && g.rowsEnd+14 <= h-3 && g.rowsEnd-g.pitch+g.pitch <= h
+	return g
+}
+
 func (p *ranksPanel) paintRanks(s rankPaint, w, h int) {
 	m := p.model
 	bg := theme.Of(theme.RoleBackground)
 	txt, dim, bright := kit.Role(theme.RoleText), kit.Role(theme.RoleDim), kit.Role(theme.RoleBright)
-	listW, rx := w-4, w
-	if w >= 125 {
-		rx = w - 62
-		listW = rx - 4
+	faint := faintCol()
+	g := p.geometry(w, h)
+	sel := m.by[p.view.dom]
+	selCol := domCol(sel)
+	zero := kit.Style{}
+
+	// The tint under the selected row and its detail column goes down first.
+	tint := theme.Mix(bg, selCol, 0.10)
+	if g.detail {
+		s.fill(g.rx-2, 5, w-1-(g.rx-2), max(h-9, 0), tint)
 	}
-	const y0, bx = 5, 32
-	avail := h - y0 - 3
-	pitch := 3
-	if 4*len(m.doms) <= avail {
-		pitch = 4
+
+	// Where each domain's row falls: the ranked first, a divider, then the
+	// rest. With more domains than rows the list scrolls to keep the pick.
+	type slot struct {
+		d *rankDom
+		y int
 	}
-	vis := max(1, avail/pitch)
-	at := 0
+	var slots []slot
+	y := 0
+	divAt := -1
 	for i, d := range m.doms {
-		if d.key == p.view.dom {
-			at = i
+		if i > 0 && d.rank == 0 && m.doms[i-1].rank > 0 {
+			divAt = y
+			y += 2
 		}
+		slots = append(slots, slot{d, y})
+		y += g.pitch
 	}
-	top := 0
-	if len(m.doms) > vis {
-		top = min(max(at-vis/2, 0), len(m.doms)-vis)
-	}
-	segW := min(max((listW-bx-1)/len(config.RankThresholds)-1, 2), 20)
-	barEnd := bx + len(config.RankThresholds)*(segW+1) - 1
-	for i := top; i < len(m.doms) && i < top+vis; i++ {
-		d, y := m.doms[i], y0+(i-top)*pitch
-		col := domCol(d)
-		track := theme.Mix(bg, col, 0.25)
-		sel := d.key == p.view.dom
-		if sel {
-			s.fill(1, y, listW, 3, theme.Mix(bg, col, 0.12))
-			for j := 0; j < 3; j++ {
-				s.text(1, y+j, "▌", col, false)
+	avail := h - 3 - g.y0
+	off := 0
+	if y > avail+1 {
+		for _, sl := range slots {
+			if sl.d == sel {
+				off = min(max(sl.y-avail/2, 0), max(y-avail, 0))
 			}
 		}
-		s.text(4, y, d.name, col, sel)
-		if d.rank > 0 {
-			s.text(18, y, config.RankTitles[d.rank-1], bright, true)
+	}
+	rowTop := g.y0 - off
+
+	// The top band: three figures, one grammar.
+	block := func(x int, label string, fig string, col kit.Color, l1 string, c1 kit.Color, l2 string) int {
+		s.text(x, 2, label, dim, false)
+		fx := paintHeading(s.p, s.o.X+x, s.o.Y+3, fig, inkOf(col)) - s.o.X + 2
+		s.text(fx, 3, l1, c1, true)
+		s.text(fx, 4, l2, txt, false)
+		return fx + max(utf8.RuneCountInString(l1), utf8.RuneCountInString(l2)) + 4
+	}
+	ex := block(4, "BADGES EARNED", fmt.Sprint(m.earned), bright, fmt.Sprintf("of %d badges", m.total), bright,
+		fmt.Sprintf("%d still to earn", m.total-m.earned))
+	s.text(ex, 3, config.FormatAmount(float64(m.pts))+" points", dim, false)
+	s.text(ex, 4, fmt.Sprintf("%d of %d ranks", m.held, len(m.doms)*len(m.thr)), dim, false)
+	x2 := max((w*35+50)/100, 56)
+	if top := m.top(); top != nil {
+		tc := domCol(top)
+		ex = block(x2, "HIGHEST RANK", m.titles[top.rank-1], tc, "of "+top.name, tc,
+			fmt.Sprintf("rank %d of %d", top.rank, len(m.titles)))
+		s.text(ex, 3, fmt.Sprintf("%d points", top.pts), dim, false)
+		if n := top.toNext(); n > 0 {
+			s.text(ex, 4, fmt.Sprintf("%d to %s", n, m.titles[top.rank]), dim, false)
+		}
+	} else {
+		s.text(x2, 2, "HIGHEST RANK", dim, false)
+		s.text(x2, 3, "none yet", dim, false)
+		ex = x2 + 12
+	}
+	if near := m.closest(); g.detail && len(near) > 0 && ex+2 <= g.rx {
+		c0 := near[0]
+		cc := domCol(c0)
+		cx := block(g.rx, "NEXT PROMOTION", fmt.Sprint(c0.toNext()), cc, c0.name, cc,
+			"points to "+m.titles[c0.rank])
+		_ = cx
+		for i := 1; i < 3 && i < len(near); i++ {
+			c := near[i]
+			fx := g.rx + headWidth(fmt.Sprint(c0.toNext())) + 2
+			xx := s.text(fx+max(utf8.RuneCountInString(c0.name), utf8.RuneCountInString("points to "+m.titles[c0.rank]))+4, 2+i, c.name, domCol(c), false)
+			s.text(xx+1, 2+i, fmt.Sprintf("%d to %s", c.toNext(), m.titles[c.rank]), dim, false)
+		}
+	}
+
+	// The ruler: six ranks, the points each starts at on the rule.
+	for k, name := range m.titles {
+		x0 := g.bx + k*(g.segW+1)
+		end := x0 + g.segW
+		col := dim
+		if k < sel.rank {
+			col = txt
+		}
+		label := fmt.Sprintf("%d %s", k+1, strings.ToUpper(name))
+		if utf8.RuneCountInString(label) > g.segW {
+			label = fmt.Sprint(k + 1)
+		}
+		s.right(end, 6, label, col, k+1 == sel.rank)
+		s.rule(x0, 7, g.segW, faint)
+		s.right(end-1, 7, fmt.Sprintf(" %d ", m.thr[k]), dim, false)
+		tick := "┬"
+		if k == len(m.titles)-1 {
+			tick = "┐"
+		}
+		s.text(end, 7, tick, dim, false)
+	}
+	s.text(4, 6, "DOMAIN", dim, false)
+	s.right(31, 6, "RANK", dim, false)
+
+	fits := func(y int) bool { return y >= g.y0 && y+3 <= h-3 }
+	if divAt >= 0 && fits(rowTop+divAt) {
+		dy := rowTop + divAt
+		w2 := g.bxEnd + 6
+		s.rule(2, dy, w2-2, faint)
+		s.text(4, dy, " NO RANK YET ", dim, false)
+	}
+	for _, sl := range slots {
+		d, y := sl.d, rowTop+sl.y
+		if !fits(y) {
+			continue
+		}
+		ranked := d.rank > 0
+		col := domCol(d)
+		track := theme.Mix(bg, col, 0.20)
+		if !ranked {
+			track = theme.Mix(bg, col, 0.14)
+		}
+		if d == sel {
+			s.fill(1, y, g.bxEnd+6, 3, tint)
+			if g.pitch == 4 {
+				for x := 1; x <= g.bxEnd+6; x++ {
+					s.p.Put(s.o.X+x, s.o.Y+y-1, '▄', zero.Foreground(tint))
+					s.p.Put(s.o.X+x, s.o.Y+y+3, '▀', zero.Foreground(tint))
+				}
+			}
+			for j := 0; j < 3; j++ {
+				s.text(1, y+j, "▌", selCol, false)
+			}
+		}
+		paintHeading(s.p, s.o.X+4, s.o.Y+y, d.name, inkOf(col))
+		if ranked {
+			n := fmt.Sprint(d.rank)
+			paintHeading(s.p, s.o.X+31-headWidth(n), s.o.Y+y, n, inkOf(bright))
+			s.text(g.bx, y, m.titles[d.rank-1], bright, true)
 		} else {
-			s.text(18, y, "No rank yet", dim, false)
+			s.text(30, y, "-", dim, false)
+			s.text(g.bx, y, "No rank yet", dim, false)
 		}
 		if n := d.toNext(); n > 0 {
-			tail := fmt.Sprintf("%d to %s", n, config.RankTitles[d.rank])
-			s.right(barEnd, y, tail, txt, sel)
-			s.right(barEnd-utf8.RuneCountInString(tail)-3, y, fmt.Sprintf("%d points", d.pts), dim, false)
+			right := fmt.Sprintf("%d to %s", n, m.titles[d.rank])
+			rc := txt
+			switch {
+			case d == sel:
+				rc = selCol
+			case !ranked:
+				rc = dim
+			}
+			s.right(g.bxEnd, y, right, rc, d == sel)
+			s.right(g.bxEnd-utf8.RuneCountInString(right)-3, y, fmt.Sprintf("%d points", d.pts), dim, false)
 		}
-		for k, th := range config.RankThresholds {
+		for k, th := range m.thr {
 			lo := 0
 			if k > 0 {
-				lo = config.RankThresholds[k-1]
+				lo = m.thr[k-1]
 			}
-			s.bar(bx+k*(segW+1), y+1, segW, float64(d.pts-lo)/float64(th-lo), col, track)
+			s.bar(g.bx+k*(g.segW+1), y+1, g.segW, float64(d.pts-lo)/float64(th-lo), col, track, '▀')
 		}
-		s.text(bx, y+2, fmt.Sprintf("%d of %d badges", d.earned, d.all), dim, false)
-		p.hits = append(p.hits, rankHit{image.Rect(1, y, listW+1, y+3), d.key})
+		s.text(g.bx, y+2, fmt.Sprintf("%d of %d badges", d.earned, d.all), dim, false)
+		switch {
+		case !ranked && d.opens != "":
+			s.right(g.bxEnd, y+2, "its workers arrive in the "+d.opens, dim, false)
+		case len(d.near) > 0:
+			v := d.near[0]
+			pc := fmt.Sprintf("%d%%", pct(v))
+			s.right(g.bxEnd, y+2, pc, txt, false)
+			nx := g.bxEnd - len(pc) - 2
+			s.right(nx, y+2, v.Name, txt, false)
+			s.right(nx-utf8.RuneCountInString(v.Name)-2, y+2, "next", dim, false)
+		}
+		p.hits = append(p.hits, rankHit{image.Rect(1, y, g.bxEnd+7, y+3), d.key})
 	}
-	if rx < w {
-		p.paintDetail(s, m.by[p.view.dom], rx, w-2-rx, h)
+
+	if g.band {
+		p.paintBand(s, g, g.rowsEnd)
+	}
+	if g.detail {
+		p.paintDetail(s, sel, g)
 	}
 }
 
-func (p *ranksPanel) paintDetail(s rankPaint, d *rankDom, rx, rw, h int) {
+// paintBand is the bottom band: what came in lately, what a rank is for, and
+// the tiers.
+func (p *ranksPanel) paintBand(s rankPaint, g ranksGeo, by int) {
+	m := p.model
+	bg := theme.Of(theme.RoleBackground)
+	txt, dim, bright := kit.Role(theme.RoleText), kit.Role(theme.RoleDim), kit.Role(theme.RoleBright)
+	s.rule(2, by, g.rx-6, faintCol())
+	s.text(4, by+1, "LATELY", dim, false)
+	n := min(12, g.h-3-(by+2))
+	for i, v := range m.recent() {
+		if i >= n {
+			break
+		}
+		ly := by + 2 + i
+		col := dim
+		dom := ""
+		if d := m.by[v.Domain]; d != nil {
+			col, dom = domCol(d), d.name
+		}
+		s.text(4, ly, "✓", col, false)
+		s.text(6, ly, truncate(v.Name, 27), txt, false)
+		s.text(34, ly, dom, col, false)
+		s.text(48, ly, fmt.Sprintf("+%d", v.Points), txt, false)
+		s.text(54, ly, v.Tier, tierCol(v.Level), false)
+		s.text(66, ly, m.when(v.At), dim, false)
+	}
+	const lx = 84
+	s.text(lx, by+1, "WHAT A RANK GIVES", dim, false)
+	for i, gv := range [][2]string{
+		{"Each rank", fmt.Sprintf("+%d%% output from the domain's workers", int(config.RankBonus*100))},
+		{"Rank 3 " + m.titles[2], "the domain's title beside your town name"},
+		{"Rank 6 " + m.titles[5], "a theme color (not in yet)"},
+	} {
+		s.text(lx, by+2+i, gv[0], bright, true)
+		s.text(lx+21, by+2+i, gv[1], txt, false)
+	}
+	s.text(lx, by+7, "POINTS BY TIER", dim, false)
+	s.right(g.bxEnd, by+7, "earned, every domain", dim, false)
+	for i, t := range rankTiers {
+		ty := by + 8 + i
+		tc := tierCol(t)
+		s.text(lx, ty, strings.ToUpper(t.Name()), tc, true)
+		s.text(lx+11, ty, fmt.Sprintf("%d points each", t.Points()), dim, false)
+		frac := 0.0
+		if m.tierAll[t] > 0 {
+			frac = float64(m.tierHave[t]) / float64(m.tierAll[t])
+		}
+		s.bar(lx+28, ty, g.bxEnd-(lx+28)-13, frac, tc, theme.Mix(bg, tc, 0.20), '▄')
+		s.right(g.bxEnd, ty, fmt.Sprintf("%d of %d", m.tierHave[t], m.tierAll[t]), txt, false)
+	}
+}
+
+// nameRuns joins names with a middle dot, wrapping at whole names.
+func nameRuns(names []string, n int) []string {
+	var out []string
+	cur := ""
+	for _, s := range names {
+		switch {
+		case cur == "":
+			cur = s
+		case utf8.RuneCountInString(cur)+3+utf8.RuneCountInString(s) <= n:
+			cur += " · " + s
+		default:
+			out = append(out, cur)
+			cur = s
+		}
+	}
+	if cur != "" {
+		out = append(out, cur)
+	}
+	return out
+}
+
+// dots sets a run of names with its separators in the faint color.
+func (s rankPaint) dots(x, y int, line string, col, faint kit.Color) {
+	for i, part := range strings.Split(line, " · ") {
+		if i > 0 {
+			x = s.text(x, y, " · ", faint, false)
+		}
+		x = s.text(x, y, part, col, false)
+	}
+}
+
+func (p *ranksPanel) paintDetail(s rankPaint, d *rankDom, g ranksGeo) {
+	m := p.model
 	bg := theme.Of(theme.RoleBackground)
 	txt, dim, bright := kit.Role(theme.RoleText), kit.Role(theme.RoleDim), kit.Role(theme.RoleBright)
 	col := domCol(d)
-	s.fill(rx-2, 5, rw+3, h-8, theme.Mix(bg, col, 0.08))
-	ink, _ := col.RGBA()
-	x := paintHeading(s.p, s.o.X+rx, s.o.Y+5, d.name, ink) - s.o.X + 2
+	rx, rw, h := g.rx, g.rw, g.h
+	line := theme.Mix(bg, col, 0.35)
+	x := paintHeading(s.p, s.o.X+rx, s.o.Y+6, d.name, inkOf(col)) - s.o.X + 2
 	if d.rank > 0 {
-		s.text(x, 5, fmt.Sprintf("rank %d  %s", d.rank, config.RankTitles[d.rank-1]), bright, true)
+		s.text(x, 6, fmt.Sprintf("rank %d  %s", d.rank, m.titles[d.rank-1]), bright, true)
 	} else {
-		s.text(x, 5, "No rank yet", dim, false)
+		s.text(x, 6, "No rank yet", dim, false)
 	}
-	s.text(x, 6, fmt.Sprintf("%d points", d.pts), dim, false)
-	s.right(rx+rw, 5, fmt.Sprintf("%d of %d badges", d.earned, d.all), txt, false)
+	s.text(x, 7, fmt.Sprintf("%d points", d.pts), dim, false)
+	s.right(rx+rw, 6, fmt.Sprintf("%d of %d badges", d.earned, d.all), txt, false)
 	if n := d.toNext(); n > 0 {
-		s.right(rx+rw, 6, fmt.Sprintf("%d points to %s", n, config.RankTitles[d.rank]), col, true)
+		s.right(rx+rw, 7, fmt.Sprintf("%d points to %s", n, m.titles[d.rank]), col, true)
 	}
-	s.rule(rx, 7, rw, col)
-	y := 9
-	if d.rank == 0 && d.opens != "" {
-		s.text(rx, y, "Its workers arrive in the "+d.opens+".", dim, false)
-		y += 2
+	s.rule(rx, 8, rw, line)
+
+	// The earned names by tier are measured first: the nearest badges get the rest.
+	type run struct {
+		tier      config.BadgeTier
+		have, all int
+		lines     []string
 	}
-	s.text(rx, y, "NEAREST BADGES", dim, false)
-	y += 2
-	for _, v := range d.near {
-		if y+3 > h-14 {
-			break
-		}
-		s.text(rx, y, "□", dim, false)
-		s.text(rx+2, y, v.Name, bright, true)
-		s.right(rx+rw, y, fmt.Sprintf("%s  +%d", v.Tier, v.Points), txt, false)
-		s.text(rx+2, y+1, truncate(v.Desc, rw-2), txt, false)
-		pct := v.Progress / v.Target
-		s.bar(rx+2, y+2, rw-8, pct, col, theme.Mix(bg, col, 0.25))
-		s.right(rx+rw, y+2, fmt.Sprintf("%d%%", int(min(pct, 1)*100)), txt, false)
-		y += 4
-	}
-	s.text(rx, y, "EARNED", dim, false)
-	y++
-	for t := config.BadgeBronze; t <= config.BadgeLegendary; t++ {
+	var runs []run
+	earnedRows := 2
+	for _, t := range rankTiers {
 		if d.total[t] == 0 {
 			continue
 		}
-		x := s.text(rx, y, strings.ToUpper(t.Name()), txt, true)
-		s.text(x+2, y, fmt.Sprintf("%d points each", t.Points()), dim, false)
-		s.right(rx+rw, y, fmt.Sprintf("%d of %d", d.have[t], d.total[t]), txt, false)
-		y++
+		r := run{t, d.have[t], d.total[t], nameRuns(d.names[t], rw-2)}
+		runs = append(runs, r)
+		earnedRows += 2 + max(1, len(r.lines))
 	}
-	y += 2
-	if y+4 <= h-3 {
-		s.text(rx, y, "WHAT A RANK GIVES", dim, false)
-		for i, g := range [][2]string{
-			{"Each rank", fmt.Sprintf("+%d%% output from the domain's workers", int(config.RankBonus*100))},
-			{"Rank 3 " + config.RankTitles[2], "the domain's title beside the town name"},
-			{"Rank 6 " + config.RankTitles[5], "a theme color (not in yet)"},
-		} {
-			s.text(rx, y+1+i, g[0], bright, true)
-			s.text(rx+21, y+1+i, g[1], txt, false)
+	earnedRows--
+	foot := h - 7
+
+	ry := 10
+	if d.rank == 0 && d.opens != "" {
+		s.text(rx, ry, "Its workers arrive in the "+d.opens+".", dim, false)
+		ry += 2
+	}
+	s.text(rx, ry, "NEAREST BADGES", dim, false)
+	ry += 2
+	for _, v := range d.near {
+		lines := wrapCells(v.Desc, rw-2)
+		if len(lines) > 2 {
+			lines = lines[:2]
 		}
+		if ry+len(lines)+3+earnedRows > foot-1 {
+			break
+		}
+		s.text(rx, ry, "□", dim, false)
+		s.text(rx+2, ry, v.Name, bright, true)
+		s.right(rx+rw, ry, fmt.Sprintf("%s  +%d", v.Tier, v.Points), tierCol(v.Level), false)
+		for j, ln := range lines {
+			s.text(rx+2, ry+1+j, ln, txt, false)
+		}
+		by := ry + 1 + len(lines)
+		s.bar(rx+2, by, rw-8, float64(pct(v))/100, col, theme.Mix(bg, col, 0.22), '▄')
+		s.right(rx+rw, by, fmt.Sprintf("%d%%", pct(v)), txt, false)
+		ry = by + 2
 	}
+
+	s.text(rx, ry, "EARNED", dim, false)
+	ry += 2
+	for _, r := range runs {
+		if ry >= foot-1 {
+			break
+		}
+		tc := tierCol(r.tier)
+		x := s.text(rx, ry, strings.ToUpper(r.tier.Name()), tc, true)
+		s.text(x+2, ry, fmt.Sprintf("%d points each", r.tier.Points()), dim, false)
+		s.right(rx+rw, ry, fmt.Sprintf("%d of %d", r.have, r.all), txt, false)
+		ry++
+		if len(r.lines) == 0 {
+			s.text(rx+2, ry, "none yet", faintCol(), false)
+			ry += 2
+			continue
+		}
+		for _, ln := range r.lines {
+			if ry < foot-1 {
+				s.dots(rx+2, ry, ln, txt, faintCol())
+			}
+			ry++
+		}
+		ry++
+	}
+	s.rule(rx, foot, rw, line)
+	s.text(rx, foot+1, fmt.Sprintf("%d still to earn in %s", d.all-d.earned, d.name), txt, false)
+	s.right(rx+rw, foot+1, "Enter  the whole list", dim, false)
 }
 
 func (p *ranksPanel) paintList(s rankPaint, w, h int) {
@@ -582,4 +892,10 @@ func findBadge(views []game.BadgeView, word string) (string, bool) {
 		}
 	}
 	return best, best != ""
+}
+
+// faintCol is the color of rules and separators: the dim text, mostly faded
+// into the background.
+func faintCol() kit.Color {
+	return theme.Mix(theme.Of(theme.RoleBackground), kit.Role(theme.RoleDim), 0.7)
 }

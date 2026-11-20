@@ -2,11 +2,15 @@ package ui
 
 import (
 	"image"
+	"image/png"
+	"os"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -38,7 +42,7 @@ func ranksPanelOn(views []game.BadgeView, w, h int) *ranksPanel {
 
 func TestRanksModelCountsFromConfig(t *testing.T) {
 	views := ranksViews(3)
-	m := buildRanks(views)
+	m := buildRanks(rules.Core(), views)
 	var want, earned int
 	for _, v := range views {
 		want++
@@ -60,7 +64,7 @@ func TestRanksModelCountsFromConfig(t *testing.T) {
 		t.Errorf("points %d (sum %d), domains %d", m.pts, sum, len(m.doms))
 	}
 	for i := 1; i < len(m.doms); i++ {
-		if m.doms[i-1].rank < m.doms[i].rank {
+		if m.doms[i-1].rank == 0 && m.doms[i].rank > 0 {
 			t.Fatalf("domains not ranked first: %s before %s", m.doms[i-1].key, m.doms[i].key)
 		}
 	}
@@ -134,5 +138,77 @@ func TestRanksPaintsAtTheWindowSize(t *testing.T) {
 		if b.W != 279 || b.H != 74 {
 			t.Fatal("size")
 		}
+	}
+}
+
+// TestRanksPicture writes the screen at the window's size when RANKS_SHOT
+// names a file. The account is made up from the real rule set: about 212
+// badges earned, the lowest tiers first, each domain's share by its size,
+// Energy none, Hacker and Astronaut a few.
+func TestRanksPicture(t *testing.T) {
+	out := os.Getenv("RANKS_SHOT")
+	if out == "" {
+		t.Skip("RANKS_SHOT not set")
+	}
+	byDom := map[string][]config.BadgeDef{}
+	var all []config.BadgeDef
+	for _, d := range rules.Core().Badges() {
+		if d.Integrity() {
+			continue
+		}
+		byDom[d.Domain()] = append(byDom[d.Domain()], d)
+		all = append(all, d)
+	}
+	want := map[string]int{"energy": 0, "hacker": 2, "astronaut": 4}
+	left := 212
+	for k, n := range want {
+		left -= n
+		_ = k
+	}
+	size := 0
+	for k, l := range byDom {
+		if _, ok := want[k]; !ok {
+			size += len(l)
+		}
+	}
+	for k, l := range byDom {
+		if _, ok := want[k]; !ok {
+			want[k] = min(left*len(l)/size, len(l))
+		}
+	}
+	now := time.Date(2026, 11, 19, 12, 0, 0, 0, time.UTC)
+	got := map[string]bool{}
+	i := 0
+	for k, l := range byDom {
+		l := append([]config.BadgeDef(nil), l...)
+		sort.SliceStable(l, func(a, b int) bool { return l[a].Tier < l[b].Tier })
+		for j := 0; j < want[k]; j++ {
+			got[l[j].Key] = true
+			i++
+		}
+	}
+	var views []game.BadgeView
+	n := 0
+	for _, d := range all {
+		v := game.BadgeView{Key: d.Key, Name: d.Name, Desc: d.Desc, Tier: d.Tier.Name(), Points: d.Points(),
+			Level: d.Tier, Domain: d.Domain(), Earned: got[d.Key]}
+		if v.Earned {
+			n++
+			v.At = now.Add(-time.Duration(n*9) * time.Hour)
+		} else if d.Threshold > 0 {
+			v.Target = d.Threshold
+			v.Progress = d.Threshold * float64((len(d.Key)*7)%90+5) / 100
+		}
+		views = append(views, v)
+	}
+	p := ranksPanelOn(views, 279, 74)
+	p.model.now = now
+	f, err := os.Create(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := png.Encode(f, ScreenImagePixel(paintAlone(p, 279, 74))); err != nil {
+		t.Fatal(err)
 	}
 }

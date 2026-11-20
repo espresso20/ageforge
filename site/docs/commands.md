@@ -520,6 +520,7 @@ See [Saving & Loading](saving-and-loading.md) for branching, the save tree, row 
 | Command | Description |
 |---|---|
 | `badges` | Open the Ranks screen: a rank for each worker domain, built from the badges earned in it. The prompt keeps working while it is open. |
+| `badges ranks` | Open it on the Ranks tab, the same as plain `badges`. |
 | `badges all` | Open it on every badge, by domain. |
 | `badges recent` | Open it on the badges earned latest first. |
 | `badges <domain>` | Open one worker domain's badges, by its key (`food`, `lumber`, `masonry` and the rest). |

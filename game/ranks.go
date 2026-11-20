@@ -67,7 +67,8 @@ func (s GameState) TownTitle() string {
 		}
 	}
 	best, rank, top := "", 0, 0
-	for _, key := range config.WorkerDomains() {
+	set := s.Ruleset()
+	for _, key := range set.WorkerDomains() {
 		if r := config.RankFor(pts[key]); r > rank || (r == rank && r > 0 && pts[key] > top) {
 			best, rank, top = key, r, pts[key]
 		}
@@ -75,5 +76,5 @@ func (s GameState) TownTitle() string {
 	if rank < 3 {
 		return ""
 	}
-	return config.RankTitles[rank-1] + " " + DomainName(best)
+	return set.RankTitles()[rank-1] + " " + DomainName(best)
 }

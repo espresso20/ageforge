@@ -2715,7 +2715,8 @@ func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 		res.Badges = badgeRequest{tab: tabRecent}
 		return res
 	}
-	if dom, ok := findDomain(want); ok {
+	state := engine.GetState()
+	if dom, ok := findDomain(state.Ruleset(), want); ok {
 		res.Badges = badgeRequest{tab: tabAll, dom: dom}
 		return res
 	}
