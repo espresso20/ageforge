@@ -40,29 +40,58 @@ func TestMultiplierTargetLabel(t *testing.T) {
 	}
 }
 
+// srcTexts is a row's sources as the page writes them, with a sign marker.
+func srcTexts(r multRow) []string {
+	var out []string
+	for _, s := range r.sources {
+		sign := "+"
+		if s.neg {
+			sign = "-"
+		}
+		out = append(out, sign+" "+s.text())
+	}
+	return out
+}
+
+func multRowOf(t *testing.T, rows []multRow, target string) multRow {
+	t.Helper()
+	for _, r := range rows {
+		if r.target == target {
+			return r
+		}
+	}
+	t.Fatalf("no %q row in %+v", target, rows)
+	return multRow{}
+}
+
 func TestSummarizeBreakdown_AdditiveAndMul(t *testing.T) {
-	// production_all: research +10%, wonders +5%, morale ×1.18.
+	// production_all: research +10%, wonders +5%, morale x1.18.
 	mods := []game.Modifier{
 		{Source: "research", Target: "production_all", Op: game.OpAdd, Value: 0.10},
 		{Source: "wonders", Target: "production_all", Op: game.OpAdd, Value: 0.05},
 		{Source: "morale", Target: "production_all", Op: game.OpMul, Value: 1.18},
 	}
 	got := summarizeBreakdown(mods)
-	// Each fragment is wrapped in its own sign-colored tag; positives are green.
-	want := "[green]Research +10%[-] [gray]·[-] [green]Wonders +5%[-] [gray]·[-] [green]Morale ×1.18[-]"
-	if got != want {
-		t.Errorf("summarizeBreakdown = %q, want %q", got, want)
+	want := []multSrc{{"Research", "+10%", false}, {"Wonders", "+5%", false}, {"Morale", "×1.18", false}}
+	if len(got) != len(want) {
+		t.Fatalf("summarizeBreakdown = %+v, want %+v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("source %d = %+v, want %+v", i, got[i], want[i])
+		}
 	}
 }
 
 func TestSummarizeBreakdown_MergesSameSource(t *testing.T) {
-	// Two research contributions on one target should merge into one entry.
+	// Two research contributions on one target merge into one entry.
 	mods := []game.Modifier{
 		{Source: "research", Target: "food_rate", Op: game.OpAdd, Value: 0.12},
 		{Source: "research", Target: "food_rate", Op: game.OpAdd, Value: 0.08},
 	}
-	if got := summarizeBreakdown(mods); got != "[green]Research +20%[-]" {
-		t.Errorf("summarizeBreakdown = %q, want %q", got, "[green]Research +20%[-]")
+	got := summarizeBreakdown(mods)
+	if len(got) != 1 || got[0].text() != "Research +20%" || got[0].neg {
+		t.Errorf("summarizeBreakdown = %+v, want one Research +20%%", got)
 	}
 }
 
@@ -71,15 +100,14 @@ func TestSummarizeBreakdown_DropsNoops(t *testing.T) {
 		{Source: "research", Target: "gather_rate", Op: game.OpAdd, Value: 0.0},
 		{Source: "morale", Target: "gather_rate", Op: game.OpMul, Value: 1.0},
 	}
-	if got := summarizeBreakdown(mods); got != "" {
-		t.Errorf("summarizeBreakdown of no-ops = %q, want empty", got)
+	if got := summarizeBreakdown(mods); len(got) != 0 {
+		t.Errorf("summarizeBreakdown of no-ops = %+v, want none", got)
 	}
 }
 
-// TestRenderActiveMultipliers_ActiveEvent proves the bug fix: a timed event's
-// production_all/tick_speed contributions now surface in the panel (they used
-// to be invisible because the old hand-aggregation never read events).
-func TestRenderActiveMultipliers_ActiveEvent(t *testing.T) {
+// TestActiveMultipliers_ActiveEvent: a timed event's production_all and
+// tick_speed contributions surface in the table.
+func TestActiveMultipliers_ActiveEvent(t *testing.T) {
 	state := game.GameState{
 		Modifiers: []game.Modifier{
 			{Source: "research", Target: "production_all", Op: game.OpAdd, Value: 0.10},
@@ -89,95 +117,76 @@ func TestRenderActiveMultipliers_ActiveEvent(t *testing.T) {
 			{Source: "event:Peaceful Century", Target: "tick_speed", Op: game.OpAdd, Value: 0.01},
 		},
 	}
-	out := renderActiveMultipliers(state)
-
-	if !strings.Contains(out, "Event: Peaceful Century +1%") {
-		t.Errorf("active event bonus missing from panel:\n%s", out)
+	rows := activeMultipliers(state)
+	speed := multRowOf(t, rows, "Game speed")
+	if got := strings.Join(srcTexts(speed), "|"); !strings.Contains(got, "+ Event: Peaceful Century +1%") || !strings.Contains(got, "+ Prestige +5%") {
+		t.Errorf("tick_speed sources: %s", got)
 	}
-	if !strings.Contains(out, "All production") || !strings.Contains(out, "Morale ×1.18") {
-		t.Errorf("production_all line malformed:\n%s", out)
-	}
-	if !strings.Contains(out, "Game speed") || !strings.Contains(out, "Prestige +5%") {
-		t.Errorf("tick_speed line malformed:\n%s", out)
+	all := multRowOf(t, rows, "All production")
+	if got := strings.Join(srcTexts(all), "|"); !strings.Contains(got, "Morale ×1.18") {
+		t.Errorf("production_all sources: %s", got)
 	}
 }
 
-// TestRenderActiveMultipliers_Empty guards nil-safety on a fresh game: no
-// modifiers → the "No active multipliers" line, no panic.
-func TestRenderActiveMultipliers_Empty(t *testing.T) {
-	state := game.GameState{Modifiers: nil}
-	out := renderActiveMultipliers(state)
-	if !strings.Contains(out, "No active multipliers") {
-		t.Errorf("empty state should report no multipliers, got:\n%s", out)
+// TestActiveMultipliers_Empty: a fresh game has no rows and does not panic.
+func TestActiveMultipliers_Empty(t *testing.T) {
+	if rows := activeMultipliers(game.GameState{Modifiers: nil}); len(rows) != 0 {
+		t.Errorf("empty state has rows: %+v", rows)
 	}
 }
 
-// TestRenderActiveMultipliers_NoopTargetsHidden ensures a target whose net
-// effect is ×1.0 (e.g. only no-op contributions) does not render a line.
-func TestRenderActiveMultipliers_NoopTargetsHidden(t *testing.T) {
-	state := game.GameState{
-		Modifiers: []game.Modifier{
-			{Source: "morale", Target: "production_all", Op: game.OpMul, Value: 1.0},
-		},
-	}
-	out := renderActiveMultipliers(state)
-	if !strings.Contains(out, "No active multipliers") {
-		t.Errorf("no-op target should be hidden, got:\n%s", out)
+// TestActiveMultipliers_NoopTargetsHidden: a target whose net effect is x1.0
+// from no-op contributions has no row.
+func TestActiveMultipliers_NoopTargetsHidden(t *testing.T) {
+	state := game.GameState{Modifiers: []game.Modifier{{Source: "morale", Target: "production_all", Op: game.OpMul, Value: 1.0}}}
+	if rows := activeMultipliers(state); len(rows) != 0 {
+		t.Errorf("no-op target has a row: %+v", rows)
 	}
 }
 
-// TestRenderActiveMultipliers_SignColors proves each contributing source is
-// colored by its own sign: a positive source gets [green], a negative [red].
-func TestRenderActiveMultipliers_SignColors(t *testing.T) {
+// TestActiveMultipliers_SignColors: each source carries its own sign and the
+// row carries the net.
+func TestActiveMultipliers_SignColors(t *testing.T) {
 	state := game.GameState{
 		Modifiers: []game.Modifier{
 			{Source: "research", Target: "production_all", Op: game.OpAdd, Value: 0.20},
 			{Source: "event:Famine", Target: "production_all", Op: game.OpAdd, Value: -0.05},
 		},
 	}
-	out := renderActiveMultipliers(state)
-	if !strings.Contains(out, "[green]Research +20%[-]") {
-		t.Errorf("positive source should be green-tagged:\n%s", out)
+	r := multRowOf(t, activeMultipliers(state), "All production")
+	if got := srcTexts(r); len(got) != 2 || got[0] != "+ Research +20%" || got[1] != "- Event: Famine -5%" {
+		t.Errorf("sources = %q", got)
 	}
-	if !strings.Contains(out, "[red]Event: Famine -5%[-]") {
-		t.Errorf("negative source should be red-tagged:\n%s", out)
-	}
-	// Net +15% → green headline.
-	if !strings.Contains(out, "[green]+15%[-]") {
-		t.Errorf("net-positive headline should be green:\n%s", out)
+	if r.pct < 14.9 || r.pct > 15.1 {
+		t.Errorf("net = %v%%, want +15%%", r.pct)
 	}
 }
 
-// TestRenderActiveMultipliers_OpposingSourcesStillRender guards the net-zero
-// collapse fix: a target whose sources cancel to ×1.0 must STILL render, with
-// both the positive and negative fragments visible.
-func TestRenderActiveMultipliers_OpposingSourcesStillRender(t *testing.T) {
+// TestActiveMultipliers_OpposingSourcesStillRender: a target whose sources
+// cancel to x1.0 still has a row, with both fragments.
+func TestActiveMultipliers_OpposingSourcesStillRender(t *testing.T) {
 	state := game.GameState{
 		Modifiers: []game.Modifier{
 			{Source: "research", Target: "gather_rate", Op: game.OpAdd, Value: 0.10},
 			{Source: "event:Drought", Target: "gather_rate", Op: game.OpAdd, Value: -0.10},
 		},
 	}
-	out := renderActiveMultipliers(state)
-	if strings.Contains(out, "No active multipliers") {
-		t.Fatalf("opposing sources netting to ~1.0 must still render a line:\n%s", out)
+	rows := activeMultipliers(state)
+	if len(rows) != 1 {
+		t.Fatalf("opposing sources netting to ~1.0 must still have a row: %+v", rows)
 	}
-	if !strings.Contains(out, "[green]Research +10%[-]") {
-		t.Errorf("positive fragment missing from net-zero row:\n%s", out)
+	if got := srcTexts(rows[0]); len(got) != 2 || got[0] != "+ Research +10%" || got[1] != "- Event: Drought -10%" {
+		t.Errorf("sources = %q", got)
 	}
-	if !strings.Contains(out, "[red]Event: Drought -10%[-]") {
-		t.Errorf("negative fragment missing from net-zero row:\n%s", out)
-	}
-	// Net ~0% → white headline (neither bonus nor penalty).
-	if !strings.Contains(out, "[white]") {
-		t.Errorf("net-zero headline should be white:\n%s", out)
+	if rows[0].pct > 0.5 || rows[0].pct < -0.5 {
+		t.Errorf("net = %v%%, want about 0", rows[0].pct)
 	}
 }
 
-// TestRenderActiveMultipliers_CapacityTargetsExcluded guards the
-// isPanelMultiplier filter: flat/capacity targets (population, "all", bare
-// storage keys) are not rate multipliers and must not appear here as percents.
-func TestRenderActiveMultipliers_CapacityTargetsExcluded(t *testing.T) {
+// TestActiveMultipliers_CapacityTargetsExcluded: flat and capacity targets
+// (population, "all", bare storage keys) are not rate multipliers and have
+// no row.
+func TestActiveMultipliers_CapacityTargetsExcluded(t *testing.T) {
 	state := game.GameState{
 		Modifiers: []game.Modifier{
 			{Source: "prestige", Target: "population", Op: game.OpAdd, Value: 2.0},
@@ -185,50 +194,32 @@ func TestRenderActiveMultipliers_CapacityTargetsExcluded(t *testing.T) {
 			{Source: "research", Target: "food", Op: game.OpAdd, Value: 0.50},
 		},
 	}
-	out := renderActiveMultipliers(state)
-	if strings.Contains(out, "Population") {
-		t.Errorf("population (capacity) must not render in the multiplier panel:\n%s", out)
-	}
-	if strings.Contains(out, "All ") || strings.Contains(out, "+2000%") {
-		t.Errorf("\"all\" (flat) must not render as a percentage:\n%s", out)
-	}
-	if !strings.Contains(out, "No active multipliers") {
-		t.Errorf("only capacity/flat targets present — panel should be empty:\n%s", out)
+	if rows := activeMultipliers(state); len(rows) != 0 {
+		t.Errorf("capacity or flat targets have rows: %+v", rows)
 	}
 }
 
-// TestStatsProvider_ActiveEventEffects proves the stats overlay now renders
-// each active event's ongoing effects beneath it, color-coded by sign: a
-// negative production effect gets a [red] "food" line, a positive one [green].
-func TestStatsProvider_ActiveEventEffects(t *testing.T) {
+// TestPrestigeRows_ActiveEventEffects: each active event's ongoing effects
+// sit beneath it, a negative production effect bad and a positive one good.
+func TestPrestigeRows_ActiveEventEffects(t *testing.T) {
 	state := game.GameState{
 		ActiveEvents: []game.ActiveEventState{
-			{
-				Name:      "Famine",
-				Key:       "famine",
-				TicksLeft: 8,
-				Effects: []game.EventEffectInfo{
-					{Type: "production", Target: "food", Value: -3.0},
-				},
-			},
-			{
-				Name:      "Gold Rush",
-				Key:       "gold_rush",
-				TicksLeft: 12,
-				Effects: []game.EventEffectInfo{
-					{Type: "production", Target: "gold", Value: 1.0},
-				},
-			},
+			{Name: "Famine", Key: "famine", TicksLeft: 8, Effects: []game.EventEffectInfo{{Type: "production", Target: "food", Value: -3.0}}},
+			{Name: "Gold Rush", Key: "gold_rush", TicksLeft: 12, Effects: []game.EventEffectInfo{{Type: "production", Target: "gold", Value: 1.0}}},
 		},
 	}
-	out := statsProvider(state, 0)
-
-	if !strings.Contains(out, "[red]    -3 food/tick[-]") {
-		t.Errorf("negative production effect should render red-tagged:\n%s", out)
+	rows := prestigeRows(state)
+	find := func(text string, k xk) {
+		t.Helper()
+		for _, r := range rows {
+			if strings.TrimSpace(r.value) == text && r.k == k {
+				return
+			}
+		}
+		t.Errorf("no %q row of kind %v in %+v", text, k, rows)
 	}
-	if !strings.Contains(out, "[green]    +1 gold/tick[-]") {
-		t.Errorf("positive production effect should render green-tagged:\n%s", out)
-	}
+	find("-3 food/s", xBad)
+	find("+1 gold/s", xGood)
 }
 
 // TestIsPanelMultiplier covers the rate/flat classification directly.

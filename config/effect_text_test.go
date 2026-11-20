@@ -43,7 +43,7 @@ func TestBuildingDescriptionsComeFromEffects(t *testing.T) {
 		}
 		for _, e := range d.Effects {
 			if e.Type == "production" && e.Value > 0 {
-				want := "+" + FormatAmount(e.Value) + " " + ResourceLabel(e.Target) + "/tick"
+				want := rateText(e.Value, ResourceLabel(e.Target))
 				if !strings.Contains(d.Description, want) {
 					t.Errorf("%s: description %q is missing %q", d.Key, d.Description, want)
 				}
@@ -505,4 +505,33 @@ func TestScholarOutputAndResearchSpeedHaveTheirOwnLabels(t *testing.T) {
 // RateText is a per-tick change to one resource: "gold +5/tick".
 func RateText(res string, v float64) string {
 	return ResourceLabel(res) + " " + signed(v, FormatAmount(v)) + "/tick"
+}
+
+// Descriptions state rates per second (or minute, hour) at the base tick: no
+// building description and no tech effect says "tick".
+func TestDescriptionsStateNoTickRates(t *testing.T) {
+	for _, d := range BaseBuildings() {
+		for _, bad := range []string{"/tick", "per tick"} {
+			if strings.Contains(d.Description, bad) {
+				t.Errorf("%s: description %q says %q", d.Key, d.Description, bad)
+			}
+		}
+	}
+	for _, def := range Technologies() {
+		for _, e := range def.Effects {
+			for _, bad := range []string{"/tick", "per tick"} {
+				if strings.Contains(e.Text(), bad) {
+					t.Errorf("%s: effect %q says %q", def.Key, e.Text(), bad)
+				}
+			}
+		}
+	}
+	for _, c := range []struct {
+		perTick float64
+		want    string
+	}{{1, "+0.5 food/s"}, {0.25, "+0.125 food/s"}, {0.5, "+0.25 food/s"}, {-3, "-1.5 food/s"}, {0.008, "+0.24 food/min"}} {
+		if got := rateText(c.perTick, "food"); got != c.want {
+			t.Errorf("rateText(%v) = %q, want %q", c.perTick, got, c.want)
+		}
+	}
 }

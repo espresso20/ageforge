@@ -63,18 +63,26 @@ func TestStatsPanelShowsLargePoolsInFull(t *testing.T) {
 	for _, pool := range []string{"production_all", "gold_rate", "knowledge_rate"} {
 		large(t, st, pool)
 	}
-	out := renderActiveMultipliers(st)
+	rows := activeMultipliers(st)
 	if got := applied(st, "gold_rate"); got != "+380%" {
 		t.Fatalf("gold has earned +380%% and applies %s, want +380%%", got)
 	}
-	wantAll(t, "Active multipliers", out,
-		"Gold production     [-] [green]+380%[-]   ",
-		"Scholar output      [-] [green]"+applied(st, "knowledge_rate")+"[-]   ",
-		"Iron production     [-] [green]+70%[-]   ",
-	)
-	for _, bad := range []string{"quarter", "earned", "capped at +200%", "[green]+200%[-] "} {
-		if strings.Contains(out, bad) {
-			t.Errorf("a pool far past +200%% carries %q:\n%s", bad, out)
+	for target, want := range map[string]string{
+		"Gold production": "+380%",
+		"Scholar output":  applied(st, "knowledge_rate"),
+		"Iron production": "+70%",
+	} {
+		r := multRowOf(t, rows, target)
+		if got := fmt.Sprintf("%+.0f%%", r.pct); got != want {
+			t.Errorf("%s headline = %s, want %s", target, got, want)
+		}
+	}
+	for _, r := range rows {
+		if r.note != "" && r.target != "Iron production" {
+			t.Errorf("%s, far past +200%%, carries the note %q", r.target, r.note)
+		}
+		if strings.Contains(r.note, "quarter") || strings.Contains(r.note, "earned") || strings.Contains(r.note, "capped at +200%") {
+			t.Errorf("a pool far past +200%% carries %q", r.note)
 		}
 	}
 }
@@ -88,24 +96,24 @@ func TestResearchPanelBonuses(t *testing.T) {
 	_, st := cappedState(t)
 	large(t, st, "production_all") // the fixture's pools are past +200%
 	large(t, st, "gold_rate")
-	out := section(t, statsProvider(st, 120), "Research bonuses", "Resource rates")
+	out := statsRowsText(researchRows(st))
 	wantAll(t, "Research bonuses", out,
-		"[green]+7%    [-] All production\n",
-		"[green]+36%   [-] Gold production\n",
-		"[green]+86%   [-] Research production\n",
-		"[green]+37%   [-] Housing\n",
-		"[green]-19%   [-] Building costs\n",
-		"[green]-27%   [-] Construction time\n",
-		"[green]-23%   [-] Research time\n",
-		"[green]-25%   [-] Wonder construction time\n",
-		"[green]+25%   [-] Festival length\n",
-		"[green]+10%   [-] Soldier posts\n",
-		"[green]+21%   [-] Trade route income\n",
-		"[green]+5     [-] Morale ceiling, in points\n",
-		"[green]-28%   [-] Trade route time\n",
-		"[green]+2     [-] Hand gathering\n",
-		"[green]+15%   [-] Game speed\n",
-		"[gray]Output:[-]  +1 data/tick, +0.25 steel/tick",
+		"+7%     All production\n",
+		"+36%    Gold production\n",
+		"+86%    Research production\n",
+		"+37%    Housing\n",
+		"-19%    Building costs\n",
+		"-27%    Construction time\n",
+		"-23%    Research time\n",
+		"-25%    Wonder construction time\n",
+		"+25%    Festival length\n",
+		"+10%    Soldier posts\n",
+		"+21%    Trade route income\n",
+		"+5      Morale ceiling, in points\n",
+		"-28%    Trade route time\n",
+		"+2      Hand gathering\n",
+		"+15%    Game speed\n",
+		"Output:  +0.575 data/s, +0.144 steel/s",
 	)
 	if strings.Contains(out, "capped") || strings.Contains(out, "a quarter") {
 		t.Errorf("a tech's bonus carries a cap note:\n%s", out)
@@ -154,13 +162,13 @@ func TestMilestonesAndWondersTagOnlyLimitedRewards(t *testing.T) {
 	must(t, ge.EnterAgeForTest("information_age"))
 	wonders := wondersProvider(ge.GetState(), 120)
 	if want := "+30% scholar output[-]\n"; !strings.Contains(wonders, want) {
-		t.Errorf("the Wonders panel tags a scholar output effect that counts in full (want %q):\n%s", want, wonders)
+		t.Errorf("the Wonders panel tags a scholar output effect that counts in full (want %q)", want)
 	}
 	if strings.Contains(wonders, "a quarter") {
 		t.Errorf("the Wonders panel still talks of a quarter:\n%s", wonders)
 	}
-	if want := "+30 data/tick[-]\n"; !strings.Contains(wonders, want) {
-		t.Errorf("the Global Network's flat output carries a note, or is gone (want %q)", want)
+	if want := "+17.3 data/s[-]\n"; !strings.Contains(wonders, want) {
+		t.Errorf("the Global Network flat output carries a note, or is gone (want %q)", want)
 	}
 }
 

@@ -54,7 +54,7 @@ func (b *barPanel) paintGrid(p *kit.Painter, g *xgrid, r image.Rectangle) {
 	if !r.Empty() && g != nil {
 		pal := newExpPalette()
 		paintExpeditionKit(p, g, r.Min, pal)
-		b.buttons.paintLit(p, g, r.Min, pal)
+		b.buttons.paint(p, g, r.Min, pal)
 	}
 }
 
@@ -115,6 +115,14 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 			routeKey:   d.expPanel.routeKey,
 			closeFirst: d.expPanel.closeConfirm,
 			update:     d.expPanel.update,
+		},
+		"stats": {
+			routeKey: d.statsPanel.routeKey,
+			update:   d.statsPanel.update,
+		},
+		"history": {
+			routeKey: d.historyPanel.routeKey,
+			update:   d.historyPanel.update,
 		},
 		"people": {
 			routeKey: d.peoplePanel.routeKey,

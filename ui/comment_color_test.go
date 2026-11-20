@@ -40,7 +40,6 @@ var commentSites = map[string]int{
 	"ui/overlay_buildings.go":   1,
 	"ui/overlay_epoch.go":       1,
 	"ui/overlay_harbinger.go":   1,
-	"ui/tab_economy.go":         1,
 }
 
 func TestCommentColorIsDrawnOnlyOnFlavor(t *testing.T) {
@@ -85,7 +84,7 @@ func TestAgeQuipIsTheOnlyCommentOnTheSplash(t *testing.T) {
 		if def.Quip == "" {
 			continue
 		}
-		for _, l := range ageSplashLines(age, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{}) {
+		for _, l := range ageSplashLines(age, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{}, 0) {
 			has := strings.Contains(l.text, "[comment")
 			if (l.kind == skQuip) != has {
 				t.Errorf("%s: line kind %v has comment tag = %v: %q", age, l.kind, has, l.text)

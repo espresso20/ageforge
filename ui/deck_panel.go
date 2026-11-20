@@ -15,8 +15,9 @@ import (
 // with the command bar and takes only the keys that print nothing, and only
 // while the bar is empty: the arrows move the pick from card to card, Enter
 // runs the picked card's command, PgUp and PgDn turn a page. Esc closes it.
-// A click picks a card; a click on a card's button, or a double click on the
-// card, runs its command. Every command goes through the command bar's own
+// A click picks a card; a click on a card's button (it carries the command, so
+// the buttons' own path runs it), or a double click on the card, runs its
+// command. Every command goes through the command bar's own
 // path, so it is echoed and answered like one that was typed.
 
 type deckPanel struct {
@@ -27,8 +28,6 @@ type deckPanel struct {
 	// draw draws the page; nil draws it as a deck of cards. A panel with a
 	// scene of its own (the Trade panel's map of roads) sets it.
 	draw func(pg *deckPage, st game.GameState, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout)
-	// run types a command and runs it, as the command bar does.
-	run func(cmd string)
 	// settings reads the glyph tier.
 	settings func() mapSettings
 
@@ -51,14 +50,13 @@ func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
 
 // registerDeck makes a panel of cards from page and registers it as the
 // overlay name, with its keyboard left to the command bar and its commands
-// run as the command bar runs them.
+// run as the command bar runs them (the buttons' own path, key_bar.go).
 func (d *Dashboard) registerDeck(name string, title rowid.Entry, page func(game.GameState) deckPage) *deckPanel {
 	p := newDeckPanel(page)
 	p.settings = d.mapSettings
-	p.run = d.runLine
 	p.prompt = func() string { return d.inputField.GetText() }
 	p.toPrompt = d.handToPrompt
-	p.buttons.press = d.app.Key
+	p.buttons.wire(d.app)
 	d.decks[name] = p
 	d.overlayMgr.RegisterWidget(name, title, p.open, p.update)
 	return p
@@ -127,10 +125,10 @@ func (p *deckPanel) pick(n int) {
 // act runs the picked card's command and reports whether it has one.
 func (p *deckPanel) act() bool {
 	c, ok := p.pg.card(p.sel)
-	if !ok || c.Command == "" || p.run == nil {
+	if !ok || c.Command == "" || p.buttons.run == nil {
 		return false
 	}
-	p.run(c.Command)
+	p.buttons.fire(xkey{cmd: c.Command})
 	return true
 }
 
@@ -150,11 +148,6 @@ func (p *deckPanel) Mouse(m kit.Mouse) bool {
 		return false
 	}
 	pt := m.Pt().Sub(p.Bounds().Min)
-	if n, ok := p.grid.hitAt(hitDeckAct, pt); ok {
-		p.pick(n)
-		p.act()
-		return true
-	}
 	n, ok := p.grid.hitAt(hitDeckCard, pt)
 	if !ok {
 		return false

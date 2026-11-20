@@ -33,7 +33,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 		"✦ The Last Passage", "☄ The Last Passage", "Prestige waits on your answer",
 		"ENDURE: pass through, diminished", "You keep 50% of this run's prestige points",
 		"SUCCUMB: let it take the run", "no points from this run", "Cosmic Legacy: production +10%",
-		"[E] ENDURE", "[S] SUCCUMB", "prestige waits · type 'catastrophe' to reopen",
+		"decide later", "ENDURE", "SUCCUMB", "prestige waits · type 'catastrophe' to reopen",
 	)
 	if strings.Contains(screen, "buildings destroyed") {
 		t.Error("the Last Passage modal shows the epoch catastrophe's Endure terms")
@@ -99,7 +99,7 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 		t.Fatal("S acted on a closed Succumb")
 	}
 	keyTo(front, tk(kit.KeyTab, 0, 0))
-	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != kit.Escape("[E] ENDURE") {
+	if b, ok := d.catFocus.(*nativeButton); !ok || b.GetLabel() != "ENDURE" {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}
 }
@@ -120,7 +120,7 @@ func TestLastPassageModalLayoutFitsWidth(t *testing.T) {
 					}
 				}
 			}
-			if want := rows + 3 + 1 + 2; l.height != want {
+			if want := rows + 3 + actionRows + 2; l.height != want {
 				t.Errorf("brace %d legacy %v: height %d, want %d", brace, legacy, l.height, want)
 			}
 		}
@@ -210,7 +210,7 @@ func checkCostBlock(t *testing.T, d *Dashboard, pages *nativePages, state game.G
 func TestHarbingerPanelLastPassage(t *testing.T) {
 	d, engine, pages := harbDashboard(t, "interstellar_age")
 	state := engine.GetState()
-	txt := untag(harbingerPanelText(state, "", false, false))
+	txt := untag(harbingerPanelText(state, "", false))
 	t.Logf("Cosmic Era harbinger panel:\n%s", txt)
 	// The prices are the thread's own, as the engine has them (the game's
 	// tests pin the figures): the panel prints them in full, with what is
@@ -246,7 +246,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	}
 
 	must(t, engine.ForceLastPassageForTest("interstellar_age"))
-	txt = untag(harbingerPanelText(engine.GetState(), "", false, false))
+	txt = untag(harbingerPanelText(engine.GetState(), "", false))
 	t.Logf("Cosmic Era harbinger panel, Last Passage pending:\n%s", txt)
 	if !strings.Contains(txt, "The Last Passage has come. Prestige waits") ||
 		!strings.Contains(txt, "Unavailable: the Last Passage has already come") {
@@ -334,8 +334,8 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 		t.Errorf("multiplier label = %q", got)
 	}
 	engine.SetCosmicLegacyForTest(true)
-	out := untag(statsProvider(engine.GetState(), 140))
-	if !strings.Contains(out, "Cosmic Legacy:") || !strings.Contains(out, "Cosmic Legacy") {
+	out := statsRowsText(prestigeRows(engine.GetState()))
+	if !strings.Contains(out, "Cosmic Legacy:") {
 		t.Errorf("stats overlay without the Cosmic Legacy:\n%s", out)
 	}
 	// It is applied after the pools: a multiplier of its own beside the
@@ -347,11 +347,15 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 	if p := st.Pools["production_all"]; p.Earned <= 2 || p.Limited {
 		t.Fatalf("the all-production pool is not far past +200%% and in full in the Quantum Age with +400%% of milestone rewards: %+v", p)
 	}
-	out = untag(statsProvider(st, 140))
+	out = statsRowsText(prestigeRows(st))
 	wantAll(t, "the Stats panel", out,
-		"Cosmic Legacy:   all production +10%, counted in full after every other bonus (permanent, through every prestige)\n",
-		"Cosmic Legacy ×1.10",
+		"Cosmic Legacy: all production +10%, counted in full after every other bonus (permanent, through every prestige)\n",
 	)
+	var srcs []string
+	for _, r := range activeMultipliers(st) {
+		srcs = append(srcs, strings.Join(srcTexts(r), "|"))
+	}
+	wantAll(t, "the multipliers", strings.Join(srcs, "\n"), "Cosmic Legacy ×1.10")
 	if r := untag(HandleCommand("rates", engine).Message); !strings.Contains(r, "Cosmic Legacy: +") {
 		t.Errorf("rates has no Cosmic Legacy part:\n%s", r)
 	}
@@ -359,8 +363,8 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 
 // harbingerPanelText renders the panel for the narrowest screen the game
 // draws. Pure: state in, text out.
-func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed bool) string {
-	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, inviteArmed)
+func harbingerPanelText(state game.GameState, note string, noteGood bool) string {
+	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, nil)
 }
 
 // narrowestScreenW is the narrowest terminal the game is laid out for.

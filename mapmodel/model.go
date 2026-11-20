@@ -326,7 +326,7 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 		}
 		if r, ok := st.Resources[d.Output]; ok && weight[d.Output] > 0 && bs.Count > 0 {
 			share := float64(d.BaseOutput*float64(bs.Count)) / weight[d.Output]
-			b.Rate = float64(r.Breakdown.BuildingRate*share) / game.BaseTickInterval.Seconds()
+			b.Rate = float64(r.Breakdown.BuildingRate*share) / tickSeconds(st)
 			b.RateName = r.Name
 		}
 		if since != nil {
@@ -546,4 +546,13 @@ func (m *Model) world(st *game.GameState) {
 		}
 		c.Pressure = clamp01(p)
 	}
+}
+
+// tickSeconds is how long a tick lasts in st, in seconds: the state's own tick
+// length, or the base tick when the state has none.
+func tickSeconds(st *game.GameState) float64 {
+	if st.TickIntervalMs > 0 {
+		return float64(st.TickIntervalMs) / 1000
+	}
+	return game.BaseTickInterval.Seconds()
 }

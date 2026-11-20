@@ -98,8 +98,8 @@ func wonderCollectHint() string {
 // formatEffect formats a building effect for display, in the same words as
 // formatTechEffect ("+10% all production", "unlocks Lumber Mill"), colored
 // by kind.
-func formatEffect(eff config.Effect) string {
-	text := formatTechEffect(eff)
+func formatEffect(eff config.Effect, tickMs int) string {
+	text := formatTechEffect(eff, tickMs)
 	switch eff.Type {
 	case "production":
 		return "[green]" + text + "[-]"

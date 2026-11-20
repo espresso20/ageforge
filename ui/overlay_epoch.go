@@ -84,7 +84,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 			durationStr := ""
 			if evDef, found := set.EraEvent(currentEvent.EventKey); found {
 				if evDef.FlavorText != "" {
-					flavorStr = evDef.FlavorText
+					flavorStr = perSecondText(evDef.FlavorText, state.TickIntervalMs)
 				}
 				if evDef.Duration > 0 {
 					durationStr = rowid.Sprintf("ui.overlay_epoch.epochProviderCurrentEpoch.08", "   %s duration", formatTicks(evDef.Duration, state))

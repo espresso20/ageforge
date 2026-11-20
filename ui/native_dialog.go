@@ -24,6 +24,9 @@ type nativeDialog struct {
 	ground  kit.Color
 	ink     kit.Color
 
+	// actions: the buttons are action buttons, three rows tall (asActions).
+	actions bool
+
 	box   image.Rectangle // where the dialog is, in the page
 	lines []string        // the text, wrapped for it
 }
@@ -65,6 +68,40 @@ func (d *nativeDialog) SetDoneFunc(fn func(button int, label string)) *nativeDia
 	return d
 }
 
+// asActions draws the buttons as action buttons. The first, where the keyboard
+// starts, is the default and names Enter; the way out names Esc and is plain.
+// With danger the last button, which confirms, is the danger one and the way
+// out is the first; otherwise the way out is the last of several and the
+// default is primary.
+func (d *nativeDialog) asActions(danger bool) *nativeDialog {
+	d.actions = true
+	n := len(d.buttons)
+	out := -1
+	switch {
+	case danger:
+		out = 0
+	case n > 1:
+		out = n - 1
+	}
+	for i, b := range d.buttons {
+		kind, key, sign := keyPlain, "", signCross
+		switch {
+		case danger && i == n-1:
+			kind, sign = keyDanger, signNone
+		case !danger && i == 0:
+			kind, sign = keyPrimary, signTick
+		}
+		switch {
+		case i == out:
+			key = "Esc"
+		case i == 0:
+			key = "Enter"
+		}
+		b.asAction(kind, d.ground, key, sign)
+	}
+	return d
+}
+
 func (d *nativeDialog) SetBackgroundColor(c kit.Color) *nativeDialog {
 	d.ground = c
 	return d
@@ -92,13 +129,20 @@ func (d *nativeDialog) Layout(r image.Rectangle) {
 	}
 	off := screenOffset(d, r)
 	need, row := -2, -1
-	for _, l := range d.labels {
-		need += kit.Width(l) + 4 + 2
-		row += kit.Width(l) + 4 + 1
+	for i, l := range d.labels {
+		w := kit.Width(l) + 4
+		if d.actions {
+			w = d.buttons[i].actionWidth()
+		}
+		need += w + 2
+		row += w + 1
 	}
 	width := max(r.Dx()/3, need)
 	d.lines = kit.WordWrap(d.text, width)
-	w, h := width+4, len(d.lines)+6
+	w, h, rows := width+4, len(d.lines)+6, 1
+	if d.actions {
+		h, rows = h+2, actionRows
+	}
 	x, y := r.Min.X+(r.Dx()-w)/2, r.Min.Y+(r.Dy()-h)/2
 	d.box = image.Rect(x, y, x+w, y+h)
 
@@ -107,11 +151,15 @@ func (d *nativeDialog) Layout(r image.Rectangle) {
 		bx = (bx + right - row) / 2
 	}
 	for i, b := range d.buttons {
-		bw := min(kit.Width(d.labels[i])+4, right-bx)
+		bw := kit.Width(d.labels[i]) + 4
+		if d.actions {
+			bw = b.actionWidth()
+		}
+		bw = min(bw, right-bx)
 		if right-bx < 1 {
 			bw = 0 // no room for this one
 		}
-		placeAt(b, bx, by, bw, 1, off)
+		placeAt(b, bx, by, bw, rows, off)
 		bx += bw + 1
 	}
 }
@@ -132,6 +180,7 @@ func (d *nativeDialog) Paint(p *kit.Painter) {
 	}
 	for _, b := range d.buttons {
 		if !b.Bounds().Empty() {
+			b.ground = d.ground
 			b.Paint(p)
 		}
 	}

@@ -510,9 +510,7 @@ func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64
 	if !fs.AtWar {
 		return 0, 0, rowid.Errorf("game.diplomacy.SendTribute.01", "The %s are not at war with you.", def.Name)
 	}
-	// Tribute cost scales with the civ's strength.
-	goldCost := 300.0 * float64(def.Strength)
-	cultureCost := 50.0 * float64(def.Strength)
+	goldCost, cultureCost := TributePrice(def)
 	if gold < goldCost {
 		return 0, 0, rowid.Errorf("game.diplomacy.SendTribute.02", "Not enough gold for tribute to the %s: need %s, have %s.", def.Name, textfmt.Number(goldCost), textfmt.Number(gold))
 	}
@@ -579,6 +577,12 @@ func (dm *DiplomacyManager) AllyBonus(def config.FactionDef) float64 {
 // cut: dealRefreshIn, rounded down, one tick at least.
 func (dm *DiplomacyManager) dealRefreshFor(age string) int {
 	return techTimeTicks(dealRefreshIn(dm.rules, age), dm.terms.dealRefresh)
+}
+
+// TributePrice is the gold and culture a tribute to def costs: it scales with
+// the civilization's strength.
+func TributePrice(def config.FactionDef) (gold, culture float64) {
+	return 300.0 * float64(def.Strength), 50.0 * float64(def.Strength)
 }
 
 // GiftPrice is what a gift costs now: GiftCost with the techs' cut.

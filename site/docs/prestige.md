@@ -52,7 +52,7 @@ prestige confirm yes
 
 `prestige confirm` first says how many points you would earn and the production multiplier before and after. It also says what resets and what persists. The double confirmation (`confirm yes`) is deliberate, because prestige cannot be undone.
 
-The **Stats** panel (`stats`) has a Prestige section too: your level, total points earned, production multiplier, carry-overs and Era Mastery.
+The **Stats** panel (`stats`) has a Prestige section too: your level, total points earned, production multiplier, carry-overs and Era Mastery. Under it is a **Prestige** button. It is dimmed until a prestige is open. A click asks first, and the answer runs `prestige confirm yes`. The festival is still run by command only (`festival`, then `festival confirm yes`).
 
 Every prestige ends with one closing line in the log. From the Modern Age to the Space Age the civilization simply winds down: the offices empty, the last tram runs, the orbital yards shut. An early taste gets a line that fits any age. In the Cosmic Era the age's harbinger is there at the end, and the lines turn to cosmic dread ("Your unmade self took your hand.").
 

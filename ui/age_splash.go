@@ -67,7 +67,7 @@ type splashLine struct {
 
 // ageSplashLines is the text of an age advance, line by line.
 func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
-	epochChanged bool, epochEvent game.EpochEventRecord) []splashLine {
+	epochChanged bool, epochEvent game.EpochEventRecord, tickMs int) []splashLine {
 	ages := config.AgeByKey()
 	newDef := ages[newAge]
 
@@ -199,7 +199,7 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 		// Look up the flavor text from config
 		flavorText := ""
 		if evDef, ok := config.EpochEventByKey()[epochEvent.EventKey]; ok {
-			flavorText = evDef.FlavorText
+			flavorText = perSecondText(evDef.FlavorText, tickMs)
 		}
 
 		blank()

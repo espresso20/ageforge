@@ -28,7 +28,6 @@ var copyExemptFiles = map[string]string{
 	"game/devcmd.go":                 "dev console",
 	"game/updater.go":                "self-update plumbing, not game text",
 	"ui/splash_canvas.go":            "art",
-	"ui/braille.go":                  "chart glyphs",
 	"ui/wonder_icon.go":              "art",
 	"game/savenames.go":              "generated save names",
 	"ui/theme_widgets.go":            "widget chrome",

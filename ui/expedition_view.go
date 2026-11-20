@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"math"
 	"slices"
 	"strings"
@@ -381,6 +382,7 @@ func renderExpedition(state game.GameState, v expView, w, h int) *xgrid {
 		g.putFit(2, l.footY, w-4, v.flash, kind)
 	}
 	if v.confirm && !v.report {
+		g.keysOff(0) // only the box's own buttons answer while it is up
 		drawConfirm(g, state, v, sc)
 	}
 	return g
@@ -390,14 +392,17 @@ func renderExpedition(state game.GameState, v expView, w, h int) *xgrid {
 var txtOf = rowid.E("ui.expedition_view.header.08", " of ")
 
 func header(g *xgrid, state game.GameState, v expView, l expLayout) {
-	ready, report := xDim, xDim
-	if v.report {
-		report = xSel
-	} else {
-		ready = xSel
+	x0 := 2
+	for i, name := range []string{rowid.Line("ui.expedition_view.header.01", " READY ROOM "), rowid.Line("ui.expedition_view.header.02", " EXPEDITION REPORT ")} {
+		k := xDim
+		if (i == 1) == v.report {
+			k = xSel
+		}
+		end := g.put(x0, 1, name, k)
+		g.tab(image.Rect(x0, 1, end, 2), strings.TrimSpace(name), i, (i == 1) == v.report)
+		x0 = end + 1
 	}
-	x := g.put(2, 1, rowid.Line("ui.expedition_view.header.01", " READY ROOM "), ready)
-	x = g.put(x+1, 1, rowid.Line("ui.expedition_view.header.02", " EXPEDITION REPORT "), report)
+	x := x0 - 1
 	if mil := state.Military; !v.report && mil.ReturnsMade > mil.ReturnsSeen {
 		g.put(x+1, 1, rowid.Sprintf("ui.expedition_view.header.03", "● %d new", mil.ReturnsMade-mil.ReturnsSeen), xLegend)
 	}
@@ -776,9 +781,7 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 	for i, ln := range limitLines(wrapText(fail, cw), 2, cw) {
 		foot = append(foot, cardLine{parts: []xseg{{ln, xDim}}, prio: 3 - i})
 	}
-	if o.CanLaunch {
-		foot = append(foot, cardLine{parts: []xseg{{" Enter ", xSel}, {rowid.Line("ui.expedition_view.briefing.16", " send the party"), xText}}})
-	} else {
+	if !o.CanLaunch {
 		for _, ln := range limitLines(wrapText(refusalText(o), cw), 2, cw) {
 			foot = append(foot, cardLine{parts: []xseg{{ln, xBad}}})
 		}
@@ -827,6 +830,13 @@ func fitCard(body, foot []cardLine, rows int) ([]cardLine, []cardLine) {
 	return body, foot
 }
 
+// txtSend and txtBack are the words of the buttons that send a party and take
+// the question back.
+var (
+	txtSend = rowid.E("ui.expedition_view.drawConfirm.12", " send   ")
+	txtBack = rowid.E("ui.expedition_view.drawConfirm.14", " back")
+)
+
 // txtBriefing is said the same way on several screens, so it has one id.
 var txtBriefing = rowid.E("ui.expedition_view.drawBriefing.01", "Briefing")
 
@@ -852,13 +862,21 @@ func drawBriefing(g *xgrid, state game.GameState, v expView, l expLayout, sc *ex
 	}
 	g.box(x, y, w, h, border, title, tk, false)
 	body, foot := briefing(state, o, cw)
-	body, foot = fitCard(body, foot, h-2)
+	rows := h - 2
+	if o.CanLaunch {
+		rows -= actionRows
+	}
+	body, foot = fitCard(body, foot, rows)
 	row := y + 1
 	for _, c := range body {
 		drawCardLine(g, x+1, row, cw, c)
 		row++
 	}
 	row = y + h - 1 - len(foot)
+	if o.CanLaunch {
+		// The button that asks to send the party stands over the card's foot.
+		g.actionButton(x+1, row-actionRows, actionSpec{kind: keyPrimary, label: strings.TrimSpace(txtSend.String()), key: "Enter", sign: signPlay})
+	}
 	for _, c := range foot {
 		drawCardLine(g, x+1, row, cw, c)
 		row++
@@ -887,7 +905,7 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 	}
 	o := *sc.offers[sc.selected(v.sel)].offer
 	w := min(58, g.w-4)
-	h := 10
+	h := 10 + actionRows - 1
 	x, y := (g.w-w)/2, max(1, (g.h-h)/2)
 	g.fill(x, y, w, h)
 	g.hit(hitConfirm, 0, x, y, w, h)
@@ -933,7 +951,8 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 	g.segs(x+2, row, xseg{padRight(rowid.Line("ui.expedition_view.drawConfirm.07", "Odds"), 6), xDim}, xseg{fmt.Sprintf("%.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)},
 		xseg{rowid.Line("ui.expedition_view.drawConfirm.08", "   Back in  "), xDim}, xseg{expDur(o.DurationMin, state), xText},
 		xseg{rowid.Line("ui.expedition_view.drawConfirm.09", "   Haul  "), xDim}, xseg{rowid.Sprintf("ui.expedition_view.drawConfirm.10", "about %.0f min", o.HaulMinutes), xGood})
-	g.segs(x+2, y+h-2, xseg{" Enter ", xSel}, xseg{rowid.Line("ui.expedition_view.drawConfirm.12", " send   "), xText}, xseg{" Esc ", xLabel}, xseg{rowid.Line("ui.expedition_view.drawConfirm.14", " back"), xText})
+	bx := g.actionButton(x+2, y+h-1-actionRows, actionSpec{kind: keyPrimary, label: strings.TrimSpace(txtSend.String()), key: "Enter", sign: signTick})
+	g.actionButton(bx+2, y+h-1-actionRows, actionSpec{kind: keyPlain, label: strings.TrimSpace(txtBack.String()), key: "Esc", sign: signCross})
 }
 
 // returnLine is how a mission that came home is told.

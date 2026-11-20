@@ -99,6 +99,10 @@ type mapPanel struct {
 	// settle is told which uncertain places the player settled on the map.
 	settle    func(ids []string)
 	onVisitor bool
+	// keys are the key prompts of the bar as last drawn, and row the bar's
+	// text, which they read their caps from.
+	keys keySet
+	row  []rune
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
@@ -184,6 +188,9 @@ func (p *mapPanel) hide() {
 
 func (p *mapPanel) Layout(r image.Rectangle) { p.Place(r) }
 
+// wireMapPanel makes the key prompts of the map's bar pressable.
+func (d *Dashboard) wireMapPanel() { d.mapPanel.buttons.wire(d.app) }
+
 // Paint draws the map over all but the last row, and the key bar on it. The
 // map still writes cells through mapstyle.Cells, at the panel's place on the screen: scr
 // puts them on the painter.
@@ -200,12 +207,25 @@ func (p *mapPanel) Paint(kp *kit.Painter) {
 	}
 	st.Draw(scr, mapstyle.Rect{X: x, Y: y, W: w, H: h - 1}, f)
 	p.drawBar(scr, mapstyle.Rect{X: x, Y: y + h - 1, W: w, H: 1}, st, f)
+	pal := newExpPalette()
+	pal.styles[xText] = pal.styles[xText].Background(theme.Of(theme.RoleChip))
+	p.buttons.paint(kp, &p.keys, p.Bounds().Min, pal)
+}
+
+// Mouse: a click on a key prompt of the bar presses its key.
+func (p *mapPanel) Mouse(m kit.Mouse) bool { return p.buttons.mouse(&p.keys, p.Bounds().Min, m) }
+
+// PointerAt: the hand over a key prompt of the bar.
+func (p *mapPanel) PointerAt(at image.Point) kit.Pointer {
+	return p.buttons.pointer(&p.keys, p.Bounds().Min, at)
 }
 
 // barPart is one run of key-bar text in one style.
 type barPart struct {
 	text string
 	role int // 0 text, 1 key, 2 dim
+	// word, when set, makes the part a key prompt: text is the key.
+	word string
 }
 
 // drawBar is the key bar: the hint or note, what Enter does, then the
@@ -221,20 +241,28 @@ func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Styl
 	}
 	var lead, cmd []barPart
 	if p.note != "" {
-		lead = []barPart{{p.note, 1}, {"  ", 0}}
+		lead = []barPart{{p.note, 1, ""}, {"  ", 0, ""}}
 	}
 	if p.prompt != nil && p.prompt() != "" {
-		cmd = []barPart{{"Enter", 1}, {rowid.Line("ui.map_panel.drawBar.02", " runs the command below · "), 2}}
+		word, sep := rowid.Line("ui.map_panel.drawBar.02", " runs the command below · "), ""
+		if i := strings.LastIndex(word, "·"); i >= 0 {
+			word, sep = word[:i], word[i:]
+		}
+		cmd = []barPart{{"Enter", 1, strings.TrimSpace(word)}, {sep, 2, ""}}
 	} else if in, ok := st.Inspect(f); ok && in.Command != "" {
-		cmd = []barPart{{"Enter", 1}, {rowid.Line("ui.map_panel.drawBar.04", " types "), 2}, {in.Command, 0}, {" · ", 2}}
+		cmd = []barPart{{"Enter", 1, strings.TrimSpace(rowid.Line("ui.map_panel.drawBar.04", " types "))}, {in.Command, 0, ""}, {" · ", 2, ""}}
 	}
-	full := []barPart{{"map glyphs", 1}, {" " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {rowid.Line("ui.map_panel.drawBar.06", " close"), 2}}
-	short := []barPart{{"map glyphs", 1}, {" · ", 2}, {"Esc", 1}, {rowid.Line("ui.map_panel.drawBar.08", " close"), 2}}
+	full := []barPart{{"map glyphs", 1, ""}, {" " + p.set.Tier.String() + " · ", 2, ""}, {"Esc", 1, strings.TrimSpace(rowid.Line("ui.map_panel.drawBar.06", " close"))}}
+	short := []barPart{{"map glyphs", 1, ""}, {" · ", 2, ""}, {"Esc", 1, strings.TrimSpace(rowid.Line("ui.map_panel.drawBar.08", " close"))}}
 	width := func(parts ...[]barPart) int {
 		n := 0
 		for _, ps := range parts {
 			for _, pt := range ps {
-				n += mapstyle.TextLen(pt.text)
+				if pt.word != "" {
+					n += keyButtonW(pt.text, pt.word)
+				} else {
+					n += mapstyle.TextLen(pt.text)
+				}
 			}
 		}
 		return n
@@ -248,16 +276,42 @@ func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Styl
 	default:
 		// A long reply is clipped so the short keys always show.
 		if room := avail - width(short); len(lead) > 0 && width(lead) > room {
-			lead = []barPart{{mapmodel.Clip(lead[0].text, max(0, room-2)), lead[0].role}, {"  ", 0}}
+			lead = []barPart{{mapmodel.Clip(lead[0].text, max(0, room-2)), lead[0].role, ""}, {"  ", 0, ""}}
 		}
 		parts = [][]barPart{lead, short}
 	}
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, base)
+	p.row = make([]rune, r.W)
+	p.keys = keySet{plain: f.Tier == mapmodel.TierASCII, glyph: func(x, _ int) rune { return p.row[x] }}
+	// The key prompts are recorded on the bar's row, which is the panel's last.
+	_, _, _, ph := p.GetRect()
+	// put writes text at x on the bar and keeps it in row, where the key
+	// prompts read their caps from.
+	put := func(x int, text string, st kit.Style) int {
+		end := cv.Text(x, 0, max(r.W-x, 0), text, st)
+		for i, c := range []rune(text) {
+			if x+i < min(end, len(p.row)) {
+				p.row[x+i] = c
+			}
+		}
+		return end
+	}
+	write := func(x, _ int, text string, cap bool) {
+		st := styles[2]
+		if cap {
+			st = styles[1]
+		}
+		put(x, text, st)
+	}
 	x := 1
 	for _, ps := range parts {
 		for _, pt := range ps {
-			if x < r.W {
-				x = cv.Text(x, 0, r.W-x, pt.text, styles[pt.role])
+			switch {
+			case x >= r.W:
+			case pt.word != "":
+				x = p.keys.keyButton(x, ph-1, pt.text, pt.word, write)
+			default:
+				x = put(x, pt.text, styles[pt.role])
 			}
 		}
 	}

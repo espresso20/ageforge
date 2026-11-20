@@ -121,6 +121,9 @@ type mainMenu struct {
 	local       *mapSettings
 	// checkUpdates opens the update check (it asks the network).
 	checkUpdates func()
+	// buttons make the entries' keys pressable and tell the entry under the
+	// pointer.
+	buttons keyPresser
 }
 
 // CreateSplashPage creates the main menu. A release build also asks, in
@@ -154,6 +157,9 @@ func newMainMenu(app *appLoop, pages *nativePages, engine *game.GameEngine, curr
 	m.start = m.now()
 	m.later = func(fn func()) {
 		time.AfterFunc(menuStrikeHold, func() { app.QueueUpdateDraw(fn) })
+	}
+	if app != nil {
+		m.buttons.wire(app)
 	}
 	m.checkUpdates = func() { showUpdateCheck(app, pages, currentVersion) }
 	if steam.Build {
@@ -450,6 +456,25 @@ func (m *mainMenu) Paint(p *kit.Painter) {
 	}
 	grid, pal := m.frameGrid(r.Dx(), r.Dy())
 	grid.paint(p, r.Min, pal, m.view.plain)
+	m.paintEntries(p, r.Min)
+}
+
+// paintEntries lights the entries over the page painted at org, and paints
+// the buttons on them: the keycaps and the switches.
+func (m *mainMenu) paintEntries(p *kit.Painter, org image.Point) {
+	sc := m.scene
+	for i, r := range sc.hits {
+		it := m.view.items[i]
+		hover := !it.off && m.buttons.in && m.buttons.press != nil && m.buttons.over.In(r)
+		lightRow(p, r.Add(org), i == m.view.sel, hover, r.Max.X-menuTail+1+org.X, m.view.plain)
+	}
+	pal := newExpPalette()
+	m.buttons.paint(p, &sc.keys, org, pal)
+	for _, sw := range sc.switches {
+		it := m.view.items[sw.item]
+		down := m.buttons.press != nil && m.buttons.sunkButton(sw.key)
+		m.buttons.paintSwitch(p, pal, sw.r.Add(org), it.on, down, it.off)
+	}
 }
 
 // frameGrid brings the scene to the clock's frame and draws the page at
@@ -457,6 +482,11 @@ func (m *mainMenu) Paint(p *kit.Painter) {
 func (m *mainMenu) frameGrid(w, h int) (*mGrid, *menuPalette) {
 	if th := theme.Active(); m.pal == nil || m.pal.key != th.Key {
 		m.pal = newMenuPalette(th)
+	}
+	m.view.pix = false
+	if !m.view.plain && pictureCell != nil {
+		cw, ch := pictureCell()
+		m.view.pix = cw > 0 && ch > 0
 	}
 	forge := 0
 	if m.view.forge {
@@ -531,6 +561,14 @@ func (m *mainMenu) Key(k kit.Key) bool {
 		if r >= 'A' && r <= 'Z' {
 			r += 'a' - 'A'
 		}
+		if m.settings && m.window != nil && (r == '-' || r == '+' || r == '=') {
+			dir := 1
+			if r == '-' {
+				dir = -1
+			}
+			m.zoom(dir)
+			return true
+		}
 		for i, it := range m.view.items {
 			if it.key == r {
 				m.view.sel = i
@@ -545,26 +583,13 @@ func (m *mainMenu) Key(k kit.Key) bool {
 	return true
 }
 
-// Mouse: the entry under the pointer is the selected one, and a click opens
-// it, as Enter does.
+// Mouse: the entry under the pointer is lit, and a click on it presses its
+// key, so it opens as the letter opens it.
 func (m *mainMenu) Mouse(ev kit.Mouse) bool {
-	if m.pending || m.scene == nil || ev.Button != kit.ButtonLeft || (ev.Kind != kit.MouseMove && ev.Kind != kit.MousePress) {
+	if m.scene == nil {
 		return false
 	}
-	i := m.scene.entryAt(ev.Pt().Sub(m.Bounds().Min))
-	if i < 0 || i >= len(m.view.items) {
-		return false
-	}
-	moved := i != m.view.sel
-	m.view.sel = i
-	if m.settings {
-		m.settingsSel = i
-	}
-	if ev.Kind == kit.MousePress {
-		m.choose(i)
-		return true
-	}
-	return moved
+	return m.buttons.mouse(&m.scene.keys, m.Bounds().Min, ev)
 }
 
 // PointerAt: the hand over an entry.
@@ -572,15 +597,14 @@ func (m *mainMenu) PointerAt(at image.Point) kit.Pointer {
 	if m.pending || m.scene == nil {
 		return kit.PointerArrow
 	}
-	i := m.scene.entryAt(at.Sub(m.Bounds().Min))
-	return handIf(i >= 0 && i < len(m.view.items))
+	return m.buttons.pointer(&m.scene.keys, m.Bounds().Min, at)
 }
 
 // choose opens entry i. With motion on the title is struck first and the
 // entry opens a moment later, once the flare has been drawn; with motion
 // off it opens at once and nothing flares.
 func (m *mainMenu) choose(i int) {
-	if i < 0 || i >= len(m.view.items) || m.pending {
+	if i < 0 || i >= len(m.view.items) || m.pending || m.view.items[i].off {
 		return
 	}
 	id := m.view.items[i].id
@@ -631,7 +655,7 @@ func (m *mainMenu) open(id string) {
 		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash")
 		m.pages.AddPage(themePickerPage, page, true, true)
 		m.app.SetFocus(page)
-	case miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord, miSetFont:
+	case miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord, miSetFont, miSetSize, miSetFull:
 		m.changeSetting(id, 1)
 	case miSetBack:
 		m.closeSettings()

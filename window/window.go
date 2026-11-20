@@ -245,13 +245,13 @@ func (g *Game) keys() {
 	case inpututil.IsKeyJustPressed(ebiten.KeyF11),
 		m.alt && inpututil.IsKeyJustPressed(ebiten.KeyEnter),
 		mac && m.meta && m.ctrl && inpututil.IsKeyJustPressed(ebiten.KeyF):
-		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+		g.ToggleFullscreen()
 		return
 	case zoom && (g.holdFires(ebiten.KeyEqual) || g.holdFires(ebiten.KeyNumpadAdd)):
-		g.zoomBy(1)
+		g.ZoomBy(1)
 		return
 	case zoom && (g.holdFires(ebiten.KeyMinus) || g.holdFires(ebiten.KeyNumpadSubtract)):
-		g.zoomBy(-1)
+		g.ZoomBy(-1)
 		return
 	case zoom && (inpututil.IsKeyJustPressed(ebiten.KeyDigit0) || inpututil.IsKeyJustPressed(ebiten.KeyNumpad0)):
 		g.zoomReset()
@@ -278,9 +278,10 @@ func (g *Game) keys() {
 	}
 }
 
-// zoomBy changes the text size one step: a point for the smooth font, one
-// pixel of the pixel font (a whole multiple of its own) for that one.
-func (g *Game) zoomBy(d int) {
+// ZoomBy changes the text size d steps: a point for the smooth font, one
+// pixel of the pixel font (a whole multiple of its own) for that one. The
+// keys and the Settings page both come here.
+func (g *Game) ZoomBy(d int) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	s := g.set.clean(g.scale)
@@ -290,6 +291,29 @@ func (g *Game) zoomBy(d int) {
 		s.FontSize += d
 	}
 	g.set = s.clean(g.scale)
+}
+
+// TextSize is the size now in use: points for the smooth font, the multiple
+// of its own pixel for the pixel font.
+func (g *Game) TextSize() int {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	s := g.set.clean(g.scale)
+	if s.Font == FontPixel {
+		return s.PixelScale
+	}
+	return s.FontSize
+}
+
+// ToggleFullscreen puts the window into fullscreen or out of it. The keys and
+// the Settings page both come here.
+func (g *Game) ToggleFullscreen() { ebiten.SetFullscreen(!ebiten.IsFullscreen()) }
+
+// Fullscreen reports whether the window is fullscreen, as of the last update.
+func (g *Game) Fullscreen() bool {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.set.Fullscreen
 }
 
 func (g *Game) zoomReset() {

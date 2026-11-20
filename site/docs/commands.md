@@ -36,7 +36,9 @@ As you type, the best completion of the line shows in dim text after the cursor:
 | `Enter` | If the line is already a whole command, run it exactly as typed. If not, and the completion makes it one, run the completion (`adv` runs `advance`). Otherwise run the line as typed, and the game says what is wrong with it. |
 | `↑` / `↓` | Step back and forward through the last 50 commands you ran. |
 
-Commands that can't be undone are never run from a completion. `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
+Commands that can't be undone are never run from a completion. `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
+
+In the window the Factions panel has a button for each `diplomacy` verb and trade offer, and the Harbinger panel has buttons for `harbinger appease`, `brace` and `invite`. Raid and Invite ask before they run. In the Trade panel the black market is a stop with a chip for each resource a run would pay in; a click runs `blackmarket <resource>` without asking.
 
 Most panels leave the prompt working while they are open, and take only the keys that print nothing. The Wonders, Harbinger and Plan panels use letter keys, so press `Esc` to close one before you type a command. In the window a click closes a panel too: on `Esc close` at its foot, or on the `×` in its top right corner. In a panel that is longer than the screen, `↑`, `↓`, `PgUp`, `PgDn`, `Home` and `End` scroll it while the prompt is empty. In the window the mouse wheel scrolls it as well.
 
@@ -67,7 +69,7 @@ Balance values are defined in ticks (a tech costs so many ticks of research, an 
 | Command | Description |
 |---|---|
 | `build <building> [count\|max]` | Start building copies of a building (default 1). A count builds as many as you can pay for, up to that number. `max` builds as many as you can pay for, up to the building's limit. A building from an earlier age is refused (see `upgrade`), and one that waits for a tech names it. The age's wonder is the exception: it is paid through its bank. Bare `build` lists the buildings you have unlocked, with how many you have, what each costs and whether you can afford it. |
-| `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost. Their workers go back to idle. Wonders, storage and knowledge buildings can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. |
+| `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost. Their workers go back to idle. The Sell button in a building's pane asks first. Wonders, storage and knowledge buildings can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. |
 | `upgrade` | List the older buildings you hold: copies, the building each becomes, the price of the next copy, how many you can pay for now, and what blocks the next one. |
 | `upgrade <building> [count\|all]` | Turn copies of an older building into its line's building for your age, one copy at a time, each at half the price of a new copy of that building. With a count it upgrades that many. With no count, or with `all`, it goes through every copy you hold. It stops at the first copy it cannot pay for or at the new building's max count, and says how many it upgraded and why it stopped. A building that waits for a tech refuses and names it. The copy keeps its workers. Storage and knowledge buildings are never upgraded. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it). When the requirements are not met it says so and points at `charter`. |
@@ -147,7 +149,7 @@ In the Plan panel:
 | `assign <building> [count\|all]` | Assign idle workers to a building (the building sets their domain). |
 | `unassign <building> [count\|all]` | Take workers out of a building and back to idle. |
 | `dismiss <building> [count\|all]` | Remove workers from a building and from your population for good. |
-| `people` | Open the People panel: your homes and every kind of person in them, then tabs for your work areas, your army and your scholars. `workers` opens it too. |
+| `people` | Open the People panel: your homes and every kind of person in them, then tabs for your work areas, your army and your scholars. `workers` opens it too. In it `recruit`, `assign`, `unassign`, `dismiss` (after a question) and `scholars <percent>` are buttons, and each button carries the command it runs. |
 | `workers` | The same as `people`. |
 | `roster` | Print each domain's share of your workforce with its workers and slots (`Faith: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on. |
 | `roster <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce. Decimals and a `%` sign are allowed (`roster lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line. |
@@ -333,7 +335,7 @@ You meet civilizations by running scouting expeditions, not by building anything
 | `wonder` | Show the current wonder's bank: each resource, banked and needed, and its keystone tech with whether it is researched. |
 | `wonder collect <resource\|all> [amount\|all\|max]` (or `wonder bank`) | Bank a resource toward the current wonder. With an amount, bank that much (at most what the wonder still needs). With `all`, `max` or no amount, bank as much as it still needs, up to what you have. `wonder collect all` does this for every resource the wonder still needs. |
 | `build <wonder>` | Build the wonder once its bank is full and its [keystone tech](wonders.md#the-keystone-tech) is researched. |
-| `wonders` | Open the Wonders panel: a progress bar for each resource this age's wonder needs, and the list of wonders with the ones you have built. |
+| `wonders` | Open the Wonders panel: a progress bar for each resource this age's wonder needs, and the list of wonders with the ones you have built. It has a Collect button (`C`, runs `wonder collect all`) and a Build button (`B`, runs `build` for the wonder); the Stats panel's Prestige button asks, then runs `prestige confirm yes`. |
 
 ```
 wonder collect wood 1000
@@ -399,7 +401,7 @@ While the prompt is empty, `-` zooms out and `=` and `+` zoom in, so a keyboard 
 | `prestige` | Show your prestige level, the points you have earned, your production multiplier (and the one a prestige would bring), Era Mastery, and the carry-overs: Plan Template, Roster and Old Friends. In the Cosmic Era it also shows the Last Passage outlook. |
 | `prestige confirm` | Explain the points and production multiplier a prestige would add, what resets, and what persists. In the Cosmic Era this includes the Last Passage outcome. |
 | `prestige confirm yes` | Prestige. It requires the Medieval Age. Points stay earned, and the three carry-overs are active from the first prestige. After a prestige, the next one opens only once you pass the furthest age an earlier run reached. |
-| `stats` | Open the Stats panel: empire statistics, the ages reached and the time spent in each age of this run, active events, the prestige section (lasting multiplier, carry-overs and [Era Mastery](prestige.md#era-mastery)), research bonuses, resource rates and active multipliers. It also shows the prestige cue when a new run would pass the current age sooner. |
+| `stats` | Open the Stats panel, a page in two parts. **This run** has big numerals for play time, buildings, workers, techs, expeditions and campaigns, and prestige level; a band with a block for each age reached and the time spent in it; a bar for each resource gathered on a log scale, with its total and rate per second; and tables of active multipliers, prestige and epoch (lasting multiplier, carry-overs, [Era Mastery](prestige.md#era-mastery), active events) and research bonuses. It also shows the prestige cue when a new run would pass the current age sooner. **Lifetime** is the account's record board: its name and title with a bar toward the next title, the counts of prestiges, civilizations started and badges earned, a ladder of the ages reached with the fastest time to each, the four best single-run counts, and a grid of the badge families. `Tab` or a click on the tabs switches the part; the wheel, `Up`/`Down` and `PgUp`/`PgDn` scroll; the pointer over an age or a bar reads out its time or exact total. On Lifetime, `Left`/`Right` or a click on a step of the ladder picks the age whose fastest time is read out. |
 
 ```
 prestige confirm yes
@@ -419,6 +421,8 @@ A prestige pays for every age the run completed, and each era's ages pay three t
 
 A festival costs the larger of 2K culture or a number of hours of your own culture income, and gives +20% to all production for 390 ticks (about 13 minutes). Festivals have a 780-tick cooldown (about 26 minutes). The hours depend on the age: roughly 8 hours in the Classical Age, rising to 100 hours by the Industrial Age and staying at 100 in every age from the Victorian Age on, so the price stays in step with what you make. Three techs help: Baroque Arts makes the boost last 25% longer (487 ticks, about 16 minutes), Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus (see [The all-production pool](resources.md#the-all-production-pool)). If a limit holds that pool, `festival` says how much of the boost counts.
 
+The People panel's overview shows a Festival card once festivals are unlocked: the boost and its length, the cost beside the culture held, and whether a festival is ready, running or cooling down, with the time left. The card's Hold festival button asks first, then runs `festival confirm yes`; it is off while a festival runs, while the cooldown lasts and while the culture is short. The dashboard header shows a Festival chip with the boost and time left while one runs.
+
 ---
 
 ## Milestones and epochs
@@ -437,9 +441,9 @@ See [Milestones](milestones.md) and [Epochs](epochs.md).
 
 | Command | Description |
 |---|---|
-| `history` | Open the Civilization History panel: braille line graphs of key metrics over time. |
+| `history` | Open the History panel: one chart of the run, with ranges for this age, this run and all runs, and a list of finished runs. |
 
-The History panel shows 7 graphs: Population, Food rate, Research rate, Faith, Morale, All production and Game speed. It keeps the last 300 samples, one every 10 ticks, so each graph covers about the last 100 minutes. Age advances appear as `│` markers across all graphs. History is saved with your game. See [History](history.md).
+The chart shows up to three measures at once (keys 1 to 0 for the core ten), with a pointer on the left and right arrows, Tab for the range, `-` for log scale, and Up, Down and Enter to draw a finished run behind the current one. See [History](history.md).
 
 ---
 
@@ -470,7 +474,7 @@ The Harbinger panel uses letter keys, so it keeps the keyboard:
 |---|---|
 | `A` | Appease |
 | `B` | Brace |
-| `I` | Invite. Press `I` twice to confirm, since it can't be undone. |
+| `I` | Invite. Asks first, since it can't be undone. |
 | `↑` / `↓` | Scroll |
 | `Esc` | Close the panel |
 

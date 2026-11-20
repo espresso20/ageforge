@@ -74,7 +74,7 @@ func TestTechEffectText(t *testing.T) {
 	}{
 		{TechEffect{Kind: EffectOutput, Target: "food", Value: 0.10}, "+10% food production"},
 		{TechEffect{Kind: EffectAllOutput, Value: 0.05}, "+5% all production"},
-		{TechEffect{Kind: EffectFlatOutput, Target: "steel", Value: 0.25}, "+0.25 steel/tick"},
+		{TechEffect{Kind: EffectFlatOutput, Target: "steel", Value: 0.25}, "+0.125 steel/s"},
 		{TechEffect{Kind: EffectHousing, Value: 0.05}, "+5% housing"},
 		{TechEffect{Kind: EffectBuildCost, Value: -0.03}, "buildings cost 3% less"},
 		{TechEffect{Kind: EffectBuildTime, Value: -0.08}, "construction takes 8% less time"},

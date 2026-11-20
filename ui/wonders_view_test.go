@@ -79,7 +79,7 @@ func TestGalleryListsBuiltWonders(t *testing.T) {
 			if !strings.Contains(line, w.ageName) {
 				t.Errorf("%d built: the line for %s does not name its age %s: %q", built, w.name, w.ageName, line)
 			}
-			if w.def.Description != "" && !strings.Contains(text[at:], w.def.Description) {
+			if w.def.Description != "" && !strings.Contains(text[at:], perSecondText(w.def.Description, st.TickIntervalMs)) {
 				t.Errorf("%d built: the gallery lacks the description of %s", built, w.name)
 			}
 			at++

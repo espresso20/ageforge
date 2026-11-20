@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
@@ -115,7 +116,7 @@ func (om *OverlayManager) Register(name string, title rowid.Entry, provide Overl
 	frame := newPanelFrame(title, tv)
 	frame.plain = func() bool { return om.plain != nil && om.plain() }
 	entry := &overlayEntry{title: title, tv: tv, frame: frame, provide: provide}
-	frame.buttons.press = om.app.Key
+	frame.buttons.wire(om.app)
 	frame.keys = func() [][2]string { return om.footerKeys(entry) }
 	frame.hint = func() string { return om.typeHint(entry) }
 	frame.notice = func() string {
@@ -189,6 +190,23 @@ func (om *OverlayManager) scrollKey(ev *kit.Key, prompt string) bool {
 		return true
 	}
 	return false
+}
+
+// SetOver has the named text overlay paint on its text once the text has
+// painted (see nativeText.over). Unknown names are ignored.
+func (om *OverlayManager) SetOver(name string, over func(p *kit.Painter, text image.Rectangle, top int)) {
+	if e, ok := om.entries[name]; ok {
+		e.tv.over = over
+	}
+}
+
+// SetButtons gives the named text overlay buttons painted over its text
+// (SetOver): pick takes the mouse first and hand says where the pointer is a
+// hand. Unknown names are ignored.
+func (om *OverlayManager) SetButtons(name string, pick func(m kit.Mouse) bool, hand func(at image.Point) kit.Pointer) {
+	if e, ok := om.entries[name]; ok {
+		e.tv.pick, e.tv.hand = pick, hand
+	}
 }
 
 // SetFooter gives the named text overlay the keys on its foot, in place of the

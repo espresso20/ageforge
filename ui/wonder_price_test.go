@@ -13,7 +13,8 @@ import (
 // NextCost for a wonder is scaled by the build-cost factor the techs give
 // every other building, so it is lower than what the bank charges (the Neon
 // Citadel read 15.5T crypto in the Buildings panel and 19.2T in its bank and
-// the plan). Every screen shows the price the bank charges.
+// the plan). Every screen shows the price the bank charges. (The Buildings
+// box on the dashboard does not list wonders.)
 func TestEveryScreenShowsTheBanksPriceForAWonder(t *testing.T) {
 	restoreForge(t)
 	scaledSeen := false
@@ -37,19 +38,7 @@ func TestEveryScreenShowsTheBanksPriceForAWonder(t *testing.T) {
 			}
 			parts := pricePartsOf(def.BaseCost)
 
-			// The Buildings panel and the build list.
-			var rows []string
-			for _, sz := range longPriceSizes {
-				rows = rows[:0]
-				for _, page := range panelPages(t, d, pages, sz[0], sz[1]) {
-					if strings.Contains(flat(page), b.Name) {
-						rows = append(rows, page...)
-					}
-				}
-				if lost := partsNotWhole(rows, parts); len(lost) > 0 {
-					t.Errorf("%s at %dx%d: the Buildings panel does not show the bank's price for %v", key, sz[0], sz[1], lost)
-				}
-			}
+			// The build list.
 			if list := untag(HandleCommand("build", eng).Message); !strings.Contains(strings.Join(strings.Fields(list), " "), strings.Join(parts, ", ")) {
 				t.Errorf("%s: the build list does not show the bank's price %q", key, strings.Join(parts, ", "))
 			}

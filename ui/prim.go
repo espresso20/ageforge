@@ -124,6 +124,14 @@ type appLoop struct {
 	focus   Primitive
 	capture func(*kit.Key) *kit.Key
 	before  func(w, h int)
+	// feel is what the keys pressed do to the key buttons on the screen.
+	feel keyFeel
+	// line runs a command line as the command bar does (the dashboard sets
+	// it): what a button that carries one does when it is clicked.
+	line func(cmd string)
+	// confirm asks a question, with yes as the word on the danger button, and
+	// runs the command line on a yes (the dashboard sets it).
+	confirm func(question, yes, cmd string)
 
 	events chan func()   // what the loop has to do, in order
 	done   chan struct{} // closed by Stop
@@ -249,6 +257,20 @@ func (a *appLoop) Resize(cols, rows int) {
 	})
 }
 
+// runLine runs a command line through the command bar's path, if the app has one.
+func (a *appLoop) runLine(cmd string) {
+	if a.line != nil {
+		a.line(cmd)
+	}
+}
+
+// askLine asks through the hook installed by the dashboard, if any.
+func (a *appLoop) askLine(question, yes, cmd string) {
+	if a.confirm != nil {
+		a.confirm(question, yes, cmd)
+	}
+}
+
 func (a *appLoop) Key(k kit.Key) {
 	a.offer(func() {
 		a.key(k)
@@ -258,7 +280,8 @@ func (a *appLoop) Key(k kit.Key) {
 
 func (a *appLoop) Mouse(m kit.Mouse) {
 	a.offer(func() {
-		if tree := a.rootTree(); tree != nil && tree.Mouse(m) {
+		gone := a.feel.tip.Move(m)
+		if tree := a.rootTree(); (tree != nil && tree.Mouse(m)) || gone {
 			a.draw()
 		}
 	})
@@ -281,6 +304,7 @@ func (a *appLoop) rootTree() *kit.Root {
 // key gives the screen a key: the app's capture first, then the root's tree,
 // which hands it to whatever has the keyboard.
 func (a *appLoop) key(k kit.Key) {
+	a.feel.typed(k)
 	a.mu.Lock()
 	capture, root, tree := a.capture, a.root, a.tree
 	a.mu.Unlock()

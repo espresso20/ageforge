@@ -571,7 +571,7 @@ func TestBonusTruthEventDurations(t *testing.T) {
 				line = e.Message
 			}
 		}
-		if !strings.Contains(line, "/tick") || !strings.HasSuffix(line, c.want) {
+		if !strings.Contains(line, "/s for ") || !strings.HasSuffix(line, c.want) {
 			t.Errorf("%s: the log says %q, want a rate and for it to end %q", c.age, line, c.want)
 		}
 	}

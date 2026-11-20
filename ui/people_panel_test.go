@@ -164,8 +164,8 @@ func TestPeopleTabsFitAt80x24And100x30(t *testing.T) {
 				if !strings.Contains(lines[h-2], "Esc") && tab == tabOverview {
 					t.Errorf("%s: the key bar lacks Esc: %q", where, lines[h-2])
 				}
-				if !strings.Contains(lines[h-2], "tabs") {
-					t.Errorf("%s: the key bar lacks the tabs hint: %q", where, lines[h-2])
+				if !strings.Contains(lines[1], "tabs") || strings.Contains(lines[h-2], "tabs") {
+					t.Errorf("%s: the tabs hint is not once, at the end of the tab row: %q / %q", where, lines[1], lines[h-2])
 				}
 			}
 		}
@@ -282,7 +282,8 @@ func TestPeoplePanelMouse(t *testing.T) {
 	if !press(centre(hitRow, 2)) || p.view.row != 2 {
 		t.Errorf("a click on the third card picked row %d", p.view.row)
 	}
-	if !press(centre(hitTab, tabArmy)) || p.view.tab != tabArmy || p.view.row != 0 {
+	tabCell := func(n int) image.Point { return p.grid.tabs[n].r.Min.Add(image.Pt(1, 0)) }
+	if !press(tabCell(tabArmy)) || p.view.tab != tabArmy || p.view.row != 0 {
 		t.Errorf("a click on the Army tab: tab %d row %d", p.view.tab, p.view.row)
 	}
 	p.Layout(image.Rect(0, 0, 100, 30))
@@ -294,7 +295,7 @@ func TestPeoplePanelMouse(t *testing.T) {
 	if press(image.Pt(0, 0)) {
 		t.Error("a click on the frame changed something")
 	}
-	if p.PointerAt(centre(hitTab, tabArmy)) != kit.PointerHand || p.PointerAt(centre(hitRow, 0)) != kit.PointerHand || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
+	if p.PointerAt(tabCell(tabArmy)) != kit.PointerHand || p.PointerAt(centre(hitRow, 0)) != kit.PointerHand || p.PointerAt(image.Pt(0, 0)) != kit.PointerArrow {
 		t.Error("the hand should show over a tab and a row, and not over the frame")
 	}
 	p.view.row = 0

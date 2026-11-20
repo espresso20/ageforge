@@ -43,13 +43,17 @@ type GameState struct {
 	PrestigeCue    PrestigeCue
 	Mastery        MasteryState
 	Trade          TradeState
+	BlackMarket    BlackMarketStatus
 	Diplomacy      DiplomacyState
 	Log            []LogEntry
 	Stats          StatsSnapshot
 	TickSpeedBonus float64
 	TickIntervalMs int
-	CheaterBadge   bool
-	EliteBadge     bool
+	// BuildCostFactor is the build-cost multiplier every building's price is
+	// scaled by (BuildBatch).
+	BuildCostFactor float64
+	CheaterBadge    bool
+	EliteBadge      bool
 	// DevTouched is true once the developer console has changed this run (saved with
 	// the run; see GameEngine.markDevTouchedLocked).
 	DevTouched bool
@@ -118,6 +122,8 @@ type GameState struct {
 	// 1.0+moraleMaxBonus at the cap, down to moraleMinMult at the 0.10 floor.
 	// Exposed so the UI renders the model without re-deriving the formula.
 	MoraleMultiplier float64
+	// Festival is what a festival costs and gives now, and its cooldown.
+	Festival FestivalStatus
 	// Plan is the build plan in order, each item with the price of its next
 	// start and whether it could start now (plan.go).
 	Plan []PlanItemView
@@ -221,6 +227,7 @@ type EpochEventRecord struct {
 
 // BuildQueueSnapshot represents a building under construction for UI
 type BuildQueueSnapshot struct {
+	Key        string
 	Name       string
 	TicksLeft  int
 	TotalTicks int

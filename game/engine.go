@@ -1590,7 +1590,7 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	// The log line states what the event did, with the real amounts, and
 	// how long a timed event lasts: its duration is stretched with the age
 	// (EventManager.Tick).
-	line := eventLine(def.LogMessage, out, ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
+	line := eventLine(def.LogMessage, out, ge.tickIntervalLocked().Seconds(), ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
 	// Setbacks log as warnings so they don't read like windfalls.
 	if def.Sentiment == "bad" {
 		ge.addLog("warning", line)
@@ -2809,7 +2809,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 
 // injectEpochRates starts an epoch event's timed rates (ev.Rates), sized
 // for this town (event_size.go), and logs the amounts they came to under
-// the event's headline: "  → Food -4.8/tick for ~10m." The flavor text
+// the event's headline: "  → Food -2.4/s for ~10m." The flavor text
 // states each rate as a share of the town's production; this line is the
 // amount. primary stands in for a rate that names no resource (the era's
 // primary one). A rate that comes to nothing (a town that makes none of
@@ -2858,7 +2858,7 @@ func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, ef
 // logTimedEffects logs a timed boost or penalty as
 // "  → All production +25% for ~6m." Caller holds ge.mu.
 func (ge *GameEngine) logTimedEffects(logType string, effects []config.Effect, ticks int) {
-	if text := effectsText(effects); text != "" {
+	if text := effectsText(effects, ge.tickIntervalLocked().Seconds()); text != "" {
 		ge.addLog(logType, rowid.Sprintf("game.engine.logTimedEffects.01", "  → %s for %s.", textfmt.Capitalize(text), ge.durationLocked(ticks)))
 	}
 }
@@ -2889,15 +2889,17 @@ func (ge *GameEngine) gainResource(res string, amount float64) float64 {
 }
 
 // effectsText describes timed event effects: "all production +25%",
-// "food -3/tick and gold +5/tick". Unknown effect types are left out.
-func effectsText(effects []config.Effect) string {
+// "food -1.5/s and gold +2.5/s". Rates are per second; tickSeconds is the
+// length of the engine's tick, which the caller reads under its own lock.
+// Unknown effect types are left out.
+func effectsText(effects []config.Effect, tickSeconds float64) string {
 	var parts []string
 	for _, e := range effects {
 		switch e.Type {
 		case "production_all":
 			parts = append(parts, rowid.Line("game.engine.effectsText.01", "all production ")+textfmt.SignedPercent(e.Value))
 		case "production":
-			parts = append(parts, ResourceName(e.Target)+" "+textfmt.Rate(e.Value))
+			parts = append(parts, ResourceName(e.Target)+" "+textfmt.RateText(e.Value/tickSeconds))
 		case "research_boost":
 			parts = append(parts, rowid.Line("game.engine.effectsText.02", "research speed ")+textfmt.SignedPercent(e.Value))
 		}
@@ -2959,11 +2961,14 @@ func (ge *GameEngine) festivalLength() int {
 func (ge *GameEngine) FestivalStatus() FestivalStatus {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	cd := ge.festivalReadyTick - ge.tick
-	if cd < 0 {
-		cd = 0
-	}
-	pool := ge.bonusPoolLocked(ge.buildResolver(), "production_all")
+	return ge.festivalStatusLocked(ge.buildResolver())
+}
+
+// festivalStatusLocked is FestivalStatus for a caller that holds ge.mu and
+// has the resolver at hand (the snapshot).
+func (ge *GameEngine) festivalStatusLocked(resolver *Resolver) FestivalStatus {
+	cd := max(ge.festivalReadyTick-ge.tick, 0)
+	pool := ge.bonusPoolLocked(resolver, "production_all")
 	return FestivalStatus{
 		CapNote:       CapNote(pool, festivalBuffPercent, false),
 		CapPhrase:     CapPhrase(pool, festivalBuffPercent, false),
@@ -3042,7 +3047,14 @@ func (ge *GameEngine) blackMarketReward(resource string, stake float64) float64 
 	return blackMarketPayoutOf(ge.rules, stake, ge.eventTown("culture", false), resource, ge.eventTown(resource, false))
 }
 
-// BlackMarketStatus is the snapshot the `blackmarket` command renders.
+// BlackMarketHaul is what a winning run pays in one resource.
+type BlackMarketHaul struct {
+	Resource string
+	Amount   float64
+}
+
+// BlackMarketStatus is the snapshot the `blackmarket` command and the Trade
+// panel render.
 type BlackMarketStatus struct {
 	Available     bool    // true when the colonial-age gate is met
 	Cost          float64 // culture required per deal right now
@@ -3052,20 +3064,17 @@ type BlackMarketStatus struct {
 	CooldownTicks int     // cooldown imposed after a deal
 	CooldownLeft  int     // ticks remaining on the current cooldown (0 if ready)
 	Ready         bool    // true when off cooldown AND gate met
+	// Payouts is what a winning run would pay now, a line for each resource
+	// the smugglers deal in, in the rules' resource order; empty until the
+	// black market is available.
+	Payouts []BlackMarketHaul
 }
 
-// BlackMarketStatus returns the live cost, odds, and cooldown for the
-// `blackmarket` command UI. Read-only.
-func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-
+// blackMarketStatusLocked builds the black-market snapshot. Under the lock.
+func (ge *GameEngine) blackMarketStatusLocked() BlackMarketStatus {
 	available := ge.progress.GetAgeOrder()[blackMarketMinAge] <= ge.progress.GetAgeOrder()[ge.age]
-	cd := ge.blackMarketReadyTick - ge.tick
-	if cd < 0 {
-		cd = 0
-	}
-	return BlackMarketStatus{
+	cd := max(ge.blackMarketReadyTick-ge.tick, 0)
+	st := BlackMarketStatus{
 		Available:     available,
 		Cost:          ge.blackMarketCost(),
 		Culture:       ge.Resources.Get("culture"),
@@ -3075,6 +3084,22 @@ func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
 		CooldownLeft:  cd,
 		Ready:         cd == 0 && available,
 	}
+	if available {
+		for _, def := range ge.rules.Resources() {
+			if amount := ge.blackMarketReward(def.Key, st.Cost); amount > 0 {
+				st.Payouts = append(st.Payouts, BlackMarketHaul{Resource: def.Key, Amount: amount})
+			}
+		}
+	}
+	return st
+}
+
+// BlackMarketStatus returns the live cost, odds, cooldown and payouts for the
+// `blackmarket` command UI. Read-only.
+func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.blackMarketStatusLocked()
 }
 
 // DoBlackMarket runs one black-market deal for the given resource: it spends a
@@ -3503,7 +3528,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 	if def.MaxCount == 1 {
 		for _, item := range ge.buildQueue {
 			if item.BuildingKey == key {
-				return rowid.Errorf("game.engine.startBuildPaid.02", "%s is already under construction (%s left).", def.Name, ge.durationLocked(item.TicksLeft))
+				return underConstructionErr(def.Name, ge.durationLocked(item.TicksLeft))
 			}
 		}
 	}
@@ -3941,47 +3966,20 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if ge.age == "primitive_age" {
-		return rowid.Errorf("game.engine.SellBuilding.02", "You cannot sell buildings in the %s.", ge.rules.Name(rules.KindAge, "primitive_age"))
+	if err := sellAgeErr(ge.rules, ge.age); err != nil {
+		return err
 	}
 
 	def, ok := ge.rules.Building(key)
 	if !ok {
 		return ge.unknownBuildingErr(key)
 	}
-
-	if def.Category == "wonder" {
-		return rowid.Errorf("game.engine.SellBuilding.03", "Wonders cannot be sold.")
-	}
-	// Storage is permanent, like wonders (see isDestroyable). Once its age has
-	// passed the age lock never lets it be rebuilt, and an age's first storage
-	// copy can cost more than the storage left after a sale, so a sold copy
-	// (even this age's, sold just before advancing) could leave no way to
-	// raise a cap ever again.
-	if def.Category == "storage" {
-		return rowid.Errorf("game.engine.SellBuilding.04", "Storage cannot be sold: once its age has passed, it can never be rebuilt.")
-	}
-	// Knowledge buildings are the knowledge store, spared the same way (see
-	// isDestroyable). Selling one shrinks that store for good, and a tech
-	// priced over the smaller store could never be started.
-	if def.Scholars > 0 {
-		return rowid.Errorf("game.engine.SellBuilding.05", "Knowledge buildings cannot be sold: once its age has passed, it can never be rebuilt.")
-	}
-
 	current := ge.Buildings.GetCount(key)
-	if current == 0 {
-		return rowid.Errorf("game.engine.SellBuilding.06", "You have no %s to sell.", def.Name)
+	if err := sellBlockErr(def, current, ge.Buildings.GetQueueCount(key, ge.buildQueue) > 0); err != nil {
+		return err
 	}
-
 	if n > current {
 		n = current
-	}
-
-	// Check build queue — reject if any copy of this building is queued
-	for _, item := range ge.buildQueue {
-		if item.BuildingKey == key {
-			return rowid.Errorf("game.engine.SellBuilding.07", "A %s is still under construction. Sell after it is finished.", def.Name)
-		}
 	}
 
 	// Compute refund before removing
@@ -4933,6 +4931,7 @@ func (ge *GameEngine) GetState() GameState {
 	for _, item := range ge.buildQueue {
 		def := ge.Buildings.defs[item.BuildingKey]
 		queue = append(queue, BuildQueueSnapshot{
+			Key:        item.BuildingKey,
 			Name:       def.Name,
 			TicksLeft:  item.TicksLeft,
 			TotalTicks: item.TotalTicks,
@@ -5044,11 +5043,13 @@ func (ge *GameEngine) GetState() GameState {
 		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
 		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources()),
+		BlackMarket:           ge.blackMarketStatusLocked(),
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,
 		Stats:                 ge.Stats.Snapshot(),
 		TickSpeedBonus:        ge.tickSpeedBonus,
 		TickIntervalMs:        int(tickInterval.Milliseconds()),
+		BuildCostFactor:       ge.Buildings.costMult,
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
 		DevTouched:            ge.devTouched,
@@ -5080,6 +5081,7 @@ func (ge *GameEngine) GetState() GameState {
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
+		Festival:              ge.festivalStatusLocked(resolver),
 		Plan:                  ge.planViews(),
 		PermanentBonuses:      maps.Clone(ge.permanentBonuses),
 		// Snapshot the resolver's aggregated modifiers for the UI's Active
@@ -5444,11 +5446,11 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 	}
 	target, older := ge.Buildings.UpgradeTarget(key)
 	if !older {
-		return rowid.Errorf("game.engine.upgradeBuildingLocked.01", "%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
+		return noUpgradeErr(oldDef.Name)
 	}
 	held := ge.Buildings.GetCount(key)
 	if held <= 0 {
-		return rowid.Errorf("game.engine.upgradeBuildingLocked.02", "You have no %s to upgrade.", oldDef.Name)
+		return noneToUpgradeErr(oldDef.Name)
 	}
 	limit := held
 	if !all && count > 0 {
@@ -5500,15 +5502,9 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 // payment, and the move. The copy keeps its workers; target is what the key's
 // line has for the age. It returns the price paid.
 func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.BuildingDef) (map[string]float64, error) {
-	if err := ge.upgradeTechErr(target); err != nil {
+	cost, err := ge.upgradeCheckLocked(key, oldDef, target)
+	if err != nil {
 		return nil, err
-	}
-	if ge.Buildings.UpgradeRoom(target.Key, 1, ge.buildQueue) <= 0 {
-		return nil, rowid.Errorf("game.engine.upgradeOneLocked.01", "%s is at its max count of %d.", target.Name, target.MaxCount)
-	}
-	cost := ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)
-	if !ge.Resources.CanAfford(cost) {
-		return nil, rowid.Errorf("game.engine.upgradeOneLocked.02", "Cannot afford to upgrade %s: need %s.", articleName(oldDef.Name), ge.shortfallText(cost))
 	}
 	ge.Resources.Pay(cost)
 
@@ -5517,6 +5513,23 @@ func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.Buildin
 	ge.Buildings.counts[target.Key]++
 	ge.Buildings.unlocked[target.Key] = true
 	ge.moveUpgradedWorkers(key, held, oldDef, target)
+	return cost, nil
+}
+
+// upgradeCheckLocked is the price of upgrading the next copy of key to target
+// and, when that cannot be done now, why: the tech, the target's limit, the
+// price. Nothing is paid or moved.
+func (ge *GameEngine) upgradeCheckLocked(key string, oldDef, target config.BuildingDef) (map[string]float64, error) {
+	if err := ge.upgradeTechErr(target); err != nil {
+		return nil, err
+	}
+	cost := ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)
+	if ge.Buildings.UpgradeRoom(target.Key, 1, ge.buildQueue) <= 0 {
+		return cost, rowid.Errorf("game.engine.upgradeOneLocked.01", "%s is at its max count of %d.", target.Name, target.MaxCount)
+	}
+	if !ge.Resources.CanAfford(cost) {
+		return cost, rowid.Errorf("game.engine.upgradeOneLocked.02", "Cannot afford to upgrade %s: need %s.", articleName(oldDef.Name), ge.shortfallText(cost))
+	}
 	return cost, nil
 }
 

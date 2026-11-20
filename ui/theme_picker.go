@@ -167,11 +167,7 @@ func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEn
 	})
 
 	// ── Footer ───────────────────────────────────────────────────────────────
-	footer := newNativeText().
-		SetDynamicColors(true).
-		SetTextAlign(kit.AlignCenter).
-		SetText(themeFooterBar())
-	pressesKeys(app, footer)
+	footer := newKeyFoot(app, pickerKeys)
 
 	// ── Layout ───────────────────────────────────────────────────────────────
 	right := newNativeFlex().SetDirection(flexRow).
@@ -458,14 +454,11 @@ func themeSwatches(t theme.Theme) string {
 	return strings.Join(rows, "\n")
 }
 
-// themeFooterBar is the picker action bar: keycap buttons matching the load-game
-// footer idiom (footerButton lives in load_game.go).
-func themeFooterBar() string {
-	return "  " + strings.Join([]string{
-		footerButton("↑↓", rowid.Line("ui.theme_picker.themeFooterBar.01", "Preview")),
-		footerButton("Enter", rowid.Line("ui.theme_picker.themeFooterBar.03", "Keep")),
-		footerButton("Esc", rowid.Line("ui.theme_picker.themeFooterBar.05", "Cancel")),
-	}, "  ") + "  "
+// pickerKeys are the theme picker's actions.
+var pickerKeys = []footerKey{
+	{"↑↓", rowid.E("ui.theme_picker.themeFooterBar.01", "Preview"), rowid.Entry{}},
+	{"Enter", rowid.E("ui.theme_picker.themeFooterBar.03", "Keep"), rowid.Entry{}},
+	{"Esc", rowid.E("ui.theme_picker.themeFooterBar.05", "Cancel"), rowid.Entry{}},
 }
 
 // drawThemeSample paints a miniature of the game UI in th's own colors: the

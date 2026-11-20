@@ -169,14 +169,21 @@ func (p *treePanel) Paint(p2 *kit.Painter) {
 	}
 	lanes := p.model.lanes
 	paintGridKit(p2, grid, r.Min, newGridPalette(len(lanes), func(i int) string { return lanes[i].Hue }))
+	if p.view.card {
+		p.buttons.paint(p2, &p.model.keys, r.Min, newExpPalette())
+	}
 }
 
-// Mouse: a click picks the tech under the pointer and opens its card, as
+// Mouse: a click on the card's button does what Enter does on the card; a
+// click picks the tech under the pointer and opens its card, as
 // Enter on it does; a click outside an open card closes it, as Esc does;
 // the wheel moves the selection a tech a notch, as the arrows do.
 func (p *treePanel) Mouse(m kit.Mouse) bool {
 	if p.model == nil {
 		return false
+	}
+	if p.view.card && p.buttons.mouse(&p.model.keys, p.Bounds().Min, m) {
+		return true
 	}
 	switch {
 	case m.Kind == kit.MouseWheel && !p.view.card:
@@ -205,8 +212,11 @@ func (p *treePanel) Mouse(m kit.Mouse) bool {
 	return true
 }
 
-// PointerAt: the hand over a tech.
+// PointerAt: the hand over a tech, and over the card's button.
 func (p *treePanel) PointerAt(at image.Point) kit.Pointer {
+	if p.view.card && p.model != nil && p.buttons.pointer(&p.model.keys, p.Bounds().Min, at) == kit.PointerHand {
+		return kit.PointerHand
+	}
 	return handIf(p.model != nil && !p.view.card && p.model.techAt(at.Sub(p.Bounds().Min), p.view, p.w, p.h) != "")
 }
 
@@ -352,4 +362,12 @@ func (p *treePanel) act() {
 	}
 	p.state = p.engine.GetState()
 	p.layout()
+}
+
+// wireButtons connects the card's button to the app (its press and feel) and
+// makes a click on it act on the card itself: with a line typed in the command
+// bar a sent Enter would belong to the bar.
+func (p *treePanel) wireButtons(a *appLoop) {
+	p.buttons.wire(a)
+	p.buttons.press = func(k kit.Key) { p.handleKey(k.Code) }
 }

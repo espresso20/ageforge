@@ -35,7 +35,7 @@ func TestReserve_DashboardBox(t *testing.T) {
 		want  []string
 	}{
 		{game.HeldHousing, 4, 40, []string{"Held by: housing"}},
-		{game.HeldFood, 0.45, 4, []string{"Held by: food", "+0.45 feeds 4 more"}},
+		{game.HeldFood, 0.45, 4, []string{"Held by: food", "+0.225 feeds 4 more"}},
 		{game.HeldNone, 4, 40, nil},
 	}
 	for _, c := range cases {
@@ -57,7 +57,7 @@ func TestReserve_DashboardBox(t *testing.T) {
 	}
 	// With room, the food line says it all in one sentence.
 	st := reserveState(t, game.HeldFood, 0.45, 4)
-	if got := heldByText(st.Workers); got != "Held by: food (+0.45 food a tick feeds 4 more)" {
+	if got := heldByText(st.Workers, 1000); got != "Held by: food (+0.45 food/s feeds 4 more)" {
 		t.Errorf("heldByText = %q", got)
 	}
 }
@@ -67,7 +67,7 @@ func TestReserve_DashboardBox(t *testing.T) {
 func TestReserve_PeoplePanel(t *testing.T) {
 	for _, c := range []struct{ by, held, recruit string }{
 		{game.HeldHousing, "held by housing", "held by housing"},
-		{game.HeldFood, "held by food (+0.45 food a tick feeds 4 more)", "held by food"},
+		{game.HeldFood, "held by food (+0.225 food/s feeds 4 more)", "held by food"},
 	} {
 		st := reserveState(t, c.by, 0.45, 4)
 		over := renderPeople(st, peopleView{tab: tabOverview}, 100, 30).String()
@@ -105,7 +105,7 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 			if by == game.HeldFood {
 				want = []string{"Held by: food"}
 				if h >= workerDetailMinRows {
-					want = append(want, "+51.2 feeds 512 more")
+					want = append(want, "+25.6 feeds 512 more")
 				} else if strings.Contains(text, "feeds") {
 					t.Errorf("%s: the food detail line takes a row a 24-row terminal needs:\n%s", where, text)
 				}

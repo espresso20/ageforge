@@ -77,7 +77,7 @@ func logsProvider(state game.GameState, _ int) string {
 	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.05", " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Population: [cyan]%d/%d[-]\n",
 		state.Tick, state.AgeName, state.Workers.TotalPop, state.Workers.MaxPop))
 	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.06", " Food use: [yellow]%s[-]  Reserve: [yellow]%d[-]\n",
-		textfmt.Rate(-state.Workers.FoodDrain), state.Workers.TotalIdle))
+		rateText(-state.Workers.FoodDrain, state.TickIntervalMs), state.Workers.TotalIdle))
 	if state.TickSpeedBonus > 0 {
 		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_logs.logsProvider.07", " Game speed: [green]%s[-] (one tick every [cyan]%dms[-])\n",
 			textfmt.SignedPercent(state.TickSpeedBonus), state.TickIntervalMs))

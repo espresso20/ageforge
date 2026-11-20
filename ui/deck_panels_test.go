@@ -75,7 +75,7 @@ func deckOf(t *testing.T, page func(game.GameState) deckPage, state game.GameSta
 	keepTheme(t)
 	ran := &[]string{}
 	p := newDeckPanel(page)
-	p.run = func(cmd string) { *ran = append(*ran, cmd) }
+	p.buttons.run = func(cmd string) { *ran = append(*ran, cmd) }
 	p.buttons.press = func(kit.Key) {}
 	p.open(state)
 	p.Layout(image.Rect(0, 0, w, h))
@@ -135,7 +135,8 @@ func TestDeckPanelsOnTheDashboard(t *testing.T) {
 		cells := drawnDashboard(t, d, pages, 100, 30)
 		foot := rectText(cells, 100, 0, 30-promptRows-2, 100, 1)[0]
 		wants := []string{"Esc"}
-		if d.decks[name].pg.Hint != "" {
+		if d.decks[name].pg.Hint != "" && !strings.Contains(foot, "PgUp") {
+			// The hint is dropped for the paging keys when the content scrolls.
 			wants = append(wants, "or type")
 		}
 		for _, want := range wants {

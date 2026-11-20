@@ -156,7 +156,7 @@ func TestMeasuredPillarRows(t *testing.T) {
 			names = append(names, set.Name(rules.KindResource, res))
 		}
 		if len(industry.Rows) != 1 || industry.Rows[0].Kind != GateRowAmount ||
-			industry.Rows[0].Label != strings.Join(names, " + ")+" income" || industry.Rows[0].Unit != "a tick" ||
+			industry.Rows[0].Label != strings.Join(names, " + ")+" income" || !industry.Rows[0].PerTick ||
 			industry.Rows[0].Target != m.Income || industry.Met {
 			t.Errorf("%s: Industry rows %+v", m.Age, industry.Rows)
 		}

@@ -30,154 +30,55 @@ func collapse(lines []string) string {
 	return strings.Join(strings.Fields(untag(strings.Join(lines, " "))), " ")
 }
 
-// entriesAt is the Economy tab's Buildings entries at w, in list order.
-func entriesAt(t *testing.T, d *Dashboard, w int) [][]string {
-	t.Helper()
-	_, entries := buildingEntries(d.economyTab.state, w)
-	return entries
-}
-
-// isLocked reports whether an entry is one a tech still locks.
-func isLocked(e []string) bool {
-	return strings.Contains(strings.Join(e, "\n"), lockedMarker)
-}
-
-// altarEntry is the Altar's entry in the Economy list at w, nil when the
-// list does not have it.
-func altarEntry(t *testing.T, d *Dashboard, w int) []string {
-	t.Helper()
-	for _, e := range entriesAt(t, d, w) {
-		if strings.Contains(collapse(e), "Altar") {
-			return e
+// altarCard is the Altar's card in the Buildings box, nil when it has none.
+func altarCard(d *Dashboard) *buildCard {
+	for _, c := range d.economyTab.buildBox.cards {
+		if c.key == "altar" {
+			return &c
 		}
 	}
 	return nil
 }
 
-// scholarLine is the scholars' line of a locked entry, "" when it has none.
-func scholarLine(entry []string) string {
-	text := collapse(entry)
-	for _, e := range lockedHintLines {
-		if p := e.String(); strings.Contains(text, p) {
-			return p
-		}
-	}
-	return ""
-}
-
-// TestLockedBuildingListedAfterTheUnlocked: in the Bronze Age with Calendar
-// not researched the Altar is listed after every unlocked building of the
-// age, greyed out, with the research it needs and a word from the scholars.
-// With Ritual still to come the need names it too.
-func TestLockedBuildingListedAfterTheUnlocked(t *testing.T) {
-	d, _ := bronzeTown(t, "language")
-	altar := altarEntry(t, d, 60)
+// TestLockedBuildingIsACardWithItsNeed: in the Bronze Age with Calendar not
+// researched the Altar is a card that cannot be built, whose reason is the need
+// the overlay names, with no wait, in the last group and with its Build off.
+func TestLockedBuildingIsACardWithItsNeed(t *testing.T) {
+	d, pages := bronzeTown(t, "language")
+	altar := altarCard(d)
 	if altar == nil {
-		t.Fatal("the Altar is not listed while Calendar is unresearched")
+		t.Fatal("the Altar has no card while Calendar is unresearched")
 	}
-	if !isLocked(altar) || !strings.Contains(altar[0], "[gray]") {
-		t.Errorf("the Altar's name line is not greyed out: %q", altar[0])
+	if altar.canBuild || altar.group != groupLater || altar.wait != "" {
+		t.Errorf("the Altar card: can build %v, group %d, wait %q; want a card that cannot be built, in the last group, waiting on nothing", altar.canBuild, altar.group, altar.wait)
 	}
-	text := collapse(altar)
-	if !strings.Contains(text, "Needs Calendar (research), after Ritual") {
-		t.Errorf("the Altar does not say what it needs:\n%s", text)
+	if want := "Needs Calendar (research), after Ritual"; altar.reason != want {
+		t.Errorf("the Altar's reason is %q, want %q", altar.reason, want)
 	}
-	if scholarLine(altar) == "" {
-		t.Errorf("the Altar has no scholar line:\n%s", text)
-	}
-	if strings.Contains(altar[len(altar)-1], "[comment::i]") {
-		t.Errorf("the Altar keeps its flavor line:\n%s", text)
-	}
-
-	// Every unlocked building of the age is listed before the Altar.
-	all := entriesAt(t, d, 60)
-	altarAt := -1
-	for i, e := range all {
-		if isLocked(e) && altarAt < 0 && strings.Contains(collapse(e), "Altar") {
-			altarAt = i
-		}
-	}
-	for key, bs := range d.economyTab.state.Buildings {
-		if !bs.Unlocked || bs.AgeKey != d.economyTab.state.Age {
-			continue
-		}
-		for i, e := range all {
-			if strings.Contains(collapse(e), bs.Name+" x") && i > altarAt {
-				t.Errorf("unlocked %s (%s) is listed after the Altar", bs.Name, key)
+	// Opened, the quiet row lists it, its reason on the screen and its button off.
+	d.economyTab.buildBox.expanded = true
+	drawDashboard(t, d, pages, 160, 60)
+	for _, pc := range d.economyTab.buildBox.placed {
+		if pc.card.key == "altar" {
+			if !d.economyTab.buildBox.cardKeys.keys[pc.build].off {
+				t.Error("the Altar's Build button is on")
 			}
+			return
 		}
 	}
+	t.Error("the opened list does not show the Altar")
 }
 
-// TestLockedBuildingWithRitualResearched: once Ritual is researched the
-// Altar says only what Calendar needs.
-func TestLockedBuildingWithRitualResearched(t *testing.T) {
-	d, _ := bronzeTown(t, "language", "ritual")
-	altar := altarEntry(t, d, 60)
+// TestLockedBuildingGoneWhenResearched: once Calendar is researched the Altar
+// is an ordinary card with no need.
+func TestLockedBuildingGoneWhenResearched(t *testing.T) {
+	d, _ := bronzeTown(t, "language", "ritual", "calendar")
+	altar := altarCard(d)
 	if altar == nil {
-		t.Fatal("the Altar is not listed while Calendar is unresearched")
+		t.Fatal("the researched Altar has no card")
 	}
-	text := collapse(altar)
-	if !strings.Contains(text, "Needs Calendar (research)") || strings.Contains(text, "after") {
-		t.Errorf("the Altar should need only Calendar now:\n%s", text)
-	}
-}
-
-// TestLockedBuildingStableAndGoneWhenResearched: the scholar line is the same
-// on every render, and once Calendar is researched the Altar is an ordinary
-// entry with no lock and no need.
-func TestLockedBuildingStableAndGoneWhenResearched(t *testing.T) {
-	d, _ := bronzeTown(t, "language")
-	first := scholarLine(altarEntry(t, d, 60))
-	second := scholarLine(altarEntry(t, d, 60))
-	if first == "" || first != second {
-		t.Fatalf("the scholar line changes between renders: %q then %q", first, second)
-	}
-
-	d2, _ := bronzeTown(t, "language", "ritual", "calendar")
-	for _, e := range entriesAt(t, d2, 60) {
-		if !strings.Contains(collapse(e), "Altar") {
-			continue
-		}
-		if isLocked(e) || strings.Contains(collapse(e), "Needs") {
-			t.Errorf("the Altar is still locked once Calendar is researched:\n%s", collapse(e))
-		}
-		return
-	}
-	t.Error("the researched Altar is not listed")
-}
-
-// TestLockedBuildingFitsTheBox: at 80x24 and 100x30 no line of a locked
-// entry is wider than the Buildings box, and where the box shows the Altar
-// it shows the whole entry.
-func TestLockedBuildingFitsTheBox(t *testing.T) {
-	for _, size := range [][2]int{{80, 24}, {100, 30}} {
-		w, h := size[0], size[1]
-		d, pages := bronzeTown(t, "language")
-		screen := strings.Split(drawDashboard(t, d, pages, w, h), "\n")
-		x, y, bw, bh := d.economyTab.buildingTV.GetInnerRect()
-		for _, e := range entriesAt(t, d, bw) {
-			if !isLocked(e) {
-				continue
-			}
-			for _, line := range e {
-				if vl := visibleLen(line); vl > bw {
-					t.Errorf("%dx%d: a locked entry line is %d cells in a %d-cell box: %q", w, h, vl, bw, untag(line))
-				}
-			}
-		}
-		var box []string
-		for j := y; j < y+bh && j < len(screen); j++ {
-			line := []rune(screen[j])
-			if x >= len(line) {
-				box = append(box, "")
-				continue
-			}
-			box = append(box, strings.TrimRight(string(line[x:min(x+bw, len(line))]), " "))
-		}
-		if strings.Contains(strings.Join(box, "\n"), "Altar") {
-			wholeEntries(t, fmt.Sprintf("%dx%d", w, h), d, box)
-		}
+	if strings.Contains(altar.reason, "Needs") {
+		t.Errorf("the Altar still has a need once Calendar is researched: %q", altar.reason)
 	}
 }
 
@@ -251,11 +152,11 @@ func TestLockedNeedsLineFormats(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d, _ := bronzeTown(t, tt.techs...)
-			altar := altarEntry(t, d, 60)
+			altar := altarCard(d)
 			if altar == nil {
-				t.Fatal("the Altar is not listed")
+				t.Fatal("the Altar has no card")
 			}
-			text := collapse(altar)
+			text := altar.reason
 			if !strings.Contains(text, tt.wantIn) {
 				t.Errorf("got %q, want substring %q", text, tt.wantIn)
 			}

@@ -25,8 +25,8 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 					}
 				}
 			}
-			// header + endure + succumb + hint + 3 gaps + buttons + 2 border
-			if want := rows + 3 + 1 + 2; l.height != want {
+			// header + endure + succumb + hint + 3 gaps + buttons (3 rows) + 2 border
+			if want := rows + 3 + actionRows + 2; l.height != want {
 				t.Errorf("%s: height %d, want %d", ep.Key, l.height, want)
 			}
 		}
@@ -112,7 +112,7 @@ func TestStatsCatastropheCounts(t *testing.T) {
 	state.CatastrophesSuccumbed = 3
 	// Legacy flags no longer drive the count (a repeat succumb in one epoch has one flag).
 	state.LegacyBonuses = map[string]bool{"iron_era": true}
-	out := statsProvider(state, 120)
+	out := statsRowsText(prestigeRows(state))
 	if !strings.Contains(out, "5  (endured 2, succumbed 3)") {
 		t.Errorf("catastrophe counts wrong:\n%s", out)
 	}

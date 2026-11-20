@@ -28,6 +28,10 @@ var longPriceCases = []struct {
 	{"cyberpunk_age", []string{"neon_citadel", "cyber_hub", "dark_energy_tap"}},
 }
 
+// onTheCards says whether the Buildings box lists a building: a wonder is
+// paid through its bank, and the box leaves it to the Wonders panel.
+func onTheCards(key string) bool { return key != "neon_citadel" }
+
 // pricePartsOf are the materials of a price as every screen writes them
 // ("6.00K iron ore"), in the order FormatCost lists them.
 func pricePartsOf(cost map[string]float64) []string {
@@ -107,12 +111,15 @@ func TestTheLongestPriceIsOnTheList(t *testing.T) {
 	}
 }
 
-// TestLongPricesFitTheBuildingsPanel: in the Buildings panel on the dashboard
+// TestLongPricesFitTheBuildingsPanel: in the Buildings box on the dashboard
 // every word of the price is there, none cut in two, and no row is cut.
 func TestLongPricesFitTheBuildingsPanel(t *testing.T) {
 	restoreForge(t)
 	for _, c := range longPriceCases {
 		for _, key := range c.keys {
+			if !onTheCards(key) {
+				continue
+			}
 			d, pages, _, b := priceTown(t, c.age, key)
 			parts := pricePartsOf(b.NextCost)
 			for _, sz := range longPriceSizes {

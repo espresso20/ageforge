@@ -230,8 +230,8 @@ func domCol(d *rankDom) kit.Color {
 	return col
 }
 
-// inkOf is a color as the pixels of a picture take it.
-func inkOf(c kit.Color) color.RGBA {
+// pixelInk is a color as the pixels of a picture take it.
+func pixelInk(c kit.Color) color.RGBA {
 	v, _ := c.RGBA()
 	return v
 }
@@ -342,7 +342,7 @@ func (p *ranksPanel) paintRanks(s rankPaint, w, h int) {
 	// The top band: three figures, one grammar.
 	block := func(x int, label string, fig string, col kit.Color, l1 string, c1 kit.Color, l2 string) int {
 		s.text(x, 2, label, dim, false)
-		fx := paintHeading(s.p, s.o.X+x, s.o.Y+3, fig, inkOf(col)) - s.o.X + 2
+		fx := paintHeading(s.p, s.o.X+x, s.o.Y+3, fig, pixelInk(col)) - s.o.X + 2
 		s.text(fx, 3, l1, c1, true)
 		s.text(fx, 4, l2, txt, false)
 		return fx + max(utf8.RuneCountInString(l1), utf8.RuneCountInString(l2)) + 4
@@ -433,10 +433,10 @@ func (p *ranksPanel) paintRanks(s rankPaint, w, h int) {
 				s.text(1, y+j, "▌", selCol, false)
 			}
 		}
-		paintHeading(s.p, s.o.X+4, s.o.Y+y, d.name, inkOf(col))
+		paintHeading(s.p, s.o.X+4, s.o.Y+y, d.name, pixelInk(col))
 		if ranked {
 			n := fmt.Sprint(d.rank)
-			paintHeading(s.p, s.o.X+31-headWidth(n), s.o.Y+y, n, inkOf(bright))
+			paintHeading(s.p, s.o.X+31-headWidth(n), s.o.Y+y, n, pixelInk(bright))
 			s.text(g.bx, y, m.titles[d.rank-1], bright, true)
 		} else {
 			s.text(30, y, "-", dim, false)
@@ -574,7 +574,7 @@ func (p *ranksPanel) paintDetail(s rankPaint, d *rankDom, g ranksGeo) {
 	col := domCol(d)
 	rx, rw, h := g.rx, g.rw, g.h
 	line := theme.Mix(bg, col, 0.35)
-	x := paintHeading(s.p, s.o.X+rx, s.o.Y+6, d.name, inkOf(col)) - s.o.X + 2
+	x := paintHeading(s.p, s.o.X+rx, s.o.Y+6, d.name, pixelInk(col)) - s.o.X + 2
 	if d.rank > 0 {
 		s.text(x, 6, fmt.Sprintf("rank %d  %s", d.rank, m.titles[d.rank-1]), bright, true)
 	} else {

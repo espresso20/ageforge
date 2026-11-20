@@ -184,7 +184,7 @@ var fileNotes = map[string]fileNote{
 	"ui/overlay_factions.go":     {place: "in the Factions panel", age: "bronze_age"},
 	"ui/overlay_harbinger.go":    {place: "in the Harbinger panel", age: "iron_age", seen: seenRare},
 	"ui/overlay_help.go":         {place: "in the Help panel", age: "primitive_age"},
-	"ui/overlay_history.go":      {place: "in the History panel", age: "medieval_age", seen: seenRare},
+	"ui/history_panel.go":        {place: "in the History panel", age: "medieval_age", seen: seenRare},
 	"ui/overlay_logs.go":         {place: "in the Logs panel", age: "primitive_age"},
 	"ui/overlay_milestones.go":   {place: "in the Milestones panel", age: "primitive_age"},
 	"ui/overlay_military.go":     {place: "in the Army panel", age: "primitive_age"},

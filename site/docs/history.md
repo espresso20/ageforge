@@ -1,62 +1,89 @@
-# Civilization History
+# History
 
-The Civilization History panel graphs how your civilization has changed during the current run. Type `history` at the prompt to open it. The panel opens full screen. Scroll it with the arrow keys, Page Up and Page Down, and close it with Esc.
+The History panel is the game's metrics page. It draws one chart of your current run, can lay an earlier run behind it, and lists every run you have finished on the account. Type `history` at the prompt to open it. Close it with Esc.
 
 ---
 
-## What it shows
+## Ranges
 
-The panel graphs seven metrics:
+Three tabs set how much of the record the chart covers. Tab cycles through them.
 
-| Metric | What it measures |
+| Range | What it covers |
 |---|---|
-| **Population** | Everyone in your civilization: workers, scholars and soldiers |
-| **Food rate** | Net food per tick (positive = surplus, negative = deficit) |
-| **Research rate** | The work your scholars do per tick |
-| **Faith** | The faith you hold |
-| **Morale** | Civilization morale as a percentage (see [Morale](morale.md)) |
-| **All production** | Your all-production bonus as the game applies it, as a percentage: every source added together, in full |
-| **Game speed** | Your game speed bonus (0.15 means ticks come 15% faster) |
+| **This age** | From the last age advance to now |
+| **This run** | The whole current run, from its start |
+| **All runs** | The current run against every finished run on the account, each lined up from its own start |
 
-Each metric gets its own braille line graph that covers the whole stored history. Above each graph are the metric's name, a trend arrow, its current value, and the lowest and highest values in the window. The arrow compares the newest sample with the one before it: ↑ means a rise of more than 2%, ↓ means a fall of more than 2%, and → means anything in between. The line above the first graph gives the tick range and the number of samples.
+Ages appear as tinted bands behind the line and as a color ribbon along the edge. Marks for age advances, wonders, catastrophes and harbingers sit on a sign row above the chart, and each age is named inside its own band when it is wide enough. A head marker shows the live end of the current run.
 
-<figure class="screen" data-screen="history"><figcaption>The Civilization History panel in the Bronze Age: population, food rate and research rate over the last three thousand ticks.</figcaption></figure>
-
-**All production** adds up every source: wonders, milestones, monuments, events and boons, in full, however large the pool grows (see [The all-production pool](resources.md#the-all-production-pool)). A pool that has earned +320% reads +320% here, and the line keeps rising as you earn more. The Stats panel's Active multipliers section lists every source.
-
-**Game speed** comes from three techs (Chronometry adds 0.05, Clockwork Automation adds 0.10 and Quantum Computing adds 0.15) and from timed boosts, such as the one a completed milestone chain grants or a faction boon that speeds the game. A timed boost lifts the line for as long as it lasts. Wonders do not move it.
+<figure class="screen" data-screen="history"><figcaption>The History panel on This run.</figcaption></figure>
 
 ---
 
-## Reading the graphs
+## Measures
 
-```
-Population      ↑ 198 workers  min:10       max:198
-  198    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│⠀⠀⠀⣀⣀⡤⠤⠖⠚⠉
-         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⠤⠶⠒⠚⠉⠉⠀⠀⠀⠀⠀⠀
-  104    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⡤⠤⠤⠖⠒⠚⠉⠉⠁⠀⠀⠀│⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-         ⣀⣀⣀⣀⣀⣀⣀⣀⣀⡤⠤⠤⠤⠤⠤⠴⠒⠒⠒⠒⠛⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-  10     ────────────────────────────────────────────────────
-```
+The picker on the left lists the measures in three groups: People, Progress and Rates. Up to three measures can be shown at once, each in its own slot with its own color and shape (circle, square, triangle). Color and shape belong to the slot, so the first measure shown is always the first slot's color.
 
-- The labels on the left show the highest value, the midpoint and the lowest value in the window. A label that would only repeat the one under it is left out, so a flat line carries its value once, on the base line.
-- The `│` markers show where you advanced an age. All 7 graphs share the same markers, so you can see how each metric responded to the advance. The ages you advanced into are listed under the graphs, by name.
-- Time runs left to right, from the oldest sample to now.
-- Values use short forms, such as 950, 12.5K or 1.23M, like the rest of the game.
+The ten core measures carry the keys 1 to 0. Pressing a key fills a free slot, or clears the measure if it is already shown. Resource rates have no key: move to one with the Up and Down keys and press Space. Rates are shown per second.
+
+Finished runs keep only the ten core measures. In All runs, the resource rates are shown as unavailable.
+
+Each line is drawn on its own scale. Under the chart, the legend states each measure's true range, such as "log, 1 to 300K workers", or says that the measure stays linear.
 
 ---
 
-## How history is collected
+## Linear and Log
 
-The game records one sample every 10 ticks and keeps the last 300 samples, which is the last 3,000 ticks of the run. A tick takes 2 seconds before any game speed bonus, so at the base speed the graphs cover the last 100 minutes. They show recent trends, not the whole run. When the history is full, each new sample replaces the oldest one. Age advances are stored as markers and drawn across all graphs. Only markers inside the window are drawn.
-
-Time you spend away from the game is sampled the same way, so the samples stay evenly spaced. The history is saved with your game, so it survives restarts. It starts over with each run: when you prestige, when you succumb to a catastrophe, and when you start a new game. The graphs appear once two samples exist. Until then the panel says there is no history yet.
+The chart can use a linear or a log scale. Log is the default on All runs, where the first hours of a run would otherwise flatten against a run that lasted days. Linear is the default on the other ranges. The choice is kept for each range while the panel is open. Measures with a fixed cap stay linear.
 
 ---
 
-## Tips
+## The pointer
 
-- After an age advance, the `│` marker shows which metrics jumped or dipped at the change.
-- A **Food rate** line that drops below zero is a food deficit. Catch it before your workers start to starve.
-- A flat **All production** line means nothing new has joined the pool during the window.
-- A taller window fits more graphs on the screen at once. Scroll to reach the rest.
+A vertical pointer reads the chart. Move it with the left and right arrow keys, or with Home and End to jump to the start and the live end. Moving the mouse over the chart moves the pointer too. The readout box shows the run time, the age and one row per shown measure. In All runs it has two columns, the current run and the ghost.
+
+---
+
+## The ghost run
+
+In All runs, a finished run can be drawn behind the current one as a dotted line with a hollow marker at the pointer, faint age ticks along the bottom edge and a dotted sample in the legend. Move to a run with the Up and Down keys and press Enter, or click its row. Picking it again clears it.
+
+---
+
+## The runs list
+
+Under the chart in All runs, the list shows the run in play pinned at the top, then every finished run, newest first. Scroll it with the wheel or the Up and Down keys.
+
+| Column | Meaning |
+|---|---|
+| **Run** | The save name |
+| **End** | How the run ended: prestige, succumbed or left |
+| **Highest age** | The age reached, in its color |
+| **Length** | How long the run lasted |
+| **Buildings, Techs, Expeditions, Workers** | Final counts. Hidden when the window is narrower than 120 columns |
+| **Pace** | A strip of the run's ages, drawn to one shared scale, so it also reads as a length bar |
+
+A crown marks the best run: the highest age reached, the shortest among equals. A run with no kept history is shown crossed out with an empty strip and cannot be picked. With no finished runs the list shows a placeholder line.
+
+---
+
+## What is recorded
+
+The game keeps the whole current run at a fixed size: recent samples at full detail and older ones thinned. When a run ends it is filed on the account with the ten core measures and the age, wonder, catastrophe and harbinger marks. Resource rates, away spans, epoch events and game speed per sample are not kept for finished runs, and wonder times are not available for runs filed earlier.
+
+---
+
+## Keys and mouse
+
+| Key | Action |
+|---|---|
+| Left / Right, Home / End | Move the pointer |
+| 1 to 0 | Show or clear a core measure |
+| Up / Down | Move through the picker, or through the runs list in All runs |
+| Space | Show or clear the picked measure (This age and This run) |
+| Tab | Next range |
+| `-` | Linear or log scale |
+| Enter | Pick or clear the ghost run |
+| Esc | Close |
+
+With the mouse: hover moves the pointer, a click on a tab, a measure, the scale button or a run row acts on it, and the wheel scrolls the runs list.

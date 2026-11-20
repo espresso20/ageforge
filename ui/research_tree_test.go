@@ -514,7 +514,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 	if want := "It takes " + formatTicks(quick, st) + "."; !strings.Contains(cardOf(st, "siege_warfare"), want) {
 		t.Errorf("with +25%% research speed Siege Warfare's card should say %q:\n%s", want, cardOf(st, "siege_warfare"))
 	}
-	if out := statsProvider(st, 140); !strings.Contains(out, "Research speed +25%: techs take 75% of their base time.") {
+	if out := statsRowsText(researchRows(st)); !strings.Contains(out, "Research speed +25%: techs take 75% of their base time.") {
 		t.Errorf("the Stats panel does not say what research speed does")
 	}
 
@@ -694,7 +694,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	// Envoys and Drama belong to ages not in sight: the Factions panel and
 	// the festival command say nothing of them yet.
 	festival := func() string { return cmdFestival(nil, ge).Message + cmdFestival([]string{"confirm"}, ge).Message }
-	if out := factionsProvider(st, 120) + festival(); strings.Contains(out, "Envoys") || strings.Contains(out, "Drama") {
+	if out := factionsProvider(st, 120, nil) + festival(); strings.Contains(out, "Envoys") || strings.Contains(out, "Drama") {
 		t.Errorf("a panel names a tech of an age not in sight:\n%s", out)
 	}
 	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {
@@ -706,7 +706,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	// and stops once it is researched.
 	late := ge.GetState()
 	for what, c := range map[string][2]string{
-		"the Factions panel": {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
+		"the Factions panel": {factionsProvider(late, 120, nil), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
 		"festival":           {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
 		"festival confirm":   {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
 	} {
@@ -719,7 +719,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	}
 	ge.GrantTechsForTest("envoys", "drama", "the_wheel")
 	late = ge.GetState()
-	if out := factionsProvider(late, 120) + festival() + deckText(tradePage(late)); strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
+	if out := factionsProvider(late, 120, nil) + festival() + deckText(tradePage(late)); strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
 		t.Errorf("with the techs researched a lock is still shown:\n%s", out)
 	}
 	if strings.Contains(out, "Interstellar Trade") || strings.Contains(out, "interstellar_trade") {
@@ -1009,5 +1009,33 @@ func TestResearchPanelMouse(t *testing.T) {
 	before := p.view.sel
 	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || p.view.sel == before {
 		t.Error("the wheel did not move the selection")
+	}
+}
+
+// A tech's flat output reads per second on its card, never per tick.
+func TestResearchCardSaysFlatOutputPerSecond(t *testing.T) {
+	ge := classicalGame(t)
+	st := ge.GetState()
+	seen := 0
+	for _, def := range config.Technologies() {
+		for _, e := range def.Effects {
+			if e.Kind != config.EffectFlatOutput {
+				continue
+			}
+			if buildTree(st, treeGeomFor(120, false), false, def.Key).by[def.Key] == nil {
+				continue
+			}
+			seen++
+			card := cardOf(st, def.Key)
+			if strings.Contains(card, "/tick") || strings.Contains(card, "per tick") {
+				t.Errorf("%s's card says a rate per tick:\n%s", def.Key, card)
+			}
+			if want := e.Text(); !strings.Contains(card, want) {
+				t.Errorf("%s's card is missing %q:\n%s", def.Key, want, card)
+			}
+		}
+	}
+	if seen == 0 {
+		t.Fatal("no tech with a flat output reached the card")
 	}
 }

@@ -565,7 +565,7 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 	laneCol := func(lane string) kit.Color { return theme.Hue(m.laneOf[lane].Hue, bg) }
 	dimmed := func(c kit.Color, k float64) kit.Color { return theme.Mix(bg, c, k) }
 	head := func(x, y int, str string, c kit.Color) int {
-		return paintHeading(s.p, s.o.X+x, s.o.Y+y, str, inkOf(c)) - s.o.X
+		return paintHeading(s.p, s.o.X+x, s.o.Y+y, str, pixelInk(c)) - s.o.X
 	}
 
 	view := "the board"

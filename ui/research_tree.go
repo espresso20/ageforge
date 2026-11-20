@@ -136,6 +136,8 @@ type treeModel struct {
 	known, inReach, nextAge, later int // counts for the title
 	lines                          map[[2]int]lineCell
 	cardAt                         image.Rectangle // where the card was drawn last, for the mouse
+	// keys is the card's button, drawn last (action_button.go).
+	keys keySet
 }
 
 // techAt is the tech drawn at a cell of the panel ("" for none): its lane's
@@ -748,6 +750,7 @@ func shortAge(name string, room int) string {
 func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid {
 	out := newTGrid(w, h)
 	m.cardAt = image.Rectangle{}
+	m.keys = keySet{plain: v.ascii, glyph: func(x, y int) rune { return out.c[y*out.w+x].r }}
 	if w < 20 || h < 8 {
 		out.text(0, 0, rowid.Line("ui.research_tree.renderTree.01", "Research: make the window larger."), tsText, -1)
 		return out
@@ -1449,13 +1452,20 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		body = append(body, wrapStyled(s, tw)...)
 	}
 	lines := append(head, body...)
-	ch := len(lines) + 2
+	// A tech that can start, or one that cannot yet, has its button under the text.
+	act := cardActionFor(state, n)
+	button := act == actStart || act == actPlan
+	btn := 0
+	if button {
+		btn = actionRows + 1
+	}
+	ch := len(lines) + 2 + btn
 	if badge {
 		ch = max(ch, 15)
 	}
 	if ch > mh {
 		ch = mh
-		lines = lines[:max(ch-2, 0)]
+		lines = lines[:max(min(ch-2-btn, len(lines)), 0)]
 	}
 	x0, y0 := ox+(mw-cw)/2, oy+(mh-ch)/2
 	m.cardAt = image.Rect(x0, y0, x0+cw, y0+ch)
@@ -1480,7 +1490,24 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 	for i, l := range lines {
 		out.styledText(x0+tx, y0+1+i, l)
 	}
+	if button && ch >= btn+3 {
+		a := actionSpec{kind: keyPrimary, label: startWord(), key: "Enter", sign: signPlay}
+		if act == actPlan {
+			a.off, a.key = true, "" // Enter adds it to the plan, which is what the text says
+		}
+		by := y0 + ch - 1 - actionRows
+		for dy := 0; dy < actionRows; dy++ {
+			for dx := 0; dx < actionW(a.label, a.key, a.sign); dx++ {
+				out.put(x0+tx+dx, by+dy, ' ', tsText, -1)
+			}
+		}
+		m.keys.action(x0+tx, by, a, func(x, y int, text string) { out.text(x, y, text, tsText, -1) })
+	}
 }
+
+// startWord is the word of the button that starts the research a tech's card
+// is open on.
+func startWord() string { return "start" }
 
 // ----- the plain glyph tier -----
 

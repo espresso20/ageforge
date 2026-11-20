@@ -60,7 +60,8 @@ func (d *Dashboard) registerAdvancePanel() {
 	d.advancePanel.settings = d.mapSettings
 	d.advancePanel.prompt = d.researchPanel.prompt
 	d.advancePanel.toPrompt = d.handToPrompt
-	d.advancePanel.buttons.press = d.app.Key
+	d.advancePanel.buttons.wire(d.app)
+	d.wireMapPanel()
 	d.overlayMgr.RegisterWidget(advancePanelName, rowid.E("ui.advance_panel.registerAdvancePanel.01", "Advance"), d.advancePanel.open, d.advancePanel.update)
 }
 
@@ -84,6 +85,7 @@ func (p *advancePanel) update(state game.GameState) {
 		p.ui.flash = ""
 	}
 	p.view = v
+	p.ui.tickMs = state.TickIntervalMs
 	p.ui.sel = clamp(p.ui.sel, 0, max(0, len(v.Pillars)-1))
 }
 
@@ -142,8 +144,7 @@ func (p *advancePanel) PointerAt(at image.Point) kit.Pointer {
 	}
 	pt := at.Sub(p.Bounds().Min)
 	_, pillar := p.grid.hitAt(hitPillar, pt)
-	_, key := p.grid.keyAt(pt)
-	return handIf(pillar || key)
+	return handIf(pillar || p.buttons.pointer(p.grid, p.Bounds().Min, at) == kit.PointerHand)
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

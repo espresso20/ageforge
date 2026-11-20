@@ -1,6 +1,7 @@
 package textfmt
 
 import (
+	"math"
 	"testing"
 	"time"
 )
@@ -119,20 +120,64 @@ func TestMaxNumber(t *testing.T) {
 	}
 }
 
-func TestRate(t *testing.T) {
+func TestRateValue(t *testing.T) {
 	cases := map[float64]string{
-		0:       "+0/tick",
-		3.25:    "+3.25/tick",
-		-0.12:   "-0.12/tick",
-		0.004:   "+0.004/tick",
-		1500:    "+1.5K/tick",
-		50:      "+50/tick",
-		12.5:    "+12.5/tick",
-		-2000.0: "-2K/tick",
+		0:       "+0",
+		3.25:    "+3.25",
+		-0.12:   "-0.12",
+		0.004:   "+0.004",
+		1500:    "+1.5K",
+		-2000.0: "-2K",
 	}
 	for in, want := range cases {
-		if got := Rate(in); got != want {
-			t.Errorf("Rate(%v) = %q, want %q", in, got, want)
+		if got := RateValue(in); got != want {
+			t.Errorf("RateValue(%v) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestRateUnit(t *testing.T) {
+	cases := []struct {
+		in   float64
+		want float64
+		unit string
+	}{
+		{0, 0, PerSecond},
+		{0.1, 0.1, PerSecond},
+		{-0.1, -0.1, PerSecond},
+		{0.0999, 0.0999 * 60, PerMinute},
+		{0.1 / 60, 0.1, PerMinute},
+		{0.1/60 - 1e-6, (0.1/60 - 1e-6) * 3600, PerHour},
+		{-0.05, -3, PerMinute},
+		{-0.0001, -0.36, PerHour},
+		{12, 12, PerSecond},
+	}
+	for _, c := range cases {
+		v, unit := RateUnit(c.in)
+		if unit != c.unit || math.Abs(v-c.want) > 1e-9 {
+			t.Errorf("RateUnit(%v) = %v %s, want %v %s", c.in, v, unit, c.want, c.unit)
+		}
+	}
+}
+
+func TestRateNumberAndText(t *testing.T) {
+	number := map[float64]string{0: "0", 3.25: "+3.25", -7.2: "-7.2", 1500: "+1.5K"}
+	for in, want := range number {
+		if got := RateNumber(in); got != want {
+			t.Errorf("RateNumber(%v) = %q, want %q", in, got, want)
+		}
+	}
+	text := map[float64]string{
+		0:          "0/s",
+		3.25:       "+3.25/s",
+		-0.12:      "-0.12/s",
+		-0.12 / 60: "-0.12/min",
+		0.0001:     "+0.36/h",
+		1500:       "+1.5K/s",
+	}
+	for in, want := range text {
+		if got := RateText(in); got != want {
+			t.Errorf("RateText(%v) = %q, want %q", in, got, want)
 		}
 	}
 }
@@ -214,6 +259,24 @@ func TestEditDistance(t *testing.T) {
 		}
 		if got := EditDistance(c.b, c.a); got != c.want {
 			t.Errorf("EditDistance(%q, %q) = %d, want %d (symmetric)", c.b, c.a, got, c.want)
+		}
+	}
+}
+
+func TestDurationExact(t *testing.T) {
+	cases := map[time.Duration]string{
+		0:                                   "0s",
+		45 * time.Second:                    "45s",
+		72 * time.Minute:                    "1h 12m",
+		26 * time.Hour:                      "1d 2h",
+		(3*24 + 4) * time.Hour:              "3d 4h",
+		(3*24+4)*time.Hour + 20*time.Minute: "3d 4h 20m",
+		24*time.Hour + 5*time.Minute:        "1d 5m",
+		48 * time.Hour:                      "2d",
+	}
+	for d, want := range cases {
+		if got := DurationExact(d); got != want {
+			t.Errorf("DurationExact(%v) = %q, want %q", d, got, want)
 		}
 	}
 }
