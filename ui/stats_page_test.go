@@ -167,10 +167,10 @@ func TestStatsPictureCountsAndPlainCells(t *testing.T) {
 	if got, want := len(p.page.pics), 6+6+12; got != want {
 		t.Fatalf("pictures: %d, want %d (tiles, blocks, bars)", got, want)
 	}
-	// the frame's own pictures are the same on both parts but two: the plate
-	// of the Prestige button that only the first part holds and the plate of
-	// the Left/Right key that only the second does, which balance, so the
-	// parts differ by exactly the page's pictures
+	// the frame's own pictures are eight on both parts: the Prestige button's
+	// plate that only the first part holds balances the plate of the
+	// Left/Right key that only the second does. So the parts differ by
+	// exactly the page's pictures, all of which are in view
 	run := len(paintAlone(overBar(p), 160, 40).Pics)
 	keyOf(p, kit.KeyTab)
 	life := len(paintAlone(overBar(p), 160, 40).Pics)
