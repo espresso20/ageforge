@@ -87,7 +87,7 @@ func (a *App) setup() {
 			if err != nil {
 				// Account is non-critical: say why and fall through to the splash
 				// accountless rather than block play.
-				showUpdateMsg(a.loop, a.pages, err.Error())
+				showMenuMsg(a.loop, a.pages, err.Error())
 				return
 			}
 			a.engine.SetAccount(newAcct)

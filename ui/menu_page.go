@@ -33,7 +33,6 @@ const (
 	miBadges   = "badges"
 	miSettings = "settings"
 	miAccounts = "accounts"
-	miUpdates  = "updates"
 	miQuit     = "quit"
 
 	// The Settings page's rows.

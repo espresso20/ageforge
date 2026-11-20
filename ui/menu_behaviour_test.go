@@ -31,11 +31,9 @@ type menuRig struct {
 	app   *appLoop
 	pages *nativePages
 	m     *mainMenu
-	// held is the choices waiting out their strike, clock the menu's time,
-	// checks how often the update check was opened.
-	held   []func()
-	clock  time.Time
-	checks int
+	// held is the choices waiting out their strike, clock the menu's time.
+	held  []func()
+	clock time.Time
 }
 
 // newMenuRig makes an account, a game for each name (the last one played
@@ -55,7 +53,6 @@ func newMenuRig(t *testing.T, games ...string) *menuRig {
 	r.app, r.pages = newAppLoop(), newNativePages()
 	r.m = CreateSplashPage(r.app, r.pages, r.eng, "dev").(*mainMenu)
 	r.m.later = func(fn func()) { r.held = append(r.held, fn) }
-	r.m.checkUpdates = func() { r.checks++ }
 	r.m.now = func() time.Time { return r.clock }
 	r.m.start = r.clock
 	r.pages.AddPage("splash", r.m, true, true)
@@ -163,7 +160,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 	if !m.view.forge || m.hasCur {
 		t.Fatalf("an account with no game: forge page %v, a current game %v", m.view.forge, m.hasCur)
 	}
-	if got := ids(m.view.items); got != "new load badges settings accounts updates quit" {
+	if got := ids(m.view.items); got != "new load badges settings accounts quit" {
 		t.Errorf("the first visit's entries are %q", got)
 	}
 	if m.view.sel != 0 {
@@ -185,7 +182,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 	if m.view.forge || !m.hasCur || m.town == nil {
 		t.Fatalf("an account with a game: forge page %v, a current game %v, a town %v", m.view.forge, m.hasCur, m.town != nil)
 	}
-	if got := ids(m.view.items); got != "continue new load badges settings accounts updates quit" {
+	if got := ids(m.view.items); got != "continue new load badges settings accounts quit" {
 		t.Errorf("the entries with a game are %q", got)
 	}
 	if m.view.sel != 0 || m.view.items[0].id != miContinue {
@@ -254,12 +251,6 @@ func TestMenuKeysOpenEveryEntry(t *testing.T) {
 		if !m.active {
 			t.Errorf("back from %q the menu is not in use", c.page)
 		}
-	}
-
-	// Check for updates stays on the front page: a dialog over the menu.
-	r.press('u')
-	if r.checks != 1 || r.front() != "splash" || !m.active {
-		t.Errorf("u: the update check opened %d times, front %q, menu in use %v", r.checks, r.front(), m.active)
 	}
 
 	// x deleted every save from the old menu. It is not on this page.
@@ -527,7 +518,6 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	m.now, m.start = func() time.Time { return clock }, clock
 	var held []func()
 	m.later = func(fn func()) { held = append(held, fn) }
-	m.checkUpdates = func() {}
 	pages.AddPage("splash", m, true, true)
 	app.SetRoot(pages, true)
 	t.Cleanup(m.leave)
@@ -655,7 +645,7 @@ func TestMenuFallsBackWithoutAnError(t *testing.T) {
 	// dialog (the one thing that is said), and the menu reads again.
 	must(t, game.DeleteSave("ashford"))
 	r.press('c')
-	if r.front() != updateModalPage {
+	if r.front() != menuModalPage {
 		t.Fatalf("Continue on a save that is gone: front %q, want a dialog", r.front())
 	}
 	if r.eng.Running() || r.m.hasCur {
@@ -750,14 +740,6 @@ func TestMenuCaptionAndTheLinesThatComeAndGo(t *testing.T) {
 		t.Error("at 80x24 the caption lost the town and its age")
 	}
 
-	// A newer release: beside the version, with its key.
-	m.update = true
-	m.buildView()
-	for _, size := range [][2]int{{120, 40}, {80, 24}} {
-		if scr := r.draw(size[0], size[1]); !scr.has("dev · update available (u)") {
-			t.Errorf("at %dx%d the update notice is not beside the version", size[0], size[1])
-		}
-	}
 	if got := menuEdition("v4.2.1"); got != "fourth" {
 		t.Errorf("v4.2.1 is the %q edition", got)
 	}
