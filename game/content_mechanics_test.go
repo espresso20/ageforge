@@ -35,7 +35,7 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 		for res, listed = range def.Import {
 		}
 		// A route's flow at its gate is its run spread over its ticks.
-		per := float64(def.TicksPerRun)
+		per := runLength(ge, def)
 		_, in, _ := ge.Trade.flows(def, RouteTerms{Harbor: harbor})
 		// The panels read the same number, harbors aside.
 		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}

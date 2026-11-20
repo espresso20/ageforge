@@ -305,7 +305,7 @@ func TestUncapped_RouteFlowIntoAFullStoreStillComesIn(t *testing.T) {
 	ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}
 	ge.recalculateRates()
 	ge.Resources.ApplyRates()
-	per := float64(def.TicksPerRun)
+	per := runLength(ge, def)
 	if want := full + ge.Trade.RoutePay(def.Import[imp])/per; math.Abs(ge.Resources.Get(imp)-want) > 1e-6 {
 		t.Errorf("%s = %v after a tick into a full store, want %v", imp, ge.Resources.Get(imp), want)
 	}

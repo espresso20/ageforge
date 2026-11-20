@@ -10,7 +10,7 @@ The other civilizations (meeting them, opinion, deals, alliances, war) have thei
 
 ## Trade routes
 
-A running route takes some of one resource from you every tick and brings you another. Its flow shows in the Resources box as a line of its own, as "trade". A route needs its required building. At the building count its listing asks, it moves the listed amount over the listed ticks; with more of the building it moves more, but with diminishing returns: each doubling of the line adds one more gate's flow (flow x1 at the gate, x2 at twice the buildings, x3 at four times). A route only sends what the town can spare: it never takes the stock below what the town itself uses, so a route that exports food leaves what the people eat.
+A running route takes some of one resource from you every tick and brings you another. Its flow shows in the Resources box as a line of its own, as "trade". A route needs its required building. At the building count its listing asks, it sends 10% of what the town makes of its export (before any trade) and brings the import in the listed ratio; with more of the building it moves more, but with diminishing returns: each doubling of the line adds one more gate's flow (flow x1 at the gate, x2 at twice the buildings, x3 at four times). A route only sends what the town can spare: it never takes the stock below what the town itself uses, so a route that exports food leaves what the people eat.
 
 <figure class="screen" data-screen="trade"><figcaption>The Trade panel in a window too small for the board: a card for each route, with Local Barter running at its full flow.</figcaption></figure>
 
@@ -47,31 +47,31 @@ The panel lists each civilization only as the head of its offers. The one other 
 
 ### Full trade routes reference
 
-Every route opens in the Bronze Age or later. The cycle lengths below are in ticks, which last 2 seconds each at the base speed: a route's listed amounts move over that many ticks at the building count it asks for.
+Every route opens in the Bronze Age or later. A route at the building count it asks for sends 10% of what the town makes of its export (before any trade) and brings in the import in the ratio below. The amounts in the table are only that ratio.
 
-| Key | Name | Min Age | Required Building | You give (per cycle) | You get (per cycle) | Cycle (ticks) |
-|---|---|---|---|---|---|---|
-| `local_barter` | Local Barter | Bronze | Market ×1 | 10 food | 8 wood | 26 |
-| `stone_trade` | Stone Trade | Iron | Market ×2 | 15 wood | 12 stone | 31 |
-| `gold_caravan` | Gold Caravan | Classical | Market ×3 | 50 stone | 5 gold | 39 |
-| `silk_road` | Silk Road | Medieval | Market ×2 | 30 gold | 80 culture | 52 |
-| `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | 300 stone + 200 wood | 90 gold | 42 |
-| `spice_trade` | Spice Trade | Colonial | Port ×1 | 100 gold | 200 food + 50 culture | 47 |
-| `colonial_exports` | Colonial Exports | Colonial | Port ×2 | 500 food | 150 gold | 39 |
-| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + research progress | 47 |
-| `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture | 52 |
-| `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron | 36 |
-| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + research progress | 42 |
-| `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | 250 steel + 200 coal | 900 gold | 47 |
-| `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | 200 iron | 100 gold + 50 coal | 31 |
-| `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold | 39 |
-| `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold | 26 |
-| `data_trade` | Data Trade | Information | Server Farm ×1 | 100 data | 500 gold | 26 |
-| `crypto_market` | Crypto Market | Cyberpunk | Black Market Hub ×1 | 50 crypto | 1K gold | 21 |
-| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1K gold | 31 |
-| `warp_commerce` | Warp Commerce | Interstellar | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 39 |
-| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold | 52 |
-| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5K gold | 26 |
+| Key | Name | Min Age | Required Building | You give (ratio) | You get (ratio) |
+|---|---|---|---|---|---|
+| `local_barter` | Local Barter | Bronze | Market ×1 | 10 food | 8 wood |
+| `stone_trade` | Stone Trade | Iron | Market ×2 | 15 wood | 12 stone |
+| `gold_caravan` | Gold Caravan | Classical | Market ×3 | 50 stone | 5 gold |
+| `silk_road` | Silk Road | Medieval | Market ×2 | 30 gold | 80 culture |
+| `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | 300 stone + 200 wood | 90 gold |
+| `spice_trade` | Spice Trade | Colonial | Port ×1 | 100 gold | 200 food + 50 culture |
+| `colonial_exports` | Colonial Exports | Colonial | Port ×2 | 500 food | 150 gold |
+| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + research progress |
+| `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture |
+| `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron |
+| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + research progress |
+| `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | 250 steel + 200 coal | 900 gold |
+| `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | 200 iron | 100 gold + 50 coal |
+| `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold |
+| `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold |
+| `data_trade` | Data Trade | Information | Server Farm ×1 | 100 data | 500 gold |
+| `crypto_market` | Crypto Market | Cyberpunk | Black Market Hub ×1 | 50 crypto | 1K gold |
+| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1K gold |
+| `warp_commerce` | Warp Commerce | Interstellar | Warp Drive Plant ×1 | 500 gold | 200 dark matter |
+| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold |
+| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5K gold |
 
 What a route gives is boosted by your harbors and by an ally whose specialty it brings in: `amount × (1 + harbor bonus + ally bonus)`.
 
@@ -79,7 +79,7 @@ What a route gives is boosted by your harbors and by an ally whose specialty it 
 
 Trade routes wait for The Wheel, a Bronze Age tech (it needs Woodworking). Until it is researched, `trade route start` is refused and names it, and the Trade routes panel says so. Rail Freight waits for Railroads in the same way: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. Warp Commerce waits for Interstellar Trade, an Interstellar Age tech that needs Asteroid Claims and Warp Drive. A game that was already running either route keeps it for the rest of that run.
 
-Boatbuilding, Containerization and Asteroid Claims each make every route bring in 10% more of what the route lists (33% with all three). A harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route's flow 1/0.85 greater (a cut of 15% to its cycle), and Wormholes 1/0.8. With all four, a route's flow is 1/0.49 of the listed one, a little over twice.
+Boatbuilding, Containerization and Asteroid Claims each make every route bring in 10% more of what the route lists (33% with all three). A harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route's flow 1/0.85 greater, and Wormholes 1/0.8. With all four, a route's flow is 1/0.49 of the listed one, a little over twice.
 
 ---
 
@@ -127,7 +127,7 @@ The Black Market turns a culture surplus into whatever you're short on, if you c
 
 ### What routes are worth
 
-Route amounts are set per route, and they don't grow with the age. Colonial Exports brings 150 gold a cycle in an age where a Port costs about 33M gold, and Quantum Trade brings 5K gold in an age where no building costs gold at all (none has since the Digital Age). Harbor and ally bonuses add a percentage to those amounts, which keeps them small, and more of the route's building adds flow in proportion. A route's goods are a small help in the Bronze and Iron Ages and close to nothing after that, so don't build for them.
+A route is sized by the town: it sends 10% of what the town makes of its export, so it grows with the age and the economy. Each doubling of the route's building adds one more such flow. Harbor and ally bonuses add a percentage to what it brings, and a route moves nothing while the town makes none of its export (the board says so). A route is worth a fraction of the income it draws on, so build for the opinion first.
 
 What a route pays all run long is opinion. Each minute a route runs adds +1 opinion with every civilization you have met that isn't at war with you, all at once. A route that runs adds 60 opinion an hour with each of them on its own, however big it is, more than any personality drift takes away. Opinion is what opens better deals, alliances and worker loans (see [Factions & Diplomacy](factions.md#opinion-and-status)), and mercantile civilizations warm to you just for having a route running.
 

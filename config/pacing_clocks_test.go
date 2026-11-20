@@ -40,26 +40,6 @@ func TestAwakeningsStretched(t *testing.T) {
 	}
 }
 
-// TestTradeRoutesStretched: a route's run is stretched for its MinAge, which
-// is right in every age it runs only if no later age stretches differently:
-// every route opens from the Bronze Age on.
-func TestTradeRoutesStretched(t *testing.T) {
-	order := AgeOrder()
-	idx := map[string]int{}
-	for i, a := range order {
-		idx[a] = i
-	}
-	for _, r := range BaseTradeRoutes() {
-		for _, later := range order[idx[r.MinAge]:] {
-			if AgeStretch(later) != AgeStretch(r.MinAge) {
-				t.Errorf("%s opens in %s (stretch %v) but runs on into %s (stretch %v): stretch it in the engine instead",
-					r.Key, r.MinAge, AgeStretch(r.MinAge), later, AgeStretch(later))
-				break
-			}
-		}
-	}
-}
-
 // TestSurvivorMilestonesStretched: the play-time milestones count 2.6x the
 // ticks they did (about 14h 26m and 3 days); TestMilestoneDescriptionNumbers
 // holds their descriptions to it.

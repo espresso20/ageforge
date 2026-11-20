@@ -36,6 +36,7 @@ func TestHarborRouteBonus_RaisesIncome(t *testing.T) {
 	run := func(withHarbor bool) float64 {
 		ge := NewGameEngine()
 		ge.age = "industrial_age"
+		townMakes(ge)
 		ge.Buildings.counts["market"] = 2
 		setRes(ge, "food", config.Million)
 		setRes(ge, "wood", config.Million)

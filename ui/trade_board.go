@@ -42,7 +42,7 @@ type tradeRoute struct {
 	out, in                    []tradeFlow
 	shares                     map[string][]game.PayShare
 	base                       map[string]float64
-	baseTicks, size, minCount  int
+	size, minCount             int
 	run, scale                 float64
 	speed                      float64
 	shortOf                    string
@@ -106,7 +106,7 @@ func tradeRoutes(st game.GameState) []tradeRoute {
 			continue
 		}
 		idx[def.Key], _ = set.Index(def.MinAge)
-		r := tradeRoute{key: def.Key, name: def.Name, base: def.Import, baseTicks: def.TicksPerRun, minCount: def.MinCount, shares: v.Shares,
+		r := tradeRoute{key: def.Key, name: def.Name, minCount: def.MinCount, shares: v.Shares,
 			run: 1, scale: 1, speed: st.Trade.Speed}
 		out, in := v.Export, v.Import
 		if on {
@@ -117,7 +117,7 @@ func tradeRoutes(st game.GameState) []tradeRoute {
 		if on && !a.Paused && !a.NoBuilding && !a.Disrupted {
 			k = float64(r.run * r.scale)
 		}
-		r.out, r.in = flows(out, k), flows(in, k)
+		r.out, r.in, r.base = flows(out, k), flows(in, k), in
 		r.size = a.Owned
 		for _, f := range r.in {
 			if rs := st.Resources[f.key]; f.key != config.ResearchTarget && r.share == "" && rs.Rate > 0 && f.tick > 0 {
@@ -138,6 +138,9 @@ func tradeRoutes(st game.GameState) []tradeRoute {
 			}
 		case on && a.Paused:
 			r.state, r.cmd = "paused", "trade route start "+def.Key
+		case on && a.NoIncome != "":
+			r.state, r.cmd = "suspended", "trade route stop "+def.Key
+			r.why = rowid.Sprintf("ui.trade_board.tradeRoutes.03", "Idle: the town makes no %s", game.ResourceName(a.NoIncome))
 		case on && a.NoBuilding:
 			r.state, r.cmd = "suspended", "trade route stop "+def.Key
 			bld := st.Buildings[def.RequiredBld]
@@ -287,11 +290,14 @@ func tradeExtras(st game.GameState, r tradeRoute, lim int) (ex []tradeExtra) {
 	for _, f := range r.in {
 		if sh := r.shares[f.key]; len(sh) > 0 && f.key != config.ResearchTarget && goods < 2 {
 			goods++
-			base := float64(r.base[f.key]*tpm) / float64(max(r.baseTicks, 1))
-			ss, total := []string{rowid.Sprintf("ui.trade_board.tradeExtras.02", "%s at base", game.Amount(base, f.key))}, 100.0
+			total := 100.0
+			for _, p := range sh {
+				total += p.Percent
+			}
+			base := float64(r.base[f.key]*tpm) / float64(max(total/100*r.speed, 1e-9))
+			ss := []string{rowid.Sprintf("ui.trade_board.tradeExtras.02", "%s at base", game.Amount(base, f.key))}
 			for _, p := range sh {
 				ss = append(ss, textfmt.Signed(p.Percent)+"% "+p.Label)
-				total += p.Percent
 			}
 			ss = append(ss, "= "+game.Amount(float64(base*total/100), f.key))
 			ex, label = append(ex, tradeExtra{label, tradeWrap(text(ss...), tcSends, lim, 2)}), ""

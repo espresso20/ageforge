@@ -12,9 +12,9 @@ import (
 
 // TradeManager runs the standing trade routes. A running route is a flow: it
 // takes its Export out of the resource rates and puts its Import into them,
-// every tick, until it is paused. Listed at the route's gate (MinCount of its
-// building line) a route moves Export and Import once per TicksPerRun ticks;
-// the flow grows with the count of the line. A route that cannot pay its
+// every tick, until it is paused. At the route's gate (MinCount of its
+// building line) it sends config.RouteShare of the town's gross production of
+// its export; the flow grows with the count of the line. A route that cannot pay its
 // export runs at a share of it (Flows). Allied faction bonuses are applied to
 // the import via DiplomacyManager. A route whose building is demolished is
 // held at 0 until the building is back.
@@ -37,6 +37,10 @@ type TradeManager struct {
 	// the UI copies of Export/Import so nothing outside the lock aliases them.
 	routeList []config.TradeRouteDef
 	routeDefs map[string]config.TradeRouteDef
+
+	// gross is what the town makes of each resource a tick before any trade
+	// flow (set by Flows), which sizes every route.
+	gross map[string]float64
 }
 
 // ActiveRoute is a route the player has started.
@@ -50,6 +54,7 @@ type ActiveRoute struct {
 	// gate, one more for each doubling of the line (Owned); Research is the research a tick the route brings.
 	Run, Scale, Research float64 `json:"-"`
 	Owned                int     `json:"-"`
+	NoIncome             string  `json:"-"` // the export the town makes none of
 	Disrupted            bool    `json:"-"`
 	NoBuilding           bool    `json:"-"`
 	said                 string
@@ -149,12 +154,30 @@ func (tm *TradeManager) timeFactor() float64 {
 	return 1
 }
 
-// flows is what def moves a tick at its gate, with the count of the building
-// line making it more: what it takes of each export, and what it brings of
-// each import with the techs' term, the harbor bonus and the allies' shares.
-// payFor adds the shares for the state view.
+// volume is the runs a tick def makes at its gate: config.RouteShare of the
+// gross production of its scarcest export, in listed amounts. It is 0, with the
+// export named, when the town makes none of one.
+func (tm *TradeManager) volume(def config.TradeRouteDef) (u float64, none string) {
+	u = math.Inf(1)
+	for _, res := range sortedKeys(def.Export) {
+		g := float64(config.RouteShare * tm.gross[res])
+		if g <= 0 {
+			return 0, res
+		}
+		u = min(u, g/def.Export[res])
+	}
+	if math.IsInf(u, 1) {
+		return 0, ""
+	}
+	return u, ""
+}
+
+// flows is what def moves a tick at its gate: what it takes of each export,
+// and what it brings of each import with the techs' term, the harbor bonus and
+// the allies' shares. payFor adds the shares for the state view.
 func (tm *TradeManager) flows(def config.TradeRouteDef, terms RouteTerms) (out, in map[string]float64, shares map[string][]PayShare) {
-	k := float64(tm.timeFactor() / float64(max(def.TicksPerRun, 1)))
+	u, _ := tm.volume(def)
+	k := float64(tm.timeFactor() * u)
 	out, in, shares = make(map[string]float64, len(def.Export)), make(map[string]float64, len(def.Import)), make(map[string][]PayShare, len(def.Import))
 	for res, amount := range def.Export {
 		out[res] = float64(amount * k)
@@ -232,10 +255,16 @@ func (tm *TradeManager) ActiveRouteCount() int {
 // (1 on a live tick; an offline step's ticks), so a long step spends the
 // stock once.
 func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, terms RouteTerms, horizon float64) {
+	horizon = max(horizon, 1)
+	if tm.gross == nil {
+		tm.gross = map[string]float64{}
+	}
+	for res, r := range rm.resources {
+		tm.gross[res] = max(0, float64(r.Rate-r.Breakdown.FoodDrain))
+	}
 	if len(tm.activeRoutes) == 0 {
 		return
 	}
-	horizon = max(horizon, 1)
 	var disrupted map[string]bool
 	if diplomacy != nil {
 		disrupted = diplomacy.DisruptedResources()
@@ -256,7 +285,8 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 			route.Scale = 1 + math.Log2(float64(owned)/float64(max(def.MinCount, 1)))
 		}
 		route.Disrupted = tm.routeDisruptedBy(def, disrupted) != ""
-		if route.Paused || route.NoBuilding || route.Disrupted {
+		_, route.NoIncome = tm.volume(def)
+		if route.Paused || route.NoBuilding || route.Disrupted || route.NoIncome != "" {
 			continue
 		}
 		out, in, _ := tm.flows(def, terms)
@@ -372,6 +402,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			DisruptedBy: blockedBy,
 			Paused:      route.Paused,
 			NoBuilding:  route.NoBuilding,
+			NoIncome:    route.NoIncome,
 			Run:         route.Run,
 			Scale:       route.Scale,
 			Owned:       route.Owned,

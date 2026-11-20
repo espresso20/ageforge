@@ -42,7 +42,7 @@ func TestRouteView_SharesMultiplyOutToTickPay(t *testing.T) {
 	for _, s := range got.Shares["wood"] {
 		sum += s.Percent / 100
 	}
-	if want := float64(def.Import["wood"]*sum) / float64(def.TicksPerRun); math.Abs(got.Import["wood"]-want) > 1e-9 {
+	if want := float64(def.Import["wood"]*sum) * runsPerTick(ge, def); math.Abs(got.Import["wood"]-want) > 1e-9 {
 		t.Fatalf("view flow %.6f, shares give %.6f", got.Import["wood"], want)
 	}
 	// The rates carry the same flow the view lists.
@@ -58,7 +58,8 @@ func TestRouteView_SharesMultiplyOutToTickPay(t *testing.T) {
 func TestRouteView_ShortShowsAndClears(t *testing.T) {
 	ge := NewGameEngine()
 	ge.age = "industrial_age"
-	ge.Buildings.counts["market"] = 2
+	townMakes(ge)
+	ge.Buildings.counts["market"] = 1 << 14 // sends more than the town makes
 	setRes(ge, "food", 0)
 	if err := ge.Trade.StartRoute("local_barter", ge.Buildings, ge.age, ge.progress.GetAgeOrder()); err != nil {
 		t.Fatal(err)
@@ -99,7 +100,7 @@ func TestRouteView_AllyShareInPay(t *testing.T) {
 			if ally <= 0 {
 				t.Fatalf("no ally share for %s on %s", f.Key, def.Key)
 			}
-			want := float64(ge.Trade.RunPay(amount, ge.harborRouteBonus()+ge.Diplomacy.GetTradeBonus(f.Specialty)) / float64(def.TicksPerRun))
+			want := float64(ge.Trade.RunPay(amount, ge.harborRouteBonus()+ge.Diplomacy.GetTradeBonus(f.Specialty)) * runsPerTick(ge, def))
 			if math.Abs(view.Import[f.Specialty]-want) > 1e-9 {
 				t.Fatalf("flow %.6f, the rates would carry %.6f", view.Import[f.Specialty], want)
 			}

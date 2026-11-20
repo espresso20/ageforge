@@ -10667,29 +10667,6 @@
   "awakening_pottery_mastery": 250,
   "awakening_steam_breakthrough": 520
  },
- "trade_route_ticks": {
-  "coal_barges": 36,
-  "colonial_exports": 39,
-  "cotton_exchange": 42,
-  "crypto_market": 21,
-  "data_trade": 26,
-  "fusion_export": 31,
-  "gold_caravan": 39,
-  "local_barter": 26,
-  "mercantile_convoy": 42,
-  "oil_pipeline": 39,
-  "power_exchange": 26,
-  "quantum_trade": 26,
-  "rail_freight": 31,
-  "silk_road": 52,
-  "spice_trade": 47,
-  "steamship_line": 47,
-  "stellar_exchange": 52,
-  "stone_trade": 31,
-  "tea_clippers": 52,
-  "triangular_trade": 47,
-  "warp_commerce": 39
- },
  "deal_flow_levels": {
   "atomic_age": {
    "culture": 502578.6794007196,

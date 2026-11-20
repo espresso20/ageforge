@@ -847,6 +847,7 @@ type ActiveRouteInfo struct {
 	Owned       int
 	Paused      bool   // stopped by the player; it keeps its place on the list
 	NoBuilding  bool   // held at 0 for want of its building line
+	NoIncome    string // held at 0: the town makes none of this export
 	Disrupted   bool   // true when blockaded by war/embargo (flow held at 0)
 	DisruptedBy string // the imported resource that is blockaded (if Disrupted)
 	// Shares is what each import's flow is made of (the techs, harbor

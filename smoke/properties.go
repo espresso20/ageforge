@@ -36,7 +36,7 @@ var KnownPropertyFailures = map[int]string{
 	2:  "fails in 2 of 22 ages; worst 0.30 of the age in the Primitive Age",
 	8:  "fails in 6 of 22 ages; worst 21.0% eaten in the Atomic Age",
 	9:  "fails in 22 of 22 ages; worst room for 22534 people per job in the Transcendent Age",
-	12: "27 of 27 trade route flows fall outside it",
+	12: "24 of 27 trade route flows fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 4 of 22 ages; worst 4.5 times in the Primitive Age",
 	18: "not worked out here yet",
@@ -230,22 +230,27 @@ func StaticProperties() Properties {
 		if !ok {
 			continue
 		}
+		// A route at its gate sends RouteShare of the reference town's income
+		// of its scarcest export and brings the import in the ratio of the
+		// listed amounts; its worth is that import over the town's income
+		// of the same resource (1 = it doubles the income).
+		runs := math.Inf(1)
+		for res, amount := range r.Export {
+			runs = math.Min(runs, float64(ref[i].income[res]/amount))
+		}
 		for res, amount := range r.Import {
-			perMinute := float64(ref[i].income[res] * refTicksPerHour / 60)
-			if perMinute <= 0 {
+			income := ref[i].income[res]
+			if income <= 0 || math.IsInf(runs, 1) || runs <= 0 {
 				continue
 			}
 			routes++
-			// A minute of the route's import flow at its gate, in minutes of the
-			// town's income of the same resource: the old run's payment per
-			// minute of the run.
-			share := float64(amount*60/(config.TickSeconds*float64(r.TicksPerRun))) / perMinute
+			share := float64(config.RouteShare*runs*amount) / income
 			if share < propRewardLow || share > propRewardHigh {
 				small++
 			}
 		}
 	}
-	add(12, fmt.Sprintf("a trade route's import flow at its gate, a minute of it, is worth between %g and %g minutes of the reference town's income of it (loot, flat bonuses and named events are not worked out here yet)", propRewardLow, propRewardHigh), small == 0,
+	add(12, fmt.Sprintf("a trade route's import at its gate is worth between %g and %g times the reference town's income of it (loot, flat bonuses and named events are not worked out here yet)", propRewardLow, propRewardHigh), small == 0,
 		fmt.Sprintf("%d of %d trade route flows fall outside it", small, routes))
 
 	// 13. (gone) It held every amount a gate asks for to a share of the store
