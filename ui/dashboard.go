@@ -33,9 +33,27 @@ var shameMessages = []rowid.Entry{
 // Dashboard is the main gameplay screen. The economy tab is the always-visible
 // background; named overlays (research, trade, military, etc.) are rendered on
 // top of it via the page stack. Only one overlay can be visible at a time.
-// promptRows is the command bar's height: one line inside its border. The
-// Map panel leaves these rows free, so the prompt works while it is open.
-const promptRows = 3
+// The command bar is barRows tall: a typed line at twice the size between
+// blank rows inside its border (6), or one line at normal size (3) when the
+// window is under barBigMinCols by barBigMinRows. Panels leave these rows
+// free, so the prompt works while one is open.
+const (
+	barBigMinCols = 120
+	barBigMinRows = 39
+	barBigRows    = 6
+	barSmallRows  = 3
+)
+
+// barRows is the command bar's height in a w by h window.
+func barRows(w, h int) int {
+	if w >= barBigMinCols && h >= barBigMinRows {
+		return barBigRows
+	}
+	return barSmallRows
+}
+
+// bar is the command bar's height in the window as it was last laid out.
+func (d *Dashboard) bar() int { return barRows(d.screenSize()) }
 
 // The dashboard's other fixed sizes: the rows over the boxes on the smallest
 // terminals (the header, dash_header.go; a bigger terminal gives it one
@@ -291,6 +309,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	d.planPanel.engine = d.engine
 	d.planPanel.height = func() int { return d.overlayMgr.screenH }
+	d.planPanel.bar = func() int { return barRows(d.overlayMgr.screenW, d.overlayMgr.screenH) }
 	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
 	d.overlayMgr.SetFooter("plan", planFooter)
 	d.overlayMgr.SetKeyHandler("plan", func(event *kit.Key) *kit.Key {
@@ -571,10 +590,15 @@ func (d *Dashboard) build() {
 	d.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(d.headerTV, headerSmallRows, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
-		AddItem(d.inputField, promptRows, 0, true)
+		AddItem(d.inputField, barSmallRows, 0, true)
 	// The header is as tall as the terminal calls for, chosen before the
 	// rows are shared out, so a resize shows the right one at once.
-	d.root.SetDrawFunc(func(_, _, w, h int) { d.root.ResizeItem(d.headerTV, headerHeight(w, h), 0) })
+	d.root.SetDrawFunc(func(_, _, w, h int) {
+		d.root.ResizeItem(d.headerTV, headerHeight(w, h), 0)
+		n := barRows(w, h)
+		d.root.ResizeItem(d.inputField, n, 0)
+		d.inputField.SetBig(n == barBigRows)
+	})
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *kit.Key) *kit.Key {
@@ -803,7 +827,7 @@ func (d *Dashboard) drawEffect(scr mapstyle.Cells, x, y, w, h int) {
 		d.fxStart = now()
 	}
 	// Not in the command bar: nothing moves where the player types.
-	h -= promptRows
+	h -= d.bar()
 	drawThemeEffect(scr, x, y, w, h, effect, int(now().Sub(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
 }
 
@@ -831,7 +855,7 @@ func (d *Dashboard) drawOver(p *kit.Painter, bounds image.Rectangle) {
 		d.app.feel.tip.Clear()
 		return
 	}
-	d.app.feel.tip.Paint(p, image.Rect(bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y-promptRows))
+	d.app.feel.tip.Paint(p, image.Rect(bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y-d.bar()))
 }
 
 // StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).

@@ -63,9 +63,11 @@ func (b *barPanel) paintGrid(p *kit.Painter, g *xgrid, r image.Rectangle) {
 // does not clear the cells it leaves empty), so the prompt stays in sight,
 // and in use, while the panel is open.
 func overBar(p Primitive) Primitive {
-	return newNativeFlex().SetDirection(flexRow).
+	f := newNativeFlex().SetDirection(flexRow).
 		AddItem(p, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+		AddItem(nil, barSmallRows, 0, false)
+	f.SetDrawFunc(func(_, _, w, h int) { f.ResizeItem(nil, barRows(w, h), 0) })
+	return f
 }
 
 // barOverlay is how the dashboard drives one of those panels while it is the

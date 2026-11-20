@@ -29,7 +29,9 @@ func TestTheCommandBarTakesAClickUnderAPanel(t *testing.T) {
 	d.inputField.SetText("build hut")
 	st := stageOf(d, pages, 200, 60)
 	x, y, _, _ := d.inputField.GetInnerRect()
-	st.click(x+kit.Width(d.inputField.GetLabel())+1, y) // on the "u" of "build"
+	// the line is at double size here: a pad column, the prompt and the "b"
+	// take 2+2*width+2 cells, so the next cell is on the "u"
+	st.click(x+2+2*kit.Width(d.inputField.GetLabel())+2+1, y+1)
 	keyTo(d.inputField, tk(kit.KeyRune, 'X', 0))
 	if got := d.inputField.GetText(); got != "bXuild hut" {
 		t.Errorf("after a click on the second letter and an X the bar reads %q", got)

@@ -19,7 +19,7 @@ import (
 const (
 	playtestCols = 2*60 + richSidebarW
 	// The row over the boxes there is the header, at its full height.
-	playtestRows = 45 + headerStdRows + promptRows
+	playtestRows = 45 + headerStdRows + barBigRows
 )
 
 // playtestTown is a dashboard on a town like the playtest's.

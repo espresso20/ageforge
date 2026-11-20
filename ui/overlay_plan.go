@@ -47,9 +47,10 @@ type planPanel struct {
 
 	// engine is read for the estimate and the optimize preview; the panel
 	// draws without them when it is nil. height says how many rows the screen
-	// has (40 when nil).
+	// has (40 when nil), bar the rows of the command bar under it (3 when nil).
 	engine *game.GameEngine
 	height func() int
+	bar    func() int
 }
 
 // reset clears the feedback, the Clear confirmation and any overlay, for a
@@ -79,11 +80,14 @@ func (p *planPanel) provider(state game.GameState, screenW int) string {
 
 // bodyRows is the rows the panel's text may use.
 func (p *planPanel) bodyRows() int {
-	h := 40
+	h, bar := 40, barSmallRows
 	if p.height != nil {
 		h = p.height()
 	}
-	return max(12, h-panelChromeRows-promptRows)
+	if p.bar != nil {
+		bar = p.bar()
+	}
+	return max(12, h-panelChromeRows-bar)
 }
 
 func clampSel(sel, n int) int {
