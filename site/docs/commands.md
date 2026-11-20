@@ -291,9 +291,9 @@ In the window a click on an offer's pin highlights it, a double click asks to se
 | Command | Description |
 |---|---|
 | `trade` | Open the Trade routes panel. |
-| `trade route` (or `trade route list`) | List your active trade routes and the routes you can start. |
+| `trade route` (or `trade route list`) | List your active trade routes (running at what share of their flow, or paused) and the routes you can start. |
 | `trade route start <route\|all>` | Start a trade route, or every route you could start. Routes wait for The Wheel, a Bronze Age tech. The Rail Freight route also waits for Railroads, and the Warp Commerce route for Interstellar Trade. |
-| `trade route stop <route>` | Stop an active trade route. |
+| `trade route stop <route>` (or `trade route pause <route>`) | Pause an active trade route: it stays listed at no flow until you start it again. |
 | `blackmarket` (or `bm`) | Show the black market's status: its culture cost, the odds and the wait between runs. It opens in the Colonial Age. |
 | `blackmarket <resource>` | Make a smuggling run: spend culture for the same worth in the chosen resource. Five runs in six go through. The sixth time the smugglers vanish with the culture. It waits for the Mercantilism tech. |
 | `trade black [resource]` | Same as `blackmarket`. |
@@ -307,9 +307,9 @@ blackmarket gold
 
 A run costs the larger of 5K culture or a number of hours of your own culture income, up to 200 hours. After a run the smugglers lie low for 624 ticks (about 21 minutes). They deal in gold, iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux.
 
-The Trade, Army and Milestones panels leave the prompt working. `←` `↑` `↓` `→` move the pick (from road to road on Trade, from order to order on Army, along a road and between roads on Milestones), `Enter` runs the picked thing's command (its button shows it), `PgUp` and `PgDn` scroll when there is more than fits, and `Esc` closes the panel. A click picks, and a click on the button runs the command. With something typed in the prompt, the keys go to the prompt. Milestones has no commands.
+The Trade, Army and Milestones panels leave the prompt working. `←` `↑` `↓` `→` move the pick (from route to route on Trade, from order to order on Army, along a road and between roads on Milestones), `Enter` runs the picked thing's command (its button shows it), `PgUp` and `PgDn` scroll when there is more than fits, and `Esc` closes the panel. A click picks, and a click on the button runs the command. With something typed in the prompt, the keys go to the prompt. Milestones has no commands.
 
-A route whose imports include a resource that a civilization you are at war with or have embargoed specializes in earns nothing until the conflict ends. Harbors raise the income of every active route. See [Trade](trade.md).
+A route whose imports include a resource that a civilization you are at war with or have embargoed specializes in moves nothing until the conflict ends. A running route is a flow in your resource rates: its flow at the building count its listing asks is the listed amount over the listed ticks, and more of the building gives more, in proportion. When the stock of what a route exports runs short, the routes sharing it all slow to the same share. Harbors raise the income of every active route. See [Trade](trade.md).
 
 ---
 
