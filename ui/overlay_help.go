@@ -47,14 +47,14 @@ func helpProvider(learned []string, _ game.GameState, screenW int) string {
 	note(rowid.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open over the whole screen, and the prompt keeps working in most of them. The Wonders, Harbinger and Build Plan panels use letter keys, so press Esc before you type a command there."))
 	keys([2]string{"PgUp/PgDn", rowid.Line("ui.overlay_help.helpProvider.04", "Scroll a panel that is longer than the screen, like this one")},
 		[2]string{"Option+arrows", rowid.Line("ui.overlay_help.helpProvider.67", "No Page Up, Page Down, Home or End on your keyboard? Option+Up and Option+Down are PgUp and PgDn, and Option+Left and Option+Right are Home and End, in every panel. Alt does the same on other keyboards")},
-		[2]string{"Esc", rowid.Line("ui.overlay_help.helpProvider.06", "Close the panel (with no panel open: save and go to the main menu)")},
+		[2]string{"Esc", rowid.Line("ui.overlay_help.helpProvider.06", "Close the panel (with no panel open: pause the game)")},
 		[2]string{"Tab", rowid.Line("ui.overlay_help.helpProvider.08", "Finish the word you are typing (press again for the next match)")},
 		[2]string{"help", rowid.Line("ui.overlay_help.helpProvider.10", "Open this page again at any time")})
 	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.12", "\n[gold]═══ The dashboard ═══[-]\n"))
 	note(rowid.Line("ui.overlay_help.helpProvider.13", "With no panel open."))
 	keys([2]string{"PgUp/PgDn", rowid.Line("ui.overlay_help.helpProvider.15", "Scroll the Buildings list")},
 		[2]string{resourcePageKeyName, rowid.Line("ui.overlay_help.helpProvider.16", "The next page of the Resources box, when it has more than it can show")},
-		[2]string{"Esc", rowid.Line("ui.overlay_help.helpProvider.18", "Save and go to the main menu (with a panel open: close it)")})
+		[2]string{"Esc", rowid.Line("ui.overlay_help.helpProvider.18", "Pause the game, with Resume, Settings, Save and Main menu (with a panel open: close it)")})
 
 	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.19", "\n[gold]═══ The prompt ═══[-]\n"))
 	note(rowid.Line("ui.overlay_help.helpProvider.20", "As you type, the best completion shows in dim text after the cursor."))
