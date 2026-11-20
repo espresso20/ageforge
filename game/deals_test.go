@@ -726,3 +726,22 @@ func TestGifts_BoostLastsItsTicksLive(t *testing.T) {
 		t.Errorf("a 10-tick boost added %v wood, want %v", extra, want)
 	}
 }
+
+// TestGifts_BoostRefusedWhenNothingMade: a boost on a good the town no longer
+// makes is refused with nothing spent.
+func TestGifts_BoostRefusedWhenNothingMade(t *testing.T) {
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "steel", Amt: 100})
+	ge.mu.Lock()
+	made := ge.incomeOf("steel")
+	stone := ge.Resources.Get("stone")
+	ge.mu.Unlock()
+	if made != 0 {
+		t.Fatalf("test town makes steel (%v a tick); pick another good", made)
+	}
+	if err := ge.takeOffer("merchant_guild", 1); err == nil || !strings.Contains(err.Error(), "not being made") {
+		t.Fatalf("boost on a good not made: %v", err)
+	}
+	if ge.Resources.Get("stone") != stone {
+		t.Error("a refused boost was paid for")
+	}
+}

@@ -542,6 +542,8 @@ func (ge *GameEngine) dealProblem(fs *FactionState, d FactionDeal) (blocked, sho
 		return rowid.Line("game.deals.dealProblem.08", "they do not trust you enough for their know-how"), ""
 	case d.Kind == DealResearch && ge.Research.currentTech == "":
 		return rowid.Line("game.deals.dealProblem.06", "nothing is being researched"), ""
+	case d.Kind == DealBoost && !(ge.incomeOf(d.Res) > 0):
+		return ResourceName(d.Res) + rowid.Line("game.deals.dealProblem.09", " is not being made"), ""
 	case d.Kind == DealPeople && ge.workerCapLocked()-ge.Workers.TotalPop() < int(d.Amt):
 		return rowid.Line("game.deals.dealProblem.07", "there is no housing for the people"), ""
 	}
