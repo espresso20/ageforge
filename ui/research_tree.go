@@ -24,7 +24,7 @@ var (
 // (what is selected, how far the map is scrolled, which zoom). buildTree
 // lays the techs out on a virtual canvas, lanes across and ages down;
 // renderTree cuts the view out of it and adds the bars round it. The panel
-// (research_panel.go) keeps the view and paints the cells in theme colours.
+// (tree_panel.go) keeps the view and paints the cells in theme colours.
 //
 // Nothing below names a lane, an age or a tech: lanes, kinds, emblems,
 // prerequisites and what a tech opens all come from the ruleset, so a
@@ -1050,6 +1050,12 @@ func (m *treeModel) statusLine(state game.GameState, v treeView) string {
 // opensText is what a tech opens, in a few words: commands, buildings, a
 // wonder. "" when it opens nothing.
 func opensText(state game.GameState, def config.TechDef) string {
+	return strings.Join(techGates(state, def), ", ")
+}
+
+// techGates is what a tech opens, a phrase each: commands, buildings, a
+// wonder.
+func techGates(state game.GameState, def config.TechDef) []string {
 	set := state.Ruleset()
 	var out []string
 	for _, l := range set.FeaturesOpenedBy(def.Key) {
@@ -1074,7 +1080,7 @@ func opensText(state game.GameState, def config.TechDef) string {
 	if wonder != "" {
 		out = append(out, txtThe.String()+wonder+rowid.Line("ui.research_tree.opensText.04", " needs it"))
 	}
-	return strings.Join(out, ", ")
+	return out
 }
 
 // joinAnd joins names as a list: "A", "A and B", "A, B and C".

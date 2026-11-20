@@ -98,8 +98,13 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 		},
 		"techs": {
 			routeKey:   d.researchPanel.routeKey,
-			closeFirst: d.researchPanel.closeCard,
+			closeFirst: d.researchPanel.closeLane,
 			update:     d.researchPanel.update,
+		},
+		"tree": {
+			routeKey:   d.treePanel.routeKey,
+			closeFirst: d.treePanel.closeBack,
+			update:     d.treePanel.update,
 		},
 		"badges": {
 			routeKey:   d.badgePanel.routeKey,

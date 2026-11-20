@@ -188,10 +188,10 @@ See [People](workers-and-domains.md) for the domain table and the efficiency for
 
 | Command | Description |
 |---|---|
-| `research` | Open the Research panel: the tech tree as a map (see [Reading the Tech Tree](technologies.md#reading-the-tech-tree)). |
-| `research tree [close\|far]` | Open the tree zoomed in on big badges (`close`) or out on the whole tree (`far`). |
+| `research` | Open the Research board: the tech in work, the queue, the techs you can start, what comes up and the ten lanes (see [Technologies](technologies.md#how-research-works)). |
+| `research tree [close\|far]` | Open the tech tree as a map (see [Reading the Tech Tree](technologies.md#reading-the-tech-tree)), zoomed in on big badges (`close`) or out on the whole tree (`far`). |
 | `research card <tech>` | Open the tree on a tech's card: what it does, how long it takes and what it needs. It opens only on a tech you can already see. |
-| `techs` | Opens the same Research panel. |
+| `techs` | Opens the Research board. |
 | `research list` | List the techs you can research now, with the time each would take your scholars. A ★ marks the keystone its age's wonder needs. Under the list: the tech in progress with its bar, percent and time left, the queue in order, and your scholars. |
 | `research <tech>` | Start researching a tech. It costs no resources, only scholars' time. It needs its prerequisites and its age. |
 | `research cancel` | Cancel the current research. The work done on it is lost. |
@@ -204,7 +204,20 @@ research agriculture
 research iron_smelting
 ```
 
-The Research panel (`research`) is a map of the tech tree. Like the Map it leaves the prompt working and takes only the keys that print nothing:
+The Research board (`research`) leaves the prompt working and takes only the keys that print nothing. The letter keys count only as capitals, on an empty prompt, so the first letter of a command never goes missing:
+
+| Key | Action |
+|---|---|
+| `Up` / `Down` | Pick the previous or next tech |
+| `Enter` | Start the picked tech; while another is in work, add it to the queue |
+| `Q` | Queue the picked tech, with the techs it still needs |
+| `L` | Show only the picked tech's lane; `Esc` shows every lane again |
+| `T` | Open the whole tech tree on the picked tech |
+| `Esc` | Close the lane filter, then the board |
+
+The mouse works on every row and button: a click picks a tech, a second click starts or queues it, the Research and Queue buttons do the same, and a click on a lane in the list shows that lane alone.
+
+The tech tree (`research tree`) is a map. It takes these keys:
 
 | Key | Action |
 |---|---|
@@ -213,7 +226,7 @@ The Research panel (`research`) is a map of the tech tree. Like the Map it leave
 | `PgUp` / `PgDn` (`Option+↑` / `Option+↓`) | Zoom out to a tech a line, and back in |
 | `Home` | Back to your current age |
 | `Enter` | Open the selected tech's card; on the card, do what its last line says (start the tech, or add it to the build plan) |
-| `Esc` | Close the card, then the panel |
+| `Esc` | Close the card, then go back to the board |
 
 With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`: it adds a tech with what it still needs first. The game never chooses what you research next, and after the first prestige [Plan Template](prestige.md#plan-template) plans the techs again on later runs. See [Technologies](technologies.md) and [Scholars and Research](knowledge.md).
 

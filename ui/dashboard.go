@@ -131,6 +131,8 @@ type Dashboard struct {
 	// researchPanel is the Research panel, the tech tree as a map
 	// (research_panel.go).
 	researchPanel *researchPanel
+	// treePanel is the whole tech tree as a map, one key from the board.
+	treePanel *treePanel
 	// badgePanel is the Ranks screen (ranks_panel.go).
 	badgePanel *ranksPanel
 	// expPanel is the Expeditions panel: the Ready Room and the Expedition
@@ -179,6 +181,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		mapViews:      mv,
 		mapPanel:      newMapPanel(mv),
 		researchPanel: newResearchPanel(),
+		treePanel:     newTreePanel(),
 		badgePanel:    newRanksPanel(),
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
@@ -201,10 +204,16 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// The Research panel: the tech tree as a map. Like the Map it leaves
 	// the keyboard with the command bar.
 	d.researchPanel.engine = d.engine
-	d.researchPanel.tier = func() mapmodel.GlyphTier { return d.mapSettings().Tier }
 	d.researchPanel.prompt = func() string { return d.inputField.GetText() }
 	d.researchPanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("techs", rowid.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
+	d.researchPanel.toTree = func(key string) { d.switchOverlay("tree", func() { d.treePanel.show(key) }) }
+	d.treePanel.engine = d.engine
+	d.treePanel.tier = func() mapmodel.GlyphTier { return d.mapSettings().Tier }
+	d.treePanel.prompt = d.researchPanel.prompt
+	d.treePanel.toPrompt = d.handToPrompt
+	d.treePanel.back = func() { d.switchOverlay("techs", nil) }
+	d.overlayMgr.RegisterWidget("tree", rowid.E("ui.dashboard.NewDashboard.tree", "Research tree"), d.treePanel.open, d.treePanel.update)
 	// The Ranks screen: the account's badges. It leaves the keyboard with
 	// the command bar too.
 	d.badgePanel.prompt = d.researchPanel.prompt
@@ -609,6 +618,18 @@ func (d *Dashboard) build() {
 		}
 		return event
 	})
+}
+
+// switchOverlay swaps the open bar panel for another, which keeps the
+// keyboard with the command bar as it does when a command opens it. prep
+// readies the panel first.
+func (d *Dashboard) switchOverlay(name string, prep func()) {
+	if prep != nil {
+		prep()
+	}
+	d.overlayMgr.Show(name, d.engine.GetState())
+	d.updateSidebar("techs")
+	d.overlayMgr.FocusOn(d.inputField)
 }
 
 func (d *Dashboard) updateSidebar(activeOverlay string) {
@@ -1485,8 +1506,8 @@ func (d *Dashboard) runLine(text string) {
 		d.mapPanel.world = result.MapWorld
 		d.mapOpen.Store(true)
 	}
-	if result.OverlayName == "techs" {
-		d.researchPanel.request(result.ResearchZoom, result.ResearchCard)
+	if result.OverlayName == "tree" {
+		d.treePanel.request(result.ResearchZoom, result.ResearchCard)
 	}
 	if result.OverlayName == "badges" {
 		d.badgePanel.request(result.Badges)

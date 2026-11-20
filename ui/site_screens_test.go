@@ -814,7 +814,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.d.closeCatastropheModal()
 
 	s.onTree = func() {
-		for _, p := range [][2]string{{"research", "research tree close"}, {"research-card", "research card civil_engineering"}, {"research-far", "research tree far"}} {
+		for _, p := range [][2]string{{"research-board", "research"}, {"research", "research tree close"}, {"research-card", "research card civil_engineering"}, {"research-far", "research tree far"}} {
 			var queued []string
 			if p[0] == "research-far" {
 				// The zoomed-out picture shows a queue: Fortification, a
