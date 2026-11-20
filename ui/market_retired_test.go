@@ -33,7 +33,7 @@ func TestMarketSwapCommandsRetired(t *testing.T) {
 			}
 		}
 	}
-	help := plainText(helpProvider(game.GameState{}, 0))
+	help := plainText(helpProvider(nil, game.GameState{}, 0))
 	for _, gone := range []string{"trade <give>", "trade list", "plan trade", "market rate"} {
 		if strings.Contains(help, gone) {
 			t.Errorf("help still mentions %q", gone)

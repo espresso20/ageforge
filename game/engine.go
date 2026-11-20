@@ -492,8 +492,8 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	// Give starting resources — enough for first hut + a little food
 	ge.Resources.Add("food", 25)
 	ge.Resources.Add("wood", 50)
-	// Startup flavor — the step-by-step onboarding now lives in the Buildings panel
-	// (main-screen polish part 1), so the log stays clean for live events.
+	// Startup flavor: the lessons show on the band above the Command box, so the
+	// log stays clean for live events.
 	ge.addLog(OfficeGame, "event", rowid.Line("game.engine.NewGameEngineWith.01", "Welcome to AgeForge. You have nothing but your hands."))
 	// Subscribe to age advances and epoch events to file them as marks.
 	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().

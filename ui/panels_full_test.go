@@ -44,6 +44,12 @@ func poisonedStage(t *testing.T) (*Dashboard, *nativePages) {
 		}
 	})
 	pages.AddPage("poison", poison, true, true)
+	// No lesson shows, so no band takes a row from a panel (the band's own
+	// test is TestPanelLessonBandRow).
+	d.lessons.learned = map[string]bool{}
+	for _, l := range lessonTable {
+		d.lessons.learned[l.key] = true
+	}
 	return d, pages
 }
 

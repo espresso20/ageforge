@@ -136,6 +136,13 @@ type Dashboard struct {
 	// panels is what the account has found and opened (panels_found.go).
 	panels panelView
 
+	// The lessons: the band above the Command box, what was learned and put
+	// off, and the counts some lessons read (lessons.go).
+	lessons                   lessonBook
+	bandBox                   *fitView
+	lessonCard, lessonPanel   string
+	lessonTyped, lessonListed int
+
 	// harbPanel is the Harbinger panel's UI state (feedback line, Invite
 	// confirmation). Owned by the UI goroutine.
 	harbPanel harbingerPanel
@@ -288,8 +295,11 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.logsPanel.focus = func() { d.overlayMgr.FocusOn(d.logsPanel) }
 	d.overlayMgr.RegisterWidget("logs", txtLogsTitle, d.logsPanel.open, d.logsPanel.update)
 	d.epochHall = &epochHall{
-		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
-		height: func() int { om := d.overlayMgr; return om.screenH - barRows(om.screenW, om.screenH) },
+		tier: func() mapmodel.GlyphTier { return d.mapSettings().Tier },
+		height: func() int {
+			om := d.overlayMgr
+			return om.screenH - barRows(om.screenW, om.screenH) - d.bandRows(om.screenH)
+		},
 		motion: func() bool { return d.mapSettings().Motion },
 	}
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
@@ -334,7 +344,9 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.historyPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("history", txtHistoryTitle, d.historyPanel.open, d.historyPanel.update)
 	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
-	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
+	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), func(st game.GameState, w int) string {
+		return helpProvider(d.lessonKeys(), st, w)
+	})
 
 	// The Map panel: the map full screen (map, and its aliases citymap and
 	// worldmap). Its settings travel with the account.
@@ -366,6 +378,8 @@ func (d *Dashboard) build() {
 
 	// Sidebar — command panel hints, laid out for the room it has: one
 	// column when the names fit that way, two when the screen is short.
+	d.bandBox = newFitView(func(w, _ int) string { return d.bandText(w) })
+	d.bandBox.body.OnRegion = func(name string, _ int) { d.bandClick(name) }
 	d.nextBox = newFitView(func(w, h int) string { return nextBoxText(d.next, w, h, d.richLayout()) })
 	// A click on a panel's name opens it, as typing the name does.
 	d.nextBox.body.OnRegion = func(name string, _ int) {
@@ -377,6 +391,7 @@ func (d *Dashboard) build() {
 				d.showMe(d.next.then[i].card, d.next.then[i].panel)
 			}
 		default:
+			d.lessonListed++
 			d.runLine(name)
 		}
 	}
@@ -616,13 +631,21 @@ func (d *Dashboard) build() {
 	d.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(d.headerTV, headerSmallRows, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
+		AddItem(d.bandBox, 1, 0, false).
 		AddItem(d.inputField, barSmallRows, 0, true)
 	// The header is as tall as the terminal calls for, chosen before the
 	// rows are shared out, so a resize shows the right one at once.
+	d.pages.inset = func(name string) int {
+		if d.overlayMgr != nil && name == d.overlayMgr.ActiveName() {
+			return d.bandRows(d.overlayMgr.screenH)
+		}
+		return 0
+	}
 	d.root.SetDrawFunc(func(_, _, w, h int) {
 		d.root.ResizeItem(d.headerTV, headerHeight(w, h), 0)
 		n := barRows(w, h)
 		d.root.ResizeItem(d.inputField, n, 0)
+		d.root.ResizeItem(d.bandBox, d.bandRows(h), 0)
 		d.inputField.SetBig(n == barBigRows)
 	})
 
@@ -875,6 +898,7 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 	d.notePanels(panelsReached(state), false)
+	d.stepLessons(state)
 	d.next = computeNext(state, d.panels)
 	d.economyTab.buildBox.nextKey = d.next.card
 	d.nextBox.changed()
@@ -1426,6 +1450,7 @@ func (d *Dashboard) submitInput() {
 		return
 	}
 	d.remember(text)
+	d.lessonTyped++
 	d.runLine(text)
 }
 

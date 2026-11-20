@@ -48,6 +48,9 @@ type accountSettings struct {
 	// opened (panels.go in ui): a found panel is on the list for good.
 	Found  []string `json:"found,omitempty"`
 	Opened []string `json:"opened,omitempty"`
+	// Lessons is the keys of the lessons the account has learned (lessons.go
+	// in ui): a learned lesson is not shown again.
+	Lessons []string `json:"lessons,omitempty"`
 }
 
 // settingsLocked returns the account's settings, read from its slot the
@@ -105,6 +108,17 @@ func (a *Account) editSettings(change func(*accountSettings)) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	change(a.settingsLocked())
+	return a.saveSettingsLocked()
+}
+
+// editSettingsIf is editSettings, writing the file only when change reports
+// that it changed something.
+func (a *Account) editSettingsIf(change func(*accountSettings) bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if !change(a.settingsLocked()) {
+		return nil
+	}
 	return a.saveSettingsLocked()
 }
 
@@ -169,4 +183,23 @@ func (a *Account) NotePanels(found, opened []string) error {
 		return nil
 	}
 	return a.editSettings(func(s *accountSettings) { s.Found, s.Opened = grow(s.Found, f), grow(s.Opened, o) })
+}
+
+// LessonsLearned is the keys of the lessons the account has learned.
+func (a *Account) LessonsLearned() []string {
+	return slices.Clone(a.readSettings().Lessons)
+}
+
+// LearnLessons adds keys to the learned lessons. It writes the settings file
+// only when the list grows.
+func (a *Account) LearnLessons(keys ...string) error {
+	return a.editSettingsIf(func(s *accountSettings) bool {
+		n := len(s.Lessons)
+		for _, k := range keys {
+			if !slices.Contains(s.Lessons, k) {
+				s.Lessons = append(s.Lessons, k)
+			}
+		}
+		return len(s.Lessons) != n
+	})
 }

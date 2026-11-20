@@ -144,7 +144,7 @@ func TestCatastropheCommandReopensOrReports(t *testing.T) {
 	if got := NewAutoCompleter(eng)("catastrophe i"); len(got) != 0 {
 		t.Errorf("autocomplete still offers catastrophe subcommands: %v", got)
 	}
-	if strings.Contains(helpProvider(eng.GetState(), 120), "catastrophe invoke") {
+	if strings.Contains(helpProvider(nil, eng.GetState(), 120), "catastrophe invoke") {
 		t.Error("help still lists catastrophe invoke")
 	}
 }
