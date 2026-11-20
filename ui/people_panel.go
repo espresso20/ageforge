@@ -21,7 +21,7 @@ type peoplePanel struct {
 	// host paints the panel's kit cells and takes the mouse; the keys stay
 	// with barPanel.
 	grid  *xgrid // what the panel last laid out, and where its rows are
-	over  *peopleOverview
+	scene *pScene
 	state game.GameState
 	view  peopleView
 	w, h  int // the last size drawn at
@@ -89,7 +89,7 @@ func (p *peoplePanel) Layout(r image.Rectangle) {
 	if p.hist != nil {
 		hist = p.hist()
 	}
-	p.grid, p.over = renderPeople(p.state, p.view, hist, p.w, p.h)
+	p.grid, p.scene = renderPeople(p.state, p.view, hist, p.w, p.h)
 	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
 		p.grid.fold()
 	}
@@ -98,13 +98,17 @@ func (p *peoplePanel) Layout(r image.Rectangle) {
 // Paint puts the panel on the kit's painter in theme colors.
 func (p *peoplePanel) Paint(p2 *kit.Painter) {
 	r := p.Bounds()
-	if p.over == nil || p.grid == nil || r.Empty() {
+	if p.scene == nil || p.grid == nil || r.Empty() {
 		p.paintGrid(p2, p.grid, r)
 		return
 	}
 	pal := newExpPalette()
 	paintExpeditionKit(p2, p.grid, r.Min, pal)
-	p.over.s.paint(p2, r.Min, pictureCell == nil || p.settings != nil && p.settings().Tier == mapmodel.TierASCII)
+	plain := pictureCell == nil || p.settings != nil && p.settings().Tier == mapmodel.TierASCII
+	p.scene.paint(p2, r.Min, plain)
+	if p.view.tab != tabOverview && !plain {
+		p.scene.lift(p2, p.grid, r.Min, pal)
+	}
 	p.buttons.paint(p2, p.grid, r.Min, pal)
 }
 
@@ -197,11 +201,27 @@ func (p *peoplePanel) pick(row int) {
 	p.view.row = row
 }
 
-// stepKey takes + and - on the Work tab with an empty prompt: they put a
+// stepKey takes A (all areas auto), B (buildings), G (growth on or off), and
+// + and - on the Work tab with an empty prompt: they put a
 // worker in the picked building and take one out, as its chips do.
 func (p *peoplePanel) stepKey(r rune, prompt string) bool {
 	if prompt != "" || p.view.tab != tabWork || p.buttons.run == nil {
 		return false
+	}
+	switch r {
+	case 'a', 'A':
+		p.buttons.run(command(verbRoster, "auto"))
+		return true
+	case 'b', 'B':
+		p.buttons.run("buildings")
+		return true
+	case 'g', 'G':
+		to := "off"
+		if game.RecruitStatus(p.state) == game.RecruitOff {
+			to = "on"
+		}
+		p.buttons.run(command("workers", "auto-recruit", to))
+		return true
 	}
 	b, ok := pickedBuilding(p.state, p.view)
 	if !ok {

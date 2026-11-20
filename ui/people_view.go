@@ -46,6 +46,9 @@ type peopleView struct {
 var peopleKeys = []keyHelp{
 	{"Left/Right", rowid.E("ui.people_view.peopleKeys.01", "Switch between Overview, Work, Army and Scholars")},
 	{"Up/Down", rowid.E("ui.people_view.peopleKeys.02", "Pick a card, a work area or a building")},
+	{"A", rowid.E("ui.people_view.peopleKeys.05", "Work: put every area on auto")},
+	{"B", rowid.E("ui.people_view.peopleKeys.06", "Work: open the buildings")},
+	{"G", rowid.E("ui.people_view.peopleKeys.07", "Work: turn automatic growth on or off")},
 	{"Esc", rowid.E("ui.people_view.peopleKeys.04", "Close the panel")},
 }
 
@@ -99,11 +102,11 @@ func knowledgeBuildings(st game.GameState) []peopleBuilding {
 
 // renderPeople draws the panel w by h. The Overview comes back with its
 // picture; the other tabs are cells alone.
-func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h int) (*xgrid, *peopleOverview) {
+func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h int) (*xgrid, *pScene) {
 	g := newXGrid(w, h)
 	g.box(0, 0, w, h, xBorder, rowid.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, xTitle, false)
 	g.closeButton(w)
-	if v.tab == tabOverview && (w < peopleMinW || h < peopleMinH) || w < 60 || h < 14 {
+	if w < peopleMinW || h < peopleMinH {
 		msg := fitText(rowid.Line("ui.people_view.renderPeople.02", "The window is too small for the People panel. Esc closes it."), w-4)
 		g.put((w-runeLen(msg))/2, h/2, msg, xBad)
 		return g, nil
@@ -113,9 +116,9 @@ func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h i
 	peopleHeader(g, st, v)
 	if v.tab == tabOverview {
 		expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, [][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
-		return g, newOverview(g, st, hist, v.row, 3)
+		return g, newOverview(g, st, hist, v.row, 3).s
 	}
-	c := peopleBody{g: g, st: st, v: v, x: 1, y: 2, w: w - 2, h: h - 4}
+	c := peopleBody{g: g, st: st, v: v, hist: hist, s: newPScene(w, 2, h-2), x: 1, y: 2, w: w - 2, h: h - 4}
 	switch v.tab {
 	case tabWork:
 		c.work()
@@ -124,7 +127,7 @@ func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h i
 	case tabScholars:
 		c.scholars()
 	}
-	return g, nil
+	return g, c.s
 }
 
 // peopleHeader is the tab row and the headcount.
@@ -160,6 +163,8 @@ type peopleBody struct {
 	g          *xgrid
 	st         game.GameState
 	v          peopleView
+	hist       *game.RunHistory
+	s          *pScene // the tab's picture
 	x, y, w, h int
 }
 

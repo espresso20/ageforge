@@ -77,7 +77,7 @@ func TestReserve_PeoplePanel(t *testing.T) {
 		if c.by == game.HeldFood && !strings.Contains(over, "feeds 4 more") {
 			t.Errorf("the Overview does not say how many more the food feeds:\n%s", over)
 		}
-		work := renderPeopleGrid(st, peopleView{tab: tabWork}, 100, 30).String()
+		work := renderPeopleGrid(st, peopleView{tab: tabWork}, 157, 43).String()
 		if !strings.Contains(work, c.recruit) || strings.Contains(work, "every worker slot is filled") {
 			t.Errorf("held by %q: the Work tab's auto-recruit line does not say %q, or still blames the slots:\n%s", c.by, c.recruit, work)
 		}

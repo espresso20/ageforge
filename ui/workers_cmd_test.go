@@ -169,7 +169,7 @@ func TestWorkersHelpAndPanel(t *testing.T) {
 	if res := HandleCommand("roster faith 50", ge); res.Type == "error" {
 		t.Fatal(res.Message)
 	}
-	panel := renderPeopleGrid(ge.GetState(), peopleView{tab: tabWork}, 100, 30).String()
+	panel := renderPeopleGrid(ge.GetState(), peopleView{tab: tabWork}, 157, 43).String()
 	if strings.Contains(panel, "workers share") || strings.Contains(panel, "Shares") {
 		t.Errorf("the People panel still uses the roster's old name:\n%s", panel)
 	}
@@ -179,11 +179,11 @@ func TestWorkersHelpAndPanel(t *testing.T) {
 			faith.row = i
 		}
 	}
-	panel = renderPeopleGrid(ge.GetState(), faith, 100, 30).String()
+	panel = renderPeopleGrid(ge.GetState(), faith, 157, 43).String()
 	wantAll(t, "the People panel's Work tab", panel, "Work areas", "Auto-recruit", "Faith", "set", "auto", "Share")
 	// A fresh game shows the tab too, and says there is nothing to staff yet.
 	fresh := game.NewGameEngine()
-	panel = renderPeopleGrid(fresh.GetState(), peopleView{tab: tabWork}, 100, 30).String()
+	panel = renderPeopleGrid(fresh.GetState(), peopleView{tab: tabWork}, 157, 43).String()
 	if !strings.Contains(panel, "No worker buildings yet") {
 		t.Errorf("a fresh game's Work tab:\n%s", panel)
 	}

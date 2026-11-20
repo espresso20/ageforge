@@ -44,7 +44,7 @@ func (s *peopleStage) rect() image.Rectangle {
 	if s.p.view.tab == tabOverview {
 		return image.Rect(0, 0, peopleBigW, peopleBigH)
 	}
-	return image.Rect(0, 0, 100, 30)
+	return image.Rect(0, 0, 157, 43)
 }
 
 // key is the button that carries cmd.

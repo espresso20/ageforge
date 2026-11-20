@@ -54,7 +54,7 @@ func peopleText(st game.GameState, v peopleView, w, h int) string {
 	g, o := renderPeople(st, v, nil, w, h)
 	s := g.String()
 	if o != nil {
-		for _, wd := range o.s.words {
+		for _, wd := range o.words {
 			s += "\n" + wd.s
 		}
 	}

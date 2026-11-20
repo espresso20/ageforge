@@ -36,7 +36,7 @@ func TestArmyRankShown(t *testing.T) {
 
 	st := peopleTown(t)
 	st.Military.Experience, st.Military.Rank = 12.5, 1
-	for _, size := range [][2]int{{80, 24}, {100, 30}} {
+	for _, size := range [][2]int{{150, 38}, {157, 43}} {
 		army := renderPeopleGrid(st, peopleView{tab: tabArmy}, size[0], size[1]).String()
 		wantAll(t, fmt.Sprintf("the Army tab at %dx%d", size[0], size[1]), army, "Rank Seasoned", "12.5/30", "odds +2 points, hauls +5%")
 	}

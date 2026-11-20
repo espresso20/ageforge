@@ -140,14 +140,11 @@ func TestPeoplePanelOpensAndSwitchesTabs(t *testing.T) {
 // Every tab draws at 80x24 and 100x30 with its frame whole: no row spills
 // past the border, the tab row and the key bar are there, and the panel
 // names the age's words.
-func TestPeopleTabsFitAt80x24And100x30(t *testing.T) {
+func TestPeopleTabsFitAtEverySize(t *testing.T) {
 	st := peopleTown(t)
-	for _, size := range [][2]int{{80, 24}, {100, 30}, {80, 21}, {157, 43}, {230, 54}, {279, 71}} {
+	for _, size := range [][2]int{{150, 38}, {157, 43}, {230, 54}, {279, 71}} {
 		w, h := size[0], size[1]
 		for tab, tabName := range peopleTabs {
-			if tab == tabOverview != (w >= peopleMinW) {
-				continue // the Overview from its smallest size, the other tabs below it
-			}
 			name := tabName.String()
 			for row := 0; row < 3; row++ {
 				v := peopleView{tab: tab, row: row}
@@ -196,7 +193,7 @@ func TestPeopleOverviewSizes(t *testing.T) {
 		if o == nil {
 			t.Fatalf("%dx%d: no Overview", size[0], size[1])
 		}
-		for _, wd := range o.s.words {
+		for _, wd := range o.words {
 			if wd.x < 1 || wd.x+runeLen(wd.s) > size[0]-1 || wd.y < 3 || wd.y >= size[1]-2 {
 				t.Errorf("%dx%d: %q at %d,%d is outside the picture", size[0], size[1], wd.s, wd.x, wd.y)
 			}
@@ -211,9 +208,9 @@ func TestPeopleOverviewSizes(t *testing.T) {
 // tab lists the desks and the research.
 func TestPeopleArmyAndScholarsTabs(t *testing.T) {
 	st := peopleTown(t)
-	army := renderPeopleGrid(st, peopleView{tab: tabArmy}, 100, 30).String()
+	army := renderPeopleGrid(st, peopleView{tab: tabArmy}, 157, 43).String()
 	wantAll(t, "the Army tab", army, "Military buildings", "Away", "Trade Trek to the Cedar Pass", "20 Spearmen", "Defense")
-	scholars := renderPeopleGrid(st, peopleView{tab: tabScholars}, 100, 30).String()
+	scholars := renderPeopleGrid(st, peopleView{tab: tabScholars}, 157, 43).String()
 	wantAll(t, "the Scholars tab", scholars, "Desks", "Research", "Studying", "scribes", "How to speed research")
 }
 
@@ -244,13 +241,13 @@ func TestPeopleArmyTabShowsPosts(t *testing.T) {
 		b.Count = map[string]int{"war_camp": 3, "barracks": 2}[key]
 		st.Buildings[key] = b
 	}
-	for _, size := range [][2]int{{80, 24}, {100, 30}} {
+	for _, size := range [][2]int{{150, 38}, {157, 43}} {
 		army := renderPeopleGrid(st, peopleView{tab: tabArmy}, size[0], size[1]).String()
 		wantAll(t, fmt.Sprintf("the Army tab at %dx%d", size[0], size[1]), army, "27/27 posted", "32/32 posted")
 	}
 	// A building short of its posts says so in the same words.
 	st.Military.Posts[0].Posted = 20
-	if army := renderPeopleGrid(st, peopleView{tab: tabArmy}, 100, 30).String(); !strings.Contains(army, "20/27 posted") {
+	if army := renderPeopleGrid(st, peopleView{tab: tabArmy}, 157, 43).String(); !strings.Contains(army, "20/27 posted") {
 		t.Errorf("a short post is not shown:\n%s", army)
 	}
 	// The box reads the town's soldiers.

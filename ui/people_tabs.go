@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -63,14 +64,24 @@ func recruitText(st game.GameState) string {
 	return rowid.Line("ui.people_tabs.recruitText.07", "Auto-recruit is on: the town is growing toward its homes.")
 }
 
+// pane is a tile on the tab's picture with its title in the top row.
+func (c peopleBody) pane(x, y, w, h int, title string, col color.RGBA) {
+	c.s.pane(x, y, w, h, col)
+	if title != "" {
+		c.g.put(x+2, y, " "+title+" ", xTitle)
+	}
+}
+
 func (c peopleBody) work() {
 	g, st := c.g, c.st
 	rows := game.ShareRows(st)
+	c.workBand(rows)
+	c.y, c.h = c.y+workBandH(c.g.h)+1, c.h-workBandH(c.g.h)-1
 	lw := c.w * 11 / 20
 	rw := c.w - lw
-	g.box(c.x, c.y, lw, c.h, xBorder, rowid.Line("ui.people_tabs.work.01", "Work areas"), xTitle, false)
-	g.box(c.x+lw, c.y, rw, c.h, xBorder, "", xTitle, false)
+	c.pane(c.x+lw, c.y, rw, c.h, "", c.s.pal.Work)
 	if len(rows) == 0 {
+		c.pane(c.x, c.y, lw, c.h, rowid.Line("ui.people_tabs.work.01", "Work areas"), c.s.pal.Work)
 		g.putFit(c.x+2, c.y+1, lw-4, rowid.Line("ui.people_tabs.work.02", "No worker buildings yet: every area is on auto."), xFaint)
 		c.footer([][2]string{escClose()}, rowid.Line("ui.people_tabs.work.03", "roster <area> <%|auto>"))
 		return
@@ -97,6 +108,12 @@ func (c peopleBody) work() {
 			break
 		}
 	}
+	// The table's tile ends with its last row.
+	shown := 0
+	for i := first; i < len(rows) && shown+1+len(notes[i]) <= avail; i++ {
+		shown += 1 + len(notes[i])
+	}
+	c.pane(c.x, c.y, lw, shown+3, rowid.Line("ui.people_tabs.work.01", "Work areas"), c.s.pal.Work)
 	y := c.y + 2
 	for i := first; i < len(rows) && y+1+len(notes[i]) <= c.y+2+avail; i++ {
 		r := rows[i]
@@ -195,8 +212,8 @@ func (c peopleBody) army() {
 	topH := max(8, c.h*3/5)
 	lw := c.w * 11 / 20
 	rw := c.w - lw
-	g.box(c.x, c.y, lw, topH, xBorder, rowid.Line("ui.people_tabs.army.01", "Military buildings"), xTitle, false)
-	g.box(c.x+lw, c.y, rw, topH, xBorder, rowid.Sprintf("ui.people_tabs.army.02", "Away · %s", num(soldiers.out)), xTitle, false)
+	c.pane(c.x, c.y, lw, topH, rowid.Line("ui.people_tabs.army.01", "Military buildings"), c.s.pal.Soldiers)
+	c.pane(c.x+lw, c.y, rw, topH, rowid.Sprintf("ui.people_tabs.army.02", "Away · %s", num(soldiers.out)), c.s.pal.Soldiers)
 
 	// The buildings with their posts, then the army and the defense under them.
 	blds := militaryBuildings(st)
@@ -254,7 +271,7 @@ func (c peopleBody) army() {
 	// The soldiers' news.
 	by := c.y + topH
 	if bh := c.h - topH; bh >= 4 {
-		g.box(c.x, by, c.w, bh, xBorder, rowid.Line("ui.people_tabs.army.14", "Fallen and filled"), xTitle, false)
+		c.pane(c.x, by, c.w, bh, rowid.Line("ui.people_tabs.army.14", "Fallen and filled"), c.s.pal.Soldiers)
 		drawLog(g, 3, by+1, c.w-4, bh-2, recentLog(st, armyEvent, bh-2), rowid.Line("ui.people_tabs.army.15", "No news from the army."))
 	}
 	c.footer([][2]string{{"↑↓", rowid.Line("ui.people_tabs.army.17", "pick a building")}, escClose()}, "army")
@@ -269,8 +286,8 @@ func (c peopleBody) scholars() {
 	topH := max(8, c.h*3/5)
 	lw := c.w * 11 / 20
 	rw := c.w - lw
-	g.box(c.x, c.y, lw, topH, xBorder, rowid.Line("ui.people_tabs.scholars.01", "Desks"), xTitle, false)
-	g.box(c.x+lw, c.y, rw, topH, xBorder, rowid.Line("ui.people_tabs.scholars.02", "Research"), xTitle, false)
+	c.pane(c.x, c.y, lw, topH, rowid.Line("ui.people_tabs.scholars.01", "Desks"), c.s.pal.Scholars)
+	c.pane(c.x+lw, c.y, rw, topH, rowid.Line("ui.people_tabs.scholars.02", "Research"), c.s.pal.Scholars)
 
 	blds := knowledgeBuildings(st)
 	per := max(0, (topH-2-1)/2)
@@ -344,7 +361,7 @@ func (c peopleBody) scholars() {
 
 	by := c.y + topH
 	if bh := c.h - topH; bh >= 4 {
-		g.box(c.x, by, c.w, bh, xBorder, rowid.Line("ui.people_tabs.scholars.16", "How to speed research"), xTitle, false)
+		c.pane(c.x, by, c.w, bh, rowid.Line("ui.people_tabs.scholars.16", "How to speed research"), c.s.pal.Scholars)
 		tips := []string{
 			rowid.Line("ui.people_tabs.scholars.17", "Build knowledge buildings: each comes with its ") + strings.ToLower(sch.name) + ".",
 			rowid.Line("ui.people_tabs.scholars.18", "Research techs that make your ") + strings.ToLower(sch.name) + rowid.Line("ui.people_tabs.scholars.19", " faster."),

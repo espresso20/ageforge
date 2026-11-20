@@ -133,3 +133,21 @@ func (s *pScene) frame(c, r, w, h int, col color.RGBA) {
 	s.cv.Rect(x, y, 2, ph, col)
 	s.cv.Rect(x+pw-2, y, 2, ph, col)
 }
+
+// lift writes the grid's text over the picture: a tab that draws its words on
+// the cell grid keeps them above the shapes the scene put under them.
+func (s *pScene) lift(p2 *kit.Painter, g *xgrid, org image.Point, pal *expPalette) {
+	for y := s.y0; y < s.end; y++ {
+		for x := 1; x < s.w-1; x++ {
+			if c := g.c[y*g.w+x]; c.r != ' ' && c.r != 0 {
+				p2.Label(org.X+x, org.Y+y, kit.Escape(string(c.r)), pal.style(c))
+			}
+		}
+	}
+}
+
+// pane is a tile of the scene with a thin line along its top, at cells.
+func (s *pScene) pane(c, r, w, h int, col color.RGBA) {
+	s.rect(c, r, w, h, s.pal.Tile)
+	s.cv.Rect(s.px(c), s.py(r), w*s.cw, 2, col)
+}
