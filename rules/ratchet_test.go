@@ -60,6 +60,8 @@ var pureConfig = map[string]bool{
 	"GatePillar": true, "GatePillars": true, "PillarName": true,
 	"YearBetween": true, "YearLabel": true,
 	"IsResourceEnded": true, "AlwaysAvailableResources": true,
+	// The rank a domain's badge points reach: a formula on its argument.
+	"RankFor": true,
 }
 
 const (

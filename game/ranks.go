@@ -19,7 +19,7 @@ func (a *Account) domainPoints(book *badgeBook) map[string]int {
 	if c := &a.ranks; c.ok && c.rev == a.badgeRev && c.book == book {
 		return c.points
 	}
-	pts := make(map[string]int, len(config.WorkerDomains()))
+	pts := make(map[string]int)
 	for key := range a.Badges {
 		if def := book.def(key); def != nil {
 			pts[def.Domain()] += def.Points()
