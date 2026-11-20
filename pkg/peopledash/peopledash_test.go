@@ -50,21 +50,21 @@ func TestNumWidth(t *testing.T) {
 }
 
 func TestTrendNeedsTwoSamples(t *testing.T) {
-	c := New(60, 30)
-	c.Trend(0, 0, 60, 30, []float64{1}, 0, 2, Work, Tile)
+	c := New(60, 30, Dark)
+	c.Trend(0, 0, 60, 30, []float64{1}, 0, 2, Dark.Work, Dark.Tile)
 	for _, p := range c.Img.Pix {
 		if p != 0 {
 			t.Fatal("a single sample drew something")
 		}
 	}
-	c.Trend(0, 0, 60, 30, []float64{1, 2, 1.5}, 0, 2, Work, Tile)
+	c.Trend(0, 0, 60, 30, []float64{1, 2, 1.5}, 0, 2, Dark.Work, Dark.Tile)
 	if c.Img.Pix[0] == 0 && c.Img.Pix[len(c.Img.Pix)-1] == 0 {
 		t.Fatal("two or more samples drew nothing")
 	}
 }
 
 func TestMoraleZones(t *testing.T) {
-	if MoraleZone(.39) != Red || MoraleZone(.45) != Amber || MoraleZone(.6) != Green {
+	if Dark.MoraleZone(.39) != Dark.Red || Dark.MoraleZone(.45) != Dark.Amber || Dark.MoraleZone(.6) != Dark.Green {
 		t.Error("zone edges moved")
 	}
 }

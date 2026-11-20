@@ -15,25 +15,20 @@ func Hex(v uint32) color.RGBA {
 	return color.RGBA{R: uint8(v >> 16), G: uint8(v >> 8), B: uint8(v), A: 255}
 }
 
-// The palette: the ground and tile of the panel, one colour per group, and the
-// morale zones.
-var (
-	Ground   = Hex(0x080b12)
-	Tile     = Hex(0x18223a)
-	Rule     = Hex(0x2c3a5c)
-	Ink      = Hex(0x080b12)
-	Text     = Hex(0xf2f0e8)
-	Dim      = Hex(0x8c96ae)
-	Work     = Hex(0xe8b030)
-	Waiting  = Hex(0xf0e0b8)
-	Soldiers = Hex(0xc8523e)
-	Scholars = Hex(0x30c0b4)
-	Homes    = Hex(0x8fa8d8)
-	Green    = Hex(0x3fc06c)
-	Amber    = Hex(0xf0a020)
-	Alarm    = Hex(0xff4636)
-	Red      = Hex(0xd23a2c)
-)
+// Palette is the colours of the panel: the ground and tile it sits on, the
+// ink, one colour per group and the morale zones.
+type Palette struct {
+	Ground, Tile, Rule, Ink, Text, Dim       color.RGBA
+	Work, Waiting, Soldiers, Scholars, Homes color.RGBA
+	Green, Amber, Alarm, Red                 color.RGBA
+}
+
+// Dark is the palette on a dark ground.
+var Dark = Palette{
+	Ground: Hex(0x080b12), Tile: Hex(0x18223a), Rule: Hex(0x2c3a5c), Ink: Hex(0x080b12), Text: Hex(0xf2f0e8), Dim: Hex(0x8c96ae),
+	Work: Hex(0xe8b030), Waiting: Hex(0xf0e0b8), Soldiers: Hex(0xc8523e), Scholars: Hex(0x30c0b4), Homes: Hex(0x8fa8d8),
+	Green: Hex(0x3fc06c), Amber: Hex(0xf0a020), Alarm: Hex(0xff4636), Red: Hex(0xd23a2c),
+}
 
 // Mix blends a toward b by t (0 is a, 1 is b).
 func Mix(a, b color.RGBA, t float64) color.RGBA {
@@ -43,10 +38,15 @@ func Mix(a, b color.RGBA, t float64) color.RGBA {
 
 // Canvas is an image with the drawing calls the panel needs. Every call
 // clips to the image.
-type Canvas struct{ Img *image.RGBA }
+type Canvas struct {
+	Img *image.RGBA
+	Pal Palette
+}
 
-// New makes a canvas of w by h pixels.
-func New(w, h int) *Canvas { return &Canvas{image.NewRGBA(image.Rect(0, 0, w, h))} }
+// New makes a canvas of w by h pixels in the palette p.
+func New(w, h int, p Palette) *Canvas {
+	return &Canvas{Img: image.NewRGBA(image.Rect(0, 0, w, h)), Pal: p}
+}
 
 // Rect fills a rectangle.
 func (c *Canvas) Rect(x, y, w, h int, col color.RGBA) {
@@ -128,8 +128,8 @@ func glyph(r rune, b bool) []string {
 		set = bold
 	}
 	g, ok := set[r]
-	if !ok {
-		g = set['0']
+	if !ok { // a character with no glyph is a gap
+		g = strings.TrimSuffix(strings.Repeat("../", len(strings.Split(set['0'], "/"))), "/")
 	}
 	return strings.Split(g, "/")
 }
@@ -209,11 +209,11 @@ func (c *Canvas) Trend(x, y, w, h int, v []float64, lo, hi float64, col, ground 
 		return y + h - 3 - int(math.Round((f-lo)/(hi-lo)*float64(h-6)))
 	}
 	px := func(i int) int { return x + 2 + i*(w-6)/(len(v)-1) }
-	c.Rect(x, y+h-1, w, 1, Rule)
-	c.Rect(x, y, 1, h, Rule)
+	c.Rect(x, y+h-1, w, 1, c.Pal.Rule)
+	c.Rect(x, y, 1, h, c.Pal.Rule)
 	for _, g := range guides {
 		for xx := x + 1; xx < x+w; xx += 5 {
-			c.Rect(xx, py(g), 2, 1, Rule)
+			c.Rect(xx, py(g), 2, 1, c.Pal.Rule)
 		}
 	}
 	fill := Mix(ground, col, .2)
@@ -232,14 +232,14 @@ func (c *Canvas) Trend(x, y, w, h int, v []float64, lo, hi float64, col, ground 
 
 // MoraleZone is the colour of a morale level: red under 40 percent, amber to
 // 50, green above.
-func MoraleZone(v float64) color.RGBA {
+func (p Palette) MoraleZone(v float64) color.RGBA {
 	switch {
 	case v < .40:
-		return Red
+		return p.Red
 	case v < .50:
-		return Amber
+		return p.Amber
 	}
-	return Green
+	return p.Green
 }
 
 // DialPoint is the pixel at morale level v on a radius r from the hub, for a
@@ -265,9 +265,9 @@ func (c *Canvas) Dial(cx, cy, r int, level, floor, cap float64) {
 			if math.Mod(v, .025) < .003 {
 				continue
 			}
-			col := MoraleZone(v)
+			col := c.Pal.MoraleZone(v)
 			if v > level {
-				col = Mix(col, Tile, .74)
+				col = Mix(col, c.Pal.Tile, .74)
 			}
 			c.Pt(cx+x, cy+y, col)
 		}
@@ -275,16 +275,16 @@ func (c *Canvas) Dial(cx, cy, r int, level, floor, cap float64) {
 	for _, v := range []float64{floor, .40, .50, cap} {
 		x0, y0 := DialPoint(cx, cy, v, floor, cap, float64(r+3))
 		x1, y1 := DialPoint(cx, cy, v, floor, cap, float64(r+11))
-		c.Line(x0, y0, x1, y1, Text)
+		c.Line(x0, y0, x1, y1, c.Pal.Text)
 	}
 	f := (level - floor) / (cap - floor)
 	for d := 0.0; d <= float64(r-t-6); d++ {
-		c.Disc(cx+int(math.Round(d*math.Cos(math.Pi*(1-f)))), cy-int(math.Round(d*math.Sin(math.Pi*(1-f)))), 2, Text)
+		c.Disc(cx+int(math.Round(d*math.Cos(math.Pi*(1-f)))), cy-int(math.Round(d*math.Sin(math.Pi*(1-f)))), 2, c.Pal.Text)
 	}
-	c.Disc(cx, cy, 10, Text)
-	c.Disc(cx, cy, 4, Tile)
+	c.Disc(cx, cy, 10, c.Pal.Text)
+	c.Disc(cx, cy, 4, c.Pal.Tile)
 	s := pct(level)
-	c.Num(cx-NumW(s, true, 5)/2, cy+18, s, Text, true, 5)
+	c.Num(cx-NumW(s, true, 5)/2, cy+18, s, c.Pal.Text, true, 5)
 }
 
 func pct(v float64) string {
@@ -308,8 +308,8 @@ func (c *Canvas) Warn(x, y int, col color.RGBA) {
 		w := 1 + i*17/15
 		c.Rect(x-w/2, y+i, w, 1, col)
 	}
-	c.Rect(x-1, y+5, 3, 5, Ink)
-	c.Rect(x-1, y+11, 3, 2, Ink)
+	c.Rect(x-1, y+5, 3, 5, c.Pal.Ink)
+	c.Rect(x-1, y+11, 3, 2, c.Pal.Ink)
 }
 
 // Arrow paints a falling (down) or rising arrow 17 pixels wide and 19 tall.
