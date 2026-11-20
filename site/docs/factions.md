@@ -67,12 +67,12 @@ Gifts, alliances, rivalries, embargoes and deals wait for **Envoys**, a Classica
 
 ## Opinion and status
 
-Each civilization you have met holds an **opinion** of you from -100 to +100, starting at 0, and a **status** that you set (or that a gift or deal raises to friendly).
+Each civilization you have met holds an **opinion** of you from -100 to +100, starting at 0, and a **status** that you set (a neutral civilization turns friendly by itself once its opinion reaches 25, however it got there: a gift, a deal, an embassy or your trade).
 
 | Status | Meaning |
 |---|---|
 | `neutral` | The default. No bonuses, no penalties. |
-| `friendly` | Set when a gift or deal brings a neutral civilization's opinion to 25 or more. Friendly civilizations offer more deals at better rates, give bigger boons and gentler setbacks. |
+| `friendly` | Set when a neutral civilization's opinion reaches 25 or more. Friendly civilizations offer more deals at better rates, give bigger boons and gentler setbacks. |
 | `allied` | Needs opinion 50 or more and costs 500 gold (250 with the Global Village, a Digital Age capstone). Adds the civilization's bonus to your whole production of its specialty and to route income of it (see [Allied bonuses](#allied-bonuses)), and gives the best deals and boons. |
 | `rival` | Free to declare. Opinion drops an extra 5 every 130 ticks. No deals, no ally bonus, smaller boons, harsher setbacks. |
 | `embargo` | Free to declare. The same as rival, and it counts as a provocation. Your routes that bring in its specialty are disrupted. |
@@ -120,7 +120,7 @@ An offer is worded from your side, the same way everywhere: `<kind>: give <lot> 
 |---|---|---|
 | Boost | +25% of your gross output of one resource you make, for 20 minutes of the base curve, which the pacing stretch makes 52 minutes at the base tick in every age that has offers (a resource the civilization's specialty names is preferred). A boost already running on that resource gets the time added | 0.6 of what the extra output is worth over the run |
 | Research | instant progress on the research under way, 1.25 times the lot's worth at research's price level, never more than it still needs. Only offered while something is being researched | a lot of goods (paid in proportion if the tech needs less than offered by the time you accept) |
-| People | N workers who join the idle pool: N = the lot's worth over the food one worker eats in one rotation of offers, at food's price level. Only offered when the homes have room | a lot of goods |
+| People | N workers who join the idle pool: N = the lot's worth over the food one worker eats in one rotation of offers, at food's price level. Only offered when the homes have room, never more than a tenth of the homes' capacity, and at most one people offer from a civilization in a set | a lot of goods |
 | Know-how | the civilization's own perk for the rest of the run: +5% of your gross output of its specialty. Once per civilization per run. Offered at opinion 50 or more, or allied, and refused if the opinion has fallen since | 10 price units of the age |
 
 Boosts show as a Gifts line in the rate of the resource. A boost ends on time while you are away, and time away produces the boost's extra only while it runs. Boosts and earned know-how are saved with your game.
@@ -129,7 +129,7 @@ A price you can't pay yet shows in red, and offers you've taken are dimmed. An o
 
 A peaceful civilization makes 2 offers when neutral, 3 friendly and 4 allied. A mercantile one makes one more, at 2 points better rates and in 20% bigger lots. An aggressive one makes one fewer (at least one), at 4 points worse rates. An isolationist makes one (two when allied).
 
-Timed gifts are the common kind; know-how shows at most once in a set. Two techs add to every set: the **Global Village** (Digital Age) and the **Federation Charter** (Galactic Age) each make every civilization make one more offer, the isolationist ones included.
+Timed gifts are the common kind. A civilization whose know-how you have not earned and that qualifies for it leads its set with that offer, once; a boost that is too dear for one good is paid in another good you hold. Two techs add to every set: the **Global Village** (Digital Age) and the **Federation Charter** (Galactic Age) each make every civilization make one more offer, the isolationist ones included.
 
 Opinion matters too. Friendly civilizations (friendly status, or opinion 25 or more) and allies offer more, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking an offer adds +1 opinion and counts as a trade. Offers can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it.
 
