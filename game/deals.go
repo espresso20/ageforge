@@ -118,11 +118,12 @@ const (
 	// dealResearchWorth is the research a lot buys, as a multiple of its value.
 	dealResearchWorth = 1.25
 	// Know-how: dealKnowhowShare more of the civ's specialty, for
-	// dealKnowhowUnits price units, in the first slot of a set with
-	// probability dealKnowhowOdds.
+	// dealKnowhowUnits price units, in the first slot of a set once the civ
+	// qualifies.
 	dealKnowhowShare = 0.05
 	dealKnowhowUnits = 10
-	dealKnowhowOdds  = 0.4
+	// dealPeopleShare caps a people offer at this share of the homes' capacity.
+	dealPeopleShare = 0.1
 
 	// dealIDStride spaces offer IDs by round: ID = round*stride + slot + 1.
 	dealIDStride = 16
@@ -271,6 +272,7 @@ type dealEnv struct {
 	// room is how many people the housing has room for; headFood is the food
 	// one eats a tick.
 	room     int
+	cap      int // the homes' worker capacity: an offer is at most dealPeopleShare of it
 	headFood float64
 	// boostTicks is how long a boost runs; refresh how long a set of offers lasts.
 	boostTicks, refresh int
@@ -303,7 +305,8 @@ func (ge *GameEngine) newDealEnv() dealEnv {
 		env.size[k] = ge.rules.StockOf(k, ge.age, 1, env.income[k])
 	}
 	if ge.Workers.IsUnlocked() {
-		env.room = max(ge.workerCapLocked()-ge.Workers.TotalPop(), 0)
+		env.cap = ge.workerCapLocked()
+		env.room = max(env.cap-ge.Workers.TotalPop(), 0)
 	}
 	env.researchLeft = ge.researchLeftLocked()
 	return env
@@ -347,18 +350,24 @@ func dealPick(s []string, r float64) string {
 // resources (amount over a good stock of it) other than the civ's specialty
 // and skip, by draw r. lv is its price level; "" when there is none.
 func (env dealEnv) payWith(def config.FactionDef, skip string, r float64) (give string, lv float64) {
-	set := orCore(env.rules)
+	cands := env.payCands(def, skip)
+	if len(cands) == 0 {
+		return "", 0
+	}
+	give = dealPick(cands, r)
+	return give, orCore(env.rules).DealPriceLevel(give, env.age)
+}
+
+// payCands is the goods payWith chooses from: your fullest priced resources
+// other than the civ's specialty and skip.
+func (env dealEnv) payCands(def config.FactionDef, skip string) []string {
 	var cands []string
-	for _, res := range set.PricedResources(env.age) {
+	for _, res := range orCore(env.rules).PricedResources(env.age) {
 		if res != def.Specialty && res != skip && env.unlocked[res] {
 			cands = append(cands, res)
 		}
 	}
-	if cands = env.fullest(cands); len(cands) == 0 {
-		return "", 0
-	}
-	give = dealPick(cands, r)
-	return give, set.DealPriceLevel(give, env.age)
+	return env.fullest(cands)
 }
 
 // rollFactionDeals rolls a civ's offers for one round. Blocked civs get none
@@ -369,12 +378,14 @@ func rollFactionDeals(def config.FactionDef, fs FactionState, env dealEnv, rng *
 	}
 	tier := dealTier(fs)
 	var out []FactionDeal
+	people := false // a civ offers people once a set, so they do not crowd out the rest
 	for slot := 0; slot < env.slots(def.Personality, tier); slot++ {
 		r1, r2, r3 := rng.Float64(), rng.Float64(), rng.Float64()
-		d, ok := makeDeal(def, fs, tier, env, slot == 0, r1, r2, r3)
+		d, ok := makeDeal(def, fs, tier, env, slot == 0, !people, r1, r2, r3)
 		if !ok || hasSameDeal(out, d) {
 			continue
 		}
+		people = people || d.Kind == DealPeople
 		d.ID = round*dealIDStride + slot + 1
 		out = append(out, d)
 	}
@@ -398,11 +409,12 @@ func knowhowOpen(def config.FactionDef, fs FactionState, env dealEnv) bool {
 		env.unlocked[def.Specialty] && orCore(env.rules).DealPriceLevel(def.Specialty, env.age) > 0
 }
 
-// makeDeal builds one slot's offer. The first draw picks the gift (a boost
-// half the time, research a quarter, people a quarter; know-how only in the
-// first slot); a gift the town cannot use falls to the next.
-func makeDeal(def config.FactionDef, fs FactionState, tier int, env dealEnv, first bool, r1, r2, r3 float64) (FactionDeal, bool) {
-	if first && r1 < dealKnowhowOdds && knowhowOpen(def, fs, env) {
+// makeDeal builds one slot's offer. A civ that has earned it offers its
+// know-how in the first slot; otherwise the first draw picks the gift (a boost
+// half the time, research a quarter, people a quarter, people only when
+// morePeople); a gift the town cannot use falls to the next.
+func makeDeal(def config.FactionDef, fs FactionState, tier int, env dealEnv, first, morePeople bool, r1, r2, r3 float64) (FactionDeal, bool) {
+	if first && knowhowOpen(def, fs, env) {
 		if give, lv := env.payWith(def, "", r3); lv > 0 {
 			return FactionDeal{Kind: DealKnowhow, Give: give, GiveAmt: roundDeal(float64(dealKnowhowUnits*lv), true), Res: def.Specialty}, true
 		}
@@ -412,6 +424,9 @@ func makeDeal(def config.FactionDef, fs FactionState, tier int, env dealEnv, fir
 		func() (FactionDeal, bool) { return boostDeal(def, env, mult, r2, r3) },
 		func() (FactionDeal, bool) { return researchDeal(def, env, mult, lot, r3) },
 		func() (FactionDeal, bool) { return peopleDeal(def, env, mult, lot, r3) },
+	}
+	if !morePeople {
+		makers[2] = func() (FactionDeal, bool) { return FactionDeal{}, false }
 	}
 	start := 0
 	if r1 >= 0.5 {
@@ -444,14 +459,19 @@ func boostDeal(def config.FactionDef, env dealEnv, mult, r2, r3 float64) (Factio
 	if r2 < 0.5 && slices.Contains(cands, def.Specialty) {
 		res = def.Specialty
 	}
-	give, lv := env.payWith(def, res, r3)
-	if lv <= 0 {
-		return FactionDeal{}, false
-	}
 	// Price units of output the boost adds.
 	units := float64(float64(dealBoostShare*env.income[res])*float64(env.boostTicks)) / set.DealPriceLevel(res, env.age)
-	d := FactionDeal{Kind: DealBoost, Give: give, GiveAmt: roundDeal(float64(units*dealBoostWorth/mult*lv), true), Res: res, Amt: float64(env.boostTicks)}
-	return d, d.GiveAmt >= 1 && d.GiveAmt <= float64(dealGiveShare*env.size[give])
+	// Pay in the drawn good, or the next fullest one the price fits in: a boost
+	// of a big producer is dear and often too much for the drawn good's stock.
+	pays := env.payCands(def, res)
+	for i := range pays {
+		give := pays[(int(r3*float64(len(pays)))+i)%len(pays)]
+		d := FactionDeal{Kind: DealBoost, Give: give, GiveAmt: roundDeal(float64(units*dealBoostWorth/mult*set.DealPriceLevel(give, env.age)), true), Res: res, Amt: float64(env.boostTicks)}
+		if d.GiveAmt >= 1 && d.GiveAmt <= float64(dealGiveShare*env.size[give]) {
+			return d, true
+		}
+	}
+	return FactionDeal{}, false
 }
 
 // researchDeal is progress on the tech in progress: dealResearchWorth of the
@@ -480,7 +500,7 @@ func peopleDeal(def config.FactionDef, env dealEnv, mult, lot, r3 float64) (Fact
 		return FactionDeal{}, false
 	}
 	head := float64(env.headFood*float64(env.refresh)) / lf // price units of one worker
-	n := min(math.Floor(float64(lot*mult)/head), math.Floor(float64(dealGiveShare*env.size[give])/lv*mult/head), float64(env.room))
+	n := min(math.Floor(float64(lot*mult)/head), math.Floor(float64(dealGiveShare*env.size[give])/lv*mult/head), float64(env.room), math.Max(1, math.Floor(float64(dealPeopleShare*float64(env.cap)))))
 	d := FactionDeal{Kind: DealPeople, Give: give, GiveAmt: roundDeal(float64(n*head/mult*lv), true), Res: "workers", Amt: n}
 	return d, n >= 1 && d.GiveAmt >= 1
 }
@@ -605,9 +625,7 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 	if fs.Opinion < dealStandingCap {
 		fs.Opinion = min(fs.Opinion+dealTradeStanding, dealStandingCap)
 	}
-	if fs.Status == "neutral" && fs.Opinion >= 25 {
-		fs.Status = "friendly"
-	}
+	fs.warm()
 	d.Taken = true
 	ge.note(config.BadgeEvDeal, def.Key)
 	ge.addLog(OfficeTrade, "success", rowid.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, DealTerms(d.Kind, d.Give, pay, d.Res, amt, textfmt.Number, ge.durationLocked)), logSubj(def.Key), logPaid(LogAmt{d.Give, pay}))
