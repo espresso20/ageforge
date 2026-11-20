@@ -245,7 +245,7 @@ func drawTradeOffers(g *xgrid, st game.GameState, routes []tradeRoute, side trad
 	px := end - 2 - runeLen(word) - 2
 	g.put(x, y, strings.Repeat("─", max(0, px-x-1)), xDim)
 	g.plate(px, y, word, xKeyName, "factions")
-	kw := 0
+	kw := 5 // the width of the OFFER head, so the heads keep their places with no offers
 	for _, c := range civs {
 		for _, d := range c.offers {
 			kw = max(kw, runeLen(game.DealKindLabel(d.Kind)))
@@ -387,7 +387,7 @@ func tradeDrawCiv(g *xgrid, c tradeCiv, sx, y, end int) {
 	x := g.put(sx+43, y, rowid.Sprintf("ui.trade_side.tradeDrawCiv.01", "opinion %d", c.opinion), xDim) + 2
 	nx := sx + 87 - runeLen(c.note)
 	g.put(nx, y, c.note, xDim)
-	if len(c.suspends) > 0 {
+	if len(c.suspends) > 0 && nx-x-1 >= 12 {
 		g.putFit(x, y, nx-x-1, rowid.Sprintf("ui.trade_side.tradeDrawCiv.02", "suspends %s", strings.Join(c.suspends, ", ")), xBad)
 	}
 }
