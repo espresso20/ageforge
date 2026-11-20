@@ -7,9 +7,6 @@ package steam
 // Build is false in a build made without the steam tag.
 const Build = false
 
-// DataDir is empty: this build keeps its data beside the binary.
-func DataDir() string { return "" }
-
 // Start does nothing.
 func Start() error { return nil }
 

@@ -1,4 +1,4 @@
-.PHONY: banner build run clean check test vet validate smoke steam all release release-patch release-minor release-major commit
+.PHONY: banner build run clean check test vet validate smoke steam all commit
 
 # Default: build + vet + run
 all: check run
@@ -47,16 +47,16 @@ test-raw: build vet
 smoke:
 	@go test ./smoke -count=1
 
-# The Steam builds, into bin/steam/. The tag turns Steamworks on and the
-# updater and font download off. The Windows flags stop the Go runtime
+# The Steam builds, into bin/steam/. The tag turns Steamworks on and DataHome
+# moves the data to the user config folder. The Windows flags stop the Go runtime
 # freezing the game under Steam's overlay and hide the console window.
 # See CONTRIBUTING.md, "Steam build".
 STEAM_VERSION ?= dev
 steam:
 	@mkdir -p bin/steam
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION) -X=runtime.godebugDefault=asyncpreemptoff=1 -H=windowsgui" -o bin/steam/ageforge-windows-amd64.exe .
-	GOOS=darwin GOARCH=arm64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION)" -o bin/steam/ageforge-darwin-arm64 .
-	GOOS=linux GOARCH=amd64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION)" -o bin/steam/ageforge-linux-amd64 .
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION) -X github.com/espresso20/ageforge/game.DataHome=user -X=runtime.godebugDefault=asyncpreemptoff=1 -H=windowsgui" -o bin/steam/ageforge-windows-amd64.exe .
+	GOOS=darwin GOARCH=arm64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION) -X github.com/espresso20/ageforge/game.DataHome=user" -o bin/steam/ageforge-darwin-arm64 .
+	GOOS=linux GOARCH=amd64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION) -X github.com/espresso20/ageforge/game.DataHome=user" -o bin/steam/ageforge-linux-amd64 .
 
 # Run the game
 run: build
@@ -74,26 +74,6 @@ clean:
 	@rm -f ageforge
 	@rm -rf bin
 	@echo "\033[0;32m[  OK  ]\033[0m Cleaned"
-
-# Build for multiple platforms (local, no version injection)
-release:
-	@echo "\033[0;36m[ageforge]\033[0m Building releases..."
-	@mkdir -p bin
-	@GOOS=darwin  GOARCH=amd64 go build -o ./bin/ageforge-darwin-amd64
-	@GOOS=darwin  GOARCH=arm64 go build -o ./bin/ageforge-darwin-arm64
-	@GOOS=linux   GOARCH=amd64 go build -o ./bin/ageforge-linux-amd64
-	@GOOS=windows GOARCH=amd64 go build -ldflags "-H=windowsgui" -o ./bin/ageforge-windows-amd64.exe
-	@echo "\033[0;32m[  OK  ]\033[0m Release builds complete"
-
-# Bump version, update CHANGELOG, commit, tag, and push to trigger CI release
-release-patch:
-	@bash scripts/release.sh patch
-
-release-minor:
-	@bash scripts/release.sh minor
-
-release-major:
-	@bash scripts/release.sh major
 
 # Interactive conventional commit — stages everything, prompts for type + description, commits + pushes
 commit:

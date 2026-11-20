@@ -33,7 +33,6 @@ const (
 	miBadges   = "badges"
 	miSettings = "settings"
 	miAccounts = "accounts"
-	miUpdates  = "updates"
 	miQuit     = "quit"
 
 	// The Settings page's rows.
@@ -73,9 +72,8 @@ type menuView struct {
 	forge bool
 	// captions is the town page's caption, fullest first.
 	captions []string
-	// version is the version line, fullest first (an update notice may
-	// lead it).
-	versions []string
+	// version is the version line.
+	version string
 	// edition is the edition the forge page's title names ("fourth"), ""
 	// when the version does not say.
 	edition string
@@ -365,7 +363,7 @@ func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *m
 	g.fill(L.px, L.py, L.pw, L.ph, pal.groundInk, pal.ground)
 	g.box(L.px, L.py, L.pw, L.ph, false, pal.groundDim)
 	sc.drawMenu(g, pal, v, false)
-	if ver := fitOption(spacedOptions(v.versions), L.pw-4); ver != "" {
+	if ver := " " + v.version + " "; v.version != "" && runeLen(ver) <= L.pw-4 {
 		g.text(L.px+L.pw-runeLen(ver)-2, L.py+L.ph-1, ver, pal.groundDim, false)
 	}
 	sc.drawElite(g, pal, v, L.px+2, L.py, L.pw-4, true)
@@ -452,12 +450,10 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	// right.
 	room := L.px + L.pw - L.mx
 	var feet []string
-	for _, ver := range v.versions {
-		if v.edition != "" {
-			feet = append(feet, txtThe.String()+v.edition+rowid.Line("ui.menu_page.renderForge.13", " edition · ")+ver)
-		}
+	if v.edition != "" {
+		feet = append(feet, txtThe.String()+v.edition+rowid.Line("ui.menu_page.renderForge.13", " edition · ")+v.version)
 	}
-	feet = append(feet, v.versions...)
+	feet = append(feet, v.version)
 	if runeLen(menuKeysHint.String()) <= room {
 		g.text(L.px+L.pw-runeLen(menuKeysHint.String()), L.foot, menuKeysHint.String(), pal.dim, false)
 		room -= runeLen(menuKeysHint.String()) + 2
@@ -640,8 +636,8 @@ func (sc *menuScene) renderCompact(g *mGrid, pal *menuPalette, v *menuView) {
 		row = sc.drawEntry(g, pal, v, i, x, row, w, tone)
 	}
 	if y := row + 1; y < g.h {
-		if ver := fitOption(v.versions, w); ver != "" {
-			g.text(x, y, ver, pal.dim, false)
+		if v.version != "" && runeLen(v.version) <= w {
+			g.text(x, y, v.version, pal.dim, false)
 		}
 	}
 }

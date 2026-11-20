@@ -43,7 +43,7 @@ Baseline on 2026-10-23, so you can tell old findings from new ones:
 | `licenses.yml` | go-licenses | `go.mod` changes, weekly | License of every built-in module against a permissive allowlist. |
 | `bench.yml` | benchstat | Go changes, master | The hot-path benchmarks, base against the change. |
 | `nightly.yml` | ordinary path | nightly, by hand | `TestOrdinaryPath` (`smoke/ordinary_path_test.go`) walks the ordinary player through all 22 ages on the frontier with `AGEFORGE_LONG_TESTS=1`. The test skips on pull requests without that variable. |
-| `release-snapshot.yml` | GoReleaser | by hand | Builds the release binaries and uploads them as an artifact. Publishes nothing. |
+| `release.yml` | go build | a `v*` tag, pull requests that edit it, by hand | Builds the per-OS archives and `SHA256SUMS.txt`. Publishes only on a tag. |
 
 Every workflow sets `permissions: contents: read` at the top and asks for more only on the job that needs it. The workflows that run on pull requests cancel a superseded run of the same pull request. Every action is pinned to a commit SHA with its version in a comment, and Dependabot proposes the bumps (one grouped pull request a week).
 
@@ -78,8 +78,6 @@ go-licenses report ./... --ignore github.com/espresso20/ageforge
 go install golang.org/x/perf/cmd/benchstat@be2c69fb417e05de5fec05c732911f4c5f172606
 scripts/ci-bench.sh compare origin/master /tmp/bench
 
-# release binaries, nothing published (needs goreleaser v2)
-goreleaser release --snapshot --clean
 ```
 
 Vale, typos, lychee and gitleaks ship as release binaries (their module paths or build setups make `go install` a poor fit). Download one from the project's releases page, check it against the release's checksums file, then:
@@ -139,12 +137,7 @@ Checked on 2026-10-23: the upstream repository is public and open source, has no
 | typos (crate-ci) | v1.51.1 (release binary, SHA-256 checked in the workflow) | Apache-2.0 or MIT | 2026-10-06 | Widely used. |
 | lychee | v0.24.2 (lychee-action v2.9.0) | Apache-2.0 or MIT | 2026-05-01 | The action had one low advisory, fixed in 2.0.2. |
 | go-licenses (google) | v2.0.1 | Apache-2.0 | 2025-09-08 | Google's. No commit since that release: the weakest pick here. It runs fail-soft and was checked against Go 1.26. |
-| GoReleaser | v2.18.3 (action v7.3.0) | MIT | 2026-10-09 | An advisory on secrets in build logs (GHSA-95mm-pj4f-x75r) covers up to 2.18.1 as published. The snapshot job holds no secrets. |
 | GitHub's own actions | checkout v7.0.1, setup-go v7.0.0, upload-artifact v7.0.2, download-artifact v8.0.2 | MIT | 2026-07 to 2026-10 | The older workflows keep the majors they used (v4, v5), pinned to the commit those tags pointed at. |
-
-## Release builds
-
-`release.yml` still builds and publishes on a `v*` tag; nothing here changes that. `.goreleaser.yaml` builds the same four targets and the same file names (the in-game updater downloads `ageforge-macos-arm64`, `ageforge-windows-amd64.exe` and so on, plus `SHA256SUMS.txt`), and its own release step is switched off. Run the "Release snapshot" workflow from the Actions tab to get the files as an artifact. To move the tag release over to GoReleaser later, enable `release:` in the config and retire `release.yml` in the same change, so a tag is never released twice.
 
 ## Not set up here
 

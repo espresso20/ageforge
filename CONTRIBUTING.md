@@ -27,9 +27,6 @@ make run          # build + run the game
 make banner       # redraw docs/banner.png from the menu's wordmark
 make clean        # remove binary
 make commit       # interactive conventional commit (see below)
-make release-patch   # bump patch version, update CHANGELOG, tag, push
-make release-minor   # bump minor version, update CHANGELOG, tag, push
-make release-major   # bump major version, update CHANGELOG, tag, push
 ```
 
 What CI checks beyond the tests (security scans, linters, prose rules, benchmarks, release builds), how to run each one locally, and how to quiet a false positive: [docs/ci.md](docs/ci.md).
@@ -135,80 +132,31 @@ balance: stash now has max count of 50, all buildings in primitive take longer t
 
 ## Release Process
 
-Releases are cut manually when ready. From `master` with a clean working tree:
+Releases are built by `.github/workflows/release.yml` when a `v*` tag is pushed.
 
-```bash
-make release-patch   # v2.4.5 → v2.4.6  (bug fixes, balance tweaks)
-make release-minor   # v2.4.5 → v2.5.0  (new features, new content)
-make release-major   # v2.4.5 → v3.0.0  (breaking changes, save format changes)
-```
+1. On a PR, rename `## [Unreleased]` in CHANGELOG.md to `## [vX.Y.Z]` with the date after it, as the sections below have, and add a fresh empty `## [Unreleased]` above it. Merge.
+2. `git tag vX.Y.Z` on that master commit, then `git push origin vX.Y.Z`.
 
-**When to use which:**
-- `patch`: fixes, balance changes, small improvements. No new gameplay systems.
-- `minor`: new commands, new ages/buildings/techs/mechanics. Backwards-compatible saves.
-- `major`: save format changes, full system rewrites, anything that could break existing saves.
+The job fails if CHANGELOG.md has no section for the tag.
 
-**What the script does** (`scripts/release.sh`):
-1. Validates you're on `master` with a clean working tree
-2. Scrapes `git log` since the last tag, groups commits by type into `### Added / Fixed / Balance / Changed / Other`
-3. Stamps `CHANGELOG.md` with the new version block and generated notes
-4. Commits, tags (`vX.Y.Z`), and pushes to `origin/master`
-5. GitHub Actions picks up the tag and: builds 5 binaries (Linux/macOS/Windows × amd64/arm64), generates `SHA256SUMS.txt`, creates the GitHub Release with the changelog as the body, and posts a Discord embed
+It builds four files and publishes them to the GitHub Release:
 
-Version is baked in at build time: `go build -ldflags "-X main.version=vX.Y.Z"`. Dev builds report `dev`.
+- `AgeForge-macos.zip`: one app for Apple Silicon and Intel Macs, ad-hoc signed, not notarized.
+- `AgeForge-windows.zip`: a folder with `AgeForge.exe`, unsigned.
+- `AgeForge-linux-amd64.tar.gz`: a folder with `ageforge`.
+- `SHA256SUMS.txt`.
 
-### How the release pipeline works
+The site's download buttons point at `releases/latest/download/<name>`, so these asset names must not change.
 
-This is a **tag-based release** pattern. The git tag is the source of truth for what has shipped. Here's the full chain:
+**Dry run:** any PR that edits `release.yml`, or Run workflow on the Actions tab, builds the same files into a `release-dry-run` artifact and publishes nothing.
 
-```
-make release-patch
-      │
-      ├─ bumps version, writes CHANGELOG.md
-      ├─ git commit "chore: release vX.Y.Z"
-      ├─ git tag vX.Y.Z
-      └─ git push origin master + vX.Y.Z
-                              │
-                              ▼
-                     GitHub Actions (release.yml)
-                              │
-                              ├─ builds 5 binaries
-                              ├─ generates SHA256SUMS.txt
-                              ├─ creates GitHub Release (with changelog body)
-                              └─ posts Discord embed
-```
-
-### What happens when a build fails
-
-All commits since the **last successful tag** accumulate and get picked up by the next release: the script runs `git log <last-tag>..HEAD` to scrape commit messages. This is sometimes called a **release train**: commits queue up and ship together on the next run that succeeds.
-
-**If the Actions build fails after the tag was already pushed**, you have two options:
-
-**Option 1: Re-run the workflow (preferred for infra failures)**
-
-Go to the [Actions tab](https://github.com/espresso20/ageforge/actions), find the failed run, and click **Re-run jobs**. The tag already exists so GitHub re-triggers the same job on the same tag. No new commit or tag needed. Use this when the failure was environmental: a flaky dependency download, a runner hiccup, a typo in a config file that you've since fixed and pushed.
-
-**Option 2: Delete the tag and re-release (for code bugs caught post-tag)**
-
-Use this if you caught a real bug in the code after tagging but before anyone downloaded it.
-
-```bash
-git tag -d vX.Y.Z                      # delete local tag
-git push origin :refs/tags/vX.Y.Z      # delete remote tag
-# fix the bug, commit it
-make release-patch                      # cuts a fresh vX.Y.Z+1
-```
-
-### What the tag represents
-
-Once a tag exists in git, that version is considered "attempted." Even if the GitHub Release was never created (build failed), the tag marks that point in history. The next `make release-*` will always bump from the latest tag, so you will never accidentally re-release the same version number.
+**A failed release:** fix on master, then delete the tag (`git push origin :refs/tags/vX.Y.Z`, `git tag -d vX.Y.Z`) and push it again, or cut the next patch version.
 
 ### Checking release status
 
 ```bash
-git tag --sort=-version:refname | head -5    # recent tags
-gh run list --workflow=release.yml            # recent workflow runs
-gh release list                               # published GitHub releases
+gh run list --workflow=release.yml   # recent workflow runs
+gh release list                      # published GitHub releases
 ```
 
 ---
@@ -344,7 +292,7 @@ Text built in ordinary code (panels, log lines, refusals) needs no entry: the re
 
 ## Steam build
 
-`go build -tags steam` makes the Steam build of the window. It starts Steamworks before the window opens, runs Steam's callbacks every frame, and unlocks Steam achievements for badges listed in `platform/steam` (`achievements`, empty until the shortlist is decided). It switches off the self-updater and the Nerd Font download, since Steam delivers updates. A build without the tag imports nothing from Steam. The App ID in `platform/steam` is 480 (Spacewar) until AgeForge has its own.
+`go build -tags steam` makes the Steam build of the window. It starts Steamworks before the window opens, runs Steam's callbacks every frame, and unlocks Steam achievements for badges listed in `platform/steam` (`achievements`, empty until the shortlist is decided). Steam delivers updates, so the game does not check for them. A build without the tag imports nothing from Steam. The App ID in `platform/steam` is 480 (Spacewar) until AgeForge has its own.
 
 To run it locally:
 
@@ -373,7 +321,7 @@ mapgen/         The procedural map engine: seed, model and frame in, a grid of
 ui/             tview TUI. Reads GameState snapshots. Never writes to engine.
 ui/mapstyle/    The map screen: the engine's cells in the theme's colours, the
                 header, news and inspector round them (procmap), and the canvas.
-scripts/        release.sh, commit.sh, ci-bench.sh (dev tooling)
+scripts/        commit.sh, ci-bench.sh (dev tooling)
 main.go         Entry point; wires engine + UI.
 ```
 

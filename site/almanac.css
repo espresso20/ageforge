@@ -2,7 +2,6 @@
 :root{
   color-scheme:light;
   --paper:#e8dcc0;--plate:#f0e6cf;--ink:#241a10;--ink-2:#5b4a35;--rubric:#962a1b;--term:#0d1117;
-  --cmd-line:transparent;
   /* the aging: a darker edge and a faint grain, light only */
   --vignette:radial-gradient(ellipse farthest-corner at 50% 50%,transparent 56%,rgba(110,80,40,.18) 100%);
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .33 0 0 0 0 .22 0 0 0 0 .1 1.6 0 0 0 -.45'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -17,14 +16,12 @@
   :root:not([data-theme="light"]){
     color-scheme:dark;
     --paper:#121822;--plate:#1a2230;--ink:#d9dee6;--ink-2:#9aa6b8;--rubric:#e0574c;--term:#0a0e14;
-    --cmd-line:var(--ink-2);
     --vignette:none;--grain:none;
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --paper:#121822;--plate:#1a2230;--ink:#d9dee6;--ink-2:#9aa6b8;--rubric:#e0574c;--term:#0a0e14;
-  --cmd-line:var(--ink-2);
   --vignette:none;--grain:none;
 }
 
@@ -46,11 +43,11 @@ button{font:inherit;color:inherit}
 /* ---- the site buttons ---- */
 .dnav{max-width:1180px;margin:0 auto;padding:18px clamp(16px,4vw,44px) 0}
 .dnav-in{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding-bottom:14px;border-bottom:3px double var(--ink)}
-.dbtn,.toggle,.inst-os button,.inst-copy{font:400 15px/1 var(--caps);letter-spacing:.14em;color:var(--ink);text-decoration:none;padding:9px 15px 8px;border:1px solid var(--ink);border-radius:0;background:transparent;box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 3px var(--ink);transition:background-color .15s,color .15s,box-shadow .15s;cursor:pointer}
+.dbtn,.toggle,.inst-os button{font:400 15px/1 var(--caps);letter-spacing:.14em;color:var(--ink);text-decoration:none;padding:9px 15px 8px;border:1px solid var(--ink);border-radius:0;background:transparent;box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 3px var(--ink);transition:background-color .15s,color .15s,box-shadow .15s;cursor:pointer}
 .toggle,.inst-os button{font-size:14px;padding:7px 12px 6px}
 .dbtn:hover,.toggle:hover,.inst-os button:hover{background:var(--ink);color:var(--paper);box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 3px var(--paper)}
-.dbtn-get,.inst-copy{background:var(--rubric);border-color:var(--rubric);color:var(--paper);box-shadow:inset 0 0 0 2px var(--rubric),inset 0 0 0 3px var(--paper)}
-.dbtn-get:hover,.inst-copy:hover{background:var(--ink);border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 3px var(--paper)}
+.dbtn-get{background:var(--rubric);border-color:var(--rubric);color:var(--paper);box-shadow:inset 0 0 0 2px var(--rubric),inset 0 0 0 3px var(--paper)}
+.dbtn-get:hover{background:var(--ink);border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 3px var(--paper)}
 .toggle.on,.inst-os button[aria-pressed="true"]{background:var(--ink);color:var(--paper);box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 3px var(--paper)}
 @media (max-width:600px){.dnav-in{flex-wrap:nowrap;justify-content:space-between;gap:6px}.dbtn{white-space:nowrap;font-size:clamp(12px,3.5vw,14px);letter-spacing:.06em;padding:8px clamp(6px,2.4vw,11px) 7px}}
 @media (max-width:360px){.dnav-in{gap:4px}.dbtn{letter-spacing:.03em;padding-inline:5px}}
@@ -75,11 +72,7 @@ h1{font:400 clamp(60px,9.5vw,128px)/.86 var(--display);color:var(--rubric);lette
 .caps{font:400 15px/1.3 var(--caps);letter-spacing:.18em;color:var(--rubric)}
 .inst{display:grid;gap:8px;min-width:0}
 .inst-os{display:flex;flex-wrap:wrap;gap:6px}
-.inst-row{display:flex;gap:10px;align-items:stretch;min-width:0}
-.inst-cmd{flex:1;min-width:0;display:block;font:12.5px/1.5 var(--mono);font-variant-numeric:normal;white-space:pre-wrap;overflow-wrap:anywhere;padding:9px 11px;border-radius:2px;background:var(--term);color:#e6edf3;border:1px solid var(--cmd-line)}
-.inst-copy{white-space:nowrap}
 .inst-note{font:italic 16px/1.35 var(--note);color:var(--ink-2)}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* ---- the plate ---- */
 .plate{display:grid;gap:10px;min-width:0}

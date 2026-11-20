@@ -15,7 +15,6 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -95,7 +94,6 @@ type mainMenu struct {
 	window                  WindowHost // the window the game is in; nil in the terminal
 	read                    string     // what refresh last read from (fingerprint)
 	eliteAt                 int        // which of eliteLines is shown, picked when the menu opens (-1: none)
-	update                  bool       // a newer version is out
 
 	// The scene, and the clock it runs on.
 	scene     *menuScene
@@ -119,35 +117,17 @@ type mainMenu struct {
 	settings    bool
 	settingsSel int
 	local       *mapSettings
-	// checkUpdates opens the update check (it asks the network).
-	checkUpdates func()
 	// buttons make the entries' keys pressable and tell the entry under the
 	// pointer.
 	buttons keyPresser
 }
 
-// CreateSplashPage creates the main menu. A release build also asks, in
-// the background, whether a newer version is out.
+// CreateSplashPage creates the main menu.
 func CreateSplashPage(app *appLoop, pages *nativePages, engine *game.GameEngine, currentVersion string) Primitive {
-	m := newMainMenu(app, pages, engine, currentVersion)
-	// Background update check: a no-op on dev builds or network errors.
-	if currentVersion != "dev" && !steam.Build {
-		go func() {
-			result, err := game.CheckLatest(currentVersion)
-			if err != nil || !result.IsNewer {
-				return
-			}
-			app.QueueUpdateDraw(func() {
-				m.update = true
-				m.buildView()
-			})
-		}()
-	}
-	return m
+	return newMainMenu(app, pages, engine, currentVersion)
 }
 
-// newMainMenu makes the menu and reads what it says. It asks the network
-// nothing.
+// newMainMenu makes the menu and reads what it says.
 func newMainMenu(app *appLoop, pages *nativePages, engine *game.GameEngine, currentVersion string) *mainMenu {
 	m := &mainMenu{
 		app: app, pages: pages, engine: engine, version: currentVersion,
@@ -160,13 +140,6 @@ func newMainMenu(app *appLoop, pages *nativePages, engine *game.GameEngine, curr
 	}
 	if app != nil {
 		m.buttons.wire(app)
-	}
-	m.checkUpdates = func() { showUpdateCheck(app, pages, currentVersion) }
-	if steam.Build {
-		// Steam delivers updates; the entry only says so.
-		m.checkUpdates = func() {
-			showUpdateMsg(app, pages, rowid.Line("ui.menu.newMainMenu.01", "Steam keeps this game up to date."))
-		}
 	}
 	m.refresh(true)
 	m.nativeHost = newNativeHost()
@@ -307,10 +280,7 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	m.view.plain = m.set.Tier == mapmodel.TierASCII
 	m.view.ages = len(m.engine.Rules().AgeKeys())
 	m.view.edition = menuEdition(m.version)
-	m.view.versions = []string{m.version}
-	if m.update {
-		m.view.versions = []string{m.version + rowid.Line("ui.menu.buildViewWith.09", " · update available (u)"), m.version + rowid.Line("ui.menu.buildViewWith.10", " · update (u)"), m.version}
-	}
+	m.view.version = m.version
 }
 
 // mainItems are the main menu's entries after Continue.
@@ -321,7 +291,6 @@ func (m *mainMenu) mainItems(badges []string) []menuItem {
 		menuItem{id: miBadges, label: rowid.Line("ui.menu.buildViewWith.04", "Badges"), key: 'b', extras: badges},
 		menuItem{id: miSettings, label: rowid.Line("ui.menu.settings.01", "Settings"), key: 's'},
 		menuItem{id: miAccounts, label: rowid.Line("ui.menu.buildViewWith.06", "Accounts"), key: 'a'},
-		menuItem{id: miUpdates, label: rowid.Line("ui.menu.buildViewWith.07", "Check for updates"), key: 'u'},
 		menuItem{id: miQuit, label: rowid.Line("ui.menu.buildViewWith.08", "Quit"), key: 'q'},
 	)
 }
@@ -664,8 +633,6 @@ func (m *mainMenu) open(id string) {
 		page := CreateAccountsPage(m.app, m.pages, m.engine, "splash")
 		m.pages.AddPage(accountsPage, page, true, true)
 		m.app.SetFocus(page)
-	case miUpdates:
-		m.checkUpdates()
 	case miQuit:
 		m.leave()
 		m.app.Stop()
@@ -680,7 +647,7 @@ func (m *mainMenu) continueGame() {
 	name := m.cur.Save.Name
 	if err := m.engine.LoadGame(name); err != nil {
 		// It was readable a moment ago: say what happened and read again.
-		showUpdateMsg(m.app, m.pages, rowid.Sprintf("ui.menu.continueGame.01", "Could not open '%s'.\n\n%v", name, err))
+		showMenuMsg(m.app, m.pages, rowid.Sprintf("ui.menu.continueGame.01", "Could not open '%s'.\n\n%v", name, err))
 		m.refresh(true)
 		return
 	}
