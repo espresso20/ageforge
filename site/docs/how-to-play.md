@@ -56,7 +56,7 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 ## The screen layout
 
 ```
-┌─ Ada · Magistrate ─────────────────────── Research complete ── Esc menu ─┐
+┌─ Ada · Magistrate ─────────────────────── Research complete ─ Esc pause ─┐
 │ Bronze Age  Year c. 2,300 BC  │  People 906/1,200   Morale 54%           │  the header: now
 │ To the Iron Age ████████░░ 49%  Knowledge ✓  People 2/3  Industry 1/2    │  the way to the next age
 │ Waiting on: Scriptorium 3/5 · Library 0/2        Short of:  Stone        │  what it waits on

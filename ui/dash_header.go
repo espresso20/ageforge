@@ -65,7 +65,7 @@ const (
 // does (the menu is what Esc opens when nothing is open).
 const headerEsc = "Esc"
 
-var headerMenu = rowid.E("ui.dash_header.headerMenu.01", "menu")
+var headerMenu = rowid.E("ui.dash_header.headerMenu.01", "pause")
 
 // headerAlert is a chip on the first row: a pending catastrophe or a
 // harbinger. Its words come in three lengths (text, short, and the mark

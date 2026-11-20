@@ -374,6 +374,7 @@ func (p *Painter) Shade(r image.Rectangle, toward Color, t float64) {
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		row := p.buf.Cells[y*p.buf.W+r.Min.X : y*p.buf.W+r.Max.X]
 		for x := range row {
+			row[x].Pic = 0 // a picture cannot be dimmed: the cell shows its ground
 			row[x].Fg = mixRGBA(row[x].Fg, to, t)
 			if !row[x].Clear() {
 				row[x].Bg = mixRGBA(row[x].Bg, to, t)

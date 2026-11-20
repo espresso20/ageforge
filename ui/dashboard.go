@@ -193,6 +193,9 @@ type Dashboard struct {
 	miniMap  *miniMap
 	body     *dashBody
 	mapLocal *mapSettings
+	// window is the window the game is in (nil in the terminal), for the
+	// pause card's display settings.
+	window WindowHost
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
 	mapOpen atomic.Bool
@@ -686,9 +689,7 @@ func (d *Dashboard) build() {
 			if d.inputField.GetText() == "" && d.economyTab.buildBox.closeOlder() {
 				return nil
 			}
-			d.engine.SaveGame(d.engine.ActiveSaveName())
-			d.engine.Stop()
-			d.pages.SwitchToPage("splash")
+			d.openPause()
 			return nil
 		// Economy tab scroll keys (always available since economy is permanent background)
 		case kit.KeyPgUp:
@@ -870,6 +871,12 @@ func (d *Dashboard) retitle() {
 // Order matters: catastrophe modal and age splash are checked first because they may
 // swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {
+	// The pause card owns the screen and the keyboard: a splash or modal opened
+	// now would take the focus from it, and its close would hand the focus to the
+	// Command box behind the dimmed town. What is pending shows after Resume.
+	if d.engine.Held() {
+		return
+	}
 	// Check for pending age splash (set by bus handler under engine lock)
 	if d.pendingAgeSplash != "" {
 		newAge := d.pendingAgeSplash

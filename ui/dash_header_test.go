@@ -278,8 +278,8 @@ func TestHeaderEscButton(t *testing.T) {
 	if len(keys) != 1 || keys[0].key.Code != kit.KeyEsc || keys[0].r.Min.Y != 0 {
 		t.Fatalf("the header's keys are %+v, want one Esc in the top edge", keys)
 	}
-	if !strings.Contains(d.headerTV.GetText(true), " Esc  menu ") {
-		t.Errorf("the button does not read Esc menu:\n%s", d.headerTV.GetText(true))
+	if !strings.Contains(d.headerTV.GetText(true), " Esc  pause ") {
+		t.Errorf("the button does not read Esc pause:\n%s", d.headerTV.GetText(true))
 	}
 	at := keys[0].r.Min.Add(image.Pt(1, 0))
 	st.mouse(kit.Mouse{Kind: kit.MouseMove, X: at.X, Y: at.Y})

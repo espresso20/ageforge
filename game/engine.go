@@ -137,6 +137,9 @@ type GameEngine struct {
 	running    bool
 	stopCh     chan struct{}
 	stopOnce   sync.Once
+
+	// hold is the pause card's hold on the tick loop (hold.go).
+	hold holdState
 	// exitMu makes SaveOnExit one at a time.
 	exitMu sync.Mutex
 	// calendar is the furthest the Advance panel has shown the town on its
@@ -895,7 +898,7 @@ func (ge *GameEngine) Start() {
 	timer := time.NewTimer(ge.getTickInterval())
 	defer timer.Stop()
 
-	lastAutosave := time.Now()
+	ge.markAutosave()
 
 	for {
 		select {
@@ -907,12 +910,17 @@ func (ge *GameEngine) Start() {
 				return
 			default:
 			}
+			// A held engine runs nothing: no tick, no autosave.
+			if ge.heldTick() {
+				timer.Reset(ge.getTickInterval())
+				continue
+			}
 			ge.safeTick()
 
 			// Periodic autosave (outside the tick lock) → overwrite the active save
 			// slot, not a fixed "autosave" file. ActiveSaveName takes its own RLock;
 			// safe here because we are outside the tick write lock.
-			if time.Since(lastAutosave) >= AutosaveInterval {
+			if ge.autosaveDue() {
 				if err := ge.SaveGame(ge.ActiveSaveName()); err != nil {
 					ge.mu.Lock()
 					ge.addLog(OfficeGame, "warning", rowid.Sprintf("game.engine.Start.01", "Autosave failed: could not write the save file (%v). Try saving by hand.", err))
@@ -935,7 +943,7 @@ func (ge *GameEngine) Start() {
 					}
 				}
 
-				lastAutosave = time.Now()
+				ge.markAutosave()
 			}
 
 			timer.Reset(ge.getTickInterval())
