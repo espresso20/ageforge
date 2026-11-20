@@ -663,9 +663,9 @@ func TestMenuFallsBackWithoutAnError(t *testing.T) {
 	}
 }
 
-// TestMenuBadgesOpenWithoutAGame: the badge case opens from the menu with
-// no game loaded, draws the account's badges, and Esc closes an open badge
-// first, then the case.
+// TestMenuBadgesOpenWithoutAGame: the Ranks screen opens from the menu with
+// no game loaded, reads the account's badges, and Esc goes back to the Ranks
+// tab first, then closes.
 func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 	r := newMenuRig(t)
 	r.press('b')
@@ -674,35 +674,20 @@ func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 	}
 	_, front := r.pages.GetFrontPage()
 	b := front.(*menuBadges)
-	if !b.account || len(b.views) == 0 {
-		t.Fatalf("the case has no badges to show: account %v, %d badges", b.account, len(b.views))
+	if b.model == nil || b.model.total == 0 {
+		t.Fatal("the screen has no badges to count")
 	}
 	if r.eng.Running() || r.eng.GetState().Tick != 0 {
 		t.Error("opening the case started a game")
 	}
-	sim := newSimScreen(t, 100, 30)
-	b.SetRect(0, 0, 100, 30)
-	drawOn(sim, b)
-	var text strings.Builder
-	for y := 0; y < 30; y++ {
-		for x := 0; x < 100; x++ {
-			ch, _, _, _ := sim.GetContent(x, y)
-			text.WriteRune(ch)
-		}
-		text.WriteByte('\n')
-	}
-	if !strings.Contains(text.String(), "earned") {
-		t.Errorf("the case does not show its count:\n%s", text.String())
-	}
-	// The case's own keys work, and Esc closes the open badge first.
-	r.key(kit.KeyRight, 0)
-	r.key(kit.KeyEnter, 0)
-	if !b.view.card {
-		t.Fatal("Enter did not open the selected badge")
+	// The screen's own keys work, and Esc leaves a list before the screen.
+	r.key(kit.KeyTab, 0)
+	if b.view.tab != tabAll {
+		t.Fatalf("Tab did not open the all-badges tab: tab %d", b.view.tab)
 	}
 	r.key(kit.KeyEsc, 0)
-	if b.view.card || r.front() != menuBadgesPage {
-		t.Fatalf("the first Esc should close the badge and leave the case open: card %v, front %q", b.view.card, r.front())
+	if b.view.tab != tabRanks || r.front() != menuBadgesPage {
+		t.Fatalf("the first Esc should go back to Ranks and leave the screen open: tab %d, front %q", b.view.tab, r.front())
 	}
 	r.key(kit.KeyEsc, 0)
 	if r.front() != "splash" || !r.m.active {

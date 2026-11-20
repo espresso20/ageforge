@@ -1,20 +1,37 @@
 # Badges
 
-A badge is a permanent mark on your account for something you did in a game. There are 553 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A badge is a permanent mark on your account for something you did in a game. There are 563 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
 
-Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
+A badge gives points, sometimes a title or a theme. Its points raise the rank of a worker domain, and each rank adds 2% to that domain's output (see [Ranks](#ranks)). They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
 ## Seeing your badges
 
-Open the badge case to look through them:
+Open the Ranks screen to look through them:
 
 ```
 badges
 ```
 
-<figure class="screen" data-screen="badge-families"><figcaption>The badge case as it opens: every family you have something in sight of, with the selected badge's coin large beside the grid.</figcaption></figure>
+<figure class="screen" data-screen="badge-ranks"><figcaption>The Ranks screen: a rank for each worker domain, highest first.</figcaption></figure>
 
-[Accounts & Recovery](account.md#the-badge-case) describes the case itself: what each coin shows, the tabs, the detail card and the plain list. The Stats panel shows a short digest of your badges. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
+<figure class="screen" data-screen="badge-list"><figcaption>All badges, by domain.</figcaption></figure>
+
+[Accounts & Recovery](account.md#ranks) describes the screen itself: the tabs and the keys. The Stats panel shows a one-line digest of your badges. `account badges` opens the screen on every badge.
+
+## Ranks
+
+Every badge belongs to one worker domain. A domain's rank comes from the points of the badges earned in it, across all your runs. The titles are placeholders: Apprentice, Journeyman, Adept, Expert, Master, Grandmaster.
+
+| Rank | Title | Points |
+|---|---|---|
+| 1 | Apprentice | 25 |
+| 2 | Journeyman | 100 |
+| 3 | Adept | 190 |
+| 4 | Expert | 320 |
+| 5 | Master | 460 |
+| 6 | Grandmaster | 700 |
+
+Each rank adds 2% to the output of that domain's workers, so a Grandmaster domain adds 12%. Adept also puts the domain's title beside the town's name. The Grandmaster theme color is not in yet. Dev commands never take rank points away.
 
 ## How a badge is earned
 
@@ -49,9 +66,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a score
 
 A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 12,865 points.
 
-A legendary coin is gold, with a rim that runs through the colors and turning rays behind it when motion is on. Eight legendary badges carry a sign of their own instead of their family's.
 
-<figure class="screen" data-screen="badge-legend"><figcaption>A legendary special at full size, with a sign of its own. Eight legendary badges have one: seven legendary specials and the badge for the last age.</figcaption></figure>
 
 ## The families
 
@@ -81,7 +96,7 @@ Three more badges sit outside the families. They are worth no points, count towa
 
 ## Ladders
 
-A ladder is a set of badges that share one count and ask for more of it at each rung. The badge case draws a ladder on a line of its own, lowest rung first, with how far the next rung is.
+A ladder is a set of badges that share one count and ask for more of it at each rung. A ladder runs lowest rung first.
 
 ### Lifetime ladders
 
@@ -160,7 +175,7 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 
 ### Resource ladders
 
-Each resource has a ladder: Trickle, Stream, River and Flood. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is 25 full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. Soldiers have a ladder too, and it counts the soldiers who take their posts. The badge case shows each rung's number and how far along you are.
+Each resource has a ladder: Trickle, Stream, River and Flood. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is 25 full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. Soldiers have a ladder too, and it counts the soldiers who take their posts. Each rung has its number.
 
 Three of them, as examples:
 
@@ -172,15 +187,15 @@ Three of them, as examples:
 
 ## What stays hidden
 
-The badge case never names something the game has not shown you yet:
+The Ranks screen never names something the game has not shown you yet:
 
 - A badge for reaching an age shows once that age is your next age, because the long bar in the header already names it. Badges tied to an age (its wonder, its Maximalist and Research badges, and the lineages, resources, payrolls and missions that begin in it) stay hidden until you reach that age.
 - A badge about a civilization or a harbinger stays hidden until you have met it, one about an awakening until it happens, and one about a catastrophe until its warning names it or it strikes.
 - The badge for wearing a theme that a badge unlocks stays hidden until you hold the theme.
 - A family with nothing in sight has no tab and no heading until you have reached the last age.
-- The counts cover what you can see. `account badges` starts with a line such as `3 of 127 earned, 15 points, ??? hidden`. The game does not say how many badges are hidden until an account has reached the last age.
+- The counts cover what you can see. The game does not say how many badges are hidden until an account has reached the last age.
 
-**14 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
+**14 badges are secret.** A secret badge shows a one-line hint and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
 
 ## Titles
 
@@ -207,7 +222,7 @@ Six more titles come with badges, not with the score:
 | The Undying | Enduring every catastrophe and the Last Passage |
 | Hut Magnate | A secret badge |
 
-You wear one title at a time. It shows in the badge case's top bar and, once you wear anything but Settler and the window has room, beside your account's name in the header's top edge.
+You wear one title at a time. Once you wear anything but Settler and the window has room, beside your account's name in the header's top edge.
 
 ```
 title

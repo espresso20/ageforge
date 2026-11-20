@@ -893,19 +893,13 @@ func TestWriteSiteScreens(t *testing.T) {
 	t.Logf("wrote %d screens to %s: %d bytes", len(shots.bytes), out, total)
 }
 
-// writeBadgeScreens takes the badge case's pictures: a badge's card on the
-// dashboard, the case, and one badge's detail. Badges belong to an account,
-// which the game above is played without, so these have a stage of their
-// own: a new account (in the test's own data folder, never the player's)
-// and a named game on it, played through the Primitive and Stone Ages the
-// same way. That play earns the Stone Age's badge and the first Housing
-// rung for real. Two more liberties, and no others:
-//
-//   - the account's ten prestiges are reported through the engine's test
-//     hook, which stands in for ten runs of play: they earn three rungs of
-//     the prestige ladder and leave the last one part way;
-//   - the clock badges are dated by is pinned, so the date in the detail is
-//     the same on every run.
+// writeBadgeScreens takes the Ranks screen's pictures: the ranks, and the
+// all-badges list. Badges belong to an account, which the game above is played
+// without, so these have a stage of their own: a new account (in the test's
+// own data folder, never the player's) and a named game on it, played through
+// the Primitive and Stone Ages the same way. One liberty, and no other: the
+// account's ten prestiges are reported through the engine's test hook, which
+// stands in for ten runs of play.
 //
 // The main menu's two pictures are taken on the same account: the first
 // page before it has a game, and the town page at the end. One liberty
@@ -926,11 +920,6 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	shots.takeMenu(s.eng, "menu-first")
 	must(t, s.eng.StartNewNamedGame("Rome"))
 	s.eng.SeedRNG(siteScreensSeed)
-	still := time.Unix(0, 0)
-	s.d.badgePanel.start, s.d.badgePanel.now = still, func() time.Time { return still }
-	// The coins stand still for the wiki: on a stopped clock the picked coin
-	// would be caught in the middle of its turn.
-	s.d.badgePanel.settings = func() mapSettings { m := s.d.mapSettings(); m.Motion = false; return m }
 
 	s.toBronze()
 	s.dismiss() // the Bronze Age's splash
@@ -940,92 +929,19 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		s.eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 	}
 	s.d.refresh() // the dashboard announces what was earned
-	// The earned-badge card, whole and still: motion off and a clock held
-	// fixed (a still card keeps its place for its whole life, which the
-	// wall clock would run out).
-	was := s.d.mapSettings().Motion
-	if err := s.eng.Account().SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
-	clock := time.Unix(0, 0)
-	s.d.fxNow = func() time.Time { return clock }
-	shots.take(s, "badge-toast")
-	s.d.fxNow = nil
-	if err := s.eng.Account().SetMotion(was); err != nil {
-		t.Fatal(err)
-	}
-	s.d.moment = badgeMoment{}
 
-	// The case as it opens: the All tab, every family in sight under its
-	// heading, on an account a few ages in.
 	s.open("badges", "")
-	p := s.d.badgePanel
-	if p.view.tab != caseTabAll {
-		t.Fatalf("the case opened on the tab %q", p.view.tab)
+	if s.d.badgePanel.view.tab != tabRanks {
+		t.Fatalf("badges opened the tab %d", s.d.badgePanel.view.tab)
 	}
-	shots.take(s, "badge-families")
+	shots.take(s, "badge-ranks")
 	s.close()
 
-	// The Ladders tab, on the gold rung of the prestige ladder: earned
-	// rungs of three tiers, rungs still to earn, and each ladder's count.
-	const rung = "ladder.prestiges.3"
-	s.open("badges ladders", "")
-	if p.view.tab != "ladder" {
-		t.Fatalf("badges ladders opened the tab %q", p.view.tab)
+	s.open("badges all", "")
+	if s.d.badgePanel.view.tab != tabAll {
+		t.Fatalf("badges all opened the tab %d", s.d.badgePanel.view.tab)
 	}
-	for i := 0; p.view.sel != rung; i++ {
-		if i > 20 || !p.routeKey(newKey(kit.KeyRight, 0, 0), "") {
-			t.Fatalf("the arrows never reached %s (on %s)", rung, p.view.sel)
-		}
-	}
-	views, sum := s.eng.Badges()
-	seen := map[string]bool{}
-	for _, v := range views {
-		switch {
-		case v.Hidden:
-			seen["hidden"] = true
-		case v.Earned:
-			seen[v.Tier] = true
-		default:
-			seen["locked"] = true
-		}
-	}
-	for _, want := range []string{"bronze", "silver", "gold", "locked", "hidden"} {
-		if !seen[want] {
-			t.Fatalf("the staged account has no %s badge to show: %+v", want, sum)
-		}
-	}
-	shots.take(s, "badge-case")
-	s.close()
-
-	// One badge's detail, by its name.
-	s.open("badges serial reincarnator", "")
-	if !p.view.card || p.view.sel != rung {
-		t.Fatalf("the detail did not open on %s", rung)
-	}
-	shots.take(s, "badge-detail")
-	s.close()
-
-	// A legendary special with a sign of its own: every milestone chain
-	// finished in one run. It is not a secret, so the wiki may show it.
-	const legend = "special.six_for_six"
-	state := s.eng.GetState()
-	if def, ok := state.Ruleset().Badge(legend); !ok || def.Hint != "" || def.Tier != config.BadgeLegendary {
-		t.Fatalf("%s is not a legendary badge the wiki may show: %+v", legend, def)
-	}
-	for _, chain := range state.Ruleset().MilestoneChains() {
-		s.eng.ReportForTest(config.BadgeEvChain, chain.Key)
-	}
-	s.d.refresh()
-	s.quiet()
-	s.open("badges six for six", "")
-	if !p.view.card || p.view.sel != legend {
-		t.Fatalf("the detail did not open on %s (on %s)", legend, p.view.sel)
-	}
-	if m := medalOf(viewOfBadge(t, s.eng, legend)); m.special == "" || m.state != medalEarned {
-		t.Fatalf("%s has no sign of its own: %+v", legend, m)
-	}
-	shots.take(s, "badge-legend")
+	shots.take(s, "badge-list")
 	s.close()
 
 	// The menu with a game: the town of the first stage, as this account's
@@ -1036,19 +952,6 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	must(t, os.WriteFile(filepath.Join(game.DataDir(), "saves", siteMenuGame+".json"), shots.town, 0o644))
 	must(t, acct.SetMainGame(siteMenuGame))
 	shots.takeMenu(s.eng, "menu")
-}
-
-// viewOfBadge is one badge of the engine's account, as the case sees it.
-func viewOfBadge(t *testing.T, eng *game.GameEngine, key string) game.BadgeView {
-	t.Helper()
-	views, _ := eng.Badges()
-	for _, v := range views {
-		if v.Key == key {
-			return v
-		}
-	}
-	t.Fatalf("no badge %s", key)
-	return game.BadgeView{}
 }
 
 // --- the file format ----------------------------------------------------------

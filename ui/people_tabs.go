@@ -9,6 +9,8 @@ import (
 	"github.com/espresso20/ageforge/rowid"
 )
 
+var txtNext = rowid.E("ui.badge_case.caseTabs.02", "Next")
+
 // people_tabs.go is the four tabs of the People panel.
 
 // num prints a whole count, written short when it is long.

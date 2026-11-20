@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"image"
 	"math"
 	"regexp"
 	"strings"
@@ -46,7 +45,6 @@ type hallCtx struct {
 	duo      bool
 	gap      int // rows between two blocks
 	bg, text kit.Color
-	coins    []hallCoin // the badges' coins, painted over the text
 }
 
 func newHallCtx(w, rows int, tier mapmodel.GlyphTier, mo hallMotion) *hallCtx {
@@ -565,47 +563,14 @@ func (c *hallCtx) rarityInk(word string) kit.Color {
 	return c.role(theme.RoleDim)
 }
 
-// hallCoin is a badge's coin on the page: the cells it covers, in the
-// page's own coordinates, its look, and its place in the order of the
-// page, which sets off its show after the ones before it.
-type hallCoin struct {
-	r    image.Rectangle
-	look coinLook
-	i    int
-}
-
-// The sizes of a coin on the page, in cells: the small layout's, which is
-// the Badges shelf's, and the large one's.
-const (
-	hallMiniCoinW, hallMiniCoinH = 7, 3
-	hallCoinW, hallCoinH         = 15, 7
-)
-
-// medalOn leaves the room for a badge's coin with its top left corner at
-// (x, y), blank, and records the coin: a small one where there is not room
-// for a large one. The page's owner paints it as a picture.
-func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
-	w, h, art := hallCoinW, hallCoinH, medalArt
-	if mini {
-		w, h, art = hallMiniCoinW, hallMiniCoinH, coinArt
-	}
-	look := lookOf(medalOf(v), medalSign(v.Family), art)
-	c.coins = append(c.coins, hallCoin{r: image.Rect(x, y, x+w, y+h), look: look, i: len(c.coins)})
-}
-
-// badges draws the cards: art, name, and the rarity in its colour, in a
-// frame of that colour.
+// badges draws the cards: name, and the rarity in its colour, in a frame of
+// that colour.
 func (c *hallCtx) badges(list []game.BadgeView) {
 	if len(list) == 0 {
 		c.paragraph(rowid.Line("ui.epoch_hall.hallFrontText.05", "No badges earned yet."), c.role(theme.RoleDim))
 		return
 	}
 	gap := 2
-	mini := c.rows < 36 || c.cw < 110
-	artW, artH := hallCoinW, hallCoinH
-	if mini {
-		artW, artH = hallMiniCoinW, hallMiniCoinH
-	}
 	longest := 0
 	for _, b := range list {
 		for _, wd := range strings.Fields(b.Name) {
@@ -613,7 +578,7 @@ func (c *hallCtx) badges(list []game.BadgeView) {
 		}
 		longest = max(longest, runeLen(b.Rarity))
 	}
-	cardW := max(min((c.cw-(len(list)-1)*gap)/len(list), 28), 14, artW+4, longest+4)
+	cardW := max(min((c.cw-(len(list)-1)*gap)/len(list), 28), 14, longest+4)
 	per := min(max((c.cw+gap)/(cardW+gap), 1), len(list))
 	nrows := (len(list) + per - 1) / per
 	per = (len(list) + nrows - 1) / nrows
@@ -626,13 +591,12 @@ func (c *hallCtx) badges(list []game.BadgeView) {
 			names[i] = wrapText(b.Name, cardW-4)
 			lines = max(lines, len(names[i]))
 		}
-		ch := 1 + 1 + artH + 1 + lines + 1 + 1
+		ch := 1 + 1 + lines + 1 + 1
 		x := c.left(len(row)*cardW + (len(row)-1)*gap)
 		for i, b := range row {
 			rar := c.rarityInk(b.Rarity)
 			c.box(x, c.y, cardW, ch, rar, &ground, b.Rarity == "legendary" || b.Rarity == "epic")
-			c.medalOn(b, x+(cardW-artW)/2, c.y+2, mini)
-			ty := c.y + 2 + artH + 1
+			ty := c.y + 2
 			for k, l := range names[i] {
 				c.g.text(x+(cardW-runeLen(l))/2, ty+k, l, c.role(theme.RoleBright), true)
 			}

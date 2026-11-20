@@ -519,36 +519,37 @@ See [Saving & Loading](saving-and-loading.md) for branching, the save tree, row 
 
 | Command | Description |
 |---|---|
-| `badges` | Open the badge case: every badge your account holds or can earn. The prompt keeps working while it is open. |
-| `badges <family>` | Open the case on one family's tab, by its name: `ages`, `wonders`, `lineages`, `ladders`, `specials` and the rest. A family you have nothing in sight of yet has no tab to open. |
-| `badges all` | Open the case on the All tab, which shows every family. |
-| `badges next` | Open the case on the badges you are closest to earning, nearest first. |
-| `badges <name>` | Open one badge's detail by its name, or a part of it (`badges hut hoarder`, `badges rock`). Only badges you can already see are found. |
+| `badges` | Open the Ranks screen: a rank for each worker domain, built from the badges earned in it. The prompt keeps working while it is open. |
+| `badges ranks` | Open it on the Ranks tab, the same as plain `badges`. |
+| `badges all` | Open it on every badge, by domain. |
+| `badges recent` | Open it on the badges earned latest first. |
+| `badges <domain>` | Open one worker domain's badges, by its key (`food`, `lumber`, `masonry` and the rest). |
+| `badges <name>` | Open the list on one badge by its name, or a part of it (`badges hut hoarder`, `badges rock`). Only badges you can already see are found. |
 | `title` | List the titles your account holds, and mark the one it wears. |
 | `title <name>` | Wear a title you hold. The start of its name is enough. |
 | `title default` | Go back to the title your badge score holds. |
 
 ```
 badges
-badges lineages
-badges next
+badges all
+badges recent
 badges rock solid
 title
 title survivor
 ```
 
-The badge case leaves the prompt working and takes only the keys that print nothing:
+The Ranks screen leaves the prompt working and takes only the keys that print nothing:
 
 | Key | Action |
 |---|---|
-| Arrows | Move from badge to badge; the grid follows |
-| `Tab` / `Shift+Tab` | The next or the previous family's tab |
-| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`) | A page up and down |
-| `Home` / `End` | The first badge and the last |
-| `Enter` | Open the selected badge's detail, and close it |
-| `Esc` | Close the detail, then the case |
+| `↑` / `↓` | Pick a domain on Ranks, a badge on the lists |
+| `Enter` | Open the picked domain's badges |
+| `Tab` / `Shift+Tab` | Cycle Ranks, All badges and Recent |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`) | A page up and down on the lists |
+| `Home` / `End` | The first and the last |
+| `Esc` | Back to Ranks, then close |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. Every earned badge's coin moves, and `motion off` holds them still. See [Badges](badges.md) for the badges themselves, their ladders, titles and the themes they give, and [the badge case](account.md#the-badge-case) for what the case shows. The title you wear belongs to your account and needs one to be loaded.
+The mouse does the same: click a tab or a row, double-click a domain to open its badges, scroll the wheel to move the pick. With something typed, `Tab` and `Enter` act on the prompt instead. See [Badges](badges.md) for the badges, ranks, titles and themes, and [Ranks](account.md#ranks) for what the screen shows. The title you wear belongs to your account and needs one to be loaded.
 
 ---
 
@@ -559,7 +560,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. The case draw
 | `account` | Show the active account's short ID and what a backup is (the recovery code restores identity, not progress). |
 | `account show code` | Show the active account's recovery code, and nothing else, in a small window that `Esc` closes. The code is not written to the game log, so it is not in the Logs panel, a save or a dump. |
 | `account list` | List the local accounts on this machine, marking the active one. |
-| `account badges` | List the active account's badges as text, family by family: its points and title, each family's earned badges and the first four still to earn. The Stats panel has a shorter digest, and `badges` opens the badge case, which shows them all. See [Badges](badges.md). |
+| `account badges` | Open the Ranks screen on every badge. The Stats panel has a one-line digest. See [Badges](badges.md). |
 | `account switch <name>` | Switch to a local account by its name (changes which account's saves you see). During a game, it saves the game to its own account and returns to the main menu. |
 | `account recover <code> [confirm]` | Restore your identity from a recovery code on a new machine or after a reinstall, and switch to it. It lands in its own slot and never overwrites an account. Add `confirm` when the game asks for it (when the account in use holds any progress). |
 | `account export [path]` | Write a signed account backup bound to its account ID (unlocks, stats, badges, prefs). The default is `account-<id8>-export.json` inside that account's slot, or a path you give. It also takes a full backup of the account. |
@@ -593,7 +594,7 @@ The Settings page has a Font row (`f`) that switches between Pixel and JetBrains
 | `theme` | Open the Themes picker to browse palettes with live preview (`↑` and `↓` preview, `Enter` keeps, `Esc` or `q` reverts). It is also on the main menu, under Settings. |
 | `theme list` | List every theme by name and key, marking the active one, with each theme's light or dark variant, which are accessible, and how to unlock the ones you haven't. |
 | `theme <key>` | Switch directly to a theme by key (for example `theme high_contrast`). |
-| `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the main menu, the badges that move in the badge case, and a theme's ambient effect. `on` brings it back (default on). Saved per account. |
+| `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the main menu, and a theme's ambient effect. `on` brings it back (default on). Saved per account. |
 
 ```
 theme
