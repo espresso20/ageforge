@@ -12,7 +12,7 @@ When you choose **New game** on the [main menu](how-to-play.md#the-main-menu), t
 
 ## Where saves live
 
-Save files go in **your active account's** saves folder, `data/accounts/<account_id>/saves/*.json`, inside the `data/` folder next to the `ageforge` binary. There is one file per save. The `save` and `load` commands and the **Load Game** browser all read and write the same files, so a save made one way shows up the other.
+Save files go in **your active account's** saves folder, `data/accounts/<account_id>/saves/*.json`, in inside the game's data folder: `data/` beside the `ageforge` binary in a build from source, or your user config folder in a release build (see [Updating](getting-started.md#updating)). There is one file per save. The `save` and `load` commands and the **Load Game** browser all read and write the same files, so a save made one way shows up the other.
 
 Saves are **per-account**: each account keeps its own `saves/` folder, so switching accounts changes which saves you see, and one account's saves never mix with another's. See [Account & Recovery](account.md) for how accounts and their slots are laid out.
 

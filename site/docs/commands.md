@@ -534,7 +534,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 
 With no panel open, `Esc` saves to your active save, stops the game and returns to the main menu. With a panel open, it closes the panel.
 
-The game autosaves to your active save every 60 seconds and again when `Esc` takes you to the main menu. Saves live in your active account's slot, `data/accounts/<id>/saves/`, inside the `data/` folder next to the `ageforge` binary.
+The game autosaves to your active save every 60 seconds and again when `Esc` takes you to the main menu. Saves live in your active account's slot, `data/accounts/<id>/saves/`, inside the game's data folder: `data/` beside the `ageforge` binary in a build from source, or your user config folder in a release build (see [Updating](getting-started.md#updating)).
 
 In the Load Game browser:
 

@@ -1,6 +1,6 @@
 # Accounts & Recovery
 
-AgeForge is a local game. There is no server, login screen or cloud. Everything lives on your machine, in the `data/` folder next to the `ageforge` program. Your accounts are small files in that folder. They give your civilizations a stable identity and hold what you earn across games: theme unlocks, lifetime stats, badges and your display settings.
+AgeForge is a local game. There is no server, login screen or cloud. Everything lives on your machine, in the game's data folder: `data/` beside the `ageforge` program in a build from source, or your user config folder in a release build (see [Updating](getting-started.md#updating)). Your accounts are small files in that folder. They give your civilizations a stable identity and hold what you earn across games: theme unlocks, lifetime stats, badges and your display settings.
 
 You can keep several accounts on one machine, with one active at a time. This page covers how accounts are laid out on disk, how to switch between them, how to export, back up and import them, what the recovery code does and does not do, and how to carry an identity to another machine.
 
