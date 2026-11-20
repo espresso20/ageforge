@@ -41,7 +41,6 @@ func tradePage(state game.GameState) deckPage {
 	pg.Head = []xseg{
 		{rowid.Line("ui.overlay_trade.tradePage.05", "Routes "), xDim},
 		{rowid.Sprintf("ui.overlay_trade.tradePage.06", "%d running", count["running"]+count["short"]+count["suspended"]), xGood}, {" · ", xFaint},
-		{rowid.Sprintf("ui.overlay_trade.tradePage.07", "%d open", count["ready"]), xText}, {" · ", xFaint},
 		{rowid.Sprintf("ui.overlay_trade.tradePage.08", "%d locked", count["locked"]), xDim},
 	}
 	pg.Notes = append(pg.Notes, allyTradeNotes(state.Diplomacy)...)
@@ -56,8 +55,8 @@ func tradePage(state game.GameState) deckPage {
 			Why:   r.why, Quiet: r.state == "locked"}
 		if r.cmd != "" {
 			c.Command, c.Action = r.cmd, rowid.Line("ui.trade_board.tradePage.01", "stop")
-			c.Danger = r.state != "ready" && r.state != "paused"
-			if r.state == "ready" || r.state == "paused" {
+			c.Danger = r.state != "paused"
+			if r.state == "paused" {
 				c.Action = rowid.Line("ui.trade_board.tradePage.02", "start")
 			}
 		}

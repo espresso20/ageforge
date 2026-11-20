@@ -55,7 +55,9 @@ type TradeManager struct {
 
 // ActiveRoute is a route the player has started.
 type ActiveRoute struct {
-	Key    string
+	Key string
+	// Paused: stopped by the player. Only StopRoute sets it and StartRoute
+	// clears it, so a start on its own never touches it.
 	Paused bool
 	// The rest is recomputed by Flows every time the rates are, not saved.
 	// Run is the share of its flow the route moves now (0 to 1): 0 when
@@ -323,6 +325,18 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 
 	tm.activeRoutes[key] = &ActiveRoute{Key: key}
 	return nil
+}
+
+// readyKeys are the unstarted routes whose age and building count are met.
+func (tm *TradeManager) readyKeys(buildings *BuildingManager, age string, ageOrder map[string]int) []string {
+	var keys []string
+	for _, def := range tm.routeList {
+		if _, active := tm.activeRoutes[def.Key]; !active && ageOrder[def.MinAge] <= ageOrder[age] &&
+			buildings.CountFrom(def.RequiredBld) >= def.MinCount {
+			keys = append(keys, def.Key)
+		}
+	}
+	return keys
 }
 
 // StopRoute pauses a trade route: it stays on the list at 0 until started.

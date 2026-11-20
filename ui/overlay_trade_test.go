@@ -17,10 +17,10 @@ func tradeState() game.GameState {
 			Export: map[string]float64{"food": 10}, Import: map[string]float64{"wood": 8}},
 		{Name: "Gold Caravan", Key: "gold_caravan", Disrupted: true, DisruptedBy: "gold",
 			Export: map[string]float64{"stone": 50}, Import: map[string]float64{"gold": 5}},
+		{Name: "Stone Trade", Key: "stone_trade", Paused: true,
+			Export: map[string]float64{"wood": 15}, Import: map[string]float64{"stone": 12}},
 	}
 	s.Trade.AvailableRoutes = []game.TradeRouteInfo{
-		{Name: "Stone Trade", Key: "stone_trade", CanStart: true, Description: "Send wood to the quarries for stone.",
-			Export: map[string]float64{"wood": 15}, Import: map[string]float64{"stone": 12}},
 		{Name: "Spice Trade", Key: "spice_trade", RequiredBld: "port", MinCount: 1,
 			Export: map[string]float64{"gold": 100}, Import: map[string]float64{"food": 200}},
 	}
@@ -41,7 +41,7 @@ func TestTradePage_Cards(t *testing.T) {
 	}
 	out := deckText(pg)
 	wantAll(t, "trade page", out,
-		"2 running", "1 open", "1 locked", // counts
+		"2 running", "1 locked", // counts
 		"⚠ Routes importing gold are suspended (a war, or your embargo).",
 		"Lift your embargo with: diplomacy neutral <civ>",
 		"-10 food/s", "+8 wood/s", "Suspended: gold imports are blockaded",
@@ -129,10 +129,5 @@ func TestTradePageLocksRoutesWithTheFeature(t *testing.T) {
 	c, ok := pg.card(0)
 	if !ok || c.Command != "" || c.Why == "" || !strings.Contains(c.Why, "The Wheel") {
 		t.Errorf("with trade routes locked the card is %+v; want no command and the refusal that names The Wheel", c)
-	}
-	st.Features[config.FeatureTradeRoutes] = game.FeatureState{Open: true}
-	pg = tradePage(st)
-	if c, _ := pg.card(0); c.Command != "trade route start local_barter" || c.Why != "" {
-		t.Errorf("with trade routes open the card is %+v; want its start command", c)
 	}
 }

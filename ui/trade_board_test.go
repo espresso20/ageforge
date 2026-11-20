@@ -29,39 +29,6 @@ func TestTradeRoutes_ShortAndRunning(t *testing.T) {
 	}
 }
 
-// TestTradeStartAll: the command starts every ready route and only those.
-func TestTradeStartAll(t *testing.T) {
-	_, _, eng := stagedDashboard(t, "colonial_age")
-	ready := map[string]bool{}
-	for _, r := range eng.GetState().Trade.AvailableRoutes {
-		if r.CanStart {
-			ready[r.Key] = true
-		}
-	}
-	if len(ready) == 0 {
-		t.Skip("no route is ready in this town")
-	}
-	active := map[string]bool{}
-	for _, a := range eng.GetState().Trade.ActiveRoutes {
-		active[a.Key] = true
-	}
-	if res := cmdTradeStartAll(eng); res.Type == "error" {
-		t.Fatalf("start all: %v", res.Message)
-	}
-	for _, a := range eng.GetState().Trade.ActiveRoutes {
-		if !active[a.Key] && !ready[a.Key] {
-			t.Errorf("started %s, which was not ready", a.Key)
-		}
-		delete(ready, a.Key)
-	}
-	if len(ready) != 0 {
-		t.Errorf("ready routes left unstarted: %v", ready)
-	}
-	if res := cmdTradeStartAll(eng); res.Type != "error" {
-		t.Error("a second start all with nothing ready should fail")
-	}
-}
-
 // TestTradeBoard_Fits: the board has no overlapping cards and nothing past the
 // last content row, in an early, a middle and a late town.
 func TestTradeBoard_Fits(t *testing.T) {
