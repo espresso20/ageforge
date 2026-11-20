@@ -32,8 +32,8 @@ func TestDealSizeFollowsTheTownsIncome(t *testing.T) {
 	}
 }
 
-// TestFullestIsTheMostHeldAgainstTheTown: a want or favor deal asks for what
-// the town holds most of, counted against a good stock of each: the same
+// TestFullestIsTheMostHeldAgainstTheTown: a price is paid in what the
+// town holds most of, counted against a good stock of each: the same
 // amount is more of the resource whose stock is small.
 func TestFullestIsTheMostHeldAgainstTheTown(t *testing.T) {
 	env := dealEnv{

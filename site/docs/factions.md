@@ -114,14 +114,14 @@ Drift runs alongside natural drift and the rival or embargo drain, and opinion s
 
 Every civilization you have met offers a small, rotating set of **offers**. Each is a lump of your goods for one **gift** that goods cannot buy. Nothing is written by hand for each civilization: its specialty, personality and strength, your opinion with it and your own output decide what it offers. The [Trade panel](trade.md) lists every open offer, with an Accept button on each, and an Active gifts block under the list shows the boosts running and the know-how earned; the Factions panel shows how many each civilization has open and its know-how. `diplomacy deals [civ]` lists them and `diplomacy accept <civ> <n>` takes one. Goods for goods are the job of [trade routes](trade.md).
 
-An offer is worded from your side, the same way everywhere: `<kind>: give <lot> → <gift>`, for example `Boost: give 876M iron ore → +25% stone 20m`.
+An offer is worded from your side, the same way everywhere: `<kind>: give <lot> → <gift>`, for example `Boost: give 876M iron ore → +25% stone 52m`.
 
 | Gift | You get | You give |
 |---|---|---|
-| Boost | +25% of your gross output of one resource you make, for 20 minutes (a resource the civilization's specialty names is preferred). A boost already running on that resource gets the time added | 0.6 of what the extra output is worth over the run |
-| Research | instant progress on the research under way, 1.25 times the lot's worth at research's price level, never more than it still needs. Only offered while something is being researched | a lot of goods |
+| Boost | +25% of your gross output of one resource you make, for 20 minutes of the base curve, which the pacing stretch makes 52 minutes at the base tick in every age that has offers (a resource the civilization's specialty names is preferred). A boost already running on that resource gets the time added | 0.6 of what the extra output is worth over the run |
+| Research | instant progress on the research under way, 1.25 times the lot's worth at research's price level, never more than it still needs. Only offered while something is being researched | a lot of goods (paid in proportion if the tech needs less than offered by the time you accept) |
 | People | N workers who join the idle pool: N = the lot's worth over the food one worker eats in one rotation of offers, at food's price level. Only offered when the homes have room | a lot of goods |
-| Know-how | the civilization's own perk for the rest of the run: +5% of your gross output of its specialty. Once per civilization per run. Offered at opinion 50 or more, or allied | 10 price units of the age |
+| Know-how | the civilization's own perk for the rest of the run: +5% of your gross output of its specialty. Once per civilization per run. Offered at opinion 50 or more, or allied, and refused if the opinion has fallen since | 10 price units of the age |
 
 Boosts show as a Gifts line in the rate of the resource. A boost ends on time while you are away, and time away produces the boost's extra only while it runs. Boosts and earned know-how are saved with your game.
 

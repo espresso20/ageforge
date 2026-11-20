@@ -2185,7 +2185,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		return infoReply(rowid.Line("ui.input.cmdDiplomacyDeals.01", "You have not met anyone to trade with yet. Scouting expeditions make first contact."))
 	}
-	lines = append(lines, theme.Paint(theme.RoleDim, rowid.Line("ui.input.cmdDiplomacyDeals.02", "Take one with: diplomacy accept <civ> <n> (or plan deal <civ> <n>)")))
+	lines = append(lines, theme.Paint(theme.RoleDim, rowid.Line("ui.input.cmdDiplomacyDeals.02", "Take one with: diplomacy accept <civ> <n>")))
 	return infoReply(strings.Join(lines, "\n"))
 }
 
