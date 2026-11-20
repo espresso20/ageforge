@@ -354,7 +354,7 @@ func (a *appLoop) Frame(dst *kit.Buffer) {
 	defer a.frameMu.Unlock()
 	dst.W, dst.H = a.front.W, a.front.H
 	dst.Cells = append(dst.Cells[:0], a.front.Cells...)
-	dst.Cursor, dst.CursorOn = a.front.Cursor, a.front.CursorOn
+	dst.Cursor, dst.CursorOn, dst.CursorBig = a.front.Cursor, a.front.CursorOn, a.front.CursorBig
 	dst.Pointer = a.front.Pointer
 	dst.Pics = append(dst.Pics[:0], a.front.Pics...)
 }
