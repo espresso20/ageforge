@@ -632,6 +632,23 @@ func (dm *DiplomacyManager) GetTradeBonus(resourceKey string) float64 {
 	return bonus
 }
 
+// AllyShares is the bonus allied civilizations add to an imported resource
+// and one share for each, in roster order (the same sum as GetTradeBonus).
+func (dm *DiplomacyManager) AllyShares(resourceKey string) (float64, []PayShare) {
+	bonus := 0.0
+	var shares []PayShare
+	for _, def := range dm.factionList {
+		fs, ok := dm.factions[def.Key]
+		if !ok || fs.Status != "allied" || fs.AtWar || def.Specialty != resourceKey {
+			continue
+		}
+		b := dm.AllyBonus(def)
+		bonus += b
+		shares = append(shares, PayShare{Label: def.Name, Percent: float64(b * 100), Kind: ShareAlly})
+	}
+	return bonus, shares
+}
+
 // DisruptedResources returns the set of specialty resources currently under
 // trade disruption: a resource is disrupted if any discovered civ that
 // specialises in it is AtWar with the player OR has been put under embargo.

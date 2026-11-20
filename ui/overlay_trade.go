@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -34,93 +33,71 @@ func tradePage(state game.GameState) deckPage {
 			deckLine{Value: rowid.Line("ui.overlay_trade.tradePage.04", "Lift your embargo with: diplomacy neutral <civ>")})
 	}
 
-	// With trade routes themselves still locked, no route can start: its
-	// card says why instead of offering a button the game would refuse.
-	refusal, routesLocked := featureRefusal(state, config.FeatureTradeRoutes)
-	open, locked := 0, 0
-	for _, r := range trade.AvailableRoutes {
-		if r.CanStart && !routesLocked {
-			open++
-		} else {
-			locked++
-		}
+	routes := tradeRoutes(state)
+	count := map[string]int{}
+	for _, r := range routes {
+		count[r.state]++
 	}
 	pg.Head = []xseg{
 		{rowid.Line("ui.overlay_trade.tradePage.05", "Routes "), xDim},
-		{rowid.Sprintf("ui.overlay_trade.tradePage.06", "%d running", len(trade.ActiveRoutes)), xGood}, {" · ", xFaint},
-		{rowid.Sprintf("ui.overlay_trade.tradePage.07", "%d open", open), xText}, {" · ", xFaint},
-		{rowid.Sprintf("ui.overlay_trade.tradePage.08", "%d locked", locked), xDim},
+		{rowid.Sprintf("ui.overlay_trade.tradePage.06", "%d running", count["running"]+count["short"]+count["suspended"]), xGood}, {" · ", xFaint},
+		{rowid.Sprintf("ui.overlay_trade.tradePage.07", "%d open", count["ready"]), xText}, {" · ", xFaint},
+		{rowid.Sprintf("ui.overlay_trade.tradePage.08", "%d locked", count["locked"]), xDim},
 	}
 	pg.Notes = append(pg.Notes, allyTradeNotes(state.Diplomacy)...)
 
-	if len(trade.ActiveRoutes) > 0 {
-		// The snapshot builds this list from a map; sort it so the panel does
-		// not reshuffle on every refresh.
-		active := append([]game.ActiveRouteInfo(nil), trade.ActiveRoutes...)
-		sort.Slice(active, func(i, j int) bool { return active[i].Key < active[j].Key })
-		sec := deckSection{Title: rowid.Line("ui.overlay_trade.tradePage.09", "Running"), MinW: 50}
-		for _, route := range active {
-			c := deckCard{
-				Title: route.Name, Chip: rowid.Line("ui.overlay_trade.tradePage.10", "running"), ChipK: xChipShort,
-				Lines:  []deckLine{{rowid.Line("ui.overlay_trade.tradePage.11", "Export"), game.Amounts(route.Export), 0}, {rowid.Line("ui.overlay_trade.tradePage.12", "Import"), game.Amounts(route.Import), xGood}},
-				Action: "stop", Command: "trade route stop " + route.Key, Danger: true,
+	// The cards are the routes in the order the board lists them, then the
+	// black market: the board draws them from the same numbers.
+	sec := deckSection{Title: rowid.Line("ui.overlay_trade.tradePage.17", "Open routes"), MinW: 46}
+	for _, r := range routes {
+		word, _, plate := tradeLook(r.state)
+		c := deckCard{Title: r.name, Chip: word, ChipK: plate,
+			Lines: []deckLine{{rowid.Line("ui.overlay_trade.tradePage.18", "Export"), tradeJoin(r.out, false), 0}, {rowid.Line("ui.overlay_trade.tradePage.19", "Import"), tradeJoin(r.in, false), xGood}},
+			Why:   r.why, Quiet: r.state == "locked"}
+		if r.cmd != "" {
+			c.Command, c.Action = r.cmd, rowid.Line("ui.trade_board.tradePage.01", "stop")
+			c.Danger = r.state != "ready"
+			if r.state == "ready" {
+				c.Action = rowid.Line("ui.trade_board.tradePage.02", "start")
 			}
-			if route.Disrupted {
-				c.Chip, c.ChipK = rowid.Line("ui.overlay_trade.tradePage.14", "suspended"), xChipMil
-				c.Lines[1].K = xBad
-				c.Why = rowid.Sprintf("ui.overlay_trade.tradePage.15", "Suspended: %s imports are blockaded", game.ResourceName(route.DisruptedBy))
-			} else {
-				c.Meter = true
-				if route.CycleTicks > 0 {
-					c.Share = max(0, min(1, 1-float64(route.TicksLeft)/float64(route.CycleTicks)))
-				}
-				c.MeterText = rowid.Sprintf("ui.overlay_trade.tradePage.16", "%s left in this cycle (%s done)",
-					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, txtCycle.String(), txtCycles.String()))
-			}
-			sec.Cards = append(sec.Cards, c)
 		}
-		pg.Sections = append(pg.Sections, sec)
-	}
-
-	if len(trade.AvailableRoutes) > 0 {
-		sec := deckSection{Title: rowid.Line("ui.overlay_trade.tradePage.17", "Open routes"), MinW: 46}
-		for _, route := range trade.AvailableRoutes {
-			c := deckCard{
-				Title: route.Name, Desc: route.Description,
-				Lines: []deckLine{{rowid.Line("ui.overlay_trade.tradePage.18", "Export"), game.Amounts(route.Export), 0}, {rowid.Line("ui.overlay_trade.tradePage.19", "Import"), game.Amounts(route.Import), xGood}},
-			}
-			if route.CanStart && !routesLocked {
-				c.Chip, c.ChipK = rowid.Line("ui.overlay_trade.tradePage.20", "ready"), xChipCivic
-				c.Action, c.Command = "start", "trade route start "+route.Key
-			} else {
-				c.Chip, c.ChipK, c.Quiet = rowid.Line("ui.overlay_trade.tradePage.22", "locked"), xKeyName, true
-				c.Why = refusal
-				if !route.CanStart {
-					c.Why = rowid.Sprintf("ui.overlay_trade.tradePage.23", "needs %s (have %s)",
-						game.BuildingCount(route.MinCount, route.RequiredBld),
-						textfmt.Int(max(state.Buildings[route.RequiredBld].Count, state.Buildings[route.RequiredBld].HeldWithLater)))
-				}
-			}
-			sec.Cards = append(sec.Cards, c)
+		if r.state == "running" && r.cycle > 0 {
+			c.Meter, c.Share = true, max(0, min(1, 1-float64(r.left)/float64(r.cycle)))
+			c.MeterText = rowid.Sprintf("ui.overlay_trade.tradePage.16", "%s left in this cycle (%s done)", formatTicks(r.left, state), textfmt.Count(r.runs, txtCycle.String(), txtCycles.String()))
 		}
-		pg.Sections = append(pg.Sections, sec)
+		sec.Cards = append(sec.Cards, c)
 	}
-
-	if len(trade.ActiveRoutes) == 0 && len(trade.AvailableRoutes) == 0 {
+	if len(sec.Cards) > 0 {
+		pg.Sections = append(pg.Sections, sec)
+	} else {
 		pg.Notes = append(pg.Notes, deckLine{Value: rowid.Line("ui.overlay_trade.tradePage.24", "No trade routes in this age yet.")})
 	}
-
 	if sec, ok := blackMarketSection(state); ok {
 		pg.Sections = append(pg.Sections, sec)
 	}
-
-	// Civilization opinion lives on the Factions panel only. This panel used
-	// to carry its own copy, which went stale.
-	pg.Sections = append(pg.Sections, deckSection{Title: rowid.Line("ui.overlay_trade.tradePage.25", "Factions"), Cards: []deckCard{{
-		Title: rowid.Line("ui.overlay_trade.tradePage.26", "Factions"), Desc: rowid.Line("ui.overlay_trade.tradePage.27", "Opinion and deals with other civilizations: type factions"),
-		Action: rowid.Line("ui.overlay_trade.tradePage.28", "open"), Command: "factions",
-	}}})
+	if sec, ok := tradeOffersSection(state, routes); ok {
+		pg.Sections = append(pg.Sections, sec)
+	}
 	return pg
+}
+
+// tradeOffersSection is the offers as cards, one for each, in the order the
+// board lists them.
+func tradeOffersSection(state game.GameState, routes []tradeRoute) (deckSection, bool) {
+	civs := tradeCivs(state, routes)
+	open, pay := tradeOfferCounts(state, civs)
+	sec := deckSection{Title: rowid.Line("ui.overlay_trade.tradeOffersSection.01", "Offers"), MinW: 46,
+		Meta: rowid.Sprintf("ui.overlay_trade.tradeOffersSection.02", "%d open · %d you can pay now", open, pay)}
+	for _, c := range civs {
+		for _, d := range c.offers {
+			sec.Cards = append(sec.Cards, deckCard{
+				Title:  c.name + " · " + game.DealKindLabel(d.Kind),
+				Lines:  []deckLine{{rowid.Line("ui.overlay_trade.tradeOffersSection.03", "You give"), tradeOfferGive(d), 0}, {rowid.Line("ui.overlay_trade.tradeOffersSection.04", "You get"), tradeOfferGet(d), xGood}},
+				Action: rowid.Line("ui.overlay_trade.tradeOffersSection.05", "accept"), Command: tradeOfferCmd(c.key, d),
+				Quiet: !tradePayable(state, d)})
+		}
+	}
+	return sec, len(sec.Cards) > 0
 }
 
 // noteLinesOf is a block of tagged text, a line to a note, in colour k:

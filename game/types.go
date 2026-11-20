@@ -831,6 +831,13 @@ type ActiveRouteInfo struct {
 	Import      map[string]float64
 	Disrupted   bool   // true when blockaded by war/embargo (income suspended)
 	DisruptedBy string // the imported resource that is blockaded (if Disrupted)
+	// Starved is true after a run was skipped for want of the export.
+	Starved bool
+	// Pay is what a run really brings in of each import, and Shares what it
+	// is made of (the techs, harbor buildings, allies); Pay is the listed
+	// amount times 1 plus the shares.
+	Pay    map[string]float64
+	Shares map[string][]PayShare
 }
 
 // TradeRouteInfo represents an available trade route for UI
@@ -843,6 +850,10 @@ type TradeRouteInfo struct {
 	RequiredBld string
 	MinCount    int
 	Description string
+	// CycleTicks is the run's period as it would be once started.
+	CycleTicks int
+	Pay        map[string]float64
+	Shares     map[string][]PayShare
 }
 
 // === Diplomacy Types ===

@@ -2007,6 +2007,9 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 
 	switch subcmd {
 	case "start":
+		if routeKey == "all" {
+			return cmdTradeStartAll(engine)
+		}
 		if err := engine.StartTradeRoute(routeKey); err != nil {
 			return errorResult(err)
 		}
@@ -2019,6 +2022,29 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return errorReply(usage)
 	}
+}
+
+// cmdTradeStartAll starts every route that can start now; it fails only when
+// none did.
+func cmdTradeStartAll(engine *game.GameEngine) CommandResult {
+	started, err := 0, error(nil)
+	for _, r := range engine.GetState().Trade.AvailableRoutes {
+		if !r.CanStart {
+			continue
+		}
+		if e := engine.StartTradeRoute(r.Key); e != nil {
+			err = e
+			continue
+		}
+		started++
+	}
+	switch {
+	case started > 0:
+		return successReply()
+	case err != nil:
+		return errorResult(err)
+	}
+	return errorReply(rowid.Line("ui.input.cmdTradeStartAll.01", "No route is ready to start."))
 }
 
 // txtCycles is said the same way on several screens, so it has one id.
@@ -2153,7 +2179,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		lines = append(lines, fmt.Sprintf("%s %s", theme.Paint(theme.RoleAccent, def.Name), theme.Paint(theme.RoleDim, "("+def.Key+")")))
 		var sb strings.Builder
-		writeFactionDeals(&sb, f, state, 100, def.Key, nil)
+		writeFactionDeals(&sb, f, state, 100)
 		lines = append(lines, strings.TrimRight(sb.String(), "\n"))
 	}
 	if len(lines) == 0 {

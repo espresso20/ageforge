@@ -25,7 +25,7 @@ func TestTradeSnapshot_ActiveRoutesInKeyOrder(t *testing.T) {
 		ge.Trade.activeRoutes[key] = &ActiveRoute{Key: key, TicksLeft: 5}
 	}
 	for i := 0; i < 50; i++ {
-		got := ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil).ActiveRoutes
+		got := ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil, RouteTerms{}).ActiveRoutes
 		if len(got) != len(keys) {
 			t.Fatalf("snapshot %d lists %d running routes, want %d", i, len(got), len(keys))
 		}

@@ -38,7 +38,7 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
 		ge.Trade.Tick(ge.Resources, ge.Buildings, nil, harbor, nil)
 		// The panels read the same number, harbors aside.
-		for _, info := range ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil).ActiveRoutes {
+		for _, info := range ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil, RouteTerms{}).ActiveRoutes {
 			want := listed
 			if boats {
 				want = float64(listed * 1.10)

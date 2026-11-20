@@ -282,7 +282,7 @@ In the window a click on an offer's pin highlights it, a double click asks to se
 |---|---|
 | `trade` | Open the Trade routes panel. |
 | `trade route` (or `trade route list`) | List your active trade routes and the routes you can start. |
-| `trade route start <route>` | Start a trade route. Routes wait for The Wheel, a Bronze Age tech. The Rail Freight route also waits for Railroads, and the Warp Commerce route for Interstellar Trade. |
+| `trade route start <route\|all>` | Start a trade route, or every route you could start. Routes wait for The Wheel, a Bronze Age tech. The Rail Freight route also waits for Railroads, and the Warp Commerce route for Interstellar Trade. |
 | `trade route stop <route>` | Stop an active trade route. |
 | `blackmarket` (or `bm`) | Show the black market's status: its culture cost, the odds and the wait between runs. It opens in the Colonial Age. |
 | `blackmarket <resource>` | Make a smuggling run: spend culture for the same worth in the chosen resource. Five runs in six go through. The sixth time the smugglers vanish with the culture. It waits for the Mercantilism tech. |

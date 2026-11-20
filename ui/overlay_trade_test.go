@@ -15,58 +15,50 @@ func tradeState() game.GameState {
 	s.Trade.ActiveRoutes = []game.ActiveRouteInfo{
 		{Name: "Local Barter", Key: "local_barter", TicksLeft: 30, CycleTicks: 50, CyclesDone: 14,
 			Export: map[string]float64{"food": 10}, Import: map[string]float64{"wood": 8}},
-		{Name: "Iron Road", Key: "iron_road", Disrupted: true, DisruptedBy: "iron",
-			Export: map[string]float64{"stone": 40}, Import: map[string]float64{"iron": 12}},
+		{Name: "Gold Caravan", Key: "gold_caravan", Disrupted: true, DisruptedBy: "gold",
+			Export: map[string]float64{"stone": 50}, Import: map[string]float64{"gold": 5}},
 	}
 	s.Trade.AvailableRoutes = []game.TradeRouteInfo{
 		{Name: "Stone Trade", Key: "stone_trade", CanStart: true, Description: "Send wood to the quarries for stone.",
 			Export: map[string]float64{"wood": 15}, Import: map[string]float64{"stone": 12}},
-		{Name: "Crypto Market", Key: "crypto_market", RequiredBld: "black_market", MinCount: 1,
-			Export: map[string]float64{"crypto": 50}, Import: map[string]float64{"gold": 1000}},
+		{Name: "Spice Trade", Key: "spice_trade", RequiredBld: "port", MinCount: 1,
+			Export: map[string]float64{"gold": 100}, Import: map[string]float64{"food": 200}},
 	}
-	s.Trade.DisruptedResources = []string{"iron"}
+	s.Trade.DisruptedResources = []string{"gold"}
 	s.Diplomacy.Factions = map[string]game.FactionInfo{
 		"merchant_guild": {Name: "Merchant Guild", Specialty: "gold", Discovered: true, Status: "allied", TradeBonus: 0.20},
 	}
 	return s
 }
 
-// TestTradePage_Cards: a mid-game state gives a card to every route, each
-// with the state the old page showed, and the commands the old page named.
+// TestTradePage_Cards: a mid-game state gives a card to every route, in the
+// order the board lists them, each with the state and the command it has.
 func TestTradePage_Cards(t *testing.T) {
 	pg := tradePage(tradeState())
-	run := deckSectionNamed(t, pg, "Running")
 	open := deckSectionNamed(t, pg, "Open routes")
-	if len(run.Cards) != 2 || len(open.Cards) != 2 {
-		t.Fatalf("want 2 running and 2 open cards:\n%s", deckText(pg))
+	if len(open.Cards) != 4 {
+		t.Fatalf("want 4 route cards:\n%s", deckText(pg))
 	}
 	out := deckText(pg)
 	wantAll(t, "trade page", out,
 		"2 running", "1 open", "1 locked", // counts
-		"⚠ Routes importing iron are suspended (a war, or your embargo).",
+		"⚠ Routes importing gold are suspended (a war, or your embargo).",
 		"Lift your embargo with: diplomacy neutral <civ>",
-		"Export 10 food", "Import 8 wood", "Suspended: iron imports are blockaded",
-		"left in this cycle", "14 cycles done",
-		"Send wood to the quarries for stone.", "Export 15 wood", "Import 12 stone",
-		"needs 1 Black Market Hub (have 0)",
-		"trade route start/stop <key>")
+		"Export 10 food", "Import 8 wood", "Suspended: gold imports are blockaded",
+		"left in this cycle", "14 cycles done", "Export 15 wood", "Import 12 stone",
+		"needs 1 Port (have 0)", "trade route start/stop <key>")
 	barter, _ := deckCardNamed(t, pg, "Local Barter")
 	if !barter.Meter || barter.Share < 0.39 || barter.Share > 0.41 || barter.Command != "trade route stop local_barter" {
 		t.Errorf("Local Barter = %+v", barter)
 	}
-	if road, _ := deckCardNamed(t, pg, "Iron Road"); road.Meter || road.Why == "" || road.Command != "trade route stop iron_road" {
-		t.Errorf("Iron Road = %+v", road)
+	if road, _ := deckCardNamed(t, pg, "Gold Caravan"); road.Meter || road.Why == "" || road.Command != "trade route stop gold_caravan" {
+		t.Errorf("Gold Caravan = %+v", road)
 	}
 	if c, _ := deckCardNamed(t, pg, "Stone Trade"); c.Command != "trade route start stone_trade" {
 		t.Errorf("Stone Trade command = %q", c.Command)
 	}
-	if c, _ := deckCardNamed(t, pg, "Crypto Market"); c.Command != "" || !c.Quiet {
+	if c, _ := deckCardNamed(t, pg, "Spice Trade"); c.Command != "" || !c.Quiet {
 		t.Errorf("a locked route should only show: %+v", c)
-	}
-	for _, gone := range []string{"black_market", "given plus received"} {
-		if strings.Contains(out, gone) {
-			t.Errorf("trade page shows %q:\n%s", gone, out)
-		}
 	}
 }
 
@@ -76,7 +68,6 @@ func TestTradePage_RunsItsCommands(t *testing.T) {
 	for title, cmd := range map[string]string{
 		"Local Barter": "trade route stop local_barter",
 		"Stone Trade":  "trade route start stone_trade",
-		"Factions":     "factions",
 	} {
 		wantDeckEnter(t, tradePage, tradeState(), title, cmd)
 	}
@@ -88,7 +79,7 @@ func TestTradePage_Fits(t *testing.T) {
 }
 
 // TestTradePage_NoDiplomacySection: faction standing lives on the Factions
-// panel, and the Trade panel only points there.
+// panel; the page names no civilization.
 func TestTradePage_NoDiplomacySection(t *testing.T) {
 	state := game.GameState{Diplomacy: game.DiplomacyState{Factions: map[string]game.FactionInfo{
 		"riverlands_tribes": {Name: "Riverlands Tribes", Specialty: "food", Discovered: true, Status: "friendly", Opinion: 30},
@@ -96,7 +87,7 @@ func TestTradePage_NoDiplomacySection(t *testing.T) {
 	}}}
 	for name, s := range map[string]game.GameState{"zero": {}, "met": state} {
 		out := deckText(tradePage(s))
-		wantAll(t, name, out, "Opinion and deals with other civilizations: type factions", "No trade routes in this age yet.")
+		wantAll(t, name, out, "No trade routes in this age yet.")
 		for _, gone := range []string{"Riverlands Tribes", "Ironhold Clans", "Undiscovered", "diplomacy ally", "Market rates", "Traded at the market", "trade <give>"} {
 			if strings.Contains(out, gone) {
 				t.Errorf("%s: trade page shows %q", name, gone)

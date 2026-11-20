@@ -556,15 +556,26 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 			"ironhold_clans": {Name: "Ironhold Clans", Discovered: true, Status: "neutral", AtWar: true, DealsBlocked: "at war with you"},
 		}},
 	}
-	raw := factionsProvider(state, panelWidth, nil)
+	// The card gives the offers one line; the deals live in Trade.
+	card := plainText(factionsProvider(state, panelWidth, nil))
+	wantAll(t, "card", card, "3 offers open")
+	for _, gone := range []string{"give 2.1K stone", "Deals:", "diplomacy accept <civ> <n>"} {
+		if strings.Contains(card, gone) {
+			t.Errorf("the faction card still shows %q", gone)
+		}
+	}
+	var sb strings.Builder
+	for _, k := range []string{"riverlands_tribes", "ironhold_clans"} {
+		writeFactionDeals(&sb, state.Diplomacy.Factions[k], state, panelWidth)
+	}
+	raw := sb.String()
 	out := plainText(raw)
-	wantAll(t, "panel", out,
+	wantAll(t, "deals", out,
 		"Deals: new offers in",
 		"1. Sell: give 2.1K stone → get 3K food",
 		"2. Goodwill: give 727 iron → get +5 opinion",
 		"3. Buy: give 10 iron → get 12 food  taken",
 		"Deals: none while they are at war with you.",
-		"diplomacy accept <civ> <n>",
 	)
 	// 100 stone can't pay 2.1K: the price is painted Negative; the favor's
 	// iron is affordable and painted Highlight.
