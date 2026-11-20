@@ -5,7 +5,6 @@
 package fixture
 
 import (
-	"maps"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
@@ -211,7 +210,7 @@ func State(o Options) game.GameState {
 			continue
 		}
 		st.Trade.ActiveRoutes = append(st.Trade.ActiveRoutes, game.ActiveRouteInfo{Name: r.Name, Key: r.Key,
-			Import: maps.Clone(r.Import), Export: maps.Clone(r.Export), Scale: 1, Run: 1})
+			Import: flowKeys(r.Import), Export: flowKeys(r.Export), Scale: 1, Run: 1})
 		n--
 	}
 
@@ -292,4 +291,13 @@ func ReachedEras(st *game.GameState, eras int) {
 		st.Stats.AgesReached = append(st.Stats.AgesReached, e.Ages...)
 	}
 	st.Stats.AgesReached = append(st.Stats.AgesReached, st.Age)
+}
+
+// flowKeys is a flow of 1 a tick for each of res.
+func flowKeys(res []string) map[string]float64 {
+	m := make(map[string]float64, len(res))
+	for _, r := range res {
+		m[r] = 1
+	}
+	return m
 }

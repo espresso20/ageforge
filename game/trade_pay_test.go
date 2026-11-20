@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -42,7 +43,8 @@ func TestRouteView_SharesMultiplyOutToTickPay(t *testing.T) {
 	for _, s := range got.Shares["wood"] {
 		sum += s.Percent / 100
 	}
-	if want := float64(def.Import["wood"]*sum) * runsPerTick(ge, def); math.Abs(got.Import["wood"]-want) > 1e-9 {
+	_, gateIn := gate(ge, def)
+	if want := float64(gateIn["wood"] * sum); math.Abs(got.Import["wood"]-want) > 1e-9 {
 		t.Fatalf("view flow %.6f, shares give %.6f", got.Import["wood"], want)
 	}
 	// The rates carry the same flow the view lists.
@@ -83,8 +85,7 @@ func TestRouteView_AllyShareInPay(t *testing.T) {
 	ge := NewGameEngine()
 	for _, f := range ge.Diplomacy.factionList {
 		for _, def := range ge.Trade.routeList {
-			amount, ok := def.Import[f.Specialty]
-			if !ok {
+			if !slices.Contains(def.Import, f.Specialty) {
 				continue
 			}
 			allyFaction(ge, f.Key)
@@ -100,7 +101,8 @@ func TestRouteView_AllyShareInPay(t *testing.T) {
 			if ally <= 0 {
 				t.Fatalf("no ally share for %s on %s", f.Key, def.Key)
 			}
-			want := float64(ge.Trade.RunPay(amount, ge.harborRouteBonus()+ge.Diplomacy.GetTradeBonus(f.Specialty)) * runsPerTick(ge, def))
+			_, gateIn := gate(ge, def)
+			want := float64(ge.Trade.RunPay(gateIn[f.Specialty], ge.harborRouteBonus()+ge.Diplomacy.GetTradeBonus(f.Specialty)))
 			if math.Abs(view.Import[f.Specialty]-want) > 1e-9 {
 				t.Fatalf("flow %.6f, the rates would carry %.6f", view.Import[f.Specialty], want)
 			}

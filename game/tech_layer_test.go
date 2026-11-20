@@ -300,13 +300,14 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	def := ge.Trade.routeDefs["local_barter"]
 	ge.Buildings.counts[def.RequiredBld] = def.MinCount
 	noErr(t, ge.StartTradeRoute("local_barter"))
-	for res, a := range def.Export {
-		ge.Trade.gross[res] = float64(a / config.RouteShare)
+	for _, res := range def.Export {
+		ge.Trade.gross[res] = 1 / config.RouteShare
 	}
-	out, _, _ := ge.Trade.flows(def, RouteTerms{})
-	for res, a := range def.Export {
+	out, _, _ := ge.Trade.flows(def, RouteTerms{}, ge.age)
+	gout, _ := gate(ge, def)
+	for res, a := range gout {
 		if got, want := out[res]/a, 1/(0.85*0.85); math.Abs(got-want) > 1e-9 {
-			t.Errorf("Local Barter moves %v of its listed run a run with both route techs, want %v", got, want)
+			t.Errorf("Local Barter moves %v of its gate flow with both route techs, want %v", got, want)
 		}
 	}
 

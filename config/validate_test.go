@@ -158,10 +158,10 @@ func TestConfig_TradeKeysExist(t *testing.T) {
 		if route.RequiredBld != "" {
 			checkKey(t, "trade.go", owner, "RequiredBld", route.RequiredBld, buildingKeys)
 		}
-		for res := range route.Export {
+		for _, res := range route.Export {
 			checkKey(t, "trade.go", owner, "Export", res, resourceKeys)
 		}
-		for res := range route.Import {
+		for _, res := range route.Import {
 			checkKey(t, "trade.go", owner, "Import", res, resourceKeys)
 		}
 	}

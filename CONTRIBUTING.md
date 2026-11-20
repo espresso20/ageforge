@@ -457,7 +457,7 @@ Any dev command that succeeds (all of the above except the read-only `/ages`, pl
 
 **New expedition**: add a def to `getExpeditions()` in `game/military.go` with `SoldiersNeeded`, `Duration`, `DifficultyBase`, `Rewards`, `MinAge`. Success: `random() > (DifficultyBase - military_bonus × 0.3)`.
 
-**New trade route**: add a `TradeRouteDef` to `config/trade.go` with `Export`/`Import` maps (only their ratio counts: a route sends `RouteShare` of the town's gross production of its export), `RequiredBld`, `MinCount`, `MinAge`.
+**New trade route**: add a `TradeRouteDef` to `config/trade.go` with `Export`/`Import` resource lists (a route sends `RouteShare` of the town's gross production of each export and brings `RouteMargin` times its value, by deal price levels), `RequiredBld`, `MinCount`, `MinAge`.
 
 **New command**: register it in the command registry, `registry()` in `ui/commands.go`: its name and aliases, subcommands, argument slots (an `ArgKind` says what each takes, so completion offers the right game things), help rows, a Help section, and `Dangerous: true` if it can't be undone (Enter then never runs it from a completion). Then handle it in `HandleCommand` in `ui/input.go` and document it in `site/docs/commands.md`. Completion, the Help panel and the smoke fuzz corpus follow from the registry. `TestRegistryMatchesDispatcher` (`go test ./ui`) fails until the registry and the handler agree both ways, and the smoke `docsync` scenario until `commands.md` does.
 

@@ -31,12 +31,10 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 			ge.Resources.UnlockResource(res)
 			r.Amount = config.Million
 		}
-		var res string
-		for res, listed = range def.Import {
-		}
-		// A route's flow at its gate is its run spread over its ticks.
-		per := runLength(ge, def)
-		_, in, _ := ge.Trade.flows(def, RouteTerms{Harbor: harbor})
+		res := def.Import[0]
+		_, gin := gate(ge, def)
+		listed = gin[res]
+		_, in, _ := ge.Trade.flows(def, RouteTerms{Harbor: harbor}, ge.age)
 		// The panels read the same number, harbors aside.
 		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}
 		for _, info := range ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil, RouteTerms{}).ActiveRoutes {
@@ -44,11 +42,11 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 			if boats {
 				want = float64(listed * 1.10)
 			}
-			if math.Abs(info.Import[res]*per-want) > 1e-9 {
-				t.Errorf("the panel lists %v %s a run (boats %v), want %v", info.Import[res]*per, res, boats, want)
+			if math.Abs(info.Import[res]-want) > 1e-9 {
+				t.Errorf("the panel lists %v %s a run (boats %v), want %v", info.Import[res], res, boats, want)
 			}
 		}
-		return in[res] * per, listed
+		return in[res], listed
 	}
 	for _, c := range []struct {
 		boats  bool

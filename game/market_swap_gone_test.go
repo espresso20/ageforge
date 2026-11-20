@@ -37,18 +37,14 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 	}
 	re.Resources.UnlockResource("gold")
 	re.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}
-	var exp, imp string
-	for exp = range def.Export {
-	}
-	for imp = range def.Import {
-	}
+	exp, imp := def.Export[0], def.Import[0]
 	re.recalculateRates()
 	paid := re.Resources.resources[imp].Breakdown.TradeFlow
 	took := -re.Resources.resources[exp].Breakdown.TradeFlow
 	re.mu.Unlock()
-	per := runLength(re, def)
-	if math.Abs(paid*per-re.Trade.RoutePay(def.Import[imp])) > 1e-9 || math.Abs(took*per-def.Export[exp]) > 1e-9 {
-		t.Errorf("a route took %v %s and paid %v %s a run, want %v and %v", took*per, exp, paid*per, imp, def.Export[exp], re.Trade.RoutePay(def.Import[imp]))
+	gout, gin := gate(re, def)
+	if math.Abs(paid-re.Trade.RoutePay(gin[imp])) > 1e-9 || math.Abs(took-gout[exp]) > 1e-9 {
+		t.Errorf("a route took %v %s and paid %v %s a tick, want %v and %v", took, exp, paid, imp, gout[exp], re.Trade.RoutePay(gin[imp]))
 	}
 
 	// Deals still pay: the offer's goods for its price, once.

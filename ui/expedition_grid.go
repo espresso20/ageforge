@@ -56,8 +56,8 @@ const (
 	xChipCivicHi
 	xChipLegendHi
 	xChipGoalHi
-	xKeycap  // a key's cap, as a chip
-	xKeyName // a chip of the key's neutral colour
+	xKeycap   // a key's cap, as a chip
+	xKeyName  // a chip of the key's neutral colour
 	xPulse    // a trade lane's goods while the route runs, bold
 	xPulseLow // the same while it is held back
 	xCount

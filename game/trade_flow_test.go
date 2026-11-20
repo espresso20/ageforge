@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"math"
+	"slices"
 	"testing"
 	"time"
 
@@ -28,7 +29,7 @@ func flowEngine(t *testing.T, key string, count int) (*GameEngine, config.TradeR
 }
 
 // At the gate a route sends RouteShare of the town's gross production of its
-// export and brings the import in the listed ratio. It grows by one gate's
+// export and brings RouteMargin times its value in the import. It grows by one gate's
 // flow for each doubling of the line.
 func TestRouteFlow_AtTheGateAndWithBuildings(t *testing.T) {
 	ge, def := flowEngine(t, "local_barter", 1)
@@ -36,11 +37,12 @@ func TestRouteFlow_AtTheGateAndWithBuildings(t *testing.T) {
 	ge.recalculateRates()
 	gross := ge.Trade.gross["food"] // 10 a tick from townMakes
 	check := func(scale float64, when string) {
+		_, gin := gate(ge, def)
 		out := float64(config.RouteShare * gross * scale)
 		if got := -ge.Resources.resources["food"].Breakdown.TradeFlow; math.Abs(got-out) > 1e-9 {
 			t.Errorf("food sent %s = %v, want %v", when, got, out)
 		}
-		if got, want := importFlow(ge, "wood"), float64(out*def.Import["wood"]/def.Export["food"]); math.Abs(got-want) > 1e-9 {
+		if got, want := importFlow(ge, "wood"), float64(gin["wood"]*scale); math.Abs(got-want) > 1e-9 {
 			t.Errorf("wood brought %s = %v, want %v", when, got, want)
 		}
 	}
@@ -54,7 +56,7 @@ func TestRouteFlow_AtTheGateAndWithBuildings(t *testing.T) {
 // route's draw never takes the food below what the town itself uses.
 func TestRouteFlow_NeverExportsWhatTheTownUses(t *testing.T) {
 	ge, def := flowEngine(t, "local_barter", 5000)
-	if _, ok := def.Export["food"]; !ok {
+	if !slices.Contains(def.Export, "food") {
 		t.Fatal("the route no longer exports food")
 	}
 	food := ge.Resources.resources["food"]
@@ -127,8 +129,7 @@ func TestRouteFlow_ThrottleSharesTheStock(t *testing.T) {
 func TestRouteFlow_PausedAndHeldMoveNothing(t *testing.T) {
 	ge, def := flowEngine(t, "local_barter", 2)
 	var res string
-	for res = range def.Import {
-	}
+	res = def.Import[0]
 	if importFlow(ge, res) <= 0 {
 		t.Fatal("a running route moves nothing")
 	}
@@ -168,10 +169,7 @@ func TestRouteFlow_OfflineAppliesAndThrottles(t *testing.T) {
 		ge, def := flowEngine(t, "local_barter", 1<<14)
 		ge.Buildings.counts["test_wood"] = 0 // only the route brings wood
 		var imp, exp string
-		for imp = range def.Import {
-		}
-		for exp = range def.Export {
-		}
+		imp, exp = def.Import[0], def.Export[0]
 		ge.Resources.resources[exp].Amount = food
 		before := ge.Resources.Get(imp)
 		ge.mu.Lock()
@@ -182,10 +180,9 @@ func TestRouteFlow_OfflineAppliesAndThrottles(t *testing.T) {
 	full, _, ge := away(config.Million)
 	def := ge.Trade.routeDefs["local_barter"]
 	ticks := float64(int(time.Hour / ge.tickIntervalLocked()))
-	var imp string
-	for imp = range def.Import {
-	}
-	want := float64(def.Import[imp]*runsPerTick(ge, def)*ge.Trade.activeRoutes[def.Key].Scale) * ticks * OfflineEfficiency
+	imp := def.Import[0]
+	_, gin := gate(ge, def)
+	want := float64(gin[imp]*ge.Trade.activeRoutes[def.Key].Scale) * ticks * OfflineEfficiency
 	if math.Abs(full-want) > want*0.01 {
 		t.Errorf("an hour away brought %v %s, want about %v", full, imp, want)
 	}
@@ -198,16 +195,24 @@ func TestRouteFlow_OfflineAppliesAndThrottles(t *testing.T) {
 	}
 }
 
-// runsPerTick is how many listed runs a tick the town's income sends def at
-// its gate; runLength is its inverse, the ticks one run of the listed
-// amounts takes.
-func runsPerTick(ge *GameEngine, def config.TradeRouteDef) float64 {
-	u, _ := ge.Trade.volume(def)
-	return u
-}
-
-func runLength(ge *GameEngine, def config.TradeRouteDef) float64 {
-	return 1 / runsPerTick(ge, def)
+// gate is what def moves a tick at its gate, before the techs, the harbor,
+// the allies and the speed cut: RouteShare of the town's gross make of each
+// export, and RouteMargin times its value, by price level, over the imports.
+func gate(ge *GameEngine, def config.TradeRouteDef) (out, in map[string]float64) {
+	age := ge.Trade.pricing(def, ge.age)
+	lv := func(res string) float64 { return ge.Trade.rules.DealPriceLevel(res, age) }
+	out, in = map[string]float64{}, map[string]float64{}
+	worth := 0.0
+	for _, res := range def.Export {
+		out[res] = config.RouteShare * ge.Trade.gross[res]
+		worth += out[res] / lv(res)
+	}
+	for _, res := range def.Import {
+		if lv(res) > 0 {
+			in[res] = worth * config.RouteMargin / float64(len(def.Import)) * lv(res)
+		}
+	}
+	return out, in
 }
 
 // townMakes gives the town some of everything routes export, so a route has

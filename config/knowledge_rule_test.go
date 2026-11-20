@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 // scholarsPerCopy is the crew each knowledge building was staffed with, and
 // is the scholars it comes with now (decision: a knowledge building comes with
@@ -112,7 +115,7 @@ func TestKnowledgeIsNotAResourceOrAPrice(t *testing.T) {
 		}
 	}
 	for _, r := range BaseTradeRoutes() {
-		if _, ok := r.Export["knowledge"]; ok {
+		if slices.Contains(r.Export, "knowledge") {
 			t.Errorf("route %s asks for knowledge", r.Key)
 		}
 	}

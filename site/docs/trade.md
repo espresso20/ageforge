@@ -10,7 +10,7 @@ The other civilizations (meeting them, opinion, deals, alliances, war) have thei
 
 ## Trade routes
 
-A running route takes some of one resource from you every tick and brings you another. Its flow shows in the Resources box as a line of its own, as "trade". A route needs its required building. At the building count its listing asks, it sends 10% of what the town makes of its export (before any trade) and brings the import in the listed ratio; with more of the building it moves more, but with diminishing returns: each doubling of the line adds one more gate's flow (flow x1 at the gate, x2 at twice the buildings, x3 at four times). A route only sends what the town can spare: it never takes the stock below what the town itself uses, so a route that exports food leaves what the people eat.
+A running route takes some of one resource from you every tick and brings you another. Its flow shows in the Resources box as a line of its own, as "trade". A route needs its required building. At the building count its listing asks, it sends 10% of what the town makes of its export (before any trade) and brings in the import, worth 10% more than what it sent; with more of the building it moves more, but with diminishing returns: each doubling of the line adds one more gate's flow (flow x1 at the gate, x2 at twice the buildings, x3 at four times). A route only sends what the town can spare: it never takes the stock below what the town itself uses, so a route that exports food leaves what the people eat.
 
 <figure class="screen" data-screen="trade"><figcaption>The Trade panel in a window too small for the board: a card for each route, with Local Barter running at its full flow.</figcaption></figure>
 
@@ -47,39 +47,39 @@ The panel lists each civilization only as the head of its offers. The one other 
 
 ### Full trade routes reference
 
-Every route opens in the Bronze Age or later. A route at the building count it asks for sends 10% of what the town makes of its export (before any trade) and brings in the import in the ratio below. The amounts in the table are only that ratio.
+Every route opens in the Bronze Age or later. A route at the building count it asks for sends 10% of what the town makes of its export (before any trade) and brings in goods worth 10% more than what it sent, by the same price levels deals use (a route with two imports splits that worth between them). Where an age has no price for a good, the route uses the price levels of the latest earlier age that has one for all of them; research a route brings is not valued yet and is not paid.
 
-| Key | Name | Min Age | Required Building | You give (ratio) | You get (ratio) |
+| Key | Name | Min Age | Required Building | You give | You get |
 |---|---|---|---|---|---|
-| `local_barter` | Local Barter | Bronze | Market ×1 | 10 food | 8 wood |
-| `stone_trade` | Stone Trade | Iron | Market ×2 | 15 wood | 12 stone |
-| `gold_caravan` | Gold Caravan | Classical | Market ×3 | 50 stone | 5 gold |
-| `silk_road` | Silk Road | Medieval | Market ×2 | 30 gold | 80 culture |
-| `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | 300 stone + 200 wood | 90 gold |
-| `spice_trade` | Spice Trade | Colonial | Port ×1 | 100 gold | 200 food + 50 culture |
-| `colonial_exports` | Colonial Exports | Colonial | Port ×2 | 500 food | 150 gold |
-| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + research progress |
-| `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture |
-| `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron |
-| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + research progress |
-| `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | 250 steel + 200 coal | 900 gold |
-| `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | 200 iron | 100 gold + 50 coal |
-| `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold |
-| `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold |
-| `data_trade` | Data Trade | Information | Server Farm ×1 | 100 data | 500 gold |
-| `crypto_market` | Crypto Market | Cyberpunk | Black Market Hub ×1 | 50 crypto | 1K gold |
-| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1K gold |
-| `warp_commerce` | Warp Commerce | Interstellar | Warp Drive Plant ×1 | 500 gold | 200 dark matter |
-| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold |
-| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5K gold |
+| `local_barter` | Local Barter | Bronze | Market ×1 | food | wood |
+| `stone_trade` | Stone Trade | Iron | Market ×2 | wood | stone |
+| `gold_caravan` | Gold Caravan | Classical | Market ×3 | stone | gold |
+| `silk_road` | Silk Road | Medieval | Market ×2 | gold | culture |
+| `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | stone + wood | gold |
+| `spice_trade` | Spice Trade | Colonial | Port ×1 | gold | food + culture |
+| `colonial_exports` | Colonial Exports | Colonial | Port ×2 | food | gold |
+| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | food + gold | culture + research progress |
+| `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | gold | food + culture |
+| `coal_barges` | Coal Barges | Industrial | Harbor ×2 | coal | gold + iron |
+| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | gold | culture + research progress |
+| `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | steel + coal | gold |
+| `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | iron | gold + coal |
+| `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | oil | gold |
+| `power_exchange` | Power Exchange | Electric | Power Station ×1 | electricity | gold |
+| `data_trade` | Data Trade | Information | Server Farm ×1 | data | gold |
+| `crypto_market` | Crypto Market | Cyberpunk | Black Market Hub ×1 | crypto | gold |
+| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | electricity | gold |
+| `warp_commerce` | Warp Commerce | Interstellar | Warp Drive Plant ×1 | gold | dark matter |
+| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | dark matter | gold |
+| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | quantum flux | gold |
 
-What a route gives is boosted by your harbors and by an ally whose specialty it brings in: `amount × (1 + harbor bonus + ally bonus)`.
+What a route gives is boosted by your harbors and by an ally whose specialty it brings in: what it brings × (1 + harbor bonus + ally bonus).
 
 ### Techs and routes
 
 Trade routes wait for The Wheel, a Bronze Age tech (it needs Woodworking). Until it is researched, `trade route start` is refused and names it, and the Trade routes panel says so. Rail Freight waits for Railroads in the same way: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. Warp Commerce waits for Interstellar Trade, an Interstellar Age tech that needs Asteroid Claims and Warp Drive. A game that was already running either route keeps it for the rest of that run.
 
-Boatbuilding, Containerization and Asteroid Claims each make every route bring in 10% more of what the route lists (33% with all three). A harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route's flow 1/0.85 greater, and Wormholes 1/0.8. With all four, a route's flow is 1/0.49 of the listed one, a little over twice.
+Boatbuilding, Containerization and Asteroid Claims each make every route bring in 10% more (33% with all three). A harbor's and an ally's share are added to that, each as its own share of what it brings. Road Building, Railroads and Automated Logistics each make every route's flow 1/0.85 greater, and Wormholes 1/0.8. With all four, a route's flow is 1/0.49 of the listed one, a little over twice.
 
 ---
 

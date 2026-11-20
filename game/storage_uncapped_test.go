@@ -293,11 +293,7 @@ func TestUncapped_RouteFlowIntoAFullStoreStillComesIn(t *testing.T) {
 	defer ge.mu.Unlock()
 	def := ge.Trade.routeDefs["local_barter"]
 	ge.Buildings.counts[def.RequiredBld] = def.MinCount
-	var imp, exp string
-	for imp = range def.Import {
-	}
-	for exp = range def.Export {
-	}
+	imp, exp := def.Import[0], def.Export[0]
 	ge.Resources.UnlockResource(imp)
 	ge.Resources.resources[exp].Amount = config.Million
 	ge.Resources.resources[imp].Amount = baseStore(imp) // a base store's worth
@@ -305,11 +301,11 @@ func TestUncapped_RouteFlowIntoAFullStoreStillComesIn(t *testing.T) {
 	ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}
 	ge.recalculateRates()
 	ge.Resources.ApplyRates()
-	per := runLength(ge, def)
-	if want := full + ge.Trade.RoutePay(def.Import[imp])/per; math.Abs(ge.Resources.Get(imp)-want) > 1e-6 {
+	gout, gin := gate(ge, def)
+	if want := full + ge.Trade.RoutePay(gin[imp]); math.Abs(ge.Resources.Get(imp)-want) > 1e-6 {
 		t.Errorf("%s = %v after a tick into a full store, want %v", imp, ge.Resources.Get(imp), want)
 	}
-	if got := ge.Resources.resources[exp].Breakdown.TradeFlow; math.Abs(got+def.Export[exp]/per) > 1e-6 {
-		t.Errorf("%s taken = %v, want the export's flow %v", exp, -got, def.Export[exp]/per)
+	if got := ge.Resources.resources[exp].Breakdown.TradeFlow; math.Abs(got+gout[exp]) > 1e-6 {
+		t.Errorf("%s taken = %v, want the export's flow %v", exp, -got, gout[exp])
 	}
 }

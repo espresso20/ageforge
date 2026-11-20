@@ -2187,7 +2187,7 @@ func (ge *GameEngine) recalculateRates() {
 
 	// The running trade routes (trade.go): their flows go in last, so no
 	// multiplier above touches them and a route moves what it lists.
-	ge.Trade.Flows(ge.Resources, ge.Buildings, ge.Diplomacy, ge.routeTerms(), ge.tradeHorizon)
+	ge.Trade.Flows(ge.Resources, ge.Buildings, ge.Diplomacy, ge.routeTerms(), ge.age, ge.tradeHorizon)
 
 	// Calculate bonus rates (the difference from the named rate sources).
 	for _, def := range ge.Resources.defs {

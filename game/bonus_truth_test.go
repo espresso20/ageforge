@@ -562,12 +562,13 @@ func truthRouteIncome(t *testing.T, ge *GameEngine) (float64, string) {
 		// A route's import flow at its gate, per unit of its listed run: the
 		// techs' term, the harbor and the allies, with the speed cut aside.
 		// (a gross that makes one listed run a tick)
-		for res, a := range def.Export {
-			ge.Trade.gross[res] = float64(a / config.RouteShare)
+		for _, res := range def.Export {
+			ge.Trade.gross[res] = 1 / config.RouteShare
 		}
-		_, in, _ := ge.Trade.flows(def, ge.routeTerms())
-		res := sortedKeys(def.Import)[0]
-		return float64(in[res]) / float64(def.Import[res]*ge.Trade.timeFactor()), ""
+		_, in, _ := ge.Trade.flows(def, ge.routeTerms(), ge.age)
+		res := def.Import[0]
+		_, base := gate(ge, def)
+		return float64(in[res]) / float64(base[res]*ge.Trade.timeFactor()), ""
 	}
 	return 0, "no trade route runs in " + ge.age
 }
