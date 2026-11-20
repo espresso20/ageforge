@@ -324,8 +324,8 @@ A route whose imports include a resource that a civilization you are at war with
 | `diplomacy neutral <civ>` | Set a civilization back to neutral. |
 | `diplomacy tribute <civ>` | Sue for peace with a civilization you are at war with (you pay gold and culture, scaled to its strength). |
 | `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a provocation that can start a war). |
-| `diplomacy deals [civ]` | List a civilization's trade deals, numbered and worded from your side, such as `1. Buy: give 876M coal → get 966K food` (with no civ: every civilization you have met). A Goodwill deal pays `+N opinion`. |
-| `diplomacy accept <civ> <n>` | Take trade deal `n` from a civilization: you give its price and get its goods, or opinion for a Goodwill deal. |
+| `diplomacy deals [civ]` | List a civilization's offers, numbered and worded from your side, such as `1. Boost: give 876M coal → +25% food 20m` (with no civ: every civilization you have met). |
+| `diplomacy accept <civ> <n>` | Take offer `n` from a civilization: you give its lot and get its gift (a timed boost, research progress, workers or the civilization's know-how). |
 
 Gifts, alliances, rivalries, embargoes and deals wait for Envoys, a Classical Age tech.
 

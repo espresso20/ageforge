@@ -907,6 +907,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			info.Status = fs.Status
 			info.TradeCount = fs.TradeCount
 			info.AtWar = fs.AtWar
+			info.Knowhow = fs.Knowhow
 			info.Deals = dealInfos(fs, age)
 			info.DealsBlocked = dealBlocked(*fs)
 			info.DealRefreshIn = max(dm.dealRefreshFor(age)-fs.DealTicks, 0)

@@ -5142,7 +5142,7 @@ func (ge *GameEngine) GetState() GameState {
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
 		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources(), ge.routeTerms()),
 		BlackMarket:           ge.blackMarketStatusLocked(),
-		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
+		Diplomacy:             ge.diplomacySnap(ageOrder),
 		Log:                   logCopy,
 		Stats:                 ge.Stats.Snapshot(),
 		TickSpeedBonus:        ge.tickSpeedBonus,

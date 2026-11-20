@@ -175,3 +175,15 @@ func firstOffer(pg deckPage) int {
 		}
 	}
 }
+
+func TestTradeActiveGiftsListsBoostsAndKnowhow(t *testing.T) {
+	var st game.GameState
+	if got := tradeActiveGifts(st); got != nil {
+		t.Fatalf("no gifts must give no block, got %v", got)
+	}
+	st.Diplomacy.Boosts = []game.BoostInfo{{Res: "stone", TicksLeft: 300}}
+	ls := tradeActiveGifts(st)
+	if len(ls) != 2 || !strings.Contains(ls[1].Value, "+25% stone") {
+		t.Fatalf("want the heading and the boost, got %v", ls)
+	}
+}

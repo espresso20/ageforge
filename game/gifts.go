@@ -68,3 +68,11 @@ func (ge *GameEngine) knowhowModifiers() []Modifier {
 	}
 	return out
 }
+
+func (ge *GameEngine) diplomacySnap(ageOrder map[string]int) DiplomacyState {
+	ds := ge.Diplomacy.Snapshot(ge.age, ageOrder)
+	for _, b := range ge.boosts {
+		ds.Boosts = append(ds.Boosts, BoostInfo{Res: b.Res, TicksLeft: max(b.End-ge.tick, 0)})
+	}
+	return ds
+}

@@ -359,6 +359,7 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	}
 
 	// Offers: one line with a button to the Trade panel, where they are taken.
+	writeFactionKnowhow(sb, f)
 	writeFactionOffers(sb, f, usable, rec)
 
 	// Action hint: what the status asks, then the buttons that carry the
@@ -524,6 +525,15 @@ func diplomacyThreshold(status string, opinion int, key string, allyCost float64
 	}
 }
 
+// writeFactionKnowhow is a civ's know-how line, earned or not.
+func writeFactionKnowhow(sb *strings.Builder, f game.FactionInfo) {
+	state, role := rowid.Line("ui.overlay_factions.writeFactionKnowhow.01", "not earned: opinion 50 or allied, then an offer"), theme.RoleDim
+	if f.Knowhow {
+		state, role = rowid.Line("ui.overlay_factions.writeFactionKnowhow.02", "earned"), theme.RolePositive
+	}
+	fmt.Fprintf(sb, "   %s\n", theme.Paint(role, game.DealGift(game.DealKnowhow, f.Specialty, 0, textfmt.Number, nil)+" · "+state))
+}
+
 // writeFactionOffers is the one line a civ's card gives its open offers: the
 // count and a button to the Trade panel, which holds them. No offers, no line.
 func writeFactionOffers(sb *strings.Builder, f game.FactionInfo, usable int, rec *btnRec) {
@@ -565,32 +575,18 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 // What you can't pay yet is in the Negative role; a taken offer is dim.
 // Resource keys go in as display names, so "iron_ore" reads "iron ore".
 func dealLine(d game.DealInfo, state game.GameState, width int) string {
-	// Raw keys go in; game.DealGets and DealTerms name the resources, so the
-	// painted skeleton below and plain use the same words ("iron ore").
-	give := textfmt.Number(d.GiveAmt) + " " + game.ResourceName(d.Give)
-	get := game.DealGift(d.Kind, d.Res, d.Amt, textfmt.Number, func(t int) string { return formatTicks(t, state) })
-	note := ""
-	switch {
-	case d.Taken:
-		note = "taken"
-	}
-	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Res, d.Amt, textfmt.Number, func(t int) string { return formatTicks(t, state) }))
+	dur := func(t int) string { return formatTicks(t, state) }
 	if d.Taken {
-		return theme.Paint(theme.RoleDim, truncate(plain+"  "+note, width))
+		plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Res, d.Amt, textfmt.Number, dur))
+		return theme.Paint(theme.RoleDim, truncate(plain+"  taken", width))
 	}
 	giveRole := theme.RoleHighlight
 	if state.Resources[d.Give].Amount < d.GiveAmt {
 		giveRole = theme.RoleNegative
 	}
-	gap := columnGap(width - runeLen(plain) - runeLen(note))
-	if runeLen(plain)+runeLen(note)+1 > width {
-		note, gap = "", ""
-	}
-	// Same words as plain, painted: the numbers-and-kind skeleton of DealTerms.
-	return fmt.Sprintf("%s %s %s %s %s %s%s%s",
+	return fmt.Sprintf("%s %s %s %s %s %s",
 		theme.Paint(theme.RoleLabel, fmt.Sprintf("%d.", d.Num)),
 		theme.Paint(theme.RoleAccent, game.DealKindLabel(d.Kind)+":"),
-		theme.Paint(theme.RoleDim, "give"), theme.Paint(giveRole, give),
-		theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_factions.dealLine.04", "→")), theme.Paint(theme.RolePositive, get),
-		gap, theme.Paint(theme.RoleDim, note))
+		theme.Paint(theme.RoleDim, "give"), theme.Paint(giveRole, textfmt.Number(d.GiveAmt)+" "+game.ResourceName(d.Give)),
+		theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_factions.dealLine.04", "→")), theme.Paint(theme.RolePositive, game.DealGift(d.Kind, d.Res, d.Amt, textfmt.Number, dur)))
 }

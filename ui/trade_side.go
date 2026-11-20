@@ -154,6 +154,24 @@ func tradeCivs(st game.GameState, routes []tradeRoute) (civs []tradeCiv) {
 	return civs
 }
 
+// tradeActiveGifts is the Active gifts block: each running boost with its
+// time left, then each earned know-how.
+func tradeActiveGifts(st game.GameState) []deckLine {
+	ls := []deckLine{{Value: rowid.Line("ui.trade_side.tradeActiveGifts.01", "Active gifts"), K: xAccent}}
+	for _, b := range st.Diplomacy.Boosts {
+		ls = append(ls, deckLine{Value: game.DealGift(game.DealBoost, b.Res, float64(b.TicksLeft), textfmt.Number, func(t int) string { return formatTicks(t, st) }), K: xGood})
+	}
+	for _, fd := range st.Ruleset().Factions() {
+		if f := st.Diplomacy.Factions[fd.Key]; f.Knowhow {
+			ls = append(ls, deckLine{Value: rowid.Sprintf("ui.trade_side.tradeActiveGifts.02", "%s (%s)", game.DealGift(game.DealKnowhow, f.Specialty, 0, textfmt.Number, nil), f.Name), K: xGood})
+		}
+	}
+	if len(ls) == 1 {
+		return nil
+	}
+	return ls
+}
+
 // tradePayable is whether the town holds what the offer asks for.
 func tradePayable(st game.GameState, d game.DealInfo) bool {
 	return st.Resources[d.Give].Amount >= d.GiveAmt
@@ -195,35 +213,18 @@ type tradeRow struct {
 }
 
 // tradePickedLines is what the picked offer says under itself.
-func tradePickedLines(st game.GameState, civ tradeCiv, d game.DealInfo, lim int) (rows [][]xseg) {
+func tradePickedLines(st game.GameState, civ tradeCiv, d game.DealInfo) (rows [][]xseg) {
 	tickSec := tickInterval(st).Seconds()
 	make_ := tradeTownMake(st, d.Give, 60/tickSec)
 	store := textfmt.Number(st.Resources[d.Give].Amount)
-	var second []xseg
 	line := []xseg{{rowid.Sprintf("ui.trade_side.tradePickedLines.01", "in store %s %s · ", store, game.ResourceName(d.Give)), xText}}
 	if make_ <= 0 {
 		line = append(line, xseg{rowid.Line("ui.trade_side.tradePickedLines.02", "the town makes none"), xBad})
 	} else {
 		line = append(line, xseg{rowid.Sprintf("ui.trade_side.tradePickedLines.03", "the town makes %s a minute", textfmt.Number(make_)), xText})
-		lot := rowid.Sprintf("ui.trade_side.tradePickedLines.04", "this lot is %s of it", formatTicks(int(d.GiveAmt/make_*60/tickSec+0.5), st))
-		if segsLen(line)+2+runeLen(lot) <= lim {
-			line = append(line, xseg{": " + lot, xText})
-		} else {
-			second = []xseg{{lot, xText}}
-		}
+		line = append(line, xseg{rowid.Sprintf("ui.trade_side.tradePickedLines.04", ": this lot is %s of it", formatTicks(int(d.GiveAmt/make_*60/tickSec+0.5), st)), xText})
 	}
-	rows = [][]xseg{line}
-	if second != nil {
-		rows = append(rows, second)
-	}
-	return append(rows, []xseg{{rowid.Line("ui.trade_side.tradePickedLines.05", "type "), xDim}, {tradeOfferCmd(civ.key, d), xRoute}})
-}
-
-func segsLen(ss []xseg) (n int) {
-	for _, s := range ss {
-		n += runeLen(s.s)
-	}
-	return n
+	return append([][]xseg{line}, []xseg{{rowid.Line("ui.trade_side.tradePickedLines.05", "type "), xDim}, {tradeOfferCmd(civ.key, d), xRoute}})
 }
 
 // drawTradeOffers draws the offers under the goods table from row y: a
@@ -245,19 +246,11 @@ func drawTradeOffers(g *xgrid, st game.GameState, routes []tradeRoute, side trad
 	px := end - 2 - runeLen(word) - 2
 	g.put(x, y, strings.Repeat("─", max(0, px-x-1)), xDim)
 	g.plate(px, y, word, xKeyName, "factions")
-	kw := 5 // the width of the OFFER head, so the heads keep their places with no offers
-	for _, c := range civs {
-		for _, d := range c.offers {
-			kw = max(kw, runeLen(game.DealKindLabel(d.Kind)))
-		}
-	}
-	kindX := sx + 2
-	giveX := kindX + kw + 2
-	getX := sx + 36
+	giveX, getX := sx+2, sx+36
 	for _, hd := range []struct {
 		x int
 		s string
-	}{{kindX, rowid.Line("ui.trade_side.drawTradeOffers.04", "OFFER")}, {giveX, rowid.Line("ui.trade_side.drawTradeOffers.05", "YOU GIVE")}, {getX, rowid.Line("ui.trade_side.drawTradeOffers.06", "YOU GET")}} {
+	}{{giveX, rowid.Line("ui.trade_side.drawTradeOffers.05", "YOU GIVE")}, {getX, rowid.Line("ui.trade_side.drawTradeOffers.06", "YOU GET")}} {
 		g.put(hd.x, y+1, hd.s, xAccent)
 	}
 	g.rput(sx+68, y+1, rowid.Line("ui.trade_side.drawTradeOffers.07", "IN STORE"), xAccent)
@@ -269,14 +262,15 @@ func drawTradeOffers(g *xgrid, st game.GameState, routes []tradeRoute, side trad
 		for k, d := range c.offers {
 			rows = append(rows, tradeRow{kind: 'o', civ: ci, off: k})
 			if oi == pick {
-				for _, l := range tradePickedLines(st, c, d, end-giveX-3) {
+				for _, l := range tradePickedLines(st, c, d) {
 					rows = append(rows, tradeRow{kind: 'x', civ: ci, off: k, segs: l})
 				}
 			}
 			oi++
 		}
 	}
-	foot := allyTradeNotes(st.Diplomacy)
+	foot := tradeActiveGifts(st)
+	foot = append(foot, allyTradeNotes(st.Diplomacy)...)
 	foot = append(foot, deckLine{Value: rowid.Line("ui.trade_side.drawTradeOffers.08", "each route that runs: +1 opinion a minute with every civilization not at war"), K: xDim})
 	rows = append(rows, tradeRow{kind: 'f'})
 	for _, l := range foot {
@@ -333,7 +327,7 @@ func drawTradeOffers(g *xgrid, st game.GameState, routes []tradeRoute, side trad
 		case 'o':
 			d := civs[r.civ].offers[r.off]
 			ok := tradePayable(st, d)
-			tradeDrawOffer(g, st, civs[r.civ], d, ok, sx, y, [3]int{kindX, giveX, getX}, pick == oi)
+			tradeDrawOffer(g, st, civs[r.civ], d, ok, sx, y, [2]int{giveX, getX}, pick == oi)
 			g.hit(hitDeckCard, base+oi, sx, y, tradeSideW, 1)
 		case 'x':
 			g.segsFit(giveX, y, end-giveX-1, r.segs...)
@@ -394,7 +388,7 @@ func tradeDrawCiv(g *xgrid, c tradeCiv, sx, y, end int) {
 
 // tradeDrawOffer draws one offer's line; cols are the columns of its kind, its
 // give and its get. The picked one is banded and shows the Enter key.
-func tradeDrawOffer(g *xgrid, st game.GameState, c tradeCiv, d game.DealInfo, ok bool, sx, y int, cols [3]int, picked bool) {
+func tradeDrawOffer(g *xgrid, st game.GameState, c tradeCiv, d game.DealInfo, ok bool, sx, y int, cols [2]int, picked bool) {
 	if picked {
 		g.band(sx-1, y, tradeSideW+1, 1)
 	}
@@ -402,10 +396,9 @@ func tradeDrawOffer(g *xgrid, st game.GameState, c tradeCiv, d game.DealInfo, ok
 	if ok {
 		k, plate = xText, xChipCivic
 	}
-	g.put(cols[0], y, game.DealKindLabel(d.Kind), xDim)
-	x := g.put(cols[1], y, tradeOfferGive(d), k)
-	g.put(max(x+1, cols[2]-3), y, "►", xDim)
-	g.put(cols[2], y, tradeOfferGet(st, d), xText)
+	x := g.put(cols[0], y, tradeOfferGive(d), k)
+	g.put(max(x+1, cols[1]-3), y, "►", xDim)
+	g.put(cols[1], y, tradeOfferGet(st, d), xText)
 	g.rput(sx+68, y, textfmt.Number(st.Resources[d.Give].Amount), k)
 	if picked {
 		g.plate(sx+71-1, y, rowid.Line("ui.trade_side.tradeDrawOffer.01", "Enter"), xKeycap, "")

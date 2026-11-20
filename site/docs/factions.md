@@ -21,7 +21,7 @@ From the Industrial Age a Geographic Society sends missions while you're away, a
 
 If you never send a mission, each civilization is discovered anyway **two ages after** its first age, far later than an explorer would meet it.
 
-On first contact the log introduces the civilization: its name, personality and backstory. Until then it doesn't exist as far as the game is concerned. No panel, log line or refusal names a civilization you haven't met, its age, its specialty or its personality. `diplomacy` and `plan deal` refuse an unmet civilization the same way they refuse a name that doesn't exist, and completion only offers the civilizations you know.
+On first contact the log introduces the civilization: its name, personality and backstory. Until then it doesn't exist as far as the game is concerned. No panel, log line or refusal names a civilization you haven't met, its age, its specialty or its personality. `diplomacy` refuses an unmet civilization the same way they refuse a name that doesn't exist, and completion only offers the civilizations you know.
 
 **Old friends after a prestige.** Prestige and Succumb end every relationship, so the next run starts having met no one. From the first prestige, **Old Friends** remembers every civilization you have met and meets each again as soon as your age reaches its own, with no mission and no two-age wait, at neutral opinion. The log says so: "Old friends: the Riverlands Tribes remember your people and make contact again." Civilizations you have never met still have to be found by the rules above.
 
@@ -34,7 +34,7 @@ On first contact the log introduces the civilization: its name, personality and 
 1. The title, with how many civilizations you have met and how many are still undiscovered.
 2. **Boons and setbacks**: every timed effect a civilization has on you. Boons are marked `✦` and setbacks `⚠`. Each line names the civilization, the effect, its size (`+13% food production`, `+8% all production`, `+9% game speed`) and the time left. The header shows how full both pools are (`boons 2/5 · setbacks 1/3`), because both have a hard limit (see [Limits](#limits)). Workers on loan from a peaceful civilization are listed here too, marked temporary or permanent. So is each crew of temporary workers that a boon lent you: who sent it, how many workers and the time left. Crews take no boon slot, so the header doesn't count them.
 3. The **Geographic Society**, in one of three states. With none built, it prompts you to build one and names its age once you can see it. If a party is due but you can't pay for it, it says so. When it is running, it shows the number of Societies, their staffing, the wait between parties, and a countdown with a progress bar to the next party.
-4. A card for each civilization you have met: name, personality, specialty and a **strength rating** of 1 to 5 stars; a line of backstory; a war banner if you are at war; the opinion bar; the status, color-coded, with any active ally bonus and how many trades you've done; how far it is to the next threshold (*+8 opinion to friendly*, *+12 opinion to ally-eligible*, or the ally command once you qualify); workers it has lent you; how many boons and setbacks it is applying; and one line saying how many **trade deals** it has open, with a button to the Trade panel (see [Trade deals](#trade-deals)). A civilization that won't trade says why instead.
+4. A card for each civilization you have met: name, personality, specialty and a **strength rating** of 1 to 5 stars; a line of backstory; a war banner if you are at war; the opinion bar; the status, color-coded, with any active ally bonus and how many trades you've done; how far it is to the next threshold (*+8 opinion to friendly*, *+12 opinion to ally-eligible*, or the ally command once you qualify); workers it has lent you; how many boons and setbacks it is applying; and its know-how, earned or not; and one line saying how many **offers** it has open, with a button to the Trade panel (see [Offers](#offers)). A civilization that won't trade says why instead.
 5. **Not yet met**: how many civilizations you haven't discovered, and nothing else (`5 civilizations not yet discovered. Send expeditions to find them.`).
 
 <figure class="screen" data-screen="factions"><figcaption>The top of the Factions panel in the Medieval Age: one boon in play, workers on loan, and the card of the first civilization met with its opinion bar.</figcaption></figure>
@@ -58,8 +58,8 @@ Gifts, alliances, rivalries, embargoes and deals wait for **Envoys**, a Classica
 | `diplomacy neutral <civ>` | Return to neutral. Free. An alliance's gold isn't refunded |
 | `diplomacy tribute <civ>` | End a war at once: 300 gold and 50 culture per point of the civilization's strength |
 | `diplomacy raid <civ>` | Raid its trade route: -20 opinion, and a provocation |
-| `diplomacy deals [civ]` | List trade deals (one civilization, or every one you have met) |
-| `diplomacy accept <civ> <n>` | Take deal `n` |
+| `diplomacy deals [civ]` | List offers (one civilization, or every one you have met) |
+| `diplomacy accept <civ> <n>` | Take offer `n` |
 
 `dip` works in place of `diplomacy` everywhere. Name a civilization by its key (`riverlands_tribes`) or as separate words (`merchant guild`). Only the ones you have met are accepted.
 
@@ -86,7 +86,7 @@ From the Bronze Age on (when the first civilization becomes eligible) every cloc
 | Trade routes | +1 per completed route cycle | With every civilization you have met that isn't at war with you, all at once. The biggest source for most players: see [What routes are worth](trade.md#what-routes-are-worth). |
 | Embassies | a steady trickle | Spread across your non-hostile civilizations (see [Embassy buildings](#embassy-buildings)). |
 | Gifts | +15 per gift, +22 with Embassies | `diplomacy gift <civ>` costs 200 gold, 25% less with the Telecommunications tech. The Embassies tech (Colonial Age) makes a gift earn half as much again, rounded down. |
-| Deals | +1 per Buy, Sell or Rare deal; +5 per Goodwill deal | Only up to opinion 50. |
+| Offers | +1 per offer taken | Only up to opinion 50. |
 | Personality | ±1 every 65 ticks | See [Personalities](#personalities). |
 | Natural drift | 1 point toward 0 every 260 ticks | Not while at war. For an ally this is a slow leak. |
 | Rival or embargo | -5 every 130 ticks | A civilization at -100 stays there. |
@@ -110,41 +110,32 @@ Drift runs alongside natural drift and the rival or embargo drain, and opinion s
 
 ---
 
-## Trade deals
+## Offers
 
-Every civilization you have met offers a small, rotating set of **trade deals**. Nothing is written by hand for each civilization: its specialty, personality and strength, and its opinion of you, decide what it offers. The [Trade panel](trade.md) lists every open deal, with an Accept button on each; the Factions panel shows how many each civilization has open. `diplomacy deals [civ]` lists them, `diplomacy accept <civ> <n>` takes one, and `plan deal <civ> <n>` queues one in the [build plan](plan.md).
+Every civilization you have met offers a small, rotating set of **offers**. Each is a lump of your goods for one **gift** that goods cannot buy. Nothing is written by hand for each civilization: its specialty, personality and strength, your opinion with it and your own output decide what it offers. The [Trade panel](trade.md) lists every open offer, with an Accept button on each, and an Active gifts block under the list shows the boosts running and the know-how earned; the Factions panel shows how many each civilization has open and its know-how. `diplomacy deals [civ]` lists them and `diplomacy accept <civ> <n>` takes one. Goods for goods are the job of [trade routes](trade.md).
 
-Every deal is worded from your side, the same way on the panel, in `diplomacy deals`, in the plan and in the log: `<kind>: give <price> → get <goods>`, for example `Buy: give 876M iron ore → get 966K food`.
+An offer is worded from your side, the same way everywhere: `<kind>: give <lot> → <gift>`, for example `Boost: give 876M iron ore → +25% stone 20m`.
 
-| Kind | You give | You get |
+| Gift | You get | You give |
 |---|---|---|
-| Buy | one of your construction resources | the civilization's specialty, sized by the goods |
-| Sell | one of the three construction resources you hold the most of, measured against a good stock of each | the civilization's specialty, a little more than a Buy pays |
-| Goodwill | one of the three you hold the most of, the same way | **+5 opinion** instead of goods (only offered below opinion 50) |
-| Rare | one of your construction resources | a construction resource of the **next** age that this age does not price, at a steep price (0.6 of its next-age parity) |
+| Boost | +25% of your gross output of one resource you make, for 20 minutes (a resource the civilization's specialty names is preferred). A boost already running on that resource gets the time added | 0.6 of what the extra output is worth over the run |
+| Research | instant progress on the research under way, 1.25 times the lot's worth at research's price level, never more than it still needs. Only offered while something is being researched | a lot of goods |
+| People | N workers who join the idle pool: N = the lot's worth over the food one worker eats in one rotation of offers, at food's price level. Only offered when the homes have room | a lot of goods |
+| Know-how | the civilization's own perk for the rest of the run: +5% of your gross output of its specialty. Once per civilization per run. Offered at opinion 50 or more, or allied | 10 price units of the age |
 
-In an age that prices a raw material, the raw is one of your construction resources, so a deal can ask for it (see [What the ores are for](resources.md#what-the-ores-are-for)).
+Boosts show as a Gifts line in the rate of the resource. A boost ends on time while you are away, and time away produces the boost's extra only while it runs. Boosts and earned know-how are saved with your game.
 
-Next to a Rare deal the Trade panel shows `next age's goods`. A price you can't pay yet shows in red, and deals you've taken are dimmed.
+A price you can't pay yet shows in red, and offers you've taken are dimmed. An offer's rate is the ratio of the two resources' price levels times a multiple of 0.84 to 1.0 of parity, and a gift is never worth more than what is paid. Food, culture and research, which no building is priced in, are valued by what the age's producers of them return. Each offer is a fixed contract.
 
-A deal stands on its own. Its rate is the ratio of the two resources' price levels times a multiple of 0.84 to 1.0 of parity, and it never pays better than parity. Food and culture, which no building is priced in, are valued by what the age's producers of them return. Each deal is a fixed contract.
+A peaceful civilization makes 2 offers when neutral, 3 friendly and 4 allied. A mercantile one makes one more, at 2 points better rates and in 20% bigger lots. An aggressive one makes one fewer (at least one), at 4 points worse rates. An isolationist makes one (two when allied).
 
-A civilization's personality sets how many deals it offers and which kinds:
+Timed gifts are the common kind; know-how shows at most once in a set. Two techs add to every set: the **Global Village** (Digital Age) and the **Federation Charter** (Galactic Age) each make every civilization make one more offer, the isolationist ones included.
 
-| Personality | Deals |
-|---|---|
-| peaceful | 2 when neutral, 3 friendly, 4 allied; mostly Buy deals |
-| mercantile | one more than peaceful, 2 points better rates, 20% bigger lots, and more Sell deals (it asks for your goods) |
-| aggressive | one fewer than peaceful (at least one), 4 points worse rates, and more Goodwill deals |
-| isolationist | one deal (two when allied): a Rare deal when the next age has goods for it to sell, its specialty otherwise |
+Opinion matters too. Friendly civilizations (friendly status, or opinion 25 or more) and allies offer more, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking an offer adds +1 opinion and counts as a trade. Offers can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it.
 
-Two techs add to every set: the **Global Village** (Digital Age) and the **Federation Charter** (Galactic Age) each make every civilization offer one more deal, the isolationist ones included.
+A lot is about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, and a roll between ×0.75 and ×1.25). It's capped so the price comes to no more than 80% of a good stock of the resource (know-how is not capped). A good stock is a number of minutes of your own income of that resource, set by the age: a town that makes twice what the age's moderate economy does of a resource gets twice the lot, within a quarter to four times the moderate lot. Prices follow your income, not the size of any store. Amounts are rounded to three figures, never in your favor.
 
-Opinion matters too. Friendly civilizations (friendly status, or opinion 25 or more) and allies offer more deals, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a Sell) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking a Buy, Sell or Rare deal adds +1 opinion and counts as a trade. A Goodwill deal adds +5. Deals can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it.
-
-A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods come to no more than half a good stock of the resource and the price to no more than 80% of one. A good stock is a number of minutes of your own income of that resource, set by the age: a town that makes twice what the age's moderate economy does of a resource gets twice the lot, within a quarter to four times the moderate lot. Prices follow your income, not the size of any store. Amounts are rounded to three figures, never in your favor.
-
-Offers rotate after **4,680 ticks of play** (about 2h 36m at the base tick; 30% sooner with the Telecommunications tech) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The card shows the time to the next set.
+Offers rotate after **4,680 ticks of play** (about 2h 36m at the base tick; 30% sooner with the Telecommunications tech) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left. The card shows the time to the next set.
 
 ---
 
