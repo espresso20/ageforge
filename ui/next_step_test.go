@@ -39,7 +39,7 @@ func TestNextRuleNothingPressing(t *testing.T) {
 	st.PendingCatastrophe, st.AgeReady, st.NextAgeName = "", false, ""
 	st.Research.CurrentTech = "tool_making"
 	st.Age = st.Ruleset().AgeKeys()[len(st.Ruleset().AgeKeys())-1]
-	got := computeNext(st)
+	got := computeNext(st, panelView{})
 	if got.rule != ruleNone || got.cmd != "" || got.card != "" || got.panel != "" || got.title == "" {
 		t.Fatalf("a quiet town gives %+v, want a title only", got)
 	}
@@ -48,12 +48,12 @@ func TestNextRuleNothingPressing(t *testing.T) {
 func TestNextRuleChoice(t *testing.T) {
 	st := nextState(t)
 	st.PendingCatastrophe, st.AgeReady = "some_epoch", true
-	if got := computeNext(st); got.rule != ruleChoice || got.cmd != "catastrophe" {
+	if got := computeNext(st, panelView{}); got.rule != ruleChoice || got.cmd != "catastrophe" {
 		t.Fatalf("a pending catastrophe gives %+v, want the choice first", got)
 	}
 	// The offer of a memory is a modal that can wait: not a step.
 	st.PendingCatastrophe, st.AgeReady, st.PendingMemoryTech = "", false, "tool_making"
-	if got := computeNext(st); got.rule == ruleChoice {
+	if got := computeNext(st, panelView{}); got.rule == ruleChoice {
 		t.Fatalf("a waiting memory offer gives %+v, want no choice", got)
 	}
 }
@@ -61,7 +61,7 @@ func TestNextRuleChoice(t *testing.T) {
 func TestNextRuleAdvance(t *testing.T) {
 	st := nextState(t)
 	st.AgeReady = true
-	if got := computeNext(st); got.rule != ruleAdvance || got.cmd != "advance" || got.panel != "charter" {
+	if got := computeNext(st, panelView{}); got.rule != ruleAdvance || got.cmd != "advance" || got.panel != "charter" {
 		t.Fatalf("a ready age gives %+v, want advance", got)
 	}
 }
@@ -74,7 +74,7 @@ func TestNextRuleResearch(t *testing.T) {
 		"cheap": {Name: "Cheap", Available: true, Cost: 2},
 		"shut":  {Name: "Shut", Cost: 1},
 	}
-	got := computeNext(st)
+	got := computeNext(st, panelView{})
 	if got.rule != ruleResearch || got.panel != "research" || got.cmd != "research cheap" {
 		t.Fatalf("an idle lab gives %+v, want a tech that can start", got)
 	}
@@ -115,14 +115,14 @@ func TestNextRuleScholars(t *testing.T) {
 	st := nextState(t)
 	st.Research.CurrentTech, st.Research.NeedsScholars = "", true
 	st.Research.Techs = map[string]game.TechState{}
-	got := computeNext(st)
+	got := computeNext(st, panelView{})
 	builds(t, got, ruleScholars, func(b game.BuildingState) bool { return b.Scholars > 0 }, st)
 }
 
 func TestNextRuleIdle(t *testing.T) {
 	st := fullyJobbed(nextState(t))
 	st.Workers.TotalIdle = 7
-	builds(t, computeNext(st), ruleIdle, func(b game.BuildingState) bool { return b.WorkerCapacity > 0 }, st)
+	builds(t, computeNext(st, panelView{}), ruleIdle, func(b game.BuildingState) bool { return b.WorkerCapacity > 0 }, st)
 	// A job still open: nothing to build for them.
 	b := st.Buildings
 	st.Buildings = map[string]game.BuildingState{}
@@ -132,7 +132,7 @@ func TestNextRuleIdle(t *testing.T) {
 		}
 		st.Buildings[k] = v
 	}
-	if got := computeNext(st); got.rule == ruleIdle {
+	if got := computeNext(st, panelView{}); got.rule == ruleIdle {
 		t.Fatalf("open jobs still give %+v", got)
 	}
 }
@@ -140,7 +140,7 @@ func TestNextRuleIdle(t *testing.T) {
 func TestNextRuleHomes(t *testing.T) {
 	st := nextState(t)
 	st.Workers.HeldBy = game.HeldHousing
-	got := computeNext(st)
+	got := computeNext(st, panelView{})
 	if got.rule != ruleHomes || got.card == "" || !strings.HasPrefix(got.cmd, "build ") {
 		t.Fatalf("full homes give %+v", got)
 	}
@@ -153,7 +153,7 @@ func TestNextRuleGate(t *testing.T) {
 	st.AgeReady, st.PendingCatastrophe = false, ""
 	st.Research.CurrentTech, st.Research.NeedsScholars = "x", false
 	st.Workers.TotalIdle, st.Workers.HeldBy = 0, ""
-	got := computeNext(st)
+	got := computeNext(st, panelView{})
 	if got.rule != ruleGate || got.cmd == "" {
 		t.Fatalf("an open gate gives %+v, want its first unmet row", got)
 	}
@@ -210,7 +210,7 @@ func TestNextThenOrder(t *testing.T) {
 	st := nextState(t)
 	st.PendingCatastrophe, st.AgeReady = "e", true
 	st.Workers.HeldBy = game.HeldHousing
-	got := computeNext(st)
+	got := computeNext(st, panelView{})
 	if got.rule != ruleChoice || len(got.then) != nextThen {
 		t.Fatalf("got %+v", got)
 	}
@@ -311,5 +311,23 @@ func TestNextStepPlate(t *testing.T) {
 	st.paint()
 	if !strings.Contains(drawPrimitive(t, st.p, 279, 74).Text(), strings.TrimSpace(txtNextStep.String())) {
 		t.Fatal("the next step's card has no plate on the screen")
+	}
+}
+
+// A step that cannot be built yet keeps its plate: the reason is written
+// after it, not over it.
+func TestNextStepPlateBesideReason(t *testing.T) {
+	d, st, _ := medievalTown(t, 279, 74)
+	d.refresh()
+	var short bool
+	for _, c := range d.economyTab.buildBox.cards {
+		short = short || c.key == d.next.card && c.reason != ""
+	}
+	if !short {
+		t.Skipf("the town's step has no reason: %+v", d.next)
+	}
+	st.paint()
+	if !strings.Contains(drawPrimitive(t, st.p, 279, 74).Text(), strings.TrimSpace(txtNextStep.String())) {
+		t.Fatal("the reason covers the next step's plate")
 	}
 }

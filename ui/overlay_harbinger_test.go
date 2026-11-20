@@ -232,7 +232,7 @@ func TestHarbingerStatusBadgeAndSidebar(t *testing.T) {
 	if !strings.Contains(d2.headerTV.GetText(true), "⚑ Harbinger: type harbinger") {
 		t.Errorf("no harbinger badge in the header: %q", d2.headerTV.GetText(true))
 	}
-	if !strings.Contains(strings.Join(panelRows(formWords, 60), "\n"), "harbinger") {
+	if !strings.Contains(strings.Join(panelRows(formWords, 60, panelView{}), "\n"), "harbinger") {
 		t.Error("harbinger missing from the Panels list")
 	}
 }

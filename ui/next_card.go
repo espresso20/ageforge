@@ -53,8 +53,16 @@ func isPanel(name string) bool {
 
 // cell is a piece of a row with the cells it takes.
 type cell struct {
-	s string
-	w int
+	s     string
+	w     int
+	fresh bool // the cell starts with a plate, which takes the cell before it
+}
+
+func b2i(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 func dimText(s string) string  { return theme.Paint(theme.RoleDim, s) }
@@ -62,13 +70,13 @@ func bodyText(s string) string { return theme.Paint(theme.RoleText, s) }
 
 // panelRows is the found panels in a form, T cells wide, a pad cell at the
 // left of each row.
-func panelRows(form, T int) []string {
+func panelRows(form, T int, v panelView) []string {
 	var groups [][]panelInfo
 	var titles []string
 	for _, g := range panelGroups {
 		var ps []panelInfo
 		for _, p := range g.panels {
-			if panelFound(p.name) {
+			if v.has(p.name) {
 				ps = append(ps, p)
 			}
 		}
@@ -77,7 +85,7 @@ func panelRows(form, T int) []string {
 		}
 	}
 	if form == formRich && T >= richMinT {
-		return richRows(groups, titles, T)
+		return richRows(groups, titles, T, v)
 	}
 	// flow writes names two blanks apart (one in the narrowest box, which
 	// has rows for no more), wrapped at room.
@@ -85,20 +93,35 @@ func panelRows(form, T int) []string {
 	if T < 24 {
 		gap = 1
 	}
-	flow := func(names []string, room int) []string {
+	// A new name sits on a plate that borrows the cell before it and the
+	// cell after, so the letters keep their columns. lead is what comes
+	// before a row's first name: a pad cell, or the group's heading.
+	flow := func(names []string, room int, lead func(row int, fresh bool) string) []string {
 		var rows []string
-		var row []string
-		used := 0
+		var row string
+		used, prev, count := 0, false, 0
 		for _, n := range names {
-			if len(row) > 0 && used+gap+len(n) > room {
-				rows, row, used = append(rows, strings.Join(row, strings.Repeat(" ", gap))), nil, 0
+			fresh := v.fresh(n)
+			w := len(n)
+			if fresh {
+				w += 2
 			}
-			if len(row) > 0 {
+			if count > 0 && used+gap+w > room {
+				rows, row, used, count, prev = append(rows, row), "", 0, 0, false
+			}
+			shown := panelLink(n, bodyText(n))
+			if fresh {
+				shown = panelLink(n, newPlate(n))
+			}
+			if count == 0 {
+				row, used = lead(len(rows), fresh), 0
+			} else {
 				used += gap
+				row += strings.Repeat(" ", max(gap-b2i(fresh)-b2i(prev), 0))
 			}
-			row, used = append(row, panelLink(n, bodyText(n))), used+len(n)
+			row, used, prev, count = row+shown, used+w, fresh, count+1
 		}
-		return append(rows, strings.Join(row, strings.Repeat(" ", gap)))
+		return append(rows, row)
 	}
 	if form <= formGrouped && T >= groupedMinT {
 		var out []string
@@ -107,13 +130,12 @@ func panelRows(form, T int) []string {
 			for j, p := range ps {
 				names[j] = p.name
 			}
-			for j, r := range flow(names, T-groupTitleW) {
-				lead := strings.Repeat(" ", groupTitleW)
+			out = append(out, flow(names, T-groupTitleW, func(j int, fresh bool) string {
 				if j == 0 {
-					lead = dimText(titles[i] + strings.Repeat(" ", groupTitleW-len(titles[i])))
+					return " " + dimText(titles[i]+strings.Repeat(" ", groupTitleW-len(titles[i])-b2i(fresh)))
 				}
-				out = append(out, " "+lead+r)
-			}
+				return strings.Repeat(" ", 1+groupTitleW-b2i(fresh))
+			})...)
 		}
 		return out
 	}
@@ -123,16 +145,12 @@ func panelRows(form, T int) []string {
 			names = append(names, p.name)
 		}
 	}
-	var out []string
-	for _, r := range flow(names, T) {
-		out = append(out, " "+r)
-	}
-	return out
+	return flow(names, T, func(_ int, fresh bool) string { return strings.Repeat(" ", 1-b2i(fresh)) })
 }
 
 // richRows is the two-column form: Town then Progress down the left, World
 // then You down the right, a gutter of T-58 between.
-func richRows(groups [][]panelInfo, titles []string, T int) []string {
+func richRows(groups [][]panelInfo, titles []string, T int, v panelView) []string {
 	column := func(idx ...int) []cell {
 		var out []cell
 		for _, i := range idx {
@@ -142,11 +160,15 @@ func richRows(groups [][]panelInfo, titles []string, T int) []string {
 			if len(out) > 0 {
 				out = append(out, cell{})
 			}
-			out = append(out, cell{dimText(titles[i]), len(titles[i])})
+			out = append(out, cell{dimText(titles[i]), len(titles[i]), false})
 			for _, p := range groups[i] {
 				job := p.job.String()
 				row := p.name + strings.Repeat(" ", panelNameW-len(p.name)+1) + job
-				out = append(out, cell{panelLink(p.name, bodyText(p.name+strings.Repeat(" ", panelNameW-len(p.name)+1))+dimText(job)), len(row)})
+				name, fresh := bodyText(p.name+strings.Repeat(" ", panelNameW-len(p.name)+1)), v.fresh(p.name)
+				if fresh {
+					name = newPlate(p.name) + strings.Repeat(" ", panelNameW-len(p.name))
+				}
+				out = append(out, cell{panelLink(p.name, name+dimText(job)), len(row), fresh})
 			}
 		}
 		return out
@@ -163,9 +185,9 @@ func richRows(groups [][]panelInfo, titles []string, T int) []string {
 		if i < len(right) {
 			r = right[i]
 		}
-		row := " " + l.s
+		row := strings.Repeat(" ", 1-b2i(l.fresh)) + l.s
 		if r.w > 0 {
-			row += strings.Repeat(" ", richColW-l.w+min(T-58, 6)) + r.s
+			row += strings.Repeat(" ", richColW-l.w+min(T-58, 6)-b2i(r.fresh)) + r.s
 		}
 		out = append(out, row)
 	}
@@ -231,10 +253,15 @@ func cardRows(s nextStep, T int, cut cardCut) []string {
 func nextBoxText(s nextStep, w, h int, rich bool) string {
 	T := w - 2
 	if !rich {
-		return strings.Join(panelRows(formWords, w-1), "\n")
+		return strings.Join(panelRows(formWords, w-1, s.view), "\n")
+	}
+	tail := ""
+	if n := s.view.newCount(); n > 0 {
+		tail = rowid.Sprintf("ui.next_card.txtNew.01", " %d new ", n)
 	}
 	rule := " " + theme.Paint(theme.RoleBorder, "─") + theme.Paint(theme.RoleAccent, txtPanels.String()) +
-		theme.Paint(theme.RoleBorder, strings.Repeat("─", max(w-2-runeLen(txtPanels.String()), 0)))
+		theme.Paint(theme.RoleBorder, strings.Repeat("─", max(w-2-runeLen(txtPanels.String())-runeLen(tail), 0))) +
+		theme.TagFgBgAttr(theme.RoleLabel, theme.RoleBackground, "b") + tail + theme.Reset
 	type step struct {
 		cut  cardCut
 		form int
@@ -249,7 +276,7 @@ func nextBoxText(s nextStep, w, h int, rich bool) string {
 	steps = append(steps, step{cardCut{whyRows: 2}, formWords}, step{cardCut{whyRows: 1}, formWords}, step{cardCut{}, formWords})
 	if s.title != "" {
 		for _, st := range steps {
-			card, list := cardRows(s, T, st.cut), panelRows(st.form, T)
+			card, list := cardRows(s, T, st.cut), panelRows(st.form, T, s.view)
 			if used := len(card) + 1 + panelRuleRows + len(list); used <= h {
 				rows := append(card, make([]string, h-used+1)...)
 				return strings.Join(append(append(rows, rule), list...), "\n")
@@ -257,9 +284,9 @@ func nextBoxText(s nextStep, w, h int, rich bool) string {
 		}
 	}
 	for f := formRich; f < formWords; f++ {
-		if list := panelRows(f, T); len(list) <= h {
+		if list := panelRows(f, T, s.view); len(list) <= h {
 			return strings.Join(list, "\n")
 		}
 	}
-	return strings.Join(panelRows(formWords, T), "\n")
+	return strings.Join(panelRows(formWords, T, s.view), "\n")
 }

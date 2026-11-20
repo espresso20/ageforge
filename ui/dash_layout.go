@@ -98,6 +98,8 @@ type dashBody struct {
 	miniShown, miniFits, miniDrawn bool
 	// screen is the terminal's size.
 	screen func() (w, h int)
+	// view is the panels the list shows, which sets how tall it is.
+	view panelView
 	// classicPeople is the People box's height, border included, in the
 	// classic layout (it grows by the lines that say what holds the
 	// population back).
@@ -145,7 +147,7 @@ func (b *dashBody) arrange(x, y, w, h int) {
 	region := h - ph
 	mh := richMapRows(side, region)
 	if !rich {
-		mh = miniBoxHeight(side, region)
+		mh = miniBoxHeight(side, region, b.view)
 		if th < miniMapMinRows {
 			mh = 0
 		}
@@ -181,12 +183,12 @@ const miniShortestInnerH = 8
 // or 0 (hidden). The list is always whole, in words. The map is about
 // square on screen (a cell is about 2.1 times taller than wide; a row short
 // of square counts), or else at least miniShortestInnerH picture rows.
-func miniBoxHeight(w, h int) int {
+func miniBoxHeight(w, h int, v panelView) int {
 	square := int(float64(w)/2.1 + 0.5)
 	if square < miniMinInnerH {
 		return 0
 	}
-	list := len(panelRows(formWords, w-3)) + 2
+	list := len(panelRows(formWords, w-3, v)) + 2
 	for _, least := range [2]int{square - 1, miniShortestInnerH} {
 		if picture := h - list - 2; picture >= least {
 			return min(picture, square) + 2

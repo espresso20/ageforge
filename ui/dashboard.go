@@ -133,6 +133,8 @@ type Dashboard struct {
 	lastState  *game.GameState
 	// next is the next step, worked out from lastState once a refresh.
 	next nextStep
+	// panels is what the account has found and opened (panels_found.go).
+	panels panelView
 
 	// harbPanel is the Harbinger panel's UI state (feedback line, Invite
 	// confirmation). Owned by the UI goroutine.
@@ -872,7 +874,8 @@ func (d *Dashboard) refresh() {
 
 	state := d.engine.GetState()
 	d.lastState = &state
-	d.next = computeNext(state)
+	d.notePanels(panelsReached(state), false)
+	d.next = computeNext(state, d.panels)
 	d.economyTab.buildBox.nextKey = d.next.card
 	d.nextBox.changed()
 
@@ -1516,6 +1519,11 @@ func (d *Dashboard) runLine(text string) {
 		d.pages.AddPage(themePickerPage, page, true, true)
 		d.app.SetFocus(page)
 		return
+	}
+	if fields := strings.Fields(cmd); len(fields) > 0 {
+		if name := panelNamed(fields[0]); name != "" {
+			d.notePanels([]string{name}, true)
+		}
 	}
 	result := HandleCommand(text, d.engine)
 	if result.EpochCard {

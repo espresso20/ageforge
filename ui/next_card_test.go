@@ -20,7 +20,7 @@ func panelNames() []string {
 // Each form of the list is whole, fits its width and clicks through.
 func TestPanelRowsForms(t *testing.T) {
 	for _, c := range []struct{ form, T, rows int }{{formRich, 60, 12}, {formGrouped, 30, 10}, {formWords, 18, 0}} {
-		rows := panelRows(c.form, c.T)
+		rows := panelRows(c.form, c.T, panelView{})
 		plain := untag(strings.Join(rows, "\n"))
 		for _, r := range rows {
 			if n := runeLen(untag(r)); n > c.T+1 {
@@ -45,7 +45,7 @@ func TestPanelRowsForms(t *testing.T) {
 		}
 	}
 	// Too narrow for a form: the next one down.
-	if got := panelRows(formRich, 40); strings.Contains(untag(strings.Join(got, "\n")), "the tech tree") {
+	if got := panelRows(formRich, 40, panelView{}); strings.Contains(untag(strings.Join(got, "\n")), "the tech tree") {
 		t.Error("a box 40 wide has job lines")
 	}
 }

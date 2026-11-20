@@ -459,7 +459,7 @@ func TestFactionsOverlayWiring(t *testing.T) {
 		t.Errorf("diplomacy with arguments opened overlay %q, want an action result", res.OverlayName)
 	}
 	// 3. The Panels list names it.
-	if list := strings.Join(panelRows(formWords, 60), "\n"); !strings.Contains(list, "factions") {
+	if list := strings.Join(panelRows(formWords, 60, panelView{}), "\n"); !strings.Contains(list, "factions") {
 		t.Errorf("the Panels list is missing the factions entry:\n%s", list)
 	}
 	// 4. The command registry (and so completion) has it.

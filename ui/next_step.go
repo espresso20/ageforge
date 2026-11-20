@@ -59,6 +59,7 @@ type nextStep struct {
 	enough              bool
 	panel, card, cmd    string
 	then                []nextItem
+	view                panelView // the panels found and opened, which the list shows
 }
 
 // item is the step as an item that follows another.
@@ -66,20 +67,16 @@ func (s nextStep) item() nextItem {
 	return nextItem{title: s.title, detail: s.detail, panel: s.panel, card: s.card}
 }
 
-// panelFound reports whether a panel is on the list yet. Every panel counts
-// as found until panels are found as the game goes on.
-func panelFound(string) bool { return true }
-
 // computeNext works the next step out of a snapshot: the first rule that
 // matches is NOW, then come the next three things.
-func computeNext(st game.GameState) nextStep {
+func computeNext(st game.GameState, v panelView) nextStep {
 	n := nextCtx{st: st, cards: buildCards(st, buyOne), set: st.Ruleset()}
 	var steps []nextStep
 	for _, rule := range []func(*nextCtx) (nextStep, bool){
 		(*nextCtx).choice, (*nextCtx).advance, (*nextCtx).research, (*nextCtx).scholars,
 		(*nextCtx).idle, (*nextCtx).homes, (*nextCtx).gate, (*nextCtx).dry,
 	} {
-		if s, ok := rule(&n); ok && (s.panel == "" || panelFound(s.panel)) {
+		if s, ok := rule(&n); ok && (s.panel == "" || v.has(s.panel)) {
 			steps = append(steps, s)
 		}
 	}
@@ -92,11 +89,11 @@ func computeNext(st game.GameState) nextStep {
 		}
 	}
 	for _, it := range n.passive() {
-		if it.panel == "" || panelFound(it.panel) {
+		if it.panel == "" || v.has(it.panel) {
 			items = append(items, it)
 		}
 	}
-	now.then = items[:min(len(items), nextThen)]
+	now.then, now.view = items[:min(len(items), nextThen)], v
 	return now
 }
 

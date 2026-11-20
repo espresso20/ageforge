@@ -299,6 +299,7 @@ func newTestDashboard(eng *game.GameEngine) (*Dashboard, *nativePages) {
 	}
 	pages := newNativePages()
 	d := NewDashboard(newAppLoop(), eng, pages)
+	d.panels = seenPanels() // layout tests want the whole list; panels_found_test.go starts from nothing
 	pages.AddPage("dashboard", d.Root(), true, true)
 	return d, pages
 }
