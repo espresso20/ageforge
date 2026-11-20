@@ -127,8 +127,8 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 			} else if title := d.workerMiniTV.GetTitle(); !strings.Contains(title, "People ") || !strings.Contains(title, "/") {
 				t.Errorf("%s: the title %q does not carry the headcount", where, title)
 			}
-			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
-			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
+			panels := strings.Join(checkFitted(t, where+", Panels", d.nextBox, cells, w), "\n")
+			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, panelNames()...)
 		}
 	}
 }
@@ -152,6 +152,6 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 		t.Errorf("the title %q lost the box's name", title)
 	}
 	wantAll(t, "the People box", text, "Operators", "Entangled", "Wardens", "Quantum minds", "Held by: food")
-	panels := strings.Join(checkFitted(t, "big town, Panels", d.sidebar, cells, 80), "\n")
-	wantAll(t, "the Panels list", panels, sidebarPanels...)
+	panels := strings.Join(checkFitted(t, "big town, Panels", d.nextBox, cells, 80), "\n")
+	wantAll(t, "the Panels list", panels, panelNames()...)
 }

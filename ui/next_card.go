@@ -1,0 +1,252 @@
+package ui
+
+import (
+	"strings"
+
+	"github.com/espresso20/ageforge/rowid"
+	"github.com/espresso20/ageforge/theme"
+)
+
+// next_card.go fills the Next box: the card for the next step, then the rule
+// row and the list of panels under it. One function writes it for both
+// layouts; the classic one gets the list alone, in words.
+
+var (
+	txtNextTitle = rowid.E("ui.next_card.txtNext.01", " Next ")
+	txtPanels    = rowid.E("ui.next_card.txtPanels.01", " Panels ")
+	txtNow       = rowid.E("ui.next_card.txtNow.01", "NOW")
+	txtThen      = rowid.E("ui.next_card.txtThen.01", "THEN")
+	txtShowMe    = rowid.E("ui.next_card.txtShowMe.01", " Show me ")
+	txtTabKey    = rowid.E("ui.next_card.txtTabKey.01", " Tab ")
+	regionShow   = "nextshow"
+	regionThen   = "nextthen"
+)
+
+// The forms of the list, richest first.
+const (
+	formRich = iota
+	formGrouped
+	formWords
+)
+
+const (
+	richColW      = 29 // a rich column: the name field, a blank, the job line
+	richMinT      = 59 // the width the rich form needs
+	groupedMinT   = 28
+	groupTitleW   = 10
+	tabMinT       = 30 // under this width the Tab plate and the command go
+	panelRuleRows = 1
+)
+
+// cell is a piece of a row with the cells it takes.
+type cell struct {
+	s string
+	w int
+}
+
+func dimText(s string) string  { return theme.Paint(theme.RoleDim, s) }
+func bodyText(s string) string { return theme.Paint(theme.RoleText, s) }
+
+// panelRows is the found panels in a form, T cells wide, a pad cell at the
+// left of each row.
+func panelRows(form, T int) []string {
+	var groups [][]panelInfo
+	var titles []string
+	for _, g := range panelGroups {
+		var ps []panelInfo
+		for _, p := range g.panels {
+			if panelFound(p.name) {
+				ps = append(ps, p)
+			}
+		}
+		if len(ps) > 0 {
+			groups, titles = append(groups, ps), append(titles, strings.ToUpper(g.title.String()))
+		}
+	}
+	if form == formRich && T >= richMinT {
+		return richRows(groups, titles, T)
+	}
+	// flow writes names two blanks apart (one in the narrowest box, which
+	// has rows for no more), wrapped at room.
+	gap := 2
+	if T < 24 {
+		gap = 1
+	}
+	flow := func(names []string, room int) []string {
+		var rows []string
+		var row []string
+		used := 0
+		for _, n := range names {
+			if len(row) > 0 && used+gap+len(n) > room {
+				rows, row, used = append(rows, strings.Join(row, strings.Repeat(" ", gap))), nil, 0
+			}
+			if len(row) > 0 {
+				used += gap
+			}
+			row, used = append(row, panelLink(n, bodyText(n))), used+len(n)
+		}
+		return append(rows, strings.Join(row, strings.Repeat(" ", gap)))
+	}
+	if form <= formGrouped && T >= groupedMinT {
+		var out []string
+		for i, ps := range groups {
+			names := make([]string, len(ps))
+			for j, p := range ps {
+				names[j] = p.name
+			}
+			for j, r := range flow(names, T-groupTitleW) {
+				lead := strings.Repeat(" ", groupTitleW)
+				if j == 0 {
+					lead = dimText(titles[i] + strings.Repeat(" ", groupTitleW-len(titles[i])))
+				}
+				out = append(out, " "+lead+r)
+			}
+		}
+		return out
+	}
+	var names []string
+	for _, ps := range groups {
+		for _, p := range ps {
+			names = append(names, p.name)
+		}
+	}
+	var out []string
+	for _, r := range flow(names, T) {
+		out = append(out, " "+r)
+	}
+	return out
+}
+
+// richRows is the two-column form: Town then Progress down the left, World
+// then You down the right, a gutter of T-58 between.
+func richRows(groups [][]panelInfo, titles []string, T int) []string {
+	column := func(idx ...int) []cell {
+		var out []cell
+		for _, i := range idx {
+			if i >= len(groups) {
+				continue
+			}
+			if len(out) > 0 {
+				out = append(out, cell{})
+			}
+			out = append(out, cell{dimText(titles[i]), len(titles[i])})
+			for _, p := range groups[i] {
+				job := p.job.String()
+				row := p.name + strings.Repeat(" ", panelNameW-len(p.name)+1) + job
+				out = append(out, cell{panelLink(p.name, bodyText(p.name+strings.Repeat(" ", panelNameW-len(p.name)+1))+dimText(job)), len(row)})
+			}
+		}
+		return out
+	}
+	// groups holds the found ones only, so a left column with no group is
+	// the one that is empty and the right moves up into it.
+	left, right := column(0, 1), column(2, 3)
+	var out []string
+	for i := 0; i < max(len(left), len(right)); i++ {
+		l, r := cell{}, cell{}
+		if i < len(left) {
+			l = left[i]
+		}
+		if i < len(right) {
+			r = right[i]
+		}
+		row := " " + l.s
+		if r.w > 0 {
+			row += strings.Repeat(" ", richColW-l.w+min(T-58, 6)) + r.s
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+// cardCut is what a card keeps when rows are short: how many THEN items,
+// whether the cost line, and how many reason rows.
+type cardCut struct {
+	then, whyRows int
+	cost          bool
+}
+
+// cardRows is the card as rows, T cells wide, with a pad cell at the left.
+func cardRows(s nextStep, T int, cut cardCut) []string {
+	x := func(parts ...string) string { return " " + strings.Join(parts, "") }
+	rows := []string{x(dimText(txtNow.String())), x(theme.Paint(theme.RoleAccent, "►"), " ", theme.Tag(theme.RoleBright)+fitText(s.title, T-2)+"[-]")}
+	if cut.whyRows > 0 {
+		why := wrapText(strings.Join(s.why, " "), T-2)
+		for _, l := range why[:min(len(why), cut.whyRows)] {
+			rows = append(rows, x("  ", bodyText(l)))
+		}
+	}
+	if cut.cost && s.cost != "" {
+		have := fitText(s.have, (T-2)/2)
+		cost := fitText(s.cost, max(T-4-runeLen(have), 1))
+		role := theme.RoleWarning
+		if s.enough {
+			role = theme.RolePositive
+		}
+		rows = append(rows, x("  ", bodyText(cost), "  ", theme.Paint(role, have)))
+	}
+	if s.cmd != "" {
+		btn := clickRegion(regionShow, theme.TagFgBgAttr(theme.RoleText, theme.RoleChip, "b")+txtShowMe.String()+theme.Reset)
+		if T >= tabMinT {
+			btn += "   " + theme.TagFgBg(theme.RoleDim, theme.RoleChip) + txtTabKey.String() + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(txtTabKey.String())-4))
+		}
+		rows = append(rows, "", x(btn))
+	}
+	if cut.then > 0 {
+		rows = append(rows, "", x(dimText(txtThen.String())))
+		for i, it := range s.then[:cut.then] {
+			if i > 0 {
+				rows = append(rows, "")
+			}
+			title, word := fitText(it.title, T), it.panel
+			line := bodyText(title)
+			if word != "" && runeLen(title)+2+len(word) <= T {
+				line += strings.Repeat(" ", T-runeLen(title)-len(word)) + dimText(word)
+			}
+			link := func(s string) string { return clickRegion(regionThen+string(rune('0'+i)), s) }
+			rows = append(rows, link(x(line)), link(x("  ", dimText(fitText(it.detail, T-2)))))
+		}
+	}
+	return rows
+}
+
+// nextBoxText fills the Next box, w by h cells inside. The card sits at the
+// top and the rule row and list at the bottom, with a blank between. When
+// rows are short the card gives way in a fixed order: the THEN items from the
+// last, then the label, the list a form down, the cost, the reasons, and at
+// last the card. The classic layout (rich false) has the list alone, in words.
+func nextBoxText(s nextStep, w, h int, rich bool) string {
+	T := w - 2
+	if !rich {
+		return strings.Join(panelRows(formWords, w-1), "\n")
+	}
+	rule := " " + theme.Paint(theme.RoleBorder, "─") + theme.Paint(theme.RoleAccent, txtPanels.String()) +
+		theme.Paint(theme.RoleBorder, strings.Repeat("─", max(w-2-runeLen(txtPanels.String()), 0)))
+	type step struct {
+		cut  cardCut
+		form int
+	}
+	var steps []step
+	for t := len(s.then); t >= 0; t-- {
+		steps = append(steps, step{cardCut{then: t, cost: true, whyRows: 2}, formRich})
+	}
+	for _, f := range []int{formGrouped, formWords} {
+		steps = append(steps, step{cardCut{cost: true, whyRows: 2}, f})
+	}
+	steps = append(steps, step{cardCut{whyRows: 2}, formWords}, step{cardCut{whyRows: 1}, formWords}, step{cardCut{}, formWords})
+	if s.title != "" {
+		for _, st := range steps {
+			card, list := cardRows(s, T, st.cut), panelRows(st.form, T)
+			if used := len(card) + 1 + panelRuleRows + len(list); used <= h {
+				rows := append(card, make([]string, h-used+1)...)
+				return strings.Join(append(append(rows, rule), list...), "\n")
+			}
+		}
+	}
+	for f := formRich; f < formWords; f++ {
+		if list := panelRows(f, T); len(list) <= h {
+			return strings.Join(list, "\n")
+		}
+	}
+	return strings.Join(panelRows(formWords, T), "\n")
+}

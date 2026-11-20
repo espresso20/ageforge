@@ -24,7 +24,7 @@ const (
 	// The rich layout's columns (richCols): Left is Resources over the Log,
 	// Middle is Buildings over a foot strip, Right is the Panels list over
 	// the mini map. Right is at least richRightMin, room for a panel's name
-	// and a short line on what it is for (panelsRichWidth).
+	// and a short line on what it is for (richMinT).
 	richLeftMin  = 46
 	richMidMin   = 44
 	richRightMin = 33
@@ -146,6 +146,9 @@ func (b *dashBody) arrange(x, y, w, h int) {
 	mh := richMapRows(side, region)
 	if !rich {
 		mh = miniBoxHeight(side, region)
+		if th < miniMapMinRows {
+			mh = 0
+		}
 	}
 	b.miniFits = mh > 0
 	if b.miniOff || b.mini == nil || !b.miniReady() {
@@ -175,42 +178,19 @@ const miniShortestInnerH = 8
 
 // miniBoxHeight is the mini map's height, border included, in a right
 // column w wide with h rows for the Panels list and the mini map together,
-// or 0 (hidden). The Panels list always lists every panel. The forms of the
-// list are tried in turn, from the form it has by itself (the rows
-// sidebarText picks a form from) to the shortest, twice: first for a box
-// about square on screen (a cell is about 2.1 times taller than wide; a
-// row short of square counts), then for a shorter box of at least
-// miniShortestInnerH picture rows. So the list gives up its groups, then
-// its single column, before the map gives up its shape. When no form
-// leaves room there is no mini map.
+// or 0 (hidden). The list is always whole, in words. The map is about
+// square on screen (a cell is about 2.1 times taller than wide; a row short
+// of square counts), or else at least miniShortestInnerH picture rows.
 func miniBoxHeight(w, h int) int {
 	square := int(float64(w)/2.1 + 0.5)
 	if square < miniMinInnerH {
 		return 0
 	}
-	forms := panelsFormRows(w - 2)
-	own := 0
-	for own < len(forms)-1 && h-2 < forms[own] {
-		own++
-	}
+	list := len(panelRows(formWords, w-3)) + 2
 	for _, least := range [2]int{square - 1, miniShortestInnerH} {
-		for f := own; f < len(forms); f++ {
-			if picture := h - (forms[f] + 2) - 2; picture >= least {
-				return min(picture, square) + 2
-			}
+		if picture := h - list - 2; picture >= least {
+			return min(picture, square) + 2
 		}
 	}
 	return 0
-}
-
-// panelsFormRows is the fewest rows inside the box each form of the Panels
-// list needs, in w cells, longest form first: the grouped list (when w has
-// room for it), a name a row, and two columns.
-func panelsFormRows(w int) []int {
-	n := len(sidebarPanels)
-	forms := []int{n, (n + 1) / 2}
-	if w >= panelsRichWidth() {
-		forms = append([]int{panelsRichRows()}, forms...)
-	}
-	return forms
 }

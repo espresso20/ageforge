@@ -173,6 +173,7 @@ var fileNotes = map[string]fileNote{
 	"ui/mastery.go":              {place: "where the panels show Era Mastery", age: "medieval_age", seen: seenRare},
 	"ui/menu.go":                 {place: "in the main menu", age: "menu", seen: seenAlways},
 	"ui/menu_page.go":            {place: "in the main menu", age: "menu", seen: seenAlways},
+	"ui/next_card.go":            {place: "on the Next card and the Panels list of the main window", age: "primitive_age", seen: seenAlways},
 	"ui/next_step.go":            {place: "on the Next card of the main window, naming the next step", age: "primitive_age", seen: seenAlways},
 	"ui/menu_scene.go":           {place: "in the main menu", age: "menu", seen: seenAlways},
 	"ui/menu_town.go":            {place: "in the main menu", age: "menu", seen: seenAlways},

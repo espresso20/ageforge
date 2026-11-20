@@ -73,12 +73,11 @@ type Dashboard struct {
 	// Tabs (only economy is permanent background)
 	economyTab *EconomyTab
 
-	// Sidebar
-	sidebar       *fitView
-	sidebarActive string // the open panel, highlighted in the list
-	workerMiniTV  *fitView
-	peopleH       int  // the People box's height in the classic layout, border included: its lines
-	workerDetail  bool // the terminal has the rows for the People box's food detail line
+	// The Next card and the Panels list (the right column's top box)
+	nextBox      *fitView
+	workerMiniTV *fitView
+	peopleH      int  // the People box's height in the classic layout, border included: its lines
+	workerDetail bool // the terminal has the rows for the People box's food detail line
 
 	// Shared UI
 	logTV *nativeText
@@ -227,7 +226,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.build()
 	d.retitle()
 	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
-		d.updateSidebar("")
 		d.returnFocus()
 	})
 	// The text panels' frames fold to ASCII with the map glyphs.
@@ -366,13 +364,24 @@ func (d *Dashboard) build() {
 
 	// Sidebar — command panel hints, laid out for the room it has: one
 	// column when the names fit that way, two when the screen is short.
-	d.sidebar = newFitView(func(w, h int) string { return sidebarText(d.sidebarActive, w, h) })
+	d.nextBox = newFitView(func(w, h int) string { return nextBoxText(d.next, w, h, d.richLayout()) })
 	// A click on a panel's name opens it, as typing the name does.
-	d.sidebar.body.OnRegion = func(name string, _ int) { d.runLine(name) }
+	d.nextBox.body.OnRegion = func(name string, _ int) {
+		switch {
+		case name == regionShow:
+			d.showMe(d.next.card, d.next.panel)
+		case strings.HasPrefix(name, regionThen):
+			if i := int(name[len(regionThen)] - '0'); i < len(d.next.then) {
+				d.showMe(d.next.then[i].card, d.next.then[i].panel)
+			}
+		default:
+			d.runLine(name)
+		}
+	}
 	// A click on the mini map opens the Map panel.
 	d.miniMap.onClick = func() { d.runLine("map") }
-	d.sidebar.SetBorder(true)
-	theme.Track(func() { d.sidebar.SetTitleColor(theme.Of(theme.RoleAccent)) })
+	d.nextBox.SetBorder(true)
+	theme.Track(func() { d.nextBox.SetTitleColor(theme.Of(theme.RoleAccent)) })
 
 	// Log panel
 	d.logTV = newNativeText().
@@ -593,10 +602,10 @@ func (d *Dashboard) build() {
 	// Main horizontal: the economy tab (the full height) and the Panels
 	// column, with the People box under the list unless the layout is rich.
 	d.peopleH = workerMiniBaseRows + 2
-	mainHoriz := newDashBody(d.economyTab.Root(), d.sidebar, d.workerMiniTV, d.miniMap, d.screenSize, func() int { return d.peopleH })
+	mainHoriz := newDashBody(d.economyTab.Root(), d.nextBox, d.workerMiniTV, d.miniMap, d.screenSize, func() int { return d.peopleH })
 	mainHoriz.modelReady = func() bool { return d.miniMap.model != nil }
 	d.body = mainHoriz
-	mainHoriz.switched = func() { d.workerMiniTV.stale = true }
+	mainHoriz.switched = func() { d.workerMiniTV.stale = true; d.titleNext() }
 
 	// Content area is just mainHoriz: no bottom strip
 	d.contentArea = mainHoriz
@@ -685,15 +694,7 @@ func (d *Dashboard) switchOverlay(name string, prep func()) {
 		prep()
 	}
 	d.overlayMgr.Show(name, d.engine.GetState())
-	d.updateSidebar("techs")
 	d.overlayMgr.FocusOn(d.inputField)
-}
-
-func (d *Dashboard) updateSidebar(activeOverlay string) {
-	if d.sidebar != nil && d.sidebarActive != activeOverlay {
-		d.sidebarActive = activeOverlay
-		d.sidebar.changed()
-	}
 }
 
 // panelLink is a panel's name as the Panels list shows it, in a region named
@@ -706,114 +707,6 @@ func clickRegion(name, shown string) string { return `["` + name + `"]` + shown 
 
 // buildLine is the command line that builds one of a building.
 func buildLine(key string) string { return "build " + key }
-
-// sidebarPanels is the Panels list, in order.
-var sidebarPanels = []string{"milestones", "badges", "research", "plan", "charter", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
-
-// buildSidebarText is the Panels list in one column, the open panel
-// highlighted: the list as it shows when the screen is tall enough for it.
-func buildSidebarText(active string) string {
-	var sb strings.Builder
-	sb.WriteString("\n")
-	for _, cmd := range sidebarPanels {
-		if cmd == active {
-			sb.WriteString(" " + panelLink(cmd, theme.Selected(fmt.Sprintf(" %-10s ", cmd))) + "\n")
-		} else {
-			sb.WriteString(" " + panelLink(cmd, fmt.Sprintf("[white]%-10s[-]", cmd)) + "\n")
-		}
-	}
-	return sb.String()
-}
-
-// sidebarText is the Panels list for a box w cells wide and h rows tall
-// inside: one column when every name gets a row (under a blank line when
-// there is a row to spare), else two columns read down then across, so a
-// short screen still lists every panel. When even two columns are too
-// many rows (the smallest screen), the first column stays a name a row and
-// the rest are packed beside it, as many to a row as fit. A box wide and
-// tall enough for it (the rich layout's) lists the panels in groups, each
-// with a line on what it is for (panelsRichText).
-func sidebarText(active string, w, h int) string {
-	if w >= panelsRichWidth() && h >= panelsRichRows() {
-		return panelsRichText(active, w, h)
-	}
-	n := len(sidebarPanels)
-	if h > n {
-		return buildSidebarText(active)
-	}
-	if h == n {
-		return strings.TrimPrefix(buildSidebarText(active), "\n")
-	}
-	cell := func(cmd string, width int) string {
-		padded := cmd + strings.Repeat(" ", max(width-len(cmd), 0))
-		if cmd == active {
-			return panelLink(cmd, theme.Selected(padded))
-		}
-		return panelLink(cmd, "[white]"+padded+"[-]")
-	}
-	// pack writes names as rows of at most room cells, a space between two.
-	pack := func(names []string, room int) [][]string {
-		var rows [][]string
-		used := 0
-		for _, name := range names {
-			if len(rows) == 0 || used+1+len(name) > room {
-				rows = append(rows, nil)
-				used = -1
-			}
-			rows[len(rows)-1] = append(rows[len(rows)-1], name)
-			used += 1 + len(name)
-		}
-		return rows
-	}
-	join := func(names []string) string {
-		cells := make([]string, len(names))
-		for i, name := range names {
-			cells[i] = cell(name, len(name))
-		}
-		return strings.Join(cells, " ")
-	}
-	var sb strings.Builder
-	rows := (n + 1) / 2
-	if rows > h && h > 0 {
-		leftW := 0
-		for _, cmd := range sidebarPanels[:h] {
-			leftW = max(leftW, len(cmd))
-		}
-		right := pack(sidebarPanels[h:], w-leftW-1)
-		if len(right) > h {
-			// Not even that fits: every name, packed across the box.
-			for _, row := range pack(sidebarPanels, w) {
-				sb.WriteString(join(row) + "\n")
-			}
-			return sb.String()
-		}
-		for i := 0; i < h; i++ {
-			sb.WriteString(cell(sidebarPanels[i], leftW))
-			if i < len(right) {
-				sb.WriteString(" " + join(right[i]))
-			}
-			sb.WriteString("\n")
-		}
-		return sb.String()
-	}
-	leftW, rightW := 0, 0
-	for i, cmd := range sidebarPanels {
-		if i < rows {
-			leftW = max(leftW, len(cmd))
-		} else {
-			rightW = max(rightW, len(cmd))
-		}
-	}
-	gap := max(1, min(2, w-leftW-rightW))
-	for i := 0; i < rows; i++ {
-		sb.WriteString(cell(sidebarPanels[i], leftW))
-		if j := i + rows; j < n {
-			sb.WriteString(strings.Repeat(" ", gap) + cell(sidebarPanels[j], rightW))
-		}
-		sb.WriteString("\n")
-	}
-	return sb.String()
-}
 
 // Root returns the root primitive for page registration: the layout, and
 // over it the active theme's ambient effect.
@@ -927,11 +820,21 @@ func (d *Dashboard) StopUpdates() {
 	}
 }
 
+// titleNext titles the right column's top box: Next beside the card, Panels
+// where the list is alone.
+func (d *Dashboard) titleNext() {
+	if d.richLayout() {
+		d.nextBox.SetTitle(txtNextTitle.String())
+	} else {
+		d.nextBox.SetTitle(txtPanels.String())
+	}
+}
+
 // retitle writes the titles on the borders of the dashboard's own boxes, in the
 // script now in force. The People box's title is also written each frame, with
 // the headcount in it when there is room.
 func (d *Dashboard) retitle() {
-	d.sidebar.SetTitle(rowid.Line("ui.dashboard.build.01", " Panels "))
+	d.titleNext()
 	d.logTV.SetTitle(rowid.Line("ui.dashboard.build.02", " Log "))
 	d.inputField.SetTitle(rowid.Line("ui.dashboard.build.13", " Command "))
 	d.workerMiniTV.SetTitle(rowid.Line("ui.dashboard.build.14", " People "))
@@ -971,6 +874,7 @@ func (d *Dashboard) refresh() {
 	d.lastState = &state
 	d.next = computeNext(state)
 	d.economyTab.buildBox.nextKey = d.next.card
+	d.nextBox.changed()
 
 	// Badges earned since the last refresh: a card and a log line each, and a
 	// line for the theme a badge gives. Here, in the UI goroutine: outside the
@@ -1041,10 +945,9 @@ func (d *Dashboard) refresh() {
 		d.miniMap.pointAt(d.mapPanel)
 	}
 
-	// Update overlay content and sidebar highlight
+	// Update overlay content
 	d.overlayMgr.Refresh(state)
 	d.maybeShowPrestigeCue(state)
-	d.updateSidebar(d.overlayMgr.ActiveName())
 	d.refreshWorkerMini(state)
 }
 
@@ -1655,7 +1558,6 @@ func (d *Dashboard) runLine(text string) {
 	if result.OverlayName != "" {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
-		d.updateSidebar(result.OverlayName)
 		if _, ok := d.barOverlays[result.OverlayName]; ok || d.overlayMgr.keepsBar(result.OverlayName) {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)

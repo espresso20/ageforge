@@ -108,7 +108,7 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 		if !d.body.miniShown {
 			t.Fatalf("%dx%d: no mini map", sz[0], sz[1])
 		}
-		px, py, pw, ph := d.sidebar.GetRect()
+		px, py, pw, ph := d.nextBox.GetRect()
 		mx, my, mw, mh := d.miniMap.GetRect()
 		bx, by, bw, bh := d.economyTab.buildBox.GetRect()
 		if mx != px || mw != pw || my != py+ph {
@@ -126,12 +126,12 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 	// columns for it), and every panel is listed.
 	for _, sz := range [][2]int{{153, 41}, {120, 37}} {
 		txt := draw(sz[0], sz[1])
-		_, py, _, ph := d.sidebar.GetRect()
+		_, py, _, ph := d.nextBox.GetRect()
 		_, my, mw, mh := d.miniMap.GetRect()
 		if want := richMapRows(mw, my+mh-py); !d.body.miniShown || mh != want || my-py != ph || strings.Contains(txt, "PROGRESS") {
 			t.Errorf("%v: shown = %v with %d rows for %d columns; want %d under the list\n%s", sz, d.body.miniShown, mh, mw, want, txt)
 		}
-		for _, name := range sidebarPanels {
+		for _, name := range panelNames() {
 			if !strings.Contains(txt, name) {
 				t.Errorf("%v: the Panels list has lost %q", sz, name)
 			}
@@ -140,23 +140,22 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 	// 192x52: the map has the rows the rule gives it and the list keeps
 	// every panel.
 	txt192 := draw(192, 52)
-	_, py192, _, ph192 := d.sidebar.GetRect()
+	_, py192, _, ph192 := d.nextBox.GetRect()
 	_, my192, mw192, mh192 := d.miniMap.GetRect()
 	if want := richMapRows(mw192, my192+mh192-py192); !d.body.miniShown || mh192 != want || my192-py192 != ph192 {
 		t.Errorf("192x52: mini map shown = %v, %d rows for %d columns, want %d", d.body.miniShown, mh192, mw192, want)
 	}
-	for _, name := range sidebarPanels {
+	for _, name := range panelNames() {
 		if !strings.Contains(txt192, name) {
 			t.Errorf("192x52: the Panels list has lost %q", name)
 		}
 	}
-	// 160x42: the list steps down a form (a name a row, no groups) so the
-	// map can show, and every panel is still listed (case D).
+	// 160x42: the map shows and every panel is still listed (case D).
 	txt := draw(160, 42)
-	if !d.body.miniShown || strings.Contains(txt, "PROGRESS") {
-		t.Errorf("160x42: shown = %v, or the list kept its grouped form\n%s", d.body.miniShown, txt)
+	if !d.body.miniShown {
+		t.Errorf("160x42: the mini map is not shown\n%s", txt)
 	}
-	for _, name := range sidebarPanels {
+	for _, name := range panelNames() {
 		if !strings.Contains(txt, name) {
 			t.Errorf("160x42: the Panels list has lost %q\n%s", name, txt)
 		}
@@ -172,7 +171,7 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 	if d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
 		t.Errorf("100x30: the mini map shows\n%s", txt)
 	}
-	for _, name := range sidebarPanels {
+	for _, name := range panelNames() {
 		if !strings.Contains(txt, name) {
 			t.Errorf("100x30: the Panels list has lost %q\n%s", name, txt)
 		}

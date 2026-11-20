@@ -207,8 +207,8 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 
 			// The header, the Panels list and the Buildings list.
 			checkHeader(t, where+", header", d, cells, w)
-			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
-			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
+			panels := strings.Join(checkFitted(t, where+", Panels", d.nextBox, cells, w), "\n")
+			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, panelNames()...)
 			checkCards(t, where+", Buildings", d, cells, w)
 
 			// The header's first row and the People box are one line a fact.
@@ -446,14 +446,17 @@ func TestAClickOnThePanelsListOpensThePanel(t *testing.T) {
 	}
 	for _, size := range [][2]int{{160, 42}, {100, 30}, {90, 24}} { // the rich list, two columns, the packed list
 		st := newStage(pages, size[0], size[1])
-		x, y, w, h := d.sidebar.GetInnerRect()
+		x, y, w, h := d.nextBox.GetInnerRect()
 		at := image.Pt(-1, -1)
+		hasCard, inList := false, false // the card above the rule row names research too
 		for j := y; j < y+h && at.X < 0; j++ {
 			row := make([]rune, w)
 			for i := range row {
 				row[i] = st.buf.At(x+i, j).R
 			}
-			if i := strings.Index(string(row), "research"); i >= 0 {
+			hasCard = hasCard || strings.Contains(string(row), "NOW")
+			inList = inList || strings.Contains(string(row), "─ Panels ─")
+			if i := strings.Index(string(row), "research"); i >= 0 && (inList || !hasCard) {
 				at = image.Pt(x+len([]rune(string(row)[:i]))+2, j)
 			}
 		}
@@ -514,39 +517,6 @@ func TestTheWheelTurnsTheResourcesBoxPage(t *testing.T) {
 		return
 	}
 	t.Fatal("staging: no size in layoutSizes gives the Resources box more than one page")
-}
-
-// TestPanelsListAlwaysWhole: the Panels list shows every panel at any
-// height the dashboard gives it, in one column when that fits and two when
-// the screen is short, the open panel marked either way.
-func TestPanelsListAlwaysWhole(t *testing.T) {
-	for h := 8; h <= 30; h++ {
-		text := sidebarText("factions", 20, h)
-		lines := strings.Split(strings.TrimRight(untag(text), "\n"), "\n")
-		if len(lines) > h {
-			t.Errorf("height %d: %d lines", h, len(lines))
-		}
-		for _, line := range lines {
-			if runeLen(line) > 20 {
-				t.Errorf("height %d: a line of %d cells: %q", h, runeLen(line), line)
-			}
-		}
-		for _, name := range sidebarPanels {
-			if !strings.Contains(untag(text), name) {
-				t.Errorf("height %d: %q is missing", h, name)
-			}
-		}
-		if !strings.Contains(text, "[onaccent:accent]") {
-			t.Errorf("height %d: the open panel is not marked", h)
-		}
-	}
-	// 100x30 gives the list 14 rows: two columns. 120x40 gives it 24: one.
-	if two := untag(sidebarText("", 20, 14)); !strings.HasPrefix(two, "milestones stats") {
-		t.Errorf("14 rows: want two columns read down then across, got:\n%s", two)
-	}
-	if one := sidebarText("", 20, 24); one != buildSidebarText("") {
-		t.Errorf("24 rows: want the one-column list")
-	}
 }
 
 // TestDashboardLayoutInEveryTheme: the fitted rows, the page line's keycap

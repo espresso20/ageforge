@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"testing"
 
@@ -36,7 +35,7 @@ func TestPeopleBoxBesideUnderConstruction(t *testing.T) {
 			where := fmt.Sprintf("%s at %dx%d", age, w, h)
 			cells := drawnDashboard(t, d, pages, w, h)
 			st = *d.lastState
-			con, ppl, pan := d1Rect(d.economyTab.constructionTV), d1Rect(d.workerMiniTV), d1Rect(d.sidebar)
+			con, ppl, pan := d1Rect(d.economyTab.constructionTV), d1Rect(d.workerMiniTV), d1Rect(d.nextBox)
 			col := d1Rect(d.economyTab.leftCol)
 			if !dashRich(w, h) {
 				// The classic layout: People under the Panels list, Under
@@ -101,7 +100,7 @@ func checkRichCut(t *testing.T, where string, d *Dashboard, w, h int) {
 	if d1Rect(d.logTV)[3] < 8 {
 		t.Errorf("%s: the Log is %d rows, under its floor of 8", where, d1Rect(d.logTV)[3])
 	}
-	pan := d1Rect(d.sidebar)
+	pan := d1Rect(d.nextBox)
 	if pan != [4]int{bodyX + left + mid, bodyY, right, pan[3]} {
 		t.Errorf("%s: the Panels list is %v, want the right column from row %d", where, pan, bodyY)
 	}
@@ -133,7 +132,7 @@ func TestRichMainViewCut(t *testing.T) {
 	d.runForTest("minimap off")
 	drawnDashboard(t, d, pages, 279, 74)
 	_, bodyY, _, bodyH := d.contentArea.GetRect()
-	if pan := d1Rect(d.sidebar); pan[1] != bodyY || pan[3] != bodyH || d.body.miniShown {
+	if pan := d1Rect(d.nextBox); pan[1] != bodyY || pan[3] != bodyH || d.body.miniShown {
 		t.Errorf("map off: the Panels list is %v, want the whole column of %d rows", pan, bodyH)
 	}
 	d.runForTest("minimap on")
@@ -295,99 +294,8 @@ func TestPanelsTableCoversEveryPanel(t *testing.T) {
 			t.Errorf("group %s lists %v, want %v", g.title.String(), names, want[g.title.String()])
 		}
 	}
-	sort.Strings(all)
-	have := append([]string(nil), sidebarPanels...)
-	sort.Strings(have)
-	if fmt.Sprint(all) != fmt.Sprint(have) {
-		t.Errorf("the table lists %v, the Panels list %v", all, have)
-	}
-	if got, want := panelsRichRows(), len(sidebarPanels)+len(panelGroups); got != want {
-		t.Errorf("the rich list is %d rows, want %d", got, want)
-	}
-}
-
-// TestPanelsRichText: the list in groups, at every box size that takes it,
-// is whole, fits, marks the open panel, and is what sidebarText gives a box
-// that big and the packed names for one that is not.
-func TestPanelsRichText(t *testing.T) {
-	for h := panelsRichRows(); h <= panelsRichRows()+6; h++ {
-		for _, w := range []int{panelsRichWidth(), panelsRichWidth() + 1, 40, 70} {
-			text := sidebarText("trade", w, h)
-			lines := strings.Split(strings.TrimRight(untag(text), "\n"), "\n")
-			if len(lines) > h {
-				t.Errorf("%dx%d: %d lines", w, h, len(lines))
-			}
-			for _, line := range lines {
-				if runeLen(line) > w {
-					t.Errorf("%dx%d: a line of %d cells: %q", w, h, runeLen(line), line)
-				}
-			}
-			plain := untag(text)
-			for _, g := range panelGroups {
-				if !strings.Contains(plain, strings.ToUpper(g.title.String())) {
-					t.Errorf("%dx%d: no heading for %s", w, h, g.title.String())
-				}
-				for _, p := range g.panels {
-					if !strings.Contains(plain, p.name+strings.Repeat(" ", panelNameW-len(p.name))+" "+p.job.String()) {
-						t.Errorf("%dx%d: %s and its job are not on one row", w, h, p.name)
-					}
-				}
-			}
-			if !strings.Contains(text, "[onaccent:accent] trade") {
-				t.Errorf("%dx%d: the open panel is not marked", w, h)
-			}
-		}
-	}
-	// Too narrow or too short for the descriptions: today's packed names.
-	for _, c := range [][2]int{{panelsRichWidth() - 1, 40}, {40, panelsRichRows() - 1}, {20, 14}, {20, 8}} {
-		text := untag(sidebarText("", c[0], c[1]))
-		if strings.Contains(text, "TOWN") || strings.Contains(text, "tech tree") {
-			t.Errorf("%dx%d: a box too small for descriptions has them:\n%s", c[0], c[1], text)
-		}
-		wantAll(t, fmt.Sprintf("%dx%d panel names", c[0], c[1]), text, sidebarPanels...)
-	}
-	// With room to spare the groups are set apart by a blank row.
-	spare := strings.Split(untag(panelsRichText("", 40, panelsRichRows()+len(panelGroups)-1)), "\n")
-	blanks := 0
-	for _, line := range spare {
-		if strings.TrimSpace(line) == "" {
-			blanks++
-		}
-	}
-	if blanks != len(panelGroups)-1+1 { // one between each pair, and the line break at the end
-		t.Errorf("a list with room to spare has %d blank rows: %q", blanks, spare)
-	}
-}
-
-// TestPanelsListOnTheDashboard: at 120x40 and up the Panels list is the
-// grouped one with a line on each panel's job; at 80x24 and 100x30 it is
-// today's packed names. Every panel name is on screen either way.
-func TestPanelsListOnTheDashboard(t *testing.T) {
-	restoreForge(t)
-	d, pages, _ := stagedDashboard(t, "medieval_age")
-	for _, sz := range d1Sizes {
-		w, h := sz[0], sz[1]
-		where := fmt.Sprintf("%dx%d", w, h)
-		cells := drawnDashboard(t, d, pages, w, h)
-		panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
-		wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
-		described := strings.Contains(panels, "the tech tree") && strings.Contains(panels, "TOWN") && strings.Contains(panels, "YOU")
-		// The mini map may take the list a shorter form (the grouped list
-		// needs panelsRichRows inside its box).
-		_, _, _, listH := d.sidebar.GetRect()
-		rich := dashRich(w, h) && listH-2 >= panelsRichRows()
-		if described != rich {
-			t.Errorf("%s: the Panels list has descriptions = %v, want %v:\n%s", where, described, rich, panels)
-		}
-		if described {
-			for _, g := range panelGroups {
-				for _, p := range g.panels {
-					if !strings.Contains(panels, p.job.String()) {
-						t.Errorf("%s: the Panels list lost the job line %q", where, p.job.String())
-					}
-				}
-			}
-		}
+	if len(all) != 18 {
+		t.Errorf("the table lists %d panels, want 18", len(all))
 	}
 }
 
