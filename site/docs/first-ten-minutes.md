@@ -2,6 +2,8 @@
 
 A walkthrough of the Primitive Age, your first age. It goes further than the short lessons the game shows on a band above the Command box.
 
+A lesson is one sentence on a band of its own over the Command box, with a cyan NEW plate, what learns it, a Show me button where there is something to point at, and Later to put it off for the sitting. It goes away by itself once you have done what it teaches, and the account remembers it. A panel's own lesson shows on the same row under that panel. The Help page lists the lessons you have learned. A window under 30 rows shows no band.
+
 ---
 
 ## Minute 0: You just launched AgeForge
