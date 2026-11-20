@@ -871,6 +871,12 @@ func (d *Dashboard) retitle() {
 // Order matters: catastrophe modal and age splash are checked first because they may
 // swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {
+	// The pause card owns the screen and the keyboard: a splash or modal opened
+	// now would take the focus from it, and its close would hand the focus to the
+	// Command box behind the dimmed town. What is pending shows after Resume.
+	if d.engine.Held() {
+		return
+	}
 	// Check for pending age splash (set by bus handler under engine lock)
 	if d.pendingAgeSplash != "" {
 		newAge := d.pendingAgeSplash

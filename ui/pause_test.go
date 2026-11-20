@@ -125,3 +125,15 @@ func TestPauseCardFits(t *testing.T) {
 		}
 	}
 }
+
+// A splash waiting for the next refresh does not open over the card: its close
+// would leave the keyboard on the Command box behind the dimmed town.
+func TestPauseHoldsBackTheRefresh(t *testing.T) {
+	d, _ := pausedDashboard(t)
+	sendKey(d, kit.KeyEsc)
+	d.pendingAgeSplash = "bronze_age"
+	d.refresh()
+	if d.pendingAgeSplash == "" || !isPaused(d) {
+		t.Errorf("refresh ran while paused: pending %q paused=%v", d.pendingAgeSplash, isPaused(d))
+	}
+}

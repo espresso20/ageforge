@@ -29,19 +29,19 @@ func TestHoldStopsTheLoopAndPlayTime(t *testing.T) {
 	}
 }
 
-// A save written while held is stamped when it is written, so the time held
-// is never offline time on the next load.
-func TestHoldIsNotOfflineTime(t *testing.T) {
+// A save written while held is stamped when it is written and carries the run
+// start with the time held already taken out: the time held is neither offline
+// time nor play time on the next load.
+func TestHoldIsNeitherOfflineNorPlayTimeInASave(t *testing.T) {
 	defer SetDataDirForTest(t.TempDir())()
 	ge := NewGameEngine()
+	start := time.Now().Add(-time.Hour)
+	ge.Stats.GameStarted = start
 	ge.Hold()
 	time.Sleep(150 * time.Millisecond)
 	before := time.Now()
 	if err := ge.SaveGame("held"); err != nil {
 		t.Fatal(err)
-	}
-	if ge.SavedAt().Before(before) {
-		t.Errorf("saved at %v, before the save began %v", ge.SavedAt(), before)
 	}
 	other := NewGameEngine()
 	if err := other.LoadGame("held"); err != nil {
@@ -49,5 +49,8 @@ func TestHoldIsNotOfflineTime(t *testing.T) {
 	}
 	if other.SavedAt().Before(before) {
 		t.Errorf("the save is stamped %v, before the held time ended", other.SavedAt())
+	}
+	if d := other.Stats.GameStarted.Sub(start); d < 100*time.Millisecond {
+		t.Errorf("saved run start moved %v, the held time was left in play time", d)
 	}
 }

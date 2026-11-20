@@ -501,6 +501,8 @@ const AutosaveName = "autosave"
 // NOTE: SaveGame acquires only an RLock for the snapshot, so it can run
 // concurrently with reads but not concurrent writes (doTick).
 func (ge *GameEngine) SaveGame(filename string) error {
+	// Time held so far is not time played: settle it before the snapshot.
+	ge.shiftStart(ge.hold.settle(time.Now(), false))
 	// Take the read lock for the snapshot + marshal so doTick cannot mutate
 	// maps/slices while json.Marshal is iterating over them.
 	ge.mu.RLock()
