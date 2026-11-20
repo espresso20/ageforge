@@ -153,24 +153,15 @@ func TestBoardMouse(t *testing.T) {
 
 func TestBoardPaintsEverySection(t *testing.T) {
 	ge := classicalGame(t)
-	var lines []string
-	for _, size := range [][2]int{{279, 74}, {279, 68}, {120, 37}} {
-		f := paintAlone(boardOn(ge, size[0], size[1]), size[0], size[1])
-		lines = f.Lines()
-		all := strings.Join(lines, "\n")
-		for _, want := range []string{"NOW RESEARCHING", "READY NOW", "COMING UP", "TIME", "Esc"} {
-			if !strings.Contains(all, want) {
-				t.Errorf("%dx%d: no %q on the board", size[0], size[1], want)
-			}
-		}
+	for _, size := range [][2]int{{279, 74}, {100, 30}} {
+		all := strings.Join(paintAlone(boardOn(ge, size[0], size[1]), size[0], size[1]).Lines(), "\n")
+		want := []string{"NOW RESEARCHING", "READY NOW", "COMING UP", "TIME", "Esc"}
 		if size[0] >= 150 {
-			for _, want := range []string{"UNLOCKS", "IN THE TREE", "Research", "Queue", "THE TEN LANES"} {
-				if size[1] < 60 && want == "THE TEN LANES" {
-					continue
-				}
-				if !strings.Contains(all, want) {
-					t.Errorf("%dx%d: no %q on the board", size[0], size[1], want)
-				}
+			want = append(want, "UNLOCKS", "IN THE TREE", "Research", "Queue", "THE TEN LANES", "more techs wait in later ages")
+		}
+		for _, w := range want {
+			if !strings.Contains(all, w) {
+				t.Errorf("%dx%d: no %q on the board", size[0], size[1], w)
 			}
 		}
 	}

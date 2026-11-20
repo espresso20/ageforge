@@ -50,6 +50,7 @@ type boardModel struct {
 	queued        map[string]bool
 	leads         map[string][]string
 	lanes         []config.TechLaneDef
+	inLane        map[string]int // techs of every age in each lane: counts only, no names
 	laneOf        map[string]config.TechLaneDef
 	tick          float64 // seconds a tick takes
 	age           int     // the current age's place
@@ -71,7 +72,9 @@ func buildBoard(state game.GameState) *boardModel {
 	for _, k := range rs.Queue {
 		m.queued[k] = true
 	}
+	m.inLane = map[string]int{}
 	for _, d := range set.Techs() {
+		m.inLane[d.Lane]++
 		if !sight.Age(d.Age) {
 			continue
 		}
@@ -112,6 +115,15 @@ func (m *boardModel) laneShort(lane string) string {
 	return f[0]
 }
 
+// all is the number of techs in the ruleset, of every age.
+func (m *boardModel) all() int {
+	n := 0
+	for _, c := range m.inLane {
+		n += c
+	}
+	return n
+}
+
 func (m *boardModel) ageName(key string) string {
 	if a, ok := m.state.Ruleset().Age(key); ok {
 		return a.Name
@@ -148,12 +160,6 @@ func (m *boardModel) missing(t *boardTech, except string) []string {
 	return out
 }
 
-// hm is a time in seconds as hours and minutes, "1:30".
-func hm(secs int) string {
-	mins := (secs + 59) / 60
-	return fmt.Sprintf("%d:%02d", mins/60, mins%60)
-}
-
 // clock is a time in seconds as it counts down: "41:12", "1:10:00".
 func clock(secs int) string {
 	if secs >= 3600 {
@@ -166,63 +172,37 @@ func timeOf(secs int) string {
 	if secs <= 0 {
 		return "-:--"
 	}
-	return hm(secs)
+	return clock(secs)
 }
 
-// packLines sets the items on at most n lines of w cells: one a line when
-// they fit that way, else two on a line. What does not fit is counted at the
-// end of the last line.
-func packLines(items []string, w, n int) []string {
-	var lines []string
-	if len(items) <= n {
-		for _, it := range items {
-			lines = append(lines, fitText(it, w))
-		}
-		return lines
+// effectLines is an effect a line, two lines at most, the rest counted.
+func effectLines(items []string, w int) []string {
+	out := items[:min(len(items), 2)]
+	for i := range out {
+		out[i] = fitText(out[i], w)
 	}
-	for i, it := range items {
-		it = fitText(it, w)
-		if k := len(lines) - 1; k >= 0 && runeLen(lines[k])+3+runeLen(it) <= w {
-			lines[k] += "   " + it
-			continue
-		}
-		if len(lines) == n {
-			more := fmt.Sprintf("   +%d more", len(items)-i)
-			lines[n-1] = fitText(lines[n-1], w-len(more)) + more
-			break
-		}
-		lines = append(lines, it)
+	if more := len(items) - 2; more > 0 {
+		out[1] = fitText(out[1], w-len(fmt.Sprint(more))-8) + fmt.Sprintf("  +%d more", more)
 	}
-	return lines
+	return out
 }
 
-// listLines sets the names, comma separated, on at most n lines of w cells
-// and counts what does not fit at the end of the last line.
-func listLines(names []string, w, n int) []string {
+// wrapList sets the items on at most n lines of w cells, joined by sep, and
+// counts what does not fit at the end of the last line.
+func wrapList(items []string, sep string, w, n int) []string {
 	var lines []string
 	cur := ""
-	for i, s := range names {
-		last := i == len(names)-1
-		if !last {
-			s += ","
+	for i, it := range items {
+		if cur == "" {
+			cur = fitText(it, w)
+		} else if runeLen(cur)+runeLen(sep)+runeLen(it) <= w {
+			cur += sep + it
+		} else if len(lines) == n-1 {
+			more := fmt.Sprintf(" +%d", len(items)-i)
+			return append(lines, fitText(cur, w-len(more))+more)
+		} else {
+			lines, cur = append(lines, cur), fitText(it, w)
 		}
-		add := s
-		if cur != "" {
-			add = cur + " " + s
-		}
-		room := w
-		if len(lines) == n-1 && !last {
-			room -= 4
-		}
-		if runeLen(add) <= room {
-			cur = add
-			continue
-		}
-		if len(lines) == n-1 {
-			return append(lines, strings.TrimRight(cur, ",")+fmt.Sprintf(" +%d", len(names)-i))
-		}
-		lines = append(lines, cur)
-		cur = s
 	}
 	if cur != "" {
 		lines = append(lines, cur)
@@ -338,11 +318,11 @@ type boardGeo struct {
 
 func (p *researchPanel) geometry() boardGeo {
 	w, h := p.w, p.h
-	g := boardGeo{cTech: 15, yHead: 9, y0: 12}
+	g := boardGeo{cTech: 21, yHead: 9, y0: 12}
 	g.cLane, g.cCost, g.cUnl, g.bw = g.cTech+32, g.cTech+45, g.cTech+61, 13
 	if w < 130 {
 		// A narrow window drops the leads column and shrinks the rest.
-		g.cLane, g.cCost, g.cUnl, g.bw = g.cTech+24, g.cTech+36, g.cTech+47, 8
+		g.cLane, g.cCost, g.cUnl, g.bw = g.cTech+22, g.cTech+34, g.cTech+45, 8
 	}
 	g.detail = w >= 150
 	g.tEnd = w - 4
@@ -670,7 +650,7 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 		s.text(g.cLane, y, m.laneShort(t.def.Lane), lc, false)
 		s.text(g.cCost, y, config.FormatAmount(t.def.Cost), bright, true)
 		s.bar(g.cCost, y+1, g.bw, t.def.Cost/maxCost, lc, dimmed(lc, 0.2), '▀')
-		for j, ln := range packLines(m.effects(t), g.cStat-3-g.cUnl, 2) {
+		for j, ln := range effectLines(m.effects(t), g.cStat-3-g.cUnl) {
 			s.text(g.cUnl, y+j, ln, kit.Role(theme.RoleEffect), false)
 		}
 		switch {
@@ -695,7 +675,7 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 		if len(on2) == 0 {
 			s.text(g.cLead, y, "nothing further", dim, false)
 		}
-		for j, ln := range listLines(on2, g.tEnd+1-g.cLead, 2) {
+		for j, ln := range wrapList(on2, ", ", g.tEnd+1-g.cLead, 2) {
 			s.text(g.cLead, y+j, ln, lead, false)
 		}
 	}
@@ -741,6 +721,10 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 			}
 			x = s.text(x, y, n.s, n.col, n.bold)
 		}
+	}
+	// The techs of later ages stay unnamed; the board only counts them.
+	if later, y := m.all()-len(m.techs), cy+3+len(coming); later > 0 && y < h-4 {
+		s.text(3, y, fmt.Sprintf("%d more techs wait in later ages", later), dim, false)
 	}
 
 	if g.detail && sel != nil {
@@ -842,15 +826,20 @@ func (p *researchPanel) paintTop(s rankPaint, w int, head func(x, y int, str str
 			if i > 1 {
 				lab = "THEN"
 			}
+			// The name comes first; the start time is left out when the
+			// bar is too short to hold it.
+			dur := clock(t.secs)
 			lx := s.text(x, 7, lab, dim, false)
-			lx = s.text(lx+2, 7, fitText(t.def.Name, max(bw-lx-2, 1)), c, true)
-			lx = s.text(lx+2, 7, hm(t.secs), txt, false)
-			s.text(lx+2, 7, "starts in "+hm(wait), dim, false)
+			lx = s.text(lx+2, 7, fitText(t.def.Name, max(x+bw-lx-2-len(dur)-2, 4)), c, true)
+			lx = s.text(lx+2, 7, dur, txt, false)
+			if start := "starts in " + clock(wait); lx+2+len(start) <= x+bw {
+				s.text(lx+2, 7, start, dim, false)
+			}
 			wait += t.secs
 		}
 		x += bw + 1
 	}
-	s.right(w-3, 7, "the queue ends in "+hm(wait), dim, false)
+	s.right(w-3, 7, "the queue ends in "+clock(wait), dim, false)
 }
 
 // paintDetail is the picked tech's column: its numbers, what it gives, its
@@ -993,7 +982,7 @@ func (p *researchPanel) paintLanes(s rankPaint, g boardGeo, sel *boardTech) {
 		}
 	}
 	s.text(rx, y, "THE TEN LANES", dim, false)
-	s.right(rx+rw, y, fmt.Sprintf("%d of %d", have, len(m.techs)), dim, false)
+	s.right(rx+rw, y, fmt.Sprintf("%d of %d", have, m.all()), dim, false)
 	y += 2
 	cur := m.state.Research.CurrentTech
 	for _, l := range m.lanes {
@@ -1002,9 +991,6 @@ func (p *researchPanel) paintLanes(s rankPaint, g boardGeo, sel *boardTech) {
 			if t.def.Lane == l.Key {
 				lane = append(lane, t)
 			}
-		}
-		if len(lane) == 0 {
-			continue
 		}
 		set := m.state.Ruleset()
 		sort.SliceStable(lane, func(i, j int) bool {
@@ -1043,13 +1029,18 @@ func (p *researchPanel) paintLanes(s rankPaint, g boardGeo, sel *boardTech) {
 				next = i
 			}
 		}
+		for i := len(lane); i < m.inLane[l.Key]; i++ {
+			if x := 13 + i; x < rw-9 {
+				s.p.Put(s.o.X+rx+x, s.o.Y+y, '·', kit.Style{}.Foreground(theme.Mix(bg, lc, 0.3)))
+			}
+		}
 		nameCol := lc
 		if n == 0 {
 			nameCol = theme.Mix(bg, lc, 0.55)
 		}
 		p.hits = append(p.hits, boardHit{image.Rect(rx, y, rx+rw, y+2), hitLane, l.Key})
 		s.text(rx, y, m.laneShort(l.Key), nameCol, p.view.lane == l.Key)
-		s.right(rx+rw, y, fmt.Sprintf("%d of %d", n, len(lane)), dim, false)
+		s.right(rx+rw, y, fmt.Sprintf("%d of %d", n, m.inLane[l.Key]), dim, false)
 		y++
 		if next >= 0 {
 			t := lane[next]
