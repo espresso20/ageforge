@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
@@ -66,6 +68,10 @@ func TestTradeBoard_Fits(t *testing.T) {
 	for _, age := range layoutAges {
 		for _, h := range []int{71, 68} {
 			_, _, eng := stagedDashboard(t, age)
+			for _, fd := range eng.Rules().Factions() {
+				_ = eng.MeetFactionForTest(fd.Key, 60)
+			}
+			eng.StepTicks(3)
 			st := eng.GetState()
 			pg := tradePage(st)
 			g, lay := renderTradeBoard(&pg, st, 0, 0, 279, h)
@@ -84,6 +90,88 @@ func TestTradeBoard_Fits(t *testing.T) {
 					}
 				}
 			}
+		}
+	}
+}
+
+// offerTown is a Colonial town that has met two civilizations: one with a
+// payable and an unpayable offer, one under embargo.
+func offerTown(t *testing.T) game.GameState {
+	t.Helper()
+	_, _, eng := stagedDashboard(t, "colonial_age")
+	st := eng.GetState()
+	fs := st.Ruleset().Factions()
+	st.Resources["food"] = game.ResourceState{Amount: 100}
+	a, b := st.Diplomacy.Factions[fs[0].Key], st.Diplomacy.Factions[fs[1].Key]
+	a.Discovered, a.Status, a.Name = true, "neutral", "Alpha"
+	a.Deals = []game.DealInfo{{Num: 1, Kind: game.DealWant, Give: "food", GiveAmt: 10, Get: "gold", GetAmt: 5},
+		{Num: 2, Kind: game.DealWant, Give: "food", GiveAmt: 1e12, Get: "gold", GetAmt: 5}}
+	b.Discovered, b.Status, b.Name, b.Deals, b.DealsBlocked = true, "embargo", "Beta", nil, "under your embargo"
+	st.Diplomacy.Factions[fs[0].Key], st.Diplomacy.Factions[fs[1].Key] = a, b
+	return st
+}
+
+// TestTradeOffers_BoardAndDeck: the count line matches the offers, a payable
+// and an unpayable offer differ in plate, an embargoed civilization says why,
+// the card runs the typed accept, and the deck fallback lists the offers.
+func TestTradeOffers_BoardAndDeck(t *testing.T) {
+	st := offerTown(t)
+	pg := tradePage(st)
+	g, _ := renderTradeBoard(&pg, st, 0, 0, 279, 71)
+	text := strings.Join(g.Lines(), "\n")
+	for _, want := range []string{"2 open · 1 you can pay now", "no offers: under your embargo", "Alpha", "Beta"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("the board lacks %q", want)
+		}
+	}
+	var plates []xk
+	for _, k := range g.keyset().keys {
+		if k.cmd == "diplomacy accept "+st.Ruleset().Factions()[0].Key+" 1" || k.cmd == "diplomacy accept "+st.Ruleset().Factions()[0].Key+" 2" {
+			plates = append(plates, g.at(k.r.Min.X+1, k.r.Min.Y).k)
+		}
+	}
+	if len(plates) != 2 || plates[0] == plates[1] {
+		t.Errorf("a payable and an unpayable offer should differ in plate: %v", plates)
+	}
+	card, ok := pg.card(firstOffer(pg))
+	if !ok {
+		t.Fatal("no offer card")
+	}
+	if want := fmt.Sprintf("diplomacy accept %s 1", st.Ruleset().Factions()[0].Key); card.Command != want {
+		t.Errorf("offer card command = %q, want %q", card.Command, want)
+	}
+	// Too small for the board, the deck lists the same offers.
+	if out := deckText(pg); !strings.Contains(out, "Alpha · Sell") || !strings.Contains(out, "2 open · 1 you can pay now") {
+		t.Errorf("the deck lacks the offers:\n%s", out)
+	}
+}
+
+// TestTradeOffers_Scroll: a list taller than its room says what is hidden and
+// scrolls; the picked offer is never cut.
+func TestTradeOffers_Scroll(t *testing.T) {
+	st := offerTown(t)
+	f := st.Diplomacy.Factions[st.Ruleset().Factions()[0].Key]
+	for n := 3; n <= 60; n++ {
+		f.Deals = append(f.Deals, game.DealInfo{Num: n, Kind: game.DealWant, Give: "food", GiveAmt: 1, Get: "gold", GetAmt: 5})
+	}
+	st.Diplomacy.Factions[st.Ruleset().Factions()[0].Key] = f
+	pg := tradePage(st)
+	g, lay := renderTradeBoard(&pg, st, firstOffer(pg)+10, 0, 279, 44)
+	text := strings.Join(g.Lines(), "\n")
+	if lay.viewH == 0 || lay.total <= lay.viewH || !strings.Contains(text, "more offers below") {
+		t.Errorf("the list should scroll (total %d, view %d):\n%s", lay.total, lay.viewH, text)
+	}
+	if !strings.Contains(text, "type diplomacy accept") {
+		t.Error("the picked offer's lines are cut")
+	}
+}
+
+// firstOffer is the deck index of the first offer card.
+func firstOffer(pg deckPage) int {
+	for n := 0; ; n++ {
+		c, ok := pg.card(n)
+		if !ok || strings.HasPrefix(c.Command, "diplomacy accept") {
+			return n
 		}
 	}
 }

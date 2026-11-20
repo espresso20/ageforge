@@ -541,7 +541,10 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 	}
 
 	base := len(lay.cards)
-	side := drawTradeSide(g, st, routes, w-tradeSideW-2, h, sel-base, scroll)
+	side := drawTradeSide(g, st, routes, w-tradeSideW-2, h, base, sel-base, scroll)
+	if side.small {
+		return renderDeck(pg, sel, scroll, w, h, said...)
+	}
 	lay.cards = append(lay.cards, side.cards...)
 	if side.viewH > 0 {
 		lay.total, lay.viewH = side.total, side.viewH

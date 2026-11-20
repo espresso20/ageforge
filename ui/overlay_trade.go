@@ -75,7 +75,29 @@ func tradePage(state game.GameState) deckPage {
 	if sec, ok := blackMarketSection(state); ok {
 		pg.Sections = append(pg.Sections, sec)
 	}
+	if sec, ok := tradeOffersSection(state, routes); ok {
+		pg.Sections = append(pg.Sections, sec)
+	}
 	return pg
+}
+
+// tradeOffersSection is the offers as cards, one for each, in the order the
+// board lists them.
+func tradeOffersSection(state game.GameState, routes []tradeRoute) (deckSection, bool) {
+	civs := tradeCivs(state, routes)
+	open, pay := tradeOfferCounts(state, civs)
+	sec := deckSection{Title: rowid.Line("ui.overlay_trade.tradeOffersSection.01", "Offers"), MinW: 46,
+		Meta: rowid.Sprintf("ui.overlay_trade.tradeOffersSection.02", "%d open · %d you can pay now", open, pay)}
+	for _, c := range civs {
+		for _, d := range c.offers {
+			sec.Cards = append(sec.Cards, deckCard{
+				Title:  c.name + " · " + game.DealKindLabel(d.Kind),
+				Lines:  []deckLine{{rowid.Line("ui.overlay_trade.tradeOffersSection.03", "You give"), tradeOfferGive(d), 0}, {rowid.Line("ui.overlay_trade.tradeOffersSection.04", "You get"), tradeOfferGet(d), xGood}},
+				Action: rowid.Line("ui.overlay_trade.tradeOffersSection.05", "accept"), Command: tradeOfferCmd(c.key, d),
+				Quiet: !tradePayable(state, d)})
+		}
+	}
+	return sec, len(sec.Cards) > 0
 }
 
 // noteLinesOf is a block of tagged text, a line to a note, in colour k:
