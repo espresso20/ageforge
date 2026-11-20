@@ -265,11 +265,17 @@ func (tm *TradeManager) StopRoute(key string) error {
 	return nil
 }
 
-// ActiveRouteCount returns the number of currently-active trade routes. Used by
+// ActiveRouteCount returns the number of started, unpaused trade routes. Used by
 // the diplomacy system to drive mercantile-civ opinion drift. Must be called
 // under the engine write lock (same as the rest of the manager).
 func (tm *TradeManager) ActiveRouteCount() int {
-	return len(tm.activeRoutes)
+	n := 0
+	for _, r := range tm.activeRoutes {
+		if !r.Paused {
+			n++
+		}
+	}
+	return n
 }
 
 // Flows puts the running routes into the resource rates, after production:
@@ -303,6 +309,10 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 	demand := map[string]float64{}
 	for _, key := range sortedKeys(tm.activeRoutes) {
 		route, def := tm.activeRoutes[key], tm.routeDefs[key]
+		if def.Key == "" { // a saved route the game no longer has
+			route.Run, route.Scale, route.Research = 0, 0, 0
+			continue
+		}
 		owned := buildings.CountFrom(def.RequiredBld)
 		route.Run, route.Research = 0, 0
 		route.Owned, route.Scale = owned, 0
@@ -363,6 +373,15 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 	}
 }
 
+// researchRate is the research a tick the running routes bring.
+func (tm *TradeManager) researchRate() float64 {
+	var w float64
+	for _, r := range tm.activeRoutes {
+		w += r.Research
+	}
+	return w
+}
+
 // Tick is a live tick's trade: the research the routes bring, a word in the
 // log when a route stops running or runs again, and once a minute a warmer
 // opinion among the civilizations for each route that runs. The goods
@@ -372,6 +391,9 @@ func (tm *TradeManager) Tick(tick int, diplomacy *DiplomacyManager, research fun
 	minute := tick%max(minutesToTicks(1), 1) == 0
 	for _, key := range sortedKeys(tm.activeRoutes) {
 		route, def := tm.activeRoutes[key], tm.routeDefs[key]
+		if def.Key == "" {
+			continue
+		}
 		state := ""
 		switch {
 		case route.Paused:

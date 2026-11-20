@@ -357,3 +357,52 @@ func TestRouteFlow_EveryRouteCanRun(t *testing.T) {
 		}
 	}
 }
+
+// A paused route is not an active one (diplomacy and the offline step read
+// the count), and a saved route the game no longer lists is skipped, not
+// sized on a zeroed definition.
+func TestRouteFlow_PausedNotCountedAndUnknownKeySkipped(t *testing.T) {
+	ge, def := flowEngine(t, "local_barter", 1)
+	if n := ge.Trade.ActiveRouteCount(); n != 1 {
+		t.Fatalf("running count = %d, want 1", n)
+	}
+	if err := ge.Trade.StopRoute(def.Key); err != nil {
+		t.Fatal(err)
+	}
+	if n := ge.Trade.ActiveRouteCount(); n != 0 {
+		t.Errorf("a paused route counts: %d", n)
+	}
+	ge.Trade.activeRoutes["gone_route"] = &ActiveRoute{Key: "gone_route"}
+	ge.recalculateRates()
+	r := ge.Trade.activeRoutes["gone_route"]
+	if math.IsNaN(r.Scale) || math.IsInf(r.Scale, 0) || r.Run != 0 {
+		t.Errorf("unknown route: scale %v run %v", r.Scale, r.Run)
+	}
+	ge.Trade.Tick(ge.tick, ge.Diplomacy, ge.grantResearch)
+}
+
+// Starting or stopping a route shows in the rates at once, with no tick.
+func TestRouteFlow_StartStopRecalculates(t *testing.T) {
+	ge := NewGameEngine()
+	ge.age = "industrial_age"
+	townMakes(ge)
+	def := ge.Trade.routeDefs["local_barter"]
+	ge.Buildings.counts[def.RequiredBld] = def.MinCount
+	for _, r := range ge.Resources.resources {
+		r.Amount = config.Million
+	}
+	learn(ge, "the_wheel")
+	ge.recalculateRates()
+	if err := ge.StartTradeRoute(def.Key); err != nil {
+		t.Fatal(err)
+	}
+	if importFlow(ge, def.Import[0]) <= 0 {
+		t.Error("a started route shows no flow before the next tick")
+	}
+	if err := ge.StopTradeRoute(def.Key); err != nil {
+		t.Fatal(err)
+	}
+	if got := importFlow(ge, def.Import[0]); got != 0 {
+		t.Errorf("a stopped route still flows %v", got)
+	}
+}

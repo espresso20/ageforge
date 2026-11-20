@@ -5276,6 +5276,8 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			ge.tradeHorizon = 0
 		}
 		ge.noteProduced(float64(n) * OfflineEfficiency)
+		// Research the routes bring comes in as it does on a live tick.
+		ge.grantResearch(float64(ge.Trade.researchRate() * float64(n) * OfflineEfficiency))
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
 			func(res string, g float64) { gains[res] += g })
 		ge.accrueFaith(float64(n) * OfflineEfficiency)
@@ -5368,6 +5370,7 @@ func (ge *GameEngine) StartTradeRoute(key string) error {
 		return err
 	}
 	ge.useFeature(routeFeatures(key)...)
+	ge.recalculateRates() // the flow shows at once, even with the game held
 	ge.addLog(OfficeTrade, LogRoutine, rowid.Sprintf("game.engine.StartTradeRoute.01", "Trade route started: %s.", ge.rules.Name(rules.KindRoute, key)))
 	return nil
 }
@@ -5380,6 +5383,7 @@ func (ge *GameEngine) StopTradeRoute(key string) error {
 	if err := ge.Trade.StopRoute(key); err != nil {
 		return err
 	}
+	ge.recalculateRates()
 	ge.addLog(OfficeTrade, LogRoutine, rowid.Sprintf("game.engine.StopTradeRoute.01", "Trade route stopped: %s.", ge.rules.Name(rules.KindRoute, key)))
 	return nil
 }
