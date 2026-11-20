@@ -130,6 +130,8 @@ type GameState struct {
 	// Plan is the build plan in order, each item with the price of its next
 	// start and whether it could start now (plan.go).
 	Plan []PlanItemView
+	// PlanPaused is whether the plan is held (PlanSetPaused).
+	PlanPaused bool
 	// PermanentBonuses is the authoritative runtime map of all cumulative
 	// permanent bonuses (epoch events, legacy, milestones, etc.).
 	// Populated in GetState(); not stored in save JSON.
@@ -387,15 +389,6 @@ type WorkerDomainState struct {
 	IdleCount   int
 	Assignments map[string]int
 	Unlocked    bool
-}
-
-// LogEntry is a timestamped game log message
-type LogEntry struct {
-	Tick    int
-	Message string
-	// Type is the category: "info", "success", "warning", "error", "event"
-	// or LogRoutine. It decides the color and the logs panel's tag.
-	Type string
 }
 
 // LogRoutine is the log category for routine confirmations: a line whose

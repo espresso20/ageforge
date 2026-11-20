@@ -243,7 +243,7 @@ func TestTextPanelsScrollWithTheBarEmpty(t *testing.T) {
 	}
 }
 
-// TestKeyedPanelsKeepTheKeyboard: the Wonders, Epoch, Harbinger and Plan panels have
+// TestKeyedPanelsKeepTheKeyboard: the Wonders, Epoch, and Harbinger panels have
 // keys that are letters, so they keep the keyboard as they always did, and
 // their foot names those keys.
 func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
@@ -252,7 +252,6 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 		"wonders":   {"Tab", "Esc"},
 		"epoch":     {"Tab", "Esc"},
 		"harbinger": {"A", "B", "I", "Esc"},
-		"plan":      {"U/D", "X", "C", "Esc"},
 	} {
 		openPanel(t, d, name, 100, 30)
 		if d.inputField.HasFocus() {
@@ -279,7 +278,7 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 // command bar says so on its foot, and a game's panels all name Esc.
 func TestPanelFooterOffersTheBar(t *testing.T) {
 	d, pages := poisonedStage(t)
-	for _, name := range []string{"factions", "logs", "buildings", "help"} {
+	for _, name := range []string{"factions", "buildings", "help"} {
 		openPanel(t, d, name, 100, 30)
 		cells := drawnDashboard(t, d, pages, 100, 30)
 		foot := rectText(cells, 100, 0, 30-barSmallRows-2, 100, 1)[0]

@@ -260,7 +260,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 		// this is checked every tick and would otherwise bury the log.
 		if !ge.autoExpeditionStarved {
 			ge.autoExpeditionStarved = true
-			ge.addLog("warning", rowid.Sprintf("game.auto_expedition.processAutoExpeditions.01", "%s: a survey party stands ready, but there are no supplies to outfit it.",
+			ge.addLog(OfficeArmy, "warning", rowid.Sprintf("game.auto_expedition.processAutoExpeditions.01", "%s: a survey party stands ready, but there are no supplies to outfit it.",
 				ge.autoExpeditionBuildingName()))
 		}
 		return
@@ -275,7 +275,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 
 	ge.autoExpeditionStarved = false
 	ge.autoExpeditionTicksLeft = interval
-	ge.addLog(LogRoutine, rowid.Sprintf("game.auto_expedition.processAutoExpeditions.03", "%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), offer.Title))
+	ge.addLog(OfficeArmy, LogRoutine, rowid.Sprintf("game.auto_expedition.processAutoExpeditions.03", "%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), offer.Title))
 }
 
 // autoExpeditionBuildingName is the society's player-facing name, read from the

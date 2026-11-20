@@ -80,8 +80,9 @@ func (c peopleBody) work() {
 	lw := c.w * 11 / 20
 	rw := c.w - lw
 	c.pane(c.x+lw, c.y, rw, c.h, "", c.s.pal.Work)
+	title := rowid.Line("ui.people_tabs.work.01", "Work areas")
 	if len(rows) == 0 {
-		c.pane(c.x, c.y, lw, c.h, rowid.Line("ui.people_tabs.work.01", "Work areas"), c.s.pal.Work)
+		c.pane(c.x, c.y, lw, c.h, title, c.s.pal.Work)
 		g.putFit(c.x+2, c.y+1, lw-4, rowid.Line("ui.people_tabs.work.02", "No worker buildings yet: every area is on auto."), xFaint)
 		c.footer([][2]string{escClose()}, rowid.Line("ui.people_tabs.work.03", "roster <area> <%|auto>"))
 		return
@@ -113,7 +114,7 @@ func (c peopleBody) work() {
 	for i := first; i < len(rows) && shown+1+len(notes[i]) <= avail; i++ {
 		shown += 1 + len(notes[i])
 	}
-	c.pane(c.x, c.y, lw, shown+3, rowid.Line("ui.people_tabs.work.01", "Work areas"), c.s.pal.Work)
+	c.pane(c.x, c.y, lw, shown+3, title, c.s.pal.Work)
 	y := c.y + 2
 	for i := first; i < len(rows) && y+1+len(notes[i]) <= c.y+2+avail; i++ {
 		r := rows[i]

@@ -246,8 +246,8 @@ func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 	if source != catastropheRolled {
 		eventName = catName + " (" + source + ")"
 	}
-	ge.addLog("warning", rowid.Sprintf("game.catastrophe.triggerCatastrophe.01", "☄ %s threatens the %s. Prepare yourself.", catName, ep.Name))
-	ge.addLog("warning", rowid.Line("game.catastrophe.triggerCatastrophe.02", "  Type 'catastrophe' to choose Endure or Succumb. Advancing and prestige wait until you do."))
+	ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.catastrophe.triggerCatastrophe.01", "☄ %s threatens the %s. Prepare yourself.", catName, ep.Name), logHead)
+	ge.addLog(OfficeWorld, "warning", rowid.Line("game.catastrophe.triggerCatastrophe.02", "  Type 'catastrophe' to choose Endure or Succumb. Advancing and prestige wait until you do."))
 
 	ge.epochEventHistory = append(ge.epochEventHistory, EpochEventRecord{
 		EpochKey: epochKey, EpochName: ep.Name,
@@ -436,33 +436,33 @@ func (ge *GameEngine) Endure() error {
 
 	debuff := ge.startReconstruction()
 
-	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.02", "☄ ENDURE: %s. [comment]%s[-]", catName, catFlavor))
-	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.03", "  Buildings destroyed: %d", destroyCount))
+	ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.catastrophe.Endure.02", "☄ ENDURE: %s. [comment]%s[-]", catName, catFlavor), logHead)
+	ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.catastrophe.Endure.03", "  Buildings destroyed: %d", destroyCount))
 	for _, desc := range names {
-		ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.04", "  → %s lost", desc))
+		ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.catastrophe.Endure.04", "  → %s lost", desc))
 	}
 	if brace > 0 {
-		ge.addLog("info", rowid.Sprintf("game.catastrophe.Endure.05", "  Braced (level %d): %d%% of buildings lost instead of %d%%, %.0f%% of stock kept instead of %.0f%%.",
+		ge.addLog(OfficeWorld, "info", rowid.Sprintf("game.catastrophe.Endure.05", "  Braced (level %d): %d%% of buildings lost instead of %d%%, %.0f%% of stock kept instead of %.0f%%.",
 			brace, braceDestroyPct[brace], braceDestroyPct[0], outcome.BracedKeepFrac*100, braceKeepFrac[0]*100))
 	}
 	if line := endureGarrisonLine(outcome); line != "" {
-		ge.addLog("success", line)
+		ge.addLog(OfficeWorld, "success", line)
 		t := ge.defenseTally()
 		t.Buildings += outcome.BuildingsSaved
 		for _, key := range sortedKeys(keptStock) {
 			ge.recordSavedResource(key, keptStock[key])
 		}
 	}
-	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.06", "  All resources reduced to %.0f%% of stored amounts.", keep*100))
-	ge.addLog("warning", rowid.Sprintf("game.catastrophe.Endure.07", "  %.0f%% of workers lost.", endureWorkerLoss*100))
-	ge.addLog("info", rowid.Sprintf("game.catastrophe.Endure.08", "  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
+	ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.catastrophe.Endure.06", "  All resources reduced to %.0f%% of stored amounts.", keep*100))
+	ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.catastrophe.Endure.07", "  %.0f%% of workers lost.", endureWorkerLoss*100))
+	ge.addLog(OfficeWorld, "info", rowid.Sprintf("game.catastrophe.Endure.08", "  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
 		endureDebuffProduction*100, approxTicks(debuff, ge.tickIntervalLocked()), endureMoraleHit*100))
 	// Past the all-production cap the surplus absorbs the penalty: say so.
 	ge.logCapped(config.Effect{Type: "production_all", Value: endureDebuffProduction})
-	ge.addLog("success", rowid.Sprintf("game.catastrophe.Endure.09", "  ✦ You endured the %s. Its badge records it.", epName))
+	ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.catastrophe.Endure.09", "  ✦ You endured the %s. Its badge records it.", epName), logHead)
 	// Cosmetic flavour — a wry beat after surviving the catastrophe.
 	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived, ge.quipRNG()); q != "" {
-		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
+		ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", q))
 	}
 
 	ge.catastropheHistory = append(ge.catastropheHistory,
@@ -566,7 +566,7 @@ func (ge *GameEngine) Succumb() error {
 	kitFrom := len(ge.log)
 	ge.startRunLegacyLocked()
 	ge.takeEndingLines(&end, kitFrom, EndLineKit)
-	ge.addLog("info", rowid.Line("game.catastrophe.Succumb.16", "Type [cyan]help[-] to rebuild."))
+	ge.addLog(OfficeWorld, "info", rowid.Line("game.catastrophe.Succumb.16", "Type [cyan]help[-] to rebuild."))
 	// The run that starts here is a new civilization.
 	ge.noteCivilizationStartedLocked()
 

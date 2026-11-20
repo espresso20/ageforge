@@ -66,6 +66,75 @@ type PlanOptimizeResult struct {
 	// marks the items of Order that are not what stood at their place before.
 	Previous []string
 	Moved    []bool
+	// Rows has one row for each item of Order when Changed: where the
+	// piece came from and when it starts in the new order.
+	Rows []PlanOptimizeRow
+}
+
+// PlanOptimizeRow is one item of the new order. From is the 1-based place
+// the item it was cut from holds today; two rows with one From are a split.
+// Start and End are the estimate of the new order; Never is set when a copy
+// of it cannot be paid for.
+type PlanOptimizeRow struct {
+	From, Count int
+	Start, End  time.Duration
+	Never       bool
+}
+
+// planOptimizeRows lays out the new order after: each piece's source in the
+// old plan and its times in the estimate of the new order. Caller holds the
+// write lock.
+func (ge *GameEngine) planOptimizeRows(after []PlanItem) []PlanOptimizeRow {
+	type src struct{ place, left int }
+	builds := map[string][]src{}
+	var others []int
+	for i, it := range ge.plan {
+		if it.Kind == PlanBuild {
+			builds[it.Key] = append(builds[it.Key], src{i + 1, it.Count})
+		} else {
+			others = append(others, i)
+		}
+	}
+	used := make([]bool, len(ge.plan))
+	rows := make([]PlanOptimizeRow, len(after))
+	for i, it := range after {
+		rows[i].Count = it.Count
+		if it.Kind == PlanBuild {
+			// The copies of a key keep their order, so a piece comes from
+			// the item that holds the next copy of its key.
+			s := builds[it.Key]
+			for len(s) > 0 && s[0].left == 0 {
+				s = s[1:]
+			}
+			if len(s) > 0 {
+				rows[i].From = s[0].place
+				for n := it.Count; n > 0 && len(s) > 0; {
+					c := min(n, s[0].left)
+					n -= c
+					s[0].left -= c
+					if s[0].left == 0 {
+						s = s[1:]
+					}
+				}
+			}
+			builds[it.Key] = s
+			continue
+		}
+		for _, j := range others {
+			if o := ge.plan[j]; !used[j] && o.Kind == it.Kind && o.Key == it.Key && o.Deal == it.Deal {
+				used[j], rows[i].From = true, j+1
+				break
+			}
+		}
+	}
+	before := ge.plan
+	ge.plan = after
+	est := ge.planEstimateLocked()
+	ge.plan = before
+	for i, e := range est.Items {
+		rows[i].Start, rows[i].End, rows[i].Never = e.Start, e.End, e.Never
+	}
+	return rows
 }
 
 // optHeld is an item that keeps its place: a build the model does not value
@@ -287,6 +356,7 @@ func (ge *GameEngine) planOptimizeLocked(apply bool) (PlanOptimizeResult, error)
 	res.Waiting = bestOut.total - bestOut.bought
 	res.Order = ge.planLabels(best)
 	res.Moved = planMoved(ge.plan, best)
+	res.Rows = ge.planOptimizeRows(best)
 	if apply {
 		ge.plan = best
 	}

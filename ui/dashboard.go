@@ -138,7 +138,7 @@ type Dashboard struct {
 	harbPanel harbingerPanel
 	// planPanel is the Plan panel's UI state (selection, feedback line,
 	// Clear confirmation). Owned by the UI goroutine.
-	planPanel planPanel
+	planPanel *planPanel
 
 	// The maps: the shared model builder, the Map panel and the dashboard's
 	// mini map. UI goroutine only. mapLocal holds the
@@ -165,6 +165,8 @@ type Dashboard struct {
 	statsPanel *statsPanel
 	// historyPanel is the History panel: the metrics of the run.
 	historyPanel *historyPanel
+	// logsPanel is the Logs panel: the roll and the slate.
+	logsPanel *logsPanel
 
 	// decks are the panels drawn as decks of cards (deck_panel.go), by
 	// overlay name.
@@ -211,6 +213,8 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),
 		historyPanel:  newHistoryPanel(),
+		planPanel:     newPlanPanel(),
+		logsPanel:     newLogsPanel(),
 		decks:         map[string]*deckPanel{},
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
@@ -274,7 +278,11 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.peoplePanel.wire(d.app)
 	d.overlayMgr.RegisterWidget("people", rowid.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
-	d.overlayMgr.Register("logs", rowid.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
+	d.logsPanel.prompt = d.researchPanel.prompt
+	d.logsPanel.toPrompt = d.handToPrompt
+	d.logsPanel.buttons.wire(d.app)
+	d.logsPanel.focus = func() { d.overlayMgr.FocusOn(d.logsPanel) }
+	d.overlayMgr.RegisterWidget("logs", txtLogsTitle, d.logsPanel.open, d.logsPanel.update)
 	d.epochHall = &epochHall{
 		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
 		height: func() int { om := d.overlayMgr; return om.screenH - barRows(om.screenW, om.screenH) },
@@ -308,18 +316,10 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		return nil
 	})
 	d.planPanel.engine = d.engine
-	d.planPanel.height = func() int { return d.overlayMgr.screenH }
-	d.planPanel.bar = func() int { return barRows(d.overlayMgr.screenW, d.overlayMgr.screenH) }
-	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
-	d.overlayMgr.SetFooter("plan", planFooter)
-	d.overlayMgr.SetKeyHandler("plan", func(event *kit.Key) *kit.Key {
-		// UI goroutine, no engine lock held (see the harbinger handler).
-		if !d.planPanel.handleKey(event, d.engine) {
-			return event
-		}
-		d.overlayMgr.Refresh(d.engine.GetState())
-		return nil
-	})
+	d.planPanel.prompt = d.researchPanel.prompt
+	d.planPanel.toPrompt = d.handToPrompt
+	d.planPanel.buttons.wire(d.app)
+	d.overlayMgr.RegisterWidget("plan", txtBuildPlan, d.planPanel.open, d.planPanel.update)
 	d.historyPanel.settings = d.mapSettings
 	d.peoplePanel.hist = d.engine.History
 	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
@@ -1047,12 +1047,12 @@ func (d *Dashboard) announceBadges() {
 	if n := d.engine.DrainBadgeCatchUp(); n > 0 {
 		line := game.BadgeCatchUpLine(n)
 		d.toastMgr.Show(line, "green", 5*time.Second)
-		d.engine.AddLog("success", line)
+		d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", line)
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
-		d.engine.AddLog("success", game.BadgeLogLine(v))
+		d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", game.BadgeLogLine(v))
 		if t, ok := theme.ByKey(v.RewardTheme); ok {
-			d.engine.AddLog("success", themeUnlockToast(t.Name.String()))
+			d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", themeUnlockToast(t.Name.String()))
 		}
 	}
 }
@@ -1347,11 +1347,11 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
-	// Every line but debug ones, routine confirmations included, so the
-	// player sees what each command did (log_routing.go).
+	// The town level of the log plus the game office's replies, folded, with
+	// a count after a line that happened more than once.
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
-		if mainLogShows(entry) {
+		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame) {
 			visible = append(visible, entry)
 		}
 	}
@@ -1377,7 +1377,11 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 		case "info":
 			color = "cyan"
 		}
-		fmt.Fprintf(&sb, "[%s]%s[-]\n", color, entry.Message)
+		times := ""
+		if entry.Count > 1 {
+			times = fmt.Sprintf(" ×%d", entry.Count)
+		}
+		fmt.Fprintf(&sb, "[%s]%s%s[-]\n", color, entry.Message, times)
 	}
 	d.logTV.SetText(safeTags(sb.String()))
 	d.logTV.ScrollToEnd()
@@ -1411,7 +1415,7 @@ func (d *Dashboard) showDevUnlockModal() {
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
 				d.engine.NoteDevUnlocked()
-				d.engine.AddLog("info", rowid.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", rowid.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
 				d.app.SetFocus(d.inputField)
 			} else {
 				d.app.SetFocus(d.inputField)
@@ -1574,7 +1578,7 @@ func (d *Dashboard) runLine(text string) {
 	if game.DevModeActive && strings.HasPrefix(cmd, "/") {
 		result := game.DevConsoleCommand(cmd, d.engine)
 		if result != "" {
-			d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
+			d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", "[positive]dev → "+result+"[-]")
 		}
 		return
 	}
@@ -1612,15 +1616,15 @@ func (d *Dashboard) runLine(text string) {
 	if result.OverlayName == "harbinger" {
 		d.harbPanel.reset()
 	}
-	if result.OverlayName == "plan" {
-		d.planPanel.reset()
-	}
 	if result.OverlayName == "map" {
 		d.mapPanel.world = result.MapWorld
 		d.mapOpen.Store(true)
 	}
 	if result.OverlayName == "tree" {
 		d.treePanel.request(result.ResearchZoom, result.ResearchCard)
+	}
+	if result.OverlayName == "logs" {
+		d.logsPanel.request(result.Logs)
 	}
 	if result.OverlayName == "badges" {
 		d.badgePanel.request(result.Badges)
@@ -1653,7 +1657,7 @@ func (d *Dashboard) runLine(text string) {
 		// A badge this command earned is announced first, so the reply, which the
 		// player asked for, is the last line in the log and stays in view.
 		d.announceBadges()
-		d.engine.AddLog(result.Type, result.Message)
+		d.engine.AddLog(game.OfficeGame, game.LevelEverything, result.Type, result.Message)
 	}
 }
 

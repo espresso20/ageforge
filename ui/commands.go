@@ -199,6 +199,12 @@ func registry() []*Command {
 					Help: []Usage{{"plan optimize", rowid.Line("ui.help.commands.plan.optimize", "Reorder the planned buildings for the fastest growth (homes and producers mixed), and say how much sooner the plan finishes; O in the panel previews it first")}}},
 				sub("up", "plan up <n>", rowid.Line("ui.help.commands.plan.up", "Move item n one place up"), Arg{Kind: ArgPlanItem}),
 				sub("down", "plan down <n>", rowid.Line("ui.help.commands.plan.down", "Move item n one place down"), Arg{Kind: ArgPlanItem}),
+				sub("pause", "plan pause", rowid.Line("ui.help.commands.plan.pause", "Hold the plan: it starts and drops nothing until resumed")),
+				sub("resume", "plan resume", rowid.Line("ui.help.commands.plan.resume", "Let the plan run again")),
+				sub("count", "plan count <n> <count>", rowid.Line("ui.help.commands.plan.count", "Set how many copies item n holds"), Arg{Kind: ArgPlanItem}, Arg{Kind: ArgNumber}),
+				sub("top", "plan top <n>", rowid.Line("ui.help.commands.plan.top", "Move item n to the top"), Arg{Kind: ArgPlanItem}),
+				sub("bottom", "plan bottom <n>", rowid.Line("ui.help.commands.plan.bottom", "Move item n to the bottom"), Arg{Kind: ArgPlanItem}),
+				sub("move", "plan move <n> <place>", rowid.Line("ui.help.commands.plan.move", "Move item n to place number place"), Arg{Kind: ArgPlanItem}, Arg{Kind: ArgNumber}),
 				{Name: "clear", Dangerous: true, Help: []Usage{{"plan clear", rowid.Line("ui.help.commands.plan.clear", "Empty the plan")}}},
 			}},
 
@@ -389,6 +395,15 @@ func registry() []*Command {
 					Help: []Usage{{"account wipe", rowid.Line("ui.help.commands.account.wipe", "Where to wipe an account (the Accounts panel)")}}},
 			}},
 
+		{Name: "logs", Run: cmdLogs, Section: secAccounts, BareOK: true,
+			Panel: rowid.Line("ui.help.panels.logs", "The log: a roll of what happened, and a slate of the town as it stands"),
+			Args:  []Arg{{Kind: ArgText, Words: []string{"headlines", "town", "everything", "all", "find"}, Optional: true}},
+			Help: []Usage{
+				{"logs", rowid.Line("ui.help.commands.logs", "Open the log at the town level")},
+				{"logs headlines|town|everything", rowid.Line("ui.help.commands.logs.2", "Open it at a level of detail")},
+				{"logs <office>", rowid.Line("ui.help.commands.logs.3", "Open it on one office, such as trade or research (all: every office)")},
+				{"logs find <words>", rowid.Line("ui.help.commands.logs.4", "Open it on a search; bare \"logs find\" clears it")},
+			}},
 		{Name: "badges", Run: cmdBadges, Aliases: []string{"achievements"}, Section: secAccounts, BareOK: true,
 			Panel: rowid.Line("ui.help.panels.badges", "The Ranks screen: a rank for each worker domain, and every badge behind it (alias: achievements)"),
 			Args:  []Arg{{Kind: ArgText, Words: []string{"ranks", "all", "recent"}, Optional: true}},
@@ -408,7 +423,6 @@ func registry() []*Command {
 		// Panels only
 		panel("milestones", rowid.Line("ui.help.panels.milestones", "Milestone goals & rewards"), "ms"),
 		panel("stats", rowid.Line("ui.help.panels.stats", "Empire statistics")),
-		panel("logs", rowid.Line("ui.help.panels.logs", "Recent game log entries")),
 		panel("history", rowid.Line("ui.help.panels.history", "Civilization history timeline")),
 		panel("buildings", rowid.Line("ui.help.panels.buildings", "Built structures by lineage")),
 	}

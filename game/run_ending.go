@@ -81,7 +81,7 @@ func (how prestigeEnding) endingKind() string {
 
 // say writes a line of the ending to the log and to the record.
 func (ge *GameEngine) sayEnding(end *RunEnding, kind, level, text string) {
-	ge.addLog(level, text)
+	ge.addLog(OfficeWorld, level, text, logHead)
 	end.Lines = append(end.Lines, RunEndingLine{Kind: kind, Level: level, Text: text})
 }
 

@@ -83,7 +83,7 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 		err = acct.SetMotion(s.Motion)
 	}
 	if err != nil {
-		d.engine.AddLog("warning", rowid.Line("ui.map_settings.saveMapSettings.01", "The setting could not be saved to your account: ")+err.Error())
+		d.engine.AddLog(game.OfficeGame, game.LevelEverything, "warning", rowid.Line("ui.map_settings.saveMapSettings.01", "The setting could not be saved to your account: ")+err.Error())
 	}
 }
 

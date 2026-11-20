@@ -77,7 +77,7 @@ func (ge *GameEngine) fireRoadEvents(active *ActiveExpedition, elapsed int) {
 		// place and the people still marked), not the story as read.
 		active.RoadTold = append(active.RoadTold, RoadTold{Event: i, Text: told})
 		active.RoadEventsSeen = append(active.RoadEventsSeen, story)
-		ge.addLog("event", story)
+		ge.addLog(OfficeArmy, "event", story)
 	}
 }
 
