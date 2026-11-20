@@ -34,7 +34,7 @@ On first contact the log introduces the civilization: its name, personality and 
 1. The title, with how many civilizations you have met and how many are still undiscovered.
 2. **Boons and setbacks**: every timed effect a civilization has on you. Boons are marked `✦` and setbacks `⚠`. Each line names the civilization, the effect, its size (`+13% food production`, `+8% all production`, `+9% game speed`) and the time left. The header shows how full both pools are (`boons 2/5 · setbacks 1/3`), because both have a hard limit (see [Limits](#limits)). Workers on loan from a peaceful civilization are listed here too, marked temporary or permanent. So is each crew of temporary workers that a boon lent you: who sent it, how many workers and the time left. Crews take no boon slot, so the header doesn't count them.
 3. The **Geographic Society**, in one of three states. With none built, it prompts you to build one and names its age once you can see it. If a party is due but you can't pay for it, it says so. When it is running, it shows the number of Societies, their staffing, the wait between parties, and a countdown with a progress bar to the next party.
-4. A card for each civilization you have met: name, personality, specialty and a **strength rating** of 1 to 5 stars; a line of backstory; a war banner if you are at war; the opinion bar; the status, color-coded, with any active ally bonus and how many trades you've done; how far it is to the next threshold (*+8 opinion to friendly*, *+12 opinion to ally-eligible*, or the ally command once you qualify); workers it has lent you; how many boons and setbacks it is applying; and its current **trade deals**, one numbered line per offer (see [Trade deals](#trade-deals)). A civilization that won't trade says why instead.
+4. A card for each civilization you have met: name, personality, specialty and a **strength rating** of 1 to 5 stars; a line of backstory; a war banner if you are at war; the opinion bar; the status, color-coded, with any active ally bonus and how many trades you've done; how far it is to the next threshold (*+8 opinion to friendly*, *+12 opinion to ally-eligible*, or the ally command once you qualify); workers it has lent you; how many boons and setbacks it is applying; and one line saying how many **trade deals** it has open, with a button to the Trade panel (see [Trade deals](#trade-deals)). A civilization that won't trade says why instead.
 5. **Not yet met**: how many civilizations you haven't discovered, and nothing else (`5 civilizations not yet discovered. Send expeditions to find them.`).
 
 <figure class="screen" data-screen="factions"><figcaption>The top of the Factions panel in the Medieval Age: one boon in play, workers on loan, and the card of the first civilization met with its opinion bar.</figcaption></figure>
@@ -113,7 +113,7 @@ Drift runs alongside natural drift and the rival or embargo drain, and opinion s
 
 ## Trade deals
 
-Every civilization you have met offers a small, rotating set of **trade deals**. Nothing is written by hand for each civilization: its specialty, personality and strength, and its opinion of you, decide what it offers. The Factions panel shows each civilization's deals on its card. `diplomacy deals [civ]` lists them, `diplomacy accept <civ> <n>` takes one, and `plan deal <civ> <n>` queues one in the [build plan](plan.md).
+Every civilization you have met offers a small, rotating set of **trade deals**. Nothing is written by hand for each civilization: its specialty, personality and strength, and its opinion of you, decide what it offers. The [Trade panel](trade.md) lists every open deal, with an Accept button on each; the Factions panel shows how many each civilization has open. `diplomacy deals [civ]` lists them, `diplomacy accept <civ> <n>` takes one, and `plan deal <civ> <n>` queues one in the [build plan](plan.md).
 
 Every deal is worded from your side, the same way on the panel, in `diplomacy deals`, in the plan and in the log: `<kind>: give <price> → get <goods>`, for example `Buy: give 876M iron ore → get 966K food`.
 
@@ -126,7 +126,7 @@ Every deal is worded from your side, the same way on the panel, in `diplomacy de
 
 In an age that prices a raw material, the raw is one of your construction resources, so a deal can ask for it (see [What the ores are for](resources.md#what-the-ores-are-for)).
 
-Next to a Rare deal the panel shows `next age's goods`. A price you can't pay yet shows in red, and deals you've taken are dimmed.
+Next to a Rare deal the Trade panel shows `next age's goods`. A price you can't pay yet shows in red, and deals you've taken are dimmed.
 
 A deal stands on its own. Its rate is the ratio of the two resources' price levels times a multiple of 0.84 to 1.0 of parity, and it never pays better than parity. Food and culture, which no building is priced in, are valued by what the age's producers of them return. Each deal is a fixed contract.
 
