@@ -492,8 +492,8 @@ func (s *siteStage) bronzeTown() {
 	s.say("trade route start local_barter")
 	s.wait(310)
 	s.level(map[string]float64{"food": 0.71, "wood": 0.34, "stone": 0.83, "gold": 0.37, "iron": 0.22, "faith": 0.41})
-	// The Scout Party needs no tech; scouting past it waits for Exploration.
-	s.say("expedition scouting_party")
+	// Offers come off a board now; the first one on it goes out.
+	s.say("expedition 1")
 	s.say("wonder collect stone")
 	s.say("wonder collect wood 9000")
 	s.say("build farm 2")
