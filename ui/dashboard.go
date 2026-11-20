@@ -193,6 +193,9 @@ type Dashboard struct {
 	miniMap  *miniMap
 	body     *dashBody
 	mapLocal *mapSettings
+	// window is the window the game is in (nil in the terminal), for the
+	// pause card's display settings.
+	window WindowHost
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
 	mapOpen atomic.Bool
@@ -686,9 +689,7 @@ func (d *Dashboard) build() {
 			if d.inputField.GetText() == "" && d.economyTab.buildBox.closeOlder() {
 				return nil
 			}
-			d.engine.SaveGame(d.engine.ActiveSaveName())
-			d.engine.Stop()
-			d.pages.SwitchToPage("splash")
+			d.openPause()
 			return nil
 		// Economy tab scroll keys (always available since economy is permanent background)
 		case kit.KeyPgUp:

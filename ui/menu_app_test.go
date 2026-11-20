@@ -118,8 +118,10 @@ func TestMenuInTheRunningApp(t *testing.T) {
 	if clockRuns() {
 		t.Error("the menu's clock runs behind the game")
 	}
-	// Esc in the game saves, stops it and returns to the menu.
+	// Esc in the game opens the pause card; Main menu saves, stops it and returns to the menu.
 	h.key(kit.KeyEsc, 0)
+	h.waitFor("the pause card", 5*time.Second, func() bool { return h.frontPage() == pausePage })
+	h.key(kit.KeyRune, 'm')
 	h.waitFor("the menu after the game", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 	moves("back from the game")
 	var sel string
@@ -183,6 +185,8 @@ func TestMenuFirstRunInTheRunningApp(t *testing.T) {
 	h.waitFor("the game", 5*time.Second, func() bool { return h.frontPage() == "dashboard" && h.inputHasFocus() })
 	waitRunning(t, h.eng)
 	h.key(kit.KeyEsc, 0)
+	h.waitFor("the pause card", 5*time.Second, func() bool { return h.frontPage() == pausePage })
+	h.key(kit.KeyRune, 'm')
 	h.waitFor("the menu after the game", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 	h.waitFor("the town page", 3*time.Second, func() bool { return !forge() })
 	var first, name string
