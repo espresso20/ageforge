@@ -420,11 +420,17 @@ func tradeMarketRows(g *xgrid, c deckCard, x0, y, w int, draw bool) int {
 		if draw {
 			g.put(x0, y, rowid.Line("ui.trade_board.tradeMarketRows.01", "a win pays one of:"), xDim)
 		}
-		_, rows := layChips(c.Chips, w)
-		if draw {
-			g.deckChips(x0, y+1, w, c.Chips)
+		words := make([]string, len(c.Chips))
+		for i, ch := range c.Chips {
+			words[i] = ch.Word
 		}
-		y += 1 + rows
+		for _, l := range deckWrap(strings.Join(words, " · "), w) {
+			y++
+			if draw {
+				g.putFit(x0, y, w, l, xText)
+			}
+		}
+		y++
 	}
 	return y - y0
 }

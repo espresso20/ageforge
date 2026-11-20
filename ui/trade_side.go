@@ -404,7 +404,7 @@ func tradeDrawOffer(g *xgrid, st game.GameState, c tradeCiv, d game.DealInfo, ok
 	}
 	g.put(cols[0], y, game.DealKindLabel(d.Kind), xDim)
 	x := g.put(cols[1], y, tradeOfferGive(d), k)
-	g.put(max(x+1, cols[2]-3), y, "▶", xDim)
+	g.put(max(x+1, cols[2]-3), y, "►", xDim)
 	g.put(cols[2], y, tradeOfferGet(d), xText)
 	g.rput(sx+68, y, textfmt.Number(st.Resources[d.Give].Amount), k)
 	if picked {
