@@ -94,11 +94,26 @@ func (ge *GameEngine) launchPlanExpedition(it PlanItem) error {
 }
 
 // PlanAdjust changes the count of build or upgrade item n (1-based) by delta
-// and returns the new count. Raising it stops at what the building's limit or
-// the copies held leave; lowering it stops at 1 (remove the item instead).
+// and returns the new count; see PlanSetCount.
 func (ge *GameEngine) PlanAdjust(n, delta int) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	if n < 1 || n > len(ge.plan) {
+		return 0, ge.planIndexErr(n)
+	}
+	return ge.planSetCountLocked(n, ge.plan[n-1].Count+delta)
+}
+
+// PlanSetCount sets the count of build or upgrade item n (1-based) and
+// returns the count it holds. Raising it stops at what the building's limit
+// or the copies held leave; lowering it stops at 1 (remove the item instead).
+func (ge *GameEngine) PlanSetCount(n, count int) (int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	return ge.planSetCountLocked(n, count)
+}
+
+func (ge *GameEngine) planSetCountLocked(n, want int) (int, error) {
 	if n < 1 || n > len(ge.plan) {
 		return 0, ge.planIndexErr(n)
 	}
@@ -106,13 +121,15 @@ func (ge *GameEngine) PlanAdjust(n, delta int) (int, error) {
 	if it.Kind != PlanBuild && it.Kind != PlanUpgrade {
 		return 0, rowid.Errorf("game.plan_expedition.PlanAdjust.01", "Only builds and upgrades have a count.")
 	}
-	if delta < 0 {
-		next := max(it.Count+delta, 1)
-		if next == it.Count {
+	if want < 1 {
+		if it.Count == 1 {
 			return 0, rowid.Errorf("game.plan_expedition.PlanAdjust.02", "The count is already 1. Remove the item to drop it.")
 		}
-		it.Count = next
-		return next, nil
+		want = 1
+	}
+	if want <= it.Count {
+		it.Count = want
+		return want, nil
 	}
 	planned := plannedCount(ge.plan, it.Kind, it.Key)
 	room := maxPlanCount - it.Count
@@ -129,7 +146,7 @@ func (ge *GameEngine) PlanAdjust(n, delta int) (int, error) {
 		}
 		room = min(room, ge.Buildings.GetCount(it.Key)-planned, ge.planRoom(newDef, planned))
 	}
-	add := min(delta, room)
+	add := min(want-it.Count, room)
 	if add <= 0 {
 		return 0, rowid.Errorf("game.plan_expedition.PlanAdjust.04", "That is the most the plan can take.")
 	}

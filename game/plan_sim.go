@@ -565,17 +565,26 @@ type simOutcome struct {
 	first, last []float64
 	// got is how many copies of each item started.
 	got []int
+	// starts holds the tick each copy started, for an item of 2 to
+	// maxLaneCopies copies (nil for the rest).
+	starts [][]float64
 }
+
+// maxLaneCopies is the most copies of one item whose starts the walk keeps.
+const maxLaneCopies = 12
 
 // walk plays items (in plan order) as the plan does: every tick, in order,
 // start what can be paid after what the items above it hold back, and let
 // the rest save up. It ends when everything has started or nothing ever will.
 func (m *planModel) walk(items []simItem) simOutcome {
 	r := m.newRun()
-	out := simOutcome{first: make([]float64, len(items)), last: make([]float64, len(items)), got: make([]int, len(items))}
+	out := simOutcome{first: make([]float64, len(items)), last: make([]float64, len(items)), got: make([]int, len(items)), starts: make([][]float64, len(items))}
 	for i, it := range items {
 		out.total += it.left
 		out.first[i], out.last[i] = -1, -1
+		if it.left >= 2 && it.left <= maxLaneCopies {
+			out.starts[i] = make([]float64, 0, it.left)
+		}
 	}
 	left := append([]simItem(nil), items...)
 	reserved := make([]float64, len(m.res))
@@ -601,6 +610,9 @@ func (m *planModel) walk(items []simItem) simOutcome {
 						}
 						out.last[i] = r.t
 						out.got[i]++
+						if out.starts[i] != nil {
+							out.starts[i] = append(out.starts[i], r.t)
+						}
 						started = true
 						continue
 					}

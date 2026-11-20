@@ -199,6 +199,12 @@ func registry() []*Command {
 					Help: []Usage{{"plan optimize", rowid.Line("ui.help.commands.plan.optimize", "Reorder the planned buildings for the fastest growth (homes and producers mixed), and say how much sooner the plan finishes; O in the panel previews it first")}}},
 				sub("up", "plan up <n>", rowid.Line("ui.help.commands.plan.up", "Move item n one place up"), Arg{Kind: ArgPlanItem}),
 				sub("down", "plan down <n>", rowid.Line("ui.help.commands.plan.down", "Move item n one place down"), Arg{Kind: ArgPlanItem}),
+				sub("pause", "plan pause", rowid.Line("ui.help.commands.plan.pause", "Hold the plan: it starts and drops nothing until resumed")),
+				sub("resume", "plan resume", rowid.Line("ui.help.commands.plan.resume", "Let the plan run again")),
+				sub("count", "plan count <n> <count>", rowid.Line("ui.help.commands.plan.count", "Set how many copies item n holds"), Arg{Kind: ArgPlanItem}, Arg{Kind: ArgNumber}),
+				sub("top", "plan top <n>", rowid.Line("ui.help.commands.plan.top", "Move item n to the top"), Arg{Kind: ArgPlanItem}),
+				sub("bottom", "plan bottom <n>", rowid.Line("ui.help.commands.plan.bottom", "Move item n to the bottom"), Arg{Kind: ArgPlanItem}),
+				sub("move", "plan move <n> <place>", rowid.Line("ui.help.commands.plan.move", "Move item n to place number place"), Arg{Kind: ArgPlanItem}, Arg{Kind: ArgNumber}),
 				{Name: "clear", Dangerous: true, Help: []Usage{{"plan clear", rowid.Line("ui.help.commands.plan.clear", "Empty the plan")}}},
 			}},
 

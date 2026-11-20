@@ -300,6 +300,9 @@ func planListText(state game.GameState) string {
 	}
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, rowid.Line("ui.overlay_plan.planListText.02", "Build plan")) + "\n")
+	if state.PlanPaused {
+		sb.WriteString(theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_plan.planListText.07", "Paused: nothing starts until you resume it.")) + "\n")
+	}
 	for i, v := range state.Plan {
 		status := v.Status
 		switch v.Status {

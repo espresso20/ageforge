@@ -169,6 +169,9 @@ type PlanItemView struct {
 	// HeldBack is what this item holds back from the items below it, by
 	// resource: its reservation while it waits (empty when it holds nothing).
 	HeldBack map[string]float64
+	// Cause is what the item waits on: "" when ready, else one of the
+	// PlanCause values.
+	Cause string
 }
 
 // loadPlanIn is a saved plan as the engine accepts it: known kinds only,
@@ -315,8 +318,25 @@ func (ge *GameEngine) PlanClear() int {
 	for _, it := range ge.plan {
 		ge.unlogPlanItemLocked(it)
 	}
-	ge.plan = nil
+	ge.plan, ge.planPaused = nil, false
 	return n
+}
+
+// PlanSetPaused holds the plan (on) or lets it run again. A held plan starts
+// nothing and drops nothing; research already under way carries on, and what
+// the views and the estimate show is what running again would do.
+func (ge *GameEngine) PlanSetPaused(on bool) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if on == ge.planPaused {
+		return
+	}
+	ge.planPaused = on
+	if on {
+		ge.addLog(LogRoutine, rowid.Line("game.plan.PlanSetPaused.01", "Plan paused."))
+	} else {
+		ge.addLog(LogRoutine, rowid.Line("game.plan.PlanSetPaused.02", "Plan resumed."))
+	}
 }
 
 // PlanMove moves item n (1-based) by delta places (negative is up, toward
@@ -722,7 +742,7 @@ func (ge *GameEngine) planCovers(cost map[string]float64, reserved map[string]fl
 // adds what it started to starts. Must be called with the write lock held.
 // Reports whether anything started.
 func (ge *GameEngine) runPlan(starts *planStarts) bool {
-	if len(ge.plan) == 0 {
+	if len(ge.plan) == 0 || ge.planPaused {
 		return false
 	}
 	started := false
@@ -1062,5 +1082,58 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		out = append(out, v)
 	}
 	ge.planResearchTimes(out, researchIdx)
+	for i := range out {
+		out[i].Cause = ge.planCauseOf(ge.plan[i], out[i])
+	}
 	return out
+}
+
+// What an item that is not ready waits on (PlanItemView.Cause).
+const (
+	PlanCauseFunds    = "funds"    // short of the price; the income will cover it
+	PlanCauseIncome   = "income"   // the income will not bring a resource in time
+	PlanCauseAge      = "age"      // it needs the next age
+	PlanCauseResearch = "research" // research: the slot, the queue, a prerequisite or a locked tech
+	PlanCauseHand     = "hand"     // it needs the player
+)
+
+// planCauseOf says what view v of item it waits on ("" when it is ready). A
+// wonder pays itself once the funds cover what its bank lacks, so it waits on
+// funds or income, never on the player.
+func (ge *GameEngine) planCauseOf(it PlanItem, v PlanItemView) string {
+	if v.Status == PlanStatusReady {
+		return ""
+	}
+	income := false
+	for _, r := range v.Rows {
+		income = income || r.Never
+	}
+	switch {
+	case it.Kind == PlanBuild && ge.Buildings.defs[it.Key].Category == "wonder":
+		if income {
+			return PlanCauseIncome
+		}
+		return PlanCauseFunds
+	case v.Status == PlanStatusWaiting:
+		return PlanCauseFunds
+	case it.Kind == PlanAdvance || it.Kind == PlanDeal:
+		return PlanCauseHand
+	case it.Kind == PlanResearch:
+		if def, ok := ge.rules.Tech(it.Key); ok && ge.progress.GetAgeOrder()[def.Age] > ge.progress.GetAgeOrder()[ge.age] {
+			return PlanCauseAge
+		}
+		return PlanCauseResearch
+	case len(v.Cost) > 0:
+		return PlanCauseIncome
+	case it.Kind == PlanBuild:
+		if def := ge.Buildings.defs[it.Key]; def.RequiredAge != "" && def.RequiredAge != ge.age {
+			return PlanCauseAge
+		}
+		return PlanCauseResearch
+	case it.Kind == PlanUpgrade:
+		if newDef, ok := ge.Buildings.UpgradeTarget(it.Key); ok && ge.upgradeTechErr(newDef) != nil {
+			return PlanCauseResearch
+		}
+	}
+	return PlanCauseHand
 }
