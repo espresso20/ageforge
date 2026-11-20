@@ -19,8 +19,8 @@
 #           kind=, need= and slot=, with commas between several values.
 #
 #   Lines are numbered by their place in the pool or bank, and the numbers are
-#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
-#   the end of a pool: a line put in the middle renumbers every line after it.
+#   the row ids of the copy sheets. Add new lines at the end of a pool: a line
+#   put in the middle renumbers every line after it.
 
 # WarRaid — a civilization you are at war with came over the wall and took
 # something.

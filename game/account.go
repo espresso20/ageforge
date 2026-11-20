@@ -293,6 +293,8 @@ type Account struct {
 	// list is asked for on every snapshot and changes on few of them.
 	badgeRev  uint64
 	badgeList badgeListCache
+	// ranks keeps the domain points for a revision (ranks.go).
+	ranks rankCache
 
 	// settings is settings.json, read on first use (account_settings.go).
 	settings *accountSettings

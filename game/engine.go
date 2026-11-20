@@ -1910,7 +1910,7 @@ func (ge *GameEngine) recalculateRates() {
 	// moraleMultiplier() is a banded curve: 1.0 across the neutral band, up to
 	// 1.0+moraleMaxBonus when morale is high, down to moraleMinMult when low.
 	mMult := ge.moraleMultiplier()
-	production, workerOutput := ge.Buildings.productionWithWorkerOutput(ge.Workers.GetAssignedCount)
+	production, workerOutput := ge.Buildings.productionWithWorkerOutput(ge.Workers.GetAssignedCount, ge.rankOutputBonus)
 	// A resource its own buildings unlock (ResourceDef.BuiltUnlocks) is
 	// unlocked by the first standing building that makes it, whatever the age.
 	for _, def := range ge.Resources.defs {
