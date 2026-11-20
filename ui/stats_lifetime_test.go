@@ -331,7 +331,7 @@ func TestLifetimeTopTilesFillEveryRow(t *testing.T) {
 		for _, w := range []int{80, 100} {
 			p, _ := lifeStats(t, 8, w, 60, pics, lifeSome, nil)
 			right := map[int]int{}
-			for _, tl := range p.page.tiles[:4] {
+			for _, tl := range p.page.tiles[:5] {
 				right[tl.r.Min.Y] = max(right[tl.r.Min.Y], tl.r.Max.X)
 			}
 			if len(right) != 2 {
