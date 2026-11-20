@@ -334,7 +334,7 @@ const (
 // Buildings with WorkerDomain set use: rate = base × count × (0.20 + 0.80 × assigned/totalCap).
 // Buildings without workers use: rate = base × count (unchanged behaviour).
 func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(key string) int) map[string]float64 {
-	rates, _ := bm.productionWithWorkerOutput(getAssigned)
+	rates, _ := bm.productionWithWorkerOutput(getAssigned, nil)
 	return rates
 }
 
@@ -342,8 +342,10 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(key string) i
 // part of it that workers add: base × count × 0.80 × assigned/totalCap for
 // every building with worker slots. That part is "worker output", what a
 // worker output bonus (gather_rate) raises; an unstaffed building's 20%,
-// wonders and ruins have none.
-func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key string) int) (rates, workerOutput map[string]float64) {
+// wonders and ruins have none. rank, when set, gives the share a worker
+// domain's rank adds to the workers' part (the engine's bonus, ranks.go);
+// WorkerScaledProduction is the listed output without it.
+func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key string) int, rank func(domain string) float64) (rates, workerOutput map[string]float64) {
 	rates = make(map[string]float64)
 	workerOutput = make(map[string]float64)
 	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
@@ -361,6 +363,10 @@ func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key strin
 				}
 				byWorkers := float64(staffedShare * fillRatio)
 				rate = eff.Value * float64(count) * (unstaffedShare + byWorkers)
+				if rank != nil {
+					// A domain's rank adds that share of what its workers make.
+					rate += eff.Value * float64(count) * byWorkers * rank(def.WorkerDomain)
+				}
 				workerOutput[eff.Target] += float64(eff.Value * float64(count) * byWorkers)
 			} else {
 				rate = eff.Value * float64(count)
