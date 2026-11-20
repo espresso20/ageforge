@@ -42,8 +42,8 @@ func count(s string, set string) int {
 func TestMagnitudeBarPresentAndScaled(t *testing.T) {
 	rows := trendRows(false, nil)
 	f := fitResourceFormat(rows, 60)
-	if f.bar != resBarMax {
-		t.Fatalf("bar is %d cells, want %d", f.bar, resBarMax)
+	if f.bar != 35 {
+		t.Fatalf("bar is %d cells, want %d", f.bar, 35)
 	}
 	lit := func(r resRow) float64 {
 		bar := untag(magnitudeCells(r.fill, 12, false))

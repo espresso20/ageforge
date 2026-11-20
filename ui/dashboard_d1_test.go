@@ -46,32 +46,7 @@ func TestPeopleBoxBesideUnderConstruction(t *testing.T) {
 				}
 				continue
 			}
-			if con[0] != col[0] || con[1] != ppl[1] || con[3] != ppl[3] {
-				t.Errorf("%s: Under construction %v and People %v are not one row", where, con, ppl)
-			}
-			if ppl[0] != con[0]+con[2] || ppl[0]+ppl[2] != col[0]+col[2] {
-				t.Errorf("%s: People %v is not the right half of the row %v", where, ppl, col)
-			}
-			if d := con[2] - ppl[2]; d < 0 || d > 1 {
-				t.Errorf("%s: the halves are %d and %d wide", where, con[2], ppl[2])
-			}
-			if want := richPeopleHeight(h); ppl[3] != want {
-				t.Errorf("%s: the People box is %d rows, want %d", where, ppl[3], want)
-			}
-			_, bodyY, _, bodyH := d.contentArea.GetRect()
-			// The Panels list and, under it when it shows, the mini map are the
-			// whole column.
-			panH := pan[3]
-			if d.body.miniShown {
-				_, _, _, mh := d.miniMap.GetRect()
-				panH += mh
-			}
-			if pan[1] != bodyY || panH != bodyH {
-				t.Errorf("%s: the Panels list %v is not the whole column (rows %d to %d)", where, pan, bodyY, bodyY+bodyH)
-			}
-			if pan[2] != richSidebarW {
-				t.Errorf("%s: the Panels column is %d wide, want %d", where, pan[2], richSidebarW)
-			}
+			checkRichCut(t, where, d, w, h)
 
 			// The box says everything the brief asks of it, and fits.
 			rows := checkFitted(t, where+", People", d.workerMiniTV, cells, w)
@@ -91,6 +66,98 @@ func TestPeopleBoxBesideUnderConstruction(t *testing.T) {
 			}
 			checkFitted(t, where+", Under construction", d.economyTab.constructionTV, cells, w)
 		}
+	}
+}
+
+// checkRichCut holds the rich layout to its rectangles: Left is Resources
+// over the Log; Middle is Buildings over a foot strip, People on the strip's
+// left and Under construction on its right; Right is the Panels list over the
+// mini map, which takes richMapRows (or the whole column while it is off).
+func checkRichCut(t *testing.T, where string, d *Dashboard, w, h int) {
+	t.Helper()
+	left, mid, right := richCols(w)
+	bodyX, bodyY, _, bodyH := d.contentArea.GetRect()
+	foot := min(14, max(richPeopleHeight(h), bodyH/4))
+	people := min(max(20, (43*mid+50)/100), mid)
+	want := map[string][4]int{
+		"Resources":          {bodyX, bodyY, left, bodyH - (d1Rect(d.logTV)[3])},
+		"Log":                {bodyX, bodyY + d1Rect(d.economyTab.resourceTV)[3], left, d1Rect(d.logTV)[3]},
+		"Buildings":          {bodyX + left, bodyY, mid, bodyH - foot},
+		"People":             {bodyX + left, bodyY + bodyH - foot, people, foot},
+		"Under construction": {bodyX + left + people, bodyY + bodyH - foot, mid - people, foot},
+	}
+	got := map[string][4]int{
+		"Resources":          d1Rect(d.economyTab.resourceTV),
+		"Log":                d1Rect(d.logTV),
+		"Buildings":          d1Rect(d.economyTab.buildBox),
+		"People":             d1Rect(d.workerMiniTV),
+		"Under construction": d1Rect(d.economyTab.constructionTV),
+	}
+	for name, r := range want {
+		if got[name] != r {
+			t.Errorf("%s: %s is %v, want %v", where, name, got[name], r)
+		}
+	}
+	if d1Rect(d.logTV)[3] < 8 {
+		t.Errorf("%s: the Log is %d rows, under its floor of 8", where, d1Rect(d.logTV)[3])
+	}
+	pan := d1Rect(d.sidebar)
+	if pan != [4]int{bodyX + left + mid, bodyY, right, pan[3]} {
+		t.Errorf("%s: the Panels list is %v, want the right column from row %d", where, pan, bodyY)
+	}
+	mapH := 0
+	if d.body.miniShown {
+		mapH = d1Rect(d.miniMap)[3]
+		if mapH != richMapRows(right, bodyH) {
+			t.Errorf("%s: the mini map is %d rows, want %d", where, mapH, richMapRows(right, bodyH))
+		}
+		if m := d1Rect(d.miniMap); m[0] != pan[0] || m[1] != pan[1]+pan[3] || m[2] != right {
+			t.Errorf("%s: the mini map %v is not under the Panels list %v", where, m, pan)
+		}
+	}
+	if pan[3]+mapH != bodyH {
+		t.Errorf("%s: the Panels list and the map cover %d of %d rows", where, pan[3]+mapH, bodyH)
+	}
+}
+
+// TestRichMainViewCut: the rich layout's three columns and rows at the sizes
+// the pictures are taken at, with the map on and off.
+func TestRichMainViewCut(t *testing.T) {
+	restoreForge(t)
+	d, pages, _ := stagedDashboard(t, "medieval_age")
+	for _, sz := range [][2]int{{279, 74}, {279, 73}, {200, 55}, {195, 51}, {157, 46}, {120, 39}} {
+		w, h := sz[0], sz[1]
+		drawnDashboard(t, d, pages, w, h)
+		checkRichCut(t, fmt.Sprintf("%dx%d", w, h), d, w, h)
+	}
+	d.runForTest("minimap off")
+	drawnDashboard(t, d, pages, 279, 74)
+	_, bodyY, _, bodyH := d.contentArea.GetRect()
+	if pan := d1Rect(d.sidebar); pan[1] != bodyY || pan[3] != bodyH || d.body.miniShown {
+		t.Errorf("map off: the Panels list is %v, want the whole column of %d rows", pan, bodyH)
+	}
+	d.runForTest("minimap on")
+}
+
+// TestRichColumns: the rich layout's column widths and map rows at the sizes
+// the pictures are taken at, and the floors each column keeps.
+func TestRichColumns(t *testing.T) {
+	for _, c := range []struct{ w, left, mid, right int }{
+		{279, 84, 131, 64}, {200, 60, 94, 46}, {195, 59, 91, 45}, {157, 47, 74, 36}, {120, 43, 44, 33},
+	} {
+		left, mid, right := richCols(c.w)
+		if left != c.left || mid != c.mid || right != c.right || left+mid+right != c.w {
+			t.Errorf("%d cells: %d | %d | %d, want %d | %d | %d", c.w, left, mid, right, c.left, c.mid, c.right)
+		}
+	}
+	if got := richMapRows(64, 63); got != 30 {
+		t.Errorf("map at 64 wide and 63 rows is %d rows, want 30", got)
+	}
+	if got := richMapRows(64, 36); got != 18 {
+		t.Errorf("map at 64 wide and 36 rows is %d rows, want 18", got)
+	}
+	if got := richMapRows(33, 40); got != 16 {
+		t.Errorf("map at 33 wide and 40 rows is %d rows, want 16", got)
 	}
 }
 
@@ -324,25 +391,18 @@ func TestPanelsListOnTheDashboard(t *testing.T) {
 	}
 }
 
-// TestEconHeightsRich: the row under the Resources box is the People box's
-// height whenever the column has room, the Resources box gives way before the
-// People box or the Log do, and the three always add up to the column.
+// TestEconHeightsRich: the Resources box has half the rich Left column, or
+// what its rows need when that is more, and the Log keeps 8 rows; the two add
+// up to the column.
 func TestEconHeightsRich(t *testing.T) {
 	for h := 14; h <= 90; h++ {
 		for want := 4; want <= 40; want++ {
-			for _, people := range []int{richPeopleRows, richPeopleDetailRows} {
-				r, c, l := econHeightsRich(h, want, people)
-				if r+c+l != h || r < 0 || c < 0 || l < 0 {
-					t.Fatalf("h %d want %d: %d + %d + %d", h, want, r, c, l)
-				}
-				if h >= 28 && (c != people || l < 5) {
-					t.Errorf("h %d want %d people %d: construction %d, log %d", h, want, people, c, l)
-				}
-				// The Resources box has its half, or what it needs when that is
-				// more, as far as the People box and the Log leave it.
-				if wantR := min(max(h*3/6, want), max(6, h-people-5)); h >= 28 && r != wantR {
-					t.Errorf("h %d want %d people %d: Resources %d, want %d", h, want, people, r, wantR)
-				}
+			r, l := econHeightsRich(h, want)
+			if r+l != h || r < 0 || l < 0 {
+				t.Fatalf("h %d want %d: %d + %d", h, want, r, l)
+			}
+			if wantR := min(max(h/2, want), h-8); h >= 16 && (r != wantR || l < 8) {
+				t.Errorf("h %d want %d: Resources %d (want %d), Log %d", h, want, r, wantR, l)
 			}
 		}
 	}

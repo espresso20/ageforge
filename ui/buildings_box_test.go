@@ -14,10 +14,10 @@ import (
 // mid-entry at the bottom ("Stash x20" showed its name and nothing else).
 //
 // The playtest's terminal is big enough for the rich layout, whose Panels
-// column is richSidebarW wide, so the screen is the 120 columns of the two
+// column is at least richRightMin wide, so the screen is the 120 columns of the two
 // middle columns and that.
 const (
-	playtestCols = 2*60 + richSidebarW
+	playtestCols = 2*60 + richRightMin
 	// The row over the boxes there is the header, at its full height.
 	playtestRows = 45 + headerStdRows + barBigRows
 )
