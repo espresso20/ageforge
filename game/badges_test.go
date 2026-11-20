@@ -656,6 +656,7 @@ func TestBadgesDoNotChangeTheRun(t *testing.T) {
 		var raw map[string]json.RawMessage
 		noErr(t, json.Unmarshal(b, &raw))
 		delete(raw, "account_id") // whose save it is, not what happened in it
+		delete(raw, "log")        // the story, which carries the account's own lines
 		return raw
 	}
 

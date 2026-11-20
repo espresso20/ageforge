@@ -56,6 +56,7 @@ var notScanned = map[string]string{
 	"mapmodel/fixture":      "test fixtures",
 	"pkg/planboard":         "pixel pictures for the Plan panel, no text of its own",
 	"pkg/sprites":           "pixel art",
+	"pkg/logroll":           "pixel art for the Logs panel, no player text",
 	"platform/steam":        "the Steamworks door: no player text",
 	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",
 	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",

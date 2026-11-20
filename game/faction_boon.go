@@ -284,11 +284,11 @@ func (ge *GameEngine) returnBoonWorkers() {
 		line := rowid.Sprintf("game.faction_boon.returnBoonWorkers.01", "%s from the %s went home.", textfmt.Count(gone, rowid.Line("game.faction_boon.returnBoonWorkers.02", "worker"), rowid.Line("game.faction_boon.returnBoonWorkers.03", "workers")), ge.rules.Name(rules.KindCiv, l.FactionKey))
 		switch staffed := gone - max(idle, 0); {
 		case staffed == 1:
-			ge.addLog("info", line+rowid.Line("game.faction_boon.returnBoonWorkers.04", " One of them was staffing a building."))
+			ge.addLog(OfficePeople, "info", line+rowid.Line("game.faction_boon.returnBoonWorkers.04", " One of them was staffing a building."))
 		case staffed > 1:
-			ge.addLog("info", rowid.Sprintf("game.faction_boon.returnBoonWorkers.05", "%s %d of them were staffing buildings.", line, staffed))
+			ge.addLog(OfficePeople, "info", rowid.Sprintf("game.faction_boon.returnBoonWorkers.05", "%s %d of them were staffing buildings.", line, staffed))
 		default:
-			ge.addLog(LogRoutine, line)
+			ge.addLog(OfficePeople, LogRoutine, line)
 		}
 	}
 }

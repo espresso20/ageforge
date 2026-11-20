@@ -395,6 +395,15 @@ func registry() []*Command {
 					Help: []Usage{{"account wipe", rowid.Line("ui.help.commands.account.wipe", "Where to wipe an account (the Accounts panel)")}}},
 			}},
 
+		{Name: "logs", Run: cmdLogs, Section: secAccounts, BareOK: true,
+			Panel: rowid.Line("ui.help.panels.logs", "The log: a roll of what happened, and a slate of the town as it stands"),
+			Args:  []Arg{{Kind: ArgText, Words: []string{"headlines", "town", "everything", "all", "find"}, Optional: true}},
+			Help: []Usage{
+				{"logs", rowid.Line("ui.help.commands.logs", "Open the log at the town level")},
+				{"logs headlines|town|everything", rowid.Line("ui.help.commands.logs.2", "Open it at a level of detail")},
+				{"logs <office>", rowid.Line("ui.help.commands.logs.3", "Open it on one office, such as trade or research (all: every office)")},
+				{"logs find <words>", rowid.Line("ui.help.commands.logs.4", "Open it on a search; bare \"logs find\" clears it")},
+			}},
 		{Name: "badges", Run: cmdBadges, Aliases: []string{"achievements"}, Section: secAccounts, BareOK: true,
 			Panel: rowid.Line("ui.help.panels.badges", "The Ranks screen: a rank for each worker domain, and every badge behind it (alias: achievements)"),
 			Args:  []Arg{{Kind: ArgText, Words: []string{"ranks", "all", "recent"}, Optional: true}},
@@ -414,7 +423,6 @@ func registry() []*Command {
 		// Panels only
 		panel("milestones", rowid.Line("ui.help.panels.milestones", "Milestone goals & rewards"), "ms"),
 		panel("stats", rowid.Line("ui.help.panels.stats", "Empire statistics")),
-		panel("logs", rowid.Line("ui.help.panels.logs", "Recent game log entries")),
 		panel("history", rowid.Line("ui.help.panels.history", "Civilization history timeline")),
 		panel("buildings", rowid.Line("ui.help.panels.buildings", "Built structures by lineage")),
 	}

@@ -58,7 +58,7 @@ A timed event's log line says how long it lasts in the age it fired in. A Drough
 
 The Stats panel (`stats`) lists every active timed event under "Active events", with the time left on it (for example `~2m 30s`) and its ongoing change to production, in green for a bonus and red for a penalty. A production boost shows as `+10% all production`. On the colorblind-safe and high-contrast [themes](themes.md), bonuses show blue and penalties orange or amber. A change to research speed is not listed there, and neither are instant effects (gifts, thefts, worker loss), since they already happened.
 
-The Logs panel (`logs`) shows the last 50 lines with tick numbers. It also lists the active events with the time left.
+The Logs panel (`logs`) shows the last 2,000 lines, grouped by when they happened, and a slate of what is under way and what is wrong. See [The log](commands.md#the-log).
 
 ---
 
