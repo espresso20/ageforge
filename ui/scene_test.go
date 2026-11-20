@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 )
 
 // sceneFits holds a drawn scene to its frame: every row w cells, every hit
@@ -22,69 +21,6 @@ func sceneFits(t *testing.T, where string, g *xgrid, lay deckLayout, w, h int) {
 		if !ht.r.In(image.Rect(1, 1, w-1, h-2)) {
 			t.Errorf("%s: a hit at %v is outside the panel", where, ht.r)
 		}
-	}
-}
-
-// TestTradeRoadsShowEveryRoute: the map names every route with its state
-// and goods, the town by its name, the notes and the way to Factions; the
-// picked route shows its button and command; nothing is lost at any size.
-func TestTradeRoadsShowEveryRoute(t *testing.T) {
-	keepTheme(t)
-	st := tradeState()
-	pg := tradePage(st)
-	g, lay := renderTradeRoads(&pg, st, 2, 0, 153, 38)
-	text := g.String()
-	want := []string{mapmodel.TownNameOf(st.Seed), "◆◆", "Factions", " open "}
-	for n := 0; n < pg.count(); n++ {
-		c, _ := pg.card(n)
-		want = append(want, c.Title)
-		if c.Chip != "" {
-			want = append(want, " "+c.Chip+" ")
-		}
-		if len(c.Lines) >= 2 {
-			want = append(want, c.Lines[0].Value+" → "+c.Lines[1].Value)
-		}
-		if lay.cards[n].Empty() {
-			t.Errorf("card %d (%s) has no place on the map", n, c.Title)
-		}
-	}
-	for _, n := range pg.Notes {
-		want = append(want, strings.Fields(n.Label + n.Value)[1])
-	}
-	picked, _ := pg.card(2)
-	want = append(want, " Enter ", picked.Action)
-	for _, s := range want {
-		if !strings.Contains(text, s) {
-			t.Errorf("the map does not show %q:\n%s", s, text)
-		}
-	}
-	if text := g.String(); strings.Contains(text, picked.Command) {
-		t.Errorf("the map prints the command the button carries:\n%s", text)
-	}
-	found := false
-	for _, k := range g.keys {
-		if k.cmd == picked.Command && k.kind == keyPrimary && k.r.Dy() == actionRows {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("no action button carries %q", picked.Command)
-	}
-	for w := 60; w <= 200; w += 11 {
-		for h := 14; h <= 50; h += 4 {
-			g, lay := renderTradeRoads(&pg, st, 1, 0, w, h)
-			sceneFits(t, "trade", g, lay, w, h)
-			for n := 0; n < pg.count(); n++ {
-				if c, _ := pg.card(n); !strings.Contains(g.String(), fitText(c.Title, 12)[:4]) && lay.total <= lay.viewH {
-					t.Errorf("trade at %dx%d: %q is not on the panel", w, h, c.Title)
-				}
-			}
-		}
-	}
-	// A window too small for the map gets the cards.
-	small, _ := renderTradeRoads(&pg, st, 0, 0, 100, 30)
-	if !strings.Contains(small.String(), pg.Sections[0].Title+" ─") {
-		t.Errorf("at 100x30 the Trade panel is not the deck:\n%s", small.String())
 	}
 }
 

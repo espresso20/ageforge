@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- The Trade panel is a board: open routes in a column with a bar for each cycle, a goods table of what the running routes take out and bring in, and every open offer from the civilizations met, grouped by civilization with an Accept button on each and a list that scrolls. A route is shown as running, suspended, ready or locked. `trade route start all` starts every route that can start. The Factions card shows one line with the number of open offers and a button to Trade.
 - The Command box is the last six rows of a window of 120x39 or more, with the typed line, its ghost and the cursor at double size (a 2x2 cell group in the window kit); a smaller window keeps three rows at normal size. Panels get the rows above it.
 - Every badge counts toward one worker domain, and an account's badge points in a domain give it a rank from 0 to 6 (thresholds 25, 100, 190, 320, 460 and 700 points). Each rank adds 2% to the output of that domain's workers, applied where a building's worker output is worked out. Ranks are account-wide and no screen shows them yet.
 - A tooltip appears after the pointer rests on a target (or the pick rests on it) and goes on any move, key or click. On the dashboard it gives the reason an off Build button is off, a build card's price as have and need with the short resources marked, and the sources of a resource's rate in the Resources box. An `xkey` or action button can carry a reason beside `off`. The plain glyph tier draws it as a box with an ASCII border.

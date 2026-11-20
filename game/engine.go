@@ -1704,6 +1704,30 @@ func (ge *GameEngine) harborRouteBonus() float64 {
 	return bonus
 }
 
+// routeTerms is what the state view needs to say what a run pays: the harbor
+// bonus with its shares by building, and the allies' shares for a resource.
+func (ge *GameEngine) routeTerms() RouteTerms {
+	byName := map[string]float64{}
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		for _, eff := range def.Effects {
+			if eff.Type == "trade_route_income" {
+				byName[def.Name] += float64(float64(eff.Value*float64(count)) * 100)
+			}
+		}
+	})
+	harbor := make([]PayShare, 0, len(byName))
+	for name, pct := range byName {
+		harbor = append(harbor, PayShare{Label: name, Percent: pct, Kind: ShareBuilding})
+	}
+	sort.Slice(harbor, func(i, j int) bool {
+		if harbor[i].Percent != harbor[j].Percent {
+			return harbor[i].Percent > harbor[j].Percent
+		}
+		return harbor[i].Label < harbor[j].Label
+	})
+	return RouteTerms{Harbor: ge.harborRouteBonus(), HarborShares: harbor, Ally: ge.Diplomacy.AllyShares}
+}
+
 // processDiplomacy handles diplomacy ticks
 func (ge *GameEngine) processDiplomacy() {
 	ageOrder := ge.progress.ageOrder()
@@ -5042,7 +5066,7 @@ func (ge *GameEngine) GetState() GameState {
 		Prestige:              prestigeSnap,
 		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
-		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources()),
+		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources(), ge.routeTerms()),
 		BlackMarket:           ge.blackMarketStatusLocked(),
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,
