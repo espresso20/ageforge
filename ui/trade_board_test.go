@@ -12,10 +12,10 @@ import (
 // short, one that has stock shows as running.
 func TestTradeRoutes_ShortAndRunning(t *testing.T) {
 	st := tradeState()
-	st.Trade.ActiveRoutes[0].Starved = true
+	st.Trade.ActiveRoutes[0].Run = 0.4
 	st.Resources = map[string]game.ResourceState{"food": {Amount: 2}}
 	st.Trade.ActiveRoutes[1].Disrupted = false
-	st.Trade.ActiveRoutes[1].Starved = true
+	st.Trade.ActiveRoutes[1].Run = 1
 	st.Resources["stone"] = game.ResourceState{Amount: 500}
 	state := map[string]string{}
 	for _, r := range tradeRoutes(st) {

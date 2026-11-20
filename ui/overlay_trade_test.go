@@ -13,7 +13,7 @@ import (
 func tradeState() game.GameState {
 	s := game.GameState{Age: "medieval_age"}
 	s.Trade.ActiveRoutes = []game.ActiveRouteInfo{
-		{Name: "Local Barter", Key: "local_barter", TicksLeft: 30, CycleTicks: 50, CyclesDone: 14,
+		{Name: "Local Barter", Key: "local_barter", Scale: 1, Run: 1,
 			Export: map[string]float64{"food": 10}, Import: map[string]float64{"wood": 8}},
 		{Name: "Gold Caravan", Key: "gold_caravan", Disrupted: true, DisruptedBy: "gold",
 			Export: map[string]float64{"stone": 50}, Import: map[string]float64{"gold": 5}},
@@ -44,11 +44,11 @@ func TestTradePage_Cards(t *testing.T) {
 		"2 running", "1 open", "1 locked", // counts
 		"⚠ Routes importing gold are suspended (a war, or your embargo).",
 		"Lift your embargo with: diplomacy neutral <civ>",
-		"Export 10 food", "Import 8 wood", "Suspended: gold imports are blockaded",
-		"left in this cycle", "14 cycles done", "Export 15 wood", "Import 12 stone",
+		"-10 food/s", "+8 wood/s", "Suspended: gold imports are blockaded",
+		"running at 100% of its flow", "-15 wood/s", "+12 stone/s",
 		"needs 1 Port (have 0)", "trade route start/stop <key>")
 	barter, _ := deckCardNamed(t, pg, "Local Barter")
-	if !barter.Meter || barter.Share < 0.39 || barter.Share > 0.41 || barter.Command != "trade route stop local_barter" {
+	if !barter.Meter || barter.Share != 1 || barter.Command != "trade route stop local_barter" {
 		t.Errorf("Local Barter = %+v", barter)
 	}
 	if road, _ := deckCardNamed(t, pg, "Gold Caravan"); road.Meter || road.Why == "" || road.Command != "trade route stop gold_caravan" {

@@ -278,7 +278,7 @@ func registry() []*Command {
 				{Name: "route", BareOK: true, Subs: []*Command{
 					sub("list", "trade route list", rowid.Line("ui.help.commands.trade.route.list", "List trade routes")),
 					sub("start", "trade route start <route|all>", rowid.Line("ui.help.commands.trade.route.start", "Start a trade route"), Arg{Kind: ArgRouteAvailable, Words: []string{"all"}}),
-					sub("stop", "trade route stop <route>", rowid.Line("ui.help.commands.trade.route.stop", "Stop a trade route"), Arg{Kind: ArgRouteActive}),
+					withAlias(sub("stop", "trade route stop <route>", rowid.Line("ui.help.commands.trade.route.stop", "Pause a trade route (also: pause)"), Arg{Kind: ArgRouteActive}), "pause"),
 				}},
 				sub("black", "trade black [resource]", rowid.Line("ui.help.commands.trade.black", "Same as blackmarket"), Arg{Kind: ArgResource, Optional: true}),
 			}},
@@ -615,4 +615,10 @@ func slotTakes(a Arg, w string, valid func(Arg, string) bool) bool {
 		return err == nil
 	}
 	return valid(a, w)
+}
+
+// withAlias gives c another name.
+func withAlias(c *Command, name string) *Command {
+	c.Aliases = append(c.Aliases, name)
+	return c
 }

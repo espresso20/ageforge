@@ -52,18 +52,18 @@ func tradePage(state game.GameState) deckPage {
 	for _, r := range routes {
 		word, _, plate := tradeLook(r.state)
 		c := deckCard{Title: r.name, Chip: word, ChipK: plate,
-			Lines: []deckLine{{rowid.Line("ui.overlay_trade.tradePage.18", "Export"), tradeJoin(r.out, false), 0}, {rowid.Line("ui.overlay_trade.tradePage.19", "Import"), tradeJoin(r.in, false), xGood}},
+			Lines: []deckLine{{rowid.Line("ui.overlay_trade.tradePage.18", "Export"), tradeJoin(r.out, false, -1, state.TickIntervalMs), 0}, {rowid.Line("ui.overlay_trade.tradePage.19", "Import"), tradeJoin(r.in, false, 1, state.TickIntervalMs), xGood}},
 			Why:   r.why, Quiet: r.state == "locked"}
 		if r.cmd != "" {
 			c.Command, c.Action = r.cmd, rowid.Line("ui.trade_board.tradePage.01", "stop")
-			c.Danger = r.state != "ready"
-			if r.state == "ready" {
+			c.Danger = r.state != "ready" && r.state != "paused"
+			if r.state == "ready" || r.state == "paused" {
 				c.Action = rowid.Line("ui.trade_board.tradePage.02", "start")
 			}
 		}
-		if r.state == "running" && r.cycle > 0 {
-			c.Meter, c.Share = true, max(0, min(1, 1-float64(r.left)/float64(r.cycle)))
-			c.MeterText = rowid.Sprintf("ui.overlay_trade.tradePage.16", "%s left in this cycle (%s done)", formatTicks(r.left, state), textfmt.Count(r.runs, txtCycle.String(), txtCycles.String()))
+		if r.moving() {
+			c.Meter, c.Share = true, max(0, min(1, r.run))
+			c.MeterText = rowid.Sprintf("ui.overlay_trade.tradePage.16", "running at %.0f%% of its flow", r.run*100)
 		}
 		sec.Cards = append(sec.Cards, c)
 	}

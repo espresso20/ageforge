@@ -2014,7 +2014,7 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 			return errorResult(err)
 		}
 		return successReply() // the engine logs the route
-	case "stop":
+	case "stop", "pause":
 		if err := engine.StopTradeRoute(routeKey); err != nil {
 			return errorResult(err)
 		}
@@ -2047,12 +2047,6 @@ func cmdTradeStartAll(engine *game.GameEngine) CommandResult {
 	return errorReply(rowid.Line("ui.input.cmdTradeStartAll.01", "No route is ready to start."))
 }
 
-// txtCycles is said the same way on several screens, so it has one id.
-var txtCycles = rowid.E("ui.input.cmdTradeRouteList.05", "cycles")
-
-// txtCycle is said the same way on several screens, so it has one id.
-var txtCycle = rowid.E("ui.input.cmdTradeRouteList.04", "cycle")
-
 func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	trade := state.Trade
@@ -2062,8 +2056,11 @@ func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 	if len(trade.ActiveRoutes) > 0 {
 		lines = append(lines, rowid.Line("ui.input.cmdTradeRouteList.02", "\n[green]Active:[-]"))
 		for _, route := range trade.ActiveRoutes {
-			lines = append(lines, rowid.Sprintf("ui.input.cmdTradeRouteList.03", "  [cyan]%s[-] (%s): %s left, %s done",
-				route.Name, route.Key, formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, txtCycle.String(), txtCycles.String())))
+			word := rowid.Sprintf("ui.input.cmdTradeRouteList.04", "running at %.0f%%", route.Run*100)
+			if route.Paused {
+				word = rowid.Line("ui.input.cmdTradeRouteList.05", "paused")
+			}
+			lines = append(lines, rowid.Sprintf("ui.input.cmdTradeRouteList.03", "  [cyan]%s[-] (%s): %s", route.Name, route.Key, word))
 		}
 	}
 

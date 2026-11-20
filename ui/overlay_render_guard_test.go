@@ -161,9 +161,9 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	// Trade: a blockade, routes in every state.
 	s.Trade.DisruptedResources = []string{"iron_ore"}
 	s.Trade.ActiveRoutes = []game.ActiveRouteInfo{
-		{Name: "Tin Road", Key: "tin_road", TicksLeft: 30, CyclesDone: 1,
+		{Name: "Tin Road", Key: "tin_road", Scale: 1, Run: 1,
 			Export: map[string]float64{"wood": 50}, Import: map[string]float64{"iron_ore": 20}, Disrupted: true, DisruptedBy: "iron_ore"},
-		{Name: "Amber Route", Key: "amber_route", TicksLeft: 12, CyclesDone: 3,
+		{Name: "Amber Route", Key: "amber_route", Scale: 2, Run: 0.5,
 			Export: map[string]float64{"food": 40, "stone": 10}, Import: map[string]float64{"gold": 5}},
 	}
 	s.Trade.AvailableRoutes = []game.TradeRouteInfo{
