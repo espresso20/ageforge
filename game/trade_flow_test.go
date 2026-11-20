@@ -102,8 +102,10 @@ func TestRouteFlow_ThrottleSharesTheStock(t *testing.T) {
 	if demand <= 0 {
 		t.Fatal("the routes take no stone")
 	}
-	// S = stock + gross: set it to half of D.
-	stone.Amount = demand/2 - gross
+	// S = stock + gross, less the share the town keeps of each (twice):
+	// set it to half of D.
+	keep := recruitFoodMarginShare * gross
+	stone.Amount = demand/2 - gross + 2*keep
 	if stone.Amount < 0 {
 		t.Skipf("the town makes %v stone a tick, more than half the demand %v", gross, demand)
 	}
@@ -116,11 +118,11 @@ func TestRouteFlow_ThrottleSharesTheStock(t *testing.T) {
 	if got := stone.Breakdown.TradeFlow; math.Abs(got+demand/2) > 1e-9 {
 		t.Errorf("the routes take %v stone a tick, want half the demand %v", -got, demand/2)
 	}
-	// With nothing in store the routes take only what the town makes.
+	// With nothing in store the routes take what the town makes, less its share.
 	stone.Amount = 0
 	ge.recalculateRates()
-	if got := -stone.Breakdown.TradeFlow; math.Abs(got-gross) > 1e-9 {
-		t.Errorf("with no stone in store the routes take %v, want what is made, %v", got, gross)
+	if got := -stone.Breakdown.TradeFlow; math.Abs(got-(gross-keep)) > 1e-9 {
+		t.Errorf("with no stone in store the routes take %v, want what is made less the share kept, %v", got, gross-keep)
 	}
 }
 
@@ -233,5 +235,23 @@ func TestRouteFlow_NoIncomeHoldsTheRoute(t *testing.T) {
 	}
 	if got := ge.Trade.activeRoutes[def.Key].NoIncome; got != "food" {
 		t.Errorf("NoIncome = %q, want food", got)
+	}
+}
+
+// A food route on a long line spends the stock down but never runs it dry:
+// the town keeps a share of what it makes, so it never starves under a route.
+func TestRouteFlow_FoodStockNeverRunsDry(t *testing.T) {
+	ge, _ := flowEngine(t, "local_barter", 5000)
+	for key := range ge.Resources.resources {
+		ge.Resources.UnlockResource(key)
+	}
+	food := ge.Resources.resources["food"]
+	food.Amount = 2000
+	for i := 0; i < 2000; i++ {
+		ge.recalculateRates()
+		ge.Resources.ApplyRates()
+	}
+	if food.Amount <= 0 || food.Rate < 0 {
+		t.Errorf("food %v at a rate of %v after the routes spent the stock, want a store above 0 and a rate that is not negative", food.Amount, food.Rate)
 	}
 }

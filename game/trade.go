@@ -331,9 +331,17 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 	share := make(map[string]float64, len(demand))
 	for res, d := range demand {
 		if r := rm.resources[res]; r != nil {
-			// Only a surplus goes out: the stock and the net rate (what the
-			// town makes less what it uses), never below nothing.
-			share[res] = min(1, max(0, r.Amount+float64(r.Rate*horizon))/float64(d*horizon))
+			// Only a surplus goes out: the net rate (what the town makes less
+			// what it uses) and, while that is not negative, the stock above
+			// what the town keeps (recruitFoodMarginShare of its make). That
+			// share stays, so a route never runs the stock dry or stops the
+			// people growing.
+			keep := float64(recruitFoodMarginShare * tm.gross[res])
+			supply := max(0, r.Rate-keep)
+			if r.Rate >= 0 {
+				supply += max(0, r.Amount-keep) / horizon
+			}
+			share[res] = min(1, supply/d)
 		}
 	}
 	for _, l := range legs {

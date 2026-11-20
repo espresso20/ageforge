@@ -1,7 +1,6 @@
 package game
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -44,10 +43,7 @@ func newLateGameEngine(tb testing.TB) *GameEngine {
 	}
 
 	started := 0
-	for key, def := range config.TradeRouteByKey() {
-		if slices.Contains(def.Export, "food") {
-			continue // sent in bulk, they would starve the town the test holds steady
-		}
+	for key := range config.TradeRouteByKey() {
 		if err := ge.Trade.StartRoute(key, ge.Buildings, ge.age, ageOrder); err == nil {
 			started++
 		}
