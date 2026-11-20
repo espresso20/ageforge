@@ -97,6 +97,8 @@ All notable changes to AgeForge are documented here.
 - The wiki's pictures of the game show the badges' coins.
 
 ### Changed
+- Downloads are one archive per system: a macOS app for Apple Silicon and Intel, a Windows zip and a Linux tar.gz, with checksums.
+- Downloaded builds keep accounts and saves in the user folder (Application Support on macOS, AppData on Windows, ~/.config on Linux) instead of beside the game.
 - The History panel is rebuilt as the game's metrics page: one chart of the run with three ranges (this age, this run, all runs), up to three measures at once on a linear or log scale, a pointer with a readout, a finished run drawn behind the current one, and a list of every finished run on the account. A wonder's build time is now recorded with the wonder.
 - Every rate on screen reads per second at the speed the game is running (per minute, or per hour, when it is under 0.1 a second), through one helper: the resource bar, build cards and the picked pane, People, Stats, the building, wonder, research, faction and log screens, the history graphs, the Advance panel's income row and the map inspector. A speed bonus raises the figure; a paused game shows the rate it would have running. Building and technology descriptions state their base figures per second too, and event lines in the log are per second at the running speed. Costs and durations are unchanged.
 - A question asked before a command runs has a red confirm button, with the keyboard starting on Cancel, only when the command cannot be undone. Any other question (the Festival's) has a primary confirm button that Enter presses, with Cancel on Esc. `festival confirm yes` is no longer held back from a completion.
@@ -183,6 +185,7 @@ All notable changes to AgeForge are documented here.
 - The plain glyph set (`map glyphs ascii`) shows the same coins; it changes only the text around them.
 
 ### Removed
+- Check for updates on the main menu. New versions come from the download page.
 - **The VibeMode switch.** The `vibemode` command, its row in the Settings page and its saved setting are gone. The game reads in its own words only.
 - Terminal mode. `ageforge --terminal` is gone: AgeForge runs in its own window only. Nothing else a player could do is removed. Saves, accounts and settings are untouched.
 - **The Primitive Age dinosaurs and the asteroid.** The sauropod, raptor and pterodactyl no longer roam the Primitive town, and the asteroid no longer streaks across the sky near the end of the Late Cretaceous.
