@@ -30,6 +30,7 @@ type advanceUI struct {
 	sel       int    // the picked pillar
 	flash     string // a line for the foot, in place of the status
 	flashGood bool
+	tickMs    int // how long a tick lasts, for the income rows
 }
 
 // hitPillar is what a click on the panel can pick.
@@ -81,7 +82,13 @@ func renderAdvance(v game.AdvanceView, u advanceUI, w, h int) *xgrid {
 		advCharter(g, v, u, 1, y0, w-2, bh)
 	} else {
 		advCharter(g, v, u, 1, y0, lw, bh)
-		advRight(g, v, lw+2, y0, rw, bh)
+		// The button that advances stands under what the next age brings; it
+		// is off until all four pillars stand.
+		if boxH := bh - actionRows; boxH >= 3 {
+			advRight(g, v, lw+2, y0, rw, boxH)
+		}
+		label := shortKeyUse("Enter")
+		g.actionButton(lw+2+rw-actionW(label, "Enter", signPlay), y0+bh-actionRows, actionSpec{kind: keyPrimary, label: label, key: "Enter", sign: signPlay, off: !v.AllStand})
 	}
 	advFoot(g, v, u, w, h)
 	return g
@@ -249,7 +256,7 @@ func advCharter(g *xgrid, v game.AdvanceView, u advanceUI, x, y, bw, bh int) {
 	if dy >= y+bh-1 || u.sel >= len(v.Pillars) {
 		return
 	}
-	advDetail(g, v.Pillars[u.sel], x+2, dy, iw, y+bh-1-dy)
+	advDetail(g, v.Pillars[u.sel], u.tickMs, x+2, dy, iw, y+bh-1-dy)
 }
 
 // pillarNote is the short line under a pillar's name: how many of its
@@ -333,7 +340,7 @@ func advPillar(g *xgrid, p game.GatePillar, picked bool, x, y, iw int, roomy boo
 // advDetail lists a pillar's requirements in rows rows from (x, y): a mark,
 // what it is, and where it stands. When they do not all fit, the ones still
 // to do come first and the rest are counted.
-func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
+func advDetail(g *xgrid, p game.GatePillar, tickMs, x, y, iw, rows int) {
 	if rows < 1 {
 		return
 	}
@@ -365,7 +372,7 @@ func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
 		}
 	}
 	for i, r := range show {
-		advRow(g, r, x, y+i, iw)
+		advRow(g, r, tickMs, x, y+i, iw)
 	}
 	y += len(show)
 	rows -= len(show)
@@ -385,7 +392,7 @@ func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
 
 // advRow draws one requirement: ✓ or ✗, its label, and its count or note at
 // the right edge. Green when met.
-func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
+func advRow(g *xgrid, r game.GateRow, tickMs, x, y, iw int) {
 	mark, mk, tk := "✗", xBad, xText
 	if r.Met {
 		mark, mk, tk = "✓", xGood, xGood
@@ -397,7 +404,7 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 	case game.GateRowShare:
 		val = fmt.Sprintf("%d%%", r.Have)
 	case game.GateRowAmount:
-		val = advAmount(r)
+		val = advAmount(r, tickMs)
 	default:
 		val = r.Note
 	}
@@ -408,13 +415,17 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 }
 
 // advAmount is a measured row's amounts at the right edge: "412 / 500", or
-// "210 / 300 a tick" for an income.
-func advAmount(r game.GateRow) string {
-	val := textfmt.Number(r.Value) + " / " + textfmt.Number(r.Target)
-	if r.Unit != "" {
-		val += " " + r.Unit
+// "2.1 / 3/s" for an income, which the game counts in ticks.
+func advAmount(r game.GateRow, tickMs int) string {
+	if r.PerTick {
+		goal, unit := ratePer(r.Target, tickMs)
+		scale := 1.0
+		if r.Target != 0 {
+			scale = goal / r.Target
+		}
+		return textfmt.Number(r.Value*scale) + " / " + textfmt.Number(goal) + unit
 	}
-	return val
+	return textfmt.Number(r.Value) + " / " + textfmt.Number(r.Target)
 }
 
 // ===== The right column =====
@@ -547,8 +558,7 @@ func advFoot(g *xgrid, v game.AdvanceView, u advanceUI, w, h int) {
 			g.putFit(2, y, room, v.Blockers[0], xDim)
 		}
 	case v.Ready:
-		x := g.put(2, y, " Enter ", xSel)
-		x = g.put(x+1, y, rowid.Line("ui.advance_view.advFoot.02", "Advance to the ")+v.NextName, xBright)
+		x := g.put(2, y, rowid.Line("ui.advance_view.advFoot.02", "Advance to the ")+v.NextName, xBright)
 		if len(v.Notices) > 0 && x+3 < w-2 {
 			g.putFit(x+2, y, w-3-x-2, v.Notices[0], xAccent)
 		}

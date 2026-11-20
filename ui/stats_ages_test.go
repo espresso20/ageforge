@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -21,13 +20,21 @@ func TestStatsShowsAgesThisRun(t *testing.T) {
 		{Age: "stone_age", Tick: 300},
 	}
 
-	text := statsProvider(st, 0)
-	if !strings.Contains(text, "Ages this run") {
-		t.Fatalf("stats panel has no Ages this run block:\n%s", text)
+	pg := buildStats(st, partRun, 120, 0, false, false, 0)
+	if !strings.Contains(statsPageText(st, partRun, 120), "Ages this run") {
+		t.Fatalf("stats panel has no Ages this run block")
 	}
 	// 300 ticks at 2s is 10 minutes; the current age has run 150 ticks, 5 minutes.
-	wantAll(t, "stats panel", text,
-		fmt.Sprintf("   %-14s ~10m\n", game.AgeName("primitive_age")),
-		fmt.Sprintf("   %-14s ~5m so far\n", game.AgeName("stone_age")),
-	)
+	want := []string{
+		game.AgeName("primitive_age") + ": ~10m",
+		game.AgeName("stone_age") + ": ~5m so far",
+	}
+	if len(pg.blocks) != len(want) {
+		t.Fatalf("blocks = %+v", pg.blocks)
+	}
+	for i, w := range want {
+		if pg.blocks[i].readout != w {
+			t.Errorf("block %d reads %q, want %q", i, pg.blocks[i].readout, w)
+		}
+	}
 }

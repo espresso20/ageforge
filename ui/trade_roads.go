@@ -44,7 +44,8 @@ func roadLookOf(c *deckCard) roadLook {
 
 // renderTradeRoads draws the page as the map of roads. The cards that are
 // routes (they have what goes out and what comes in) are the roads, in the
-// page's order; the cards after them go in the box at the right.
+// page's order; the cards after them go in the box at the right, and a card
+// that is a stop (the black market) is a place of its own on the land.
 func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout) {
 	var cards []*deckCard
 	for si := range pg.Sections {
@@ -53,7 +54,7 @@ func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		}
 	}
 	routes := 0
-	for routes < len(cards) && len(cards[routes].Lines) >= 2 {
+	for routes < len(cards) && len(cards[routes].Lines) >= 2 && !cards[routes].Stop {
 		routes++
 	}
 	y0, y1 := 3, h-5
@@ -64,6 +65,9 @@ func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 	}
 	if routes == 0 || routes*per > avail || w < roadMinW || h < roadMinH {
 		return renderDeck(pg, sel, scroll, w, h, said...)
+	}
+	if sel < routes && cards[sel].Command != "" && per+min((avail-routes*per)/(routes+1), 3) < actionRows {
+		return renderDeck(pg, sel, scroll, w, h, said...) // no room for the picked route's button
 	}
 	g := newXGrid(w, h)
 	g.box(0, 0, w, h, xBorder, pg.Title, xTitle, false)
@@ -99,6 +103,16 @@ func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		}
 	}
 	drawRoadTown(g, ty, mapmodel.TownNameOf(st.Seed))
+	for i := routes; i < len(cards); i++ {
+		if !cards[i].Stop {
+			continue
+		}
+		top, ok := stopTop(y0, y1, ty)
+		if !ok {
+			return renderDeck(pg, sel, scroll, w, h, said...) // no room for the stop's place
+		}
+		drawRoadStop(g, top, cards[i], i == sel, i)
+	}
 
 	// Where each road leaves the trunk: the road that ends farthest from the
 	// gate's row turns off first, so no road crosses another.
@@ -167,7 +181,7 @@ func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 			}
 		}
 		// The end of the road: the route's name and state, what it trades,
-		// and under that its button when it is picked, else what it waits on.
+		// and under that what it waits on; the picked route has its button.
 		nk := xBright
 		if c.Quiet {
 			nk = xDim
@@ -176,7 +190,15 @@ func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		if i == sel {
 			g.put(labelX-2, dy, "▸", xAccent)
 		}
-		x := g.putFit(labelX+2, dy, labelW-6-runeLen(c.Chip), c.Title, nk)
+		// The picked route's button stands at the right of its end, three
+		// rows tall; what the route says fits to the left of it.
+		room := labelW - 2
+		if i == sel && c.Command != "" {
+			bw := actionW(c.Action, "Enter", signPlay)
+			g.deckAction(labelX+labelW-bw-1, dy, c, true, false)
+			room -= bw + 2
+		}
+		x := g.putFit(labelX+2, dy, room-4-runeLen(c.Chip), c.Title, nk)
 		if c.Chip != "" {
 			g.put(x+1, dy, " "+c.Chip+" ", c.ChipK)
 		}
@@ -185,19 +207,9 @@ func renderTradeRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		if c.Why != "" {
 			under, uk = c.Why, xBad
 		}
-		last := dy + per - 1
-		if i == sel && c.Command != "" {
-			ex := g.keyButton(labelX+2, last, "Enter", c.Action)
-			g.hit(hitDeckAct, i, labelX+2, last, ex-labelX-2, 1)
-			g.putFit(ex+1, last, labelX+labelW-ex-1, c.Command, xDim)
-			if per == 3 {
-				g.segsFit(labelX+2, dy+1, labelW-2, goods...)
-			}
-		} else {
-			g.segsFit(labelX+2, dy+1, labelW-2, goods...)
-			if per == 3 {
-				g.putFit(labelX+2, last, labelW-2, under, uk)
-			}
+		g.segsFit(labelX+2, dy+1, room, goods...)
+		if per == 3 {
+			g.putFit(labelX+2, dy+2, room, under, uk)
 		}
 		lay.cards[i] = image.Rect(labelX-2, dy, labelX+labelW, dy+per)
 		g.hit(hitDeckCard, i, labelX-2, dy, labelW+2, per)
@@ -294,22 +306,23 @@ func drawRoadBooks(g *xgrid, pg *deckPage, cards []*deckCard, routes, sel, x, y,
 		if i == sel {
 			tk = xAccent
 		}
-		put(tk, c.Title)
-		for _, l := range wrapCells(c.Desc, inner) {
-			put(xDim, l)
-		}
-		if c.Command != "" {
-			if row < end {
-				bx := x + 2
-				if i == sel {
-					bx = g.keyButton(x+2, row, "Enter", c.Action)
-				} else {
-					bx = g.put(x+2, row, " "+c.Action+" ", xKeyName)
-				}
-				g.hit(hitDeckAct, i, x+2, row, bx-x-2, 1)
-				g.putFit(bx+1, row, x+2+inner-bx-1, c.Command, xDim)
+		if c.Stop {
+			row = drawStopEntry(g, c, i == sel, x, row, inner)
+		} else {
+			put(tk, c.Title)
+			for _, l := range wrapCells(c.Desc, inner) {
+				put(xDim, l)
 			}
-			row++
+			if c.Command != "" {
+				rows := 1
+				if i == sel {
+					rows = actionRows
+				}
+				if row+rows <= end {
+					g.deckAction(x+2, row, c, i == sel, false)
+				}
+				row += rows
+			}
 		}
 		if row > end {
 			return false

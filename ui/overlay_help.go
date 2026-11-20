@@ -110,14 +110,17 @@ func helpProvider(_ game.GameState, screenW int) string {
 	note(rowid.Line("ui.overlay_help.helpProvider.47", "Settings are commands: map glyphs, map flows, minimap."))
 
 	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.48", "\n[gold]═══ The Research panel ═══[-]\n"))
-	note(rowid.Line("ui.overlay_help.helpProvider.49", "The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing."))
-	keys(helpPairs(researchKeys)...)
+	note(rowid.Line("ui.overlay_help.helpProvider.49", "The board. The prompt keeps working while it is open; the board takes the keys that print nothing."))
+	keys(helpPairs(boardKeys)...)
 	note(rowid.Line("ui.overlay_help.helpProvider.50", "Zoom is a command too: research tree close, research tree far."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.68", "\n[gold]═══ The tech tree ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.69", "The whole tree as a map, opened with T on the board. Esc goes back to the board."))
+	keys(helpPairs(treeKeys)...)
 
-	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.51", "\n[gold]═══ The badge case ═══[-]\n"))
-	note(rowid.Line("ui.overlay_help.helpProvider.52", "Your account's badges. The prompt keeps working while it is open; the case takes the keys that print nothing."))
+	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.51", "\n[gold]═══ The Ranks screen ═══[-]\n"))
+	note(rowid.Line("ui.overlay_help.helpProvider.52", "Your account's badges, as a rank for each worker domain. The prompt keeps working while it is open; the screen takes the keys that print nothing."))
 	keys(helpPairs(badgeKeys)...)
-	note(rowid.Line("ui.overlay_help.helpProvider.53", "Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still."))
+	note(rowid.Line("ui.overlay_help.helpProvider.53", "Finding one is a command: badges all, badges recent, badges <domain>, badges <name>."))
 
 	sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.54", "\n[gold]═══ The Expeditions panel ═══[-]\n"))
 	note(rowid.Line("ui.overlay_help.helpProvider.55", "The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing."))

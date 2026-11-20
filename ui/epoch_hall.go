@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"image"
 	"sort"
 	"strings"
 	"time"
@@ -43,8 +42,6 @@ type epochHall struct {
 	// own). Either may be nil, and then c does nothing.
 	state func() game.GameState
 	card  func(game.GameState) (epochCardResult, error)
-	// pics are the coins on the page, painted over its text.
-	pics hallCoins
 	// note is the line the last card left on the foot, until noteUntil.
 	note      string
 	noteUntil time.Time
@@ -83,13 +80,6 @@ func (h *epochHall) makeCard() {
 		h.note = rowid.Sprintf("ui.epoch_hall.makeCard.02", "Picture saved to %s.", res.Path)
 	}
 	h.noteUntil = h.clock().Add(hallNoteFor)
-}
-
-// paintCoins is the screen's picture layer (see nativeText.over): the coins
-// of the page, in the pose of the clock when the motion setting is on.
-func (h *epochHall) paintCoins(p *kit.Painter, text image.Rectangle, top int) {
-	on := h.motion != nil && h.motion()
-	h.pics.paint(p, text, top, hallFrame(on, h.clock()))
 }
 
 // open starts the screen on the front page.
@@ -140,7 +130,6 @@ func (h *epochHall) rows() int {
 // provider is the screen's text: the front page, or the details.
 func (h *epochHall) provider(state game.GameState, screenW int) string {
 	if h.details {
-		h.pics.list = nil
 		return epochProvider(state, screenW)
 	}
 	mo := hallMotion{}
@@ -151,9 +140,7 @@ func (h *epochHall) provider(state game.GameState, screenW int) string {
 		}
 		mo = hallMotion{on: true, t: float64(now().UnixMilli()) / 1000}
 	}
-	page := hallFrontPage(state, screenW, h.rows(), h.glyphTier(), mo, true)
-	h.pics.list = page.coins
-	return page.text
+	return hallFrontPage(state, screenW, h.rows(), h.glyphTier(), mo, true)
 }
 
 // ---- what the screen says ----
@@ -220,6 +207,9 @@ func newHallView(state game.GameState) hallView {
 		v.name = game.AgeName(state.Age)
 	}
 	v.town = mapmodel.TownNameOf(state.Seed)
+	if t := state.TownTitle(); t != "" {
+		v.town += ", " + t
+	}
 	v.cur = game.AgeName(state.Age)
 	v.age = v.cur
 	if yr, ok := set.AgeYear(state.Age); ok {
@@ -236,7 +226,7 @@ func newHallView(state game.GameState) hallView {
 	stat := func(n int, label string) hallStat {
 		return hallStat{value: textfmt.Int(n), big: textfmt.Int(n), label: label}
 	}
-	techs := stat(state.Research.TotalResearched, rowid.Line("ui.epoch_hall.newHallView.04", "Techs"))
+	techs := stat(state.Research.TotalResearched, txtTechsShort.String())
 	techs.value = rowid.Sprintf("ui.epoch_hall.newHallView.03", "%s of %s", textfmt.Int(state.Research.TotalResearched), textfmt.Int(len(set.Techs())))
 	techs.hasBar = true
 	if total := len(set.Techs()); total > 0 {
@@ -389,18 +379,12 @@ func hallFrontText(state game.GameState, screenW, rows int, tier mapmodel.GlyphT
 // hallFront is the front page at a moment of the clock. Every block is
 // centred as a unit on the width of the screen.
 func hallFront(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion) string {
-	return hallFrontPage(state, screenW, rows, tier, mo, true).text
-}
-
-// hallPage is the front page: its text, and the coins to paint over it.
-type hallPage struct {
-	text  string
-	coins []hallCoin
+	return hallFrontPage(state, screenW, rows, tier, mo, true)
 }
 
 // hallFrontPage is hallFront with or without the line that says which key
 // copies the picture (the picture itself leaves it out).
-func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, hint bool) hallPage {
+func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, hint bool) string {
 	v := newHallView(state)
 	c := hallCompose(v, screenW, rows, tier, mo, 1, hint)
 	// On a tall screen the page sits a little below the top, not hard
@@ -408,7 +392,7 @@ func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphT
 	if spare := rows - 4 - c.end; spare > 3 {
 		c = hallCompose(v, screenW, rows, tier, mo, 1+min(spare/3, 10), hint)
 	}
-	return hallPage{text: c.render(), coins: c.coins}
+	return c.render()
 }
 
 // hallCompose lays the page out with its banner starting at row top.
@@ -453,3 +437,6 @@ func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hall
 	c.sky(v.seed)
 	return c
 }
+
+// txtTechsShort is said the same way on several screens, so it has one id.
+var txtTechsShort = rowid.E("ui.epoch_hall.newHallView.04", "Techs")

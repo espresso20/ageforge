@@ -114,7 +114,7 @@ func TestPlannedTechsShowTheirPlaceOnTheMap(t *testing.T) {
 // says where it stands.
 func TestCardPlansALockedTechWithItsChain(t *testing.T) {
 	ge := classicalGame(t)
-	p := newResearchPanel()
+	p := newTreePanel()
 	p.engine = ge
 	p.w, p.h = 120, 37
 	p.request("close", "imperial_legions")
@@ -188,7 +188,7 @@ func TestPlanningAcrossKnownAges(t *testing.T) {
 }
 
 // renderLines is the panel as drawn, a string a row.
-func renderLines(p *researchPanel) []string {
+func renderLines(p *treePanel) []string {
 	g := renderTree(p.state, p.model, p.view, p.w, p.h)
 	return strings.Split(g.String(), "\n")
 }

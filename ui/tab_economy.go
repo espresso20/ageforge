@@ -3,69 +3,16 @@ package ui
 import (
 	"fmt"
 	"math"
-	"slices"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
-
-// earlyGameAges lists the age keys during which the "Getting Started" onboarding
-// block renders in the Buildings panel. Re-homed here out of the startup log so the
-// otherwise-empty early-game panel does useful work; it auto-retires once the
-// player advances past these ages. Tunable: trim to just {"primitive_age"} for a
-// shorter intro, or extend it if later ages still warrant hand-holding.
-var earlyGameAges = []string{"primitive_age", "stone_age"}
-
-// onboardingStep is one line of the first-steps guide: the commands to type,
-// the word that joins them, and a short note on why.
-type onboardingStep struct {
-	Commands []string
-	Join     string // "/", "and", "then"; unused for a single command
-	Note     rowid.Entry
-	Comma    bool // the note follows the commands after a comma ("..., then build"), not a colon
-}
-
-// onboardingSteps is the first-steps guide in the Buildings panel. It is data
-// so onboarding_test.go can run every command through HandleCommand on a
-// fresh game: a step that teaches a failing command must break the build.
-var onboardingSteps = []onboardingStep{
-	{Commands: []string{"gather wood 5", "gather food"}, Join: "/", Note: rowid.E("ui.tab_economy.onboardingSteps.01", "collect by hand")},
-	{Commands: []string{"build gathering_camp", "build wood_camp"}, Join: "and", Note: rowid.E("ui.tab_economy.onboardingSteps.03", "food runs short first")},
-	{Commands: []string{"build hut"}, Note: rowid.E("ui.tab_economy.onboardingSteps.04", "shelter; raises your housing")},
-	{Commands: []string{"workers"}, Note: rowid.E("ui.tab_economy.onboardingSteps.05", "workers come on their own and staff the camps (staffed camps make 5x)")},
-	{Commands: []string{"wonder collect all"}, Comma: true, Note: rowid.E("ui.tab_economy.onboardingSteps.06", "then build the [gold]wonder[-] once its bank is full. You need it to advance.")},
-}
-
-// renderOnboarding draws the first-steps guide for a list w cells wide:
-// gold header, cyan commands, white prose, each step wrapped under itself.
-func renderOnboarding(w int) string {
-	var sb strings.Builder
-	sb.WriteString(rowid.Line("ui.tab_economy.renderOnboarding.01", "\n [gold]─── Getting started ───[-]\n"))
-	sb.WriteString(rowid.Line("ui.tab_economy.renderOnboarding.02", " [white]First steps:[-]\n"))
-	for i, st := range onboardingSteps {
-		var text strings.Builder
-		for j, c := range st.Commands {
-			if j > 0 {
-				fmt.Fprintf(&text, " [white]%s[-] ", st.Join)
-			}
-			// A command stays whole on its line: its spaces do not break.
-			fmt.Fprintf(&text, "[cyan]%s[-]", strings.ReplaceAll(c, " ", glue))
-		}
-		sep := ": "
-		if st.Comma {
-			sep = ", "
-		}
-		text.WriteString(sep + st.Note.String())
-		sb.WriteString(hangingRow(fmt.Sprintf(" [white]%d.[-] ", i+1), text.String(), w))
-	}
-	sb.WriteString(hangingRow(" ", rowid.Line("ui.tab_economy.renderOnboarding.03", "[white]Type[-] [cyan]help[-] [white]for all commands.[-]"), w))
-	return sb.String()
-}
 
 // cultureThresholds defines the culture breakpoints at which rewards unlock.
 // The bar displayed in the Economy panel measures progress towards the next threshold.
@@ -93,17 +40,18 @@ var cultureThresholdLabels = []rowid.Entry{
 
 // EconomyTab is the permanent background panel visible at all times on the Dashboard.
 // It is split into three panes: resource summary (left-top), under construction
-// queue (left-bottom), and the full building list (right). The building panel is
-// scrollable via PgUp/PgDn because it can grow very long in late ages.
+// queue (left-bottom), and the build cards (right), which dash_cards_box.go
+// draws. The cards are scrollable via the wheel and PgUp/PgDn because the list
+// can grow long in late ages.
 //
-// Each pane writes its text for the size it is drawn at (fitView), so no row
-// is ever left for the terminal to wrap: see resources_box.go for the
-// Resources box, and layoutConstruction and buildingEntries below.
+// The two text panes write their text for the size they are drawn at
+// (fitView), so no row is ever left for the terminal to wrap: see
+// resources_box.go for the Resources box, and layoutConstruction below.
 type EconomyTab struct {
-	root           *nativeFlex
+	root           *nativeGroup
 	leftCol        *econColumn
-	resourceTV     *fitView
-	buildingTV     *fitView
+	resourceTV     *resourceView
+	buildBox       *buildBox
 	constructionTV *fitView
 
 	state game.GameState
@@ -115,10 +63,9 @@ type EconomyTab struct {
 	// resPage is the page of the Resources box on show (Ctrl+R turns it),
 	// and resPages how many its rows took at the last draw.
 	resPage, resPages int
-	// bldFirst is the first entry of the Buildings list on show (PgUp and
-	// PgDn move it a page of whole entries), bldShown how many entries the
-	// last draw showed and bldRows how many rows it had for them.
-	bldFirst, bldShown, bldRows int
+	// resKeys is the resource each text line of the box belongs to ("" for
+	// none), as of the last draw.
+	resKeys []string
 }
 
 // txtResourcesTitle is said the same way on several screens, so it has one id.
@@ -128,34 +75,38 @@ var txtResourcesTitle = rowid.E("ui.tab_economy.NewEconomyTab.01", " Resources "
 // script now in force.
 func (t *EconomyTab) retitle() {
 	t.resourceTV.SetTitle(txtResourcesTitle.String())
-	t.buildingTV.SetTitle(rowid.Line("ui.tab_economy.NewEconomyTab.02", " Buildings "))
+	t.buildBox.title = rowid.Line("ui.tab_economy.NewEconomyTab.02", " Buildings ")
+	t.buildBox.dirty = true
 	t.constructionTV.SetTitle(rowid.Line("ui.tab_economy.NewEconomyTab.03", " Under construction "))
 }
 
 // NewEconomyTab constructs the economy tab widget tree: the left column
 // (econColumn: resources, construction and, once the Dashboard adds it, the
-// log) and the building list, side by side at 1:1.
-func NewEconomyTab() *EconomyTab {
+// log) and the build cards, side by side (econLeftW shares the width).
+// app is what the cards' buttons press through.
+func NewEconomyTab(app *appLoop) *EconomyTab {
 	t := &EconomyTab{resPages: 1}
 
-	t.resourceTV = newFitView(func(w, h int) string {
-		lines, pages := layoutResourceBox(t.rows(), w, h, t.resPage)
+	t.resourceTV = newResourceView(func(w, h int) string {
+		rows := t.rows()
+		lines, owner, pages := layoutResourceOwners(rows, w, h, t.resPage)
+		t.resKeys = t.resKeys[:0]
+		for _, o := range owner {
+			key := ""
+			if o >= 0 {
+				key = rows[o].key
+			}
+			t.resKeys = append(t.resKeys, key)
+		}
 		t.resPages = pages
 		t.resPage = ((t.resPage % pages) + pages) % pages
 		return strings.Join(lines, "\n")
-	})
+	}, func() bool { return t.plain != nil && t.plain() })
 	t.resourceTV.SetBorder(true)
+	t.resourceTV.tip, t.resourceTV.tipFor = &app.feel.tip, t.rateTip
 
-	t.buildingTV = newFitView(func(w, h int) string {
-		head, entries := buildingEntries(t.state, w)
-		lines, first, shown := layoutBuildings(head, entries, w, h, t.bldFirst)
-		t.bldFirst, t.bldShown, t.bldRows = first, shown, h
-		return strings.Join(lines, "\n")
-	})
-	t.buildingTV.SetScrollable(false)
-	t.buildingTV.wheel = t.wheelBuildings
 	t.resourceTV.wheel = t.wheelResources
-	t.buildingTV.SetBorder(true)
+	t.buildBox = newBuildBox(func() bool { return t.plain != nil && t.plain() }, app)
 
 	t.constructionTV = newFitView(func(w, h int) string {
 		return strings.Join(layoutConstruction(t.state, w, h), "\n")
@@ -166,7 +117,6 @@ func NewEconomyTab() *EconomyTab {
 	// Persistent tab chrome: enroll titles so a live theme switch restyles them.
 	theme.Track(func() {
 		t.resourceTV.SetTitleColor(theme.Of(theme.RoleLabel))
-		t.buildingTV.SetTitleColor(theme.Of(theme.RoleHighlight))
 		t.constructionTV.SetTitleColor(theme.Of(theme.RoleHighlight))
 	})
 
@@ -174,12 +124,23 @@ func NewEconomyTab() *EconomyTab {
 		resourceRows: func() int { return resourceRowsNeed(t.rows()) }}
 	t.leftCol.nativeGroup = newNativeGroup(t.leftCol.arrange)
 
-	t.root = newNativeFlex().SetDirection(flexColumn).
-		AddItem(t.leftCol, 0, 1, false).
-		AddItem(t.buildingTV, 0, 1, false)
+	t.root = newNativeGroup(func(x, y, w, h int) {
+		left := econLeftW(w)
+		t.root.put(t.leftCol, x, y, left, h)
+		t.root.put(t.buildBox, x+left, y, w-left, h)
+	})
 
 	return t
 }
+
+// econLeftMax is the left column's width in a wide layout: the Buildings box
+// has the rest.
+const econLeftMax = 46
+
+// econLeftW is the left column's width in an economy tab w cells wide: half of
+// it while that is under econLeftMax, as the two boxes always shared a narrow
+// terminal, and econLeftMax from there up.
+func econLeftW(w int) int { return min(econLeftMax, w/2) }
 
 // AddToLeftColumn puts the Dashboard's log panel at the foot of the left column.
 func (t *EconomyTab) AddToLeftColumn(item Primitive) {
@@ -207,7 +168,7 @@ func (t *EconomyTab) Refresh(state game.GameState) {
 	}
 	t.trend.note(state, t.now())
 	t.resourceTV.changed()
-	t.buildingTV.changed()
+	t.buildBox.update(state)
 	t.constructionTV.changed()
 }
 
@@ -215,6 +176,10 @@ func (t *EconomyTab) Refresh(state game.GameState) {
 func (t *EconomyTab) rows() []resRow {
 	return resourceRowsFor(t.state, &t.trend, t.plain != nil && t.plain())
 }
+
+// ScrollUp and ScrollDown turn the build cards a page.
+func (t *EconomyTab) ScrollUp()   { t.buildBox.page(-1) }
+func (t *EconomyTab) ScrollDown() { t.buildBox.page(1) }
 
 // NextResourcePage turns the Resources box to its next page (round to the
 // first after the last) and reports whether it has more than one.
@@ -429,190 +394,6 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 	return lines
 }
 
-// buildingEntries writes the Buildings list for a list w cells wide as its
-// heading and its entries: this age's buildings, each with its cost, what
-// it does, its flavor line and its worker slots, every line broken on
-// purpose and indented under its own start (a cost breaks between its
-// parts, never inside one). The first-steps guide, while it shows, is the
-// last entry. An entry is the lines of one building: the box shows it
-// whole or not at all.
-func buildingEntries(state game.GameState, w int) (head string, entries [][]string) {
-	if w < 8 {
-		return "", nil
-	}
-	set := state.Ruleset()
-	entry := func(text string) {
-		entries = append(entries, strings.Split(strings.TrimRight(text, "\n"), "\n"))
-	}
-
-	// Only the current age's buildings: the unlocked ones, then the ones a
-	// tech still locks (greyed out, lockedBuildingEntry).
-	keys := keysWhere(state.Buildings, func(_ string, bs game.BuildingState) bool {
-		return bs.Unlocked && bs.AgeKey == state.Age
-	})
-	locked := keysWhere(state.Buildings, func(_ string, bs game.BuildingState) bool {
-		return !bs.Unlocked && bs.LockTech != "" && bs.AgeKey == state.Age
-	})
-	keys = append(keys, locked...)
-
-	if len(keys) > 0 {
-		ageName := state.Age
-		if def, ok := set.Age(state.Age); ok {
-			ageName = def.Name
-		}
-		head = fmt.Sprintf(" [gold]── %s ──[-]", truncate(ageName, w-7))
-		for _, key := range keys {
-			bs := state.Buildings[key]
-			if !bs.Unlocked {
-				entry(lockedBuildingEntry(state, key, bs, w))
-				continue
-			}
-			var sb strings.Builder
-			icon, iconW := "[red]✗[-]", 1
-			switch {
-			case bs.AtMaxCount:
-				icon, iconW = rowid.Line("ui.tab_economy.buildingEntries.01", "[yellow]MAX[-]"), 3
-			case bs.CanBuild:
-				icon = "[green]✓[-]"
-			}
-			countColor := "gray"
-			if bs.Count > 0 {
-				countColor = "gold"
-			}
-			count := fmt.Sprintf("x%d", bs.Count)
-			name := truncate(bs.Name, max(4, w-(1+iconW+1+1+runeLen(count))))
-			fmt.Fprintf(&sb, " %s [gold::b]%s[-:-:-] [%s]%s[-]\n", icon, name, countColor, count)
-			if bs.AtMaxCount {
-				sb.WriteString(hangingRow("   ", rowid.Line("ui.tab_economy.buildingEntries.02", "[yellow]Building limit reached.[-]"), w))
-			} else {
-				sb.WriteString(costRow(txtIndentedCost.String(), buildingPrice(&state, key, bs), w))
-			}
-			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(buildingText(bs))+"[-]", w))
-			if bs.Flavor != "" {
-				sb.WriteString(hangingRow("   ", "[comment::i]"+bs.Flavor+"[-:-:-]", w))
-			}
-			if bs.WorkerCapacity > 0 {
-				totalCap := bs.Count * bs.WorkerCapacity
-				domainLabel := domainToLabel[bs.WorkerDomain].String()
-				if domainLabel == "" {
-					domainLabel = textfmt.Capitalize(bs.WorkerDomain)
-				}
-				// Slots filled over slots, the domain, and a bar in brackets
-				// when there is room for one worth drawing. A narrow list
-				// closes the count up, then leaves the domain out.
-				const lead = 12 // "   Workers: "
-				text := fmt.Sprintf("%d / %d %s", bs.WorkersAssigned, totalCap, domainLabel)
-				if lead+runeLen(text) > w {
-					text = fmt.Sprintf("%d/%d %s", bs.WorkersAssigned, totalCap, domainLabel)
-				}
-				if lead+runeLen(text) > w {
-					text = truncate(fmt.Sprintf("%d/%d", bs.WorkersAssigned, totalCap), max(1, w-lead))
-				}
-				line := rowid.Line("ui.tab_economy.buildingEntries.04", "   [green]Workers:[-] ") + text
-				if cells := min(10, w-lead-runeLen(text)-4); cells >= 4 {
-					line += "  [" + workerAssignBar(bs.WorkersAssigned, totalCap, cells) + "]"
-				}
-				sb.WriteString(line + "\n")
-			}
-			// Pending player-driven upgrade indicator
-			if bs.PendingUpgrade != "" {
-				newName := state.Buildings[bs.PendingUpgrade].Name
-				if newName == "" {
-					newName = bs.PendingUpgrade
-				}
-				sb.WriteString(hangingRow("   ", rowid.Sprintf("ui.tab_economy.buildingEntries.05", "[gold]↑ Upgrade available: %s. Type: upgrade %s[-]", newName, key), w))
-			}
-			entry(sb.String())
-			if !bs.AtMaxCount {
-				// The entry stands for its build command: a click on any of
-				// its lines writes the command in the prompt.
-				lines := entries[len(entries)-1]
-				for i := range lines {
-					lines[i] = clickRegion(buildLine(key), lines[i])
-				}
-			}
-		}
-	}
-
-	if len(entries) == 0 {
-		head = rowid.Line("ui.tab_economy.buildingEntries.06", " [gray]No buildings unlocked yet[-]")
-	}
-
-	// Early-game onboarding: fill the otherwise-empty lower Buildings space with a
-	// first-steps guide (re-homed out of the startup log). Auto-retires once the
-	// player advances past the early ages. Colors are deliberately legible — gold
-	// header + cyan command names + white prose — not muddy gray.
-	// Auto-retire the onboarding block once the player is past the early ages OR has
-	// logged 30+ minutes of play. PlayTime is wall-clock (time.Since(GameStarted)),
-	// so it's robust against tick-speed bonuses that a raw tick count would inflate.
-	if slices.Contains(earlyGameAges, state.Age) && state.Stats.PlayTime < 30*time.Minute {
-		entry(renderOnboarding(w))
-	}
-	return head, entries
-}
-
-// layoutBuildings lays the Buildings list out in a box w cells wide and h
-// rows high, from entry first on: the heading, then as many whole entries
-// as fit. An entry is never cut: one that does not fit whole is left for
-// the next page, and the box says how many are above and below and which
-// keys turn the page. It returns the lines, the first entry it really
-// started from (first is brought into range) and how many it showed. A box
-// too short for even one entry shows the top of that entry, as much as
-// fits: the one case an entry is cut.
-func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []string, from, shown int) {
-	if head != "" {
-		lines = append(lines, head)
-	}
-	total := 0
-	for _, e := range entries {
-		total += len(e)
-	}
-	if len(lines)+total <= h || h <= 0 {
-		// It all fits (or the box has no size yet): the whole list.
-		for _, e := range entries {
-			lines = append(lines, e...)
-		}
-		return lines, 0, len(entries)
-	}
-	from = min(max(first, 0), len(entries)-1)
-	room := h - len(lines)
-	if from > 0 {
-		room-- // the line that says what is above
-	}
-	end := from
-	for end < len(entries) {
-		need := len(entries[end])
-		if end < len(entries)-1 {
-			need++ // the line that says what is below
-		}
-		if need > room {
-			break
-		}
-		room -= len(entries[end])
-		end++
-	}
-	if from > 0 {
-		lines = append(lines, theme.Paint(theme.RoleDim, truncate(rowid.Sprintf("ui.tab_economy.layoutBuildings.01", " ↑ %d more above: PgUp (⌥↑)", from), w)))
-	}
-	if end == from {
-		// Not even one entry fits whole: show the top of it.
-		cut := max(h-len(lines)-1, 0)
-		lines = append(lines, entries[from][:min(cut, len(entries[from]))]...)
-		end = from + 1
-	} else {
-		for _, e := range entries[from:end] {
-			lines = append(lines, e...)
-		}
-	}
-	if below := len(entries) - end; below > 0 {
-		lines = append(lines, theme.Paint(theme.RoleDim, truncate(rowid.Sprintf("ui.tab_economy.layoutBuildings.02", " ↓ %d more below: PgDn (⌥↓)", below), w)))
-	}
-	if len(lines) > h {
-		lines = lines[:h] // a box of a row or two has no room for the notes
-	}
-	return lines, from, end - from
-}
-
 // buildingPrice is the price a building screen shows for the next copy of
 // key. A wonder is paid through its bank at the price in the ruleset; the
 // build-cost factor that scales every other building's price does not reach
@@ -665,39 +446,6 @@ func costRow(lead string, cost map[string]float64, w int) string {
 	return lead + strings.Join(lines, "\n"+strings.Repeat(" ", indent)) + "\n"
 }
 
-// ScrollUp turns the Buildings list back a page of whole entries.
-func (t *EconomyTab) ScrollUp() {
-	if t.bldFirst <= 0 {
-		return
-	}
-	// The page that ends just above the one on show: as many entries as
-	// fit in the box, counted back from it.
-	_, _, w, _ := t.buildingTV.GetInnerRect()
-	_, entries := buildingEntries(t.state, w)
-	first := min(t.bldFirst, len(entries))
-	room := t.bldRows - 3 // the heading and the two lines that say what is above and below
-	for first > 0 && len(entries[first-1]) <= room {
-		room -= len(entries[first-1])
-		first--
-	}
-	if first == t.bldFirst {
-		first--
-	}
-	t.bldFirst = max(first, 0)
-	t.buildingTV.changed()
-}
-
-// ScrollDown turns the Buildings list on a page of whole entries.
-func (t *EconomyTab) ScrollDown() {
-	_, _, w, _ := t.buildingTV.GetInnerRect()
-	_, entries := buildingEntries(t.state, w)
-	if t.bldFirst+t.bldShown >= len(entries) {
-		return // the last entry is on show
-	}
-	t.bldFirst += max(t.bldShown, 1)
-	t.buildingTV.changed()
-}
-
 // wheelResources turns the Resources box a page for a turn of the wheel: on
 // for a turn toward the player, back for one away, stopping at the first and
 // the last page. It reports whether the page changed.
@@ -717,43 +465,32 @@ func (t *EconomyTab) wheelResources(rows int) bool {
 	return true
 }
 
-// wheelBuildings moves the Buildings list one entry for a turn of the wheel,
-// down for a turn toward the player, and reports whether the list moved.
-func (t *EconomyTab) wheelBuildings(rows int) bool {
-	first := t.bldFirst
-	switch {
-	case rows < 0 && first > 0:
-		first--
-	case rows > 0:
-		_, _, w, _ := t.buildingTV.GetInnerRect()
-		if _, entries := buildingEntries(t.state, w); first+t.bldShown < len(entries) {
-			first++
-		}
-	}
-	if first == t.bldFirst {
-		return false
-	}
-	t.bldFirst = first
-	t.buildingTV.changed()
-	return true
-}
+// tipRate is the tooltip on a resource's line in the Resources box.
+type tipRate struct{ key string }
 
-// domainToLabel maps domain strings to friendly display labels.
-var domainToLabel = map[string]rowid.Entry{
-	"food":        rowid.E("ui.tab_economy.domainToLabel.01", "Food"),
-	"faith":       rowid.E("ui.tab_economy.domainToLabel.02", "Faith"),
-	"military":    rowid.E("ui.tab_economy.domainToLabel.03", "Military"),
-	"trade":       rowid.E("ui.tab_economy.domainToLabel.04", "Trade"),
-	"engineering": rowid.E("ui.tab_economy.domainToLabel.05", "Engineering"),
-	"hacker":      rowid.E("ui.tab_economy.domainToLabel.06", "Hacker"),
-	"astronaut":   rowid.E("ui.tab_economy.domainToLabel.07", "Astronaut"),
-}
-
-// workerAssignBar returns a ▓/░ bar width cells wide for assigned/capacity.
-// Filled portion uses BarFillColor (Accent role), empty uses BarEmptyColor (Dim role).
-func workerAssignBar(assigned, capacity, width int) string {
-	if capacity <= 0 {
-		return BarEmptyColor() + strings.Repeat("░", width) + "[-]"
+// rateTip is the tooltip for line i of the Resources box: what the resource's
+// rate is made of, the largest parts first, in at most the plate's rows.
+func (t *EconomyTab) rateTip(i int) (any, kit.TipText, bool) {
+	if i < 0 || i >= len(t.resKeys) || t.resKeys[i] == "" {
+		return nil, kit.TipText{}, false
 	}
-	return progressCells(float64(assigned)/float64(capacity), width)
+	key := t.resKeys[i]
+	rs := t.state.Resources[key]
+	src := rateSources(rs.Breakdown, t.state.TickIntervalMs)
+	if len(src) == 0 {
+		return nil, kit.TipText{}, false
+	}
+	sort.SliceStable(src, func(a, b int) bool { return math.Abs(src[a].size) > math.Abs(src[b].size) })
+	lines := []string{rs.Name + ": " + rateText(rs.Rate, t.state.TickIntervalMs)}
+	shown := src
+	if len(src) > kit.TipMaxRows-1 {
+		shown = src[:kit.TipMaxRows-2]
+	}
+	for _, s := range shown {
+		lines = append(lines, "  "+s.text)
+	}
+	if more := len(src) - len(shown); more > 0 {
+		lines = append(lines, rowid.Sprintf("ui.tab_economy.rateTip.01", "  and %d more", more))
+	}
+	return tipRate{key}, kit.TipText{Lines: lines, Wide: true}, true
 }

@@ -121,10 +121,7 @@ func newLoadGameBrowser(app *appLoop, pages *nativePages, engine *game.GameEngin
 
 	// ── Footer ───────────────────────────────────────────────────────────────
 	// Written for the width it is drawn at, so no key is cut off at 80 columns.
-	footer := newFitView(func(w, h int) string { return keyBar(loadGameKeys, w, h) })
-	pressesKeys(app, footer.nativeText)
-	footer.SetTextAlign(kit.AlignCenter)
-	footer.changed()
+	footer := newKeyFoot(app, loadGameKeys)
 
 	// ── Layout ───────────────────────────────────────────────────────────────
 	b.root = newNativeFlex().SetDirection(flexRow).
@@ -560,21 +557,6 @@ func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 	return fmt.Sprintf("%s%s   [gray]%s   %s[-]%s", prefix, s.Name, age, relativeTime(s.Timestamp), tag)
 }
 
-// rowTag returns the trailing status tag for a (non-corrupt) save row, or "".
-// Precedence: autosave first, then modified, then elite.
-// footerButton renders one keycap-style action button: the hotkey on a gold
-// cap fused to its label on a dark chip — e.g. a gold "Enter" beside "Load".
-//
-// A button whose key is one press is a click region named for the key, so
-// a box that pressesKeys makes a click on it press that key.
-func footerButton(key, label string) string {
-	chip := theme.KeycapButton(key, label)
-	if _, ok := capKey(key); !ok {
-		return chip // a pair of keys, like ↑↓: nothing one click could mean
-	}
-	return clickRegion(key, chip)
-}
-
 // capKey is the key a keycap names, when it names one press: Enter, Esc, Tab,
 // a paging key, an arrow, plus or minus, or a letter or digit (as pressed
 // without Shift).
@@ -594,6 +576,8 @@ func capKey(name string) (kit.Key, bool) {
 		return kit.Key{Code: kit.KeyHome}, true
 	case "End":
 		return kit.Key{Code: kit.KeyEnd}, true
+	case "Space":
+		return kit.Key{Code: kit.KeyRune, Rune: ' '}, true
 	case "+":
 		return kit.Key{Code: kit.KeyRune, Rune: '+'}, true
 	case "-", "−":
@@ -608,61 +592,6 @@ func capKey(name string) (kit.Key, bool) {
 		}
 	}
 	return kit.Key{}, false
-}
-
-// pressesKeys makes a click on a keycap button in t press its key, as the
-// keyboard would: the key goes to whatever has the keyboard.
-func pressesKeys(app *appLoop, t *nativeText) {
-	t.body.OnRegion = func(name string, _ int) {
-		if k, ok := capKey(name); ok {
-			app.Key(k)
-		}
-	}
-}
-
-// footerKey is one action on a key bar: its key, its name, and a shorter
-// name for a bar with little room ("" when the name is short already).
-type footerKey struct {
-	key          string
-	label, short rowid.Entry
-}
-
-// keyBar lays a key bar out for a box w cells wide and rows lines tall. It
-// writes the fullest form that fits on one line: every name in full, then
-// the shorter names, then those set closer. A bar still too long for one
-// line is set in full over two when the box has them.
-func keyBar(keys []footerKey, w, rows int) string {
-	line := func(ks []footerKey, short bool, gap string) string {
-		parts := make([]string, len(ks))
-		for i, k := range ks {
-			label := k.label.String()
-			if short && k.short.Plain() != "" {
-				label = k.short.String()
-			}
-			parts[i] = footerButton(k.key, label)
-		}
-		return strings.Join(parts, gap)
-	}
-	for _, form := range []struct {
-		short bool
-		gap   string
-	}{{false, "  "}, {true, "  "}, {true, " "}} {
-		if l := line(keys, form.short, form.gap); visibleLen(l) <= w {
-			return l
-		}
-	}
-	if rows >= 2 {
-		// Two lines, as even as the buttons allow.
-		for _, short := range []bool{false, true} {
-			for cut := (len(keys) + 1) / 2; cut < len(keys); cut++ {
-				a, b := line(keys[:cut], short, "  "), line(keys[cut:], short, "  ")
-				if visibleLen(a) <= w && visibleLen(b) <= w {
-					return a + "\n" + b
-				}
-			}
-		}
-	}
-	return line(keys, true, " ")
 }
 
 // loadGameKeys are the Load Game browser's actions.
@@ -695,6 +624,8 @@ var txtEliteTag = rowid.E("ui.load_game.rowTag.03", "[gold]⭐ elite[-]")
 // txtModifiedTag is said the same way on several screens, so it has one id.
 var txtModifiedTag = rowid.E("ui.load_game.rowTag.02", "[red]⚠ modified[-]")
 
+// rowTag returns the trailing status tag for a (non-corrupt) save row, or "".
+// Precedence: autosave first, then modified, then elite.
 func rowTag(s game.SaveInfo) string {
 	if s.Name == game.AutosaveName {
 		return rowid.Line("ui.load_game.rowTag.01", "[gold]★ auto[-]")

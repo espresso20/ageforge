@@ -55,7 +55,7 @@ func TestFactionsProvider_RendersAllFactions(t *testing.T) {
 
 	state := game.GameState{Diplomacy: game.DiplomacyState{Factions: factions}}
 
-	out := factionsProvider(state, panelWidth)
+	out := factionsProvider(state, panelWidth, nil)
 	if out == "" {
 		t.Fatal("factionsProvider returned empty output")
 	}
@@ -79,7 +79,7 @@ func TestFactionsProvider_RendersAllFactions(t *testing.T) {
 // points at expeditions rather than the old — and doubly wrong — claim that
 // diplomacy starts with a Colonial Age Embassy.
 func TestFactionsProvider_EmptyState(t *testing.T) {
-	out := factionsProvider(game.GameState{}, panelWidth)
+	out := factionsProvider(game.GameState{}, panelWidth, nil)
 	if out == "" {
 		t.Fatal("factionsProvider returned empty output on zero state")
 	}
@@ -129,7 +129,7 @@ func TestFactionsProvider_RendersExpandedCivData(t *testing.T) {
 		factions[def.Key] = info
 	}
 
-	out := factionsProvider(game.GameState{Diplomacy: game.DiplomacyState{Factions: factions}}, panelWidth)
+	out := factionsProvider(game.GameState{Diplomacy: game.DiplomacyState{Factions: factions}}, panelWidth, nil)
 	if out == "" {
 		t.Fatal("factionsProvider returned empty output for expanded roster")
 	}
@@ -180,7 +180,7 @@ func TestFactionsProvider_LiveFavoursAndSetbacks(t *testing.T) {
 		},
 	}
 
-	out := factionsProvider(state, panelWidth)
+	out := factionsProvider(state, panelWidth, nil)
 
 	// Favours: named, credited, quantified, and counted down in wall-clock.
 	favour := lineContaining(out, "Specialty Windfall")
@@ -221,7 +221,7 @@ func TestFactionsProvider_LiveFavoursAndSetbacks(t *testing.T) {
 // TestFactionsProvider_LiveEffectsEmptyState checks the gray two-liner that
 // stands in when nothing is running — a statement plus how to earn one.
 func TestFactionsProvider_LiveEffectsEmptyState(t *testing.T) {
-	out := factionsProvider(game.GameState{}, panelWidth)
+	out := factionsProvider(game.GameState{}, panelWidth, nil)
 	if !strings.Contains(out, "No boons or setbacks in play") {
 		t.Errorf("empty live-effects section missing its statement, got:\n%s", out)
 	}
@@ -234,14 +234,14 @@ func TestFactionsProvider_LiveEffectsEmptyState(t *testing.T) {
 // through all three of its states: nothing built, built-but-starved, running.
 func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 	t.Run("not built", func(t *testing.T) {
-		out := factionsProvider(game.GameState{}, panelWidth)
+		out := factionsProvider(game.GameState{}, panelWidth, nil)
 		if !strings.Contains(out, "No Geographic Society") {
 			t.Errorf("missing the not-built hint, got:\n%s", out)
 		}
 		if strings.Contains(out, "Industrial Age") || !strings.Contains(out, "A later age brings one") {
 			t.Errorf("a new player's not-built hint must not name the Society's age, got:\n%s", out)
 		}
-		if next := factionsProvider(game.GameState{Age: "colonial_age"}, panelWidth); !strings.Contains(next, "The Industrial Age brings one") {
+		if next := factionsProvider(game.GameState{Age: "colonial_age"}, panelWidth, nil); !strings.Contains(next, "The Industrial Age brings one") {
 			t.Errorf("one age before the Society, the hint should name its age, got:\n%s", next)
 		}
 		if strings.Contains(out, "Next dispatch") {
@@ -255,7 +255,7 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 			Active: true, Starved: true, TicksLeft: 0, Interval: 300,
 			Count: 1, Assigned: 2, Capacity: 5,
 		}
-		out := factionsProvider(state, panelWidth)
+		out := factionsProvider(state, panelWidth, nil)
 		if !strings.Contains(out, "cannot pay the expedition cost") {
 			t.Errorf("starved Society should warn that it can't afford a party, got:\n%s", out)
 		}
@@ -273,7 +273,7 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 			Active: true, TicksLeft: 77, Interval: 192,
 			Count: 2, Assigned: 7, Capacity: 10,
 		}
-		out := factionsProvider(state, panelWidth)
+		out := factionsProvider(state, panelWidth, nil)
 		line := lineContaining(out, "Societies:")
 		wantAll(t, "Society status line", line, "Societies: [cyan]2", "7/10", "(70%)", "~6m 24s")
 		next := lineContaining(out, "Next dispatch")
@@ -295,7 +295,7 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 // counts the civilizations still out there and names none of them: no name,
 // no age, no specialty, no personality (playtest 2026-09-29).
 func TestFactionsProvider_UnmetCivsAreOnlyCounted(t *testing.T) {
-	out := factionsProvider(game.GameState{Age: "primitive_age"}, panelWidth)
+	out := factionsProvider(game.GameState{Age: "primitive_age"}, panelWidth, nil)
 	section := out[strings.Index(out, "Not yet met"):]
 	for _, def := range config.BaseFactions() {
 		for _, leak := range []string{def.Name, def.Key, def.Personality} {
@@ -319,7 +319,7 @@ func TestFactionsProvider_RendersStrength(t *testing.T) {
 		// snapshot must still show the civ's real rating.
 		"void_reavers": {Name: "Void Reavers", Discovered: true, Status: "neutral"},
 	}}}
-	out := factionsProvider(state, panelWidth)
+	out := factionsProvider(state, panelWidth, nil)
 
 	card := lineContaining(out, "Void Reavers")
 	if !strings.Contains(card, "★★★★★") {
@@ -359,11 +359,11 @@ func TestEffectMagnitude(t *testing.T) {
 		{game.EventEffectInfo{Type: "gather_rate", Value: 0.20}, "+20% worker output", "green"},
 		{game.EventEffectInfo{Type: "production_all", Value: 0.08}, "+8% all production", "green"},
 		{game.EventEffectInfo{Type: "tick_speed", Value: 0.09}, "+9% game speed", "green"},
-		{game.EventEffectInfo{Type: "production", Target: "wood", Value: 2.5}, "+2.5 wood/tick", "green"},
+		{game.EventEffectInfo{Type: "production", Target: "wood", Value: 2.5}, "+2.5 wood/s", "green"},
 		{game.EventEffectInfo{Type: "something_else", Value: 1}, "", ""},
 	}
 	for _, c := range cases {
-		plain, colored := effectMagnitude(c.eff)
+		plain, colored := effectMagnitude(c.eff, 1000)
 		if plain != c.want {
 			t.Errorf("effectMagnitude(%+v) plain = %q, want %q", c.eff, plain, c.want)
 		}
@@ -393,8 +393,8 @@ func TestFactionsProvider_RespectsWidth(t *testing.T) {
 	}
 	state := game.GameState{Diplomacy: game.DiplomacyState{Factions: factions}}
 
-	narrow := factionsProvider(state, 80)
-	wide := factionsProvider(state, 160)
+	narrow := factionsProvider(state, 80, nil)
+	wide := factionsProvider(state, 160, nil)
 	if narrow == wide {
 		t.Fatal("provider ignores its width parameter — narrow and wide renders are identical")
 	}
@@ -421,12 +421,12 @@ func TestFactionsProvider_NoPanicOnDegenerateState(t *testing.T) {
 	}
 	state.Military.AutoExpedition = game.AutoExpeditionState{Active: true, Capacity: 0, Interval: 0}
 
-	if out := factionsProvider(state, 0); out == "" {
+	if out := factionsProvider(state, 0, nil); out == "" {
 		t.Fatal("degenerate state produced no output")
 	}
 	// An event whose key has an empty faction suffix is not attributable and must
 	// be dropped, not credited to a civ with no name.
-	out := factionsProvider(state, panelWidth)
+	out := factionsProvider(state, panelWidth, nil)
 	if strings.Contains(out, "Nameless") {
 		t.Error("an unattributable faction event was rendered anyway")
 	}
@@ -556,7 +556,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 			"ironhold_clans": {Name: "Ironhold Clans", Discovered: true, Status: "neutral", AtWar: true, DealsBlocked: "at war with you"},
 		}},
 	}
-	raw := factionsProvider(state, panelWidth)
+	raw := factionsProvider(state, panelWidth, nil)
 	out := plainText(raw)
 	wantAll(t, "panel", out,
 		"Deals: new offers in",
@@ -669,7 +669,7 @@ func TestFactionsProvider_ShowsBoonCrews(t *testing.T) {
 			},
 		},
 	}
-	out := factionsProvider(state, panelWidth)
+	out := factionsProvider(state, panelWidth, nil)
 
 	var rows []string
 	for _, line := range strings.Split(out, "\n") {
@@ -713,7 +713,7 @@ func TestFactionsProvider_BoonNamesTheCivOnce(t *testing.T) {
 			Effects: []game.EventEffectInfo{{Type: "iron_rate", Target: "iron", Value: 0.11}},
 		}},
 	}
-	line := untag(lineContaining(factionsProvider(state, panelWidth), "Specialty Windfall"))
+	line := untag(lineContaining(factionsProvider(state, panelWidth, nil), "Specialty Windfall"))
 	if n := strings.Count(line, "Ironhold Clans"); n != 1 {
 		t.Errorf("the boon line names the civilization %d times, want once: %q", n, line)
 	}
@@ -732,7 +732,7 @@ func TestFactionsProvider_BackstoryWrapsNotCut(t *testing.T) {
 	}
 	state := game.GameState{Diplomacy: game.DiplomacyState{Factions: factions}}
 	for _, w := range []int{200, 80} {
-		out := plainText(factionsProvider(state, w))
+		out := plainText(factionsProvider(state, w, nil))
 		flat := strings.Join(strings.Fields(out), " ")
 		for _, def := range config.BaseFactions() {
 			if def.Backstory == "" {

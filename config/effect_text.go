@@ -83,6 +83,14 @@ func FormatPercent(frac float64) string {
 	return FormatRateValue(math.Abs(frac)*100) + "%"
 }
 
+// rateText is a per-tick amount of a resource as a description states it: per
+// second at the base tick, in the unit a player reads ("+0.5 food/s"). The
+// figure is FormatAmount's, three significant figures, so 0.25 stays 0.25.
+func rateText(perTick float64, label string) string {
+	v, unit := textfmt.RateUnit(perTick / TickSeconds)
+	return signed(v, FormatAmount(v)) + " " + label + unit
+}
+
 // signed prefixes "+" or "-" to an already formatted magnitude.
 func signed(v float64, s string) string {
 	if v < 0 {
@@ -133,7 +141,7 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 		switch e.Type {
 		case "production":
 			if e.Value != 0 {
-				part := signed(e.Value, FormatAmount(e.Value)) + " " + ResourceLabel(e.Target) + "/tick"
+				part := rateText(e.Value, ResourceLabel(e.Target))
 				// A resource that unlocks in a later age than the building
 				// gathers nothing until then (the engine applies no rate to a
 				// locked resource), and the text owes the player that.
@@ -160,7 +168,7 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 			// The engine splits an embassy's opinion evenly across the
 			// civilizations that take it (DiplomacyManager.AddPassiveOpinion):
 			// each one gets its share, not the whole amount.
-			parts = append(parts, "+"+FormatAmount(e.Value)+" opinion/tick per worker, split across the civilizations that are not hostile")
+			parts = append(parts, rateText(e.Value, "opinion")+" per worker, split across the civilizations that are not hostile")
 		}
 	}
 	if d.Soldiers > 0 {
@@ -186,7 +194,7 @@ func scholarCount(n int) string {
 }
 
 // OnceUnlocked is what a building's description adds to an output it cannot
-// deliver yet: "+41 uranium/tick once unlocked". It names no age, so it
+// deliver yet: "+20 uranium/s once unlocked". It names no age, so it
 // spoils nothing about ages the player has not seen.
 const OnceUnlocked = "once unlocked"
 
@@ -197,7 +205,7 @@ func MakesBeforeUnlock(d BuildingDef, res string) bool {
 }
 
 // buildingEffectText is the mechanical sentence appended to a building's
-// flavor: "+1 food/tick (3 workers)." It is empty for a building with
+// flavor: "+0.5 food/s (3 workers)." It is empty for a building with
 // nothing to report (the Geographic Society, whose work is done by the
 // engine, not by an Effect).
 func buildingEffectText(d BuildingDef) string {

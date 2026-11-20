@@ -25,10 +25,9 @@ const poisonRune = 'א'
 var fullSizes = [][2]int{{80, 24}, {100, 30}, {160, 45}}
 
 // panelCommands are the commands that open the panels of the Panels list, and
-// the two more overlays a command opens (the Buildings list and the old name
-// of the Factions panel).
+// the one more overlay a command opens (the Buildings list).
 func panelCommands() []string {
-	return append(append([]string(nil), sidebarPanels...), "buildings", "diplomacy")
+	return append(append([]string(nil), sidebarPanels...), "buildings")
 }
 
 // poisonedStage is a dashboard in the Medieval Age with a page of poison over
@@ -280,7 +279,7 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 // command bar says so on its foot, and a game's panels all name Esc.
 func TestPanelFooterOffersTheBar(t *testing.T) {
 	d, pages := poisonedStage(t)
-	for _, name := range []string{"factions", "stats", "logs", "history", "buildings", "help"} {
+	for _, name := range []string{"factions", "logs", "buildings", "help"} {
 		openPanel(t, d, name, 100, 30)
 		cells := drawnDashboard(t, d, pages, 100, 30)
 		foot := rectText(cells, 100, 0, 30-promptRows-2, 100, 1)[0]

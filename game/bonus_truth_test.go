@@ -1660,6 +1660,10 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 
 func truthPercent(v float64) string { return fmt.Sprintf("%+g%%", math.Round(v*1000)/10) }
 
+// onceUnlockedRe is a rate a description marks as not yet delivered
+// ("+0.5 titanium/s once unlocked").
+var onceUnlockedRe = regexp.MustCompile(`/(s|min|h) ` + config.OnceUnlocked)
+
 // truthEffectText words an effect the way the game does.
 func truthEffectText(e config.Effect) string {
 	switch e.Type {
@@ -1887,7 +1891,7 @@ func truthBuildingPromises() []truthPromise {
 			}
 			// An output the building's own text marks "once unlocked".
 			text, later := truthEffectText(eff), false
-			if eff.Type == "production" && config.MakesBeforeUnlock(def, eff.Target) && strings.Contains(def.Description, "/tick "+config.OnceUnlocked) {
+			if eff.Type == "production" && config.MakesBeforeUnlock(def, eff.Target) && onceUnlockedRe.MatchString(def.Description) {
 				text, later = text+" "+config.OnceUnlocked, true
 			}
 			var also []string

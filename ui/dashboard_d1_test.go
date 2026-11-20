@@ -106,7 +106,7 @@ func TestPeopleRichBoxLines(t *testing.T) {
 	// A roomy box: every fact, the soldiers' posts and the ones out.
 	full := plainText(peopleRichText(st, 40, 8))
 	flat := strings.Join(strings.Fields(full), " ")
-	for _, want := range []string{"Pop 1061/1113", "95% full", "Craftsfolk 511", "Villagers 412", "Spearmen 108/140 · 20 out", "Scribes 30", "Held by: food", "+0.45 food a tick feeds 3 more"} {
+	for _, want := range []string{"Pop 1061/1113", "95% full", "Craftsfolk 511", "Villagers 412", "Spearmen 108/140 · 20 out", "Scribes 30", "Held by: food", "+0.45 food/s feeds 3 more"} {
 		if !strings.Contains(flat, want) {
 			t.Errorf("a roomy box lacks %q:\n%s", want, full)
 		}

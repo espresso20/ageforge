@@ -255,7 +255,7 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 					continue
 				}
 				changed++
-				take(ResourceName(eff.Target)+" "+textfmt.Rate(eff.Value*ge.speedK()), "the rate of "+eff.Target)
+				take(ResourceName(eff.Target)+" "+textfmt.RateText(eff.Value*ge.speedK()/ge.tickIntervalLocked().Seconds()), "the rate of "+eff.Target)
 				// The rate is what the rates pass will apply.
 				off := ge.Resources.resources[eff.Target].Rate
 				ge.recalculateRates()
@@ -270,7 +270,7 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 					ge.Events.active = saved
 					ge.recalculateRates()
 					if got := ge.Resources.resources[eff.Target].Rate - without; got/want < 0.999 || got/want > 1.001 {
-						t.Errorf("%s: the line says %s %s, and the rate moves by %v", def.Key, eff.Target, textfmt.Rate(want), got)
+						t.Errorf("%s: the line says %s %s, and the rate moves by %v", def.Key, eff.Target, textfmt.RateText(want/ge.tickIntervalLocked().Seconds()), got)
 					}
 				}
 			}

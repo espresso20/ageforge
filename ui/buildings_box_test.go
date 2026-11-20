@@ -1,12 +1,10 @@
 package ui
 
 import (
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/window/kit"
 )
 
 // The playtest's screen and town: a MacBook at a large font, where the
@@ -40,221 +38,45 @@ func playtestTown(t *testing.T) (*Dashboard, *nativePages) {
 	return d, pages
 }
 
-// buildingsBox returns the rows inside the Buildings box as drawn, with the
-// trailing blanks trimmed off each.
-func buildingsBox(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []string {
+// checkCards holds the Buildings box to what it laid out: the cards sit inside
+// the box, one under another, nothing overlaps, every card's Build button is
+// inside the box, and every part of every price is on the screen whole.
+func checkCards(t *testing.T, where string, d *Dashboard, cells []simCell, screenW int) {
 	t.Helper()
-	drawDashboard(t, d, pages, w, h)
-	screen := strings.Split(drawDashboard(t, d, pages, w, h), "\n")
-	x, y, bw, bh := d.economyTab.buildingTV.GetInnerRect()
-	var rows []string
-	for j := y; j < y+bh && j < len(screen); j++ {
-		line := []rune(screen[j])
-		if x >= len(line) {
-			rows = append(rows, "")
-			continue
-		}
-		rows = append(rows, strings.TrimRight(string(line[x:min(x+bw, len(line))]), " "))
+	b := d.economyTab.buildBox
+	x, y, w, h := b.GetRect()
+	if w < 10 || h < 5 {
+		t.Errorf("%s: the Buildings box is %dx%d", where, w, h)
+		return
 	}
-	return rows
-}
-
-// wholeEntries fails if the box shows part of an entry: every entry of the
-// list is on screen whole, line for line, or not at all. It returns how
-// many are on screen.
-func wholeEntries(t *testing.T, where string, d *Dashboard, rows []string) int {
-	t.Helper()
-	_, _, w, _ := d.economyTab.buildingTV.GetInnerRect()
-	_, entries := buildingEntries(d.economyTab.state, w)
-	screen := strings.Join(rows, "\n") + "\n"
-	shown := 0
-	for _, e := range entries {
-		var plain []string
-		for _, line := range e {
-			plain = append(plain, strings.TrimRight(untag(line), " "))
+	if len(b.placed) == 0 {
+		t.Errorf("%s: the Buildings box shows no card", where)
+		return
+	}
+	iw, ih := w-2, h-2
+	edge := 1
+	for i, pc := range b.placed {
+		if pc.y < edge || pc.y+pc.rows > 1+ih {
+			t.Errorf("%s: card %q is at rows %d-%d of a box with %d inside", where, pc.card.name, pc.y, pc.y+pc.rows, ih)
 		}
-		// The entry's own first line: a building's name, or the first-steps
-		// guide's heading (which opens with a blank line).
-		name := ""
-		for _, line := range plain {
-			if name = line; strings.TrimSpace(line) != "" {
-				break
+		edge = pc.y + pc.rows
+		key := b.cardKeys.keys[pc.build]
+		if r := key.r; r.Min.X < 1 || r.Max.X > 1+iw || r.Min.Y < pc.y || r.Max.Y > pc.y+pc.rows {
+			t.Errorf("%s: card %q has its Build button at %v, outside its card (rows %d-%d, %d wide)", where, pc.card.name, r, pc.y, pc.y+pc.rows, iw)
+		}
+		if i > 0 && key.r.Min.X != b.cardKeys.keys[b.placed[0].build].r.Min.X {
+			t.Errorf("%s: the Build buttons are not in one column", where)
+		}
+		got := strings.Join(rectText(cells, screenW, x+1, y+pc.y, iw, pc.rows), "\n")
+		for _, line := range pc.price {
+			for _, part := range line {
+				if !strings.Contains(got, part.text) {
+					t.Errorf("%s: card %q lost the price part %q:\n%s", where, pc.card.name, part.text, got)
+				}
 			}
 		}
-		if !strings.Contains(screen, name+"\n") {
-			continue // not on screen at all
+		if !strings.Contains(got, pc.card.name) {
+			t.Errorf("%s: card %q does not show its name:\n%s", where, pc.card.name, got)
 		}
-		shown++
-		if !strings.Contains(screen, strings.Join(plain, "\n")+"\n") {
-			t.Errorf("%s: the Buildings box shows part of an entry, %q, and not the rest of it:\n%s", where, strings.TrimSpace(name), strings.Join(rows, "\n"))
-		}
-	}
-	if shown == 0 {
-		t.Errorf("%s: the Buildings box shows no entry:\n%s", where, strings.Join(rows, "\n"))
-	}
-	return shown
-}
-
-// TestBuildingsBoxOnThePlaytestScreen: on the playtest's screen and town,
-// with the mini map turned off, the Buildings list has the whole column.
-// With more entries than fit, the box shows whole entries only, says how
-// many are below and names the key; a page down shows the rest, with how
-// many are above.
-func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
-	d, pages := playtestTown(t)
-	d.runForTest("minimap off")
-	d.refresh()
-	txt := drawDashboard(t, d, pages, playtestCols, playtestRows)
-	if d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
-		t.Fatalf("the mini map shows with minimap off:\n%s", txt)
-	}
-	rows := buildingsBox(t, d, pages, playtestCols, playtestRows)
-	_, _, bw, bh := d.economyTab.buildingTV.GetInnerRect()
-	if bw < 55 || bw > 65 || bh < 30 {
-		t.Fatalf("the Buildings box is %d by %d inside; the playtest's column was about 60 by 37", bw, bh)
-	}
-	_, entries := buildingEntries(d.economyTab.state, bw)
-	first := wholeEntries(t, "the first page", d, rows)
-	if first >= len(entries) {
-		t.Fatalf("all %d entries fit a %d-row box: the test needs a list longer than its box", len(entries), bh)
-	}
-	last := rows[len(rows)-1]
-	for len(rows) > 0 && last == "" {
-		rows = rows[:len(rows)-1]
-		last = rows[len(rows)-1]
-	}
-	if want := "↓ " + strconv.Itoa(len(entries)-first) + " more below: PgDn (⌥↓)"; strings.TrimSpace(last) != want {
-		t.Errorf("the box does not end by saying what is below it: %q, want %q", last, want)
-	}
-	if strings.Contains(strings.Join(rows, "\n"), "more above") {
-		t.Errorf("the first page says there is more above it:\n%s", strings.Join(rows, "\n"))
-	}
-	// The stash, which the playtest saw cut down to its name, is whole or
-	// absent on each page.
-	seen := map[string]bool{}
-	note := func(rows []string) {
-		for _, r := range rows {
-			if name := strings.TrimSpace(r); strings.HasPrefix(name, "✗ ") || strings.HasPrefix(name, "✓ ") || strings.HasPrefix(name, "MAX ") {
-				seen[name] = true
-			}
-		}
-	}
-	note(rows)
-
-	// Page down until the end: every page is whole entries, and names
-	// what is above it.
-	for page := 2; page < 10 && d.economyTab.bldFirst+d.economyTab.bldShown < len(entries); page++ {
-		d.economyTab.ScrollDown()
-		rows = buildingsBox(t, d, pages, playtestCols, playtestRows)
-		wholeEntries(t, "page "+strconv.Itoa(page), d, rows)
-		if want := "↑ " + strconv.Itoa(d.economyTab.bldFirst) + " more above: PgUp (⌥↑)"; !strings.Contains(strings.Join(rows, "\n"), want) {
-			t.Errorf("page %d does not say what is above it (%q):\n%s", page, want, strings.Join(rows, "\n"))
-		}
-		note(rows)
-	}
-	if len(seen) < len(entries)-1 { // the first-steps guide is an entry with no name line
-		t.Errorf("paging through the list showed %d buildings of %d entries: %v", len(seen), len(entries), seen)
-	}
-	// And back up to the top.
-	for i := 0; i < 10 && d.economyTab.bldFirst > 0; i++ {
-		d.economyTab.ScrollUp()
-		wholeEntries(t, "paging back", d, buildingsBox(t, d, pages, playtestCols, playtestRows))
-	}
-	if d.economyTab.bldFirst != 0 {
-		t.Errorf("PgUp did not come back to the top: the list starts at entry %d", d.economyTab.bldFirst)
-	}
-}
-
-// TestBuildingsBoxUnderTheMiniMap: with the mini map on (as it is unless
-// turned off) at the playtest's screen, the list has two thirds of the column
-// and still shows whole entries only, and says what is below.
-func TestBuildingsBoxUnderTheMiniMap(t *testing.T) {
-	d, pages := playtestTown(t)
-	miniOn(t, d)
-	txt := drawDashboard(t, d, pages, playtestCols, playtestRows)
-	if !d.body.miniShown || !strings.Contains(txt, "┌ Map ─") {
-		t.Fatalf("minimap on did not show the mini map at %dx%d", playtestCols, playtestRows)
-	}
-	rows := buildingsBox(t, d, pages, playtestCols, playtestRows)
-	shown := wholeEntries(t, "under the mini map", d, rows)
-	_, _, bw, _ := d.economyTab.buildingTV.GetInnerRect()
-	_, entries := buildingEntries(d.economyTab.state, bw)
-	if want := "↓ " + strconv.Itoa(len(entries)-shown) + " more below: PgDn (⌥↓)"; !strings.Contains(strings.Join(rows, "\n"), want) {
-		t.Errorf("under the mini map the box does not say what is below it (%q):\n%s", want, strings.Join(rows, "\n"))
-	}
-}
-
-// TestLayoutBuildings: the paging rule itself, on entries of known heights.
-func TestLayoutBuildings(t *testing.T) {
-	entry := func(name string, n int) []string {
-		out := []string{name}
-		for i := 1; i < n; i++ {
-			out = append(out, name+" line "+strconv.Itoa(i+1))
-		}
-		return out
-	}
-	entries := [][]string{entry("a", 4), entry("b", 5), entry("c", 3), entry("d", 6)}
-	// Everything fits: the whole list, no notes.
-	lines, from, shown := layoutBuildings("head", entries, 40, 19, 2)
-	if len(lines) != 19 || from != 0 || shown != 4 || strings.Contains(strings.Join(lines, "\n"), "more") {
-		t.Errorf("a box with room for it all: %d lines from entry %d, %d shown: %v", len(lines), from, shown, lines)
-	}
-	// One row short: d does not fit whole, so it is left out and counted.
-	lines, from, shown = layoutBuildings("head", entries, 40, 18, 0)
-	if from != 0 || shown != 3 || len(lines) != 14 || untag(lines[len(lines)-1]) != " ↓ 1 more below: PgDn (⌥↓)" {
-		t.Errorf("a box one row short: from %d, %d shown, %v", from, shown, lines)
-	}
-	// The next page: what is above, then d whole.
-	lines, from, shown = layoutBuildings("head", entries, 40, 18, 3)
-	if from != 3 || shown != 1 || untag(lines[1]) != " ↑ 3 more above: PgUp (⌥↑)" || len(lines) != 8 {
-		t.Errorf("the last page: from %d, %d shown, %v", from, shown, lines)
-	}
-	// A middle page says both.
-	lines, _, shown = layoutBuildings("head", entries, 40, 9, 1)
-	if shown != 1 || untag(lines[1]) != " ↑ 1 more above: PgUp (⌥↑)" || untag(lines[len(lines)-1]) != " ↓ 2 more below: PgDn (⌥↓)" {
-		t.Errorf("a middle page: %d shown, %v", shown, lines)
-	}
-	// No box ever holds more rows than it has.
-	for h := 1; h < 22; h++ {
-		for first := 0; first < len(entries); first++ {
-			if lines, _, _ := layoutBuildings("head", entries, 40, h, first); len(lines) > max(h, 1) {
-				t.Errorf("a %d-row box from entry %d was given %d lines", h, first, len(lines))
-			}
-		}
-	}
-}
-
-// The wheel over the Buildings list moves it an entry at a time, down for a
-// turn toward the player, and stops at either end.
-func TestTheWheelMovesTheBuildingsList(t *testing.T) {
-	d, pages := playtestTown(t)
-	d.runForTest("minimap off")
-	d.refresh()
-	st := newStage(pages, playtestCols, playtestRows)
-	x, y, bw, _ := d.economyTab.buildingTV.GetInnerRect()
-	_, entries := buildingEntries(d.economyTab.state, bw)
-	wheel := func(rows int) bool {
-		moved := st.mouse(kit.Mouse{Kind: kit.MouseWheel, X: x + 2, Y: y + 2, Wheel: rows})
-		st.paint()
-		return moved
-	}
-	st.mouse(kit.Mouse{Kind: kit.MouseMove, X: x + 2, Y: y + 2}) // the pointer arrives: not a turn of the wheel
-	if wheel(-1) || d.economyTab.bldFirst != 0 {
-		t.Errorf("a turn up at the top moved the list to entry %d", d.economyTab.bldFirst)
-	}
-	if !wheel(3) || d.economyTab.bldFirst != 1 {
-		t.Errorf("a turn down left the list at entry %d, want 1 (one entry a turn, however far)", d.economyTab.bldFirst)
-	}
-	if !wheel(-1) || d.economyTab.bldFirst != 0 {
-		t.Errorf("a turn back up left the list at entry %d, want 0", d.economyTab.bldFirst)
-	}
-	for i := 0; i < 2*len(entries); i++ {
-		wheel(1)
-	}
-	if got := d.economyTab.bldFirst + d.economyTab.bldShown; got != len(entries) || d.economyTab.bldFirst == 0 {
-		t.Errorf("turning down to the end shows entries %d to %d of %d", d.economyTab.bldFirst, got, len(entries))
-	}
-	if wheel(1) {
-		t.Error("a turn down at the end still moved the list")
 	}
 }

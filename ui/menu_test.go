@@ -252,19 +252,13 @@ func checkMenuPage(t *testing.T, where string, sc *menuScene, v *menuView, town 
 	// The entries: each on its row, marked when selected, its key at the
 	// end of the row, and the Continue entry's line under it.
 	row := L.my
-	for i, it := range v.items {
+	for _, it := range v.items {
 		left := "  " + it.label
-		if i == v.sel {
-			left = "▸ " + it.label
-		}
 		if !rowHas(g, L.mx, row, left) {
 			t.Errorf("%s: row %d should hold %q, holds %q", where, row, left, strings.TrimSpace(g.row(row)))
 		}
-		keyAt := L.mx + L.mw - 1
-		if !L.forge {
-			keyAt = L.mx + L.mw - 2
-		}
-		if !rowHas(g, keyAt, row, string(it.key)) {
+		keyAt := L.mx + L.mw - menuCapW
+		if !rowHas(g, keyAt, row, " "+strings.ToUpper(string(it.key))+" ") {
 			t.Errorf("%s: the key of %q is not at column %d of row %d: %q", where, it.label, keyAt, row, strings.TrimSpace(g.row(row)))
 		}
 		if it.id == miBadges && !strings.Contains(g.row(row), it.extras[len(it.extras)-1]) {
@@ -436,11 +430,8 @@ func TestMenuPagesFitWhileMoving(t *testing.T) {
 					t.Fatalf("%s: the strike threw %d sparks", where, len(sc.sparks.a))
 				}
 				row := sc.L.my
-				for i, it := range v.items {
+				for _, it := range v.items {
 					left := "  " + it.label
-					if i == v.sel {
-						left = "▸ " + it.label
-					}
 					if !rowHas(g, sc.L.mx, row, left) {
 						t.Fatalf("%s: row %d should hold %q under the sparks, holds %q", where, row, left, strings.TrimSpace(g.row(row)))
 					}

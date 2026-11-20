@@ -241,9 +241,9 @@ func TestTeachingBonusHasItsOwnLine(t *testing.T) {
 		t.Fatalf("staging: %+v", st.Scholars)
 	}
 	pct := fmt.Sprintf("+%.0f%%", st.Scholars.TeachingBonus*100)
-	stats := statsProvider(st, 120)
-	if want := fmt.Sprintf("[green]%-7s[-] Worker output from teaching", pct); !strings.Contains(stats, want) {
-		t.Errorf("the stats have no teaching line for %s:\n%s", pct, section(t, stats, "Research bonuses", "Resource rates"))
+	stats := statsRowsText(researchRows(st))
+	if want := fmt.Sprintf("%-7s Worker output from teaching", pct); !strings.Contains(stats, want) {
+		t.Errorf("the stats have no teaching line for %s:\n%s", pct, stats)
 	}
 	rates := HandleCommand("rates", ge).Message
 	if want := "Teaching: " + pct + " to what workers make (" + fmt.Sprint(st.Scholars.Total) + " of " + fmt.Sprint(st.Scholars.Total) + " scholars teach)"; !strings.Contains(rates, want) {
@@ -395,18 +395,16 @@ func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 	screens := map[string]string{
 		"research list":   cmdResearchList(ge).Message,
 		"rates":           HandleCommand("rates", ge).Message,
-		"stats":           statsProvider(st, 120),
+		"stats":           statsPageText(st, partRun, 120),
 		"activity":        logsProvider(st, 100),
 		"buildings":       buildingsProvider(st, 120),
 		"build list":      cmdBuild(nil, ge).Message,
 		"scholars":        HandleCommand("scholars", ge).Message,
 		"research cancel": usageFor("research cancel"),
-		"history labels":  historyProvider(ge)(st, 100),
 		"economy buildings": func() string {
-			_, e := buildingEntries(st, 60)
 			var sb strings.Builder
-			for _, x := range e {
-				sb.WriteString(strings.Join(x, "\n"))
+			for _, c := range buildCards(st, buyMax) {
+				fmt.Fprintln(&sb, c.name, c.out, c.reason, c.wait, c.price)
 			}
 			return sb.String()
 		}(),
@@ -468,7 +466,7 @@ func TestSuggestResearchGameAware(t *testing.T) {
 
 // A wonder's work for the scholars reads as what it is, not as a bare number.
 func TestWonderResearchEffectIsNotANumber(t *testing.T) {
-	if got := formatTechEffect(config.Effect{Type: "research", Value: 0.05}); got != "speeds research" {
+	if got := formatTechEffect(config.Effect{Type: "research", Value: 0.05}, 1000); got != "speeds research" {
 		t.Errorf("a wonder's research effect reads %q", got)
 	}
 	st := scholarGame(t).GetState()
@@ -482,14 +480,14 @@ func TestWonderResearchEffectIsNotANumber(t *testing.T) {
 // An active Enlightenment boon reads as the scholars' work, not as a bonus to
 // a resource that no longer exists.
 func TestEnlightenmentLineNamesScholarOutput(t *testing.T) {
-	plain, _ := effectMagnitude(game.EventEffectInfo{Type: "knowledge_rate", Target: "knowledge", Value: 0.2})
+	plain, _ := effectMagnitude(game.EventEffectInfo{Type: "knowledge_rate", Target: "knowledge", Value: 0.2}, 1000)
 	if plain != "+20% scholar output" {
 		t.Errorf("the active Enlightenment reads %q", plain)
 	}
 }
 
-// In the Buildings panel a knowledge building past its cap shows no MAX and no
-// limit line, only the half-rate words; a building with a real limit still does.
+// In the Buildings box a knowledge building past its cap says nothing of a
+// limit; a building with a real limit still does.
 func TestKnowledgeBuildingPastItsCapShowsNoLimitInThePanel(t *testing.T) {
 	restoreForge(t)
 	const lib = "monastery_library"
@@ -505,34 +503,22 @@ func TestKnowledgeBuildingPastItsCapShowsNoLimitInThePanel(t *testing.T) {
 	}
 	for _, sz := range wallSizes {
 		w, h := sz[0], sz[1]
-		maxes, limits, halves, shown := 0, 0, 0, false
+		limits, shown := 0, false
 		for _, rows := range panelPages(t, d, pages, w, h) {
 			for _, r := range rows {
-				if strings.Contains(r, " "+name+" x"+fmt.Sprint(copies)) {
+				if strings.Contains(r, name+" x"+fmt.Sprint(copies)) {
 					shown = true
-					if strings.Contains(r, "MAX") {
-						t.Errorf("%dx%d: the %s shows MAX: %q", w, h, name, r)
-					}
 				}
-				if strings.Contains(r, "MAX") {
-					maxes++
-				}
-				if strings.Contains(r, "Building limit reached.") {
+				if strings.Contains(r, txtLimit.String()) {
 					limits++
 				}
-			}
-			if strings.Contains(flat(rows), "each researches at half rate") {
-				halves++
 			}
 		}
 		if !shown {
 			t.Errorf("%dx%d: the %s is on no page of the panel", w, h, name)
 		}
-		if halves == 0 {
-			t.Errorf("%dx%d: no page says a copy past the cap researches at half rate", w, h)
-		}
-		if maxes != 1 || limits != 1 {
-			t.Errorf("%dx%d: the monument at its limit shows MAX %d times and its limit line %d times, want once each", w, h, maxes, limits)
+		if limits != 1 {
+			t.Errorf("%dx%d: the monument at its limit shows its limit line %d times, want once", w, h, limits)
 		}
 	}
 }

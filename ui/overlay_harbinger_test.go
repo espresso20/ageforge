@@ -32,7 +32,7 @@ func harbDashboard(t *testing.T, age string) (*Dashboard, *game.GameEngine, *nat
 
 func TestHarbingerPanelWithNoHarbinger(t *testing.T) {
 	engine := game.NewGameEngine() // Primitive Age: nothing can strike in the Stone Era
-	txt := untag(harbingerPanelText(engine.GetState(), "", false, false))
+	txt := untag(harbingerPanelText(engine.GetState(), "", false))
 	wantAll(t, "panel", txt, "No harbinger is here", "A harbinger comes only when doom is on its way", "No catastrophe can strike in the Stone Era")
 	if strings.Contains(txt, "%") {
 		t.Errorf("pre-industrial outlook must not print a figure:\n%s", txt)
@@ -43,7 +43,7 @@ func TestHarbingerPanelWithNoHarbinger(t *testing.T) {
 	iron := game.NewGameEngine()
 	must(t, iron.SummonHarbingerForTest("classical_age"))
 	must(t, iron.ForceQuietFateForTest("iron_era"))
-	txt = untag(harbingerPanelText(iron.GetState(), "", false, false))
+	txt = untag(harbingerPanelText(iron.GetState(), "", false))
 	if !strings.Contains(txt, "No harbinger has come: the Iron Era is quiet, for now.") {
 		t.Errorf("quiet era panel:\n%s", txt)
 	}
@@ -77,7 +77,7 @@ func TestNoScreenLeaksTheFate(t *testing.T) {
 		d.refresh()
 		m := mapmodel.NewBuilder(nil).Build(&st, nil)
 		return view{
-			panel:    harbingerPanelText(st, "", false, false),
+			panel:    harbingerPanelText(st, "", false),
 			cmd:      HandleCommand("catastrophe", engine).Message,
 			epoch:    epochProvider(st, 120),
 			status:   d.headerTV.GetText(false),
@@ -121,14 +121,14 @@ func TestHarbingerPanelPreIndustrial(t *testing.T) {
 	if h == nil || h.Numeric || h.When != game.WhenThisAge {
 		t.Fatalf("classical age harbinger = %+v", h)
 	}
-	txt := untag(harbingerPanelText(st, "", false, false))
+	txt := untag(harbingerPanelText(st, "", false))
 	assertNoLaterEras(t, txt, "iron_era")
 	wantAll(t, "panel", txt,
 		"The Oracle", h.Description, "Warning of impending doom before this age is out.", "Severity:", "The omens give no figure",
 		"Appease: "+h.AppeaseLabel, "Brace: "+h.BraceLabel, "Invite: "+h.InviteLabel,
 		"Level 0 / 2", "Next level costs:", "20% of buildings fall, 15% of stock is kept", "Next level: 15% fall, 30% kept",
 		"it still comes when it was fated to",
-		" A ", " B ", " I ", "Esc",
+		" A ", " B ", " I ",
 	)
 	wantAll(t, "panel", txt, h.Lines...)
 	if strings.Contains(txt, "Published odds") {
@@ -138,7 +138,7 @@ func TestHarbingerPanelPreIndustrial(t *testing.T) {
 	// The earliest figures give no timing; in the Stone Era, where nothing
 	// can strike, a harbinger is a false prophet with nothing to answer.
 	_, stone, _ := harbDashboard(t, "bronze_age")
-	txt = untag(harbingerPanelText(stone.GetState(), "", false, false))
+	txt = untag(harbingerPanelText(stone.GetState(), "", false))
 	wantAll(t, "stone era panel", txt, "Warning of impending doom. The Soothsayer gives no word of when.", "Unavailable: no catastrophe can strike in the Stone Era.")
 	assertNoLaterEras(t, txt, "stone_era")
 }
@@ -149,7 +149,7 @@ func TestHarbingerPanelPostIndustrial(t *testing.T) {
 	if st.Harbinger == nil || !st.Harbinger.Numeric {
 		t.Fatalf("industrial age harbinger = %+v", st.Harbinger)
 	}
-	txt := untag(harbingerPanelText(st, "", false, false))
+	txt := untag(harbingerPanelText(st, "", false))
 	want := "Published odds: " + harbingerPercent(st.Harbinger.Probability)
 	if !strings.Contains(txt, want) {
 		t.Errorf("panel missing %q:\n%s", want, txt)
@@ -157,7 +157,7 @@ func TestHarbingerPanelPostIndustrial(t *testing.T) {
 }
 
 // The panel's keys run the actions against the engine, report back in the
-// panel, and Invite needs a second press.
+// panel, and Invite asks first.
 func TestHarbingerPanelKeys(t *testing.T) {
 	d, engine, pages := harbDashboard(t, "iron_age")
 	d.harbPanel.reset()
@@ -190,20 +190,21 @@ func TestHarbingerPanelKeys(t *testing.T) {
 		t.Errorf("panel did not show the appease refusal %q (price %s) without a storage clause", want, textfmt.Number(need))
 	}
 
-	// Invite: first press only arms it.
+	// Invite: the key asks and runs nothing; the answer is the dialog's.
 	press('i')
-	if engine.GetState().Harbinger.Invited || !d.harbPanel.inviteArmed {
-		t.Fatal("a single I press must not invite")
+	if engine.GetState().Harbinger.Invited {
+		t.Fatal("an I press must not invite")
 	}
-	// Any other action disarms it.
-	press('b')
-	if d.harbPanel.inviteArmed {
-		t.Error("another key should disarm the invite")
+	if name, _ := pages.GetFrontPage(); name != "ask_line" {
+		t.Fatalf("the front page is %q, not the question", name)
 	}
-	press('i')
-	press('I')
+	_, item := pages.GetFrontPage()
+	dlg := item.(*nativeDialog)
+	d.app.SetFocus(dlg)
+	keyTo(dlg, tk(kit.KeyTab, 0, 0))
+	keyTo(dlg, tk(kit.KeyEnter, 0, 0))
 	if st := engine.GetState(); !st.Harbinger.Invited || st.Harbinger.AppeaseBlocked == "" {
-		t.Fatalf("invite after two presses: %+v", st.Harbinger)
+		t.Fatalf("invite after the answer: %+v", st.Harbinger)
 	}
 	press('a')
 	if !strings.Contains(d.harbPanel.note, "invited") {
@@ -320,7 +321,7 @@ func TestHarbingerHandoffToastAndEarlierFigures(t *testing.T) {
 	}
 	st := engine.GetState()
 	st.Harbinger.Earlier = []string{"the Wild Man", "the Hermit"}
-	txt := untag(harbingerPanelText(st, "", false, false))
+	txt := untag(harbingerPanelText(st, "", false))
 	if !strings.Contains(txt, "Took up the warning from The Wild Man, then The Hermit. Your answers stand.") {
 		t.Errorf("panel does not name the earlier figures:\n%s", txt)
 	}
@@ -341,7 +342,7 @@ func TestCosmicDoomScreens(t *testing.T) {
 	if h == nil || h.LastPassage || !h.LastPassageWaiting {
 		t.Fatalf("doom's harbinger = %+v", h)
 	}
-	panel := untag(harbingerPanelText(st, "", false, false))
+	panel := untag(harbingerPanelText(st, "", false))
 	if !strings.Contains(panel, "The Last Passage still waits at your next prestige.") {
 		t.Errorf("panel:\n%s", panel)
 	}

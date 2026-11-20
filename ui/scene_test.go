@@ -52,11 +52,23 @@ func TestTradeRoadsShowEveryRoute(t *testing.T) {
 		want = append(want, strings.Fields(n.Label + n.Value)[1])
 	}
 	picked, _ := pg.card(2)
-	want = append(want, " Enter  "+picked.Action+" ", picked.Command)
+	want = append(want, " Enter ", picked.Action)
 	for _, s := range want {
 		if !strings.Contains(text, s) {
 			t.Errorf("the map does not show %q:\n%s", s, text)
 		}
+	}
+	if text := g.String(); strings.Contains(text, picked.Command) {
+		t.Errorf("the map prints the command the button carries:\n%s", text)
+	}
+	found := false
+	for _, k := range g.keys {
+		if k.cmd == picked.Command && k.kind == keyPrimary && k.r.Dy() == actionRows {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("no action button carries %q", picked.Command)
 	}
 	for w := 60; w <= 200; w += 11 {
 		for h := 14; h <= 50; h += 4 {

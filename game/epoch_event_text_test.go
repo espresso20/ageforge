@@ -104,12 +104,12 @@ func TestEpochEventTextMatchesEffects(t *testing.T) {
 					}
 					line := ""
 					for _, entry := range ge.log[logged:] {
-						if strings.Contains(strings.ToLower(entry.Message), strings.ToLower(ResourceName(e.Target))+" "+textfmt.Rate(e.Value)) {
+						if strings.Contains(strings.ToLower(entry.Message), strings.ToLower(ResourceName(e.Target))+" "+textfmt.RateText(e.Value/ge.tickIntervalLocked().Seconds())) {
 							line = entry.Message
 						}
 					}
 					if line == "" {
-						t.Errorf("%s: no log line states the amount, %s %s: %v", ev.Key, ResourceName(e.Target), textfmt.Rate(e.Value), ge.log[logged:])
+						t.Errorf("%s: no log line states the amount, %s %s: %v", ev.Key, ResourceName(e.Target), textfmt.RateText(e.Value/ge.tickIntervalLocked().Seconds()), ge.log[logged:])
 					}
 				case e.Type == "production_all":
 					need("all production +" + config.FormatPercent(e.Value))
@@ -191,7 +191,7 @@ func TestEpochAndAwakeningLogsDoNotRepeatText(t *testing.T) {
 	}
 	for _, key := range []string{"trade_winds", "the_famine", "resource_drought"} {
 		got := apply(key)
-		if len(got) != 2 || !strings.Contains(got[len(got)-1].Message, "/tick for ") {
+		if len(got) != 2 || !strings.Contains(got[len(got)-1].Message, "/s for ") {
 			t.Errorf("%s should add one line with the amount its rate comes to; got %v", key, got)
 		}
 	}

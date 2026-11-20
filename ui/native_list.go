@@ -35,9 +35,12 @@ type nativeListItem struct {
 // selection inverted, and a move past either end coming round.
 func newNativeList() *nativeList {
 	l := &nativeList{list: kit.NewList(), wrap: true}
-	l.list.Bar, l.list.ClickChooses, l.list.TextOnly = false, true, true
+	l.list.Bar, l.list.ClickChooses, l.list.TextOnly = false, true, false
 	l.list.Style = kit.Style{Fg: kit.Role(theme.RoleText), Bg: kit.Role(theme.RoleBackground)}
 	l.list.SelectedStyle = kit.Style{Fg: kit.Role(theme.RoleBackground), Bg: kit.Role(theme.RoleText)}
+	l.list.AfterRow = func(p *kit.Painter, row image.Rectangle, _ int, selected, hover bool) {
+		lightRow(p, row, selected, hover, row.Max.X-2, false)
+	}
 	l.list.OnMove = func(i int) { l.fire(l.changed, i) }
 	l.list.OnChoose = l.choose
 	l.box = &kit.Panel{Child: l.list, Ground: kit.Role(theme.RoleBackground), TitleAlign: kit.AlignCenter}
@@ -80,7 +83,7 @@ func (l *nativeList) choose(i int) {
 func (l *nativeList) sync() {
 	rows := make([]string, len(l.items))
 	for i, it := range l.items {
-		rows[i] = it.main
+		rows[i] = " " + it.main // the first column is the picked row's bar
 	}
 	l.list.SetItems(rows)
 }

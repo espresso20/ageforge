@@ -353,8 +353,7 @@ func TestWar_TributeEndsWar(t *testing.T) {
 	fs := &FactionState{Discovered: true, Status: "embargo", Opinion: -90, AtWar: true, Provocations: 2}
 	dm.factions[key] = fs
 
-	goldCost := 300.0 * float64(def.Strength)
-	cultureCost := 50.0 * float64(def.Strength)
+	goldCost, cultureCost := TributePrice(def)
 	if _, _, err := dm.SendTribute(key, goldCost, cultureCost); err != nil {
 		t.Fatalf("SendTribute returned error: %v", err)
 	}
@@ -367,6 +366,29 @@ func TestWar_TributeEndsWar(t *testing.T) {
 	// Tribute on a civ not at war must error.
 	if _, _, err := dm.SendTribute(key, goldCost, cultureCost); err == nil {
 		t.Error("tribute to a civ not at war should error")
+	}
+}
+
+// TestTributePrice_MatchesSendTribute confirms the price function is the one
+// SendTribute charges: one gold short is refused, the price is paid in full.
+func TestTributePrice_MatchesSendTribute(t *testing.T) {
+	key := "ironhold_clans"
+	def := config.FactionByKey()[key]
+	gold, culture := TributePrice(def)
+	if gold <= 0 || culture <= 0 {
+		t.Fatalf("price = %v gold, %v culture, want both positive", gold, culture)
+	}
+	dm := NewDiplomacyManager()
+	dm.factions[key] = &FactionState{Discovered: true, Status: "embargo", Opinion: -90, AtWar: true}
+	if _, _, err := dm.SendTribute(key, gold-1, culture); err == nil {
+		t.Error("one gold short was accepted")
+	}
+	if _, _, err := dm.SendTribute(key, gold, culture-1); err == nil {
+		t.Error("one culture short was accepted")
+	}
+	g, c, err := dm.SendTribute(key, gold, culture)
+	if err != nil || g != gold || c != culture {
+		t.Errorf("SendTribute at the price = %v, %v, %v; want %v, %v, nil", g, c, err, gold, culture)
 	}
 }
 

@@ -9,16 +9,25 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/kit"
 )
 
 // renderCurrentWonderSummary returns a short text block for the current-age wonder,
 // prepended at the top of the wonders overlay so the player can see their active
 // wonder status without scrolling.
 func renderCurrentWonderSummary(state game.GameState) string {
+	return wonderSummary(state).text
+}
+
+// wonderSummary is the summary with what its buttons need: where the bank's
+// heading and the rows kept for Build begin in the text, and each button's
+// command and whether it is off.
+func wonderSummary(state game.GameState) wonderBlock {
 	var sb strings.Builder
+	blk := wonderBlock{bank: -1, build: -1}
 	current := currentWonder(state)
 	if current == nil {
-		return ""
+		return blk
 	}
 
 	bs, hasBs := state.Buildings[current.key]
@@ -33,7 +42,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 
 	// Effects
 	for _, eff := range current.def.Effects {
-		fmt.Fprintf(&sb, "   %s%s\n", formatEffect(eff), capTag(state, eff, built, "-"))
+		fmt.Fprintf(&sb, "   %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, built, "-"))
 	}
 
 	// Its keystone tech, and whether it is researched
@@ -43,18 +52,47 @@ func renderCurrentWonderSummary(state game.GameState) string {
 
 	// Bank progress if not built
 	if !built && hasBs {
-		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n"))
-		for _, r := range bankRows(current.def.BaseCost, bs.WonderBank) {
-			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", r.color, game.ResourceName(r.res), wonderProgressBar(r.share, 8), textfmt.Number(r.banked), textfmt.Number(r.need))
+		blk.bank = sb.Len() + 1
+		head := rowid.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n")
+		blk.bankCol = runeLen(kit.Strip(strings.Trim(head, "\n"))) + 2
+		fmt.Fprint(&sb, head)
+		// The bars share a column: the longest name sets it.
+		rows, nameW := bankRows(current.def.BaseCost, bs.WonderBank), 0
+		for _, r := range rows {
+			nameW = max(nameW, runeLen(game.ResourceName(r.res)))
 		}
-		if bs.WonderBankFull {
+		for _, r := range rows {
+			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", r.color, padRight(game.ResourceName(r.res), nameW), wonderProgressBar(r.share, 8), textfmt.Number(r.banked), textfmt.Number(r.need))
+		}
+		switch {
+		case bs.WonderBankFull && bs.CanBuild:
+			// The Build button carries the command this line named.
+		case bs.WonderBankFull:
 			fmt.Fprintf(&sb, "   %s\n", wonderBuildLine(state, current.key))
-		} else {
+		default:
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", wonderCollectHint())
 		}
+		blk.build = sb.Len()
+		sb.WriteString(strings.Repeat("\n", actionRows))
+		blk.buildCmd = buildLine(current.key)
+		blk.buildOff = !bs.CanBuild || wonderQueued(state, current.key)
+		blk.collectCmd = wonderCollectCmd
+		blk.collectOff = !wonderBankable(state, current.def.BaseCost, bs)
 	}
 	sb.WriteString("\n")
-	return sb.String()
+	blk.text = sb.String()
+	return blk
+}
+
+// wonderQueued says whether the wonder is already under construction: its
+// bank stays full while it builds, so Build waits until it stands.
+func wonderQueued(state game.GameState, key string) bool {
+	for _, q := range state.BuildQueue {
+		if q.Key == key {
+			return true
+		}
+	}
+	return false
 }
 
 // wonderBankPercent returns the floored share of a wonder's price that has
@@ -119,7 +157,7 @@ func wondersProvider(state game.GameState, _ int) string {
 			if len(w.def.Effects) > 0 {
 				sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.03", "   [cyan]Effects:[-]\n"))
 				for _, eff := range w.def.Effects {
-					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff), capTag(state, eff, true, "-"))
+					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, true, "-"))
 				}
 			}
 		} else if unlocked {
@@ -154,7 +192,7 @@ func wondersProvider(state game.GameState, _ int) string {
 			if len(w.def.Effects) > 0 {
 				sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.08", "   [cyan]Effects when built:[-]\n"))
 				for _, eff := range w.def.Effects {
-					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff), capTag(state, eff, false, "-"))
+					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff, state.TickIntervalMs), capTag(state, eff, false, "-"))
 				}
 			}
 		} else {

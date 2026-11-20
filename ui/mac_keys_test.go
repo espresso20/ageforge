@@ -54,11 +54,11 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 	}
 	d := h.a.dashboard
 
-	h.submit("badges")
-	h.waitFor("the badge case", 5*time.Second, func() bool {
+	h.submit("badges all")
+	h.waitFor("the badge list", 5*time.Second, func() bool {
 		var ok bool
 		h.onUI(func() {
-			ok = d.overlayMgr.ActiveName() == "badges" && d.badgePanel.model != nil && len(d.badgePanel.model.items) > 1
+			ok = d.overlayMgr.ActiveName() == "badges" && d.badgePanel.model != nil && len(d.badgePanel.rows) > 1
 		})
 		return ok
 	})
@@ -69,11 +69,11 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 	}
 	var first, last string
 	h.onUI(func() {
-		items := d.badgePanel.model.items
-		first, last = items[0].id, items[len(items)-1].id
+		rows := d.badgePanel.rows
+		first, last = rows[0].Key, rows[len(rows)-1].Key
 	})
 	if first == last {
-		t.Fatal("the badge case holds one badge")
+		t.Fatal("the badge list holds one badge")
 	}
 	alt := kit.ModAlt
 

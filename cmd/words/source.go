@@ -46,6 +46,7 @@ var notScanned = map[string]string{
 	"cmd/bannerpng":         "README banner generator, no player text",
 	"smoke":                 "the smoke suite",
 	"window":                "the window host: fonts, keys and drawing, no player text (the font row is in ui)",
+	"window/fonts":          "the bundled font files, no player text",
 	"window/mapview":        "the window map renderer: pixels from the world model, no player text",
 	"window/kit":            "the UI kit: widgets that paint cells, no player text (screens in ui give it their words)",
 	"world":                 "the space model for the map: catalogues and internal keys, no player text (the ui reads the game's own words)",

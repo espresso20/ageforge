@@ -12,14 +12,15 @@ import (
 )
 
 // formatTechEffect names a config.Effect in glossary words: "+10% all
-// production", "+0.5 food/tick",
+// production", "+0.25 food/s",
 // "+10 housing", "unlocks Lumber Mill".
-func formatTechEffect(eff config.Effect) string {
+func formatTechEffect(eff config.Effect, tickMs int) string {
 	switch eff.Type {
 	case "bonus":
 		return textfmt.SignedPercent(eff.Value) + " " + game.EffectTargetName(eff.Target)
 	case "production":
-		return rateNumber(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
+		num, unit := rateFigure(eff.Value, tickMs)
+		return num + " " + game.ResourceName(eff.Target) + unit
 	case "research":
 		// The scholars' work is a time on a tech, never a number of its own
 		// (config.buildingEffectParts says it the same way).
@@ -34,17 +35,6 @@ func formatTechEffect(eff config.Effect) string {
 	default:
 		return game.EffectTargetName(eff.Target) + " " + textfmt.Signed(eff.Value)
 	}
-}
-
-// rateNumber prints a signed per-tick amount with the decimals a small rate
-// needs ("+0.05", "+0.5", "+2.5", "-3"): textfmt.RateValue without its
-// trailing zeros. textfmt.Signed would round 0.05 up to "0.1".
-func rateNumber(v float64) string {
-	s := textfmt.RateValue(v)
-	if strings.Contains(s, ".") && !strings.ContainsAny(s, "KMBTQ") {
-		s = strings.TrimRight(strings.TrimRight(s, "0"), ".")
-	}
-	return s
 }
 
 // researchSummaryLines is the Stats panel's Research section: what research
@@ -128,7 +118,8 @@ func researchBonusLines(state game.GameState) string {
 	var flat []string
 	for _, res := range sortedKeysOf(rs.Flat) {
 		if v := rs.Flat[res]; v != 0 {
-			flat = append(flat, rateNumber(v)+" "+game.ResourceName(res)+"/tick")
+			num, unit := rateFigure(v, state.TickIntervalMs)
+			flat = append(flat, num+" "+game.ResourceName(res)+unit)
 		}
 	}
 	if len(flat) > 0 {

@@ -48,6 +48,8 @@ The Wonders panel (`wonders`) opens on this age's wonder: its effects, its keyst
 
 The share is weighted by what each resource is worth in the age's prices, so a resource named in huge amounts does not count for more than a dear one. The header, the Advance panel and the [Map](map.md) show the same share. `↑` `↓` scroll the panel, `PgUp` `PgDn` page through it, and `Esc` closes it. The panel has letter keys of its own, so it keeps the keyboard: press `Esc` before you type a command. Once you have built a wonder, the panel's first lines say that `G` opens the gallery.
 
+The panel also has two buttons for this age's wonder. **Collect**, beside the bank heading (key `C`), runs `wonder collect all`. **Build** (key `B`) runs `build` for the wonder. Each is drawn dimmed, and does nothing, while its command would do nothing: Collect when the bank is full or you hold none of what it needs, Build until the bank is full and the keystone is researched.
+
 ### The gallery
 
 Press `G` (or `Tab`) in the Wonders panel for the gallery: a plain list of every wonder you have built, oldest first. Each wonder has its name, its age, the year that age began and its description. `↑` `↓` and `PgUp` `PgDn` scroll the list. `G` or `Tab` goes back to the wonders, and so does `Esc` (a second `Esc` closes the panel). A wonder you have not built is not in the gallery.

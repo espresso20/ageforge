@@ -141,7 +141,10 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspect
 		staff += rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.06", ", short of hands")
 	}
 	add(b.Capacity > 0, staff)
-	add(b.Rate > 0 && b.RateName != "", "+"+shortRate(b.Rate)+" "+strings.ToLower(b.RateName)+"/s")
+	if b.Rate > 0 && b.RateName != "" {
+		v, unit := textfmt.RateUnit(b.Rate)
+		add(true, textfmt.RateNumber(v)+" "+strings.ToLower(b.RateName)+unit)
+	}
 	if upgrade := m.Catalog.Defs[b.Upgrade]; upgrade != nil {
 		add(true, rowid.Line("ui.mapstyle.roguelike.inspect.describeTile.07", "upgrades to ")+upgrade.Name)
 	} else {
@@ -256,28 +259,4 @@ func describeTerrain(t mapmodel.Terrain, m *mapmodel.Model) Inspection {
 		in.Lines = append(in.Lines, note)
 	}
 	return in
-}
-
-// rateUnits are the suffixes of a rate, largest first.
-var rateUnits = []struct {
-	size   float64
-	suffix string
-}{{1e12, "T"}, {1e9, "B"}, {1e6, "M"}, {1e3, "k"}}
-
-// shortRate renders a rate: 3.2, 748, 12.4k, 3.1M.
-func shortRate(f float64) string {
-	if f >= 999.5e12 {
-		return textfmt.Number(f) // past the T of this table: the game's own units
-	}
-	suffix := ""
-	for _, unit := range rateUnits {
-		if f >= unit.size {
-			f, suffix = f/unit.size, unit.suffix
-			break
-		}
-	}
-	if f < 10 || suffix != "" && f < 100 {
-		return strconv.FormatFloat(f, 'f', 1, 64) + suffix
-	}
-	return strconv.Itoa(int(f+0.5)) + suffix
 }

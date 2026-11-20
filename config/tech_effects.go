@@ -217,7 +217,7 @@ func (e TechEffect) Text() string {
 	case EffectAllOutput:
 		return signed(e.Value, pct) + " all production"
 	case EffectFlatOutput:
-		return signed(e.Value, FormatAmount(e.Value)) + " " + ResourceLabel(e.Target) + "/tick"
+		return rateText(e.Value, ResourceLabel(e.Target))
 	case EffectHousing:
 		return signed(e.Value, pct) + " housing"
 	case EffectBuildCost:

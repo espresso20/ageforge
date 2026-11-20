@@ -37,8 +37,22 @@ type deckCard struct {
 	// runs; Action is the word on the button. A card with no command only
 	// shows.
 	Action, Command string
+	// Danger draws the button as the one that ends something.
+	Danger bool
 	// Quiet draws the title dim: a card that is done with, or out of reach.
 	Quiet bool
+	// Chips is a row of small buttons under the card's lines, wrapped to the
+	// card's width, each with a command of its own.
+	Chips []deckChip
+	// Stop marks a place a scene draws off its roads: not one of the routes.
+	Stop bool
+}
+
+// deckChip is a small button on a card: the word on it, the command a click
+// runs, and whether it is off (drawn, never run).
+type deckChip struct {
+	Word, Command string
+	Off           bool
 }
 
 // deckSection is a named run of cards.
@@ -74,10 +88,8 @@ const (
 	deckChrome = 4
 )
 
-const (
-	hitDeckCard = iota // a card
-	hitDeckAct         // a card's button
-)
+// hitDeckCard is a card, for the grid's hits.
+const hitDeckCard = 0
 
 // deckLayout is where a drawn deck's parts are.
 type deckLayout struct {
@@ -140,21 +152,56 @@ func deckWrap(s string, w int) []string {
 	return []string{string(rs[:cut]), fitText(string(rest), w)}
 }
 
-// height is the rows the card takes cw wide, its edges included.
-func (c *deckCard) height(cw int) int {
+// height is the rows the card takes cw wide, its edges included: the picked
+// card's button is three rows, another card's chip one.
+func (c *deckCard) height(cw int, picked bool) int {
 	h := 2 + len(c.Lines)
 	if c.Desc != "" {
 		h += len(deckWrap(c.Desc, cw-4))
 	}
-	for _, on := range []bool{c.Meter, c.Command != ""} {
-		if on {
-			h++
+	if c.Meter {
+		h++
+	}
+	if c.Command != "" {
+		h++
+		if picked {
+			h += actionRows - 1
 		}
 	}
 	if c.Why != "" {
 		h += len(deckWrap(c.Why, cw-4))
 	}
-	return h
+	_, rows := layChips(c.Chips, cw-4)
+	return h + rows
+}
+
+// layChips is where each chip goes in a block w cells wide, as an offset
+// from its corner, and the rows the block takes: a chip is its word with a
+// space either side, one cell apart, wrapping to the next row at the edge.
+func layChips(chips []deckChip, w int) (at []image.Point, rows int) {
+	x, y := 0, 0
+	for _, c := range chips {
+		cw := min(runeLen(c.Word), max(w-2, 1)) + 2
+		if x > 0 && x+cw > w {
+			x, y = 0, y+1
+		}
+		at = append(at, image.Pt(x, y))
+		x += cw + 1
+	}
+	if len(chips) > 0 {
+		rows = y + 1
+	}
+	return at, rows
+}
+
+// deckChips draws chips in a block w cells wide with its corner at (x, y)
+// and returns the rows it took.
+func (g *xgrid) deckChips(x, y, w int, chips []deckChip) int {
+	at, rows := layChips(chips, w)
+	for i, c := range chips {
+		g.chip(x+at[i].X, y+at[i].Y, fitText(c.Word, max(w-2, 1)), keyAccent, c.Command, "", "", c.Off)
+	}
+	return rows
 }
 
 // deckColumns is how many cards go side by side in inner cells, and how wide
@@ -168,8 +215,9 @@ func deckColumns(inner, minW int) (cols, cw int) {
 }
 
 // layoutDeck works out where each card goes in a content inner cells wide,
-// and how many rows the content has.
-func layoutDeck(pg *deckPage, inner int) (cards []image.Rectangle, total int) {
+// with card sel picked, and how many rows the content has.
+func layoutDeck(pg *deckPage, inner, sel int) (cards []image.Rectangle, total int) {
+	n := 0
 	y := 0
 	if len(pg.Head) > 0 {
 		y += 2
@@ -184,13 +232,14 @@ func layoutDeck(pg *deckPage, inner int) (cards []image.Rectangle, total int) {
 			row := s.Cards[i:min(i+cols, len(s.Cards))]
 			ch := 0
 			for j := range row {
-				ch = max(ch, row[j].height(cw))
+				ch = max(ch, row[j].height(cw, n+i+j == sel))
 			}
 			for j := range row {
 				cards = append(cards, image.Rect(j*(cw+1), y, j*(cw+1)+cw, y+ch))
 			}
 			y += ch
 		}
+		n += len(s.Cards)
 		y++
 	}
 	return cards, max(y-1, 0)
@@ -208,7 +257,7 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deck
 	if inner < 12 || viewH < 3 {
 		return g, deckLayout{}
 	}
-	cards, total := layoutDeck(pg, inner)
+	cards, total := layoutDeck(pg, inner, sel)
 	lay := deckLayout{cards: cards, total: total, viewH: viewH}
 	scroll = clamp(scroll, 0, max(0, total-viewH))
 
@@ -265,9 +314,16 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deck
 			g.hits = append(g.hits, xhit{ht.id, ht.n, r})
 		}
 	}
+	shift := image.Pt(2, 1-scroll)
 	for _, k := range tall.keys {
-		if r := k.r.Add(image.Pt(2, 1-scroll)).Intersect(view); !r.Empty() {
-			g.keys = append(g.keys, xkey{k.key, r})
+		if r := k.r.Add(shift).Intersect(view); !r.Empty() {
+			// A key cut by the view is only a hit; a whole one keeps its look.
+			whole := k.r.Add(shift).In(view)
+			k.r, k.cap, k.word = r, k.cap.Add(shift), k.word.Add(shift)
+			if !whole && k.kind.action() || !k.cap.In(view) && !k.cap.Empty() {
+				k.cap, k.word = image.Rectangle{}, image.Rectangle{}
+			}
+			g.keys = append(g.keys, k)
 		}
 	}
 	if total > viewH {
@@ -299,8 +355,8 @@ func deckKeys(pg *deckPage, sel int, pages bool) [][2]string {
 }
 
 // drawDeckCard draws card n in r. The picked card has a bright edge and its
-// button shows the Enter key; every card with a command shows the command
-// beside its button, so what a click does is also what to type.
+// button shows the Enter key; every card with a command has a button that
+// carries it (deckAction).
 func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) {
 	x, y, cw := r.Min.X, r.Min.Y, r.Dx()
 	edge, tk := xFaint, xBright
@@ -359,17 +415,31 @@ func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) 
 			y++
 		}
 	}
-	if c.Command == "" {
-		return
+	y += g.deckChips(x+2, y, cw-4, c.Chips)
+	if c.Command != "" {
+		g.deckAction(x+2, y, c, picked, y+actionRows < r.Max.Y)
 	}
-	end, ck := x+2, xFaint
+}
+
+// deckAction draws card c's button at (x, y): the picked card's is the
+// action button, three rows; any other card has a small chip, on the middle
+// row of those three when roomy says the card has them. Either carries the card's command, so a click runs it and the pointer
+// resting on it shows it in the command bar. It returns the rows it takes.
+func (g *xgrid) deckAction(x, y int, c *deckCard, picked, roomy bool) int {
 	if picked {
-		end, ck = g.keyButton(x+2, y, "Enter", c.Action), xDim
-	} else {
-		end = g.put(x+2, y, " "+c.Action+" ", xKeyName)
+		a := actionSpec{kind: keyPrimary, label: c.Action, key: "Enter", cmd: c.Command, sign: signPlay}
+		if c.Danger {
+			a.kind, a.sign = keyDanger, signStop
+		}
+		g.actionButton(x, y, a)
+		return actionRows
 	}
-	g.hit(hitDeckAct, n, x+2, y, end-x-2, 1)
-	g.putFit(end+1, y, x+cw-3-end, c.Command, ck)
+	if roomy { // the row of the picked card's label, when the card has the room
+		y++
+	}
+	end := g.put(x, y, " "+c.Action+" ", xKeyName)
+	g.keys = append(g.keys, xkey{r: image.Rect(x, y, end, y+1), cmd: c.Command, kind: keyPlain})
+	return 1
 }
 
 // step is the card a key moves the pick to from sel: Left and Right to the

@@ -13,13 +13,18 @@ import (
 	"github.com/espresso20/ageforge/rowid"
 )
 
+var (
+	txtRunsCommandBelow = rowid.E("ui.badge_case.drawKeys.15", "runs the command below")
+	txtEscCloses        = rowid.E("ui.badge_case.drawCard.01", " Esc closes ")
+)
+
 // research_tree.go draws the Research panel: the tech tree as a map.
 //
 // Everything here is a pure function of a game snapshot, a size and a view
 // (what is selected, how far the map is scrolled, which zoom). buildTree
 // lays the techs out on a virtual canvas, lanes across and ages down;
 // renderTree cuts the view out of it and adds the bars round it. The panel
-// (research_panel.go) keeps the view and paints the cells in theme colours.
+// (tree_panel.go) keeps the view and paints the cells in theme colours.
 //
 // Nothing below names a lane, an age or a tech: lanes, kinds, emblems,
 // prerequisites and what a tech opens all come from the ruleset, so a
@@ -131,6 +136,8 @@ type treeModel struct {
 	known, inReach, nextAge, later int // counts for the title
 	lines                          map[[2]int]lineCell
 	cardAt                         image.Rectangle // where the card was drawn last, for the mouse
+	// keys is the card's button, drawn last (action_button.go).
+	keys keySet
 }
 
 // techAt is the tech drawn at a cell of the panel ("" for none): its lane's
@@ -743,6 +750,7 @@ func shortAge(name string, room int) string {
 func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid {
 	out := newTGrid(w, h)
 	m.cardAt = image.Rectangle{}
+	m.keys = keySet{plain: v.ascii, glyph: func(x, y int) rune { return out.c[y*out.w+x].r }}
 	if w < 20 || h < 8 {
 		out.text(0, 0, rowid.Line("ui.research_tree.renderTree.01", "Research: make the window larger."), tsText, -1)
 		return out
@@ -1045,6 +1053,12 @@ func (m *treeModel) statusLine(state game.GameState, v treeView) string {
 // opensText is what a tech opens, in a few words: commands, buildings, a
 // wonder. "" when it opens nothing.
 func opensText(state game.GameState, def config.TechDef) string {
+	return strings.Join(techGates(state, def), ", ")
+}
+
+// techGates is what a tech opens, a phrase each: commands, buildings, a
+// wonder.
+func techGates(state game.GameState, def config.TechDef) []string {
 	set := state.Ruleset()
 	var out []string
 	for _, l := range set.FeaturesOpenedBy(def.Key) {
@@ -1069,7 +1083,7 @@ func opensText(state game.GameState, def config.TechDef) string {
 	if wonder != "" {
 		out = append(out, txtThe.String()+wonder+rowid.Line("ui.research_tree.opensText.04", " needs it"))
 	}
-	return strings.Join(out, ", ")
+	return out
 }
 
 // joinAnd joins names as a list: "A", "A and B", "A, B and C".
@@ -1438,13 +1452,20 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		body = append(body, wrapStyled(s, tw)...)
 	}
 	lines := append(head, body...)
-	ch := len(lines) + 2
+	// A tech that can start, or one that cannot yet, has its button under the text.
+	act := cardActionFor(state, n)
+	button := act == actStart || act == actPlan
+	btn := 0
+	if button {
+		btn = actionRows + 1
+	}
+	ch := len(lines) + 2 + btn
 	if badge {
 		ch = max(ch, 15)
 	}
 	if ch > mh {
 		ch = mh
-		lines = lines[:max(ch-2, 0)]
+		lines = lines[:max(min(ch-2-btn, len(lines)), 0)]
 	}
 	x0, y0 := ox+(mw-cw)/2, oy+(mh-ch)/2
 	m.cardAt = image.Rect(x0, y0, x0+cw, y0+ch)
@@ -1469,7 +1490,24 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 	for i, l := range lines {
 		out.styledText(x0+tx, y0+1+i, l)
 	}
+	if button && ch >= btn+3 {
+		a := actionSpec{kind: keyPrimary, label: startWord(), key: "Enter", sign: signPlay}
+		if act == actPlan {
+			a.off, a.key = true, "" // Enter adds it to the plan, which is what the text says
+		}
+		by := y0 + ch - 1 - actionRows
+		for dy := 0; dy < actionRows; dy++ {
+			for dx := 0; dx < actionW(a.label, a.key, a.sign); dx++ {
+				out.put(x0+tx+dx, by+dy, ' ', tsText, -1)
+			}
+		}
+		m.keys.action(x0+tx, by, a, func(x, y int, text string) { out.text(x, y, text, tsText, -1) })
+	}
 }
+
+// startWord is the word of the button that starts the research a tech's card
+// is open on.
+func startWord() string { return "start" }
 
 // ----- the plain glyph tier -----
 

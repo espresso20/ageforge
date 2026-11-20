@@ -5,6 +5,7 @@ import (
 	"image"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -166,15 +167,15 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			cells := drawnDashboard(t, d, pages, w, h)
 
 			// The Resources box: one resource a row, never a rate split.
-			rows := checkFitted(t, where+", Resources", d.economyTab.resourceTV, cells, w)
+			rows := checkFitted(t, where+", Resources", d.economyTab.resourceTV.fitView, cells, w)
 			shown := 0
 			for _, row := range rows {
 				if strings.HasSuffix(row, "/") || strings.HasPrefix(strings.TrimSpace(row), "tick") {
 					t.Errorf("%s: a rate is split after its slash: %q", where, row)
 				}
-				if strings.Contains(row, "/t") && !strings.Contains(row, "Ctrl") {
+				if isRateRow(row) {
 					shown++
-					if w >= 120 && !strings.Contains(row, "/tick") {
+					if w >= 120 && !strings.Contains(row, "/s") && !strings.Contains(row, "/min") {
 						t.Errorf("%s: a resource row lost its rate's unit at a size with room for it: %q", where, row)
 					}
 					// Culture and faith show progress toward something; an ordinary
@@ -208,11 +209,7 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			checkHeader(t, where+", header", d, cells, w)
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
 			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
-			for _, row := range checkFitted(t, where+", Buildings", d.economyTab.buildingTV, cells, w) {
-				if strings.HasSuffix(row, "/") {
-					t.Errorf("%s: the Buildings list splits a rate after its slash: %q", where, row)
-				}
-			}
+			checkCards(t, where+", Buildings", d, cells, w)
 
 			// The header's first row and the People box are one line a fact.
 			if status := rectText(cells, w, 0, 1, w, 1)[0]; !strings.Contains(status, st.AgeName) || !strings.Contains(status, "People") || !strings.Contains(status, "Morale") {
@@ -283,7 +280,7 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 		}
 		rows := 0
 		for _, line := range strings.Split(seen, "\n") {
-			if strings.Contains(line, "/t") && !strings.Contains(line, "Ctrl") {
+			if isRateRow(line) {
 				rows++
 			}
 		}
@@ -308,12 +305,12 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 // one, and a row never outgrows the box.
 func TestResourceRowsLineUp(t *testing.T) {
 	rows := []resRow{
-		storeRow(game.ResourceState{Name: "Food", Amount: 49600, Rate: 13.9}),
-		storeRow(game.ResourceState{Name: "Gold", Amount: 2.66 * config.Million, Rate: 3760}), // "+3.76K/tick", the longest
-		storeRow(game.ResourceState{Name: "Knowledge", Amount: 32400, Rate: 17}),
-		storeRow(game.ResourceState{Name: "Dark Matter Crystals", Amount: 12, Rate: -0.04}),
-		faithRow(game.ResourceState{Name: "Faith", Amount: 20, Rate: 0.04}, game.CatastropheOutlook{FaithStrength: 0.41, FaithBand: game.FaithBandAt(0.41)}),
-		cultureRow(game.ResourceState{Name: "Culture", Amount: 1200, Rate: 7.1}),
+		storeRow(game.ResourceState{Name: "Food", Amount: 49600, Rate: 13.9}, 0),
+		storeRow(game.ResourceState{Name: "Gold", Amount: 2.66 * config.Million, Rate: 3760}, 0), // "+3.76K/s", the longest
+		storeRow(game.ResourceState{Name: "Knowledge", Amount: 32400, Rate: 17}, 0),
+		storeRow(game.ResourceState{Name: "Dark Matter Crystals", Amount: 12, Rate: -0.04}, 0),
+		faithRow(game.ResourceState{Name: "Faith", Amount: 20, Rate: 0.04}, game.CatastropheOutlook{FaithStrength: 0.41, FaithBand: game.FaithBandAt(0.41)}, 0),
+		cultureRow(game.ResourceState{Name: "Culture", Amount: 1200, Rate: 7.1}, 0),
 	}
 	// From a little under the narrowest box the game draws (27 cells, at 80
 	// columns) up to a roomy one.
@@ -325,12 +322,12 @@ func TestResourceRowsLineUp(t *testing.T) {
 			if runeLen(line) > w {
 				t.Errorf("width %d: row is %d cells: %q", w, runeLen(line), line)
 			}
-			unit := f.unit
-			at := strings.Index(line, unit)
+			rate, _ := f.rateText(r)
+			at := strings.Index(line, rate)
 			if at < 0 {
 				t.Fatalf("width %d: row has no rate: %q", w, line)
 			}
-			end := runeLen(line[:at]) + runeLen(unit)
+			end := runeLen(line[:at]) + runeLen(rate)
 			if rateEnd >= 0 && end != rateEnd {
 				t.Errorf("width %d: rates end at columns %d and %d: %q", w, rateEnd, end, line)
 			}
@@ -351,7 +348,7 @@ func TestResourceRowsLineUp(t *testing.T) {
 	// At the width of a 120-column terminal's box the long name gives way
 	// to its initials, the rate keeps its unit and there is a bar.
 	f := fitResourceFormat(rows, 47)
-	if line := untag(f.line(rows[3])); !strings.Contains(line, "D. M. Crystals") || !strings.Contains(line, "-0.04/tick") || f.bar < resBarMin {
+	if line := untag(f.line(rows[3])); !strings.Contains(line, "D. M. Crystals") || !strings.Contains(line, "-2.4/min") || f.bar < resBarMin {
 		t.Errorf("47 cells: want initials, the full unit and a bar: %q (bar %d)", line, f.bar)
 	}
 }
@@ -363,7 +360,7 @@ func TestResourceRowsLineUp(t *testing.T) {
 func TestResourceBoxLayouts(t *testing.T) {
 	var rows []resRow
 	for i := 0; i < 26; i++ {
-		rows = append(rows, storeRow(game.ResourceState{Name: fmt.Sprintf("Resource %d", i), Amount: float64(i) * 1000, Rate: float64(i) * 1.5}))
+		rows = append(rows, storeRow(game.ResourceState{Name: fmt.Sprintf("Resource %d", i), Amount: float64(i) * 1000, Rate: float64(i) * 1.5}, 0))
 		for w := 24; w <= 70; w += 3 {
 			for h := 1; h <= 60; h += 2 {
 				lines, pages := layoutResourceBox(rows, w, h, 0)
@@ -382,17 +379,14 @@ func TestResourceBoxLayouts(t *testing.T) {
 		}
 	}
 	seven := rows[:7]
-	if lines, _ := layoutResourceBox(seven, 60, 15, 0); len(lines) != 15 || lines[1] != "" {
-		t.Errorf("a roomy box puts a line between rows and ends on the legend: %d lines", len(lines))
+	if lines, _ := layoutResourceBox(seven, 60, 15, 0); len(lines) != 13 || lines[1] != "" {
+		t.Errorf("a roomy box puts a line between rows and ends on the last row: %d lines", len(lines))
 	}
-	if lines, _ := layoutResourceBox(seven, 60, 9, 0); len(lines) != 9 || lines[1] == "" || lines[7] != "" {
-		t.Errorf("a shorter box closes the rows up and keeps the legend apart: %q", lines)
-	}
-	if lines, _ := layoutResourceBox(seven, 60, 8, 0); len(lines) != 8 || !strings.Contains(untag(lines[7]), "falling") {
-		t.Errorf("a box with one row to spare keeps the legend: %q", lines)
+	if lines, _ := layoutResourceBox(seven, 60, 9, 0); len(lines) != 7 || lines[1] == "" {
+		t.Errorf("a shorter box closes the rows up: %q", lines)
 	}
 	if lines, pages := layoutResourceBox(seven, 60, 7, 0); len(lines) != 7 || pages != 1 {
-		t.Errorf("a box as tall as its rows shows them all and no legend: %d lines, %d pages", len(lines), pages)
+		t.Errorf("a box as tall as its rows shows them all: %d lines, %d pages", len(lines), pages)
 	}
 	if lines, pages := layoutResourceBox(seven, 60, 6, 0); pages != 2 || !strings.Contains(untag(lines[5]), "1-5 of 7") {
 		t.Errorf("a box a row short shows a page and says which: %d pages, %q", pages, lines)
@@ -599,3 +593,10 @@ func TestDashboardLayoutDump(t *testing.T) {
 		}
 	}
 }
+
+// rateInRow matches a rate as the Resources box writes it: a sign, a number
+// and a per-second, per-minute or per-hour unit.
+var rateInRow = regexp.MustCompile(`[+-][0-9][0-9.]*[A-Za-z]{0,2}/(s|min|m|h)\b`)
+
+// isRateRow reports whether a line of the Resources box is a resource's row.
+func isRateRow(row string) bool { return rateInRow.MatchString(row) }

@@ -77,7 +77,7 @@ func TestMapPanelLettersAreThePrompts(t *testing.T) {
 		t.Errorf("letters changed the glyphs: %s", p.set.Tier)
 	}
 	txt := drawMapPanel(t, d, 160, 48)
-	wantAll(t, "key bar", txt, "map glyphs unicode", "Esc close")
+	wantAll(t, "key bar", squashed(txt), "map glyphs unicode", "Esc close")
 	d.runForTest("map glyphs ascii")
 	if d.overlayMgr.ActiveName() != "map" {
 		t.Fatal("a setting command closed the panel")
@@ -140,7 +140,7 @@ func TestMapInspectStagesCommand(t *testing.T) {
 	if cmd == "" {
 		t.Fatal("Tab never reached a target with a command")
 	}
-	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter types "+cmd) {
+	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(squashed(txt), "Enter types "+cmd) {
 		t.Errorf("key bar does not offer %q:\n%s", cmd, txt)
 	}
 	p.routeKey(newKey(kit.KeyEnter, 0, 0), "")
@@ -153,7 +153,7 @@ func TestMapInspectStagesCommand(t *testing.T) {
 	if !d.inputField.comp.complete(cmd) {
 		t.Errorf("staged %q is not a whole command", cmd)
 	}
-	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter runs the command below") {
+	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(squashed(txt), "Enter runs the command below") {
 		t.Errorf("key bar does not say Enter runs the staged command:\n%s", txt)
 	}
 	for _, k := range []kit.KeyCode{kit.KeyTab, kit.KeyBacktab, kit.KeyEnter} {
@@ -304,7 +304,7 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	waitFor("the Map panel", func() bool { look(); return active == "map" && prompt == "" && focused })
 	var txt string
 	onLoop(func() { txt = simCells(sim).Text() })
-	if !strings.Contains(txt, "Command") || !strings.Contains(txt, "Esc close") {
+	if !strings.Contains(txt, "Command") || !strings.Contains(squashed(txt), "Esc close") {
 		t.Errorf("the command bar or the key bar is missing with the map open:\n%s", txt)
 	}
 
@@ -380,3 +380,8 @@ func TestMapKeepsThePromptFocused(t *testing.T) {
 		t.Errorf("PgUp reached the prompt: %q", d.inputField.GetText())
 	}
 }
+
+// squashed is text with every run of blanks, and every line break, as one
+// space: a key prompt is a cap and its word with room round them, and reads
+// the same.
+func squashed(s string) string { return strings.Join(strings.Fields(s), " ") }

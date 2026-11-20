@@ -97,6 +97,7 @@ func showButtonModal(app *appLoop, pages *nativePages, page, text string, button
 	modal := newNativeDialog(app).
 		SetText(text).
 		AddButtons(buttons).
+		asActions(false).
 		SetDoneFunc(func(button int, label string) {
 			pages.RemovePage(page)
 			done(button, label)

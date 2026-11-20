@@ -32,7 +32,7 @@ func (st GameState) measuredRows(set *rules.Set, m config.GateMeasure, rows map[
 		rows[config.PillarKnowledge] = append(rows[config.PillarKnowledge], st.keyTechRow(set, m.KeyTech))
 	}
 
-	pop := amountRow("population", rowid.Line("game.advance_view_v2.measuredRows.01", "Population"), float64(town.Population), float64(m.People), "")
+	pop := amountRow("population", rowid.Line("game.advance_view_v2.measuredRows.01", "Population"), float64(town.Population), float64(m.People), false)
 	pop.Met = town.PeopleMet()
 	rows[config.PillarPeople] = append(rows[config.PillarPeople], pop)
 
@@ -40,21 +40,21 @@ func (st GameState) measuredRows(set *rules.Set, m config.GateMeasure, rows map[
 	for _, res := range m.Materials {
 		names = append(names, set.Name(rules.KindResource, res))
 	}
-	income := amountRow("income", strings.Join(names, " + ")+rowid.Line("game.advance_view_v2.measuredRows.02", " income"), town.Income, m.Income, rowid.Line("game.advance_view_v2.measuredRows.03", "a tick"))
+	income := amountRow("income", strings.Join(names, " + ")+rowid.Line("game.advance_view_v2.measuredRows.02", " income"), town.Income, m.Income, true)
 	income.Met = town.IndustryMet()
 	rows[config.PillarIndustry] = append(rows[config.PillarIndustry], income)
 }
 
 // amountRow is a row of an amount the town has against the amount the gate
 // measures.
-func amountRow(key, label string, have, need float64, unit string) GateRow {
+func amountRow(key, label string, have, need float64, perTick bool) GateRow {
 	progress := 1.0
 	if have < need {
 		progress = clampShare(have / need)
 	}
 	return GateRow{
 		Kind: GateRowAmount, Key: key, Label: label,
-		Have: intOf(have), Need: intOf(need), Value: have, Target: need, Unit: unit,
+		Have: intOf(have), Need: intOf(need), Value: have, Target: need, PerTick: perTick,
 		Met: have >= need, Progress: progress,
 	}
 }

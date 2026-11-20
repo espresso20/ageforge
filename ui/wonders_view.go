@@ -20,6 +20,10 @@ import (
 // wondersView is the panel's state: which view it is on.
 type wondersView struct {
 	gallery bool
+	// blk is the current wonder's summary as the list last showed it; the
+	// buttons are laid over it.
+	blk wonderBlock
+	textButtons
 }
 
 // builtWonders lists the wonders the town has built, oldest first.
@@ -36,6 +40,7 @@ func builtWonders(state game.GameState) []wonderInfo {
 // provider is the panel's text: the list, or the gallery.
 func (wv *wondersView) provider(state game.GameState, w int) string {
 	if !wv.gallery {
+		wv.blk = wonderSummary(state)
 		return wondersProvider(state, w)
 	}
 	return wv.galleryText(state)
@@ -58,6 +63,9 @@ func (wv *wondersView) back() bool {
 // took it: G or Tab swaps the list and the gallery, and the rest (scrolling)
 // is the text view's.
 func (wv *wondersView) handleKey(ev *kit.Key) bool {
+	if wv.press(ev) {
+		return true
+	}
 	toggle := ev.Code == kit.KeyTab || ev.Code == kit.KeyRune && (ev.Rune == 'g' || ev.Rune == 'G')
 	if toggle {
 		wv.gallery = !wv.gallery

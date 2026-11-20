@@ -40,13 +40,12 @@ type CommandResult struct {
 	// MapWorld opens the Map panel (OverlayName "map") on the known world.
 	MapWorld bool
 	// ResearchZoom ("close" or "far") and ResearchCard (a tech key) say how
-	// the Research panel (OverlayName "techs") opens: at that zoom, on that
+	// the tech tree (OverlayName "tree") opens: at that zoom, on that
 	// tech's card. Empty leaves the panel as it was.
 	ResearchZoom string
 	ResearchCard string
-	// Badges says how the badge case (OverlayName "badges") opens: on a
-	// tab, or on a badge with its detail open. The zero value leaves the
-	// case as it was.
+	// Badges says how the Ranks screen (OverlayName "badges") opens: on a
+	// tab, a domain's badges, or a badge. The zero value is the Ranks tab.
 	Badges badgeRequest
 	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
@@ -860,14 +859,14 @@ func cmdStatus(_ []string, engine *game.GameEngine) CommandResult {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  %-10s %s %s",
-			rs.Name, textfmt.Number(rs.Amount), FormatRateTick(rs.Rate)))
+			rs.Name, textfmt.Number(rs.Amount), rateTag(rs.Rate, state.TickIntervalMs)))
 	}
 	lines = append(lines, "")
 
 	// Population
 	v := state.Workers
-	lines = append(lines, rowid.Sprintf("ui.input.cmdStatus.03", "[gold]Population:[-] %d/%d (reserve: %d, food drain: %s/tick)",
-		v.TotalPop, v.MaxPop, v.TotalIdle, textfmt.Number(v.FoodDrain)))
+	lines = append(lines, rowid.Sprintf("ui.input.cmdStatus.03", "[gold]Population:[-] %d/%d (reserve: %d, food drain: %s)",
+		v.TotalPop, v.MaxPop, v.TotalIdle, rateAmount(v.FoodDrain, state.TickIntervalMs)))
 	for _, vt := range v.Types {
 		if !vt.Unlocked {
 			continue
@@ -1170,9 +1169,9 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if acct == nil {
 			return warningReply(rowid.Line("ui.input.cmdAccount.52", "Accounts are unavailable (no account is loaded)."))
 		}
-		// Info, not success: the list must reach the log, and the engine logs nothing here.
-		views, summary := engine.Badges()
-		return infoReply(strings.Join(badgeListLines(views, summary), "\n"))
+		res := panelReply("badges")
+		res.Badges = badgeRequest{tab: tabAll}
+		return res
 
 	case "wipe":
 		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we
@@ -1377,42 +1376,10 @@ func cmdRates(_ []string, engine *game.GameEngine) CommandResult {
 		if !rs.Unlocked || (rs.Rate == 0 && rs.Breakdown == (game.RateBreakdown{})) {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s", rs.Name, FormatRateTick(rs.Rate)))
-		b := rs.Breakdown
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s", rs.Name, rateTag(rs.Rate, state.TickIntervalMs)))
 		var parts []string
-		if b.BuildingRate != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.03", "Buildings: %s", textfmt.RateValue(b.BuildingRate)))
-		}
-		if b.WorkerRate != 0 {
-			// What worker output bonuses add (game/engine.go, gather_rate).
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.04", "Worker bonus: %s", textfmt.RateValue(b.WorkerRate)))
-		}
-		if b.ResearchRate != 0 {
-			// What the techs add: their bonus on what the resource's
-			// buildings make, counted after the pools, and the flat output
-			// of a tech that is its first source.
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.05", "Research: %s", textfmt.RateValue(b.ResearchRate)))
-		}
-		if b.EventRate != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.06", "Events: %s", textfmt.RateValue(b.EventRate)))
-		}
-		if b.TradeRate != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.07", "Trade: %s", textfmt.RateValue(b.TradeRate)))
-		}
-		if b.BonusRate != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.08", "Bonuses: %s", textfmt.RateValue(b.BonusRate)))
-		}
-		if b.LegacyRate != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.09", "Cosmic Legacy: %s", textfmt.RateValue(b.LegacyRate)))
-		}
-		if b.MasteryRate != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.10", "Era Mastery: %s", textfmt.RateValue(b.MasteryRate)))
-		}
-		if b.PrestigeRate != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.11", "Prestige: %s", textfmt.RateValue(b.PrestigeRate)))
-		}
-		if b.FoodDrain != 0 {
-			parts = append(parts, rowid.Sprintf("ui.input.cmdRates.12", "Drain: %s", textfmt.RateValue(b.FoodDrain)))
+		for _, src := range rateSources(rs.Breakdown, state.TickIntervalMs) {
+			parts = append(parts, src.text)
 		}
 		if len(parts) > 0 {
 			lines = append(lines, fmt.Sprintf("    %s", strings.Join(parts, "  ")))
@@ -1575,7 +1542,7 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	if subcmd == "tree" {
 		switch zoom := strings.ToLower(strings.Join(args[1:], " ")); zoom {
 		case "", "close", "far":
-			return CommandResult{OverlayName: "techs", ResearchZoom: zoom}
+			return CommandResult{OverlayName: "tree", ResearchZoom: zoom}
 		}
 		return errorReply(usageFor("research tree"))
 	}
@@ -1586,7 +1553,7 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 		if def, ok := state.Ruleset().Tech(key); !ok || !game.SightOf(&state).Age(def.Age) {
 			return errorReply(rowid.Line("ui.input.cmdResearch.01", "No tech '") + strings.Join(args[1:], " ") + rowid.Line("ui.input.cmdResearch.02", "' in sight. Type research to see the tree."))
 		}
-		return CommandResult{OverlayName: "techs", ResearchCard: key}
+		return CommandResult{OverlayName: "tree", ResearchCard: key}
 	}
 	if subcmd == "cancel" {
 		if err := engine.CancelResearch(); err != nil {
@@ -1864,11 +1831,12 @@ func cmdBlackMarket(args []string, engine *game.GameEngine) CommandResult {
 
 // cmdBlackMarketStatus renders the bare `blackmarket` status panel.
 func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
-	st := engine.BlackMarketStatus()
+	state := engine.GetState()
+	st := state.BlackMarket
 	var lines []string
 	lines = append(lines, rowid.Line("ui.input.cmdBlackMarketStatus.01", "[gold]Black Market[-]"))
 	if !st.Available {
-		lines = append(lines, "  "+theme.Paint(theme.RoleDim, rowid.Line("ui.input.cmdBlackMarketStatus.02", "Smuggling networks open in ")+ageRef(engine.GetState(), "colonial_age")+"."))
+		lines = append(lines, "  "+theme.Paint(theme.RoleDim, rowid.Line("ui.input.cmdBlackMarketStatus.02", "Smuggling networks open in ")+ageRef(state, "colonial_age")+"."))
 		return infoReply(strings.Join(lines, "\n"))
 	}
 	lines = append(lines, rowid.Line("ui.input.cmdBlackMarketStatus.09", "  Spend culture on a smuggling run: it pays back the minutes of income the culture cost you, as minutes of your income of the resource you pick."))
@@ -1881,7 +1849,7 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 			lines = append(lines, rowid.Line("ui.input.cmdBlackMarketStatus.07", "  Status: [yellow]not enough culture yet.[-]"))
 		}
 	} else {
-		lines = append(lines, rowid.Sprintf("ui.input.cmdBlackMarketStatus.08", "  Status: [yellow]lying low[-]. The next run is possible in %s.", formatTicks(st.CooldownLeft, engine.GetState())))
+		lines = append(lines, rowid.Sprintf("ui.input.cmdBlackMarketStatus.08", "  Status: [yellow]lying low[-]. The next run is possible in %s.", formatTicks(st.CooldownLeft, state)))
 	}
 	return infoReply(strings.Join(lines, "\n"))
 }
@@ -2140,7 +2108,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		lines = append(lines, fmt.Sprintf("%s %s", theme.Paint(theme.RoleAccent, def.Name), theme.Paint(theme.RoleDim, "("+def.Key+")")))
 		var sb strings.Builder
-		writeFactionDeals(&sb, f, state, 100)
+		writeFactionDeals(&sb, f, state, 100, def.Key, nil)
 		lines = append(lines, strings.TrimRight(sb.String(), "\n"))
 	}
 	if len(lines) == 0 {
@@ -2696,34 +2664,37 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	return res
 }
 
-// cmdBadges opens the badge case: bare, on a family's tab ("badges ages"),
-// on the badges nearest their count ("badges next"), or on one badge's
-// detail by its name ("badges hut hoarder"). A name is looked for among the
-// badges in sight only: a withheld badge has no name to find.
+// cmdBadges opens the Ranks screen: bare, on a tab ("badges all", "badges
+// recent"), on one domain's badges ("badges food"), or on one badge by its
+// name ("badges hut hoarder"). A name is looked for among the badges in sight
+// only: a withheld badge has no name to find.
 func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 	res := panelReply("badges")
 	if len(args) == 0 {
 		return res
 	}
 	want := strings.ToLower(strings.Join(args, " "))
-	if want == "all" {
-		res.Badges = badgeRequest{tab: caseTabAll, setTab: true}
+	switch want {
+	case "ranks":
+		return res
+	case "all":
+		res.Badges = badgeRequest{tab: tabAll}
+		return res
+	case "recent":
+		res.Badges = badgeRequest{tab: tabRecent}
 		return res
 	}
-	if want == "next" {
-		res.Badges = badgeRequest{tab: caseTabNext, setTab: true}
+	state := engine.GetState()
+	if dom, ok := findDomain(state.Ruleset(), want); ok {
+		res.Badges = badgeRequest{tab: tabAll, dom: dom}
 		return res
 	}
-	views, sum := engine.Badges()
-	if tab, ok := findBadgeTab(views, sum.HiddenCounted, want); ok {
-		res.Badges = badgeRequest{tab: tab, setTab: true}
-		return res
-	}
+	views, _ := engine.Badges()
 	if key, ok := findBadge(views, want); ok {
-		res.Badges = badgeRequest{sel: key, card: true}
+		res.Badges = badgeRequest{tab: tabAll, sel: key}
 		return res
 	}
-	return errorReply(rowid.Sprintf("ui.input.cmdBadges.01", "No badge or family in sight is called %q. Type badges to look through them.", strings.Join(args, " ")))
+	return errorReply(rowid.Sprintf("ui.input.cmdBadges.01", "No badge or domain in sight is called %q. Type badges to look through them.", strings.Join(args, " ")))
 }
 
 // wornTitle is the title an account wears: the one it chose, or the one

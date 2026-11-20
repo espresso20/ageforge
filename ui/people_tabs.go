@@ -9,6 +9,8 @@ import (
 	"github.com/espresso20/ageforge/rowid"
 )
 
+var txtNext = rowid.E("ui.badge_case.caseTabs.02", "Next")
+
 // people_tabs.go is the four tabs of the People panel.
 
 // num prints a whole count, written short when it is long.
@@ -77,7 +79,7 @@ func (c peopleBody) overview() {
 		held = "housing"
 	case game.HeldFood:
 		held = "food"
-		if t := heldByText(ws); strings.Contains(t, "(") {
+		if t := heldByText(ws, st.TickIntervalMs); strings.Contains(t, "(") {
 			held = rowid.Line("ui.people_tabs.overview.03", "food ") + t[strings.Index(t, "("):]
 		}
 	}
@@ -121,6 +123,10 @@ func (c peopleBody) overview() {
 			if j == 0 {
 				kind = xBright
 			}
+			if j == 3 && (i == 1 || i == 2) {
+				g.peopleLink(x+1, cy+1+j, w-2, l, map[int]int{1: tabWork, 2: tabArmy}[i])
+				continue
+			}
 			g.putFit(x+2, cy+1+j, w-4, l, kind)
 		}
 	}
@@ -128,10 +134,16 @@ func (c peopleBody) overview() {
 	// Lately: what happened to the people.
 	ly := cy + ch
 	if lh := c.y + c.h - ly; lh >= 4 {
-		g.box(c.x, ly, c.w, lh, xBorder, rowid.Line("ui.people_tabs.overview.07", "Lately"), xTitle, false)
-		drawLog(g, 3, ly+1, c.w-4, lh-2, recentLog(st, peopleEvent, lh-2), rowid.Line("ui.people_tabs.overview.08", "Nothing yet. People move in as you build homes."))
+		// The Festival card takes the right of the box when there is room.
+		lw := c.w
+		if fw := c.festivalWidth(); fw > 0 && lh >= festivalRows(st) {
+			lw -= fw
+			c.festivalCard(c.x+lw, ly, fw, lh)
+		}
+		g.box(c.x, ly, lw, lh, xBorder, rowid.Line("ui.people_tabs.overview.07", "Lately"), xTitle, false)
+		drawLog(g, 3, ly+1, lw-4, lh-2, recentLog(st, peopleEvent, lh-2), rowid.Line("ui.people_tabs.overview.08", "Nothing yet. People move in as you build homes."))
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick"}, {"Esc", "close"}}, "people")
+	c.footer([][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
 }
 
 // txtFood is said the same way on several screens, so it has one id.
@@ -152,7 +164,7 @@ func (c peopleBody) foodLine(x, y, w int) {
 	if rs.Rate < 0 {
 		net = xBad
 	}
-	parts := []xseg{{txtFood.String(), xDim}, {textfmt.Rate(-ws.FoodDrain), xText}, {rowid.Line("ui.people_tabs.foodLine.02", " for everyone"), xDim}, {rowid.Line("ui.people_tabs.foodLine.03", "   net "), xDim}, {textfmt.Rate(rs.Rate), net}}
+	parts := []xseg{{txtFood.String(), xDim}, {rateText(-ws.FoodDrain, c.st.TickIntervalMs), xText}, {rowid.Line("ui.people_tabs.foodLine.02", " for everyone"), xDim}, {rowid.Line("ui.people_tabs.foodLine.03", "   net "), xDim}, {rateText(rs.Rate, c.st.TickIntervalMs), net}}
 	// Morale, which the old Workers panel showed, before the figure that goes
 	// first on a narrow panel.
 	mk := xText
@@ -225,21 +237,36 @@ func (c peopleBody) work() {
 	g.box(c.x+lw, c.y, rw, c.h, xBorder, "", xTitle, false)
 	if len(rows) == 0 {
 		g.putFit(c.x+2, c.y+1, lw-4, rowid.Line("ui.people_tabs.work.02", "No worker buildings yet: every area is on auto."), xFaint)
-		c.footer([][2]string{{"←→", "tabs"}, {"Esc", "close"}}, "roster <area> <%|auto>")
+		c.footer([][2]string{escClose()}, rowid.Line("ui.people_tabs.work.03", "roster <area> <%|auto>"))
 		return
 	}
 	inner := lw - 4
 	g.segsFit(c.x+2, c.y+1, inner, xseg{rowid.Line("ui.people_tabs.work.06", "  Area"), xDim})
 	g.put(c.x+2+2+11+1, c.y+1, rowid.Line("ui.people_tabs.work.07", "Share"), xDim)
 	g.rput(rightOf(c.x, lw), c.y+1, rowid.Line("ui.people_tabs.work.08", "Filled"), xDim)
-	per := (c.h - 3) / 2
-	first := window(len(rows), per, c.v.row)
-	for n := 0; n < per && first+n < len(rows); n++ {
-		i := first + n
+	// An area takes a row and the rows its buildings need; the window
+	// starts where it would with two rows each, and moves on until the
+	// picked area is whole.
+	notes := make([][]string, len(rows))
+	for i, r := range rows {
+		notes[i] = c.areaBuildings(r.Domain, inner-2)
+	}
+	avail := c.h - 3
+	first := window(len(rows), avail/2, c.v.row)
+	for used := 0; first < c.v.row; first++ {
+		used = 0
+		for i := first; i <= c.v.row; i++ {
+			used += 1 + len(notes[i])
+		}
+		if used <= avail {
+			break
+		}
+	}
+	y := c.y + 2
+	for i := first; i < len(rows) && y+1+len(notes[i]) <= c.y+2+avail; i++ {
 		r := rows[i]
-		y := c.y + 2 + n*2
 		pickName(g, c.x+2, y, 13, r.Name, i == c.v.row)
-		g.hit(hitRow, i, c.x+1, y, lw-2, 2)
+		g.hit(hitRow, i, c.x+1, y, lw-2, 1+len(notes[i]))
 		share := "auto"
 		sk := xDim
 		if r.Set {
@@ -267,43 +294,31 @@ func (c peopleBody) work() {
 				}
 			}
 		}
-		g.putFit(c.x+4, y+1, inner-2, c.areaBuildings(r.Domain), xDim)
+		for j, l := range notes[i] {
+			g.put(c.x+4, y+1+j, l, xDim)
+		}
+		y += 1 + len(notes[i])
 	}
 	// The picked area.
 	r := rows[clamp(c.v.row, 0, len(rows)-1)]
 	g.put(c.x+lw+2, c.y, " "+fitText(r.Name, rw-6)+" ", xTitle)
 	rx, ri := c.x+lw+2, rw-4
-	y := c.y + 1
+	y = c.y + 1
 	bs := c.areaList(r.Domain)
-	for i, b := range bs {
-		if y >= c.y+c.h-8 {
-			g.putFit(rx, y, ri, rowid.Sprintf("ui.people_tabs.work.09", "and %d more", len(bs)-i), xFaint)
-			y++
-			break
-		}
-		count := fmt.Sprintf("%s/%s", num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count))
-		g.putFit(rx, y, ri-runeLen(count)-1, fmt.Sprintf("%s x%d", b.Name, b.Count), xText)
-		g.rput(rx+ri-1, y, count, xGood)
-		y++
-	}
+	recruitY := c.y + c.h - 1 - c.recruitRows()
+	y = c.workList(rx, y, ri, recruitY-6, bs)
 	if len(bs) == 0 {
 		g.putFit(rx, y, ri, rowid.Line("ui.people_tabs.work.10", "No buildings here yet."), xFaint)
 		y++
 	}
 	y++
-	share := rowid.Line("ui.people_tabs.work.11", "auto, by its buildings' slots")
-	if r.Set {
-		share = rowid.Line("ui.people_tabs.work.12", "set to ") + game.SharePercent(float64(int(r.Percent+0.5)))
-	}
-	g.segsFit(rx, y, ri, xseg{rowid.Line("ui.people_tabs.work.13", "Share  "), xDim}, xseg{share, xText})
-	y++
-	g.segsFit(rx, y, ri, xseg{rowid.Line("ui.people_tabs.work.14", "Set it  "), xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <%|auto>", xText})
+	c.shareRow(rx, y, ri, r)
 	y += 2
 	lines := wrapText(recruitText(st), ri)
 	openAt := len(lines) // the first line of the note after it is gold
 	lines = append(lines, wrapText(rowid.Line("ui.people_tabs.work.17", "Open slots fill from the reserve."), ri)...)
 	for i, l := range lines {
-		if y >= c.y+c.h-1 {
+		if y >= recruitY-1 {
 			break
 		}
 		k := xDim
@@ -313,7 +328,8 @@ func (c peopleBody) work() {
 		g.put(rx, y, l, k)
 		y++
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", rowid.Line("ui.people_tabs.work.19", "pick an area")}, escClose()}, "roster <area> <%|auto>")
+	c.recruitBlock(rx, recruitY, ri)
+	c.footer([][2]string{{"↑↓", rowid.Line("ui.people_tabs.work.19", "pick an area")}, escClose()}, "roster <area> <%|auto>")
 }
 
 // areaList is the built buildings of a work area that take workers.
@@ -321,14 +337,17 @@ func (c peopleBody) areaList(domain string) []peopleBuilding {
 	return builtWhere(c.st, func(b game.BuildingState) bool { return b.WorkerDomain == domain && b.WorkerCapacity > 0 })
 }
 
-// areaBuildings is a work area's buildings on one line: "Farm 10/10 · Smithy
-// 64/64".
-func (c peopleBody) areaBuildings(domain string) string {
+// areaBuildings is a work area's buildings in rows at most w cells wide,
+// broken between buildings: "Farm 10/10 · Smithy 64/64".
+func (c peopleBody) areaBuildings(domain string, w int) []string {
 	var parts []string
 	for _, b := range c.areaList(domain) {
 		parts = append(parts, fmt.Sprintf("%s %s/%s", b.Name, num(b.WorkersAssigned), num(b.WorkerCapacity*b.Count)))
 	}
-	return strings.Join(parts, " · ")
+	for i := 0; i < len(parts)-1; i++ {
+		parts[i] += " ·"
+	}
+	return wrapLines(parts, w, runeLen)
 }
 
 // ===== Army =====
@@ -403,7 +422,7 @@ func (c peopleBody) army() {
 		g.box(c.x, by, c.w, bh, xBorder, rowid.Line("ui.people_tabs.army.14", "Fallen and filled"), xTitle, false)
 		drawLog(g, 3, by+1, c.w-4, bh-2, recentLog(st, armyEvent, bh-2), rowid.Line("ui.people_tabs.army.15", "No news from the army."))
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", rowid.Line("ui.people_tabs.army.17", "pick a building")}, escClose()}, "army")
+	c.footer([][2]string{{"↑↓", rowid.Line("ui.people_tabs.army.17", "pick a building")}, escClose()}, "army")
 }
 
 // ===== Scholars =====
@@ -471,7 +490,7 @@ func (c peopleBody) scholars() {
 	for i, row := range [][2]string{
 		{rowid.Line("ui.people_tabs.scholars.08", "Studying"), studying},
 		{rowid.Line("ui.people_tabs.scholars.09", "Progress"), progress},
-		{rowid.Line("ui.people_tabs.scholars.10", "Research"), textfmt.RateValue(s.PerTick) + rowid.Line("ui.people_tabs.scholars.11", " a tick")},
+		{rowid.Line("ui.people_tabs.scholars.10", "Research"), rateText(s.PerTick, st.TickIntervalMs)},
 		{sch.name, rowid.Sprintf("ui.people_tabs.scholars.12", "%s: %s research, %s teach", num(s.Total), num(s.Researching), num(s.Teaching))},
 		{rowid.Line("ui.people_tabs.scholars.13", "Teaching"), textfmt.SignedPercent(s.TeachingBonus) + rowid.Line("ui.people_tabs.scholars.14", " to what workers make")},
 		{txtNext.String(), next},
@@ -483,6 +502,9 @@ func (c peopleBody) scholars() {
 		lab := fitText(row[0], 9)
 		g.put(rx, y, lab, xDim)
 		g.putFit(rx+10, y, ri-10, row[1], xText)
+	}
+	if y := c.y + 7; y < c.y+topH-1 {
+		c.splitRow(rx, y, ri)
 	}
 
 	by := c.y + topH
@@ -500,5 +522,5 @@ func (c peopleBody) scholars() {
 			g.putFit(3, by+1+i, c.w-4, "· "+t, xText)
 		}
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", rowid.Line("ui.people_tabs.scholars.22", "pick a building")}, escClose()}, "scholars")
+	c.footer([][2]string{{"↑↓", rowid.Line("ui.people_tabs.scholars.22", "pick a building")}, escClose()}, "scholars")
 }

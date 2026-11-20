@@ -14,18 +14,19 @@ var txtCopies = rowid.E("ui.building_text.buildingText.06", "copies")
 // txtCopy is said the same way on several screens, so it has one id.
 var txtCopy = rowid.E("ui.building_text.buildingText.05", "copy")
 
-// buildingText is a building's description as the lists show it. A knowledge
-// building also says where its research halves ("Past 5 copies, each
+// buildingText is a building's description as the lists show it (its rates
+// are already per second). A knowledge building also says where its research halves ("Past 5 copies, each
 // researches at half rate.") and, when the description does not say it (it
 // does: "comes with 2 scholars"), its scholars a copy. Nothing refuses a copy
 // past that count, so the line is all it says about the count.
 func buildingText(bs game.BuildingState) string {
+	desc := bs.Description
 	if bs.Scholars <= 0 {
-		return bs.Description
+		return desc
 	}
 	count := textfmt.Count(bs.Scholars, rowid.Line("ui.building_text.buildingText.01", "scholar"), rowid.Line("ui.building_text.buildingText.02", "scholars"))
 	line := ""
-	if !strings.Contains(bs.Description, count) {
+	if !strings.Contains(desc, count) {
 		line = textfmt.Capitalize(count+rowid.Line("ui.building_text.buildingText.03", " a copy")) + "."
 	}
 	if bs.FullRateCopies > 0 {
@@ -35,7 +36,7 @@ func buildingText(bs game.BuildingState) string {
 		line += rowid.Sprintf("ui.building_text.buildingText.07", "Past %s, each researches at half rate.", textfmt.Count(bs.FullRateCopies, txtCopy.String(), txtCopies.String()))
 	}
 	if line == "" {
-		return bs.Description
+		return desc
 	}
-	return strings.TrimSpace(bs.Description + " " + line)
+	return strings.TrimSpace(desc + " " + line)
 }

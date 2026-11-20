@@ -109,7 +109,7 @@ blackmarket <resource>   # make a smuggling run for the chosen resource
 trade black <resource>   # the same, through the trade command
 ```
 
-`bm` works in place of `blackmarket`.
+`bm` works in place of `blackmarket`. In the Trade panel the Black Market is a smugglers' stop on the map, off the roads (a card in a window too small for the map). Select it to see what a run costs, how much culture you hold, the odds and whether it is ready or lying low, with a chip for each resource a run would pay in and how much. A click on a chip makes that run at once, without a question, and the chips are off while the stop is not ready or you are short of culture. Before the Colonial Age the stop is not there; without Mercantilism it is quiet and says what it needs.
 
 A run costs the larger of 5K culture and a number of hours of your own culture income. That number is about 200 in the Colonial Age, about 166 in the Industrial Age, and 200 in every age from the Victorian Age on. A town that makes twice the culture pays twice.
 

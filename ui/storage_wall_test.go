@@ -38,20 +38,29 @@ func flat(rows []string) string {
 	return strings.Join(strings.Fields(strings.Join(rows, " ")), " ")
 }
 
-// panelPages draws the dashboard and turns the Buildings panel through its
-// pages, returning each page's rows (checked to be whole lines), until the
-// last one.
+// panelPages draws the dashboard with the Buildings box opened and turns it
+// through its pages, returning each page's rows inside the frame, without the
+// card's edge (the gauge and the sign), until the last one.
 func panelPages(t *testing.T, d *Dashboard, pages *nativePages, w, h int) [][]string {
 	t.Helper()
 	var out [][]string
-	d.economyTab.bldFirst = 0
+	box := d.economyTab.buildBox
+	box.expanded, box.first = true, 0
 	for i := 0; i < 40; i++ {
 		cells := drawnDashboard(t, d, pages, w, h)
-		rows := checkFitted(t, fmt.Sprintf("Buildings page %d at %dx%d", i+1, w, h), d.economyTab.buildingTV, cells, w)
+		x, y, bw, bh := box.GetRect()
+		edge := cardGlyphCols
+		if bw-2 < compactBelow {
+			edge = compactWords
+		}
+		var rows []string
+		for _, r := range rectText(cells, w, x+1+edge, y+1, bw-2-edge, bh-2) {
+			rows = append(rows, r)
+		}
 		out = append(out, rows)
-		before := d.economyTab.bldFirst
+		before := box.first
 		d.economyTab.ScrollDown()
-		if d.economyTab.bldFirst == before {
+		if box.first == before {
 			break
 		}
 	}
@@ -91,8 +100,8 @@ func TestBuildingsPanelHasNoStorageWall(t *testing.T) {
 	}
 }
 
-// Storage has no limit now: the Strongroom, built 40 times, shows neither MAX
-// nor "Building limit reached." A building with a real limit still does.
+// Storage has no limit now: the Strongroom, built 40 times, is a card that
+// says nothing of a limit. A building with a real limit still does.
 func TestStorageBuildingShowsNoLimit(t *testing.T) {
 	restoreForge(t)
 	d, pages, eng := wallTown(t, map[string]int{wallStore: 40, "grand_amphitheatre_monument": 1})
@@ -106,19 +115,13 @@ func TestStorageBuildingShowsNoLimit(t *testing.T) {
 	}
 	for _, sz := range wallSizes {
 		w, h := sz[0], sz[1]
-		maxes, limits, store := 0, 0, false
+		limits, store := 0, false
 		for _, rows := range panelPages(t, d, pages, w, h) {
 			for _, r := range rows {
-				if strings.Contains(r, " "+name+" x40") {
+				if strings.Contains(r, name+" x40") {
 					store = true
-					if strings.Contains(r, "MAX") {
-						t.Errorf("%dx%d: the %s shows MAX: %q", w, h, name, r)
-					}
 				}
-				if strings.Contains(r, "MAX") {
-					maxes++
-				}
-				if strings.Contains(r, "Building limit reached.") {
+				if strings.Contains(r, txtLimit.String()) {
 					limits++
 				}
 			}
@@ -126,8 +129,8 @@ func TestStorageBuildingShowsNoLimit(t *testing.T) {
 		if !store {
 			t.Errorf("%dx%d: the %s is on no page of the panel", w, h, name)
 		}
-		if maxes != 1 || limits != 1 {
-			t.Errorf("%dx%d: the monument at its limit shows MAX %d times and its limit line %d times, want once each", w, h, maxes, limits)
+		if limits != 1 {
+			t.Errorf("%dx%d: the monument at its limit shows its limit line %d times, want once", w, h, limits)
 		}
 	}
 }

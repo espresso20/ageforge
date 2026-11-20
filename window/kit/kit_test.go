@@ -2,6 +2,7 @@ package kit
 
 import (
 	"image"
+	"image/color"
 	"reflect"
 	"strings"
 	"testing"
@@ -486,6 +487,48 @@ func TestAPictureKeepsItsCellsUntilSomethingIsPaintedOnThem(t *testing.T) {
 	p.Picture(image.Rect(0, 0, 2, 2), nil)
 	if len(b.Pics) != 1 {
 		t.Error("a picture with no image was listed")
+	}
+}
+
+// A label is text over a picture: its cells keep the picture and the ground,
+// take the glyph and the ink, and honour the clip; Print on the same cells
+// still takes them back.
+func TestALabelKeepsThePictureUnderItsText(t *testing.T) {
+	b := NewBuffer(10, 2)
+	p := NewPainter(b)
+	img := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	ground := RGB(1, 2, 3)
+	p.Fill(image.Rect(0, 0, 10, 2), ground)
+	p.Picture(image.Rect(2, 0, 7, 1), img)
+	ink := Style{}.Foreground(RGB(200, 100, 50)).Bold(true)
+	if n := p.Label(3, 0, "Esc", ink); n != 3 {
+		t.Fatalf("Label took %d cells, want 3", n)
+	}
+	for i, r := range "Esc" {
+		c := b.At(3+i, 0)
+		if c.R != r || c.Pic != 1 || c.Fg != (color.RGBA{200, 100, 50, 255}) || c.Attr&Bold == 0 {
+			t.Errorf("cell %d is %+v, want %q over the picture in the ink", 3+i, c, r)
+		}
+		if bg, _ := ground.RGBA(); c.Bg != bg {
+			t.Errorf("cell %d lost its ground: %v", 3+i, c.Bg)
+		}
+	}
+	if b.At(2, 0).Pic != 1 || b.At(2, 0).R != ' ' {
+		t.Errorf("a cell beside the text changed: %+v", b.At(2, 0))
+	}
+	// A style with a ground of its own does not repaint the cell's.
+	p.Label(2, 0, "x", Style{}.Background(RGB(9, 9, 9)))
+	if bg, _ := ground.RGBA(); b.At(2, 0).Bg != bg || b.At(2, 0).Pic != 1 {
+		t.Errorf("a label's own ground replaced the cell's: %+v", b.At(2, 0))
+	}
+	// The clip holds.
+	if n := p.Clip(image.Rect(0, 0, 4, 2)).Label(3, 0, "abc", ink); n != 3 || b.At(3, 0).R != 'a' || b.At(4, 0).R != 's' {
+		t.Errorf("a clipped label wrote past its clip: %q %q (took %d)", b.At(3, 0).R, b.At(4, 0).R, n)
+	}
+	// Print takes the picture back.
+	p.Print(3, 0, -1, "P", ink)
+	if b.At(3, 0).Pic != 0 || b.At(4, 0).Pic != 1 {
+		t.Errorf("Print left the picture on its cell, or took the next: %d %d", b.At(3, 0).Pic, b.At(4, 0).Pic)
 	}
 }
 

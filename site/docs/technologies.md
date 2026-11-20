@@ -2,7 +2,7 @@
 
 Research gives your civilization lasting bonuses. 203 technologies span all 22 ages, and each one changes your production, military power, housing, building costs or times, research time, a number in one of the game's mechanics, or what you can build or do, for the rest of the run. A tech's bonus is small and counts in full: no cap holds it back (see [How tech bonuses stack](#how-tech-bonuses-stack)). Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
 
-<figure class="screen" data-screen="research"><figcaption>The Research panel in the Classical Age: the tech tree as a map. Philosophy is part way through, Civil Engineering can start, and the Medieval Age waits below the dotted line.</figcaption></figure>
+<figure class="screen" data-screen="research-board"><figcaption>The Research board in the Classical Age: the tech in work with its clock, the queue under it, the techs that can start with the time each takes, and what comes up. A window wide enough also shows the picked tech's detail and the ten lanes.</figcaption></figure>
 
 ---
 
@@ -34,7 +34,7 @@ The scholars' work is the research of your knowledge buildings (each copy at ful
 
 ### The bar and the time
 
-The tech in progress shows a bar that fills to 100%, its percent and the time left, in the header of the Research panel, on its card, in `research list` and in the Logs panel. The Scholars tab of the People panel shows its percent and the time left. The Stats panel says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
+The tech in progress shows a bar that fills to 100%, its percent and the time left, in the header of the Research board, on its card, in `research list` and in the Logs panel. The Scholars tab of the People panel shows its percent and the time left. The Stats panel says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
 
 Events, loot, milestone rewards, the Ancient Cache and two trade routes can add work to the tech in progress, at most half its price. See [Scholars and Research](knowledge.md).
 
@@ -142,7 +142,7 @@ Cancels the current research. The work done on it is lost.
 ```
 research
 ```
-With no arguments, opens the Research panel, the tech tree as a map (so do `techs` and `research tree`). See [Reading the tech tree](#reading-the-tech-tree).
+With no arguments, opens the Research board (so does `techs`): the tech in work with its clock and the queue, the techs you can start with the time each takes, the ones coming up, and your progress in the ten lanes. `Enter` starts the picked tech, or queues it when one is in work, and a capital `Q` queues it. A capital `L` shows one lane and `Esc` shows them all again. A capital `T` opens the whole tech tree on the pick (`research tree` opens it directly). The letters count as keys only when the prompt is empty. The mouse works on every row and button. See [Reading the tech tree](#reading-the-tech-tree).
 
 ---
 
@@ -167,7 +167,9 @@ Shortcut: `res` is an alias for `research`. All subcommands work identically.
 
 ## Reading the tech tree
 
-`research` opens the tree as a map. It covers the whole screen but the command bar, and it does not have to fit: the view follows the tech you select.
+<figure class="screen" data-screen="research"><figcaption>The tech tree in the Classical Age. Philosophy is part way through, Civil Engineering can start, and the Medieval Age waits below the dotted line.</figcaption></figure>
+
+`research tree` (or `T` on the Research board) opens the tree as a map. It covers the whole screen but the command bar, and it does not have to fit: the view follows the tech you select.
 
 - The top bar counts the techs you know out of those in the ages you have reached (`RESEARCH 23/33`). While a tech is in progress it shows the tech's name, bar, percent and time left, and your scholars on the right.
 - Lanes run across, ages run down. Each lane is a column with its name in capitals at the top. From left to right they are Faith & Culture, Knowledge, Trade & Exploration, Agriculture, Craft & Engineering, Materials, Military, Energy, Flight & Space and Computing; a lane appears once one of its techs is in sight. When lanes are off screen, an arrow at that end of the lane row counts them (`2▸`), and a wide window names the nearest on the left (`◂ FAITH`). Each age is a band, named in the gutter on the left with how many of its techs you hold.
@@ -358,7 +360,7 @@ Exploration is the tree's one tech with two ways in: it needs Map Making or Boat
 | `feudalism` | Feudalism | optional | 1h 27m | `the_plough` | +8% housing |
 | `chronometry` | Chronometry | optional | 1h 54m | none | +5% game speed |
 | `guilds` | Guilds | capstone | 4h 11m | `civil_engineering`, `metal_casting` | Buildings cost 4% less, construction takes 8% less time |
-| `steel_forging` | Steel Forging | spine | 40m | `iron_smelting` | +0.25 steel/tick, +8% iron production |
+| `steel_forging` | Steel Forging | spine | 40m | `iron_smelting` | +0.125 steel/s, +8% iron production |
 | `fortification` | Fortification | optional | 2h 28m | `imperial_legions` | Raids on you take 15% less, +10% military power |
 
 ---
@@ -473,7 +475,7 @@ Exploration is the tree's one tech with two ways in: it needs Map Making or Boat
 | `titanium_alloys` | Titanium Alloys | optional | 39h 50m | `chemical_engineering` | +5% steel production, +5% titanium ore production |
 | `special_forces` | Special Forces | optional | 51h 44m | `nuclear_deterrence` | Campaigns take 15% less time |
 | `electricity_tech` | Advanced Electrics | spine | 4h 52m | `nuclear_fission` | Opens the Power Grid Hub, +5% electricity production |
-| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 8h 15m | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
+| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 8h 15m | `rocketry`, `electricity_tech` | +0.5 data/s, +10% expedition rewards |
 | `computers` | Computers | spine | 6h 20m | `electricity_tech` | +5% scholar output, research takes 3% less time |
 
 ---

@@ -40,6 +40,7 @@ const (
 
 // resRow is one resource's row before it is laid out.
 type resRow struct {
+	key      string // the resource's key, for the tooltip on its line
 	name     string
 	amt      string // the amount column
 	amtColor string
@@ -49,7 +50,8 @@ type resRow struct {
 	// that fits, plain text, drawn in statusColor.
 	status      []string
 	statusColor string
-	rate        float64
+	rate        float64 // in unit: per second, or per minute for a slow one (perSecond)
+	unit        string
 	fill        float64 // how far along the bar is, 0 to 1
 	// progress draws a bar of progress toward something (faith strength,
 	// culture's next step). A row without it has no bar.
@@ -93,18 +95,20 @@ func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRo
 	top := magnitudeTop(held)
 	for _, key := range keys {
 		rs := state.Resources[key]
+		n := len(rows)
 		switch key {
 		case "culture":
-			rows = append(rows, cultureRow(rs))
+			rows = append(rows, cultureRow(rs, state.TickIntervalMs))
 		case "faith":
-			rows = append(rows, faithRow(rs, state.CatastropheOutlook))
+			rows = append(rows, faithRow(rs, state.CatastropheOutlook, state.TickIntervalMs))
 		default:
-			r := storeRow(rs)
+			r := storeRow(rs, state.TickIntervalMs)
 			r.fill = magnitudeFill(rs.Amount, top)
 			r.magnitude, r.plain = true, plain
 			r.trend = hist.points(key, rs.Amount)
 			rows = append(rows, r)
 		}
+		rows[n].key = key
 	}
 	return rows
 }
@@ -112,8 +116,9 @@ func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRo
 // storeRow is an ordinary resource: what is held and which way it is going.
 // Stock has no ceiling, so there is no cap; its bar (set by resourceRowsFor)
 // shows magnitude, not fullness.
-func storeRow(rs game.ResourceState) resRow {
-	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rs.Rate}
+func storeRow(rs game.ResourceState, tickMs int) resRow {
+	rate, unit := ratePer(rs.Rate, tickMs)
+	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rate, unit: unit}
 	switch {
 	case rs.Rate > 0:
 		r.amtColor = "green"
@@ -127,8 +132,9 @@ func storeRow(rs game.ResourceState) resRow {
 // cultureRow is culture: what is held over the next step it earns
 // something at, the bar the way there, and what that step gives on the
 // detail line.
-func cultureRow(rs game.ResourceState) resRow {
-	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rs.Rate, progress: true}
+func cultureRow(rs game.ResourceState, tickMs int) resRow {
+	rate, unit := ratePer(rs.Rate, tickMs)
+	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rate, unit: unit, progress: true}
 	for i, step := range cultureThresholds {
 		if rs.Amount < step {
 			r.cap = textfmt.Number(step)
@@ -176,12 +182,13 @@ func faithBandFor(held float64, o game.CatastropheOutlook) faithBand {
 // made, against four and a half moderate sets'), not the fill of the store
 // faith is kept in. The band stands where a step would, and the detail line
 // says it in full with the odds it gives.
-func faithRow(rs game.ResourceState, o game.CatastropheOutlook) resRow {
+func faithRow(rs game.ResourceState, o game.CatastropheOutlook, tickMs int) resRow {
 	band := faithBandFor(rs.Amount, o)
+	rate, unit := ratePer(rs.Rate, tickMs)
 	return resRow{
 		name: rs.Name, amt: fmt.Sprintf("%.0f%%", o.FaithStrength*100), amtColor: "white",
 		status: []string{band.label, band.short, band.mark}, statusColor: band.color,
-		rate: rs.Rate, fill: o.FaithStrength, progress: true,
+		rate: rate, unit: unit, fill: o.FaithStrength, progress: true,
 		detail: rowid.Sprintf("ui.resources_box.faithRow.01", "[%s]%s[-] [gray](epoch: %s)[-]", band.color, band.label, band.epochOdds),
 	}
 }
@@ -189,11 +196,11 @@ func faithRow(rs game.ResourceState, o game.CatastropheOutlook) resRow {
 // resFormat is the grid the rows are drawn on.
 type resFormat struct {
 	nameW, amtW, capW, rateW int
-	gap                      int    // cells between columns
-	sep                      int    // cells between amount and step: 3 is " / ", 1 is "/", 0 is no step column
-	bar                      int    // cells of bar, 0 for none
-	trend                    int    // cells of trend line after the bar, 0 for none
-	unit                     string // the rate's unit: "/tick", or "/t" when even the step had to go
+	gap                      int  // cells between columns
+	sep                      int  // cells between amount and step: 3 is " / ", 1 is "/", 0 is no step column
+	bar                      int  // cells of bar, 0 for none
+	trend                    int  // cells of trend line after the bar, 0 for none
+	short                    bool // a per-minute rate says "/m": even the step had to go
 }
 
 // midW is the cells between the amount and the rate columns' gaps: the
@@ -238,7 +245,7 @@ func fitResourceFormat(rows []resRow, w int) resFormat {
 
 // fitResourceGrid is the grid without a trend line.
 func fitResourceGrid(rows []resRow, w int) resFormat {
-	f := resFormat{unit: "/tick", gap: 2, sep: 3}
+	f := resFormat{gap: 2, sep: 3}
 	longest := 0
 	needMid, needBar := false, false // does any row have a step or status, a bar?
 	for _, r := range rows {
@@ -247,7 +254,7 @@ func fitResourceGrid(rows []resRow, w int) resFormat {
 		longest = max(longest, runeLen(r.name))
 		f.amtW = max(f.amtW, runeLen(r.amt))
 		f.capW = max(f.capW, runeLen(r.cap))
-		text, _ := rateParts(r.rate, f.unit)
+		text, _ := f.rateText(r)
 		f.rateW = max(f.rateW, runeLen(text))
 	}
 	// spacings from roomy to tight; barIn is the widest bar w leaves.
@@ -302,15 +309,24 @@ func fitResourceGrid(rows []resRow, w int) resFormat {
 	if f.width() <= w {
 		return f
 	}
-	f.unit, f.rateW = "/t", 0
+	f.short, f.rateW = true, 0
 	for _, r := range rows {
-		text, _ := rateParts(r.rate, f.unit)
+		text, _ := f.rateText(r)
 		f.rateW = max(f.rateW, runeLen(text))
 	}
 	if over := f.width() - w; over > 0 {
 		f.nameW = max(3, f.nameW-over)
 	}
 	return f
+}
+
+// rateText is a row's rate as the grid writes it, and its color.
+func (f resFormat) rateText(r resRow) (text, color string) {
+	unit := r.unit
+	if f.short && unit == textfmt.PerMinute {
+		unit = "/m"
+	}
+	return rateParts(r.rate, unit)
 }
 
 // line draws r on the grid: one line, f.width() cells at most, tags and all.
@@ -344,7 +360,7 @@ func (f resFormat) line(r resRow) string {
 			fmt.Fprintf(&b, "[gray]/%s[-]%s", r.cap, strings.Repeat(" ", f.capW-runeLen(r.cap)))
 		}
 	}
-	rate, rateColor := rateParts(r.rate, f.unit)
+	rate, rateColor := f.rateText(r)
 	fmt.Fprintf(&b, "%s%s[%s]%s[-]", gap, strings.Repeat(" ", max(0, f.rateW-runeLen(rate))), rateColor, rate)
 	if f.bar > 0 {
 		b.WriteString(gap)
@@ -396,24 +412,6 @@ func shortName(name string, n int) string {
 	return truncate(strings.Join(words, " "), n)
 }
 
-// resLegends are the legend under the rows, from full to brief: what the
-// amount's color and the marker mean, so neither carries meaning by color
-// alone. The box prints the fullest that fits.
-var resLegends = []rowid.Entry{
-	rowid.E("ui.resources_box.resLegends.01", " [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m trend[-]"),
-	rowid.E("ui.resources_box.resLegends.02", " [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m[-]"),
-	rowid.E("ui.resources_box.resLegends.03", " [red]▼[-] [gray]falling[-]"),
-}
-
-func resLegend(w int) string {
-	for _, e := range resLegends {
-		if l := e.String(); visibleLen(l) <= w {
-			return l
-		}
-	}
-	return ""
-}
-
 // resMoreLine is the last line of a box that shows a page of its rows:
 // which rows these are, and the key that turns the page.
 func resMoreLine(first, last, total, w int) string {
@@ -431,8 +429,8 @@ func resMoreLine(first, last, total, w int) string {
 }
 
 // resourceBoxNeeds is the least rows a box must have inside to show n
-// resources without paging: the rows, then the legend.
-func resourceBoxNeeds(n int) int { return n + 1 }
+// resources without paging: the rows.
+func resourceBoxNeeds(n int) int { return n }
 
 // resourceRowsNeed is the rows inside the box that show rows without paging.
 func resourceRowsNeed(rows []resRow) int {
@@ -444,12 +442,19 @@ func resourceRowsNeed(rows []resRow) int {
 // h) and how many pages the rows take: 1 when they all fit. page is the
 // page to show, counted from 0 and taken round the number of pages.
 func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int) {
+	lines, _, pages = layoutResourceOwners(rows, w, h, page)
+	return lines, pages
+}
+
+// layoutResourceOwners is layoutResourceBox that also says which row each
+// line belongs to (an index into rows, or -1 for a blank or the paging line),
+// so a line under the pointer can be traced back to its resource.
+func layoutResourceOwners(rows []resRow, w, h, page int) (lines []string, owner []int, pages int) {
 	if w < 1 || h < 1 {
-		return nil, 1
+		return nil, nil, 1
 	}
 	f := fitResourceFormat(rows, w)
 	n := len(rows)
-	legend := resLegend(w)
 	var details []int // rows with a detail line that fits
 	for i, r := range rows {
 		if r.detail != "" && visibleLen(r.detail)+3 <= w {
@@ -464,40 +469,28 @@ func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int
 		}
 		return false
 	}
-	build := func(airy, withDetails, blank, withLegend bool) []string {
-		var out []string
+	build := func(airy, withDetails bool) (out []string, own []int) {
+		put := func(line string, i int) { out, own = append(out, line), append(own, i) }
 		for i, r := range rows {
-			out = append(out, f.line(r))
+			put(f.line(r), i)
 			if withDetails && hasDetail(i) {
-				out = append(out, "   "+r.detail)
+				put("   "+r.detail, i)
 			}
 			if airy && i < n-1 {
-				out = append(out, "")
+				put("", -1)
 			}
 		}
-		if withLegend && legend != "" {
-			if blank {
-				out = append(out, "")
-			}
-			out = append(out, legend)
-		}
-		return out
+		return out, own
 	}
-	// From roomy to bare: a line between rows, the detail lines, the legend.
-	for _, v := range [][4]bool{
-		{true, true, true, true},
-		{false, true, true, true},
-		{false, false, true, true},
-		{false, false, false, true},
-		{false, false, false, false},
-	} {
-		if out := build(v[0], v[1], v[2], v[3]); len(out) <= h {
-			return out, 1
+	// From roomy to bare: a line between rows, the detail lines.
+	for _, v := range [][2]bool{{true, true}, {false, true}, {false, false}} {
+		if out, own := build(v[0], v[1]); len(out) <= h {
+			return out, own, 1
 		}
 	}
 	// A page of rows, and the line that says so.
 	if h == 1 {
-		return []string{resMoreLine(1, n, n, w)}, 1
+		return []string{resMoreLine(1, n, n, w)}, []int{-1}, 1
 	}
 	size := h - 1
 	room := max(1, size)
@@ -505,11 +498,11 @@ func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int
 	page = ((page % pages) + pages) % pages
 	first := page * room
 	last := min(n, first+room)
-	for _, r := range rows[first:last] {
-		lines = append(lines, f.line(r))
+	for i, r := range rows[first:last] {
+		lines, owner = append(lines, f.line(r)), append(owner, first+i)
 	}
 	for len(lines) < size {
-		lines = append(lines, "")
+		lines, owner = append(lines, ""), append(owner, -1)
 	}
-	return append(lines, resMoreLine(first+1, last, n, w)), pages
+	return append(lines, resMoreLine(first+1, last, n, w)), append(owner, -1), pages
 }

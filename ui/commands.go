@@ -151,11 +151,11 @@ func panel(name, desc string, aliases ...string) *Command {
 // registry is the player command list, in Help panel order within each
 // section. Built fresh per call: callers may not modify it.
 func registry() []*Command {
-	confirmYes := func(form, text string) *Command {
-		return &Command{Name: "confirm", BareOK: true, Subs: []*Command{{Name: "yes", Dangerous: true}}, Help: []Usage{{form, text}}}
+	confirmYes := func(form, text string, dangerous bool) *Command {
+		return &Command{Name: "confirm", BareOK: true, Subs: []*Command{{Name: "yes", Dangerous: dangerous}}, Help: []Usage{{form, text}}}
 	}
-	prestigeConfirm := confirmYes("prestige confirm yes", rowid.Line("ui.help.commands.prestige_confirm_yes", "Prestige: a new run, keeping your points, carry-overs and Era Mastery"))
-	festivalConfirm := confirmYes("festival confirm yes", rowid.Line("ui.help.commands.festival_confirm_yes", "Hold the festival now"))
+	prestigeConfirm := confirmYes("prestige confirm yes", rowid.Line("ui.help.commands.prestige_confirm_yes", "Prestige: a new run, keeping your points, carry-overs and Era Mastery"), true)
+	festivalConfirm := confirmYes("festival confirm yes", rowid.Line("ui.help.commands.festival_confirm_yes", "Hold the festival now"), false)
 
 	return []*Command{
 		// Actions
@@ -236,7 +236,7 @@ func registry() []*Command {
 			}},
 
 		// Research, Expeditions & Army
-		{Name: "research", Run: cmdResearch, Aliases: []string{"res"}, Section: secResearch, Panel: rowid.Line("ui.help.panels.research", "The tech tree: a map of every tech in sight"),
+		{Name: "research", Run: cmdResearch, Aliases: []string{"res"}, Section: secResearch, Panel: rowid.Line("ui.help.panels.research", "The Research board: what can start, the queue, the ten lanes; T opens the tech tree"),
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
 			Help: []Usage{{"research <tech>", rowid.Line("ui.help.commands.research", "Research a tech")}},
 			Subs: []*Command{
@@ -390,13 +390,13 @@ func registry() []*Command {
 			}},
 
 		{Name: "badges", Run: cmdBadges, Aliases: []string{"achievements"}, Section: secAccounts, BareOK: true,
-			Panel: rowid.Line("ui.help.panels.badges", "The badge case: every badge your account holds or can earn (alias: achievements)"),
-			Args:  []Arg{{Kind: ArgText, Words: []string{"next", "all"}, Optional: true}},
+			Panel: rowid.Line("ui.help.panels.badges", "The Ranks screen: a rank for each worker domain, and every badge behind it (alias: achievements)"),
+			Args:  []Arg{{Kind: ArgText, Words: []string{"ranks", "all", "recent"}, Optional: true}},
 			Help: []Usage{
-				{"badges", rowid.Line("ui.help.commands.badges", "Open the badge case (alias: achievements); the prompt keeps working while it is open")},
-				{"badges <family>", rowid.Line("ui.help.commands.badges.2", "Open it on a family's tab: ages, lineages, ladders, specials and the rest (all: every family)")},
-				{"badges next", rowid.Line("ui.help.commands.badges.3", "Open it on the badges you are closest to")},
-				{"badges <name>", rowid.Line("ui.help.commands.badges.4", "Open a badge's detail by its name, or a part of it")},
+				{"badges", rowid.Line("ui.help.commands.badges", "Open the Ranks screen (alias: achievements); the prompt keeps working while it is open")},
+				{"badges all", rowid.Line("ui.help.commands.badges.2", "Open it on every badge, by domain (recent: the latest earned)")},
+				{"badges <domain>", rowid.Line("ui.help.commands.badges.3", "Open one worker domain's badges")},
+				{"badges <name>", rowid.Line("ui.help.commands.badges.4", "Open a badge's line by its name, or a part of it")},
 			}},
 		{Name: "title", Run: cmdTitle, Section: secAccounts, BareOK: true,
 			Args: []Arg{{Kind: ArgText, Words: []string{"default"}, Optional: true}},

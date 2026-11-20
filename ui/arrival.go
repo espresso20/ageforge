@@ -142,7 +142,11 @@ func (a *arrival) say(cur *game.GameState) {
 			v.era, v.eraIcon = era.Name, era.Icon
 		}
 	}
-	v.lines = ageSplashLines(a.newAge, a.summary, a.epoch, a.event)
+	tickMs := 0
+	if cur != nil {
+		tickMs = cur.TickIntervalMs
+	}
+	v.lines = ageSplashLines(a.newAge, a.summary, a.epoch, a.event, tickMs)
 	plain := func(kind splashKind, nth int) string {
 		for _, l := range v.lines {
 			if l.kind != kind {

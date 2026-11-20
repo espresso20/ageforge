@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"runtime"
+	"strconv"
+
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
@@ -17,16 +20,20 @@ func (m *mainMenu) settingsItems() []menuItem {
 	items := []menuItem{
 		{id: miSetTheme, label: rowid.Line("ui.menu.buildViewWith.05", "Themes"), key: 't', extras: []string{theme.Active().Name.String()}},
 		{id: miSetGlyphs, label: rowid.Line("ui.menu.settings.02", "Map glyphs"), key: 'g', extras: []string{m.set.Tier.String()}},
-		{id: miSetMotion, label: rowid.Line("ui.menu.settings.03", "Motion"), key: 'm', extras: []string{settingOnOff(m.set.Motion)}},
-		{id: miSetMinimap, label: rowid.Line("ui.menu.settings.04", "Minimap"), key: 'i', extras: []string{settingOnOff(m.set.Minimap)}},
+		{id: miSetMotion, label: rowid.Line("ui.menu.settings.03", "Motion"), key: 'm', extras: []string{settingOnOff(m.set.Motion)}, sw: true, on: m.set.Motion},
+		{id: miSetMinimap, label: rowid.Line("ui.menu.settings.04", "Minimap"), key: 'i', extras: []string{settingOnOff(m.set.Minimap)}, sw: true, on: m.set.Minimap},
 	}
-	// The font is a row only when the game is in its own window.
+	// The font, the text size and fullscreen are rows only when the game is
+	// in its own window.
 	if m.window != nil {
-		items = append(items, menuItem{id: miSetFont, label: txtFont.String(), key: 'f', extras: []string{fontName(m.window.FontChoice())}})
+		items = append(items,
+			menuItem{id: miSetFont, label: txtFont.String(), key: 'f', extras: []string{fontName(m.window.FontChoice())}},
+			menuItem{id: miSetSize, label: rowid.Line("ui.menu.settings.09", "Text size"), key: 'z', extras: []string{strconv.Itoa(m.window.TextSize())}, size: true, hint: zoomKeysHint()},
+			menuItem{id: miSetFull, label: rowid.Line("ui.menu.settings.10", "Fullscreen"), key: 'u', extras: []string{settingOnOff(m.window.Fullscreen())}, sw: true, on: m.window.Fullscreen(), hint: keyF11})
 	}
 	// Discord status is a row only in a build that has a Discord application id.
 	if m.appID != "" {
-		items = append(items, menuItem{id: miSetDiscord, label: rowid.Line("ui.menu.settings.08", "Discord status"), key: 'd', extras: []string{settingOnOff(m.discordOn())}})
+		items = append(items, menuItem{id: miSetDiscord, label: rowid.Line("ui.menu.settings.08", "Discord status"), key: 'd', extras: []string{settingOnOff(m.discordOn())}, sw: true, on: m.discordOn(), off: m.acct == nil})
 	}
 	return append(items, menuItem{id: miSetBack, label: rowid.Line("ui.menu.settings.05", "Back"), key: 'b'})
 }
@@ -99,6 +106,19 @@ func (m *mainMenu) changeSetting(id string, dir int) {
 		m.window.NextFont()
 		m.refresh(false)
 		return
+	case miSetSize:
+		if m.window == nil {
+			return
+		}
+		m.zoom(dir)
+		return
+	case miSetFull:
+		if m.window == nil {
+			return
+		}
+		m.window.ToggleFullscreen()
+		m.refresh(false)
+		return
 	case miSetDiscord:
 		// Held by the account only: with none loaded there is nothing to keep it in.
 		if m.acct == nil {
@@ -117,6 +137,28 @@ func (m *mainMenu) changeSetting(id string, dir int) {
 		m.local = &set
 	}
 	m.refresh(false)
+}
+
+// zoom changes the text size by steps, through the call the window's own
+// keys make.
+func (m *mainMenu) zoom(steps int) {
+	if m.window == nil {
+		return
+	}
+	m.settingsSel = m.view.sel
+	m.window.ZoomBy(steps)
+	m.refresh(false)
+}
+
+// keyF11 is the key the window's own fullscreen is on.
+const keyF11 = "F11"
+
+// zoomKeysHint is the window's own keys for the text size.
+func zoomKeysHint() string {
+	if runtime.GOOS == "darwin" {
+		return "Cmd+/-"
+	}
+	return "Ctrl+/-"
 }
 
 // closeSettings returns to the main menu, on the Settings entry.

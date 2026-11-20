@@ -13,7 +13,7 @@ import (
 // (ageSplashLines).
 func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	epochChanged bool, epochEvent game.EpochEventRecord) string {
-	lines := ageSplashLines(newAge, summary, epochChanged, epochEvent)
+	lines := ageSplashLines(newAge, summary, epochChanged, epochEvent, 0)
 	out := make([]string, len(lines))
 	for i, l := range lines {
 		out[i] = l.text
@@ -73,7 +73,7 @@ func TestAgeSplashLinesAreOneLineEach(t *testing.T) {
 		t.Fatalf("only %d cases", len(cases))
 	}
 	for _, c := range cases {
-		for _, l := range ageSplashLines(c.age, c.summary, c.epoch, c.event) {
+		for _, l := range ageSplashLines(c.age, c.summary, c.epoch, c.event, 0) {
 			if strings.Contains(l.text, "\n") {
 				t.Errorf("%s: a line holds a line break: %q", c.age, l.text)
 			}

@@ -219,10 +219,7 @@ func drawArmyOrder(g *xgrid, c *deckCard, n int, picked bool, y, w int, lay *dec
 	}
 	switch {
 	case picked && c.Command != "":
-		ex := g.keyButton(4, y, "Enter", c.Action)
-		g.hit(hitDeckAct, n, 4, y, ex-4, 1)
-		g.putFit(ex+1, y, w-3-ex, c.Command, xDim)
-		y++
+		y += g.deckAction(4, y, c, true, false)
 	case c.Why != "":
 		g.putFit(4, y, inner-2, c.Why, xBad)
 		y++

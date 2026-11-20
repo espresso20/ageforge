@@ -126,12 +126,6 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 	if escAccepts {
 		escHint = rowid.Line("ui.newgame_modal.showSaveNameModalOpts.03", "Esc: accept")
 	}
-	hintTV := newNativeText().
-		SetDynamicColors(true).
-		SetTextAlign(kit.AlignCenter).
-		SetText(rowid.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")
-	hintTV.SetBackgroundColor(theme.Of(theme.RoleSurface))
-
 	// closeAndRestore removes the modal page and restores focus to focusReturn.
 	// Used on cancel (Esc).
 	closeAndRestore := func() {
@@ -170,6 +164,30 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		}
 	})
 
+	escape := closeAndRestore
+	if escAccepts {
+		// First-run account naming can't be cancelled into a no-account state:
+		// Esc accepts the current/generated value via the normal submit path.
+		escape = submit
+	}
+
+	// The keys the box answers to, as buttons.
+	hints, _ := keyHints(rowid.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")
+	var choices []choice
+	for _, h := range hints {
+		c := choice{label: h[1], key: h[0], kind: keyPlain}
+		switch h[0] {
+		case "Enter":
+			c.kind, c.sign, c.press = keyPrimary, signTick, submit
+		case "Esc":
+			c.sign, c.press = signCross, escape
+		case "Tab":
+			c.press = reroll
+		}
+		choices = append(choices, c)
+	}
+	buttons, _ := choiceRow(choices, 1, -1)
+
 	// Opaque spacers between the fields: transparent ones would let the page
 	// beneath (the dashboard, for a Branch save) bleed through.
 	inner := newNativeFlex().SetDirection(flexRow).
@@ -177,22 +195,16 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
-		AddItem(hintTV, 1, 0, false)
+		AddItem(buttons, actionRows, 0, false)
 	framed(inner, title, theme.RoleAccent).SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
 	// DoneFunc above so plain typing keys still reach the input.
 	//
-	// Height is sized to the exact content (5 rows + 2 border = 7). An oversized
+	// Height is sized to the exact content (input, gap, error, gap, buttons + 2 border). An oversized
 	// box would leave unallocated interior rows that no primitive paints, and
 	// those rows would show the dashboard through them.
-	escape := closeAndRestore
-	if escAccepts {
-		// First-run account naming can't be cancelled into a no-account state:
-		// Esc accepts the current/generated value via the normal submit path.
-		escape = submit
-	}
-	modal := centeredModal(inner, 60, 7)
+	modal := centeredModal(inner, 66, 4+actionRows+2)
 	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: escape, kit.KeyTab: reroll, kit.KeyBacktab: reroll})
 
 	pages.AddPage(pageName, modal, true, true)

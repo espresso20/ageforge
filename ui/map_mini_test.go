@@ -109,7 +109,7 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 		}
 		px, py, pw, ph := d.sidebar.GetRect()
 		mx, my, mw, mh := d.miniMap.GetRect()
-		bx, by, bw, bh := d.economyTab.buildingTV.GetRect()
+		bx, by, bw, bh := d.economyTab.buildBox.GetRect()
 		if mx != px || mw != pw || my != py+ph {
 			t.Errorf("%v: mini map %d,%d %dx%d is not under the Panels list %d,%d %dx%d", sz, mx, my, mw, mh, px, py, pw, ph)
 		}

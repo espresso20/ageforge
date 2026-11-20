@@ -105,6 +105,7 @@ type headerView struct {
 	Age, Year, Prestige, Dev string
 	People, PeopleShort      headFact
 	Morale, Delta            headFact
+	Festival                 string // a running festival's chip; "" when none
 	MoraleK                  xk
 	Alerts                   []headerAlert
 	// the rows under it; nil until the first refresh
@@ -280,6 +281,13 @@ func headerNow(g *xgrid, v headerView, w, level int, draw bool) bool {
 		left = append(left, xseg{" ", xDim})
 		left = append(left, v.Delta.segs(xDim, v.MoraleK)...)
 	}
+	// A running festival is noted after morale; a click there is not a click
+	// on People.
+	note := 0
+	if v.Festival != "" && level < 5 {
+		left = append(left, xseg{"  ", xDim}, xseg{v.Festival, xGood})
+		note = 2 + runeLen(v.Festival)
+	}
 	type chip struct {
 		s   string
 		k   xk
@@ -326,7 +334,7 @@ func headerNow(g *xgrid, v headerView, w, level int, draw bool) bool {
 	x := 2
 	for i, p := range left {
 		if i == people {
-			g.hit(hitHeader, headerPeople, x, y, min(lw-(x-2), max(cx-2-x, 0)), 1)
+			g.hit(hitHeader, headerPeople, x, y, min(lw-note-(x-2), max(cx-2-x, 0)), 1)
 		}
 		x = g.putFit(x, y, max(cx-2-x, 0), p.s, p.k)
 	}
@@ -392,10 +400,10 @@ type headerBox struct {
 	lit  image.Rectangle
 }
 
-func newHeaderBox(view func(w int) headerView, plain func() bool, run func(string), press func(kit.Key)) *headerBox {
+func newHeaderBox(view func(w int) headerView, plain func() bool, run func(string), app *appLoop) *headerBox {
 	b := &headerBox{view: view, plain: plain, run: run}
 	b.nativeHost = newNativeHost()
-	b.esc.press = press
+	b.esc.wire(app)
 	return b
 }
 
@@ -513,9 +521,26 @@ func (b *headerBox) Paint(p *kit.Painter) {
 	pal := newExpPalette()
 	paintExpeditionKit(p, b.grid, r.Min, pal)
 	if b.in && !b.lit.Empty() {
-		paintLitRect(p, b.grid, r.Min, pal, b.lit)
+		paintHot(p, b.grid, r.Min, pal, b.lit)
 	}
-	b.esc.paintLit(p, b.grid, r.Min, pal)
+	b.esc.paint(p, b.grid, r.Min, pal)
+}
+
+// paintHot repaints the cells of r, a click target, as they look under the
+// pointer, over the grid already painted at org: a chip in its bright phase,
+// anything else on the chip ground under its ink.
+func paintHot(p *kit.Painter, g *xgrid, org image.Point, pal *expPalette, r image.Rectangle) {
+	r = r.Intersect(image.Rect(0, 0, g.w, g.h))
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		for x := r.Min.X; x < r.Max.X; x++ {
+			c := g.c[y*g.w+x]
+			st := pal.style(c).Background(pal.styles[xKeyName].Bg)
+			if c.k >= xChipShort && c.k <= xChipGoal {
+				st = pal.styles[c.k+xChipShortHi-xChipShort]
+			}
+			p.Put(org.X+x, org.Y+y, c.r, st)
+		}
+	}
 }
 
 // headerPlain says the glyph tier is the plain one.

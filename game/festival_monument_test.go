@@ -209,3 +209,20 @@ func TestFestivalStatus_ReportsCostAndBuff(t *testing.T) {
 		t.Errorf("status CooldownTicks = %d, want %d", st.CooldownTicks, festivalCooldownTicks)
 	}
 }
+
+// The snapshot carries what a festival costs and its cooldown, and agrees
+// with FestivalStatus.
+func TestGetStateCarriesTheFestival(t *testing.T) {
+	ge := bmEngine(1e9)
+	ge.SeedRNG(4)
+	if got, want := ge.GetState().Festival, ge.FestivalStatus(); got != want {
+		t.Fatalf("snapshot festival %+v, status %+v", got, want)
+	}
+	if err := ge.DoFestival(); err != nil {
+		t.Fatal(err)
+	}
+	st := ge.GetState()
+	if st.Festival != ge.FestivalStatus() || st.Festival.Ready || st.Festival.CooldownLeft == 0 {
+		t.Errorf("after a festival the snapshot holds %+v", st.Festival)
+	}
+}
