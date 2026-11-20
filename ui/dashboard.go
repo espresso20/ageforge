@@ -277,7 +277,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.Register("logs", rowid.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
 	d.epochHall = &epochHall{
 		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
-		height: func() int { return d.overlayMgr.screenH },
+		height: func() int { om := d.overlayMgr; return om.screenH - barRows(om.screenW, om.screenH) },
 		motion: func() bool { return d.mapSettings().Motion },
 	}
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
