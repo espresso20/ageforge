@@ -555,7 +555,7 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		}
 	}
 	if takes+brings > 0 {
-		g.put(2, 2, rowid.Sprintf("ui.trade_board.renderTradeBoard.14", "Trade in %s, out %s (goods a tick, all routes)", rateAmount(brings, st.TickIntervalMs), rateAmount(takes, st.TickIntervalMs)), xDim)
+		g.put(2, 2, rowid.Sprintf("ui.trade_board.renderTradeBoard.14", "Trade in %s, out %s (all routes)", rateAmount(brings, st.TickIntervalMs), rateAmount(takes, st.TickIntervalMs)), xDim)
 	}
 
 	y := 5
