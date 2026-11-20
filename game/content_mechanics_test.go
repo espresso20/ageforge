@@ -31,13 +31,12 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 			ge.Resources.UnlockResource(res)
 			r.Amount = config.Million
 		}
-		var res string
-		for res, listed = range def.Import {
-		}
-		before := ge.Resources.Get(res)
-		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
-		ge.Trade.Tick(ge.Resources, ge.Buildings, nil, harbor, nil)
+		res := def.Import[0]
+		_, gin := gate(ge, def)
+		listed = gin[res]
+		_, in, _ := ge.Trade.flows(def, RouteTerms{Harbor: harbor}, ge.age)
 		// The panels read the same number, harbors aside.
+		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter"}
 		for _, info := range ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil, RouteTerms{}).ActiveRoutes {
 			want := listed
 			if boats {
@@ -47,7 +46,7 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 				t.Errorf("the panel lists %v %s a run (boats %v), want %v", info.Import[res], res, boats, want)
 			}
 		}
-		return ge.Resources.Get(res) - before, listed
+		return in[res], listed
 	}
 	for _, c := range []struct {
 		boats  bool

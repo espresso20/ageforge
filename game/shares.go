@@ -342,9 +342,10 @@ func (ge *GameEngine) recruitFood() (net, perWorker, margin float64) {
 // grows (workerGain) are per tick before k. Compared as they stood, the
 // rate looked k times richer than it was, and the routine recruited more
 // workers than the food fed. Breakdown.FoodDrain is minus the drain the
-// last rates counted.
+// last rates counted. Trade is left out: a route only takes a surplus, so the
+// people grow as if it were not there.
 func foodBeforeMastery(rate float64, b RateBreakdown) float64 {
-	return rate - b.MasteryRate - b.FoodDrain
+	return rate - b.MasteryRate - b.FoodDrain - b.TradeFlow
 }
 
 // FoodBeforeMastery is foodBeforeMastery for the Workers panel.

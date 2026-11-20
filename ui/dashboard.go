@@ -818,11 +818,14 @@ func (d *Dashboard) StartUpdates() {
 				// is enough, since its frame counter runs on the clock.
 				// So does a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.decks["trade"].moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
 							d.mapPanel.hide()
+						}
+						if d.overlayMgr.ActiveName() != "trade" {
+							d.decks["trade"].moving.Store(false)
 						}
 						if d.overlayMgr.ActiveName() != "expedition" {
 							d.expPanel.moving.Store(false)

@@ -19,52 +19,49 @@ func setRes(ge *GameEngine, key string, amount float64) {
 
 // --- Harbor lineage ---------------------------------------------------------
 
+// importFlow is what a route's import adds to a resource's rate, read from the
+// rate breakdown after a recalculation.
+func importFlow(ge *GameEngine, res string) float64 {
+	for key := range ge.Resources.resources {
+		ge.Resources.UnlockResource(key)
+	}
+	ge.recalculateRates()
+	return ge.Resources.resources[res].Breakdown.TradeFlow
+}
+
 // TestHarborRouteBonus_RaisesIncome is the load-bearing harbour test: with a
-// harbour built, a route's imports must pay out MORE than the same route with no
-// harbour. Drives the real engine income path (processTrade → Trade.Tick).
+// harbour built, a route's import flow is larger than the same route's with no
+// harbour, by the harbour's share.
 func TestHarborRouteBonus_RaisesIncome(t *testing.T) {
 	run := func(withHarbor bool) float64 {
 		ge := NewGameEngine()
 		ge.age = "industrial_age"
-		// Provide a market for the route requirement + the simplest route.
+		townMakes(ge)
 		ge.Buildings.counts["market"] = 2
 		setRes(ge, "food", config.Million)
 		setRes(ge, "wood", config.Million)
-		setRes(ge, "gold", 0)
 		if withHarbor {
 			ge.Buildings.counts["harbor"] = 1 // +5% route income
 		}
-		// Start a deterministic route: stone_trade (export wood, import stone)?
-		// Use local_barter (food→wood) so we measure wood gain cleanly.
 		if err := ge.Trade.StartRoute("local_barter", ge.Buildings, ge.age, ge.progress.GetAgeOrder()); err != nil {
 			t.Fatalf("StartRoute: %v", err)
 		}
-		before := ge.Resources.Get("wood")
-		// Tick until the route completes exactly one cycle.
-		def := config.TradeRouteByKey()["local_barter"]
-		for i := 0; i < def.TicksPerRun; i++ {
-			ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), nil)
-		}
-		return ge.Resources.Get("wood") - before
+		return importFlow(ge, "wood")
 	}
 
 	base := run(false)
 	boosted := run(true)
 	if base <= 0 {
-		t.Fatalf("baseline route produced no import (got %.3f)", base)
+		t.Fatalf("baseline route brought no import (got %.6f)", base)
 	}
-	if boosted <= base {
-		t.Errorf("harbour bonus did not raise income: base=%.3f boosted=%.3f", base, boosted)
-	}
-	// local_barter imports 8 wood; +5% harbour → 8.4.
-	if math.Abs(boosted-8.4) > 1e-6 {
-		t.Errorf("boosted import = %.3f, want 8.4 (8 × 1.05)", boosted)
+	if math.Abs(boosted/base-1.05) > 1e-9 {
+		t.Errorf("harbour flow = %.6f against %.6f without, want x1.05", boosted, base)
 	}
 }
 
-// TestRouteCycle_RaisesOpinion: each completed route cycle gives +1 opinion to
+// TestRouteCycle_RaisesOpinion: each minute a route runs gives +1 opinion to
 // every civ you have met, except civs at war with you (trade.md, "Trade
-// routes"). A skipped (starved) run gives nothing.
+// routes"). A route that is not running gives nothing.
 func TestRouteCycle_RaisesOpinion(t *testing.T) {
 	ge := NewGameEngine()
 	ge.age = "medieval_age"
@@ -76,16 +73,22 @@ func TestRouteCycle_RaisesOpinion(t *testing.T) {
 	if err := ge.Trade.StartRoute("silk_road", ge.Buildings, ge.age, ge.progress.GetAgeOrder()); err != nil {
 		t.Fatalf("StartRoute: %v", err)
 	}
-	def := config.TradeRouteByKey()["silk_road"]
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
+	for key := range ge.Resources.resources {
+		ge.Resources.UnlockResource(key)
 	}
+	ge.recalculateRates()
+	minute := func() {
+		for i := 1; i <= minutesToTicks(1); i++ {
+			ge.Trade.Tick(i, ge.Diplomacy, nil)
+		}
+	}
+	minute()
 	f := ge.Diplomacy.factions
 	if got := f["riverlands_tribes"].Opinion; got != 11 {
-		t.Errorf("met civ opinion after one cycle = %d, want 11", got)
+		t.Errorf("met civ opinion after one minute = %d, want 11", got)
 	}
 	if got := f["riverlands_tribes"].TradeCount; got != 1 {
-		t.Errorf("met civ trade count after one cycle = %d, want 1", got)
+		t.Errorf("met civ trade count after one minute = %d, want 1", got)
 	}
 	if got := f["ironhold_clans"].Opinion; got != -60 {
 		t.Errorf("civ at war: opinion = %d, want -60 (unchanged)", got)
@@ -94,13 +97,14 @@ func TestRouteCycle_RaisesOpinion(t *testing.T) {
 		t.Errorf("unmet civ: opinion = %d, want 0 (unchanged)", got)
 	}
 
-	// A run it cannot afford is skipped and warms no one.
-	setRes(ge, "gold", 0)
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
+	// A paused route is held and warms no one.
+	if err := ge.Trade.StopRoute("silk_road"); err != nil {
+		t.Fatal(err)
 	}
+	ge.recalculateRates()
+	minute()
 	if got := f["riverlands_tribes"].Opinion; got != 11 {
-		t.Errorf("after a skipped run opinion = %d, want 11", got)
+		t.Errorf("after a paused minute opinion = %d, want 11", got)
 	}
 }
 
@@ -120,7 +124,7 @@ func hostileFaction(ge *GameEngine, key string, atWar bool) {
 }
 
 // TestDisruption_BlocksRouteWhenAtWar verifies a route importing a hostile civ's
-// specialty resource earns nothing while at war, then resumes once peace returns.
+// specialty resource brings nothing while at war, then resumes once peace returns.
 // Uses silk_road (imports culture) against an embargoed/at-war culture specialist
 // (artisan_league, specialty "culture").
 func TestDisruption_BlocksRouteWhenAtWar(t *testing.T) {
@@ -141,16 +145,11 @@ func TestDisruption_BlocksRouteWhenAtWar(t *testing.T) {
 		t.Fatalf("test assumes artisan_league specialty culture")
 	}
 
-	def := config.TradeRouteByKey()["silk_road"]
-
 	// 1) At war → route is disrupted, no culture gained over a full cycle.
 	ge := setup()
 	hostileFaction(ge, "artisan_league", true)
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
-	}
-	if got := ge.Resources.Get("culture"); got != 0 {
-		t.Errorf("at war: culture gained = %.1f, want 0 (route should be disrupted)", got)
+	if got := importFlow(ge, "culture"); got != 0 {
+		t.Errorf("at war: culture flow = %.6f, want 0 (route should be disrupted)", got)
 	}
 	// Disrupted flag should be reflected on the active route + state snapshot.
 	disrupted := ge.Diplomacy.DisruptedResources()
@@ -161,19 +160,13 @@ func TestDisruption_BlocksRouteWhenAtWar(t *testing.T) {
 	// 2) Embargo (no war) also disrupts.
 	ge = setup()
 	hostileFaction(ge, "artisan_league", false)
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
-	}
-	if got := ge.Resources.Get("culture"); got != 0 {
-		t.Errorf("embargo: culture gained = %.1f, want 0", got)
+	if got := importFlow(ge, "culture"); got != 0 {
+		t.Errorf("embargo: culture flow = %.6f, want 0", got)
 	}
 
 	// 3) Peace → route runs normally and culture flows.
 	ge = setup()
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
-	}
-	if got := ge.Resources.Get("culture"); got <= 0 {
-		t.Errorf("peace: culture gained = %.1f, want > 0 (route should run)", got)
+	if got := importFlow(ge, "culture"); got <= 0 {
+		t.Errorf("peace: culture flow = %.6f, want > 0 (route should run)", got)
 	}
 }

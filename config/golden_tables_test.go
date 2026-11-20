@@ -71,7 +71,6 @@ type goldenTables struct {
 	TypicalIncome map[string]map[string]float64 `json:"typical_income"`
 	EpochEvents   map[string]int                `json:"epoch_event_ticks"`
 	Awakenings    map[string]int                `json:"awakening_ticks"`
-	TradeRoutes   map[string]int                `json:"trade_route_ticks"`
 	DealLevels    map[string]map[string]float64 `json:"deal_flow_levels"`
 }
 
@@ -79,7 +78,7 @@ func liveGoldenTables() goldenTables {
 	g := goldenTables{
 		Buildings: map[string]goldenBuilding{}, Techs: map[string]goldenTech{}, Gates: map[string]goldenGate{},
 		AgeTargetSecs: map[string]float64{}, PriceLevels: map[string]map[string]float64{},
-		EpochEvents: map[string]int{}, Awakenings: map[string]int{}, TradeRoutes: map[string]int{},
+		EpochEvents: map[string]int{}, Awakenings: map[string]int{},
 	}
 	defs := BaseBuildings()
 	for _, d := range defs {
@@ -109,9 +108,6 @@ func liveGoldenTables() goldenTables {
 	}
 	for _, a := range Awakenings() {
 		g.Awakenings[a.Key] = a.Duration
-	}
-	for _, r := range BaseTradeRoutes() {
-		g.TradeRoutes[r.Key] = r.TicksPerRun
 	}
 	return g
 }

@@ -77,6 +77,10 @@ type deckPage struct {
 	Sections []deckSection
 	// Hint is what the foot says may be typed.
 	Hint string
+	// clock is the seconds an animated page has run (held while the game is
+	// held); animate is set by a draw that has something moving.
+	clock   float64
+	animate bool
 }
 
 const (

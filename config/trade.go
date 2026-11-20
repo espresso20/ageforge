@@ -1,22 +1,26 @@
 package config
 
-// TradeRouteDef defines a passive recurring trade route. Once started, the
-// engine automatically exports Export resources and adds Import resources every
-// TicksPerRun ticks. The route stops if Export resources are insufficient.
-//
-// TicksPerRun is typed for the base curve and stretched for the route's
-// MinAge (StretchTicks), so an age runs as many cycles as it did before the
-// one-week curve. Every route opens from the Bronze Age on, where the stretch
-// is the same in every later age (a config test holds that).
+// RouteShare is the share of the town's gross production of an exported
+// resource that a route at its gate sends out.
+const RouteShare = 0.10
+
+// RouteMargin is how much more value a route brings in than it sends out, by
+// the price levels deals use.
+const RouteMargin = 1.10
+
+// TradeRouteDef defines a trade route. A running route is a flow: at its gate
+// (MinCount of RequiredBld) it sends RouteShare of the town's gross
+// production of each export and brings in RouteMargin times that value, split
+// evenly over its imports. The flow grows with the buildings past the gate. A
+// shortage of an export slows the route.
 type TradeRouteDef struct {
 	Name        string
 	Key         string
-	MinAge      string             // minimum age to unlock this route
-	RequiredBld string             // building key that must be built (e.g. "market", "port")
-	MinCount    int                // minimum count of RequiredBld needed
-	TicksPerRun int                // ticks per trade cycle (at 1x speed)
-	Export      map[string]float64 // resources consumed from player each cycle
-	Import      map[string]float64 // resources added to player each cycle
+	MinAge      string   // minimum age to unlock this route
+	RequiredBld string   // building key that must be built (e.g. "market", "port")
+	MinCount    int      // minimum count of RequiredBld needed
+	Export      []string // what the route takes
+	Import      []string // what the route brings
 	Description string
 }
 
@@ -52,56 +56,49 @@ var ValidPersonalities = map[string]bool{
 	"isolationist": true,
 }
 
-// BaseTradeRoutes returns all trade route definitions, with TicksPerRun
-// stretched for each route's MinAge.
+// BaseTradeRoutes returns all trade route definitions.
 func BaseTradeRoutes() []TradeRouteDef {
 	defs := []TradeRouteDef{
 		{
 			Name: "Local Barter", Key: "local_barter",
 			MinAge: "bronze_age", RequiredBld: "market", MinCount: 1,
-			TicksPerRun: 26,
-			Export:      map[string]float64{"food": 10},
-			Import:      map[string]float64{"wood": 8},
+			Export:      []string{"food"},
+			Import:      []string{"wood"},
 			Description: "Send surplus food to nearby villages for wood.",
 		},
 		{
 			Name: "Stone Trade", Key: "stone_trade",
 			MinAge: "iron_age", RequiredBld: "market", MinCount: 2,
-			TicksPerRun: 31,
-			Export:      map[string]float64{"wood": 15},
-			Import:      map[string]float64{"stone": 12},
+			Export:      []string{"wood"},
+			Import:      []string{"stone"},
 			Description: "Send wood to the quarries for stone.",
 		},
 		{
 			Name: "Gold Caravan", Key: "gold_caravan",
 			MinAge: "classical_age", RequiredBld: "market", MinCount: 3,
-			TicksPerRun: 39,
-			Export:      map[string]float64{"stone": 50},
-			Import:      map[string]float64{"gold": 5},
+			Export:      []string{"stone"},
+			Import:      []string{"gold"},
 			Description: "Send stone caravans out for gold.",
 		},
 		{
 			Name: "Silk Road", Key: "silk_road",
 			MinAge: "medieval_age", RequiredBld: "market", MinCount: 2,
-			TicksPerRun: 52,
-			Export:      map[string]float64{"gold": 30},
-			Import:      map[string]float64{"culture": 80},
+			Export:      []string{"gold"},
+			Import:      []string{"culture"},
 			Description: "Send gold along the Silk Road for culture.",
 		},
 		{
 			Name: "Spice Trade", Key: "spice_trade",
 			MinAge: "colonial_age", RequiredBld: "port", MinCount: 1,
-			TicksPerRun: 47,
-			Export:      map[string]float64{"gold": 100},
-			Import:      map[string]float64{"food": 200, "culture": 50},
+			Export:      []string{"gold"},
+			Import:      []string{"food", "culture"},
 			Description: "Pay gold to distant lands for spiced food and culture.",
 		},
 		{
 			Name: "Colonial Exports", Key: "colonial_exports",
 			MinAge: "colonial_age", RequiredBld: "port", MinCount: 2,
-			TicksPerRun: 39,
-			Export:      map[string]float64{"food": 500},
-			Import:      map[string]float64{"gold": 150},
+			Export:      []string{"food"},
+			Import:      []string{"gold"},
 			Description: "Sell food to colonial settlements for gold.",
 		},
 		// --- Colonial → Industrial gap fillers (Trade Expansion) ---
@@ -111,121 +108,106 @@ func BaseTradeRoutes() []TradeRouteDef {
 		{
 			Name: "Mercantile Convoy", Key: "mercantile_convoy",
 			MinAge: "renaissance_age", RequiredBld: "exchange", MinCount: 1,
-			TicksPerRun: 42,
-			Export:      map[string]float64{"stone": 300, "wood": 200},
-			Import:      map[string]float64{"gold": 90},
+			Export:      []string{"stone", "wood"},
+			Import:      []string{"gold"},
 			Description: "Run armed convoys of stone and wood between city-states for gold.",
 		},
 		{
 			Name: "Triangular Trade", Key: "triangular_trade",
 			MinAge: "colonial_age", RequiredBld: "harbor", MinCount: 1,
-			TicksPerRun: 47,
-			Export:      map[string]float64{"food": 400, "gold": 60},
-			Import:      map[string]float64{"culture": 120, ResearchTarget: 80},
+			Export:      []string{"food", "gold"},
+			Import:      []string{"culture", ResearchTarget},
 			Description: "A three-way colonial exchange: send food and gold for culture and research.",
 		},
 		{
 			Name: "Tea Clippers", Key: "tea_clippers",
 			MinAge: "colonial_age", RequiredBld: "harbor", MinCount: 2,
-			TicksPerRun: 52,
-			Export:      map[string]float64{"gold": 250},
-			Import:      map[string]float64{"food": 600, "culture": 90},
+			Export:      []string{"gold"},
+			Import:      []string{"food", "culture"},
 			Description: "Fast clippers trade gold in distant ports for food and culture.",
 		},
 		{
 			Name: "Coal Barges", Key: "coal_barges",
 			MinAge: "industrial_age", RequiredBld: "harbor", MinCount: 2,
-			TicksPerRun: 36,
-			Export:      map[string]float64{"coal": 300},
-			Import:      map[string]float64{"gold": 220, "iron": 150},
+			Export:      []string{"coal"},
+			Import:      []string{"gold", "iron"},
 			Description: "Barge coal downriver to the foundries for gold and iron.",
 		},
 		{
 			Name: "Cotton Exchange", Key: "cotton_exchange",
 			MinAge: "industrial_age", RequiredBld: "stock_exchange", MinCount: 1,
-			TicksPerRun: 42,
-			Export:      map[string]float64{"gold": 400},
-			Import:      map[string]float64{"culture": 200, ResearchTarget: 150},
+			Export:      []string{"gold"},
+			Import:      []string{"culture", ResearchTarget},
 			Description: "Pay gold at the cotton exchange for culture and research.",
 		},
 		{
 			Name: "Steamship Line", Key: "steamship_line",
 			MinAge: "industrial_age", RequiredBld: "harbor_authority", MinCount: 2,
-			TicksPerRun: 47,
-			Export:      map[string]float64{"steel": 250, "coal": 200},
-			Import:      map[string]float64{"gold": 900},
+			Export:      []string{"steel", "coal"},
+			Import:      []string{"gold"},
 			Description: "A steamship line hauls steel and coal across the ocean for gold.",
 		},
 		{
 			Name: "Rail Freight", Key: "rail_freight",
 			MinAge: "industrial_age", RequiredBld: "iron_works_complex", MinCount: 1,
-			TicksPerRun: 31,
-			Export:      map[string]float64{"iron": 200},
-			Import:      map[string]float64{"gold": 100, "coal": 50},
+			Export:      []string{"iron"},
+			Import:      []string{"gold", "coal"},
 			Description: "Ship iron by rail for gold and coal.",
 		},
 		{
 			Name: "Oil Pipeline", Key: "oil_pipeline",
 			MinAge: "victorian_age", RequiredBld: "oil_derrick", MinCount: 2,
-			TicksPerRun: 39,
-			Export:      map[string]float64{"oil": 100},
-			Import:      map[string]float64{"gold": 300},
+			Export:      []string{"oil"},
+			Import:      []string{"gold"},
 			Description: "Pipe oil to the refineries for gold.",
 		},
 		{
 			Name: "Power Exchange", Key: "power_exchange",
 			MinAge: "electric_age", RequiredBld: "power_station", MinCount: 1,
-			TicksPerRun: 26,
-			Export:      map[string]float64{"electricity": 500},
-			Import:      map[string]float64{"gold": 200},
+			Export:      []string{"electricity"},
+			Import:      []string{"gold"},
 			Description: "Sell surplus electricity on the grid for gold.",
 		},
 		{
 			Name: "Data Trade", Key: "data_trade",
 			MinAge: "information_age", RequiredBld: "server_farm", MinCount: 1,
-			TicksPerRun: 26,
-			Export:      map[string]float64{"data": 100},
-			Import:      map[string]float64{"gold": 500},
+			Export:      []string{"data"},
+			Import:      []string{"gold"},
 			Description: "Sell data on digital marketplaces for gold.",
 		},
 		{
 			Name: "Crypto Market", Key: "crypto_market",
 			MinAge: "cyberpunk_age", RequiredBld: "black_market", MinCount: 1,
-			TicksPerRun: 21,
-			Export:      map[string]float64{"crypto": 50},
-			Import:      map[string]float64{"gold": 1000},
+			Export:      []string{"crypto"},
+			Import:      []string{"gold"},
 			Description: "Sell crypto on underground exchanges for gold.",
 		},
 		{
 			Name: "Fusion Export", Key: "fusion_export",
 			MinAge: "fusion_age", RequiredBld: "fusion_reactor", MinCount: 1,
-			TicksPerRun: 31,
-			Export:      map[string]float64{"electricity": 200},
-			Import:      map[string]float64{"gold": 1000},
+			Export:      []string{"electricity"},
+			Import:      []string{"gold"},
 			Description: "Sell fusion electricity to nearby civilizations for gold.",
 		},
 		{
 			Name: "Warp Commerce", Key: "warp_commerce",
 			MinAge: "interstellar_age", RequiredBld: "warp_drive_plant", MinCount: 1,
-			TicksPerRun: 39,
-			Export:      map[string]float64{"gold": 500},
-			Import:      map[string]float64{"dark_matter": 200},
+			Export:      []string{"gold"},
+			Import:      []string{"dark_matter"},
 			Description: "Send gold across the warp gates for dark matter.",
 		},
 		{
 			Name: "Stellar Freight", Key: "stellar_exchange",
 			MinAge: "galactic_age", RequiredBld: "galactic_trade_hub", MinCount: 1,
-			TicksPerRun: 52,
-			Export:      map[string]float64{"dark_matter": 100},
-			Import:      map[string]float64{"gold": 2000},
+			Export:      []string{"dark_matter"},
+			Import:      []string{"gold"},
 			Description: "Ship dark matter between star systems for gold.",
 		},
 		{
 			Name: "Quantum Trade", Key: "quantum_trade",
 			MinAge: "quantum_age", RequiredBld: "reality_processor", MinCount: 1,
-			TicksPerRun: 26,
-			Export:      map[string]float64{"quantum_flux": 50},
-			Import:      map[string]float64{"gold": 5000},
+			Export:      []string{"quantum_flux"},
+			Import:      []string{"gold"},
 			Description: "Send quantum flux across dimensional boundaries for gold.",
 		},
 	}

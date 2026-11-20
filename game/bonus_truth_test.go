@@ -325,7 +325,7 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 	out := map[string]float64{
 		config.MechanicGatherAmount:          ge.gatherBonus(),
 		config.MechanicRaidLoss:              ge.raidLossFactor(),
-		config.MechanicRouteTicks:            float64(ge.Trade.RunTicks(truthRefTicks)) / truthRefTicks,
+		config.MechanicRouteTicks:            1 / ge.Trade.timeFactor(),
 		config.MechanicRouteIncome:           ge.Trade.RoutePay(truthRefTicks) / truthRefTicks,
 		config.MechanicMoraleCap:             ge.moraleCap(),
 		config.MechanicDealRefreshTicks:      float64(ge.Diplomacy.dealRefreshFor(ge.age)),
@@ -559,20 +559,16 @@ func truthRouteIncome(t *testing.T, ge *GameEngine) (float64, string) {
 		if order[def.MinAge] > order[ge.age] || ge.Buildings.GetCount(def.RequiredBld) < def.MinCount {
 			continue
 		}
-		// The route books what came in as the store's change, so an import
-		// into a store of trillions is read to the nearest few thousandths
-		// of a unit: an empty import store reads it exactly.
-		for res := range def.Import {
-			ge.Resources.resources[res].Amount = 0
+		// A route's import flow at its gate, per unit of its listed run: the
+		// techs' term, the harbor and the allies, with the speed cut aside.
+		// (a gross that makes one listed run a tick)
+		for _, res := range def.Export {
+			ge.Trade.gross[res] = 1 / config.RouteShare
 		}
-		for res, amount := range def.Export {
-			r := ge.Resources.resources[res]
-			r.Amount = math.Max(r.Amount, amount)
-		}
-		ge.Trade.activeRoutes = map[string]*ActiveRoute{def.Key: {Key: def.Key, TicksLeft: 1}}
-		ge.processTrade()
-		res := sortedKeys(def.Import)[0]
-		return ge.Resources.Get(res) / def.Import[res], ""
+		_, in, _ := ge.Trade.flows(def, ge.routeTerms(), ge.age)
+		res := def.Import[0]
+		_, base := gate(ge, def)
+		return float64(in[res]) / float64(base[res]*ge.Trade.timeFactor()), ""
 	}
 	return 0, "no trade route runs in " + ge.age
 }

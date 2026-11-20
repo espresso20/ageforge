@@ -146,10 +146,24 @@ func (rm *ResourceManager) ApplyRates() {
 func (rm *ResourceManager) AddProduced(scale float64, gained func(key string, amount float64)) {
 	for _, key := range rm.order {
 		r := rm.resources[key]
-		if !rm.unlocked[key] || r.Rate <= 0 {
+		if !rm.unlocked[key] {
 			continue
 		}
-		g := float64(r.Rate * scale)
+		rate := r.Rate
+		if flow := r.Breakdown.TradeFlow; rate <= 0 && flow < 0 {
+			// Exports take more than the net rate shows: what the town makes
+			// is credited and the routes' share taken off the stock.
+			net := float64(float64(max(rate-flow, 0)+flow) * scale)
+			r.Amount = max(0, r.Amount+net)
+			if net > 0 && gained != nil {
+				gained(key, net)
+			}
+			continue
+		}
+		if rate <= 0 {
+			continue
+		}
+		g := float64(rate * scale)
 		if g > 0 {
 			r.Amount += g
 			if gained != nil {

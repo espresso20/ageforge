@@ -292,12 +292,12 @@ func TestTradeRouteDescriptionsNameGiveAndGet(t *testing.T) {
 			continue
 		}
 		give, get := d[:i], d[i:]
-		for res := range r.Export {
+		for _, res := range r.Export {
 			if !strings.Contains(give, ResourceLabel(res)) {
 				t.Errorf("%s: %q should name the export %q before \"for\"", r.Key, r.Description, ResourceLabel(res))
 			}
 		}
-		for res := range r.Import {
+		for _, res := range r.Import {
 			if !strings.Contains(get, ResourceLabel(res)) {
 				t.Errorf("%s: %q should name the import %q after \"for\"", r.Key, r.Description, ResourceLabel(res))
 			}

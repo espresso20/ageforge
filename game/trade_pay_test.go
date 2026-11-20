@@ -2,13 +2,14 @@ package game
 
 import (
 	"math"
+	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
 )
 
-// TestRouteView_SharesMultiplyOutToTickPay: the pay and shares on the state
-// view equal what Tick pays, with a harbor and an ally in play, and the
+// TestRouteView_SharesMultiplyOutToTickPay: the flow and shares on the state
+// view equal what the rates carry, with a harbor and an ally in play, and the
 // building shares keep their order.
 func TestRouteView_SharesMultiplyOutToTickPay(t *testing.T) {
 	ge := NewGameEngine()
@@ -42,59 +43,55 @@ func TestRouteView_SharesMultiplyOutToTickPay(t *testing.T) {
 	for _, s := range got.Shares["wood"] {
 		sum += s.Percent / 100
 	}
-	if want := def.Import["wood"] * sum; math.Abs(got.Pay["wood"]-want) > 1e-9 {
-		t.Fatalf("view pay %.6f, shares give %.6f", got.Pay["wood"], want)
+	_, gateIn := gate(ge, def)
+	if want := float64(gateIn["wood"] * sum); math.Abs(got.Import["wood"]-want) > 1e-9 {
+		t.Fatalf("view flow %.6f, shares give %.6f", got.Import["wood"], want)
 	}
-	before := ge.Resources.Get("wood")
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), nil)
-	}
-	if paid := ge.Resources.Get("wood") - before; math.Abs(paid-got.Pay["wood"]) > 1e-9 {
-		t.Fatalf("Tick paid %.6f, view says %.6f", paid, got.Pay["wood"])
+	// The rates carry the same flow the view lists.
+	flow := importFlow(ge, "wood")
+	got = ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil, ge.routeTerms()).ActiveRoutes[0]
+	if math.Abs(flow-got.Import["wood"]*got.Scale) > 1e-9 {
+		t.Fatalf("the rates carry %.6f, the view says %.6f", flow, got.Import["wood"]*got.Scale)
 	}
 }
 
-// TestRouteView_StarvedShowsAndClears: a route short of its export is flagged
-// on the view; a funded one is not.
-func TestRouteView_StarvedShowsAndClears(t *testing.T) {
+// TestRouteView_ShortShowsAndClears: a route short of its export runs slower
+// and the view says by how much; a funded one runs in full.
+func TestRouteView_ShortShowsAndClears(t *testing.T) {
 	ge := NewGameEngine()
 	ge.age = "industrial_age"
-	ge.Buildings.counts["market"] = 2
+	townMakes(ge)
+	ge.Buildings.counts["market"] = 1 << 14 // sends more than the town makes
 	setRes(ge, "food", 0)
 	if err := ge.Trade.StartRoute("local_barter", ge.Buildings, ge.age, ge.progress.GetAgeOrder()); err != nil {
 		t.Fatal(err)
 	}
-	def := config.TradeRouteByKey()["local_barter"]
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
-	}
 	view := func() ActiveRouteInfo {
+		ge.recalculateRates()
 		return ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil, RouteTerms{}).ActiveRoutes[0]
 	}
-	if !view().Starved {
-		t.Fatal("route short of its export is not flagged")
+	if got := view().Run; got >= 1 {
+		t.Fatalf("a route with no stock runs at %v, want under 1", got)
 	}
 	setRes(ge, "food", config.Million)
-	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
-	}
-	if view().Starved {
-		t.Fatal("a funded run left the route flagged")
+	if got := view().Run; got != 1 {
+		t.Fatalf("a funded route runs at %v, want 1", got)
 	}
 }
 
 // TestRouteView_AllyShareInPay: an ally whose specialty a route imports adds
-// its share, and the view's pay matches the sum of Tick's terms.
+// its share, and the view's flow matches the sum of the terms.
 func TestRouteView_AllyShareInPay(t *testing.T) {
 	ge := NewGameEngine()
 	for _, f := range ge.Diplomacy.factionList {
 		for _, def := range ge.Trade.routeList {
-			amount, ok := def.Import[f.Specialty]
-			if !ok {
+			if !slices.Contains(def.Import, f.Specialty) {
 				continue
 			}
 			allyFaction(ge, f.Key)
-			pay, shares := ge.Trade.payFor(def, ge.routeTerms())
+			ge.Trade.activeRoutes[def.Key] = &ActiveRoute{Key: def.Key}
+			view := ge.Trade.Snapshot(ge.age, ge.progress.GetAgeOrder(), ge.Buildings, nil, ge.routeTerms()).ActiveRoutes[0]
+			shares := view.Shares
 			var ally float64
 			for _, s := range shares[f.Specialty] {
 				if s.Kind == ShareAlly {
@@ -104,9 +101,10 @@ func TestRouteView_AllyShareInPay(t *testing.T) {
 			if ally <= 0 {
 				t.Fatalf("no ally share for %s on %s", f.Key, def.Key)
 			}
-			want := ge.Trade.RunPay(amount, ge.harborRouteBonus()+ge.Diplomacy.GetTradeBonus(f.Specialty))
-			if math.Abs(pay[f.Specialty]-want) > 1e-9 {
-				t.Fatalf("pay %.6f, Tick would pay %.6f", pay[f.Specialty], want)
+			_, gateIn := gate(ge, def)
+			want := float64(ge.Trade.RunPay(gateIn[f.Specialty], ge.harborRouteBonus()+ge.Diplomacy.GetTradeBonus(f.Specialty)))
+			if math.Abs(view.Import[f.Specialty]-want) > 1e-9 {
+				t.Fatalf("flow %.6f, the rates would carry %.6f", view.Import[f.Specialty], want)
 			}
 			return
 		}
