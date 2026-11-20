@@ -138,7 +138,7 @@ type Dashboard struct {
 	harbPanel harbingerPanel
 	// planPanel is the Plan panel's UI state (selection, feedback line,
 	// Clear confirmation). Owned by the UI goroutine.
-	planPanel planPanel
+	planPanel *planPanel
 
 	// The maps: the shared model builder, the Map panel and the dashboard's
 	// mini map. UI goroutine only. mapLocal holds the
@@ -211,6 +211,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),
 		historyPanel:  newHistoryPanel(),
+		planPanel:     newPlanPanel(),
 		decks:         map[string]*deckPanel{},
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
@@ -308,18 +309,10 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		return nil
 	})
 	d.planPanel.engine = d.engine
-	d.planPanel.height = func() int { return d.overlayMgr.screenH }
-	d.planPanel.bar = func() int { return barRows(d.overlayMgr.screenW, d.overlayMgr.screenH) }
-	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
-	d.overlayMgr.SetFooter("plan", planFooter)
-	d.overlayMgr.SetKeyHandler("plan", func(event *kit.Key) *kit.Key {
-		// UI goroutine, no engine lock held (see the harbinger handler).
-		if !d.planPanel.handleKey(event, d.engine) {
-			return event
-		}
-		d.overlayMgr.Refresh(d.engine.GetState())
-		return nil
-	})
+	d.planPanel.prompt = d.researchPanel.prompt
+	d.planPanel.toPrompt = d.handToPrompt
+	d.planPanel.buttons.wire(d.app)
+	d.overlayMgr.RegisterWidget("plan", txtBuildPlan, d.planPanel.open, d.planPanel.update)
 	d.historyPanel.settings = d.mapSettings
 	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
 		return d.engine.History(), d.engine.RunArchive(), d.engine.ActiveSaveName()
@@ -1608,9 +1601,6 @@ func (d *Dashboard) runLine(text string) {
 	}
 	if result.OverlayName == "harbinger" {
 		d.harbPanel.reset()
-	}
-	if result.OverlayName == "plan" {
-		d.planPanel.reset()
 	}
 	if result.OverlayName == "map" {
 		d.mapPanel.world = result.MapWorld

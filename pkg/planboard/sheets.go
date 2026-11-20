@@ -50,7 +50,7 @@ func (l Layout) Slip(r image.Rectangle, sign string, gx, gy, step int, gauges []
 	for x := r.Min.X*cw + 6; x < r.Max.X*cw-6; x += 9 {
 		c.disc(x+rn.jit(), r.Min.Y*ch+4+rn.jit(), 2, Sheet)
 	}
-	c.sign(sign, (r.Min.X+2)*cw, (r.Min.Y+2)*ch, rn.n(3), Paper)
+	c.signBig(sign, (r.Min.X+2)*cw, (r.Min.Y+1)*ch+4, rn.n(3), Paper)
 	for i, g := range gauges {
 		y := (gy+i*step)*ch + ch/2 - 4
 		c.fill(gx*cw, y, (r.Max.X-1-gx)*cw, 8, g)
@@ -58,17 +58,19 @@ func (l Layout) Slip(r image.Rectangle, sign string, gx, gy, step int, gauges []
 	return c.img
 }
 
-// Gate is the gate card: an arch over the card and one pillar bar per
-// requirement, each a row apart from row gy.
-func (l Layout) Gate(r image.Rectangle, gx, gy, step int, pillars []Bar) *image.RGBA {
-	c := part(r, l.CW, l.CH)
+// Gate is the gate card (its picture also covers the three rows above r): an arch over the card and one pillar bar per
+// requirement, gw cells wide from column gx, step rows apart from row gy.
+func (l Layout) Gate(r image.Rectangle, gx, gw, gy, step int, pillars []Bar) *image.RGBA {
+	c := part(image.Rect(r.Min.X, r.Min.Y-3, r.Max.X, r.Max.Y), l.CW, l.CH)
 	cw, ch := l.CW, l.CH
 	c.cells(r, Card)
-	c.arch(r.Min.X*cw, (r.Min.Y-3)*ch, r.Dx()*cw, 3*ch, Brass)
-	c.arch(r.Min.X*cw+8, (r.Min.Y-3)*ch+8, r.Dx()*cw-16, 3*ch-8, Sheet)
+	aw := min(r.Dx(), 26) * cw
+	ax := r.Min.X*cw + (r.Dx()*cw-aw)/2
+	c.arch(ax, (r.Min.Y-3)*ch, aw, 3*ch, Brass)
+	c.arch(ax+8, (r.Min.Y-3)*ch+8, aw-16, 3*ch-8, Sheet)
 	c.rect(r.Min.X*cw, r.Min.Y*ch, r.Dx()*cw, 3, Brass)
 	for i, g := range pillars {
-		c.fill(gx*cw, (gy+i*step)*ch+ch/2-4, (r.Max.X-1-gx)*cw, 8, g)
+		c.fill(gx*cw, (gy+i*step)*ch+ch/2-4, gw*cw, 8, g)
 	}
 	return c.img
 }

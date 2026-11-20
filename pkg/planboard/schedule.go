@@ -122,7 +122,9 @@ func (l Layout) Schedule(s Sched) Drawn {
 		x := l.Lanes.Min.X + 1
 		c.frame(image.Rect(x, 2, x+s.FinishW, 3), line)
 		x += s.FinishW + 1
-		c.frame(image.Rect(x, 2, x+s.UntimedW, 3), line)
+		if s.UntimedW > 0 {
+			c.frame(image.Rect(x, 2, x+s.UntimedW, 3), line)
+		}
 	}
 	// Lanes: the ground, the gate's band, the grid.
 	c.cells(l.Lanes, Sheet)

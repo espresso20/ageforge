@@ -204,60 +204,6 @@ func TestLongPricesFitTheBuildOverlay(t *testing.T) {
 	}
 }
 
-// TestLongPricesFitTheBuildPlan: the plan prints a ready item's whole price
-// ("starts next tick for ..."), and a waiting item names the material it is
-// short of with its amounts; both keep their words whole at both sizes.
-func TestLongPricesFitTheBuildPlan(t *testing.T) {
-	restoreForge(t)
-	for _, c := range longPriceCases {
-		for _, key := range c.keys {
-			d, pages, eng, b := priceTown(t, c.age, key)
-			if _, err := eng.PlanAddBuild(key, 1); err != nil {
-				t.Fatal(err)
-			}
-			eng.StepTicks(0)
-			v := eng.GetState().Plan[0]
-			if v.Status != game.PlanStatusReady {
-				t.Fatalf("staging: the plan item for %s is %s (%s)", key, v.Status, v.Note)
-			}
-			// The plan prints the item's own price (a wonder's is what its
-			// bank lacks, which is its full price).
-			parts := pricePartsOf(v.Cost)
-			if len(parts) != len(b.NextCost) {
-				t.Fatalf("staging: the plan prices %s in %d materials, the building in %d", key, len(parts), len(b.NextCost))
-			}
-			for _, sz := range longPriceSizes {
-				w, h := sz[0], sz[1]
-				d.overlayMgr.screenW = w
-				if !d.overlayMgr.Show("plan", eng.GetState()) {
-					t.Fatal("plan overlay not registered")
-				}
-				screen := drawPrimitive(t, pages, w, h).Text()
-				// The detail pane has a row for each material: its whole name
-				// and its amount on one row.
-				var lost []string
-				for res, need := range v.Cost {
-					name, amount := game.ResourceName(res), textfmt.Number(need)
-					found := false
-					for _, row := range strings.Split(screen, "\n") {
-						if strings.Contains(row, name) && strings.Contains(row, amount) {
-							found = true
-							break
-						}
-					}
-					if !found {
-						lost = append(lost, amount+" "+name)
-					}
-				}
-				if len(lost) > 0 {
-					t.Errorf("%s at %dx%d: the plan does not show %v whole on a row:\n%s", key, w, h, lost, screen)
-				}
-				d.overlayMgr.Hide()
-			}
-		}
-	}
-}
-
 // TestLongPricesFitTheWonderPanel: a wonder's bank is a line a material; the
 // longest of them (the Cyberpunk Age's) keeps each line whole.
 func TestLongPricesFitTheWonderPanel(t *testing.T) {

@@ -163,6 +163,7 @@ func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error
 		}
 	}
 
+	drawShotPics(img, b, cellW, cellH) // text on a picture is written over it
 	for cy := 0; cy < rows; cy++ {
 		for cx := 0; cx < cols; cx++ {
 			c := cells[cy*cols+cx]
@@ -193,7 +194,6 @@ func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error
 			}
 		}
 	}
-	drawShotPics(img, b, cellW, cellH)
 	return img
 }
 

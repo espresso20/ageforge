@@ -126,6 +126,11 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 			routeKey: d.historyPanel.routeKey,
 			update:   d.historyPanel.update,
 		},
+		"plan": {
+			routeKey:   d.planPanel.routeKey,
+			closeFirst: d.planPanel.closeFirst,
+			update:     d.planPanel.update,
+		},
 		"people": {
 			routeKey: d.peoplePanel.routeKey,
 			update:   d.peoplePanel.update,
