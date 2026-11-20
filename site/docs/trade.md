@@ -1,6 +1,6 @@
 # Trade
 
-Trade routes and the Black Market move resources around your economy. There are 21 trade routes. A running route is a flow in your income: it takes some of a resource and brings another every tick, and the flow grows with the buildings you have for it. Each minute a route runs also raises the opinion of you held by every civilization you have met (except one at war with you). Harbors raise what the routes bring. The Black Market turns culture into a resource of your choice, with a risk of one deal in six.
+Trade routes and the Black Market move resources around your economy. There are 21 trade routes. A running route is a flow in your income: it takes some of a resource and brings another every tick, and the flow grows with the buildings you have for it, by one gate's worth for each doubling of them. Each minute a route runs also raises the opinion of you held by every civilization you have met (except one at war with you). Harbors raise what the routes bring. The Black Market turns culture into a resource of your choice, with a risk of one deal in six.
 
 The game has no market where one resource swaps for another. Every material an age charges for comes from a building (see [The maker rule](buildings.md#the-maker-rule)).
 
@@ -10,7 +10,7 @@ The other civilizations (meeting them, opinion, deals, alliances, war) have thei
 
 ## Trade routes
 
-A running route takes some of one resource from you every tick and brings you another. Its flow shows in the Resources box as a line of its own, as "trade". A route needs its required building. At the building count its listing asks, it moves the listed amount over the listed ticks; with more of the building it moves proportionally more (twice the buildings, twice the flow).
+A running route takes some of one resource from you every tick and brings you another. Its flow shows in the Resources box as a line of its own, as "trade". A route needs its required building. At the building count its listing asks, it moves the listed amount over the listed ticks; with more of the building it moves more, but with diminishing returns: each doubling of the line adds one more gate's flow (flow x1 at the gate, x2 at twice the buildings, x3 at four times). A route only sends what the town can spare: it never takes the stock below what the town itself uses, so a route that exports food leaves what the people eat.
 
 <figure class="screen" data-screen="trade"><figcaption>The Trade panel in a window too small for the board: a card for each route, with Local Barter running at its full flow.</figcaption></figure>
 

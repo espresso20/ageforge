@@ -309,7 +309,7 @@ A run costs the larger of 5K culture or a number of hours of your own culture in
 
 The Trade, Army and Milestones panels leave the prompt working. `←` `↑` `↓` `→` move the pick (from route to route on Trade, from order to order on Army, along a road and between roads on Milestones), `Enter` runs the picked thing's command (its button shows it), `PgUp` and `PgDn` scroll when there is more than fits, and `Esc` closes the panel. A click picks, and a click on the button runs the command. With something typed in the prompt, the keys go to the prompt. Milestones has no commands.
 
-A route whose imports include a resource that a civilization you are at war with or have embargoed specializes in moves nothing until the conflict ends. A running route is a flow in your resource rates: its flow at the building count its listing asks is the listed amount over the listed ticks, and more of the building gives more, in proportion. When the stock of what a route exports runs short, the routes sharing it all slow to the same share. Harbors raise the income of every active route. See [Trade](trade.md).
+A route whose imports include a resource that a civilization you are at war with or have embargoed specializes in moves nothing until the conflict ends. A running route is a flow in your resource rates: its flow at the building count its listing asks is the listed amount over the listed ticks, and each doubling of the building adds one more gate's flow. A route only exports a surplus, never what the town itself uses. When the stock of what a route exports runs short, the routes sharing it all slow to the same share. Harbors raise the income of every active route. See [Trade](trade.md).
 
 ---
 
