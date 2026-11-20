@@ -123,5 +123,5 @@ func (d *Dashboard) notePanels(names []string, opened bool) {
 
 // newPlate is a panel's name on the cyan plate, one cell wider at each side.
 func newPlate(s string) string {
-	return theme.TagFgBgAttr(theme.RoleBackground, theme.RoleLabel, "b") + " " + s + " " + theme.Reset
+	return theme.TagFgBgAttr(theme.RoleBackground, theme.RoleNew, "b") + " " + s + " " + theme.Reset
 }

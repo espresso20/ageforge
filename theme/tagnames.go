@@ -23,6 +23,7 @@ var roleTagNames = [numRoles]string{
 	RoleOnNegative:    "onnegative",
 	RoleComment:       "comment",
 	RoleEffect:        "effect",
+	RoleNew:           "new",
 }
 
 // tagName pairs a color name the theme owns with the role it resolves to.

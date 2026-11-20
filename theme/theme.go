@@ -52,6 +52,7 @@ const (
 	RoleOnNegative    // text drawn ON a Negative fill: danger modals (derived: Text, else black/white)
 	RoleComment       // the flavor sentences (quips, comments, lore) and nothing else; no other role uses it
 	RoleEffect        // what a tech does (its effect sentence in the research screens): blue; derived when a theme leaves it unset
+	RoleNew           // fresh things: the NEW plate, a newly found panel; cyan, text on Background and Background text on it both clear 4.5:1
 	numRoles
 )
 
@@ -79,6 +80,7 @@ var roleNames = [numRoles]string{
 	RoleOnNegative:    "OnNegative",
 	RoleComment:       "Comment",
 	RoleEffect:        "Effect",
+	RoleNew:           "New",
 }
 
 // String renders a Role for diagnostics and test failure messages.
