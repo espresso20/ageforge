@@ -154,6 +154,16 @@ func (s rankPaint) right(end, y int, str string, col kit.Color, bold bool) {
 	s.text(end-utf8.RuneCountInString(str), y, str, col, bold)
 }
 
+// rightFrom is right, held to the cells after from: a string that does not
+// fit there is cut, and dropped when almost nothing of it would show.
+func (s rankPaint) rightFrom(from, end, y int, str string, col kit.Color, bold bool) {
+	room := end - from
+	if room < 4 {
+		return
+	}
+	s.right(end, y, fitText(str, room), col, bold)
+}
+
 func (s rankPaint) fill(x, y, w, h int, bg kit.Color) {
 	s.p.Fill(image.Rect(s.o.X+x, s.o.Y+y, s.o.X+x+w, s.o.Y+y+h), bg)
 }
@@ -473,17 +483,23 @@ func (p *ranksPanel) paintRanks(s rankPaint, w, h int) {
 			}
 			s.bar(g.bx+k*(g.segW+1), y+1, g.segW, float64(d.pts-lo)/float64(th-lo), col, track, '▀')
 		}
-		s.text(g.bx, y+2, fmt.Sprintf("%d of %d badges", d.earned, d.all), dim, false)
+		after := s.text(g.bx, y+2, fmt.Sprintf("%d of %d badges", d.earned, d.all), dim, false) + 2
 		switch {
 		case !ranked && d.opens != "":
-			s.right(g.bxEnd, y+2, "its workers arrive in the "+d.opens, dim, false)
+			s.rightFrom(after, g.bxEnd, y+2, "its workers arrive in the "+d.opens, dim, false)
 		case len(d.near) > 0:
 			v := d.near[0]
 			pc := fmt.Sprintf("%d%%", pct(v))
+			if g.bxEnd-len(pc)-2 < after {
+				break
+			}
 			s.right(g.bxEnd, y+2, pc, txt, false)
 			nx := g.bxEnd - len(pc) - 2
-			s.right(nx, y+2, v.Name, txt, false)
-			s.right(nx-utf8.RuneCountInString(v.Name)-2, y+2, "next", dim, false)
+			name := fitText(v.Name, max(0, nx-after))
+			s.rightFrom(after, nx, y+2, name, txt, false)
+			if lead := nx - utf8.RuneCountInString(name) - 2; lead-6 >= after {
+				s.right(lead, y+2, "next", dim, false)
+			}
 		}
 		p.hits = append(p.hits, rankHit{image.Rect(1, y, g.bxEnd+7, y+3), d.key})
 	}
