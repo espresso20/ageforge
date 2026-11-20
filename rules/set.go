@@ -111,6 +111,7 @@ type Set struct {
 	priceLevels map[string]map[string]float64
 	priced      map[string][]string // age -> its construction resources, sorted
 	flowLevels  map[string]map[string]float64
+	routeLevels map[[2]string]float64
 	flowIncome  map[string]map[string]float64
 	typIncome   map[string]map[string]float64
 	flowBuilt   map[string]map[string]float64

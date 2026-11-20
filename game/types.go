@@ -898,7 +898,7 @@ type DiplomacyState struct {
 	// BoonCrews are the workers faction boons have lent (Extra Hands), one
 	// entry per crew, oldest first. They go home when TicksLeft runs out.
 	BoonCrews []BoonWorkerLoan
-	Boosts []BoostInfo // gift boosts running
+	Boosts    []BoostInfo // gift boosts running
 }
 
 // BoostInfo is one running gift boost.
@@ -928,5 +928,5 @@ type FactionInfo struct {
 	Deals         []DealInfo
 	DealsBlocked  string
 	DealRefreshIn int
-	Knowhow bool // the civ's perk is earned (gifts.go)
+	Knowhow       bool // the civ's perk is earned (gifts.go)
 }

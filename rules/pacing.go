@@ -22,6 +22,13 @@ func (s *Set) derive() {
 		s.priced[age] = config.PricedResourcesAt(lv)
 	}
 	s.flowLevels = config.FlowDealLevels(s.buildings, s.agePos)
+	s.routeLevels = map[[2]string]float64{}
+	for _, age := range s.ageKeys {
+		for _, r := range config.BaseResources() {
+			s.routeLevels[[2]string{r.Key, age}] = s.walkRouteLevel(r.Key, age)
+		}
+		s.routeLevels[[2]string{config.ResearchTarget, age}] = s.walkRouteLevel(config.ResearchTarget, age)
+	}
 	s.flowIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.IsFlowResource)
 	s.typIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.AnyResource)
 	s.flowBuilt = config.BuildingOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
@@ -208,6 +215,15 @@ func (s *Set) DealPriceLevel(res, age string) float64 {
 // RoutePriceLevel is DealPriceLevel for a trade route: an age that has no level
 // for res carries the latest earlier one forward (0 when no age has one).
 func (s *Set) RoutePriceLevel(res, age string) float64 {
+	if l, ok := s.routeLevels[[2]string{res, age}]; ok {
+		return l
+	}
+	return s.walkRouteLevel(res, age)
+}
+
+// walkRouteLevel is RoutePriceLevel worked out, for derive to keep (a Set is
+// read by many goroutines and never written after compile).
+func (s *Set) walkRouteLevel(res, age string) float64 {
 	for i, ok := s.agePos[age]; ok && i >= 0; i-- {
 		if l := s.DealPriceLevel(res, s.ageKeys[i]); l > 0 {
 			return l
