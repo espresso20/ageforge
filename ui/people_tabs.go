@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"image/color"
-	"strings"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -78,8 +77,13 @@ func (c peopleBody) work() {
 	c.workBand(rows)
 	c.y, c.h = c.y+workBandH(c.g.h)+1, c.h-workBandH(c.g.h)-1
 	lw := c.w * 11 / 20
+	if c.v.shut {
+		lw = c.w
+	}
 	rw := c.w - lw
-	c.pane(c.x+lw, c.y, rw, c.h, "", c.s.pal.Work)
+	if rw > 0 {
+		c.pane(c.x+lw, c.y, rw, c.h, "", c.s.pal.Work)
+	}
 	title := rowid.Line("ui.people_tabs.work.01", "Work areas")
 	if len(rows) == 0 {
 		c.pane(c.x, c.y, lw, c.h, title, c.s.pal.Work)
@@ -152,6 +156,11 @@ func (c peopleBody) work() {
 		}
 		y += 1 + len(notes[i])
 	}
+	keys := [][2]string{{"↑↓", rowid.Line("ui.people_tabs.work.19", "pick an area")}, {"Enter", rowid.Line("ui.people_tabs.work.20", "open or close it")}, escClose()}
+	if c.v.shut {
+		c.footer(keys, "roster <area> <%|auto>")
+		return
+	}
 	// The picked area.
 	r := rows[clamp(c.v.row, 0, len(rows)-1)]
 	g.put(c.x+lw+2, c.y, " "+fitText(r.Name, rw-6)+" ", xTitle)
@@ -182,7 +191,7 @@ func (c peopleBody) work() {
 		y++
 	}
 	c.recruitBlock(rx, recruitY, ri)
-	c.footer([][2]string{{"↑↓", rowid.Line("ui.people_tabs.work.19", "pick an area")}, escClose()}, "roster <area> <%|auto>")
+	c.footer(keys, "roster <area> <%|auto>")
 }
 
 // areaList is the built buildings of a work area that take workers.
@@ -201,179 +210,4 @@ func (c peopleBody) areaBuildings(domain string, w int) []string {
 		parts[i] += " ·"
 	}
 	return wrapLines(parts, w, runeLen)
-}
-
-// ===== Army =====
-
-func (c peopleBody) army() {
-	g, st := c.g, c.st
-	mil := st.Military
-	kinds := peopleKinds(st)
-	soldiers := kinds[2]
-	topH := max(8, c.h*3/5)
-	lw := c.w * 11 / 20
-	rw := c.w - lw
-	c.pane(c.x, c.y, lw, topH, rowid.Line("ui.people_tabs.army.01", "Military buildings"), c.s.pal.Soldiers)
-	c.pane(c.x+lw, c.y, rw, topH, rowid.Sprintf("ui.people_tabs.army.02", "Away · %s", num(soldiers.out)), c.s.pal.Soldiers)
-
-	// The buildings with their posts, then the army and the defense under them.
-	blds := militaryBuildings(st)
-	per := max(0, (topH-2-5)/2)
-	if len(blds) == 0 {
-		g.putFit(c.x+2, c.y+1, lw-4, rowid.Line("ui.people_tabs.army.03", "No military buildings yet."), xFaint)
-	}
-	posts := map[string]game.SoldierPost{}
-	for _, p := range mil.Posts {
-		posts[p.Key] = p
-	}
-	first := window(len(blds), per, c.v.row)
-	for n := 0; n < per && first+n < len(blds); n++ {
-		i := first + n
-		b := blds[i]
-		y := c.y + 1 + n*2
-		p := posts[b.key]
-		staff := rowid.Sprintf("ui.people_tabs.army.04", "%s/%s posted", num(p.Posted), num(p.Posts))
-		pickName(g, c.x+2, y, lw-6-runeLen(staff), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
-		g.hit(hitRow, i, c.x+1, y, lw-2, 2)
-		sk := xGood
-		if p.Posted < p.Posts {
-			sk = xBad
-		}
-		g.rput(rightOf(c.x, lw), y, staff, sk)
-		g.putFit(c.x+4, y+1, lw-8, b.Description, xDim)
-	}
-	sy := c.y + topH - 6
-	g.segsFit(c.x+2, sy, lw-4, xseg{soldiers.name + " ", xDim}, xseg{num(soldiers.count) + rowid.Line("ui.people_tabs.army.05", " posted of ") + num(mil.SoldierCap), xText})
-	g.segsFit(c.x+2, sy+1, lw-4, xseg{rowid.Line("ui.people_tabs.army.06", "Defense "), xDim}, xseg{num(int(mil.DefenseRating)), xText},
-		xseg{rowid.Line("ui.people_tabs.army.07", "  threat ") + num(int(mil.Threat)) + rowid.Line("ui.people_tabs.army.08", ", blunts ") + textfmt.Percent(mil.Mitigation), xDim})
-	g.segsFit(c.x+2, sy+2, lw-4, xseg{rowid.Line("ui.people_tabs.army.09", "Rank "), xDim}, xseg{rankName(st, mil.Rank), xBright}, xseg{" · " + rankProgress(st) + rowid.Line("ui.people_tabs.army.10", " experience"), xText})
-	g.segsFit(c.x+2, sy+3, lw-4, xseg{rowid.Line("ui.people_tabs.army.11", "Gives "), xDim}, xseg{rankGives(mil.Rank), xText})
-	g.segsFit(c.x+2, sy+4, lw-4, xseg{rankNext(st), xDim})
-
-	// Away: each party out.
-	y := c.y + 1
-	away := 0
-	for _, m := range mil.Active {
-		if m == nil {
-			continue
-		}
-		away++
-		if y+1 >= c.y+topH-1 {
-			break
-		}
-		g.putFit(c.x+lw+2, y, rw-4, m.Name, xBright)
-		g.putFit(c.x+lw+4, y+1, rw-6, rowid.Sprintf("ui.people_tabs.army.12", "%s · back in %s", textfmt.Count(m.Soldiers, soldiers.one, soldiers.name), formatTicks(m.TicksLeft, st)), xDim)
-		y += 2
-	}
-	if away == 0 {
-		g.putFit(c.x+lw+2, y, rw-4, rowid.Line("ui.people_tabs.army.13", "Nobody is out."), xFaint)
-	}
-
-	// The soldiers' news.
-	by := c.y + topH
-	if bh := c.h - topH; bh >= 4 {
-		c.pane(c.x, by, c.w, bh, rowid.Line("ui.people_tabs.army.14", "Fallen and filled"), c.s.pal.Soldiers)
-		drawLog(g, 3, by+1, c.w-4, bh-2, recentLog(st, armyEvent, bh-2), rowid.Line("ui.people_tabs.army.15", "No news from the army."))
-	}
-	c.footer([][2]string{{"↑↓", rowid.Line("ui.people_tabs.army.17", "pick a building")}, escClose()}, "army")
-}
-
-// ===== Scholars =====
-
-func (c peopleBody) scholars() {
-	g, st := c.g, c.st
-	kinds := peopleKinds(st)
-	sch := kinds[3]
-	topH := max(8, c.h*3/5)
-	lw := c.w * 11 / 20
-	rw := c.w - lw
-	c.pane(c.x, c.y, lw, topH, rowid.Line("ui.people_tabs.scholars.01", "Desks"), c.s.pal.Scholars)
-	c.pane(c.x+lw, c.y, rw, topH, rowid.Line("ui.people_tabs.scholars.02", "Research"), c.s.pal.Scholars)
-
-	blds := knowledgeBuildings(st)
-	per := max(0, (topH-2-1)/2)
-	if len(blds) == 0 {
-		g.putFit(c.x+2, c.y+1, lw-4, rowid.Line("ui.people_tabs.scholars.03", "No knowledge buildings yet: each one comes with its ")+strings.ToLower(sch.name)+".", xFaint)
-	}
-	first := window(len(blds), per, c.v.row)
-	for n := 0; n < per && first+n < len(blds); n++ {
-		i := first + n
-		b := blds[i]
-		y := c.y + 1 + n*2
-		each := rowid.Sprintf("ui.people_tabs.scholars.04", "%s each", num(b.Scholars))
-		pickName(g, c.x+2, y, lw-6-runeLen(each), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
-		g.hit(hitRow, i, c.x+1, y, lw-2, 2)
-		g.rput(rightOf(c.x, lw), y, each, xDim)
-		const bw = 10
-		fill := bw
-		if b.FullRateCopies > 0 {
-			fill = bw * min(b.Count, b.FullRateCopies) / b.FullRateCopies
-		}
-		for k := 0; k < bw; k++ {
-			if k < fill {
-				g.set(c.x+4+k, y+1, '█', xLore)
-			} else {
-				g.set(c.x+4+k, y+1, '░', xFaint)
-			}
-		}
-		total := fmt.Sprintf("%s %s", num(b.Count*b.Scholars), strings.ToLower(sch.name))
-		if b.FullRateCopies > 0 {
-			if b.Count > b.FullRateCopies {
-				total += rowid.Sprintf("ui.people_tabs.scholars.23", ", %d copies, %d at half rate", b.Count, b.Count-b.FullRateCopies)
-			} else {
-				total += rowid.Sprintf("ui.people_tabs.scholars.05", ", %d of %d copies", b.Count, b.FullRateCopies)
-			}
-		}
-		g.putFit(c.x+4+bw+1, y+1, lw-4-bw-4, total, xText)
-	}
-
-	// Research.
-	r := st.Research
-	rx, ri := c.x+lw+2, rw-4
-	studying, progress := "nothing", "-"
-	if r.CurrentTech != "" {
-		studying = r.CurrentTechName
-		progress = fmt.Sprintf("%d%%, %s", researchPercent(st), researchLeft(st))
-	}
-	next := rowid.Line("ui.people_tabs.scholars.07", "nothing planned")
-	if q := queueLines(st); len(q) > 0 {
-		next = strings.TrimPrefix(q[0], "1. ")
-	}
-	s := st.Scholars
-	for i, row := range [][2]string{
-		{rowid.Line("ui.people_tabs.scholars.08", "Studying"), studying},
-		{rowid.Line("ui.people_tabs.scholars.09", "Progress"), progress},
-		{rowid.Line("ui.people_tabs.scholars.10", "Research"), rateText(s.PerTick, st.TickIntervalMs)},
-		{sch.name, rowid.Sprintf("ui.people_tabs.scholars.12", "%s: %s research, %s teach", num(s.Total), num(s.Researching), num(s.Teaching))},
-		{rowid.Line("ui.people_tabs.scholars.13", "Teaching"), textfmt.SignedPercent(s.TeachingBonus) + rowid.Line("ui.people_tabs.scholars.14", " to what workers make")},
-		{txtNext.String(), next},
-	} {
-		y := c.y + 1 + i
-		if y >= c.y+topH-1 {
-			break
-		}
-		lab := fitText(row[0], 9)
-		g.put(rx, y, lab, xDim)
-		g.putFit(rx+10, y, ri-10, row[1], xText)
-	}
-	if y := c.y + 7; y < c.y+topH-1 {
-		c.splitRow(rx, y, ri)
-	}
-
-	by := c.y + topH
-	if bh := c.h - topH; bh >= 4 {
-		c.pane(c.x, by, c.w, bh, rowid.Line("ui.people_tabs.scholars.16", "How to speed research"), c.s.pal.Scholars)
-		tips := []string{
-			rowid.Line("ui.people_tabs.scholars.17", "Build knowledge buildings: each comes with its ") + strings.ToLower(sch.name) + ".",
-			rowid.Line("ui.people_tabs.scholars.18", "Research techs that make your ") + strings.ToLower(sch.name) + rowid.Line("ui.people_tabs.scholars.19", " faster."),
-			rowid.Line("ui.people_tabs.scholars.20", "Expeditions and events can bring back finds that add to the research in progress."),
-		}
-		for i, t := range tips {
-			if i >= bh-2 {
-				break
-			}
-			g.putFit(3, by+1+i, c.w-4, "· "+t, xText)
-		}
-	}
-	c.footer([][2]string{{"↑↓", rowid.Line("ui.people_tabs.scholars.22", "pick a building")}, escClose()}, "scholars")
 }

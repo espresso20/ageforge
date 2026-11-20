@@ -209,9 +209,9 @@ func TestPeopleOverviewSizes(t *testing.T) {
 func TestPeopleArmyAndScholarsTabs(t *testing.T) {
 	st := peopleTown(t)
 	army := renderPeopleGrid(st, peopleView{tab: tabArmy}, 157, 43).String()
-	wantAll(t, "the Army tab", army, "Military buildings", "Away", "Trade Trek to the Cedar Pass", "20 Spearmen", "Defense")
+	wantAll(t, "the Army tab", army, "Military buildings", "Away", "Trade Trek to the Cedar Pass", "20 Spearmen", "Rank and defense")
 	scholars := renderPeopleGrid(st, peopleView{tab: tabScholars}, 157, 43).String()
-	wantAll(t, "the Scholars tab", scholars, "Desks", "Research", "Studying", "scribes", "How to speed research")
+	wantAll(t, "the Scholars tab", scholars, "Desks", "Research", "Pick research", "scribes", "How to speed research")
 }
 
 // The four kinds have colours of their own in every theme.
@@ -299,5 +299,35 @@ func TestPeoplePanelMouse(t *testing.T) {
 	p.view.row = 0
 	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || (peopleRows(st, tabArmy) > 1 && p.view.row != 1) {
 		t.Errorf("the wheel left the pick on row %d", p.view.row)
+	}
+}
+
+// T opens the research board from any tab; Enter closes and opens the picked
+// work area's detail, on the Work tab only and never over typed text.
+func TestPeopleResearchAndEnterKeys(t *testing.T) {
+	engine, _ := expFixture(t)
+	p := newPeoplePanel()
+	p.open(engine.GetState())
+	var ran []string
+	p.buttons.run = func(c string) { ran = append(ran, c) }
+	if !p.routeKey(newKey(kit.KeyRune, 't', 0), "") || len(ran) != 1 || ran[0] != "research" {
+		t.Errorf("T ran %v, want research", ran)
+	}
+	if p.routeKey(newKey(kit.KeyRune, 't', 0), "x") {
+		t.Error("T was taken with text in the prompt")
+	}
+	if p.routeKey(newKey(kit.KeyEnter, 0, 0), "") {
+		t.Error("Enter was taken off the Work tab")
+	}
+	p.view.tab = tabWork
+	if p.routeKey(newKey(kit.KeyEnter, 0, 0), "x") {
+		t.Error("Enter was taken with text in the prompt")
+	}
+	if !p.routeKey(newKey(kit.KeyEnter, 0, 0), "") || !p.view.shut {
+		t.Error("Enter did not close the detail")
+	}
+	p.pick(0)
+	if p.view.shut {
+		t.Error("picking an area left the detail closed")
 	}
 }

@@ -31,11 +31,25 @@ func TestGlyphsAreRectangular(t *testing.T) {
 	for name, set := range map[string]map[rune]string{"bold": bold, "thin": thin} {
 		for r, g := range set {
 			rows := strings.Split(g, "/")
+			if want := len(strings.Split(set['0'], "/")); len(rows) != want {
+				t.Errorf("%s glyph %q has %d rows, want %d", name, r, len(rows), want)
+			}
 			for _, row := range rows {
 				if len(row) != len(rows[0]) {
 					t.Errorf("%s glyph %q has uneven rows", name, r)
 				}
 			}
+		}
+	}
+}
+
+func TestEveryUnitLetterHasAGlyph(t *testing.T) {
+	for _, r := range "KMBTQiSxpOcNoD" {
+		if _, ok := bold[r]; !ok {
+			t.Errorf("no bold glyph for %q", r)
+		}
+		if _, ok := thin[r]; !ok {
+			t.Errorf("no thin glyph for %q", r)
 		}
 	}
 }

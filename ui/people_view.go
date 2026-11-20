@@ -36,10 +36,11 @@ const (
 
 // peopleView is what the player has picked.
 type peopleView struct {
-	tab int       // the tab
-	row int       // the picked row on the tab (a card, an area, a building)
-	sub int       // the picked building of the picked work area
-	buy buyChoice // how many Recruit takes
+	tab  int       // the tab
+	row  int       // the picked row on the tab (a card, an area, a building)
+	sub  int       // the picked building of the picked work area
+	buy  buyChoice // how many Recruit takes
+	shut bool      // the picked work area's detail is closed
 }
 
 // peopleKeys are the panel's keys as the Help panel lists them.
@@ -49,6 +50,8 @@ var peopleKeys = []keyHelp{
 	{"A", rowid.E("ui.people_view.peopleKeys.05", "Work: put every area on auto")},
 	{"B", rowid.E("ui.people_view.peopleKeys.06", "Work: open the buildings")},
 	{"G", rowid.E("ui.people_view.peopleKeys.07", "Work: turn automatic growth on or off")},
+	{"T", rowid.E("ui.people_view.peopleKeys.08", "Pick research")},
+	{"Enter", rowid.E("ui.people_view.peopleKeys.09", "Work: open or close the picked area")},
 	{"Esc", rowid.E("ui.people_view.peopleKeys.04", "Close the panel")},
 }
 
