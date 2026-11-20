@@ -18,14 +18,13 @@ I'll acknowledge the report within 48 hours and aim to release a fix within 14 d
 
 ## Scope
 
-AgeForge is a local terminal application — it reads/writes save files to disk and makes outbound-only network requests to check for updates (GitHub releases API). There is no server, no user accounts, and no data collection.
+AgeForge is a local terminal application — it reads/writes save files to disk and makes no network request for updates. There is no server, no user accounts, and no data collection.
 
 The main attack surface is:
 
 | Area | Notes |
 |------|-------|
 | **Save file parsing** | Malformed JSON save files could cause crashes |
-| **Auto-updater** | Downloads binaries from GitHub releases; SHA256 is verified before install |
 | **Website** | Static Netlify site; no server-side code |
 
 ## Supported Versions
