@@ -98,8 +98,8 @@ func TestNewPanelsAndTheirPlates(t *testing.T) {
 		t.Errorf("the list does not follow what was found: %q", list)
 	}
 	text := untag(nextBoxText(d.next, 62, 40, true))
-	if !strings.Contains(text, fmt.Sprintf(" %d new ", want)) {
-		t.Errorf("the rule row has no count: %q", text)
+	if strings.Contains(text, fmt.Sprintf(" %d new ", want)) {
+		t.Errorf("the rule row counts new panels: %q", text)
 	}
 	// A click, a typed name and Show me clear the plate.
 	for _, how := range []func(){
