@@ -6,112 +6,100 @@ import (
 )
 
 // hold.go holds the simulation for the pause card. The tick loop keeps its
-// timer but runs no tick, no autosave and no catch-up while the engine is
-// held; the time held is added to the run's start and to the autosave clock,
-// so it is neither time played nor time until the next autosave.
+// timer but runs no tick and no autosave while the engine is held; the time
+// held is added to the run's start and to the autosave clock, so it is neither
+// time played nor time until the next autosave.
 
 // holdState is the held flag and the wall-clock marks the loop works from.
 type holdState struct {
 	mu       sync.Mutex
 	at       time.Time // when the hold began or was last settled; zero when not held
 	autosave time.Time // the last autosave, or the loop's start
-	saved    time.Time // the last successful save
+	saved    time.Time // the last save or load
 }
 
-// settle returns the time held since the last settle and moves the mark to
-// now (or clears it when end is set). It is zero when not held.
-func (h *holdState) settle(now time.Time, end bool) time.Duration {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if h.at.IsZero() {
-		return 0
-	}
-	d := now.Sub(h.at)
-	if end {
-		h.at = time.Time{}
-	} else {
-		h.at = now
-	}
-	h.autosave = h.autosave.Add(d)
-	return d
-}
-
-// Hold stops the simulation until Release. Calling it again changes nothing.
-func (ge *GameEngine) Hold() {
+// with runs f on the state under its lock.
+func (ge *GameEngine) with(f func(h *holdState)) {
 	ge.hold.mu.Lock()
 	defer ge.hold.mu.Unlock()
-	if ge.hold.at.IsZero() {
-		ge.hold.at = time.Now()
+	f(&ge.hold)
+}
+
+// settle moves the hold's mark to now (clearing it when end is set), pushes the
+// autosave clock on by the time held since the mark, and moves the run's start
+// on by the same, so play time stands still. A no-op when not held.
+func (ge *GameEngine) settle(end bool) {
+	var d time.Duration
+	ge.with(func(h *holdState) {
+		if h.at.IsZero() {
+			return
+		}
+		now := time.Now()
+		d, h.at = now.Sub(h.at), now
+		if end {
+			h.at = time.Time{}
+		}
+		h.autosave = h.autosave.Add(d)
+	})
+	if d > 0 {
+		ge.mu.Lock()
+		if ge.Stats != nil {
+			ge.Stats.GameStarted = ge.Stats.GameStarted.Add(d)
+		}
+		ge.mu.Unlock()
 	}
 }
 
-// Release lets the simulation go on. The time held does not count as time
-// played.
-func (ge *GameEngine) Release() { ge.shiftStart(ge.hold.settle(time.Now(), true)) }
+// Hold stops the simulation until Release. Holding again changes nothing.
+func (ge *GameEngine) Hold() {
+	ge.with(func(h *holdState) {
+		if h.at.IsZero() {
+			h.at = time.Now()
+		}
+	})
+}
+
+// Release lets the simulation go on; the time held is not time played.
+func (ge *GameEngine) Release() { ge.settle(true) }
 
 // Held reports whether the simulation is held.
-func (ge *GameEngine) Held() bool {
-	ge.hold.mu.Lock()
-	defer ge.hold.mu.Unlock()
-	return !ge.hold.at.IsZero()
+func (ge *GameEngine) Held() (held bool) {
+	ge.with(func(h *holdState) { held = !h.at.IsZero() })
+	return
 }
 
-// heldTick is called by the tick loop for each timer: when held it keeps the
-// time held out of the play time and reports true, and the loop skips the tick.
+// heldTick is the loop's check for each timer: when held it settles and
+// reports true, and the loop skips the tick.
 func (ge *GameEngine) heldTick() bool {
 	if !ge.Held() {
 		return false
 	}
-	ge.shiftStart(ge.hold.settle(time.Now(), false))
+	ge.settle(false)
 	return true
 }
 
-// shiftStart moves the run's start on by d.
-func (ge *GameEngine) shiftStart(d time.Duration) {
-	if d <= 0 {
-		return
-	}
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	if ge.Stats != nil {
-		ge.Stats.GameStarted = ge.Stats.GameStarted.Add(d)
-	}
-}
-
 // SavedAt is when the game was last saved or loaded; zero before either.
-func (ge *GameEngine) SavedAt() time.Time {
-	ge.hold.mu.Lock()
-	defer ge.hold.mu.Unlock()
-	return ge.hold.saved
+func (ge *GameEngine) SavedAt() (t time.Time) {
+	ge.with(func(h *holdState) { t = h.saved })
+	return
 }
 
 // NextAutosave is how long until the loop's next autosave; zero when the loop
 // is not running.
-func (ge *GameEngine) NextAutosave() time.Duration {
-	ge.hold.mu.Lock()
-	defer ge.hold.mu.Unlock()
-	if ge.hold.autosave.IsZero() {
-		return 0
-	}
-	return max(0, AutosaveInterval-time.Since(ge.hold.autosave))
+func (ge *GameEngine) NextAutosave() (d time.Duration) {
+	ge.with(func(h *holdState) {
+		if !h.autosave.IsZero() {
+			d = max(0, AutosaveInterval-time.Since(h.autosave))
+		}
+	})
+	return
 }
 
-func (ge *GameEngine) noteSaved() { ge.noteSavedAt(time.Now()) }
+func (ge *GameEngine) noteSaved(t time.Time) { ge.with(func(h *holdState) { h.saved = t }) }
 
-func (ge *GameEngine) noteSavedAt(t time.Time) {
-	ge.hold.mu.Lock()
-	ge.hold.saved = t
-	ge.hold.mu.Unlock()
+func (ge *GameEngine) autosaveDue() (due bool) {
+	ge.with(func(h *holdState) { due = time.Since(h.autosave) >= AutosaveInterval })
+	return
 }
 
-func (ge *GameEngine) autosaveDue() bool {
-	ge.hold.mu.Lock()
-	defer ge.hold.mu.Unlock()
-	return time.Since(ge.hold.autosave) >= AutosaveInterval
-}
-
-func (ge *GameEngine) markAutosave() {
-	ge.hold.mu.Lock()
-	ge.hold.autosave = time.Now()
-	ge.hold.mu.Unlock()
-}
+func (ge *GameEngine) markAutosave() { ge.with(func(h *holdState) { h.autosave = time.Now() }) }
