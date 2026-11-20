@@ -67,7 +67,7 @@ func TestDeterministicAndSeeded(t *testing.T) {
 func TestNoTwoCardsAlike(t *testing.T) {
 	var all []*image.RGBA
 	for o := 0; o < Offices; o++ {
-		all = append(all, Card(o, true, .5, false, 1, 91, 120))
+		all = append(all, Tile(o, true, .5, false, 1, 182, 45))
 	}
 	for i := range all {
 		for j := i + 1; j < len(all); j++ {
@@ -81,13 +81,13 @@ func TestNoTwoCardsAlike(t *testing.T) {
 					d++
 				}
 			}
-			if d < 200 {
+			if d < 120 {
 				t.Errorf("cards %d and %d differ in only %d pixels", i, j, d)
 			}
 		}
 	}
-	if same(Card(2, true, 1, false, 1, 91, 120), Card(2, false, 1, false, 1, 91, 120)) ||
-		same(Card(2, true, 1, false, 1, 91, 120), Card(2, true, 1, true, 1, 91, 120)) {
+	if same(Tile(2, true, 1, false, 1, 182, 45), Tile(2, false, 1, false, 1, 182, 45)) ||
+		same(Tile(2, true, 1, false, 1, 182, 45), Tile(2, true, 1, true, 1, 182, 45)) {
 		t.Error("an off card and a wax dot must show")
 	}
 }
@@ -188,6 +188,6 @@ func TestWritePictures(t *testing.T) {
 	l := Plan(279, 68)
 	save("lever.png", Lever(l, 7, 15, 1))
 	for o := 0; o < Offices; o++ {
-		save(fmt.Sprintf("card-%d.png", o), Card(o, o != 3, .6, o == 7, 1, 91, 120))
+		save(fmt.Sprintf("card-%d.png", o), Tile(o, o != 3, .6, o == 7, 1, 182, 45))
 	}
 }

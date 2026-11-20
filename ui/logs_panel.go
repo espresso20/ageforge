@@ -340,6 +340,14 @@ func (p *logsPanel) toggleOffice(o int) {
 	}
 }
 
+// setAll turns every office on or off.
+func (p *logsPanel) setAll(on bool) {
+	for o := 1; o <= 10; o++ {
+		p.on[o] = on
+	}
+	p.build()
+}
+
 // startFind puts the keyboard on the Find slip.
 func (p *logsPanel) startFind() {
 	p.typing = true
@@ -422,11 +430,7 @@ func (p *logsPanel) Key(k kit.Key) bool {
 			p.moveTo(len(p.rows) - 1)
 			return true
 		case c == "A":
-			p.on = [11]bool{}
-			for o := 1; o <= 10; o++ {
-				p.on[o] = true
-			}
-			p.build()
+			p.setAll(true)
 			return true
 		}
 	}
@@ -440,7 +444,7 @@ func (p *logsPanel) Mouse(m kit.Mouse) bool {
 		return false
 	}
 	org := p.Bounds().Min
-	if p.buttons.mouse(p.chrome, p.hintOrigin(), m) {
+	if p.buttons.mouse(p.chrome, p.keysOrigin(), m) {
 		return true
 	}
 	if m.Kind == kit.MouseWheel {
@@ -465,6 +469,8 @@ func (p *logsPanel) Mouse(m kit.Mouse) bool {
 			p.follow = false
 			p.toggleFold()
 		}
+	case l.Mode == logroll.Full && pt.Y == l.Rack.Y && pt.X >= l.Rack.X+8 && pt.X < l.Rack.X+17:
+		p.setAll(pt.X < l.Rack.X+13)
 	default:
 		for i, s := range l.Stamps {
 			if s.In(pt.X, pt.Y) && l.Mode != logroll.Placeholder {
@@ -511,11 +517,11 @@ func (p *logsPanel) PointerAt(at image.Point) kit.Pointer {
 	if p.chrome == nil {
 		return kit.PointerArrow
 	}
-	if _, key := p.chrome.keyAt(at.Sub(p.hintOrigin())); key {
+	if _, key := p.chrome.keyAt(at.Sub(p.keysOrigin())); key {
 		return kit.PointerHand
 	}
 	pt, l := at.Sub(p.Bounds().Min), p.lay
-	acts := l.Find.In(pt.X, pt.Y) || l.Rail.In(pt.X, pt.Y) || p.plate().In(pt.X, pt.Y) && p.unseen() > 0
+	acts := l.Find.In(pt.X, pt.Y) || l.Mode == logroll.Full && pt.Y == l.Rack.Y && pt.X >= l.Rack.X+8 && pt.X < l.Rack.X+17 || l.Rail.In(pt.X, pt.Y) || p.plate().In(pt.X, pt.Y) && p.unseen() > 0
 	if i := p.rowAt(pt.Y); l.Body.In(pt.X, pt.Y) && i >= 0 {
 		acts = acts || p.rows[i].e.Count > 1 && p.rows[i].kind == rowLine
 	}
@@ -525,7 +531,25 @@ func (p *logsPanel) PointerAt(at image.Point) kit.Pointer {
 	return handIf(acts)
 }
 
-// hintOrigin is where the hint row's grid starts on the screen.
-func (p *logsPanel) hintOrigin() image.Point {
-	return p.Bounds().Min.Add(image.Pt(0, p.lay.Hint.Y))
+// keysOrigin is where the header buttons' grid starts on the screen.
+func (p *logsPanel) keysOrigin() image.Point {
+	return p.Bounds().Min.Add(image.Pt(p.lay.Keys.X, p.lay.Keys.Y))
+}
+
+// kept is how many lines the log holds, seams not counted.
+func (p *logsPanel) kept() (n int) {
+	for _, e := range p.state.Log {
+		if !e.Seam {
+			n++
+		}
+	}
+	return n
+}
+
+// linesText is "N lines" for an office's tile.
+func (p *logsPanel) linesText(n int) string {
+	if n == 1 {
+		return rowid.Sprintf("ui.logs_panel.words.09", "%d line", n)
+	}
+	return rowid.Sprintf("ui.logs_panel.words.16", "%d lines", n)
 }

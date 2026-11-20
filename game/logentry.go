@@ -116,6 +116,9 @@ type LogEntry struct {
 	// Seam marks the line a load writes to close the sitting before it: At is
 	// the sitting's last line, FirstAt its first and Count its line count.
 	Seam bool `json:"seam,omitempty"`
+	// Banner marks a headline that opens a new age or era; the roll draws it
+	// as a band across the page.
+	Banner bool `json:"bn,omitempty"`
 }
 
 // Earlier is how many of the fold's lines are older than the kept members.
@@ -130,6 +133,7 @@ type logWrite struct {
 }
 
 func logHead(w *logWrite)    { w.e.Level = LevelHeadline }
+func logBanner(w *logWrite)  { w.e.Level, w.e.Banner = LevelHeadline, true }
 func logTrouble(w *logWrite) { w.e.Trouble = true }
 func logID(id string) logOpt { return func(w *logWrite) { w.e.ID = id } }
 func logSubj(s string) logOpt {

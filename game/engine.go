@@ -2288,7 +2288,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
-	ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.engine.advanceAge.05", "Advanced from the %s to the %s.", oldName, newName), logHead)
+	ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.engine.advanceAge.05", "Advanced from the %s to the %s.", oldName, newName), logBanner)
 	if line := ge.masteryEntryLine(newAge, prevK); line != "" {
 		ge.addLog(OfficeWorld, "info", line)
 	}
@@ -2503,7 +2503,7 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 	}
 	ge.currentEpoch = newEpoch
 	ep, _ := ge.rules.Era(newEpoch)
-	ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.engine.detectEpochTransition.01", "[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description), logHead)
+	ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.engine.detectEpochTransition.01", "[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description), logBanner)
 	ge.publish(EventEpochAdvanced, payload{
 		"epoch_key":  newEpoch,
 		"epoch_name": ep.Name,

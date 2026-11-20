@@ -25,7 +25,6 @@ func Desk(l Layout, cw, ch int, seed uint64) *image.RGBA {
 		c.hline(r.n(c.Rect.Dx()), r.n(c.Rect.Dy()), 3+r.n(18), mix(wood[r.n(4)], hx(0x120c05), .3+r.f()*.25))
 	}
 	cells(l.Title, Strip)
-	cells(l.Head, Strip)
 	cells(l.Rail, Strip)
 	cells(l.Rack, Plate)
 	cells(l.Lever, Plate)
@@ -40,6 +39,7 @@ func Desk(l Layout, cw, ch int, seed uint64) *image.RGBA {
 		c.hline(x0, y, r.n(2), mix(Paper, Band, .7))
 		c.hline(x1-1-r.n(2), y, 1+r.n(2), mix(Paper, Band, .7))
 	}
+	c.rect(x0, l.Head.Y*ch, x1-x0, ch, Head)
 	for _, y := range []int{l.Roll.Y * ch, (l.Roll.Bottom() - 1) * ch} {
 		for i, col := range [4]color.RGBA{hx(0xe0c27f), hx(0xb98f4e), hx(0x8f6a36), hx(0x5e441f)} {
 			c.rect(x0, y+i*ch/4, x1-x0, (i+1)*ch/4-i*ch/4, col)

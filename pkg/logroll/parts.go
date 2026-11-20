@@ -5,84 +5,76 @@ import (
 	"image/color"
 )
 
-// Card is one stamp of the rack, w by h pixels. A tall box (60 px or more) is
-// the whole slot: a label card with a worn corner, a tack, worn edges and a
-// smudge, none alike (the seed is the office and the layout), with the
-// stamp's face above it. A short box is the face alone. inkLevel (0 to 1) is
-// how much ink the face holds, wax puts the wax dot of recent trouble on it.
-func Card(office int, on bool, inkLevel float64, wax bool, seed uint64, w, h int) *image.RGBA {
+// Tile is one office of the rack, w by h pixels: the office's face on a block
+// at the left (35 px wide) and a paper tab at the right for its name and line
+// count, a worn corner and a smudge, none alike (the seed is the office).
+// inkLevel (0 to 1) is how much ink the face holds; dot puts the red dot of
+// something new in the tab's corner. An office that is off is muted grey.
+func Tile(office int, on bool, inkLevel float64, dot bool, seed uint64, w, h int) *image.RGBA {
 	r := rng(seedOf(seed, uint64(office), 14))
 	c := newCanvas(w, h, Plate)
 	paper, ink, block := hx(0xdccb9f), Inks[office%Offices], hx(0x7a5a30)
 	if !on {
 		paper, ink, block = hx(0xa89878), hx(0x8d7f62), hx(0x948565)
 	}
-	fw, fh := min(35, w), min(45, h)
-	fx, fy := (w-fw)/2, 0
-	if h >= 60 {
-		fy = 10
-		c.rect(2, 2, w-4, h-4, paper)
-		for k := 0; k < 4; k++ { // worn edge: a few missing pixels along each side
-			c.rect(2+r.n(w-4), 2, 1+r.n(4), 1, Plate)
-			c.rect(2+r.n(w-4), h-3, 1+r.n(4), 1, Plate)
-			c.rect(2, 2+r.n(h-4), 1, 1+r.n(4), Plate)
-			c.rect(w-3, 2+r.n(h-4), 1, 1+r.n(4), Plate)
+	fw := min(35, w)
+	if w > fw {
+		c.rect(fw, 1, w-fw-1, h-2, paper)
+		cx := w - 2 - r.n(3)
+		for i := 0; i < 3+r.n(2); i++ { // worn corner
+			c.rect(cx-i, h-2-(3-i), 1+i, 1, Plate)
 		}
-		cx, cy, cs := []int{2, w - 2}[r.n(2)], []int{2, h - 2}[r.n(2)], 4+r.n(7) // cut corner
-		for i := 0; i < cs; i++ {
-			c.rect(min(cx, cx+(cs-i)*(1-2*(cx/(w-2)))), cy+i*(1-2*(cy/(h-2))), cs-i, 1, Plate)
-		}
-		c.disc(10+r.n(w-20), 6+r.n(3), 2, hx(0x3a2a14)) // tack
-		sx, sy := w-30+r.n(14), h-14+r.n(6)
-		for k := 0; k < 3+r.n(3); k++ { // smudge
-			c.hline(sx+r.n(5), sy+k, 3+r.n(7), mix(paper, hx(0x2a2418), .14+r.f()*.1))
+		sx := fw + 8 + r.n(max(1, w-fw-30))
+		for k := 0; k < 2+r.n(2); k++ { // smudge
+			c.hline(sx+r.n(4), h-6+k, 3+r.n(6), mix(paper, hx(0x2a2418), .12+r.f()*.08))
 		}
 	}
-	c.rect(fx, fy, fw, fh, block)
-	c.rect(fx, fy, fw, 2, mix(block, Chalk, .25))
+	c.rect(0, 0, fw, h, block)
+	c.rect(0, 0, fw, 2, mix(block, Chalk, .25))
 	fc := mix(block, ink, .4+.6*inkLevel)
 	if on {
 		fc = mix(block, hx(0xf6eed2), .35+.65*inkLevel)
 	}
-	face(c, office, fx+3, fy+3, fw-6, fh-6, fc, &r, 1, 0)
-	if !on {
-		for y := fy; y < fy+fh; y += 6 {
-			c.hline(fx, y, fw, mix(block, Plate, .4))
-		}
-	}
-	if wax {
-		c.disc(fx+fw-4, fy+5, 4, hx(0xb21e1e))
-		c.disc(fx+fw-5, fy+4, 1, hx(0xe06a5a))
+	face(c, office, 3, 3, fw-6, h-6, fc, &r, 1, 0)
+	if dot && w > fw {
+		c.disc(w-8, 7, 4, hx(0xb21e1e))
+		c.disc(w-9, 6, 1, hx(0xe06a5a))
 	}
 	return c.RGBA
 }
 
 // Lever is the Detail lever of layout l in pixels, at stop 0 to 2. Full is a
-// slot with a knob beside three plates; compact is three blocks on a row.
+// brass line down the left with a notch to each stop's number box, a red knob
+// at the chosen one and a pale plate behind it; compact is three small blocks
+// on a row.
 func Lever(l Layout, cw, ch, stop int) *image.RGBA {
 	q := l.Lever
 	c := newCanvas(q.W*cw, q.H*ch, Plate)
 	pale, dark := hx(0xe6d3a0), hx(0x35240f)
+	if l.Mode != Full {
+		for i, s := range l.Stops {
+			col := dark
+			if i == stop {
+				col = pale
+			}
+			c.rect((s.X-q.X)*cw+1, (s.Y-q.Y)*ch+1, s.W*cw-2, s.H*ch-2, col)
+		}
+		return c.RGBA
+	}
+	lx := 2*cw + cw/2
+	a, z := (l.Stops[0].Y-q.Y)*ch+ch/2, (l.Stops[2].Y-q.Y)*ch+ch/2
+	c.rect(lx-1, a, 3, z-a, BrassD)
 	for i, s := range l.Stops {
-		x, y, w, h := (s.X-q.X)*cw, (s.Y-q.Y)*ch, s.W*cw, s.H*ch
-		col := dark
+		x, y := (s.X-q.X)*cw, (s.Y-q.Y)*ch
 		if i == stop {
-			col = pale
+			c.rect(x, y, s.W*cw, s.H*ch, pale)
 		}
-		if l.Mode == Full {
-			c.rect(x, y+2, w, h-4, col)
-			c.hline(3*cw+3, y+h/2, x-3*cw-3, hx(0x2a1c0c))
-		} else {
-			c.rect(x+1, y+1, w-2, h-2, col)
-		}
+		c.hline(lx, y+ch/2, x+cw-lx, BrassD)
+		c.rect(x+cw/2, y+2, 3*cw, ch-4, Brass)
 	}
-	if l.Mode == Full {
-		a, z := (l.Stops[0].Y-q.Y)*ch+l.Stops[0].H*ch/2, (l.Stops[2].Y-q.Y)*ch+l.Stops[2].H*ch/2
-		c.rect(cw+2, a, 4, z-a, hx(0x2a1c0c))
-		ky := (l.Stops[stop].Y-q.Y)*ch + l.Stops[stop].H*ch/2
-		c.disc(cw+4, ky, 8, hx(0x9b1f1f))
-		c.disc(cw+2, ky-2, 2, hx(0xd45a4a))
-	}
+	ky := (l.Stops[stop].Y-q.Y)*ch + ch/2
+	c.disc(lx, ky, 6, hx(0x9b1f1f))
+	c.disc(lx-2, ky-2, 2, hx(0xd45a4a))
 	return c.RGBA
 }
 

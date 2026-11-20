@@ -202,71 +202,95 @@ func TestLogsSeamLabel(t *testing.T) {
 	}
 }
 
-// shotState is a made-up town's log: a sitting that ended, headlines, a fold
-// with its lines and troubles.
-func shotState(now int64) game.GameState {
+// shotLog is a made-up town's log: a sitting that ended, headlines, a fold
+// with its lines, builds in every office and troubles.
+func shotLog(now int64) []game.LogEntry {
 	var log []game.LogEntry
 	at := now - 3*3600
 	add := func(o game.Office, lv int, typ, msg string, paid, gained []game.LogAmt) {
 		at += 40
 		log = append(log, game.LogEntry{Tick: int(at / 4), At: at, Office: o, Level: lv, Type: typ, Message: msg, Paid: paid, Gained: gained})
 	}
-	for i := 0; i < 14; i++ {
+	for i := 0; i < 20; i++ {
 		add(game.OfficeBuilding, game.LevelTown, "success", fmt.Sprintf("Mill %d built (you have %d)", i+1, i+1), []game.LogAmt{{Res: "wood", N: 120 * float64(i+1)}}, nil)
 		if i%4 == 0 {
 			add(game.OfficeTrade, game.LevelTown, "info", "Trade route Local Barter is running again after 9m.", nil, []game.LogAmt{{Res: "gold", N: 45}})
+			add(game.OfficePeople, game.LevelTown, "info", fmt.Sprintf("%d villagers joined the town.", 3+i), nil, nil)
+			add(game.OfficeStores, game.LevelEverything, "warning", "Wood is nearly full.", nil, nil)
 		}
 	}
-	add(game.OfficeGame, game.LevelHeadline, "event", "The Medieval Age begins", nil, nil)
+	add(game.OfficeWorld, game.LevelHeadline, "success", "Advanced from the Dark Age to the Medieval Age.", nil, nil)
+	log[len(log)-1].Banner = true
 	log = append(log, game.LogEntry{Seam: true, At: at, Count: len(log)})
-	at += 3600
-	add(game.OfficeResearch, game.LevelTown, "success", "Pottery was learned.", nil, nil)
+	at += 3600 - 1200
+	for i := 0; i < 8; i++ {
+		add(game.OfficeResearch, game.LevelTown, "success", fmt.Sprintf("Research %d was learned.", i+1), nil, nil)
+		add(game.OfficeArmy, game.LevelTown, "info", "The scouts came back from the ridge.", nil, nil)
+		add(game.OfficeDiplomacy, game.LevelTown, "info", "The Riverlands Tribes sent word.", nil, nil)
+		add(game.OfficePlan, game.LevelTown, "info", "A plan step was finished.", nil, nil)
+	}
 	add(game.OfficeStores, game.LevelTown, "warning", "Food is falling: gone in about 38m.", nil, nil)
-	f := game.LogEntry{Tick: int(at / 4), At: at + 300, FirstAt: at + 40, Office: game.OfficeBuilding, Level: game.LevelTown, Type: "success", Message: "8 Manors built (you have 15)", Count: 8, ID: "m", Subject: "manor"}
+	log[len(log)-1].Trouble = true
+	f := game.LogEntry{Tick: int(at / 4), At: at + 300, FirstAt: at + 40, Office: game.OfficeBuilding, Level: game.LevelTown, Type: "success", Message: "8 Manors built (you have 15)", Count: 8, ID: "m", Subject: "manor",
+		Paid: []game.LogAmt{{Res: "stone", N: 6400}}, Gained: []game.LogAmt{{Res: "workers", N: 90}}}
 	for i := 0; i < 3; i++ {
 		f.Members = append(f.Members, game.LogMember{At: at + int64(40*i), Tick: f.Tick, Text: fmt.Sprintf("Manor built (you have %d)", 13+i), Paid: []game.LogAmt{{Res: "stone", N: 800}}})
 	}
 	log = append(log, f)
-	add(game.OfficeGame, game.LevelHeadline, "event", "Wonder available: Great Library", nil, nil)
+	add(game.OfficeWorld, game.LevelHeadline, "success", "Wonder available: Great Library", nil, nil)
 	add(game.OfficeTrade, game.LevelTown, "info", "The Riverlands Tribes offer 3 new deals.", nil, nil)
-	return game.GameState{Log: log}
+	return log
 }
 
-// TestLogsPicture writes pictures when LOGS_SHOT names a directory.
+// TestLogsPicture writes pictures of the whole screen, the command box
+// included, when LOGS_SHOT names a directory.
 func TestLogsPicture(t *testing.T) {
 	dir := os.Getenv("LOGS_SHOT")
 	if dir == "" {
 		t.Skip("LOGS_SHOT not set")
 	}
+	restoreForge(t)
+	was := pictureCell
+	pictureCell = func() (int, int) { return 7, 15 }
+	t.Cleanup(func() { pictureCell = was })
 	now := time.Now().Unix()
 	shot := func(name string, w, h int, setup func(*logsPanel)) {
-		p := newLogsPanel()
-		p.open(shotState(now))
-		p.Layout(image.Rect(0, 0, w, h))
+		d, pages, eng := stagedDashboard(t, "medieval_age")
+		pages.SwitchToPage("dashboard")
+		d.overlayMgr.Show("logs", eng.GetState())
+		st := stageOf(d, pages, w, h)
+		p := d.logsPanel
+		p.state.Log = shotLog(now)
+		if rs, ok := p.state.Resources["food"]; ok {
+			rs.Rate = -4.2
+			p.state.Resources["food"] = rs
+		}
+		p.build()
 		if setup != nil {
 			setup(p)
+			p.Layout(p.Bounds())
 		}
+		st.paint()
 		f, err := os.Create(dir + "/2026-11-20-logs-" + name + ".png")
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer f.Close()
-		if err := png.Encode(f, ScreenImagePixel(paintAlone(p, w, h))); err != nil {
+		if err := png.Encode(f, ScreenImagePixel(&st.buf)); err != nil {
 			t.Fatal(err)
 		}
 	}
-	shot("town", 279, 74, nil)
+	shot("main", 279, 74, nil)
 	shot("headlines", 279, 74, func(p *logsPanel) { p.setLevel(game.LevelHeadline) })
 	shot("find", 279, 74, func(p *logsPanel) { p.find = "built"; p.build() })
 	shot("fold", 279, 74, func(p *logsPanel) {
 		for i, r := range p.rows {
 			if r.kind == rowLine && r.e.Count > 1 {
 				p.sel = i
+				p.follow = false
 				p.toggleFold()
 			}
 		}
-		p.Layout(image.Rect(0, 0, 279, 74))
 	})
-	shot("compact", 157, 40, nil)
-	shot("six", 279, 68, nil)
+	shot("compact", 157, 49, nil)
 }

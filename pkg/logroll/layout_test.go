@@ -9,7 +9,7 @@ func TestPlanRects(t *testing.T) {
 			t.Fatalf("%v: placeholder", s)
 		}
 		whole := Rect{0, 0, l.Cols, l.Rows}
-		top := map[string]Rect{"title": l.Title, "head": l.Head, "rack": l.Rack, "lever": l.Lever,
+		top := map[string]Rect{"title": l.Title, "rack": l.Rack, "lever": l.Lever,
 			"roll": l.Roll, "rail": l.Rail, "slate": l.Slate, "hint": l.Hint}
 		for a, ra := range top {
 			if !whole.Holds(ra) {
@@ -28,7 +28,8 @@ func TestPlanRects(t *testing.T) {
 				}
 			}
 		}
-		in("title", l.Title, l.Find)
+		in("title", l.Title, l.Find, l.Keys)
+		in("roll", l.Roll, l.Head)
 		in("rack", l.Rack, l.Stamps[:]...)
 		in("lever", l.Lever, l.Stops[:]...)
 		in("slate", l.Slate, l.SlateBody, l.Ledge)

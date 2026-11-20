@@ -37,10 +37,10 @@ type Layout struct {
 	Mode       Mode
 	Cols, Rows int
 
-	Title, Find, Head, Hint Rect // strip, find slip (inside Title), column heads, hint line
-	Rack, Lever             Rect
-	Roll, Body, Rail        Rect // Roll holds its two rollers; Body is the lines
-	Slate, SlateBody, Ledge Rect // SlateBody and Ledge sit inside Slate
+	Title, Find, Keys, Head, Hint Rect // strip, find slip and buttons (inside Title), column heads (inside Roll), hint line
+	Rack, Lever                   Rect
+	Roll, Body, Rail              Rect // Roll holds its two rollers; Body is the lines
+	Slate, SlateBody, Ledge       Rect // SlateBody and Ledge sit inside Slate
 
 	Stamps [10]Rect // one per office, inside Rack
 	Stops  [3]Rect  // one per level, inside Lever
@@ -71,13 +71,18 @@ func Plan(cols, rows int) Layout {
 		rackW, rackX, slateW, margin = 8, 1, 50, 1
 	}
 	l.Slate = Rect{cols - margin - slateW, 3, slateW, rows - 5}
-	l.Rail = Rect{l.Slate.X - 5, 4, 3, rows - 8}
+	l.Rail = Rect{l.Slate.X - 5, 5, 3, rows - 8}
 	rollX := rackX + rackW + 2
 	l.Roll = Rect{rollX, 3, l.Rail.X - rollX, rows - 5}
-	l.Body = Rect{rollX, 4, l.Roll.W, rows - 7}
-	l.Head = Rect{rollX, 2, l.Roll.W, 1}
+	l.Head = Rect{rollX, 4, l.Roll.W, 1}
+	l.Body = Rect{rollX, 5, l.Roll.W, rows - 8}
 	l.Title = Rect{margin, 0, l.Slate.X - margin - 2, 2}
-	l.Find = Rect{rollX, 0, min(40, l.Title.Right()-rollX), 2}
+	l.Keys = Rect{l.Title.Right() - 34, 1, 34, 1}
+	fw := 36
+	if !full {
+		fw = 26
+	}
+	l.Find = Rect{l.Keys.X - 1 - fw, 1, fw, 1}
 	l.Hint = Rect{margin, rows - 1, cols - 2*margin, 1}
 	l.SlateBody = Rect{l.Slate.X + 1, l.Slate.Y + 1, slateW - 2, l.Slate.H - 5}
 	l.Ledge = Rect{l.Slate.X + 1, l.Slate.Bottom() - 3, slateW - 2, 3}
@@ -86,11 +91,11 @@ func Plan(cols, rows int) Layout {
 		l.Rack = Rect{rackX, 4, rackW, 42}
 		l.Lever = Rect{rackX, 48, rackW, rows - 51}
 		for i := range l.Stamps {
-			l.Stamps[i] = Rect{rackX + i%2*13, l.Rack.Y + 2 + i/2*8, 13, 8}
+			l.Stamps[i] = Rect{rackX, l.Rack.Y + 1 + 4*i, rackW, 3}
 		}
-		sh := (l.Lever.H - 2) / 3
+		pitch := (l.Lever.H - 1) / 3
 		for i := range l.Stops {
-			l.Stops[i] = Rect{l.Lever.X + 5, l.Lever.Y + 2 + i*sh, l.Lever.W - 7, sh}
+			l.Stops[i] = Rect{l.Lever.X + 4, l.Lever.Y + 1 + i*pitch, l.Lever.W - 5, pitch - 1}
 		}
 	} else {
 		l.Rack = Rect{rackX, 4, rackW, 30}

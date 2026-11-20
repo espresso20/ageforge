@@ -21,12 +21,20 @@ import (
 const logsSeed = 7
 
 var (
-	txtLogsKeyMove   = rowid.E("ui.logs_panel.keys.01", "scroll")
-	txtLogsKeyDetail = rowid.E("ui.logs_panel.keys.02", "detail")
-	txtLogsKeyNewest = rowid.E("ui.logs_panel.keys.03", "newest")
-	txtLogsKeyOpen   = rowid.E("ui.logs_panel.keys.04", "open")
-	txtLogsHeads     = [...]rowid.Entry{rowid.E("ui.logs_panel.heads.01", "Time"), rowid.E("ui.logs_panel.heads.02", "What happened"),
+	txtLogsHeads = [...]rowid.Entry{rowid.E("ui.logs_panel.heads.01", "When"), rowid.E("ui.logs_panel.heads.02", "What happened"),
 		rowid.E("ui.logs_panel.heads.03", "Paid"), rowid.E("ui.logs_panel.heads.04", "Gained"), rowid.E("ui.logs_panel.heads.05", "Times")}
+	txtLogsHint    = rowid.E("ui.logs_panel.words.10", "click or type: logs trade, logs find stone, logs everything")
+	txtLogsFindBox = rowid.E("ui.logs_panel.words.11", "Find: type a word")
+	txtLogsFindKey = rowid.E("ui.logs_panel.words.12", "Find")
+	txtLogsNewKey  = rowid.E("ui.logs_panel.words.13", "Newest")
+	txtLogsEscKey  = rowid.E("ui.logs_panel.words.14", "Close")
+	txtLogsDetail  = rowid.E("ui.logs_panel.words.15", "Detail")
+	txtLogsShow    = [...]rowid.Entry{rowid.E("ui.logs_panel.show.01", "Show"), rowid.E("ui.logs_panel.show.02", "all"), rowid.E("ui.logs_panel.show.03", "none")}
+	txtLogsNotes   = [3][]rowid.Entry{
+		{rowid.E("ui.logs_panel.notes.01", "ages, wonders,"), rowid.E("ui.logs_panel.notes.02", "disasters")},
+		{rowid.E("ui.logs_panel.notes.03", "adds builds,"), rowid.E("ui.logs_panel.notes.04", "tech, trade,"), rowid.E("ui.logs_panel.notes.05", "trouble")},
+		{rowid.E("ui.logs_panel.notes.06", "adds each copy,"), rowid.E("ui.logs_panel.notes.07", "every run,"), rowid.E("ui.logs_panel.notes.08", "every save")},
+	}
 )
 
 func (p *logsPanel) Layout(r image.Rectangle) {
@@ -42,9 +50,10 @@ func (p *logsPanel) Layout(r image.Rectangle) {
 		p.chrome = g
 		return
 	}
-	g := newXGrid(r.Dx(), 1)
-	expKeyBar(g, expLayout{w: r.Dx(), h: 1, footY: 0}, [][2]string{{"↑↓", txtLogsKeyMove.String()}, {"1-3", txtLogsKeyDetail.String()},
-		{"Space", txtLogsKeyOpen.String()}, {"End", txtLogsKeyNewest.String()}, escClose()}, "")
+	g := newXGrid(p.lay.Keys.W, 1)
+	x := g.keyButton(0, 0, "F", txtLogsFindKey.String())
+	x = g.keyButton(x+1, 0, "N", txtLogsNewKey.String())
+	g.keyButton(x+1, 0, "Esc", txtLogsEscKey.String())
 	p.chrome = g
 	p.clamp()
 }
@@ -84,14 +93,14 @@ func solid(w, h int, c color.RGBA) *image.RGBA {
 	return img
 }
 
-// officeFacts are each office's lines at the level and whether it had trouble
-// in the last ten minutes: the ink of its card and its wax.
+// officeFacts are each office's lines at the level and whether it wrote any
+// in the last ten minutes: the ink of its tile and its red dot.
 func (p *logsPanel) officeFacts() (n [11]int, wax [11]bool) {
 	soon := p.now().Add(-10 * time.Minute).Unix()
 	for _, e := range p.state.Log {
 		if !e.Seam && e.Office >= 1 && e.Office <= 10 && e.Level <= p.level {
 			n[e.Office]++
-			wax[e.Office] = wax[e.Office] || e.Trouble && e.At >= soon
+			wax[e.Office] = wax[e.Office] || e.At >= soon
 		}
 	}
 	return n, wax
@@ -116,41 +125,71 @@ func (p *logsPanel) Paint(p2 *kit.Painter) {
 	}
 	p2.Picture(r, p.pic(func() *image.RGBA { return logroll.Desk(l, cw, ch, logsSeed) }, "desk", l.Key()))
 
-	say(l.Title.X, 0, txtLogsTitle.String(), logroll.DeskInk, true)
-	say(l.Title.X, 1, txtLogsLevels[p.level-1].String(), logroll.Dim, false)
-	p2.Picture(cells(l.Find), p.pic(func() *image.RGBA { return solid(l.Find.W*cw, l.Find.H*ch, logroll.Paper) }, "slip", l.Find))
-	say(l.Find.X+1, l.Find.Y, txtLogsFind.String()+" (F)", logroll.Dim, false)
-	cur := ""
-	if p.typing {
-		cur = "▌"
+	p2.Picture(cells(logroll.Rect{X: l.Title.X, Y: l.Title.Y + 1, W: 9, H: 1}), p.pic(func() *image.RGBA { return solid(9*cw, ch, logroll.Brass) }, "tab"))
+	say(l.Title.X+2, 1, txtLogsTitle.String(), logroll.Light, true)
+	say(l.Title.X+11, 1, p.state.AgeName, logroll.DeskInk, true)
+	if l.Mode == logroll.Full {
+		shown := 0
+		for _, row := range p.rows {
+			if row.kind == rowLine {
+				shown++
+			}
+		}
+		say(l.Title.X+27, 1, rowid.Sprintf("ui.logs_panel.words.08", "%s of %s lines kept, %d shown", commas(float64(p.kept())), commas(float64(game.MaxLogSize)), shown), logroll.Dim, false)
 	}
-	say(l.Find.X+1, l.Find.Y+1, fit(p.find+cur, l.Find.W-2), logroll.Ink, false)
+	p2.Picture(cells(l.Find), p.pic(func() *image.RGBA { return solid(l.Find.W*cw, ch, logroll.Paper) }, "slip", l.Find))
+	if p.find == "" && !p.typing {
+		say(l.Find.X+1, l.Find.Y, fit(txtLogsFindBox.String(), l.Find.W-2), logroll.Dim, false)
+	} else {
+		cur := ""
+		if p.typing {
+			cur = "▌"
+		}
+		say(l.Find.X+1, l.Find.Y, fit(txtLogsFindKey.String()+": "+p.find+cur, l.Find.W-2), logroll.Ink, false)
+	}
+	say(l.Hint.X, l.Hint.Y, fit(txtLogsHint.String(), l.Hint.W), logroll.DeskInk, false)
 	for i, q := range []logroll.Rect{l.Clock, l.Text, l.Paid, l.Gained, l.Times} {
 		if q.W > 0 {
-			say(q.X, l.Head.Y, txtLogsHeads[i].String(), logroll.Light, false)
+			say(q.X, l.Head.Y, txtLogsHeads[i].String(), logroll.Dim, true)
 		}
 	}
 
-	counts, wax := p.officeFacts()
+	counts, recent := p.officeFacts()
+	if l.Mode == logroll.Full {
+		for i, w := range []int{0, 7, 12} {
+			say(l.Rack.X+1+w, l.Rack.Y, txtLogsShow[i].String(), logroll.DeskInk, i > 0)
+		}
+	}
 	for i, q := range l.Stamps {
 		o := i + 1
-		img := p.pic(func() *image.RGBA {
-			return logroll.Card(i, p.on[o], min(1, .2+float64(counts[o])/30), wax[o], logsSeed, q.W*cw, q.H*ch)
-		}, "card", i, p.on[o], min(1, .2+float64(counts[o])/30), wax[o], q)
-		p2.Picture(cells(q), img)
+		ink := min(1, .2+float64(counts[o])/30)
+		p2.Picture(cells(q), p.pic(func() *image.RGBA {
+			return logroll.Tile(i, p.on[o], ink, recent[o], logsSeed, q.W*cw, q.H*ch)
+		}, "tile", i, p.on[o], ink, recent[o], q))
 		if l.Mode == logroll.Full {
-			say(q.X+1, q.Y+5, fit(game.Office(o).Name(), q.W-2), logroll.Ink, true)
-			say(q.X+1, q.Y+6, fmt.Sprintf("%c  %d", logsKeys[i], counts[o]), logroll.Dim, false)
+			c := logroll.Ink
+			if !p.on[o] {
+				c = logroll.Dim
+			}
+			say(q.X+6, q.Y, fit(game.Office(o).Name(), q.W-8), c, p.on[o])
+			say(q.X+6, q.Y+1, p.linesText(counts[o]), logroll.Dim, false)
 		}
 	}
 	p2.Picture(cells(l.Lever), p.pic(func() *image.RGBA { return logroll.Lever(l, cw, ch, p.level-1) }, "lever", p.level, l.Key()))
 	if l.Mode == logroll.Full {
+		say(l.Lever.X+1, l.Lever.Y, txtLogsDetail.String(), logroll.DeskInk, true)
 		for i, s := range l.Stops {
-			ink := logroll.DeskInk
+			ink, dim := logroll.DeskInk, logroll.DeskInk
 			if i+1 == p.level {
-				ink = logroll.Ink
+				ink, dim = logroll.Ink, logroll.Dim
 			}
-			say(s.X+1, s.Y+s.H/2, fmt.Sprintf("%d %s", i+1, txtLogsLevels[i]), ink, i+1 == p.level)
+			say(s.X+1, s.Y, fmt.Sprint(i+1), logroll.Light, true)
+			say(s.X+4, s.Y, txtLogsLevels[i].String(), ink, i+1 == p.level)
+			for j, n := range txtLogsNotes[i] {
+				if j+1 < s.H {
+					say(s.X+4, s.Y+1+j, n.String(), dim, false)
+				}
+			}
 		}
 	}
 
@@ -162,8 +201,8 @@ func (p *logsPanel) Paint(p2 *kit.Painter) {
 		say(q.X+1, q.Y, fit(rowid.Sprintf("ui.logs_panel.words.02", "%d new lines", n), q.W-2), logroll.Light, true)
 	}
 	p.paintSlate(p2, org, cw, ch)
-	paintExpeditionKit(p2, p.chrome, p.hintOrigin(), pal)
-	p.buttons.paint(p2, p.chrome, p.hintOrigin(), pal)
+	paintExpeditionKit(p2, p.chrome, p.keysOrigin(), pal)
+	p.buttons.paint(p2, p.chrome, p.keysOrigin(), pal)
 }
 
 // paintRail draws the whole kept roll with its headlines, troubles and seams
