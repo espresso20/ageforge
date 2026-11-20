@@ -32,7 +32,7 @@ func main() {
 		engine.SetAccount(acct)
 	}
 	if loadErr != nil {
-		engine.AddLog("error", loadErr.Error())
+		engine.AddLog(game.OfficeGame, game.LevelEverything, "error", loadErr.Error())
 	}
 
 	app := ui.NewApp(engine, version)

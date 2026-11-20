@@ -62,7 +62,7 @@ func TestCommandRepliesReachTheMainLog(t *testing.T) {
 		submitForTest(d, r.cmd)
 	}
 	const ready = "✦ Ready to advance to the Stone Age."
-	eng.AddLog("event", ready+" Type 'advance' when you're ready.")
+	eng.AddLog(game.OfficeGame, game.LevelEverything, "event", ready+" Type 'advance' when you're ready.")
 
 	st := eng.GetState()
 	d.refreshLog(st)

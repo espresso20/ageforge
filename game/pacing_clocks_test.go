@@ -155,7 +155,7 @@ func TestDiplomacyClocksStretch(t *testing.T) {
 	dm.factions[peaceful] = &FactionState{Discovered: true, Status: "friendly", Opinion: 60}
 	drift := config.StretchTicks(stretchedAge, driftInterval)
 	rng := rand.New(rand.NewSource(5))
-	var msgs []string
+	var msgs []logNote
 	tick := drift
 	for ; tick < drift*500 && !dm.hasLentBatch(peaceful); tick += drift {
 		msgs = dm.processLending(rng, tick, stretchedAge)
@@ -168,8 +168,8 @@ func TestDiplomacyClocksStretch(t *testing.T) {
 	if got := lent.ReturnTick - (tick - drift); got != lendTicks {
 		t.Errorf("loan lasts %d ticks, want %d", got, lendTicks)
 	}
-	if want := DurationText(lendTicks, BaseTickInterval); len(msgs) == 0 || !strings.Contains(msgs[len(msgs)-1], want) {
-		t.Errorf("loan message %q does not say %q", msgs, want)
+	if want := DurationText(lendTicks, BaseTickInterval); len(msgs) == 0 || !strings.Contains(msgs[len(msgs)-1].text, want) {
+		t.Errorf("loan message %v does not say %q", msgs, want)
 	}
 }
 

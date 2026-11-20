@@ -50,6 +50,9 @@ type ActiveRoute struct {
 	// Starved is transient: true after a run was skipped because the exports
 	// were short, so the warning logs once per shortage, not every run.
 	Starved bool `json:"-"`
+	// Lost counts the runs a disruption or a shortage cost since the route
+	// last delivered: the log says so when it runs again.
+	Lost int `json:"-"`
 }
 
 // routeDisruptedBy returns the first imported resource of def that appears in the
@@ -175,8 +178,8 @@ func (tm *TradeManager) ActiveRouteCount() int {
 // and passes it in. Disrupted routes (those importing a resource a hostile civ
 // specialises in — see DiplomacyManager.DisruptedResources) are skipped for the
 // cycle with a log line.
-func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64, research func(work float64) string) []string {
-	var messages []string
+func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64, research func(work float64) string) []logNote {
+	var messages []logNote
 
 	routes := tm.routeDefs
 
@@ -198,7 +201,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 
 		// Check building still meets requirements
 		if buildings.CountFrom(def.RequiredBld) < def.MinCount {
-			messages = append(messages, rowid.Sprintf("game.trade.Tick.01", "Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)))
+			messages = append(messages, note(rowid.Sprintf("game.trade.Tick.01", "Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)), logSubj(key), logTrouble))
 			delete(tm.activeRoutes, key)
 			continue
 		}
@@ -211,7 +214,8 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		if route.Disrupted {
 			route.TicksLeft--
 			if route.TicksLeft <= 0 {
-				messages = append(messages, rowid.Sprintf("game.trade.Tick.02", "Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)))
+				route.Lost++
+				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.02", "Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)), logSubj(key), logTrouble))
 				route.TicksLeft = tm.RunTicks(def.TicksPerRun)
 			}
 			continue
@@ -248,29 +252,40 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 
 				// Add imports
+				got := make(map[string]float64, len(imports))
 				for res, actual := range imports {
 					if res == config.ResearchTarget {
 						if research != nil {
 							if said := research(actual); said != "" {
-								messages = append(messages, "  → "+def.Name+rowid.Line("game.trade.Tick.03", " gave ")+said+".")
+								messages = append(messages, note("  → "+def.Name+rowid.Line("game.trade.Tick.03", " gave ")+said+".", logSubj(key)))
 							}
 						}
 						continue
 					}
 					resources.Add(res, actual)
+					got[res] = actual
 				}
 
 				route.CyclesDone++
 				route.Starved = false
+				if route.Lost > 0 {
+					messages = append(messages, note(rowid.Sprintf("game.trade.Tick.05", "Trade route %s is running again after %s lost.", def.Name, textfmt.Count(route.Lost, rowid.Line("game.trade.Tick.06", "run"), rowid.Line("game.trade.Tick.07", "runs"))), logSubj(key), logAs("info")))
+					route.Lost = 0
+				}
+				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.08", "%s delivered %s.", def.Name, Amounts(got)), logSubj(key), logID("game.trade.Tick.08"), logAs(LogRoutine),
+					logLevel(LevelEverything), logPaid(amts(def.Export)...), logGot(amts(got)...)))
 				// A completed cycle warms every civ you have met and are not at war with.
 				if diplomacy != nil {
 					diplomacy.RecordTrade()
 				}
-			} else if !route.Starved {
+			} else {
+				route.Lost++
+			}
+			if !canAfford && !route.Starved {
 				route.Starved = true
 				for _, res := range sortedKeys(def.Export) {
 					if resources.Get(res) < def.Export[res] {
-						messages = append(messages, rowid.Sprintf("game.trade.Tick.04", "%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)))
+						messages = append(messages, note(rowid.Sprintf("game.trade.Tick.04", "%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)), logSubj(key), logTrouble))
 						break
 					}
 				}

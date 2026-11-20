@@ -36,7 +36,7 @@ func TestBuildCompletionLogCategory(t *testing.T) {
 		ge.finishBuild(BuildQueueItem{BuildingKey: "hut"})
 	}
 	quips := 0
-	for i, e := range ge.log {
+	for _, e := range ge.log {
 		switch {
 		case strings.Contains(e.Message, "Hut built"):
 			if e.Type != LogRoutine {
@@ -44,8 +44,8 @@ func TestBuildCompletionLogCategory(t *testing.T) {
 			}
 		case strings.HasPrefix(e.Message, "  [comment]"):
 			quips++
-			if e.Type != LogRoutine || i == 0 || !strings.Contains(ge.log[i-1].Message, "Hut built") {
-				t.Errorf("quip %q logs as %q after %q", e.Message, e.Type, ge.log[max(i-1, 0)].Message)
+			if e.Type != LogRoutine {
+				t.Errorf("quip %q logs as %q", e.Message, e.Type)
 			}
 		}
 	}

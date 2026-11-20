@@ -330,11 +330,11 @@ func (b *loadGameBrowser) doLoad() {
 		return
 	}
 	if err := b.engine.LoadGame(s.Name); err != nil {
-		b.engine.AddLog("error", rowid.Sprintf("ui.load_game.doLoad.02", "Load failed: %v", err))
+		b.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Sprintf("ui.load_game.doLoad.02", "Load failed: %v", err))
 		b.detail.SetText(b.detailFor(s) + rowid.Sprintf("ui.load_game.doLoad.03", "\n\n[red]Load failed: %v[-]", err))
 		return
 	}
-	b.engine.AddLog("success", rowid.Line("ui.load_game.doLoad.04", "Game loaded."))
+	b.engine.AddLog(game.OfficeGame, game.LevelEverything, "success", rowid.Line("ui.load_game.doLoad.04", "Game loaded."))
 	b.pages.RemovePage(loadGamePage)
 	b.pages.SwitchToPage("dashboard")
 	// From the splash this performs the first engine start; mid-game the engine is
@@ -391,7 +391,7 @@ func (b *loadGameBrowser) doDelete() {
 			return
 		}
 		if err := game.DeleteSave(s.Name); err != nil {
-			b.engine.AddLog("error", rowid.Sprintf("ui.load_game.doDelete.04", "Delete failed: %v", err))
+			b.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Sprintf("ui.load_game.doDelete.04", "Delete failed: %v", err))
 			b.detail.SetText(rowid.Sprintf("ui.load_game.doDelete.05", "[red]Delete failed: %v[-]", err))
 			return
 		}
@@ -514,7 +514,7 @@ func (b *loadGameBrowser) doDuplicate() {
 	}
 	newName, err := game.DuplicateSave(s.Name)
 	if err != nil {
-		b.engine.AddLog("error", rowid.Sprintf("ui.load_game.doDuplicate.01", "Duplicate failed: %v", err))
+		b.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Sprintf("ui.load_game.doDuplicate.01", "Duplicate failed: %v", err))
 		b.detail.SetText(rowid.Sprintf("ui.load_game.doDuplicate.02", "[red]Duplicate failed: %v[-]", err))
 		return
 	}

@@ -75,7 +75,7 @@ func playerLogCount(ge *game.GameEngine) int {
 	n := 0
 	for _, e := range ge.GetLogs() {
 		if mainLogShows(e) {
-			n++
+			n += max(1, e.Count) // a fold counts each line it stands for
 		}
 	}
 	return n

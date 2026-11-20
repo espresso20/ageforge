@@ -990,6 +990,7 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	noErr(t, ge.HarbingerBrace())
 	noErr(t, ge.HarbingerInvite())
 	want, wantFate := *ge.harbinger, *ge.fate
+	spoke := countLogs(ge, "has come") + countLogs(ge, "takes up")
 	ge2 := saveAndLoad(t, ge, "harb_mid")
 
 	if ge2.cheaterBadge {
@@ -1001,7 +1002,7 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	if !ge2.fate.Arrived || ge2.catastropheInvited {
 		t.Errorf("arrived %v / invite flag %v", ge2.fate.Arrived, ge2.catastropheInvited)
 	}
-	if countLogs(ge2, "has come")+countLogs(ge2, "takes up") != 0 {
+	if countLogs(ge2, "has come")+countLogs(ge2, "takes up") != spoke {
 		t.Error("loading spoke again")
 	}
 	ge2.harbingerTickCheck()

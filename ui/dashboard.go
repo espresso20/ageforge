@@ -1022,12 +1022,12 @@ func (d *Dashboard) announceBadges() {
 	if n := d.engine.DrainBadgeCatchUp(); n > 0 {
 		line := game.BadgeCatchUpLine(n)
 		d.toastMgr.Show(line, "green", 5*time.Second)
-		d.engine.AddLog("success", line)
+		d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", line)
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
-		d.engine.AddLog("success", game.BadgeLogLine(v))
+		d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", game.BadgeLogLine(v))
 		if t, ok := theme.ByKey(v.RewardTheme); ok {
-			d.engine.AddLog("success", themeUnlockToast(t.Name.String()))
+			d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", themeUnlockToast(t.Name.String()))
 		}
 	}
 }
@@ -1384,7 +1384,7 @@ func (d *Dashboard) showDevUnlockModal() {
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
 				d.engine.NoteDevUnlocked()
-				d.engine.AddLog("info", rowid.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", rowid.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
 				d.app.SetFocus(d.inputField)
 			} else {
 				d.app.SetFocus(d.inputField)
@@ -1547,7 +1547,7 @@ func (d *Dashboard) runLine(text string) {
 	if game.DevModeActive && strings.HasPrefix(cmd, "/") {
 		result := game.DevConsoleCommand(cmd, d.engine)
 		if result != "" {
-			d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
+			d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", "[positive]dev → "+result+"[-]")
 		}
 		return
 	}
@@ -1626,7 +1626,7 @@ func (d *Dashboard) runLine(text string) {
 		// A badge this command earned is announced first, so the reply, which the
 		// player asked for, is the last line in the log and stays in view.
 		d.announceBadges()
-		d.engine.AddLog(result.Type, result.Message)
+		d.engine.AddLog(game.OfficeGame, game.LevelEverything, result.Type, result.Message)
 	}
 }
 

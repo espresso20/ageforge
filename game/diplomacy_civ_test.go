@@ -108,7 +108,7 @@ func TestFirstContact_FiresFlavorMessage(t *testing.T) {
 	msgs := dm.Tick(testRNG(), "medieval_age", fullAgeOrder(), 1, false)
 	joined := ""
 	for _, m := range msgs {
-		joined += m + "\n"
+		joined += m.text + "\n"
 	}
 	if !strings.Contains(joined, "First contact") {
 		t.Errorf("Tick on first reaching medieval_age produced no first-contact message:\n%s", joined)

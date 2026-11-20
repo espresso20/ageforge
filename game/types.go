@@ -382,15 +382,6 @@ type WorkerDomainState struct {
 	Unlocked    bool
 }
 
-// LogEntry is a timestamped game log message
-type LogEntry struct {
-	Tick    int
-	Message string
-	// Type is the category: "info", "success", "warning", "error", "event"
-	// or LogRoutine. It decides the color and the logs panel's tag.
-	Type string
-}
-
 // LogRoutine is the log category for routine confirmations: a line whose
 // effect a panel already shows. A build started, queued or finished (a
 // wonder's completion excepted), a sale, an upgrade, workers recruited,

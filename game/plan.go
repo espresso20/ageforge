@@ -746,7 +746,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		}
 		if it.Kind == PlanDeal {
 			if gone := ge.planDealGone(it); gone != "" {
-				ge.addLog("warning", rowid.Sprintf("game.plan.runPlan.01", "Plan: dropped %s (%s).", ge.planItemLabel(it), gone))
+				ge.addLog(OfficePlan, "warning", rowid.Sprintf("game.plan.runPlan.01", "Plan: dropped %s (%s).", ge.planItemLabel(it), gone))
 				continue
 			}
 			if ge.runPlanDeal(it, reserved) {
@@ -795,7 +795,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 				reason = rowid.Line("game.plan.runPlan.05", "nothing left to start")
 			}
 			label := ge.planItemLabel(it)
-			ge.addLog("warning", rowid.Sprintf("game.plan.runPlan.06", "Plan: dropped %s (%s).", label, reason))
+			ge.addLog(OfficePlan, "warning", rowid.Sprintf("game.plan.runPlan.06", "Plan: dropped %s (%s).", label, reason))
 			continue
 		}
 		first := it.Kind == PlanResearch && !researchSeen
@@ -836,7 +836,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					// MaxCount may be reached mid-item.
 					if it.Count > 0 {
 						if why := ge.planBuildInvalid(it.Key, plannedCount(out, PlanBuild, it.Key)); why != "" {
-							ge.addLog("warning", rowid.Sprintf("game.plan.runPlan.10", "Plan: dropped the last %s (%s).", ge.planItemLabel(it), why))
+							ge.addLog(OfficePlan, "warning", rowid.Sprintf("game.plan.runPlan.10", "Plan: dropped the last %s (%s).", ge.planItemLabel(it), why))
 							it.Count = 0
 						}
 					}
@@ -881,7 +881,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	ge.plan = out
 	if advanceAt >= 0 {
 		next := ge.progress.GetNextAge(ge.age)
-		ge.addLog("info", rowid.Sprintf("game.plan.runPlan.12", "Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
+		ge.addLog(OfficePlan, "info", rowid.Sprintf("game.plan.runPlan.12", "Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
 		// Reported before the advance, so a badge judged on reaching the age
 		// sees that the plan did it.
 		ge.note(config.BadgeEvPlanStarted, PlanAdvance)
@@ -964,7 +964,7 @@ func planStaffSource(def config.BuildingDef) bool {
 func (ge *GameEngine) runPlanTick() {
 	var s planStarts
 	if ge.runPlan(&s) {
-		ge.addLog(LogRoutine, rowid.Line("game.plan.runPlanTick.01", "Plan: ")+s.describe(ge.rules)+".")
+		ge.addLog(OfficePlan, LogRoutine, rowid.Line("game.plan.runPlanTick.01", "Plan: ")+s.describe(ge.rules)+".")
 	}
 }
 
