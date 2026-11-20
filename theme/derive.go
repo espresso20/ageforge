@@ -30,6 +30,8 @@ var (
 //	Comment       = neon orange, nudged to read on Background (every shipped
 //	                theme sets its own; this is the floor for a new one)
 //	Effect        = blue, nudged to read on Background (same rule)
+//	New           = cyan, nudged to read on Background (same rule; the ratio is
+//	                symmetric, so Background-colored text on a New plate clears it too)
 //
 // Core roles are never touched: a theme that leaves one of those unset is a bug
 // the contrast test will catch.
@@ -69,6 +71,9 @@ func deriveRoles(t Theme) Theme {
 	}
 	if unset(RoleEffect) {
 		c[RoleEffect] = Legible(effectBlue, c[RoleBackground], 4.5)
+	}
+	if unset(RoleNew) {
+		c[RoleNew] = Legible(newCyan, c[RoleBackground], 4.5)
 	}
 	return t
 }
@@ -175,3 +180,6 @@ func Hue(hex string, bg Color) Color {
 	}
 	return Legible(NewRGBColor(r, g, b), bg, 3)
 }
+
+// newCyan is the new-marker color's starting point.
+var newCyan = NewRGBColor(0x2e, 0xc4, 0xd6)

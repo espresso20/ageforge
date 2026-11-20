@@ -34,6 +34,7 @@ var surfacePairs = func() []contrastPair {
 			contrastPair{RoleBorder, bg, 3.0, 3.0, "borders (non-text UI)"},
 			contrastPair{RoleComment, bg, 4.5, 4.5, "flavor sentences"},
 			contrastPair{RoleEffect, bg, 4.5, 7.0, "what a tech does"},
+			contrastPair{RoleNew, bg, 4.5, 4.5, "new markers; also the Background text on a New plate"},
 		)
 	}
 	ps = append(ps,
