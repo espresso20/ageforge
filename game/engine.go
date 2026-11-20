@@ -132,7 +132,8 @@ type GameEngine struct {
 	progress   *ProgressManager
 	buildQueue []BuildQueueItem
 	log        []LogEntry
-	now        func() time.Time // the log's clock; nil is time.Now
+	now        func() time.Time // the log's clock; nil is time.Now once liveStamps is set
+	liveStamps bool             // stamp the log with the wall clock (set by Start and by a load)
 	running    bool
 	stopCh     chan struct{}
 	stopOnce   sync.Once
@@ -858,6 +859,7 @@ func (ge *GameEngine) Start() {
 	default:
 	}
 	ge.running = true
+	ge.liveStamps = true
 	// Read the channel once, under the lock: a later restart replaces the
 	// field, and this loop must keep listening to the channel it started with.
 	stop := ge.stopCh

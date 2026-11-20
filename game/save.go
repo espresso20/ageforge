@@ -941,6 +941,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	} else {
 		ge.history = NewRunHistory()
 	}
+	ge.liveStamps = true
 	ge.log = logFromSave(save.Log)
 	ge.logSeam()
 	ge.runID = save.RunID

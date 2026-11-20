@@ -98,7 +98,7 @@ type LogEntry struct {
 	// Type is the category: "info", "success", "warning", "error", "event"
 	// or LogRoutine. It decides the color.
 	Type    string `json:"t"`
-	At      int64  `json:"a"` // wall clock, unix seconds
+	At      int64  `json:"a"` // unix seconds: wall clock when played live (see clock)
 	Office  Office `json:"o"`
 	Level   int    `json:"l"`
 	Trouble bool   `json:"tr,omitempty"`
@@ -200,11 +200,20 @@ func sumAmts(a, b []LogAmt) []LogAmt {
 	return out
 }
 
+// logEpoch is the stamp of tick zero in an engine that is not played live.
+const logEpoch = 1_700_000_000
+
+// clock is the time a line is stamped with: the wall clock once the engine is
+// played live (Start or a load), and a time derived from the tick before that,
+// so that engines stepped by simulation and tests come out identical.
 func (ge *GameEngine) clock() time.Time {
 	if ge.now != nil {
 		return ge.now()
 	}
-	return time.Now()
+	if ge.liveStamps {
+		return time.Now()
+	}
+	return time.Unix(logEpoch+int64(ge.tick), 0)
 }
 
 // SetClock replaces the clock the log stamps lines with (tests).
