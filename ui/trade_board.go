@@ -25,7 +25,7 @@ const (
 
 // The route columns, from the board's left edge.
 const (
-	tcState, tcName, tcSends, tcArrow, tcBrings, tcShare, tcRun = 4, 15, 35, 56, 58, 91, 133
+	tcState, tcName, tcSends, tcArrow, tcBrings, tcShare, tcRun = 4, 15, 35, 53, 63, 91, 133
 )
 
 // tradeFlow is one good a route moves, as the route runs now: per tick and
@@ -49,6 +49,15 @@ type tradeRoute struct {
 	share                      string
 	by, lift                   string
 	war                        bool
+}
+
+// inPerSec is what the route brings in a second (research left out).
+func (r tradeRoute) inPerSec(tickMs int) float64 {
+	var t float64
+	for _, f := range r.in {
+		t += f.tick
+	}
+	return float64(t * 1000 / float64(max(tickMs, 1)))
 }
 
 // moving is true while the route moves goods, at all its flow or less.
@@ -340,7 +349,7 @@ func tradeExtraRows(ex []tradeExtra) (n int) {
 
 // drawTradeEntry draws one route at row y, its extras if it is picked, and
 // returns the row after it.
-func drawTradeEntry(g *xgrid, st game.GameState, r tradeRoute, ex []tradeExtra, y, end, n int, picked bool) int {
+func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex []tradeExtra, y, end, n int, picked bool) int {
 	word, k, _ := tradeLook(r.state)
 	rows := 2 + tradeExtraRows(ex)
 	if picked {
@@ -355,11 +364,12 @@ func drawTradeEntry(g *xgrid, st game.GameState, r tradeRoute, ex []tradeExtra, 
 	}
 	g.putFit(tcName, y, tcSends-tcName-1, r.name, nk)
 	g.putFit(tcSends, y, tcArrow-tcSends-1, tradeJoin(r.out, false, -1, st.TickIntervalMs), xText)
-	g.put(tcArrow, y, "►", xDim)
+	laneAt(g, tcArrow, y, r.moving(), r.inPerSec(st.TickIntervalMs), r.run, pg.clock, k)
 	g.putFit(tcBrings, y, tcShare-tcBrings-1, tradeJoin(r.in, false, 1, st.TickIntervalMs), xText)
 	if r.moving() {
 		g.putFit(tcShare, y, tcRun-tcShare-8, r.share, xText)
 		g.rput(tcRun, y, fmt.Sprintf("%.0f%%", r.run*100), k)
+		pg.animate = true
 	}
 	if r.cmd != "" {
 		word, pk := rowid.Line("ui.trade_board.drawTradeEntry.01", "stop"), xKeyName
@@ -555,7 +565,9 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		}
 	}
 	if takes+brings > 0 {
-		g.put(2, 2, rowid.Sprintf("ui.trade_board.renderTradeBoard.14", "Trade in %s, out %s (all routes)", rateAmount(brings, st.TickIntervalMs), rateAmount(takes, st.TickIntervalMs)), xDim)
+		x := g.put(2, 2, rowid.Sprintf("ui.trade_board.renderTradeBoard.14", "Trade in %s, out %s (all routes)", rateAmount(brings, st.TickIntervalMs), rateAmount(takes, st.TickIntervalMs)), xDim)
+		laneAt(g, x+2, 2, true, float64(brings*1000/float64(max(st.TickIntervalMs, 1))), 1, pg.clock, xGood)
+		pg.animate = true
 	}
 
 	y := 5
@@ -564,7 +576,7 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		if i == sel {
 			rex = ex
 		}
-		y = drawTradeEntry(g, st, r, rex, y, end, i, i == sel)
+		y = drawTradeEntry(g, pg, st, r, rex, y, end, i, i == sel)
 		lay.cards = append(lay.cards, image.Rect(0, -10000+2*i, 1, -9999+2*i))
 		if i < len(routes)-1 {
 			y += gap

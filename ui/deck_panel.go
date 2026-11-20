@@ -3,6 +3,8 @@ package ui
 import (
 	"image"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -30,6 +32,13 @@ type deckPanel struct {
 	draw func(pg *deckPage, st game.GameState, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout)
 	// settings reads the glyph tier.
 	settings func() mapSettings
+	// held says the game is held; the lanes stop with it. now is the frame
+	// clock, clock the seconds run, moving whether a draw has something moving.
+	held   func() bool
+	now    func() time.Time
+	last   time.Time
+	clock  float64
+	moving atomic.Bool
 
 	state  game.GameState
 	pg     deckPage
@@ -43,7 +52,7 @@ type deckPanel struct {
 }
 
 func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
-	p := &deckPanel{page: page}
+	p := &deckPanel{page: page, now: time.Now}
 	p.barPanel = newBarPanel(p.routeKey)
 	return p
 }
@@ -54,6 +63,7 @@ func newDeckPanel(page func(game.GameState) deckPage) *deckPanel {
 func (d *Dashboard) registerDeck(name string, title rowid.Entry, page func(game.GameState) deckPage) *deckPanel {
 	p := newDeckPanel(page)
 	p.settings = d.mapSettings
+	p.held = d.engine.Held
 	p.prompt = func() string { return d.inputField.GetText() }
 	p.toPrompt = d.handToPrompt
 	p.buttons.wire(d.app)
@@ -100,7 +110,13 @@ func (p *deckPanel) Layout(r image.Rectangle) {
 	if r.Empty() {
 		return
 	}
+	motion := p.settings == nil || p.settings().Motion
+	if t := p.now(); !p.last.IsZero() && motion && (p.held == nil || !p.held()) {
+		p.clock += t.Sub(p.last).Seconds()
+	}
+	p.last = p.now()
 	p.pg = p.page(p.state)
+	p.pg.clock = p.clock
 	p.sel = clamp(p.sel, 0, max(0, p.pg.count()-1))
 	if p.draw != nil {
 		p.grid, p.lay = p.draw(&p.pg, p.state, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
@@ -108,6 +124,7 @@ func (p *deckPanel) Layout(r image.Rectangle) {
 		p.grid, p.lay = renderDeck(&p.pg, p.sel, p.scroll, r.Dx(), r.Dy(), p.said...)
 	}
 	p.scroll = clamp(p.scroll, 0, max(0, p.lay.total-p.lay.viewH))
+	p.moving.Store(p.pg.animate && motion && (p.held == nil || !p.held()))
 	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
 		p.grid.fold()
 	}
