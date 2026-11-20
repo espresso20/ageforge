@@ -263,3 +263,15 @@ func TestHistoryKeyBarFitsAt100(t *testing.T) {
 		}
 	}
 }
+
+// bufText is the text of the rectangle r of b, a line per row.
+func bufText(b *kit.Buffer, r image.Rectangle) string {
+	var sb strings.Builder
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		for x := r.Min.X; x < r.Max.X; x++ {
+			sb.WriteRune(b.At(x, y).R)
+		}
+		sb.WriteByte('\n')
+	}
+	return sb.String()
+}

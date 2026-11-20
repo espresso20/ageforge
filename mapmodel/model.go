@@ -50,7 +50,8 @@ type Model struct {
 	// Lineages groups them; only lineages with something built appear.
 	Lineages []*Lineage
 
-	TownName string // the name the run's seed gives the town
+	TownName  string // the name the run's seed gives the town
+	TownTitle string // the account's best domain title, from Adept up; "" before
 
 	Wonders     []Wonder
 	Workers     Workers
@@ -224,6 +225,7 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	m.people(st)
 	m.world(st)
 	m.TownName = cityName(st.Seed)
+	m.TownTitle = st.TownTitle()
 	m.Recap = recap(m, st, since)
 	m.Flows = flowsFor(m, st)
 	m.LayoutKey = layoutKey(m)

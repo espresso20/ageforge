@@ -13,7 +13,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/window/kit"
 )
 
 // epoch_card.go is the Discord card: a picture of the epoch screen's front
@@ -48,16 +47,13 @@ func epochCardFrame(state game.GameState) (*panelFrame, *nativeText, int) {
 	// The page says how tall it is; the frame adds its edges (3 rows) and a
 	// blank row under the text.
 	page := hallFrontPage(state, epochPicCols, epochLayoutRows, mapmodel.TierUnicode, hallMotion{}, false)
-	picRows := max(epochPicMinRows, strings.Count(page.text, "\n")+1+panelChromeRows+1)
+	picRows := max(epochPicMinRows, strings.Count(page, "\n")+1+panelChromeRows+1)
 
 	tv := newNativeText().SetDynamicColors(true).SetWrap(true)
 	tv.SetBackgroundColor(theme.Of(theme.RoleBackground))
 	// The page has no key hint here: the picture is of the screen, and the
 	// hint is for the player who is looking at it.
-	tv.SetText(safeTags(page.text))
-	// The coins stand still, struck for the picture's own cell size.
-	pics := &hallCoins{list: page.coins, cache: &coinCache{px: image.Pt(shotCellW, shotCellH)}}
-	tv.over = func(p *kit.Painter, text image.Rectangle, top int) { pics.paint(p, text, top, atRest) }
+	tv.SetText(safeTags(page))
 	return newPanelFrame(rowid.E("ui.epoch_card.epochPicture.01", "Epoch"), tv), tv, picRows
 }
 

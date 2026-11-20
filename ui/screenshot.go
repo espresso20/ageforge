@@ -13,6 +13,7 @@ import (
 	"golang.org/x/image/math/fixed"
 
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/window/fonts"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -68,6 +69,36 @@ func shotBlend(a, b color.RGBA, t float64) color.RGBA {
 // round the edge. Go Mono is sized for a 12 by 24 cell; other sizes scale the
 // shapes but not the letters.
 func ScreenImage(b *kit.Buffer, cellW, cellH int) *image.RGBA {
+	return screenImage(b, cellW, cellH, loadShotFonts)
+}
+
+// The window's own cell: 7 by 15 pixels, Departure Mono on an 11 pixel em.
+const (
+	pixelCellW = 7
+	pixelCellH = 15
+)
+
+// ScreenImagePixel is the picture of a buffer in the window's own cell and
+// face, so a letter is the size it is in the game.
+func ScreenImagePixel(b *kit.Buffer) *image.RGBA {
+	return screenImage(b, pixelCellW, pixelCellH, loadPixelFonts)
+}
+
+// loadPixelFonts is Departure Mono at its native size; it has no bold, so the
+// one face serves both.
+func loadPixelFonts() (*shotFonts, error) {
+	sf, err := opentype.Parse(fonts.Departure)
+	if err != nil {
+		return nil, err
+	}
+	face, err := opentype.NewFace(sf, &opentype.FaceOptions{Size: 11, DPI: 72, Hinting: font.HintingFull})
+	if err != nil {
+		return nil, err
+	}
+	return &shotFonts{reg: sf, bold: sf, regFace: face, boldFace: face}, nil
+}
+
+func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error)) *image.RGBA {
 	cells, cols, rows := b.Cells, b.W, b.H
 	defBg := theme.RGBA(theme.RoleBackground)
 	w, h := cols*cellW+2*shotPad, rows*cellH+2*shotPad
@@ -89,7 +120,7 @@ func ScreenImage(b *kit.Buffer, cellW, cellH int) *image.RGBA {
 	if len(cells) < cols*rows {
 		return img
 	}
-	fonts, ferr := loadShotFonts()
+	sf, ferr := load()
 
 	type cellPaint struct{ fg, bg color.RGBA }
 	paints := make([]cellPaint, cols*rows)
@@ -150,7 +181,7 @@ func ScreenImage(b *kit.Buffer, cellW, cellH int) *image.RGBA {
 			case symbolShapes[r] != nil:
 				drawSymbol(img, cell, symbolShapes[r], p.fg)
 			case ferr == nil:
-				drawGlyph(img, fonts, cell, r, p.fg, c.Attr&kit.Bold != 0)
+				drawGlyph(img, sf, cell, r, p.fg, c.Attr&kit.Bold != 0)
 			}
 		}
 	}

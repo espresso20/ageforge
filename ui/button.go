@@ -50,6 +50,9 @@ const (
 const (
 	// keySteps is how many animation steps a typed key stays sunk.
 	keySteps = 2
+	// animStep is the animation ticker's step: sixteen a second, twice the
+	// rate of everything else that moves.
+	animStep = mapAnimStep / 2
 	// keyHoldMax bounds how long a held mouse button keeps a key sunk when
 	// its release never arrives (the press closed the panel).
 	keyHoldMax = 2 * time.Second
@@ -98,7 +101,7 @@ func (f *keyFeel) clock() time.Time {
 func (f *keyFeel) typed(k kit.Key) {
 	f.key, f.preview = k, ""
 	f.tip.Clear()
-	f.end.Store(f.clock().Add(keySteps * coinStep).UnixNano())
+	f.end.Store(f.clock().Add(keySteps * animStep).UnixNano())
 }
 
 // hold notes that the button at r, which presses k, was pressed with a mouse
@@ -127,7 +130,7 @@ func (f *keyFeel) sunk(k kit.Key) bool {
 // ago: a key is sunk, or was in the step before.
 func (f *keyFeel) busy() bool {
 	n := f.clock().UnixNano()
-	return n < f.end.Load()+int64(coinStep) || n < f.held.Load()
+	return n < f.end.Load()+int64(animStep) || n < f.held.Load()
 }
 
 // sameKey reports whether two keys are the same press: letters count as the
@@ -149,6 +152,12 @@ var (
 
 func rampOf(c color.RGBA) keyRamp {
 	return keyRamp{toward(c, keyBlack, .6), toward(c, keyBlack, .32), c, toward(c, keyWhite, .38)}
+}
+
+// rgbOf is a theme colour as the pixels of a picture take it.
+func rgbOf(c theme.Color) color.RGBA {
+	r, g, b := c.RGB()
+	return color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 255}
 }
 
 // inkOn is the ink that reads on c.

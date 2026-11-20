@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"math/rand"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -132,8 +133,8 @@ type Dashboard struct {
 	// researchPanel is the Research panel, the tech tree as a map
 	// (research_panel.go).
 	researchPanel *researchPanel
-	// badgePanel is the badge case (badge_panel.go).
-	badgePanel *badgePanel
+	// badgePanel is the Ranks screen (ranks_panel.go).
+	badgePanel *ranksPanel
 	// expPanel is the Expeditions panel: the Ready Room and the Expedition
 	// Report (expedition_panel.go).
 	expPanel *expeditionPanel
@@ -172,12 +173,6 @@ type Dashboard struct {
 	// fxNow is the effect's clock; nil means time.Now (a test pins it).
 	fxNow func() time.Time
 
-	// moment is the card an earned badge shows (badge_moment.go), and
-	// momentOn is set while it is on show and moving, so the refresh loop
-	// redraws it at the animation rate. Read off the UI goroutine.
-	moment   badgeMoment
-	momentOn atomic.Bool
-
 	stopCh chan struct{}
 }
 
@@ -190,7 +185,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		mapViews:      mv,
 		mapPanel:      newMapPanel(mv),
 		researchPanel: newResearchPanel(),
-		badgePanel:    newBadgePanel(),
+		badgePanel:    newRanksPanel(),
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),
@@ -219,12 +214,10 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.researchPanel.toPrompt = d.handToPrompt
 	d.researchPanel.wireButtons(d.app)
 	d.overlayMgr.RegisterWidget("techs", rowid.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
-	// The badge case: the account's badges. It leaves the keyboard with the
-	// command bar too.
-	d.badgePanel.settings = d.mapSettings
+	// The Ranks screen: the account's badges. It leaves the keyboard with
+	// the command bar too.
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
-	d.badgePanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("badges", rowid.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
 	d.registerDeck("army", rowid.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
@@ -263,12 +256,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
 	d.epochHall.card = func(st game.GameState) (epochCardResult, error) { return makeEpochCard(st, copyImageToClipboard) }
 	d.overlayMgr.Register("epoch", rowid.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
-	// The Badges panel and the epoch screen draw their coins from one set
-	// of pictures.
-	coins := &coinCache{}
-	d.badgePanel.setCoins(coins)
-	d.epochHall.pics.cache = coins
-	d.overlayMgr.SetOver("epoch", d.epochHall.paintCoins)
 	d.overlayMgr.SetNotice("epoch", d.epochHall.notice)
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
 	d.overlayMgr.SetBackHandler("epoch", d.epochHall.back)
@@ -807,20 +794,6 @@ func (d *Dashboard) clock() func() time.Time {
 	return time.Now
 }
 
-// drawMoment paints the earned-badge card over the dashboard, in the top
-// right from the second row (the header's buttons keep the first) down to the
-// command bar. A card not yet begun waits while a panel covers the dashboard,
-// so it is seen when the panel closes.
-func (d *Dashboard) drawMoment(p *kit.Painter, bounds image.Rectangle) {
-	if d.overlayMgr.HasActive() && d.moment.start.IsZero() {
-		d.momentOn.Store(false)
-		return
-	}
-	area := image.Rect(bounds.Min.X, bounds.Min.Y+1, bounds.Max.X, bounds.Max.Y-promptRows)
-	set := d.mapSettings()
-	d.momentOn.Store(d.moment.paint(p, area, d.clock()(), set.Motion, set.Tier))
-}
-
 // tipCell is the cell size the tooltip's picture is drawn at: none in the
 // plain glyph set, or with no window.
 func (d *Dashboard) tipCell() (int, int) {
@@ -830,11 +803,9 @@ func (d *Dashboard) tipCell() (int, int) {
 	return pictureCell()
 }
 
-// drawOver draws what goes over the dashboard: the moment, then the tooltip,
-// which is the last thing painted. A panel over the dashboard takes the
-// tooltip away.
+// drawOver draws what goes over the dashboard: the tooltip, which is the last
+// thing painted. A panel over the dashboard takes the tooltip away.
 func (d *Dashboard) drawOver(p *kit.Painter, bounds image.Rectangle) {
-	d.drawMoment(p, bounds)
 	if d.overlayMgr.HasActive() {
 		d.app.feel.tip.Clear()
 		return
@@ -851,10 +822,10 @@ func (d *Dashboard) StartUpdates() {
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
-		// The animation ticker runs at the rate of the badge case's coins,
+		// The animation ticker runs at the rate of a key button's sink,
 		// twice the rate of everything else that moves, which redraws on
 		// every other tick.
-		anim := time.NewTicker(coinStep)
+		anim := time.NewTicker(animStep)
 		defer anim.Stop()
 		other := false
 		for {
@@ -866,20 +837,13 @@ func (d *Dashboard) StartUpdates() {
 			case <-anim.C:
 				// The open Map panel animates between refreshes: a redraw
 				// is enough, since its frame counter runs on the clock.
-				// So does the badge case, while it shows a badge that moves,
-				// and a theme with an ambient effect, and a key button that is sinking.
+				// So does a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.badgePanel.moving.Load() || d.momentOn.Load() || d.epochHall.pics.moving.Load() || d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
+				if d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
 							d.mapPanel.hide()
-						}
-						if d.overlayMgr.ActiveName() != "badges" {
-							d.badgePanel.moving.Store(false)
-						}
-						if d.overlayMgr.ActiveName() != "epoch" {
-							d.epochHall.pics.moving.Store(false)
 						}
 						if d.overlayMgr.ActiveName() != "expedition" {
 							d.expPanel.moving.Store(false)
@@ -1025,8 +989,8 @@ func (d *Dashboard) refresh() {
 // announceBadges says what the account earned since the last refresh. Badges
 // its record already proved when it was loaded get one line between them.
 // Then it drains the badges the account earned since the last refresh
-// (the engine judged them under its lock and only queued them) and gives each a
-// place on the card in the top right (badge_moment.go) and one log line, with a second line for the theme it unlocks when it gives one. The line is fixed per badge, so earning one draws
+// (the engine judged them under its lock and only queued them) and gives each
+// one log line, with a second line for the theme it unlocks when it gives one. The line is fixed per badge, so earning one draws
 // nothing from the run's random streams.
 func (d *Dashboard) announceBadges() {
 	if d.engine == nil {
@@ -1040,7 +1004,6 @@ func (d *Dashboard) announceBadges() {
 		d.engine.AddLog("success", line)
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
-		d.moment.add(v)
 		d.engine.AddLog("success", game.BadgeLogLine(v))
 		if t, ok := theme.ByKey(v.RewardTheme); ok {
 			d.engine.AddLog("success", themeUnlockToast(t.Name.String()))
@@ -1298,6 +1261,22 @@ func statusLine(state game.GameState, year string) headerView {
 	v.People = headFact{rowid.Sprintf("ui.dashboard.statusLine.17", "People %s", pop), pop}
 	v.PeopleShort = headFact{strings.Replace(v.People.Text, pop, short, 1), short}
 	return v
+}
+
+// txtExpeditions is said the same way on several screens, so it has one id.
+var txtExpeditions = rowid.E("ui.badge_list.badgeFamilyTitles.19", "Expeditions")
+
+// wholeNumber writes a count in full, its thousands set off with commas
+// ("1,245"): a score is exact, and reads wrong rounded to "1.25K".
+func wholeNumber(n int) string {
+	s := strconv.Itoa(max(n, -n))
+	for i := len(s) - 3; i > 0; i -= 3 {
+		s = s[:i] + "," + s[i:]
+	}
+	if n < 0 {
+		return "-" + s
+	}
+	return s
 }
 
 // groupedCount writes a whole count with a comma between its thousands

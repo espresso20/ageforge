@@ -706,6 +706,10 @@ type BadgeView struct {
 	// Emblem names the symbol the badge case draws (config.BadgeDef.Emblem).
 	// A silhouette has none: a symbol would say what the badge is about.
 	Emblem string
+	// Domain is the worker domain the badge's points go to ("" for an
+	// integrity badge, and for a silhouette: the domain would say what the
+	// badge is about).
+	Domain string
 	// Ladder is the name of the ladder the badge is a rung of, Rung its
 	// place on it from 1 and Rungs how many the ladder has. "" and 0 for
 	// a badge on no ladder, and for a silhouette.
@@ -800,6 +804,9 @@ func (a *Account) viewLocked(book *badgeBook, def *config.BadgeDef, shown bool) 
 		}
 	}
 	v.Emblem = def.Emblem
+	if !v.Integrity {
+		v.Domain = def.Domain()
+	}
 	v.RewardTheme, v.RewardTitle = def.Reward.Theme, def.Reward.Title
 	if !v.Earned && def.Scope == config.BadgeLifetime && def.Counter != "" && def.Threshold > 0 {
 		v.Progress, v.Target = a.Counters[def.Counter], def.Threshold

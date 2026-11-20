@@ -105,28 +105,28 @@ func TestAMousePressSinksTheKeyUntilReleaseAndATypedKeyForTwoSteps(t *testing.T)
 	if len(pressed) != 1 || pressed[0] != enter {
 		t.Fatalf("the press sent %v", pressed)
 	}
-	now = now.Add(10 * coinStep)
+	now = now.Add(10 * animStep)
 	if !k.feel.sunk(enter) {
 		t.Error("the key came up while the button was down")
 	}
 	k.mouse(g, image.Point{}, kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonLeft, X: 3, Y: 1})
-	now = now.Add(coinStep)
+	now = now.Add(animStep)
 	if k.feel.sunk(enter) {
 		t.Error("a released key stayed sunk past its steps")
 	}
 	k.feel.typed(enter)
-	now = now.Add(coinStep)
+	now = now.Add(animStep)
 	if !k.feel.sunk(enter) || k.feel.sunk(kit.Key{Code: kit.KeyEsc}) {
 		t.Error("a typed key should sink its own button for a step")
 	}
-	now = now.Add(coinStep + coinStep/2)
+	now = now.Add(animStep + animStep/2)
 	if k.feel.sunk(enter) {
 		t.Error("a typed key stayed sunk after two steps")
 	}
 	if !k.feel.busy() {
 		t.Error("one more repaint is due after the sink ends")
 	}
-	now = now.Add(2 * coinStep)
+	now = now.Add(2 * animStep)
 	if k.feel.busy() {
 		t.Error("still busy long after")
 	}
@@ -151,7 +151,7 @@ func TestPressedKeysShowSunkInPixels(t *testing.T) {
 	if bytes.Equal(rest.Pix, paint().Pix) {
 		t.Error("a typed Enter did not sink the Enter button")
 	}
-	now = now.Add(5 * coinStep)
+	now = now.Add(5 * animStep)
 	if again := paint(); again != rest {
 		t.Error("after the sink the button is not the rest picture again")
 	}

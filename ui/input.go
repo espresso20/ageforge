@@ -44,9 +44,8 @@ type CommandResult struct {
 	// tech's card. Empty leaves the panel as it was.
 	ResearchZoom string
 	ResearchCard string
-	// Badges says how the badge case (OverlayName "badges") opens: on a
-	// tab, or on a badge with its detail open. The zero value leaves the
-	// case as it was.
+	// Badges says how the Ranks screen (OverlayName "badges") opens: on a
+	// tab, a domain's badges, or a badge. The zero value is the Ranks tab.
 	Badges badgeRequest
 	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
@@ -1170,9 +1169,9 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if acct == nil {
 			return warningReply(rowid.Line("ui.input.cmdAccount.52", "Accounts are unavailable (no account is loaded)."))
 		}
-		// Info, not success: the list must reach the log, and the engine logs nothing here.
-		views, summary := engine.Badges()
-		return infoReply(strings.Join(badgeListLines(views, summary), "\n"))
+		res := panelReply("badges")
+		res.Badges = badgeRequest{tab: tabAll}
+		return res
 
 	case "wipe":
 		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we
@@ -2665,34 +2664,37 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	return res
 }
 
-// cmdBadges opens the badge case: bare, on a family's tab ("badges ages"),
-// on the badges nearest their count ("badges next"), or on one badge's
-// detail by its name ("badges hut hoarder"). A name is looked for among the
-// badges in sight only: a withheld badge has no name to find.
+// cmdBadges opens the Ranks screen: bare, on a tab ("badges all", "badges
+// recent"), on one domain's badges ("badges food"), or on one badge by its
+// name ("badges hut hoarder"). A name is looked for among the badges in sight
+// only: a withheld badge has no name to find.
 func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 	res := panelReply("badges")
 	if len(args) == 0 {
 		return res
 	}
 	want := strings.ToLower(strings.Join(args, " "))
-	if want == "all" {
-		res.Badges = badgeRequest{tab: caseTabAll, setTab: true}
+	switch want {
+	case "ranks":
+		return res
+	case "all":
+		res.Badges = badgeRequest{tab: tabAll}
+		return res
+	case "recent":
+		res.Badges = badgeRequest{tab: tabRecent}
 		return res
 	}
-	if want == "next" {
-		res.Badges = badgeRequest{tab: caseTabNext, setTab: true}
+	state := engine.GetState()
+	if dom, ok := findDomain(state.Ruleset(), want); ok {
+		res.Badges = badgeRequest{tab: tabAll, dom: dom}
 		return res
 	}
-	views, sum := engine.Badges()
-	if tab, ok := findBadgeTab(views, sum.HiddenCounted, want); ok {
-		res.Badges = badgeRequest{tab: tab, setTab: true}
-		return res
-	}
+	views, _ := engine.Badges()
 	if key, ok := findBadge(views, want); ok {
-		res.Badges = badgeRequest{sel: key, card: true}
+		res.Badges = badgeRequest{tab: tabAll, sel: key}
 		return res
 	}
-	return errorReply(rowid.Sprintf("ui.input.cmdBadges.01", "No badge or family in sight is called %q. Type badges to look through them.", strings.Join(args, " ")))
+	return errorReply(rowid.Sprintf("ui.input.cmdBadges.01", "No badge or domain in sight is called %q. Type badges to look through them.", strings.Join(args, " ")))
 }
 
 // wornTitle is the title an account wears: the one it chose, or the one

@@ -78,7 +78,7 @@ func (pg *statsPage) lifetime(st game.GameState, w int, wide bool, grow int) int
 	y = pg.ladder(st, as, y, w, grow)
 	y, rec := pg.records(st, as, y, w, grow)
 	pg.tiles = append(tiles, rec...)
-	return pg.families(as, y, w)
+	return pg.families(st, as, y, w)
 }
 
 // layPlaque puts the plaque's picture and words (or, with no pictures, its
@@ -214,87 +214,33 @@ func (pg *statsPage) records(st game.GameState, as *game.AccountStatsView, y, w,
 	return pg.layTiles(tiles, y, w, n, 3+grow), tiles
 }
 
-// families lays the badge families out in a grid: each family's coin at the
-// best tier earned in it (a recess where none is), its name and its count.
-func (pg *statsPage) families(as *game.AccountStatsView, y, w int) int {
+// families lays the worker domains' badges out in a grid: each domain's best
+// tier earned (a blank mark where none is), its name and its count.
+func (pg *statsPage) families(st game.GameState, as *game.AccountStatsView, y, w int) int {
 	pg.heading(0, y, w, txtFamilies.String())
 	y++
-	best := map[string]config.BadgeTier{}
-	for _, v := range as.Badges {
-		if t, ok := best[v.Family]; v.Earned && !v.Integrity && (!ok || v.Level > t) {
-			best[v.Family] = v.Level
-		}
-	}
-	var tabs []caseTab
-	for _, t := range caseTabs(as.Badges, as.BadgeSummary.HiddenCounted) {
-		if t.key != caseTabAll && t.key != caseTabNext {
-			tabs = append(tabs, t)
-		}
-	}
+	doms := buildRanks(st.Ruleset(), as.Badges).doms
 	cols := clamp(w/26, 2, 6)
 	pw := w / cols
-	pitch := coinRows + 3
-	if !pg.pic {
-		pitch = 3
-	}
-	for i, t := range tabs {
-		x, ty := i%cols*pw, y+i/cols*pitch
-		tier, got := best[t.key]
-		count := fmt.Sprintf("%d / %d", t.earned, t.shown)
+	for i, d := range doms {
+		x, ty := i%cols*pw, y+i/cols*3
+		count := fmt.Sprintf("%d / %d", d.earned, d.all)
 		k := xDim
-		if t.earned > 0 {
+		if d.earned > 0 {
 			k = xBright
 		}
-		if !pg.pic {
-			mark := "[ ]"
-			if got {
-				mark = "[" + strings.ToUpper(tier.Name()[:1]) + "]"
-			}
-			pg.g.put(x, ty, mark, xAccent)
-			pg.g.put(x+4, ty, fitText(t.title, pw-5), xText)
-			pg.g.put(x+4, ty+1, count, k)
-			continue
-		}
-		cx := x + (pw-coinCols)/2
-		sign := medalSign(t.key)
-		pg.pics = append(pg.pics, statsPic{r: image.Rect(cx, ty, cx+coinCols, ty+coinRows), key: fmt.Sprint("coin", t.key, tier, got),
-			draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
-				if !got {
-					return statsRecessPic(coinCols*cw, coinRows*ch, in)
-				}
-				return coinPicture(lookOf(medal{tier: tier, state: medalEarned}, sign, coinArt), coinCols*cw, coinRows*ch, coinPose{})
-			}})
-		name := fitText(t.title, pw-1)
-		pg.g.put(x+(pw-runeLen(name))/2, ty+coinRows, name, xText)
-		pg.g.put(x+(pw-len(count))/2, ty+coinRows+1, count, k)
-	}
-	return y + (len(tabs)+cols-1)/cols*pitch
-}
-
-// statsRecessPic is the place of a coin not earned: a round hollow of the
-// coin's size, dark at the upper left and lit at the lower right.
-func statsRecessPic(w, h int, in statsInk) *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	k := max(1, min(w, h)/coinArt)
-	a := art{img, k}
-	W, H := w/k, h/k
-	r := float64(coinArt) / 2
-	for y := 0; y < H; y++ {
-		for x := 0; x < W; x++ {
-			dx, dy := float64(x-W/2)+.5, float64(y-H/2)+.5
-			d := math.Hypot(dx, dy)
-			switch {
-			case d > r:
-			case d > r-1.5 && dx+dy < 0:
-				a.px(x, y, in.shadow)
-			case d > r-1.5:
-				a.px(x, y, toward(in.well, in.face, .18))
-			default:
-				a.px(x, y, in.well)
+		mark := "[ ]"
+		for t := config.BadgeLegendary; t >= config.BadgeBronze; t-- {
+			if d.have[t] > 0 {
+				mark = "[" + strings.ToUpper(t.Name()[:1]) + "]"
+				break
 			}
 		}
+		pg.g.put(x, ty, mark, xAccent)
+		pg.g.put(x+4, ty, fitText(d.name, pw-5), xText)
+		pg.g.put(x+4, ty+1, count, k)
 	}
-	return img
+	return y + (len(doms)+cols-1)/cols*3
 }
 
 // statsCrown is the crown over the highest step, '#' lit.

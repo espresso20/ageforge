@@ -181,7 +181,7 @@ Two settings shape the Map: the glyph set and the mini map. They are saved per a
 | `minimap on` | Show the mini map under the Panels list (the default) |
 | `map flows` | The flows overlay: where your economy is stuck (see [The flows overlay](#the-flows-overlay)). `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
-All of them work while the Map is open, so you see the change at once. The `motion` setting (`motion on` and `motion off`) holds the maps, the badge case and a theme's ambient effect still when it is off.
+All of them work while the Map is open, so you see the change at once. The `motion` setting (`motion on` and `motion off`) holds the maps and a theme's ambient effect still when it is off.
 
 ### The flows overlay
 

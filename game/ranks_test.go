@@ -77,3 +77,20 @@ func TestDomainRankRaisesWorkerOutput(t *testing.T) {
 		t.Errorf("food building rate with rank 2 = %v, want %v (base %v)", got, want, base)
 	}
 }
+
+func TestTownTitleFromAdeptUp(t *testing.T) {
+	var s GameState
+	if s.TownTitle() != "" {
+		t.Error("no account, no title")
+	}
+	key := config.WorkerDomains()[0]
+	views := []BadgeView{{Key: "a", Earned: true, Domain: key, Points: config.RankThresholds[1]}}
+	s.AccountStats = &AccountStatsView{Badges: views}
+	if got := s.TownTitle(); got != "" {
+		t.Errorf("rank 2 wears %q", got)
+	}
+	s.AccountStats.Badges[0].Points = config.RankThresholds[2]
+	if got, want := s.TownTitle(), config.RankTitles[2]+" "+DomainName(key); got != want {
+		t.Errorf("title %q, want %q", got, want)
+	}
+}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -41,11 +42,11 @@ func lifeAccount(ages []config.AgeDef, nAges int, earn func(fam, n int) int) *ga
 	}
 	tiers := []config.BadgeTier{config.BadgeBronze, config.BadgeBronze, config.BadgeSilver, config.BadgeGold, config.BadgePlatinum, config.BadgeLegendary}
 	var sum game.BadgeSummary
-	for fi, f := range badgeFamilyTitles {
+	for fi, key := range rules.Core().WorkerDomains() {
 		have := earn(fi, len(tiers))
 		for i, tier := range tiers {
 			v := game.BadgeView{
-				Key: fmt.Sprintf("%s.%d", f.key, i), Family: f.key, Name: fmt.Sprintf("%s %d", f.key, i),
+				Key: fmt.Sprintf("%s.%d", key, i), Family: key, Domain: key, Name: fmt.Sprintf("%s %d", key, i),
 				Level: tier, Tier: tier.Name(), Points: tier.Points(), Earned: i < have,
 			}
 			if v.Earned {
@@ -215,19 +216,16 @@ func TestLifetimeRecordsShowTheLargerOfRecordAndRun(t *testing.T) {
 	}
 }
 
-func TestLifetimeFamilyCoinsFollowTheBestTier(t *testing.T) {
+func TestLifetimeFamiliesFollowTheBestTier(t *testing.T) {
 	earn := func(fam, n int) int { return []int{0, 1, 2, 3, 4, 5, 6}[fam%7] }
 	p, st := lifeStats(t, 8, 160, 80, true, earn, nil)
 	as := st.AccountStats
-	byKey := map[string]*statsPic{}
-	for i := range p.page.pics {
-		byKey[p.page.pics[i].key] = &p.page.pics[i]
-	}
-	for fi, f := range badgeFamilyTitles {
+	text := statsPageText(st, partLifetime, 160)
+	for fi, key := range rules.Core().WorkerDomains() {
 		var best config.BadgeTier
 		got, have, total := false, 0, 0
 		for _, v := range as.Badges {
-			if v.Family != f.key {
+			if v.Domain != key {
 				continue
 			}
 			total++
@@ -239,27 +237,22 @@ func TestLifetimeFamilyCoinsFollowTheBestTier(t *testing.T) {
 			}
 		}
 		if have != earn(fi, 6) {
-			t.Fatalf("fixture: family %s has %d", f.key, have)
+			t.Fatalf("fixture: domain %s has %d", key, have)
 		}
-		pic := byKey[fmt.Sprint("coin", f.key, best, got)]
-		if pic == nil {
-			t.Errorf("family %s: no picture for tier %v, earned %v", f.key, best, got)
-			continue
+		mark := "[ ]"
+		if got {
+			mark = "[" + strings.ToUpper(best.Name()[:1]) + "]"
 		}
-		count := fmt.Sprintf("%d / %d", have, total)
-		lines := gridLines(p.page.g)
-		if !strings.Contains(lines[pic.r.Max.Y], f.title.String()) {
-			t.Errorf("family %s: title %q not under its coin: %q", f.key, f.title.String(), lines[pic.r.Max.Y])
+		if !strings.Contains(text, mark+" "+game.DomainName(key)) {
+			t.Errorf("domain %s: no %q before its name in\n%s", key, mark, text)
 		}
-		if !strings.Contains(lines[pic.r.Max.Y+1], count) {
-			t.Errorf("family %s: count %q not under its title: %q", f.key, count, lines[pic.r.Max.Y+1])
+		if !strings.Contains(text, fmt.Sprintf("%d / %d", have, total)) {
+			t.Errorf("domain %s: count %d / %d missing", key, have, total)
 		}
 	}
-	// a fresh account has every family as a recess
-	q, _ := lifeStats(t, 1, 160, 80, true, lifeNone, nil)
-	for _, pic := range q.page.pics {
-		if strings.HasPrefix(pic.key, "coin") && !strings.HasSuffix(pic.key, "false") {
-			t.Errorf("new account paints a coin: %s", pic.key)
+	for _, pic := range p.page.pics {
+		if strings.HasPrefix(pic.key, "coin") {
+			t.Errorf("a coin is painted: %s", pic.key)
 		}
 	}
 }
@@ -304,11 +297,6 @@ func TestLifetimeNothingOverlaps(t *testing.T) {
 			}
 			for _, s := range p.page.steps {
 				rects = append(rects, s.r)
-			}
-			for _, pc := range p.page.pics {
-				if strings.HasPrefix(pc.key, "coin") {
-					rects = append(rects, pc.r)
-				}
 			}
 			for i := range rects {
 				if rects[i].Max.X > w-4 {

@@ -144,6 +144,8 @@ func endLevelTag(level string) string {
 // txtBadge is said the same way on several screens, so it has one id.
 var txtBadge = rowid.E("ui.ending_page.endViewFor.03", "badge")
 
+var txtEarned = rowid.E("ui.badge_case.drawCounts.02", " earned")
+
 // endViewFor works out what the film says from the record of the ending.
 func endViewFor(end game.RunEnding, pal *menuPalette) endView {
 	v := endView{end: end, prestige: end.Prestige(), age: game.AgeName(end.Age)}
