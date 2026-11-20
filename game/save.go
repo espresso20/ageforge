@@ -535,6 +535,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	if err := writeFileAtomic(filepath.Join(dir, filename+".json"), data); err != nil {
 		return fmt.Errorf("could not write the save file: %w", err)
 	}
+	ge.noteSaved()
 	if played != nil {
 		// The record is a convenience: a save that was written is a save,
 		// whether or not the settings file could be.
@@ -1010,6 +1011,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	// Apply offline progress for time since save
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
+	ge.noteSavedAt(save.Timestamp)
 
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
 	// modal the player closed in the old session is shown again). Handlers run
