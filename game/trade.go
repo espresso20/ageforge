@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
@@ -42,6 +43,15 @@ type TradeManager struct {
 	// gross is what the town makes of each resource a tick before any trade
 	// flow (set by Flows), which sizes every route.
 	gross map[string]float64
+	// levels keeps RoutePriceLevel per good and age; order the sorted keys of
+	// activeRoutes (routes are only added, so a length check keeps it true).
+	levels map[[2]string]float64
+	order  []string
+	// The throttle's scratch, kept between calls.
+	legs          []routeLeg
+	demand, share map[string]float64
+	// allyMemo is the allies' bonus per good within one Flows call.
+	allyMemo map[string]float64
 }
 
 // ActiveRoute is a route the player has started.
@@ -59,6 +69,30 @@ type ActiveRoute struct {
 	Disrupted            bool    `json:"-"`
 	NoBuilding           bool    `json:"-"`
 	said                 string
+	// sized is the route's scaled flows with the inputs they were worked
+	// from: they are redone only when one of those changes.
+	sized sizedFlow
+}
+
+// routeLeg is a running route and its flows, for the throttle.
+type routeLeg struct {
+	route   *ActiveRoute
+	out, in map[string]float64
+}
+
+// flowKey is everything a route's flow is sized from.
+type flowKey struct {
+	age                       string
+	speed, pay, harbor, scale float64
+	gross                     [4]float64 // exports, then imports
+	ally                      [2]float64
+}
+
+// sizedFlow is a route's flows at its scale, read-only once stored.
+type sizedFlow struct {
+	key     flowKey
+	ok      bool
+	out, in map[string]float64
 }
 
 // routeDisruptedBy returns the first imported resource of def that appears in the
@@ -144,6 +178,11 @@ type RouteTerms struct {
 	Harbor       float64
 	HarborShares []PayShare
 	Ally         func(res string) (float64, []PayShare)
+	// Lean leaves the shares out (Flows needs only the sums): no lists are
+	// built, and Ally is read as the bonus alone.
+	Lean bool
+	// AllyBonus is Ally's bonus without the shares, for Lean terms.
+	AllyBonus func(res string) float64
 }
 
 // timeFactor is how much faster the techs make a route move: its flow is
@@ -155,16 +194,38 @@ func (tm *TradeManager) timeFactor() float64 {
 	return 1
 }
 
+// priceLevel is rules' RoutePriceLevel, kept: it walks the ages.
+func (tm *TradeManager) priceLevel(res, age string) float64 {
+	k := [2]string{res, age}
+	if l, ok := tm.levels[k]; ok {
+		return l
+	}
+	if tm.levels == nil {
+		tm.levels = map[[2]string]float64{}
+	}
+	l := tm.rules.RoutePriceLevel(res, age)
+	tm.levels[k] = l
+	return l
+}
+
+// routeKeys is the started routes' keys in order, kept between calls.
+func (tm *TradeManager) routeKeys() []string {
+	if len(tm.order) != len(tm.activeRoutes) {
+		tm.order = sortedKeys(tm.activeRoutes)
+	}
+	return tm.order
+}
+
 // idle names the export the town makes none of, or the good no age prices.
 // "" when the route can run.
 func (tm *TradeManager) idle(def config.TradeRouteDef, age string) string {
 	for _, res := range def.Export {
-		if tm.gross[res] <= 0 || tm.rules.RoutePriceLevel(res, age) <= 0 {
+		if tm.gross[res] <= 0 || tm.priceLevel(res, age) <= 0 {
 			return res
 		}
 	}
 	for _, res := range def.Import {
-		if tm.rules.RoutePriceLevel(res, age) <= 0 {
+		if tm.priceLevel(res, age) <= 0 {
 			return res
 		}
 	}
@@ -181,8 +242,11 @@ func (tm *TradeManager) idle(def config.TradeRouteDef, age string) string {
 // on the import. The shares are for the state view.
 func (tm *TradeManager) flows(def config.TradeRouteDef, terms RouteTerms, age string) (out, in map[string]float64, shares map[string][]PayShare) {
 	k := tm.timeFactor()
-	out, in, shares = make(map[string]float64, len(def.Export)), make(map[string]float64, len(def.Import)), make(map[string][]PayShare, len(def.Import))
-	level := func(res string) float64 { return tm.rules.RoutePriceLevel(res, age) }
+	out, in = make(map[string]float64, len(def.Export)), make(map[string]float64, len(def.Import))
+	if !terms.Lean {
+		shares = make(map[string][]PayShare, len(def.Import))
+	}
+	level := func(res string) float64 { return tm.priceLevel(res, age) }
 	// worth is the value, in price units, each import brings before the bonuses.
 	worth := 0.0
 	for _, res := range def.Import {
@@ -207,6 +271,20 @@ func (tm *TradeManager) flows(def config.TradeRouteDef, terms RouteTerms, age st
 	}
 	for _, res := range def.Import {
 		bonus := terms.Harbor
+		if terms.Lean {
+			if terms.AllyBonus != nil {
+				b, ok := tm.allyMemo[res]
+				if !ok {
+					b = terms.AllyBonus(res)
+					tm.allyMemo[res] = b
+				}
+				bonus += b
+			}
+			if p := level(res); p > 0 {
+				in[res] = float64(tm.RunPay(worth*p, bonus))
+			}
+			continue
+		}
 		list := []PayShare{}
 		if t := tm.RoutePay(1); t != 1 {
 			list = append(list, PayShare{Label: rowid.Line("game.trade.payFor.01", "techs"), Percent: float64((t - 1) * 100), Kind: ShareTech})
@@ -291,6 +369,10 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 	if tm.gross == nil {
 		tm.gross = map[string]float64{}
 	}
+	if tm.allyMemo == nil {
+		tm.allyMemo, tm.demand, tm.share = map[string]float64{}, map[string]float64{}, map[string]float64{}
+	}
+	clear(tm.allyMemo)
 	for res, r := range rm.resources {
 		tm.gross[res] = max(0, float64(r.Rate-r.Breakdown.FoodDrain))
 	}
@@ -301,13 +383,10 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 	if diplomacy != nil {
 		disrupted = diplomacy.DisruptedResources()
 	}
-	type leg struct {
-		route   *ActiveRoute
-		out, in map[string]float64
-	}
-	var legs []leg
-	demand := map[string]float64{}
-	for _, key := range sortedKeys(tm.activeRoutes) {
+	legs, demand, share := tm.legs[:0], tm.demand, tm.share
+	clear(demand)
+	clear(share)
+	for _, key := range tm.routeKeys() {
 		route, def := tm.activeRoutes[key], tm.routeDefs[key]
 		if def.Key == "" { // a saved route the game no longer has
 			route.Run, route.Scale, route.Research = 0, 0, 0
@@ -318,24 +397,19 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 		route.Owned, route.Scale = owned, 0
 		route.NoBuilding = owned < def.MinCount
 		if !route.NoBuilding {
-			route.Scale = 1 + math.Log2(float64(owned)/float64(max(def.MinCount, 1)))
+			route.Scale = 1 + detmath.Log(float64(owned)/float64(max(def.MinCount, 1)))/math.Ln2
 		}
 		route.Disrupted = tm.routeDisruptedBy(def, disrupted) != ""
 		route.NoIncome = tm.idle(def, age)
 		if route.Paused || route.NoBuilding || route.Disrupted || route.NoIncome != "" {
 			continue
 		}
-		out, in, _ := tm.flows(def, terms, age)
+		out, in := tm.sized(route, def, terms, age)
 		for res, a := range out {
-			out[res] = float64(a * route.Scale)
-			demand[res] += out[res]
+			demand[res] += a
 		}
-		for res, a := range in {
-			in[res] = float64(a * route.Scale)
-		}
-		legs = append(legs, leg{route, out, in})
+		legs = append(legs, routeLeg{route, out, in})
 	}
-	share := make(map[string]float64, len(demand))
 	for res, d := range demand {
 		if r := rm.resources[res]; r != nil {
 			// Only a surplus goes out: the net rate (what the town makes less
@@ -351,6 +425,7 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 			share[res] = min(1, supply/d)
 		}
 	}
+	tm.legs = legs
 	for _, l := range legs {
 		l.route.Run = 1
 		for res := range l.out {
@@ -373,6 +448,49 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 	}
 }
 
+// sized is def's flows at the route's scale. They are kept on the route and
+// worked out again only when the age, the techs, the bonuses, the town's
+// income of a good or the route's scale changes.
+func (tm *TradeManager) sized(route *ActiveRoute, def config.TradeRouteDef, terms RouteTerms, age string) (out, in map[string]float64) {
+	k := flowKey{age: age, speed: tm.timeFactor(), pay: tm.RoutePay(1), harbor: terms.Harbor, scale: route.Scale}
+	if len(def.Export) > 2 || len(def.Import) > 2 || !terms.Lean {
+		out, in, _ = tm.flows(def, terms, age)
+		for res, a := range out {
+			out[res] = float64(a * route.Scale)
+		}
+		for res, a := range in {
+			in[res] = float64(a * route.Scale)
+		}
+		return out, in
+	}
+	for i, res := range def.Export {
+		k.gross[i] = tm.gross[res]
+	}
+	for i, res := range def.Import {
+		k.gross[2+i] = tm.gross[res]
+		if terms.AllyBonus != nil {
+			b, ok := tm.allyMemo[res]
+			if !ok {
+				b = terms.AllyBonus(res)
+				tm.allyMemo[res] = b
+			}
+			k.ally[i] = b
+		}
+	}
+	if route.sized.ok && route.sized.key == k {
+		return route.sized.out, route.sized.in
+	}
+	out, in, _ = tm.flows(def, terms, age)
+	for res, a := range out {
+		out[res] = float64(a * route.Scale)
+	}
+	for res, a := range in {
+		in[res] = float64(a * route.Scale)
+	}
+	route.sized = sizedFlow{key: k, ok: true, out: out, in: in}
+	return out, in
+}
+
 // researchRate is the research a tick the running routes bring.
 func (tm *TradeManager) researchRate() float64 {
 	var w float64
@@ -389,7 +507,7 @@ func (tm *TradeManager) researchRate() float64 {
 func (tm *TradeManager) Tick(tick int, diplomacy *DiplomacyManager, research func(work float64) string) []logNote {
 	var messages []logNote
 	minute := tick%max(minutesToTicks(1), 1) == 0
-	for _, key := range sortedKeys(tm.activeRoutes) {
+	for _, key := range tm.routeKeys() {
 		route, def := tm.activeRoutes[key], tm.routeDefs[key]
 		if def.Key == "" {
 			continue
@@ -444,7 +562,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	}
 	var disruptedResources []string
 	seenDisrupt := make(map[string]bool)
-	for _, key := range sortedKeys(tm.activeRoutes) {
+	for _, key := range tm.routeKeys() {
 		route := tm.activeRoutes[key]
 		def := allRoutes[key]
 		blockedBy := tm.routeDisruptedBy(def, disrupted)

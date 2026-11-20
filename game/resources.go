@@ -153,7 +153,7 @@ func (rm *ResourceManager) AddProduced(scale float64, gained func(key string, am
 		if flow := r.Breakdown.TradeFlow; rate <= 0 && flow < 0 {
 			// Exports take more than the net rate shows: what the town makes
 			// is credited and the routes' share taken off the stock.
-			net := float64(max(rate-flow, 0)+flow) * scale
+			net := float64(float64(max(rate-flow, 0)+flow) * scale)
 			r.Amount = max(0, r.Amount+net)
 			if net > 0 && gained != nil {
 				gained(key, net)
