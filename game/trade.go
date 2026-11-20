@@ -408,6 +408,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			RequiredBld: def.RequiredBld,
 			MinCount:    def.MinCount,
 			Description: def.Description,
+			CycleTicks:  tm.RunTicks(def.TicksPerRun),
 			Pay:         pay,
 			Shares:      shares,
 		})

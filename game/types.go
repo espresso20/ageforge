@@ -859,8 +859,10 @@ type TradeRouteInfo struct {
 	RequiredBld string
 	MinCount    int
 	Description string
-	Pay         map[string]float64
-	Shares      map[string][]PayShare
+	// CycleTicks is the run's period as it would be once started.
+	CycleTicks int
+	Pay        map[string]float64
+	Shares     map[string][]PayShare
 }
 
 // === Diplomacy Types ===

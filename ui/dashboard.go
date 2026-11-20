@@ -236,7 +236,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.toPrompt = d.handToPrompt
 	d.expPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
-	d.registerDeck("trade", rowid.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeRoads
+	d.registerDeck("trade", rowid.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeBoard
 	d.factions = &factionsView{}
 	d.overlayMgr.Register("factions", rowid.E("ui.dashboard.NewDashboard.07", "Factions"), d.factions.provider)
 	d.factions.wire(d.overlayMgr)
