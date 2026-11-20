@@ -205,6 +205,17 @@ func (s *Set) DealPriceLevel(res, age string) float64 {
 	return config.DealPriceLevelAt(res, s.priceLevels[age], s.flowLevels[age])
 }
 
+// RoutePriceLevel is DealPriceLevel for a trade route: an age that has no level
+// for res carries the latest earlier one forward (0 when no age has one).
+func (s *Set) RoutePriceLevel(res, age string) float64 {
+	for i, ok := s.agePos[age]; ok && i >= 0; i-- {
+		if l := s.DealPriceLevel(res, s.ageKeys[i]); l > 0 {
+			return l
+		}
+	}
+	return 0
+}
+
 // FlowIncome is what a player who invests moderately in the flow resource
 // res makes per tick in age at 1x (config.FlowIncome has the full rule).
 func (s *Set) FlowIncome(res, age string) float64 { return s.flowIncome[age][res] }

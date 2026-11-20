@@ -41,8 +41,7 @@ type TradeManager struct {
 
 	// gross is what the town makes of each resource a tick before any trade
 	// flow (set by Flows), which sizes every route.
-	gross   map[string]float64
-	ageKeys []string // the ages in order, for pricing
+	gross map[string]float64
 }
 
 // ActiveRoute is a route the player has started.
@@ -91,7 +90,7 @@ func NewTradeManagerWith(set *rules.Set) *TradeManager {
 // Rebind moves the manager onto set: it takes set's trade routes. Running
 // routes and totals stay.
 func (tm *TradeManager) Rebind(set *rules.Set) {
-	tm.rules, tm.ageKeys = set, set.AgeKeys()
+	tm.rules = set
 	tm.routeList = set.TradeRoutes()
 	tm.routeDefs = make(map[string]config.TradeRouteDef, len(tm.routeList))
 	for _, def := range tm.routeList {
@@ -156,59 +155,56 @@ func (tm *TradeManager) timeFactor() float64 {
 	return 1
 }
 
-// pricing is the age whose price levels value def: age itself, or the latest
-// before it that prices everything the route trades (a level
-// is missing for gold in the last ages, and for some goods in others). ""
-// when no age does.
-func (tm *TradeManager) pricing(def config.TradeRouteDef, age string) string {
-	i, _ := tm.rules.Index(age)
-	priced := func(res []string, age string) bool {
-		for _, r := range res {
-			if tm.rules.DealPriceLevel(r, age) <= 0 {
-				return false
-			}
-		}
-		return true
-	}
-	for ; i >= 0; i-- {
-		if k := tm.ageKeys[i]; priced(def.Export, k) && priced(def.Import, k) {
-			return k
-		}
-	}
-	return ""
-}
-
-// idle names the export the town makes none of, or the good the age puts no
-// price on. "" when the route can run.
+// idle names the export the town makes none of, or the good no age prices.
+// "" when the route can run.
 func (tm *TradeManager) idle(def config.TradeRouteDef, age string) string {
 	for _, res := range def.Export {
-		if tm.gross[res] <= 0 {
+		if tm.gross[res] <= 0 || tm.rules.RoutePriceLevel(res, age) <= 0 {
 			return res
 		}
 	}
-	if tm.pricing(def, age) == "" {
-		return def.Export[0]
+	for _, res := range def.Import {
+		if tm.rules.RoutePriceLevel(res, age) <= 0 {
+			return res
+		}
 	}
 	return ""
 }
 
-// flows is what def moves a tick at its gate: config.RouteShare of the town's
-// gross make of each export, and config.RouteMargin times that value, by price
-// level (as dealRate), split over the imports, with the techs' term, the harbor bonus and
-// the allies' shares. The shares are for the state view.
+// flows is what def moves a tick at its gate. It is sized on the import: the
+// first import the town makes comes in at config.RouteShare of that make, and
+// the export is what is worth that less config.RouteMargin (by price level, as
+// dealRate), so the bonuses below raise the import and not the export. A town
+// that makes no import yet sizes it from the export (config.RouteShare of the
+// make) so the route can bring a new good. The techs' term on route time
+// multiplies both; the techs' pay, the harbor bonus and the allies' shares go
+// on the import. The shares are for the state view.
 func (tm *TradeManager) flows(def config.TradeRouteDef, terms RouteTerms, age string) (out, in map[string]float64, shares map[string][]PayShare) {
 	k := tm.timeFactor()
 	out, in, shares = make(map[string]float64, len(def.Export)), make(map[string]float64, len(def.Import)), make(map[string][]PayShare, len(def.Import))
-	age = tm.pricing(def, age)
-	level := func(res string) float64 { return tm.rules.DealPriceLevel(res, age) }
+	level := func(res string) float64 { return tm.rules.RoutePriceLevel(res, age) }
+	// worth is the value, in price units, each import brings before the bonuses.
 	worth := 0.0
-	for _, res := range def.Export {
-		out[res] = float64(config.RouteShare * tm.gross[res] * k)
-		if l := level(res); l > 0 {
-			worth += out[res] / l
+	for _, res := range def.Import {
+		if g := tm.gross[res]; g > 0 && level(res) > 0 {
+			worth = float64(config.RouteShare*g*k) / level(res)
+			break
 		}
 	}
-	worth *= config.RouteMargin / float64(max(len(def.Import), 1))
+	if worth > 0 {
+		sent := float64(worth*float64(len(def.Import))) / config.RouteMargin
+		for _, res := range def.Export {
+			out[res] = float64(sent / float64(len(def.Export)) * level(res))
+		}
+	} else {
+		for _, res := range def.Export {
+			out[res] = float64(config.RouteShare * tm.gross[res] * k)
+			if l := level(res); l > 0 {
+				worth += out[res] / l
+			}
+		}
+		worth *= config.RouteMargin / float64(max(len(def.Import), 1))
+	}
 	for _, res := range def.Import {
 		bonus := terms.Harbor
 		list := []PayShare{}
