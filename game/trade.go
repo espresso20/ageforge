@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
@@ -45,9 +46,10 @@ type ActiveRoute struct {
 	// The rest is recomputed by Flows every time the rates are, not saved.
 	// Run is the share of its flow the route moves now (0 to 1): 0 when
 	// paused, blockaded or short of its building, less than 1 when the
-	// export is short. Scale is the count of the building line over the
-	// route's gate; Research is the research a tick the route brings.
+	// export is short. Scale is the flow's multiple of the gate's: 1 at the
+	// gate, one more for each doubling of the line (Owned); Research is the research a tick the route brings.
 	Run, Scale, Research float64 `json:"-"`
+	Owned                int     `json:"-"`
 	Disrupted            bool    `json:"-"`
 	NoBuilding           bool    `json:"-"`
 	said                 string
@@ -248,8 +250,11 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 		route, def := tm.activeRoutes[key], tm.routeDefs[key]
 		owned := buildings.CountFrom(def.RequiredBld)
 		route.Run, route.Research = 0, 0
-		route.Scale = float64(owned) / float64(max(def.MinCount, 1))
+		route.Owned, route.Scale = owned, 0
 		route.NoBuilding = owned < def.MinCount
+		if !route.NoBuilding {
+			route.Scale = 1 + math.Log2(float64(owned)/float64(max(def.MinCount, 1)))
+		}
 		route.Disrupted = tm.routeDisruptedBy(def, disrupted) != ""
 		if route.Paused || route.NoBuilding || route.Disrupted {
 			continue
@@ -267,7 +272,9 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 	share := make(map[string]float64, len(demand))
 	for res, d := range demand {
 		if r := rm.resources[res]; r != nil {
-			share[res] = min(1, (r.Amount+max(r.Rate, 0)*horizon)/float64(d*horizon))
+			// Only a surplus goes out: the stock and the net rate (what the
+			// town makes less what it uses), never below nothing.
+			share[res] = min(1, max(0, r.Amount+float64(r.Rate*horizon))/float64(d*horizon))
 		}
 	}
 	for _, l := range legs {
@@ -367,6 +374,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			NoBuilding:  route.NoBuilding,
 			Run:         route.Run,
 			Scale:       route.Scale,
+			Owned:       route.Owned,
 			Shares:      shares,
 		})
 		if blockedBy != "" && !seenDisrupt[blockedBy] {

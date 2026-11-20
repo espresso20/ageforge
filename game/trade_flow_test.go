@@ -42,11 +42,35 @@ func TestRouteFlow_AtTheGateAndWithBuildings(t *testing.T) {
 			t.Errorf("flow of %s at the gate = %v, want %v", res, got, want)
 		}
 	}
-	ge.Buildings.counts[def.RequiredBld] = 3 * def.MinCount
+	// Each doubling of the line adds one gate's flow: x3 at four gates.
+	ge.Buildings.counts[def.RequiredBld] = 4 * def.MinCount
 	for res, amount := range def.Import {
 		if got, want := importFlow(ge, res), float64(3*amount/per); math.Abs(got-want) > 1e-9 {
-			t.Errorf("flow of %s at three gates = %v, want %v", res, got, want)
+			t.Errorf("flow of %s at four gates = %v, want %v", res, got, want)
 		}
+	}
+}
+
+// A route exports only a surplus: with food scarce and a huge line, the
+// route's draw never takes the food below what the town itself uses.
+func TestRouteFlow_NeverExportsWhatTheTownUses(t *testing.T) {
+	ge, def := flowEngine(t, "local_barter", 5000)
+	if _, ok := def.Export["food"]; !ok {
+		t.Fatal("the route no longer exports food")
+	}
+	food := ge.Resources.resources["food"]
+	food.Amount = 3
+	for key := range ge.Resources.resources {
+		ge.Resources.UnlockResource(key)
+	}
+	ge.recalculateRates()
+	pre := food.Rate - food.Breakdown.TradeFlow
+	if pre+food.Amount >= 0 {
+		if left := food.Amount + food.Rate; left < -1e-9 {
+			t.Errorf("trade left %v food after a tick: it took what the town uses (net %v, store %v)", left, pre, food.Amount)
+		}
+	} else if food.Breakdown.TradeFlow != 0 {
+		t.Errorf("the town already runs short of food, yet the route moved %v", food.Breakdown.TradeFlow)
 	}
 }
 

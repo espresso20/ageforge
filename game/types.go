@@ -844,6 +844,7 @@ type ActiveRouteInfo struct {
 	Export      map[string]float64
 	Import      map[string]float64
 	Scale, Run  float64
+	Owned       int
 	Paused      bool   // stopped by the player; it keeps its place on the list
 	NoBuilding  bool   // held at 0 for want of its building line
 	Disrupted   bool   // true when blockaded by war/embargo (flow held at 0)
