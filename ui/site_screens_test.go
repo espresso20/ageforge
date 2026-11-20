@@ -67,6 +67,10 @@ const (
 	// game at its smallest size.
 	sitePairW, sitePairH = 80, 24
 
+	// The People panel is drawn at its floor plus the rows the command bar
+	// takes under a panel at that size.
+	sitePeopleW, sitePeopleH = peopleMinW, peopleMinH + barBigRows
+
 	siteScreensSeed = 20261007
 
 	// siteMenuVersion is the version the main menu's pictures carry: the
@@ -320,6 +324,9 @@ func (s *siteStage) draw(w, h int) ([]simCell, []kit.Pic, theme.Color, theme.Col
 	sim.SetSize(w, h)
 	screen := sim
 	s.d.overlayMgr.screenW = w
+	// The panels take their height from the screen's, at least the game's
+	// default of 40 (a taller screen gives them more).
+	s.d.overlayMgr.screenH = max(40, h)
 	// Twice: the first draw lays the panels out, and a refresh after it
 	// fills in what depends on their sizes (the mini map, wrapped text).
 	var cells []simCell
@@ -740,7 +747,6 @@ func TestWriteSiteScreens(t *testing.T) {
 	}{
 		{"buildings", "buildings", "Bronze Age (current)"},
 		{"rates", "stats", ""},
-		{"people", "people", ""},
 		{"advance", "charter", ""},
 		{"trade", "trade", ""},
 		{"wonders", "wonders", ""},
@@ -753,6 +759,11 @@ func TestWriteSiteScreens(t *testing.T) {
 		shots.take(s, p.name)
 		s.close()
 	}
+	// The People panel has a floor of peopleMinW x peopleMinH, above the panel
+	// size, so it is drawn at its own.
+	s.open("people", "")
+	shots.takeIn(s, "people", theme.DefaultKey, sitePeopleW, sitePeopleH)
+	s.close()
 	// The Map: the close-up, as a large terminal draws it, and the whole town
 	// in one view, as a panel of the usual size draws it.
 	s.open("map", "")
