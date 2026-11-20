@@ -170,6 +170,7 @@ func (a *App) SetWindowHost(h WindowHost) {
 	if a.menu != nil {
 		a.menu.window = h
 	}
+	a.dashboard.window = h
 	pictureCell = h.CellSize
 }
 

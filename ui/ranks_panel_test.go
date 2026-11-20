@@ -5,6 +5,7 @@ import (
 	"image/png"
 	"os"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -141,6 +142,22 @@ func TestRanksPaintsAtTheWindowSize(t *testing.T) {
 	}
 }
 
+// TestRanksRowsNeverOverlap: a domain's badge count and the note at the right
+// of its row share one line, and at a narrow width the note is cut or dropped
+// rather than drawn over the count.
+func TestRanksRowsNeverOverlap(t *testing.T) {
+	for _, w := range []int{80, 90, 100, 157, 279} {
+		for _, every := range []int{2, 7} {
+			p := ranksPanelOn(ranksViews(every), w, 46)
+			for y, line := range paintAlone(p, w, 46).Lines() {
+				if i := strings.Index(line, " badges"); i >= 0 && !strings.HasPrefix(line[i+7:], " ") && line[i+7:] != "" {
+					t.Errorf("width %d, row %d: %q", w, y, strings.TrimSpace(line))
+				}
+			}
+		}
+	}
+}
+
 // TestRanksPicture writes the screen at the window's size when RANKS_SHOT
 // names a file. The account is made up from the real rule set: about 212
 // badges earned, the lowest tiers first, each domain's share by its size,
@@ -210,5 +227,30 @@ func TestRanksPicture(t *testing.T) {
 	defer f.Close()
 	if err := png.Encode(f, ScreenImagePixel(paintAlone(p, 279, 74))); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// TestRanksKeysAreButtons: the screen's typed keys are buttons; a click on
+// one presses its key.
+func TestRanksKeysAreButtons(t *testing.T) {
+	p := ranksPanelOn(ranksViews(2), 120, 37)
+	paintAlone(p, 120, 37)
+	var got []kit.KeyCode
+	p.buttons.press = func(k kit.Key) { got = append(got, k.Code) }
+	for _, want := range []kit.KeyCode{kit.KeyEnter, kit.KeyTab, kit.KeyEsc} {
+		hit := false
+		for _, k := range p.keys.keyset().keys {
+			if k.key.Code == want && !k.r.Empty() {
+				p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: k.r.Min.X, Y: k.r.Min.Y, Clicks: 1})
+				hit = true
+				break
+			}
+		}
+		if !hit {
+			t.Errorf("no button for key %v", want)
+		}
+	}
+	if len(got) != 3 {
+		t.Errorf("clicks pressed %v, want Enter, Tab and Esc", got)
 	}
 }

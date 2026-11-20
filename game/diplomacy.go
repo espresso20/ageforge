@@ -124,7 +124,7 @@ type DiplomacyManager struct {
 
 	// notices are log lines raised outside Tick (an embargo that starts a
 	// war); the next Tick returns them first. Transient, not saved.
-	notices []string
+	notices []logNote
 	// warEvents is the wars that started and ended since the engine last
 	// asked (takeWarEvents). Transient, not saved.
 	warEvents []warEvent
@@ -429,7 +429,7 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 	// already deeply hostile. A war it starts is announced on the next tick.
 	if status == "embargo" && fs.Status != "embargo" {
 		if dm.recordProvocation(fs, def, 0) {
-			dm.notices = append(dm.notices, rowid.Sprintf("game.diplomacy.SetStatus.04", "The %s declared war on you.", def.Name))
+			dm.notices = append(dm.notices, note(rowid.Sprintf("game.diplomacy.SetStatus.04", "The %s declared war on you.", def.Name), logHead, logSubj(def.Key)))
 		}
 	}
 
@@ -632,6 +632,23 @@ func (dm *DiplomacyManager) GetTradeBonus(resourceKey string) float64 {
 	return bonus
 }
 
+// AllyShares is the bonus allied civilizations add to an imported resource
+// and one share for each, in roster order (the same sum as GetTradeBonus).
+func (dm *DiplomacyManager) AllyShares(resourceKey string) (float64, []PayShare) {
+	bonus := 0.0
+	var shares []PayShare
+	for _, def := range dm.factionList {
+		fs, ok := dm.factions[def.Key]
+		if !ok || fs.Status != "allied" || fs.AtWar || def.Specialty != resourceKey {
+			continue
+		}
+		b := dm.AllyBonus(def)
+		bonus += b
+		shares = append(shares, PayShare{Label: def.Name, Percent: float64(b * 100), Kind: ShareAlly})
+	}
+	return bonus, shares
+}
+
 // DisruptedResources returns the set of specialty resources currently under
 // trade disruption: a resource is disrupted if any discovered civ that
 // specialises in it is AtWar with the player OR has been put under embargo.
@@ -671,7 +688,7 @@ func (dm *DiplomacyManager) DisruptedResources() map[string]bool {
 // rng supplies every random draw (worker lending). Loops that draw from it or
 // queue side effects walk the factions in roster order (factionList), never
 // map order, so a seeded rng gives the same outcome on every run.
-func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string]int, tick int, tradedRecently bool) []string {
+func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string]int, tick int, tradedRecently bool) []logNote {
 	messages := dm.notices
 	dm.notices = nil
 
@@ -680,7 +697,7 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 	defs := dm.factionDefs
 	for _, key := range discovered {
 		def := defs[key]
-		messages = append(messages, firstContactMessage(def))
+		messages = append(messages, note(firstContactMessage(def), logHead, logSubj(key)))
 	}
 
 	// Personality drift on the slow cadence.
@@ -722,8 +739,8 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 // the worker removal), then rolls a small chance for high-opinion peaceful civs
 // to lend new workers. Returns log messages for both directions. The roll's
 // cadence and a loan's length are stretched for age.
-func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int, age string) []string {
-	var messages []string
+func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int, age string) []logNote {
+	var messages []logNote
 	defs := dm.factionDefs
 
 	// Return expired (non-permanent) batches.
@@ -735,7 +752,7 @@ func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int, age string)
 			if d, ok := defs[b.FactionKey]; ok {
 				name = d.Name
 			}
-			messages = append(messages, rowid.Sprintf("game.diplomacy.processLending.01", "%s returned home to the %s.", textfmt.Count(b.Count, rowid.Line("game.diplomacy.processLending.02", "lent worker"), rowid.Line("game.diplomacy.processLending.03", "lent workers")), name))
+			messages = append(messages, note(rowid.Sprintf("game.diplomacy.processLending.01", "%s returned home to the %s.", textfmt.Count(b.Count, rowid.Line("game.diplomacy.processLending.02", "lent worker"), rowid.Line("game.diplomacy.processLending.03", "lent workers")), name), logSubj(b.FactionKey)))
 			continue
 		}
 		kept = append(kept, b)
@@ -776,7 +793,7 @@ func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int, age string)
 		dm.lentBatches = append(dm.lentBatches, batch)
 		msg := lendMessage(def, count, permanent, lendTicks)
 		dm.pendingLends = append(dm.pendingLends, LendRequest{FactionKey: key, Count: count, Message: msg})
-		messages = append(messages, msg)
+		messages = append(messages, note(msg, logSubj(key)))
 	}
 	return messages
 }
@@ -795,8 +812,8 @@ func (dm *DiplomacyManager) hasLentBatch(factionKey string) bool {
 // and auto-ends wars that have gone warCooldownTicks without a fresh
 // provocation, both stretched for age. Returns log messages; resource losses
 // are queued for the engine.
-func (dm *DiplomacyManager) processWar(tick int, age string) []string {
-	var messages []string
+func (dm *DiplomacyManager) processWar(tick int, age string) []logNote {
+	var messages []logNote
 	cooldown, raidEvery := dm.rules.StretchTicks(age, warCooldownTicks), dm.rules.StretchTicks(age, warRaidInterval)
 	for _, def := range dm.factionList {
 		key := def.Key
@@ -808,7 +825,7 @@ func (dm *DiplomacyManager) processWar(tick int, age string) []string {
 		if tick-fs.LastProvocationTick >= cooldown {
 			dm.endWar(fs)
 			dm.warEvents = append(dm.warEvents, warEvent{faction: key})
-			messages = append(messages, rowid.Sprintf("game.diplomacy.processWar.01", "The war with the %s has burned out. An uneasy peace settles.", def.Name))
+			messages = append(messages, note(rowid.Sprintf("game.diplomacy.processWar.01", "The war with the %s has burned out. An uneasy peace settles.", def.Name), logHead, logSubj(key)))
 			continue
 		}
 		// Raid every warRaidInterval ticks while at war. Severity scales with

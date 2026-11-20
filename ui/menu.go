@@ -685,7 +685,7 @@ func (m *mainMenu) continueGame() {
 		return
 	}
 	m.leave()
-	m.engine.AddLog("success", rowid.Line("ui.menu.continueGame.02", "Game loaded."))
+	m.engine.AddLog(game.OfficeGame, game.LevelEverything, "success", rowid.Line("ui.menu.continueGame.02", "Game loaded."))
 	m.pages.SwitchToPage("dashboard")
 	go m.engine.Start()
 }

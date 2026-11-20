@@ -224,9 +224,8 @@ func TestScholarsLineWhereResearchIsShown(t *testing.T) {
 	if row := headerRow(st, 80, 24); !strings.Contains(row, "Primitive Writing") || !strings.Contains(row, "░") {
 		t.Errorf("80x24: the header lost the bar: %q", row)
 	}
-	logs := logsProvider(st, 100)
-	if !strings.Contains(logs, fmt.Sprintf("%d%%", researchPercent(st))) || !strings.Contains(logs, "█") && !strings.Contains(logs, "░") {
-		t.Errorf("the Activity panel does not show the bar:\n%s", logs)
+	if logs := slateText(st); !strings.Contains(logs, researchLeft(st)) {
+		t.Errorf("the Logs slate does not show the research:\n%s", logs)
 	}
 }
 
@@ -350,7 +349,7 @@ func TestScholarsCommand(t *testing.T) {
 	if got := NewAutoCompleter(ge)("schol"); !slices.Contains(got, "scholars") {
 		t.Errorf("completing schol = %v", got)
 	}
-	if help := HandleCommand("help scholars", ge); help.OverlayName != "help" || !strings.Contains(untag(helpProvider(ge.GetState(), 120)), "scholars <percent>") {
+	if help := HandleCommand("help scholars", ge); help.OverlayName != "help" || !strings.Contains(untag(helpProvider(nil, ge.GetState(), 120)), "scholars <percent>") {
 		t.Errorf("help scholars = %+v, or the Help panel does not list scholars <percent>", help)
 	}
 	// A town with no scholars says so in the engine's words.
@@ -396,7 +395,7 @@ func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 		"research list":   cmdResearchList(ge).Message,
 		"rates":           HandleCommand("rates", ge).Message,
 		"stats":           statsPageText(st, partRun, 120),
-		"activity":        logsProvider(st, 100),
+		"slate":           slateText(st),
 		"buildings":       buildingsProvider(st, 120),
 		"build list":      cmdBuild(nil, ge).Message,
 		"scholars":        HandleCommand("scholars", ge).Message,
@@ -521,4 +520,15 @@ func TestKnowledgeBuildingPastItsCapShowsNoLimitInThePanel(t *testing.T) {
 			t.Errorf("%dx%d: the monument at its limit shows its limit line %d times, want once", w, h, limits)
 		}
 	}
+}
+
+// slateText is what the Logs slate says is under way, as text.
+func slateText(st game.GameState) string {
+	p := newLogsPanel()
+	p.state = st
+	var out []string
+	for _, r := range p.slate().under {
+		out = append(out, r.text+"  "+r.right)
+	}
+	return strings.Join(out, "\n")
 }

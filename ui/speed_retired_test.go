@@ -28,7 +28,7 @@ func TestSpeedCommandRetired(t *testing.T) {
 		}
 	}
 
-	help := plainText(helpProvider(game.GameState{}, 0))
+	help := plainText(helpProvider(nil, game.GameState{}, 0))
 	for _, line := range strings.Split(help, "\n") {
 		if l := strings.TrimSpace(line); l == "speed" || strings.HasPrefix(l, "speed ") {
 			t.Errorf("help still lists the speed command: %q", l)

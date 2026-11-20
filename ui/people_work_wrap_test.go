@@ -31,6 +31,16 @@ func gridRows(p *peoplePanel) []string {
 	return rows
 }
 
+// firstAreaRow is the first grid row that picks an area.
+func firstAreaRow(p *peoplePanel) int {
+	for y := 0; y < p.h; y++ {
+		if _, ok := p.grid.hitAt(hitRow, image.Pt(5, y)); ok {
+			return y
+		}
+	}
+	return -1
+}
+
 func TestWorkAreasWrapTheirBuildingsInsteadOfCuttingThem(t *testing.T) {
 	p := workPanel(t, 157, 46, 0)
 	text := strings.Join(gridRows(p), "\n")
@@ -43,23 +53,25 @@ func TestWorkAreasWrapTheirBuildingsInsteadOfCuttingThem(t *testing.T) {
 		}
 	}
 	// A click on a wrapped row of an area picks that area.
+	top := firstAreaRow(p)
 	for row := 0; row < 6; row++ {
-		if _, ok := p.grid.hitAt(hitRow, image.Pt(5, 4+row)); !ok {
+		if _, ok := p.grid.hitAt(hitRow, image.Pt(5, top+row)); !ok {
 			t.Fatalf("no area under row %d", row)
 		}
 	}
 	// The area below the first one still picks the second.
-	n, _ := p.grid.hitAt(hitRow, image.Pt(5, 4))
-	m, _ := p.grid.hitAt(hitRow, image.Pt(5, 5))
+	n, _ := p.grid.hitAt(hitRow, image.Pt(5, top))
+	m, _ := p.grid.hitAt(hitRow, image.Pt(5, top+1))
 	if n != m {
-		t.Errorf("rows 4 and 5 belong to areas %d and %d, want one area", n, m)
+		t.Errorf("rows %d and %d belong to areas %d and %d, want one area", top, top+1, n, m)
 	}
 }
 
 func TestWorkAreasKeepTwoRowsEachWhenTheyFit(t *testing.T) {
 	p := workPanel(t, 279, 74, 0)
 	rows := gridRows(p)
-	for _, i := range []int{4, 6, 8} {
+	top := firstAreaRow(p)
+	for _, i := range []int{top, top + 2, top + 4} {
 		if !strings.Contains(rows[i], "auto") || strings.Contains(rows[i+1], "auto") {
 			t.Errorf("row %d is not an area row followed by its buildings: %q / %q", i, rows[i], rows[i+1])
 		}
@@ -68,9 +80,9 @@ func TestWorkAreasKeepTwoRowsEachWhenTheyFit(t *testing.T) {
 
 func TestWorkTabShowsThePickedAreaWhole(t *testing.T) {
 	for row := 0; row < 6; row++ {
-		p := workPanel(t, 157, 20, row)
-		if _, ok := p.grid.hitAt(hitRow, image.Pt(5, 4)); !ok {
-			t.Fatal("no area at the top")
+		p := workPanel(t, 157, 38, row)
+		if firstAreaRow(p) < 0 {
+			t.Fatal("no area on the tab")
 		}
 		found := false
 		for y := 0; y < p.h; y++ {
@@ -79,7 +91,7 @@ func TestWorkTabShowsThePickedAreaWhole(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Errorf("area %d is not on a 20 row Work tab", row)
+			t.Errorf("area %d is not on a 38 row Work tab", row)
 		}
 	}
 }

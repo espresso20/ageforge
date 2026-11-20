@@ -11,7 +11,7 @@ import (
 // People, Advance and Expeditions panels have: the whole screen but the
 // command bar, a box with the panel's name in its top edge, the text inside
 // it, and a line of keys along the foot. Like the other full-screen panels it
-// leaves the command bar showing under it (promptRows).
+// leaves the command bar showing under it (barRows).
 //
 // The frame and the text are one kit tree on one host: the frame is the
 // widget, and the text view's kit box is its child. This is the shape every

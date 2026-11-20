@@ -213,13 +213,13 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		{label: laterLabel, key: laterKey, kind: keyPlain, sign: signCross, press: d.closeCatastropheModal},
 		{label: endureLabel, key: endureKey, kind: keyDanger, press: func() {
 			if err := endure(); err != nil {
-				d.engine.AddLog("error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
 			}
 			d.closeCatastropheModal()
 		}},
 		{label: succumbLabel, key: succumbKey, kind: keyDanger, off: !succumbOpen, press: func() {
 			if err := succumb(); err != nil {
-				d.engine.AddLog("error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.04", "Succumb failed: ")+err.Error())
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.04", "Succumb failed: ")+err.Error())
 			}
 			d.closeCatastropheModal()
 		}},

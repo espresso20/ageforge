@@ -221,8 +221,6 @@ type boardView struct {
 
 const (
 	hitTech = iota
-	hitResearch
-	hitQueue
 	hitLane
 )
 
@@ -242,6 +240,7 @@ type researchPanel struct {
 	ready, coming []*boardTech // what the board shows, held to the lane
 	view          boardView
 	hits          []boardHit
+	keys          *xgrid // the buttons drawn at the last paint
 	w, h          int
 }
 
@@ -495,6 +494,9 @@ func (p *researchPanel) act(queue bool) {
 }
 
 func (p *researchPanel) Mouse(m kit.Mouse) bool {
+	if p.keys != nil && p.buttons.mouse(p.keys, p.Bounds().Min, m) {
+		return true
+	}
 	switch {
 	case m.Kind == kit.MouseWheel:
 		key := kit.KeyDown
@@ -519,10 +521,6 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 			if m.Clicks == 2 {
 				p.act(false)
 			}
-		case hitResearch:
-			p.act(false)
-		case hitQueue:
-			p.act(true)
 		case hitLane:
 			if p.view.lane == h.id {
 				p.view.lane = ""
@@ -538,6 +536,9 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 
 // PointerAt: the hand over a row or a button a click would act on.
 func (p *researchPanel) PointerAt(at image.Point) kit.Pointer {
+	if p.keys != nil && p.buttons.pointer(p.keys, p.Bounds().Min, at) == kit.PointerHand {
+		return kit.PointerHand
+	}
 	pt := at.Sub(p.Bounds().Min)
 	for _, h := range p.hits {
 		if pt.In(h.r) {
@@ -561,6 +562,8 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 	faint := faintCol()
 	s.fill(0, 0, w, h, bg)
 	p.hits = p.hits[:0]
+	keys := newXGrid(w, h)
+	p.keys = keys
 	g := p.geometry()
 	laneCol := func(lane string) kit.Color { return theme.Hue(m.laneOf[lane].Hue, bg) }
 	dimmed := func(c kit.Color, k float64) kit.Color { return theme.Mix(bg, c, k) }
@@ -578,8 +581,7 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 	if sc := m.state.Scholars; m.tick > 0 {
 		s.right(w-11, 0, fmt.Sprintf("%d scholars researching   %s work a second", sc.Researching, config.FormatAmount(rs.PerTick/m.tick)), txt, false)
 	}
-	s.fill(w-8, 0, 5, 1, theme.Of(theme.RoleAccent))
-	s.text(w-8, 0, " Esc ", kit.Role(theme.RoleOnAccent), false)
+	keys.closeButton(w)
 
 	p.paintTop(s, w, head)
 
@@ -731,7 +733,20 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 		p.paintDetail(s, g, sel, sc, head)
 	}
 	s.rule(2, h-3, w-4, faint)
-	s.text(2, h-2, "↑ ↓ row    Enter research    Q queue    L one lane    T the whole tree    Esc close", dim, false)
+	s.footKeys(keys, h-2, [][2]string{{"↑ ↓", "row"}, {"Enter", "research"}, {"Q", "queue"}, {"L", "one lane"}, {"T", "the whole tree"}, {"Esc", "close"}}, dim)
+	capitals(keys)
+	p.buttons.paint(pt, keys, r.Min, newExpPalette())
+}
+
+// capitals makes the letter keys of a grid the capitals the board takes: a
+// cap names a letter in lower case, and commands are typed in lower case.
+func capitals(g *xgrid) {
+	ks := g.keyset().keys
+	for i := range ks {
+		if ks[i].key.Code == kit.KeyRune && unicode.IsLetter(ks[i].key.Rune) {
+			ks[i].key.Rune = unicode.ToUpper(ks[i].key.Rune)
+		}
+	}
 }
 
 type boardNeed struct {
@@ -949,16 +964,13 @@ func (p *researchPanel) paintDetail(s rankPaint, g boardGeo, t *boardTech, sc ki
 	}
 
 	// The buttons keep their place above the lanes.
-	b1, b2 := "  Research  Enter  ", "  Queue  Q  "
+	off, why := t.ts.Researched, rowid.Line("ui.research_board.paintDetail.researched", "Already researched")
+	b1 := actionSpec{kind: keyPrimary, label: "Research", key: "Enter", sign: signPlay, off: off, why: why}
+	b2 := actionSpec{kind: keyPlain, label: "Queue", key: "Q", off: off, why: why}
 	by := g.by
-	s.fill(rx, by-1, runeLen(b1), 3, theme.Of(theme.RoleAccent))
-	s.text(rx, by, b1, kit.Role(theme.RoleOnAccent), true)
-	b2x := rx + runeLen(b1) + 2
-	s.fill(b2x, by-1, runeLen(b2), 3, theme.Of(theme.RoleChip))
-	s.text(b2x, by, b2, txt, false)
-	p.hits = append(p.hits,
-		boardHit{image.Rect(rx, by-1, rx+runeLen(b1), by+2), hitResearch, ""},
-		boardHit{image.Rect(b2x, by-1, b2x+runeLen(b2), by+2), hitQueue, ""})
+	bx := p.keys.actionButton(rx, by-1, b1) + 2
+	p.keys.actionButton(bx, by-1, b2)
+	capitals(p.keys)
 	if p.view.note != "" {
 		s.text(rx, by+3, fitText(p.view.note, rw), kit.Role(theme.RoleWarning), false)
 	}

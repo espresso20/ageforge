@@ -47,6 +47,9 @@ type CommandResult struct {
 	// Badges says how the Ranks screen (OverlayName "badges") opens: on a
 	// tab, a domain's badges, or a badge. The zero value is the Ranks tab.
 	Badges badgeRequest
+	// Logs says how the Logs panel (OverlayName "logs") opens: at a level, on
+	// an office, on every office or on a Find.
+	Logs logsRequest
 	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
 	// the account; with no account loaded the dashboard keeps it for the
@@ -624,6 +627,38 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 	return successReply()
 }
 
+// cmdLogs opens the Logs panel: bare, at a level ("logs headlines"), on one
+// office ("logs trade"), on every office ("logs all") or on a Find ("logs
+// find clay pots"; bare "logs find" clears it).
+func cmdLogs(args []string, _ *game.GameEngine) CommandResult {
+	res := panelReply("logs")
+	if len(args) == 0 {
+		return res
+	}
+	w := strings.ToLower(args[0])
+	switch w {
+	case "headlines":
+		res.Logs = logsRequest{level: game.LevelHeadline}
+	case "town":
+		res.Logs = logsRequest{level: game.LevelTown}
+	case "everything":
+		res.Logs = logsRequest{level: game.LevelEverything}
+	case "all":
+		res.Logs = logsRequest{all: true}
+	case "find":
+		res.Logs = logsRequest{setFind: true, find: strings.Join(args[1:], " ")}
+	default:
+		for _, o := range game.Offices() {
+			if strings.EqualFold(o.Name(), w) {
+				res.Logs = logsRequest{office: o}
+				return res
+			}
+		}
+		return errorReply(rowid.Sprintf("ui.input.cmdLogs.01", "Logs have no %q. Try headlines, town, everything, all, an office such as trade, or find <words>.", args[0]))
+	}
+	return res
+}
+
 func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	logs := engine.GetLogs()
@@ -684,7 +719,17 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	// All log entries
 	sb.WriteString(fmt.Sprintf("\n=== Log Entries (%d) ===\n", len(logs)))
 	for _, entry := range logs {
-		sb.WriteString(fmt.Sprintf("T%-5d [%-7s] %s\n", entry.Tick, entry.Type, entry.Message))
+		clock, times := "--:--:--", ""
+		if entry.At > 0 {
+			clock = time.Unix(entry.At, 0).Format("15:04:05")
+		}
+		if entry.Count > 1 {
+			times = fmt.Sprintf(" x%d", entry.Count)
+		}
+		if entry.Seam {
+			clock = "-- seam --"
+		}
+		sb.WriteString(fmt.Sprintf("T%-5d %s [%-7s] %s%s\n", entry.Tick, clock, entry.Type, entry.Message, times))
 	}
 
 	if err := os.WriteFile(filename, []byte(sb.String()), 0644); err != nil {
@@ -1962,6 +2007,9 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 
 	switch subcmd {
 	case "start":
+		if routeKey == "all" {
+			return cmdTradeStartAll(engine)
+		}
 		if err := engine.StartTradeRoute(routeKey); err != nil {
 			return errorResult(err)
 		}
@@ -1974,6 +2022,29 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return errorReply(usage)
 	}
+}
+
+// cmdTradeStartAll starts every route that can start now; it fails only when
+// none did.
+func cmdTradeStartAll(engine *game.GameEngine) CommandResult {
+	started, err := 0, error(nil)
+	for _, r := range engine.GetState().Trade.AvailableRoutes {
+		if !r.CanStart {
+			continue
+		}
+		if e := engine.StartTradeRoute(r.Key); e != nil {
+			err = e
+			continue
+		}
+		started++
+	}
+	switch {
+	case started > 0:
+		return successReply()
+	case err != nil:
+		return errorResult(err)
+	}
+	return errorReply(rowid.Line("ui.input.cmdTradeStartAll.01", "No route is ready to start."))
 }
 
 // txtCycles is said the same way on several screens, so it has one id.
@@ -2108,7 +2179,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		lines = append(lines, fmt.Sprintf("%s %s", theme.Paint(theme.RoleAccent, def.Name), theme.Paint(theme.RoleDim, "("+def.Key+")")))
 		var sb strings.Builder
-		writeFactionDeals(&sb, f, state, 100, def.Key, nil)
+		writeFactionDeals(&sb, f, state, 100)
 		lines = append(lines, strings.TrimRight(sb.String(), "\n"))
 	}
 	if len(lines) == 0 {
@@ -2515,7 +2586,53 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return routineReply(rowid.Sprintf("ui.input.cmdPlan.11", "Plan item %d is now number %d.", n, to))
+		return planMovedReply(n, to)
+	case "pause", "resume":
+		if len(rest) != 0 {
+			return errorReply(usageFor("plan " + sub))
+		}
+		engine.PlanSetPaused(sub == "pause")
+		if sub == "pause" {
+			return routineReply(rowid.Line("ui.input.cmdPlan.21", "Plan paused. It starts nothing until you resume it."))
+		}
+		return routineReply(rowid.Line("ui.input.cmdPlan.22", "Plan resumed."))
+	case "count", "move":
+		if len(rest) != 2 {
+			return errorReply(usageFor("plan " + sub))
+		}
+		n, err := parseCount(rest[0])
+		if err == nil {
+			var to int
+			if to, err = parseCount(rest[1]); err == nil {
+				if sub == "count" {
+					var got int
+					if got, err = engine.PlanSetCount(n, to); err == nil {
+						return routineReply(rowid.Sprintf("ui.input.cmdPlan.23", "Plan item %d now holds %d.", n, got))
+					}
+					return errorResult(err)
+				}
+				var at int
+				if at, err = engine.PlanMove(n, to-n); err == nil {
+					return planMovedReply(n, at)
+				}
+				return errorResult(err)
+			}
+		}
+		return usageError(usageFor("plan "+sub), err)
+	case "top", "bottom":
+		n, err := planIndexArg(rest, sub)
+		if err != nil {
+			return usageError(usageFor("plan "+sub), err)
+		}
+		delta := 1 - n
+		if sub == "bottom" {
+			delta = maxCommandCount
+		}
+		to, err := engine.PlanMove(n, delta)
+		if err != nil {
+			return errorResult(err)
+		}
+		return planMovedReply(n, to)
 	case "optimize", "reorder":
 		if len(rest) != 0 {
 			return errorReply(usageFor("plan optimize"))
@@ -2581,6 +2698,11 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		return routineReply(rowid.Line("ui.input.cmdPlan.16", "Planned: advance as soon as the next age's requirements are met."))
 	}
 	return errorReply(subUsage("plan"))
+}
+
+// planMovedReply says where plan item n went.
+func planMovedReply(n, to int) CommandResult {
+	return routineReply(rowid.Sprintf("ui.input.cmdPlan.11", "Plan item %d is now number %d.", n, to))
 }
 
 // planIndexArg reads the one item number a plan subcommand takes.

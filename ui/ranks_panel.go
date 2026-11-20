@@ -68,6 +68,7 @@ type ranksPanel struct {
 	rows  []game.BadgeView // what the open list tab shows
 	tabs  [numRankTabs]image.Rectangle
 	hits  []rankHit
+	keys  *xgrid // the buttons drawn at the last paint
 	w, h  int
 }
 
@@ -153,6 +154,16 @@ func (s rankPaint) right(end, y int, str string, col kit.Color, bold bool) {
 	s.text(end-utf8.RuneCountInString(str), y, str, col, bold)
 }
 
+// rightFrom is right, held to the cells after from: a string that does not
+// fit there is cut, and dropped when almost nothing of it would show.
+func (s rankPaint) rightFrom(from, end, y int, str string, col kit.Color, bold bool) {
+	room := end - from
+	if room < 4 {
+		return
+	}
+	s.right(end, y, fitText(str, room), col, bold)
+}
+
 func (s rankPaint) fill(x, y, w, h int, bg kit.Color) {
 	s.p.Fill(image.Rect(s.o.X+x, s.o.Y+y, s.o.X+x+w, s.o.Y+y+h), bg)
 }
@@ -183,6 +194,8 @@ func (p *ranksPanel) Paint(pt *kit.Painter) {
 	s.fill(0, 0, r.Dx(), r.Dy(), theme.Of(theme.RoleBackground))
 	txt, dim := kit.Role(theme.RoleText), kit.Role(theme.RoleDim)
 	p.hits = p.hits[:0]
+	g := newXGrid(r.Dx(), r.Dy())
+	p.keys = g
 	m, w, h := p.model, r.Dx(), r.Dy()
 
 	s.text(2, 0, "BADGES", kit.Role(theme.RoleAccent), true)
@@ -196,9 +209,7 @@ func (p *ranksPanel) Paint(pt *kit.Painter) {
 		p.tabs[i] = image.Rect(x, 0, end, 1)
 		x = end + 3
 	}
-	s.text(w-8, 0, " Esc ", kit.Role(theme.RoleOnAccent), false)
-	s.p.Fill(image.Rect(r.Min.X+w-8, r.Min.Y, r.Min.X+w-3, r.Min.Y+1), theme.Of(theme.RoleAccent))
-	s.text(w-8, 0, " Esc ", kit.Role(theme.RoleOnAccent), false)
+	g.closeButton(w)
 
 	if p.view.tab == tabRanks {
 		p.paintRanks(s, w, h)
@@ -212,11 +223,22 @@ func (p *ranksPanel) Paint(pt *kit.Painter) {
 		p.paintList(s, w, h)
 	}
 	s.rule(2, h-3, w-4, faintCol())
-	hint := "↑ ↓ domain    Enter open the list    Tab ranks / all badges / recent    Esc close"
+	foot := [][2]string{{"↑ ↓", "domain"}, {"Enter", "open the list"}, {"Tab", "ranks / all badges / recent"}, {"Esc", "close"}}
 	if p.view.tab != tabRanks {
-		hint = "↑ ↓ badge    PgUp PgDn page    Tab ranks / all badges / recent    Esc back"
+		foot = [][2]string{{"↑ ↓", "badge"}, {"PgUp PgDn", "page"}, {"Tab", "ranks / all badges / recent"}, {"Esc", "back"}}
 	}
-	s.text(2, h-2, hint, dim, false)
+	s.footKeys(g, h-2, foot, dim)
+	p.buttons.paint(pt, g, r.Min, newExpPalette())
+}
+
+// footKeys is a row of key buttons at y: each a cap and its word.
+func (s rankPaint) footKeys(g *xgrid, y int, keys [][2]string, word kit.Color) {
+	x := 2
+	for _, k := range keys {
+		end := g.keyButton(x, y, k[0], k[1])
+		s.text(x+runeLen(k[0])+3, y, k[1], word, false)
+		x = end + 1
+	}
 }
 
 // domCol is a domain's colour on the background; a domain with no rank is
@@ -461,17 +483,23 @@ func (p *ranksPanel) paintRanks(s rankPaint, w, h int) {
 			}
 			s.bar(g.bx+k*(g.segW+1), y+1, g.segW, float64(d.pts-lo)/float64(th-lo), col, track, '▀')
 		}
-		s.text(g.bx, y+2, fmt.Sprintf("%d of %d badges", d.earned, d.all), dim, false)
+		after := s.text(g.bx, y+2, fmt.Sprintf("%d of %d badges", d.earned, d.all), dim, false) + 2
 		switch {
 		case !ranked && d.opens != "":
-			s.right(g.bxEnd, y+2, "its workers arrive in the "+d.opens, dim, false)
+			s.rightFrom(after, g.bxEnd, y+2, "its workers arrive in the "+d.opens, dim, false)
 		case len(d.near) > 0:
 			v := d.near[0]
 			pc := fmt.Sprintf("%d%%", pct(v))
+			if g.bxEnd-len(pc)-2 < after {
+				break
+			}
 			s.right(g.bxEnd, y+2, pc, txt, false)
 			nx := g.bxEnd - len(pc) - 2
-			s.right(nx, y+2, v.Name, txt, false)
-			s.right(nx-utf8.RuneCountInString(v.Name)-2, y+2, "next", dim, false)
+			name := fitText(v.Name, max(0, nx-after))
+			s.rightFrom(after, nx, y+2, name, txt, false)
+			if lead := nx - utf8.RuneCountInString(name) - 2; lead-6 >= after {
+				s.right(lead, y+2, "next", dim, false)
+			}
 		}
 		p.hits = append(p.hits, rankHit{image.Rect(1, y, g.bxEnd+7, y+3), d.key})
 	}
@@ -731,6 +759,9 @@ func (p *ranksPanel) listRows() int { return max(1, p.h-8) }
 // Mouse: a click on a tab opens it, a click on a row picks it (a double click
 // on a domain opens its badges, as Enter does), the wheel moves the pick.
 func (p *ranksPanel) Mouse(m kit.Mouse) bool {
+	if p.keys != nil && p.buttons.mouse(p.keys, p.Bounds().Min, m) {
+		return true
+	}
 	switch {
 	case m.Kind == kit.MouseWheel:
 		key := kit.KeyDown
@@ -765,6 +796,9 @@ func (p *ranksPanel) Mouse(m kit.Mouse) bool {
 
 // PointerAt: the hand over a tab or a row a click would pick.
 func (p *ranksPanel) PointerAt(at image.Point) kit.Pointer {
+	if p.keys != nil && p.buttons.pointer(p.keys, p.Bounds().Min, at) == kit.PointerHand {
+		return kit.PointerHand
+	}
 	pt := at.Sub(p.Bounds().Min)
 	for i, r := range p.tabs {
 		if pt.In(r) {

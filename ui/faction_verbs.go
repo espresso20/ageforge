@@ -2,8 +2,6 @@ package ui
 
 import (
 	"image"
-	"strconv"
-	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -31,7 +29,6 @@ var (
 	txtVerbNeutral = rowid.E("ui.faction_verbs.neutral.01", "Neutral")
 	txtVerbTribute = rowid.E("ui.faction_verbs.tribute.01", "Tribute")
 	txtVerbRaid    = rowid.E("ui.faction_verbs.raid.01", "Raid")
-	txtVerbAccept  = rowid.E("ui.faction_verbs.accept.01", "Accept")
 )
 
 // factionsView is the panel's buttons: the slots its text last reserved for
@@ -94,13 +91,4 @@ func factionVerbs(state game.GameState, def config.FactionDef, f game.FactionInf
 		verb(txtVerbTribute.String(), "tribute", tribute, !f.AtWar || gold < tributeGold || culture < tributeCulture),
 		raid,
 	}
-}
-
-// dealButton is Accept for one offer of the civilization key, off when it is
-// taken, cannot be paid or the feature is still locked.
-func dealButton(state game.GameState, key string, d game.DealInfo) actionSpec {
-	_, locked := featureRefusal(state, config.FeatureDiplomacy)
-	off := locked || d.Taken || state.Resources[d.Give].Amount < d.GiveAmt
-	cmd := strings.Join([]string{diplomacyCmd + "accept", key, strconv.Itoa(d.Num)}, " ")
-	return actionSpec{label: txtVerbAccept.String(), kind: keySteel, cmd: cmd, off: off}
 }

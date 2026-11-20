@@ -42,8 +42,8 @@ func count(s string, set string) int {
 func TestMagnitudeBarPresentAndScaled(t *testing.T) {
 	rows := trendRows(false, nil)
 	f := fitResourceFormat(rows, 60)
-	if f.bar != resBarMax {
-		t.Fatalf("bar is %d cells, want %d", f.bar, resBarMax)
+	if f.bar != 35 {
+		t.Fatalf("bar is %d cells, want %d", f.bar, 35)
 	}
 	lit := func(r resRow) float64 {
 		bar := untag(magnitudeCells(r.fill, 12, false))
@@ -140,17 +140,17 @@ func TestNarrowDropsTrendThenBar(t *testing.T) {
 }
 
 func TestRisingHistoryDrawsRisingLine(t *testing.T) {
-	line := untag(trendCells([]float64{1, 2, 3, 4, 5, 6, 7, 8}, false, "green"))
+	line := untag(trendCells([]float64{1, 2, 3, 4, 5, 6, 7, 8}, false, "green", resTrendCells))
 	if line != "▁▂▃▄▅▆▇█" {
 		t.Errorf("rising line is %q", line)
 	}
-	if got := untag(trendCells([]float64{8, 4, 1}, false, "red")); got != "     █▄▁" {
+	if got := untag(trendCells([]float64{8, 4, 1}, false, "red", resTrendCells)); got != "     █▄▁" {
 		t.Errorf("falling line is %q", got)
 	}
-	if got := untag(trendCells([]float64{3, 3, 3}, true, "gray")); got != "     ---" {
+	if got := untag(trendCells([]float64{3, 3, 3}, true, "gray", resTrendCells)); got != "     ---" {
 		t.Errorf("flat ASCII line is %q", got)
 	}
-	if got := untag(trendCells([]float64{5}, false, "gray")); strings.TrimSpace(got) != "" {
+	if got := untag(trendCells([]float64{5}, false, "gray", resTrendCells)); strings.TrimSpace(got) != "" {
 		t.Errorf("one point should be blank, got %q", got)
 	}
 }

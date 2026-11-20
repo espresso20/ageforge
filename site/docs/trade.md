@@ -12,18 +12,20 @@ The other civilizations (meeting them, opinion, deals, alliances, war) have thei
 
 Every few ticks a route takes a set of resources from you and gives you others in return. A route needs its required building and enough in stock of what it takes.
 
-<figure class="screen" data-screen="trade"><figcaption>The Trade routes panel: a card for each route, with Local Barter part way through a cycle.</figcaption></figure>
+<figure class="screen" data-screen="trade"><figcaption>The Trade panel in a window too small for the board: a card for each route, with Local Barter part way through a cycle.</figcaption></figure>
 
 ### Commands
 
 ```
 trade
 trade route list
-trade route start <route>
+trade route start <route|all>
 trade route stop <route>
 ```
 
-`trade` on its own opens the Trade routes panel, which fills the screen. It is a map. Your town stands at the left under its name, and a road runs from its gate to the end of each route: bright for a route that is running, red for one that is suspended, plain for one you could start and faint for one that is locked. A running route has a caravan on its road, going out with what it sells for the first half of a cycle and coming home with what it bought for the second. At the end of each road are the route's name, its state, what it trades and how long its cycle has left, or what it still needs. The box at the right lists what the running routes take out and bring in, anything that bears on trade (a lock, a blockade, an ally's bonus) and the way to the Factions panel. The top shows how many routes are running, open and locked. `↑` and `↓` move from road to road, `Enter` runs the picked route's command (`stop` on a running route, `start` on a ready one; the button shows it), and a click picks a road, with a click on its button running the command. What the command did shows on the panel. A window too small for the map shows the routes as a list of cards. `t` works in place of `trade`.
+`trade` on its own opens the Trade panel, a board that fills the screen. Your open routes stand in a column at the left, each with its state, what it trades, a bar for the cycle and what a run is worth. A running route is bright, a suspended one red, a route you could start plain and a locked one faint. A short route says what it still needs. Beside them a goods table lists what the running routes take out and bring in each minute, anything that bears on trade (a lock, a blockade, an ally's bonus) and the way to the Factions panel. Below the table is the list of every open offer from the civilizations you have met, grouped under each one with an Accept button on the offer. A civilization that won't trade says why instead. A long list scrolls with `PgUp` and `PgDn`, with a line at each end counting the offers out of sight and one saying how many you can pay now. `↑` and `↓` move from route to route and on through the offers. `Enter` runs the picked entry's command: `stop` or `start` on a route, accept on an offer, which first shows what the lot would add to the town's stock. A click picks an entry, and a click on its button runs the command. What the command did shows on the panel. A window too small for the board shows the routes and the offers as a list of cards. `t` works in place of `trade`.
+
+`trade route start all` starts every route you could start in one go. Routes that can't start are left alone.
 
 `trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route. It fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle. There's no limit on how many routes can run at once.
 
@@ -41,7 +43,7 @@ On the Trade routes panel a disrupted route's card is marked suspended, with a n
 
 Disruption follows the war and embargo state directly, so there's nothing separate to track. Before you embargo or provoke a civilization, check which of your routes bring in its specialty.
 
-The panel doesn't list civilizations. The one diplomacy effect it shows is an Allied bonuses note at the top while an ally is boosting a resource (see [Allied Bonuses](factions.md#allied-bonuses)). Its last card points you to the Factions panel (`factions`) for opinion and deals.
+The panel lists each civilization only as the head of its offers. The one other diplomacy effect it shows is an Allied bonuses note while an ally is boosting a resource (see [Allied Bonuses](factions.md#allied-bonuses)). The Factions panel (`factions`) has opinion, status and every diplomacy verb.
 
 ### Full trade routes reference
 

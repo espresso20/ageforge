@@ -26,7 +26,6 @@ const (
 	// MinTickInterval is the floor imposed after all speed bonuses are applied.
 	// It prevents the tick loop from spinning faster than the UI can render.
 	MinTickInterval = 200 * time.Millisecond
-	MaxLogSize      = 500
 
 	// productionFloor caps how far a NEGATIVE additive production bonus can drag a
 	// rate down. The additive pools (production_all, <res>_rate, gather_rate) are
@@ -133,9 +132,14 @@ type GameEngine struct {
 	progress   *ProgressManager
 	buildQueue []BuildQueueItem
 	log        []LogEntry
+	now        func() time.Time // the log's clock; nil is time.Now once liveStamps is set
+	liveStamps bool             // stamp the log with the wall clock (set by Start and by a load)
 	running    bool
 	stopCh     chan struct{}
 	stopOnce   sync.Once
+
+	// hold is the pause card's hold on the tick loop (hold.go).
+	hold holdState
 	// exitMu makes SaveOnExit one at a time.
 	exitMu sync.Mutex
 	// calendar is the furthest the Advance panel has shown the town on its
@@ -203,6 +207,12 @@ type GameEngine struct {
 
 	// Starvation tracking — counts consecutive ticks with food <= 0 and active drain
 	starvationTicks int
+	foodWarnTick    int  // tick the early food warning fired; 0 when not armed
+	planSeen        bool // a plan was there at the last look
+	planWaitKey     string
+	planWaitSince   int
+	foodWarned      bool // the early warning is out; its closing line is owed
+	lowMoraleSince  int  // tick morale went low
 
 	// Automatic expedition dispatch (see auto_expedition.go).
 	//
@@ -419,6 +429,8 @@ type GameEngine struct {
 	// plan is the build plan the engine works through as resources come in
 	// (plan.go). Saved; cleared by prestige, Succumb and Reset.
 	plan []PlanItem
+	// planPaused holds the plan: it starts and drops nothing (plan.go).
+	planPaused bool
 	// previewCache and estimateCache keep the last optimize preview and plan
 	// estimate (plan_estimate.go, plan_optimize.go) for a few ticks. Not saved.
 	previewCache  previewCache
@@ -483,9 +495,9 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	// Give starting resources — enough for first hut + a little food
 	ge.Resources.Add("food", 25)
 	ge.Resources.Add("wood", 50)
-	// Startup flavor — the step-by-step onboarding now lives in the Buildings panel
-	// (main-screen polish part 1), so the log stays clean for live events.
-	ge.addLog("event", rowid.Line("game.engine.NewGameEngineWith.01", "Welcome to AgeForge. You have nothing but your hands."))
+	// Startup flavor: the lessons show on the band above the Command box, so the
+	// log stays clean for live events.
+	ge.addLog(OfficeGame, "event", rowid.Line("game.engine.NewGameEngineWith.01", "Welcome to AgeForge. You have nothing but your hands."))
 	// Subscribe to age advances and epoch events to file them as marks.
 	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().
 	ge.Bus.Subscribe(EventAgeAdvanced, func(e EventData) {
@@ -727,106 +739,130 @@ func (ge *GameEngine) moraleMultiplier() float64 {
 	return 1.0 // exactly neutral
 }
 
-// updateMoraleTick applies per-tick morale changes: starvation penalty,
-// over-militarization drain, idle-worker drain, morale-building contribution,
-// and a gentle drift back toward neutral. Must be called with the write lock
-// held (inside doTick).
-func (ge *GameEngine) updateMoraleTick() {
+// Morale mover keys (MoraleMover.Key).
+const (
+	MoverStarving  = "starving"  // the food ran out
+	MoverScouting  = "scouting"  // too many workers in the scouting work area
+	MoverWaiting   = "waiting"   // more than half the workforce waits
+	MoverBuildings = "buildings" // buildings that lift spirits
+	MoverFaith     = "faith"     // the faith economy
+	MoverSettling  = "settling"  // morale settling toward 50%
+)
+
+// MoraleMover is one term of the morale tick and what it moves morale by in a
+// minute (a point is 1.0).
+type MoraleMover struct {
+	Key       string
+	PerMinute float64
+}
+
+type moraleTerm struct {
+	key   string
+	delta float64
+}
+
+// moraleTermsLocked is the terms the morale tick applies, in order, as the
+// change each makes in one tick; terms that are zero are left out. The tick
+// applies them and the snapshot reports them, so the two cannot differ. Caller
+// holds the lock.
+func (ge *GameEngine) moraleTermsLocked() []moraleTerm {
+	var out []moraleTerm
+	add := func(key string, v float64) {
+		if v != 0 {
+			out = append(out, moraleTerm{key, v})
+		}
+	}
 	foodRate := 0.0
 	if fr, ok := ge.Resources.resources["food"]; ok {
 		foodRate = fr.Rate
 	}
 	totalPop := ge.Workers.TotalPop()
 
-	// Food deficit penalty. (No generic food-surplus boost any more — being fed
-	// is the baseline, not a reward. High morale must be EARNED via buildings
+	// Food deficit penalty. (No generic food-surplus boost any more: being fed
+	// is the baseline, not a reward. High morale must be earned via buildings
 	// and events; this only punishes outright starvation.)
 	if foodRate < 0 && ge.Resources.Get("food") <= 0 {
-		ge.applyMorale(-0.005)
+		add(MoverStarving, -0.005)
 	}
 
-	// Military ratio — if military workers > 30% of pop, drain morale
+	// Scouting ratio: if workers in the scouting work area pass 30% of the
+	// pool, morale drains.
 	if totalPop > 0 {
-		militaryAssigned := 0
+		assigned := 0
 		for key, bs := range ge.Buildings.counts {
 			if bs == 0 {
 				continue
 			}
-			def, ok := ge.Buildings.defs[key]
-			if ok && def.WorkerDomain == "military" {
-				militaryAssigned += ge.Workers.GetAssignedCount(key)
+			if def, ok := ge.Buildings.defs[key]; ok && def.WorkerDomain == "military" {
+				assigned += ge.Workers.GetAssignedCount(key)
 			}
 		}
-		ratio := float64(militaryAssigned) / float64(totalPop)
-		if ratio > 0.30 {
-			over := (ratio - 0.30) * 10
-			ge.applyMorale(-0.003 * over)
+		if ratio := float64(assigned) / float64(totalPop); ratio > 0.30 {
+			add(MoverScouting, -0.003*((ratio-0.30)*10))
 		}
 	}
 
-	// Idle workers > 50% of pop
-	if totalPop > 0 {
-		idle := ge.Workers.IdleCount()
-		if float64(idle)/float64(totalPop) > 0.50 {
-			ge.applyMorale(-0.002)
-		}
+	// Waiting workers > 50% of the pool.
+	if totalPop > 0 && float64(ge.Workers.IdleCount())/float64(totalPop) > 0.50 {
+		add(MoverWaiting, -0.002)
 	}
 
-	// Morale-building contribution: each BUILT building with a "morale" effect
-	// lifts spirits by existing (FLAT — not worker-scaled). Sum across all built
-	// buildings and apply once. Read straight from the building manager's counts
-	// and defs (lock-free; we already hold the engine write lock — do NOT call
-	// GetState()).
-	moraleFromBuildings := 0.0
+	// Morale buildings: each built building with a "morale" effect lifts
+	// spirits by existing (flat, not worker-scaled). Read straight from the
+	// building manager (lock-free; the caller holds the engine lock: never
+	// call GetState here).
+	fromBuildings := 0.0
 	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "morale" {
-				moraleFromBuildings += float64(eff.Value * float64(count))
+				fromBuildings += float64(eff.Value * float64(count))
 			}
 		}
 	})
-	if moraleFromBuildings != 0 {
-		ge.applyMorale(moraleFromBuildings)
+	add(MoverBuildings, fromBuildings)
+
+	// Faith: an active faith economy keeps spirits up, by its production rate
+	// (not the stock), capped per tick (faithMoraleFactor, faithMoraleCap).
+	if fr, ok := ge.Resources.resources["faith"]; ok && fr.Rate > 0 {
+		add(MoverFaith, math.Min(fr.Rate*faithMoraleFactor, faithMoraleCap))
 	}
 
-	// Faith-rate morale lift: an active faith economy keeps spirits up. Scales with
-	// faith PRODUCTION rate (not hoarded stock), capped per tick so a late-game
-	// faith firehose can't peg morale in one step. Tunable via the consts above.
-	faithRate := 0.0
-	if fr, ok := ge.Resources.resources["faith"]; ok {
-		faithRate = fr.Rate
-	}
-	if faithRate > 0 {
-		ge.applyMorale(math.Min(faithRate*faithMoraleFactor, faithMoraleCap))
-	}
-
-	// Drift gently toward neutral. A stable, fed, non-over-militarized civ with
-	// no morale buildings settles at moraleNeutral (~0.50). This makes neutral
-	// the resting state: you must keep earning to hold the high-morale bonus,
-	// and recover deliberately to escape the low-morale penalty. Move by at most
-	// the remaining distance so drift never overshoots/oscillates past neutral.
+	// Drift toward neutral: a stable, fed town with no morale buildings
+	// settles at moraleNeutral. Never more than the distance left.
 	if ge.morale > moraleNeutral {
-		step := moraleDrift
-		if step > ge.morale-moraleNeutral {
-			step = ge.morale - moraleNeutral
-		}
-		ge.applyMorale(-step)
+		add(MoverSettling, -math.Min(moraleDrift, ge.morale-moraleNeutral))
 	} else if ge.morale < moraleNeutral {
-		step := moraleDrift
-		if step > moraleNeutral-ge.morale {
-			step = moraleNeutral - ge.morale
-		}
-		ge.applyMorale(step)
+		add(MoverSettling, math.Min(moraleDrift, moraleNeutral-ge.morale))
+	}
+	return out
+}
+
+// moraleMovers is moraleTermsLocked with each term a minute long (30 ticks).
+func (ge *GameEngine) moraleMoversLocked() []MoraleMover {
+	var out []MoraleMover
+	for _, t := range ge.moraleTermsLocked() {
+		out = append(out, MoraleMover{Key: t.key, PerMinute: float64(t.delta * 30)})
+	}
+	return out
+}
+
+// updateMoraleTick applies the morale terms for one tick. Must be called with
+// the write lock held (inside doTick).
+func (ge *GameEngine) updateMoraleTick() {
+	for _, t := range ge.moraleTermsLocked() {
+		ge.applyMorale(t.delta)
 	}
 
 	// Low morale warning (fires once, resets when morale recovers above 0.40)
 	if ge.morale < 0.40 && !ge.lowMoraleWarned {
 		ge.lowMoraleWarned = true
+		ge.lowMoraleSince = ge.tick
 		ge.note(config.BadgeEvLowMorale, "")
-		ge.addLog("warning", rowid.Sprintf("game.engine.updateMoraleTick.01", "⚠ Morale low (%s): all production %s. Faith output raises morale.",
-			textfmt.Percent(ge.morale), textfmt.SignedPercent(ge.moraleMultiplier()-1)))
+		ge.addLog(OfficeStores, "warning", rowid.Sprintf("game.engine.updateMoraleTick.01", "⚠ Morale low (%s): all production %s. Faith output raises morale.",
+			textfmt.Percent(ge.morale), textfmt.SignedPercent(ge.moraleMultiplier()-1)), logTrouble)
 	} else if ge.morale >= 0.40 && ge.lowMoraleWarned {
 		ge.lowMoraleWarned = false
+		ge.addLog(OfficeStores, "info", rowid.Sprintf("game.engine.updateMoraleTick.02", "Morale is back to normal after %s.", ge.durationLocked(ge.tick-ge.lowMoraleSince)), logTrouble, logSubj("morale"))
 	}
 }
 
@@ -850,6 +886,7 @@ func (ge *GameEngine) Start() {
 	default:
 	}
 	ge.running = true
+	ge.liveStamps = true
 	// Read the channel once, under the lock: a later restart replaces the
 	// field, and this loop must keep listening to the channel it started with.
 	stop := ge.stopCh
@@ -861,7 +898,7 @@ func (ge *GameEngine) Start() {
 	timer := time.NewTimer(ge.getTickInterval())
 	defer timer.Stop()
 
-	lastAutosave := time.Now()
+	ge.markAutosave()
 
 	for {
 		select {
@@ -873,15 +910,24 @@ func (ge *GameEngine) Start() {
 				return
 			default:
 			}
+			// A held engine runs nothing: no tick, no autosave.
+			if ge.heldTick() {
+				timer.Reset(ge.getTickInterval())
+				continue
+			}
 			ge.safeTick()
 
 			// Periodic autosave (outside the tick lock) → overwrite the active save
 			// slot, not a fixed "autosave" file. ActiveSaveName takes its own RLock;
 			// safe here because we are outside the tick write lock.
-			if time.Since(lastAutosave) >= AutosaveInterval {
+			if ge.autosaveDue() {
 				if err := ge.SaveGame(ge.ActiveSaveName()); err != nil {
 					ge.mu.Lock()
-					ge.addLog("warning", rowid.Sprintf("game.engine.Start.01", "Autosave failed: could not write the save file (%v). Try saving by hand.", err))
+					ge.addLog(OfficeGame, "warning", rowid.Sprintf("game.engine.Start.01", "Autosave failed: could not write the save file (%v). Try saving by hand.", err))
+					ge.mu.Unlock()
+				} else {
+					ge.mu.Lock()
+					ge.addLog(OfficeGame, LogRoutine, rowid.Line("game.engine.Start.04", "Autosaved."), logID("game.engine.Start.04"), logLevel(LevelEverything))
 					ge.mu.Unlock()
 				}
 
@@ -892,12 +938,12 @@ func (ge *GameEngine) Start() {
 				if acct := ge.Account(); acct != nil {
 					if err := acct.FlushIfDirty(); err != nil {
 						ge.mu.Lock()
-						ge.addLog("warning", rowid.Sprintf("game.engine.Start.03", "Could not save your lifetime stats (%v). The game tries again at the next autosave.", err))
+						ge.addLog(OfficeGame, "warning", rowid.Sprintf("game.engine.Start.03", "Could not save your lifetime stats (%v). The game tries again at the next autosave.", err))
 						ge.mu.Unlock()
 					}
 				}
 
-				lastAutosave = time.Now()
+				ge.markAutosave()
 			}
 
 			timer.Reset(ge.getTickInterval())
@@ -914,7 +960,7 @@ func (ge *GameEngine) safeTick() {
 	defer func() {
 		if r := recover(); r != nil {
 			ge.mu.Lock()
-			ge.addLog("error", rowid.Sprintf("game.engine.safeTick.01", "This tick hit an error and was skipped. Save your game and report the bug: %v", r))
+			ge.addLog(OfficeGame, "error", rowid.Sprintf("game.engine.safeTick.01", "This tick hit an error and was skipped. Save your game and report the bug: %v", r))
 			ge.mu.Unlock()
 		}
 	}()
@@ -1039,7 +1085,7 @@ func (ge *GameEngine) SetAccount(a *Account) {
 	if a != nil {
 		_ = a.FlushIfDirty()
 		if moved := a.takeSetAside(); moved != "" {
-			ge.AddLog("info", rowid.Sprintf("game.engine.SetAccount.01", "An account from before 4.0 had this name. It was moved to %s.", moved))
+			ge.addLog(OfficeGame, "info", rowid.Sprintf("game.engine.SetAccount.01", "An account from before 4.0 had this name. It was moved to %s.", moved))
 		}
 	}
 }
@@ -1351,7 +1397,7 @@ func (ge *GameEngine) markDevTouchedLocked() {
 		return
 	}
 	ge.devTouched = true
-	ge.addLog("warning", devTouchedLogLine)
+	ge.addLog(OfficeGame, "warning", devTouchedLogLine)
 }
 
 // markDevTouched is markDevTouchedLocked for callers that do not hold ge.mu (the dev
@@ -1445,6 +1491,7 @@ func (ge *GameEngine) doTick() {
 
 	// The build plan starts whatever this tick's income pays for (plan.go).
 	ge.runPlanTick()
+	ge.planWatch()
 
 	// Worker shares (shares.go): idle workers go to work and recruits fill
 	// the empty slots, every few ticks.
@@ -1464,30 +1511,32 @@ func (ge *GameEngine) doTick() {
 		}
 	}
 
+	ge.foodWarning()
+
 	// Starvation: when food is at 0 with active drain, one worker dies every
 	// starvationDeathInterval ticks. Only workers (and the reserve) can: the
 	// scholars eat, but they go with their building, not with the food.
 	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
-			ge.addLog("warning", rowid.Sprintf("game.engine.doTick.05", "⚠ Food has run out. One worker dies every %s until you have food again.",
-				ge.durationLocked(starvationDeathInterval)))
+			ge.addLog(OfficeStores, "warning", rowid.Sprintf("game.engine.doTick.05", "⚠ Food has run out. One worker dies every %s until you have food again.",
+				ge.durationLocked(starvationDeathInterval)), logTrouble)
 			if q := config.PickLogFlavor(config.LogFlavorStarvation, ge.quipRNG()); q != "" {
-				ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
+				ge.addLog(OfficeStores, "info", fmt.Sprintf("  [comment]%s[-]", q))
 			}
 		}
 		if ge.starvationTicks%starvationDeathInterval == 0 && ge.Workers.TotalPop() > 0 {
 			killed := ge.Workers.KillWorker(1)
 			if killed > 0 {
 				ge.report(Event{Kind: config.BadgeEvStarved, N: float64(killed)})
-				ge.addLog("error", rowid.Sprintf("game.engine.doTick.06", "☠ A worker starved to death. Population: %d.", ge.popLocked()))
+				ge.addLog(OfficeStores, "error", rowid.Sprintf("game.engine.doTick.06", "☠ A worker starved to death. Population: %d.", ge.popLocked()), logTrouble, logSubj("food"), logPaid(LogAmt{"workers", float64(killed)}))
 			}
 		}
 	} else if ge.starvationTicks > 0 {
 		ge.starvationTicks = 0
-		ge.addLog("info", rowid.Line("game.engine.doTick.07", "✓ Food is back. Workers have stopped starving."))
+		ge.addLog(OfficeStores, "info", rowid.Line("game.engine.doTick.07", "✓ Food is back. Workers have stopped starving."), logTrouble)
 		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded, ge.quipRNG()); q != "" {
-			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
+			ge.addLog(OfficeStores, "info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
 
@@ -1507,7 +1556,7 @@ func (ge *GameEngine) doTick() {
 		if !ge.ageReady {
 			ge.ageReady = true
 			nextName := ge.progress.GetAgeName(nextAge)
-			ge.addLog("event", rowid.Sprintf("game.engine.doTick.09", "✦ Ready to advance to the %s. Type 'advance' when you're ready.", nextName))
+			ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.engine.doTick.09", "✦ Ready to advance to the %s. Type 'advance' when you're ready.", nextName))
 		}
 	} else {
 		ge.ageReady = false // requirements dropped — not ready anymore
@@ -1522,24 +1571,24 @@ func (ge *GameEngine) doTick() {
 // finishResearch logs a completed tech and publishes EventResearchDone.
 func (ge *GameEngine) finishResearch(completed string) {
 	def := ge.Research.defs[completed]
-	ge.addLog("success", rowid.Sprintf("game.engine.finishResearch.02", "Research complete: %s.", def.Name))
+	ge.addLog(OfficeResearch, "success", rowid.Sprintf("game.engine.finishResearch.02", "Research complete: %s.", def.Name), logSubj(completed))
 	// The keystone of this age's wonder says what it opened.
 	if w := ge.progress.WonderForAge(ge.age); w != "" && ge.Buildings.defs[w].RequiredTech == completed &&
 		ge.Buildings.GetCount(w) == 0 && ge.Buildings.GetQueueCount(w, ge.buildQueue) == 0 {
-		ge.addLog("info", rowid.Sprintf("game.engine.finishResearch.03", "With %s researched, %s can be built once its bank is full.", def.Name, ge.Buildings.defs[w].Name))
+		ge.addLog(OfficeResearch, "info", rowid.Sprintf("game.engine.finishResearch.03", "With %s researched, %s can be built once its bank is full.", def.Name, ge.Buildings.defs[w].Name))
 	}
 	// A tech that opens a command says so.
 	for _, lock := range ge.rules.FeaturesOpenedBy(completed) {
-		ge.addLog("info", fmt.Sprintf("%s %s.", def.Name, lock.Opens))
+		ge.addLog(OfficeResearch, "info", fmt.Sprintf("%s %s.", def.Name, lock.Opens))
 	}
 	// A bonus a cap keeps from counting says so.
 	for _, capped := range ge.capLinesLocked(def.GeneralEffects(), true) {
-		ge.addLog("info", capped)
+		ge.addLog(OfficeResearch, "info", capped)
 	}
 	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
 	if ge.quipRNG().Intn(2) == 0 {
 		if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
-			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
+			ge.addLog(OfficeResearch, "info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
 	ge.publish(EventResearchDone, payload{"tech": completed})
@@ -1557,7 +1606,7 @@ func (ge *GameEngine) processEvents() {
 
 	for _, ae := range expired {
 		// The script's line for this has a second slot, which stays empty.
-		ge.addLog("info", rowid.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, ""))
+		ge.addLog(OfficeWorld, "info", rowid.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, ""))
 	}
 
 	// Morale effects from triggered events
@@ -1593,16 +1642,16 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	line := eventLine(def.LogMessage, out, ge.tickIntervalLocked().Seconds(), ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
 	// Setbacks log as warnings so they don't read like windfalls.
 	if def.Sentiment == "bad" {
-		ge.addLog("warning", line)
+		ge.addLog(OfficeArmy, "warning", line)
 	} else {
-		ge.addLog("event", line)
+		ge.addLog(OfficeArmy, "event", line)
 	}
 	if garrison != "" {
-		ge.addLog("success", garrison)
+		ge.addLog(OfficeArmy, "success", garrison)
 		// The garrison blunted a raid that landed: some of it fell doing so.
 		if def.Raid {
 			if fall := ge.raidFallLocked(); fall != "" {
-				ge.addLog("warning", fall)
+				ge.addLog(OfficeArmy, "warning", fall)
 			}
 		}
 	}
@@ -1627,18 +1676,18 @@ func (ge *GameEngine) processExpeditions() {
 		ge.syncSoldiers()
 		res.Message += ge.casualtyLine(res)
 		ge.Military.recordReturn(res, ge.tick)
-		ge.addLog("event", res.Message)
+		ge.addLog(OfficeArmy, "event", res.Message)
 		if res.Rank > res.RankBefore {
-			ge.addLog("event", rowid.Sprintf("game.engine.processExpeditions.03", "Your army is now %s.", config.Term(ge.age, config.ArmyRankKey(res.Rank)).One))
+			ge.addLog(OfficeArmy, "event", rowid.Sprintf("game.engine.processExpeditions.03", "Your army is now %s.", config.Term(ge.age, config.ArmyRankKey(res.Rank)).One))
 		}
 		if res.RoadEvents > 0 {
-			ge.addLog("info", rowid.Sprintf("game.engine.processExpeditions.04", "The mission met %d road events.", res.RoadEvents))
+			ge.addLog(OfficeArmy, "info", rowid.Sprintf("game.engine.processExpeditions.04", "The mission met %d road events.", res.RoadEvents))
 		}
 		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
 		// this is where the seeded rng lives. It is additive: res.Message above
 		// already carried the mechanical outcome and the loot.
 		if q := ge.expeditionFlavorLine(res); q != "" {
-			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
+			ge.addLog(OfficeArmy, "info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 		// Add rewards to resources
 		ge.applyExpeditionRewards(res.Rewards)
@@ -1654,7 +1703,7 @@ func (ge *GameEngine) processExpeditions() {
 		var msgs []string
 		ge.withLuck(res.luck, func() { msgs = ge.rollExpeditionEncounter(res.Category, res.Success) })
 		for _, msg := range msgs {
-			ge.addLog("event", msg)
+			ge.addLog(OfficeDiplomacy, "event", msg)
 		}
 	}
 
@@ -1670,7 +1719,7 @@ func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
 		if resource == config.ResearchTarget {
 			// Not stored: it goes to the tech in progress.
 			if said := ge.grantResearch(rewards[resource]); said != "" {
-				ge.addLog("info", rowid.Line("game.engine.applyExpeditionRewards.01", "  → Gained ")+said+".")
+				ge.addLog(OfficeArmy, "info", rowid.Line("game.engine.applyExpeditionRewards.01", "  → Gained ")+said+".")
 			}
 			continue
 		}
@@ -1680,10 +1729,7 @@ func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
 
 // processTrade handles trade route ticks
 func (ge *GameEngine) processTrade() {
-	messages := ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), ge.grantResearch)
-	for _, msg := range messages {
-		ge.addLog("warning", msg)
-	}
+	ge.logNotes(OfficeTrade, "warning", ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), ge.grantResearch))
 }
 
 // harborRouteBonus sums the "trade_route_income" effect across all built harbour
@@ -1704,6 +1750,30 @@ func (ge *GameEngine) harborRouteBonus() float64 {
 	return bonus
 }
 
+// routeTerms is what the state view needs to say what a run pays: the harbor
+// bonus with its shares by building, and the allies' shares for a resource.
+func (ge *GameEngine) routeTerms() RouteTerms {
+	byName := map[string]float64{}
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		for _, eff := range def.Effects {
+			if eff.Type == "trade_route_income" {
+				byName[def.Name] += float64(float64(eff.Value*float64(count)) * 100)
+			}
+		}
+	})
+	harbor := make([]PayShare, 0, len(byName))
+	for name, pct := range byName {
+		harbor = append(harbor, PayShare{Label: name, Percent: pct, Kind: ShareBuilding})
+	}
+	sort.Slice(harbor, func(i, j int) bool {
+		if harbor[i].Percent != harbor[j].Percent {
+			return harbor[i].Percent > harbor[j].Percent
+		}
+		return harbor[i].Label < harbor[j].Label
+	})
+	return RouteTerms{Harbor: ge.harborRouteBonus(), HarborShares: harbor, Ally: ge.Diplomacy.AllyShares}
+}
+
 // processDiplomacy handles diplomacy ticks
 func (ge *GameEngine) processDiplomacy() {
 	ageOrder := ge.progress.ageOrder()
@@ -1715,9 +1785,7 @@ func (ge *GameEngine) processDiplomacy() {
 	// met before the age fallback would meet them.
 	ge.meetOldFriendsLocked()
 	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
-	for _, msg := range messages {
-		ge.addLog("event", msg)
-	}
+	ge.logNotes(OfficeDiplomacy, "event", messages)
 	// First contact, however it came about this tick: an expedition's
 	// encounter, an old friend, or the age reaching the civilization.
 	for _, key := range ge.Diplomacy.takeMet() {
@@ -1811,14 +1879,14 @@ func (ge *GameEngine) checkMilestones() {
 		if parts := milestoneRewardParts(ms.Rewards); parts != "" {
 			line += " " + parts + "."
 		}
-		ge.addLog("success", line)
+		ge.addLog(OfficeWorld, "success", line, logHead, logSubj(ms.Key))
 		// A reward a cap keeps from counting says so, before it is granted.
 		for _, capped := range ge.capLinesLocked(ms.Rewards, false) {
-			ge.addLog("info", capped)
+			ge.addLog(OfficeWorld, "info", capped)
 		}
 		// Cosmetic flavour quip on its own dim line (never replaces the reward text).
 		if ms.Flavor != "" {
-			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", ms.Flavor))
+			ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", ms.Flavor))
 		}
 		ge.applyMilestoneRewards(ms.Rewards)
 		// Publish milestone event
@@ -1837,12 +1905,12 @@ func (ge *GameEngine) checkMilestones() {
 		// The boost's length is typed for the base curve and stretched for
 		// the age it lands in, so it saves the same share of the age.
 		boost := ge.stretchTicks(chain.BoostDuration)
-		ge.addLog("success", rowid.Sprintf("game.engine.checkMilestones.02", "Chain complete: %s. Title: %s. Game speed %s for %s.",
+		ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.engine.checkMilestones.02", "Chain complete: %s. Title: %s. Game speed %s for %s.",
 			chain.Name, chain.Title, textfmt.SignedPercent(chain.BoostValue),
-			ge.durationWithSpeedBonusLocked(boost, chain.BoostValue)))
+			ge.durationWithSpeedBonusLocked(boost, chain.BoostValue)), logHead)
 		// Cosmetic flavour quip on its own dim line (never replaces the title/boost).
 		if chain.Flavor != "" {
-			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", chain.Flavor))
+			ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", chain.Flavor))
 		}
 		ge.startChainBoost(chain, boost)
 		// Publish chain event
@@ -1869,7 +1937,7 @@ func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
 		case "instant_resource":
 			if eff.Target == config.ResearchTarget {
 				if said := ge.grantResearch(eff.Value); said != "" {
-					ge.addLog("info", rowid.Line("game.engine.applyMilestoneRewards.01", "  → Gained ")+said+".")
+					ge.addLog(OfficeWorld, "info", rowid.Line("game.engine.applyMilestoneRewards.01", "  → Gained ")+said+".")
 				}
 				continue
 			}
@@ -2223,7 +2291,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			NewKey: target.Key, NewName: target.Name,
 			Count: count,
 		})
-		ge.addLog("info", rowid.Sprintf("game.engine.advanceAge.01", "↑ %s can upgrade to %s. Type 'upgrade %s'.",
+		ge.addLog(OfficeBuilding, "info", rowid.Sprintf("game.engine.advanceAge.01", "↑ %s can upgrade to %s. Type 'upgrade %s'.",
 			buildingCountIn(ge.rules, count, key), target.Name, key))
 	}
 	ge.lastAgeAdvanceSummary = summary
@@ -2273,28 +2341,28 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			r.Amount *= CarryoverResidualPct
 		}
 	}
-	ge.addLog("info", rowid.Sprintf("game.engine.advanceAge.03", "Stockpiles trimmed for the new age: each resource is capped at %d times the cost of the cheapest new building that uses it, resources no new building uses keep %s, and faith is untouched.",
+	ge.addLog(OfficeWorld, "info", rowid.Sprintf("game.engine.advanceAge.03", "Stockpiles trimmed for the new age: each resource is capped at %d times the cost of the cheapest new building that uses it, resources no new building uses keep %s, and faith is untouched.",
 		CarryoverStarterBuildings, textfmt.Percent(CarryoverResidualPct)))
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
-	ge.addLog("success", rowid.Sprintf("game.engine.advanceAge.05", "Advanced from the %s to the %s.", oldName, newName))
+	ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.engine.advanceAge.05", "Advanced from the %s to the %s.", oldName, newName), logBanner)
 	if line := ge.masteryEntryLine(newAge, prevK); line != "" {
-		ge.addLog("info", line)
+		ge.addLog(OfficeWorld, "info", line)
 	}
 	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
 	// Age transitions are rare, so it fires every time.
 	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance, ge.quipRNG()); q != "" {
-		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
+		ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", q))
 	}
 
 	// Notify player about the wonder available in this age
 	for _, bKey := range ge.progress.GetUnlocks(newAge).UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
 			if ge.Buildings.TechLocked(bKey) {
-				ge.addLog("event", rowid.Sprintf("game.engine.advanceAge.06", "★ Wonder available: %s. Bank its cost and research %s, its keystone, then build it.", def.Name, ge.techName(def.RequiredTech)))
+				ge.addLog(OfficeBuilding, "event", rowid.Sprintf("game.engine.advanceAge.06", "★ Wonder available: %s. Bank its cost and research %s, its keystone, then build it.", def.Name, ge.techName(def.RequiredTech)))
 			} else {
-				ge.addLog("event", rowid.Sprintf("game.engine.advanceAge.07", "★ Wonder available: %s. Bank its cost, then build it.", def.Name))
+				ge.addLog(OfficeBuilding, "event", rowid.Sprintf("game.engine.advanceAge.07", "★ Wonder available: %s. Bank its cost, then build it.", def.Name))
 			}
 			break
 		}
@@ -2493,7 +2561,7 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 	}
 	ge.currentEpoch = newEpoch
 	ep, _ := ge.rules.Era(newEpoch)
-	ge.addLog("event", rowid.Sprintf("game.engine.detectEpochTransition.01", "[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description))
+	ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.engine.detectEpochTransition.01", "[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description), logBanner)
 	ge.publish(EventEpochAdvanced, payload{
 		"epoch_key":  newEpoch,
 		"epoch_name": ep.Name,
@@ -2537,9 +2605,9 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	// One log line per awakening — the pivotal "new era" beat. Coloured by the epoch
 	// so the awakening visually belongs to the era it ushers in.
 	// The flavor text states the boost and its duration, so no separate effect line.
-	ge.addLog("event", rowid.Sprintf("game.engine.fireAwakening.01", "[%s]✦ Awakening: %s. %s[-]", ep.Color, def.Name, def.FlavorText))
+	ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.engine.fireAwakening.01", "[%s]✦ Awakening: %s. %s[-]", ep.Color, def.Name, def.FlavorText), logHead)
 	for _, capped := range ge.capLinesLocked(def.Effects, true) {
-		ge.addLog("info", capped)
+		ge.addLog(OfficeWorld, "info", capped)
 	}
 }
 
@@ -2643,7 +2711,7 @@ func (ge *GameEngine) recordEpochEvent(epochKey string, ev config.EpochEventDef)
 // what the text cannot know (actual counts, amounts, names).
 func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	ge.note(config.BadgeEvEraEvent, ev.Type)
-	ge.addLog("success", fmt.Sprintf("✦ %s. [comment]%s[-]", ev.Name, ev.FlavorText))
+	ge.addLog(OfficeWorld, "success", fmt.Sprintf("✦ %s. [comment]%s[-]", ev.Name, ev.FlavorText))
 	ageOrder := ge.progress.GetAgeOrder()
 	switch ev.Key {
 	case "age_of_plenty":
@@ -2654,7 +2722,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		before := ge.Workers.TotalPop()
 		ge.Workers.AddPctAll(0.15)
 		if gained := ge.Workers.TotalPop() - before; gained > 0 {
-			ge.addLog("success", rowid.Sprintf("game.engine.applyGoodEpochEvent.01", "  → %s joined (population now %d).",
+			ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.engine.applyGoodEpochEvent.01", "  → %s joined (population now %d).",
 				textfmt.Count(gained, rowid.Line("game.engine.applyGoodEpochEvent.02", "new worker"), rowid.Line("game.engine.applyGoodEpochEvent.03", "new workers")), ge.popLocked()))
 		}
 	case "ancient_cache":
@@ -2674,7 +2742,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		// the age's cheapest tech.
 		if gain := math.Min(config.EventSize(config.Effect{Type: config.EventGain, Target: config.ResearchTarget, Value: config.AncientCacheMinutes}, ge.eventTown(config.ResearchTarget, false)), ge.cheapestTechPrice()); gain > 0 {
 			if said := ge.grantResearch(gain); said != "" {
-				ge.addLog("info", rowid.Line("game.engine.applyGoodEpochEvent.04", "  → The cache gave ")+said+".")
+				ge.addLog(OfficeWorld, "info", rowid.Line("game.engine.applyGoodEpochEvent.04", "  → The cache gave ")+said+".")
 			}
 		}
 	case "trade_winds":
@@ -2685,7 +2753,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		culture := ge.gainResource("culture", ge.Resources.Get("culture")*0.30)
 		faith := ge.gainResource("faith", ge.Resources.Get("faith")*0.20)
 		if gained := Amounts(map[string]float64{"culture": culture, "faith": faith}); gained != "nothing" {
-			ge.addLog("success", fmt.Sprintf("  → +%s.", gained))
+			ge.addLog(OfficeWorld, "success", fmt.Sprintf("  → +%s.", gained))
 		}
 		ge.injectEpochRates("epoch_cultural_festival", ev, "success", "")
 	case "grand_discovery":
@@ -2697,11 +2765,11 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 		for _, key := range startable {
 			ge.Research.Learn(key)
-			ge.addLog("success", rowid.Sprintf("game.engine.applyGoodEpochEvent.05", "  → Free tech: %s.", ge.rules.Name(rules.KindTech, key)))
+			ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.engine.applyGoodEpochEvent.05", "  → Free tech: %s.", ge.rules.Name(rules.KindTech, key)))
 			ge.finishResearch(key)
 		}
 		if len(startable) == 0 {
-			ge.addLog("success", rowid.Line("game.engine.applyGoodEpochEvent.06", "  → No techs were left to research this age."))
+			ge.addLog(OfficeWorld, "success", rowid.Line("game.engine.applyGoodEpochEvent.06", "  → No techs were left to research this age."))
 		}
 	case "worker_innovation":
 		// Permanent +10% production_all
@@ -2720,7 +2788,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 		if bestKey != "" {
 			ge.Buildings.counts[bestKey] += giftCount
-			ge.addLog("success", rowid.Sprintf("game.engine.applyGoodEpochEvent.07", "  → %s, free.", buildingCountIn(ge.rules, giftCount, bestKey)))
+			ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.engine.applyGoodEpochEvent.07", "  → %s, free.", buildingCountIn(ge.rules, giftCount, bestKey)))
 		}
 	case "peaceful_century":
 		// +20% all production for Duration ticks
@@ -2756,7 +2824,7 @@ func countWorkersRealOne(n int) string {
 // cannot state (what burned, who died, how much was lost).
 func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochKey string) {
 	ge.note(config.BadgeEvEraEvent, ev.Type)
-	ge.addLog("warning", fmt.Sprintf("⚠ %s. [comment]%s[-]", ev.Name, ev.FlavorText))
+	ge.addLog(OfficeWorld, "warning", fmt.Sprintf("⚠ %s. [comment]%s[-]", ev.Name, ev.FlavorText), logHead)
 	switch ev.Key {
 	case "the_famine":
 		ge.injectEpochRates("epoch_famine", ev, "warning", "")
@@ -2771,9 +2839,9 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 			lost = append(lost, buildingCountIn(ge.rules, destroyed[key], key))
 		}
 		if len(lost) > 0 {
-			ge.addLog("warning", rowid.Sprintf("game.engine.applyChallengingEpochEvent.01", "  → Destroyed: %s.", textfmt.List(lost)))
+			ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.engine.applyChallengingEpochEvent.01", "  → Destroyed: %s.", textfmt.List(lost)))
 		} else {
-			ge.addLog("warning", rowid.Line("game.engine.applyChallengingEpochEvent.02", "  → The fire burned out before it reached any buildings."))
+			ge.addLog(OfficeWorld, "warning", rowid.Line("game.engine.applyChallengingEpochEvent.02", "  → The fire burned out before it reached any buildings."))
 		}
 	case "epidemic":
 		// The rate first: it is a share of what the town made when the
@@ -2782,7 +2850,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		before := ge.Workers.TotalPop()
 		ge.Workers.RemovePct(0.20)
 		if lost := before - ge.Workers.TotalPop(); lost > 0 {
-			ge.addLog("warning", rowid.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", countWorkersRealOne(lost)))
+			ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", countWorkersRealOne(lost)))
 		}
 	case "resource_drought":
 		// Debuff epoch's primary resource
@@ -2801,7 +2869,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		ge.injectEpochRates("epoch_economic_crash", ev, "warning", "")
 	case "the_dark_age":
 		if tech, ok := ge.Research.CancelResearch(); ok {
-			ge.addLog("warning", rowid.Sprintf("game.engine.applyChallengingEpochEvent.06", "  → Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
+			ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.engine.applyChallengingEpochEvent.06", "  → Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
 		}
 		ge.injectEpochRates("epoch_dark_age", ev, "warning", "")
 	}
@@ -2859,7 +2927,7 @@ func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, ef
 // "  → All production +25% for ~6m." Caller holds ge.mu.
 func (ge *GameEngine) logTimedEffects(logType string, effects []config.Effect, ticks int) {
 	if text := effectsText(effects, ge.tickIntervalLocked().Seconds()); text != "" {
-		ge.addLog(logType, rowid.Sprintf("game.engine.logTimedEffects.01", "  → %s for %s.", textfmt.Capitalize(text), ge.durationLocked(ticks)))
+		ge.addLog(OfficeWorld, logType, rowid.Sprintf("game.engine.logTimedEffects.01", "  → %s for %s.", textfmt.Capitalize(text), ge.durationLocked(ticks)))
 	}
 }
 
@@ -2868,7 +2936,7 @@ func (ge *GameEngine) logTimedEffects(logType string, effects []config.Effect, t
 // all counts. Caller holds ge.mu.
 func (ge *GameEngine) logCapped(effects ...config.Effect) {
 	for _, capped := range ge.capLinesLocked(effects, true) {
-		ge.addLog("info", capped)
+		ge.addLog(OfficeWorld, "info", capped)
 	}
 }
 
@@ -2879,7 +2947,7 @@ func (ge *GameEngine) loseShare(res string, frac float64) {
 	if loss <= 0 || !ge.Resources.Remove(res, loss) {
 		return
 	}
-	ge.addLog("warning", rowid.Sprintf("game.engine.loseShare.01", "  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
+	ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.engine.loseShare.01", "  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
 }
 
 // gainResource adds to a resource and returns what it added.
@@ -3013,7 +3081,7 @@ func (ge *GameEngine) DoFestival() error {
 	ge.festivalReadyTick = ge.tick + ge.festivalCooldown()
 	ge.useFeature(config.FeatureFestivals)
 	ge.note(config.BadgeEvFestival, "")
-	ge.addLog("success", rowid.Sprintf("game.engine.DoFestival.04", "Held a cultural festival for %s: all production %s for %s.",
+	ge.addLog(OfficeStores, "success", rowid.Sprintf("game.engine.DoFestival.04", "Held a cultural festival for %s: all production %s for %s.",
 		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(buff)))
 	ge.logCapped(config.Effect{Type: "production_all", Value: festivalBuffPercent})
 	return nil
@@ -3143,10 +3211,10 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 
 	if ge.bmRandFloat() < blackMarketWinChance {
 		got := ge.gainResource(resource, reward)
-		ge.addLog("success", rowid.Sprintf("game.engine.DoBlackMarket.06", "The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
+		ge.addLog(OfficeTrade, "success", rowid.Sprintf("game.engine.DoBlackMarket.06", "The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
 		return true, reward, nil
 	}
-	ge.addLog("warning", rowid.Sprintf("game.engine.DoBlackMarket.07", "The smuggling run failed. You lost %s.", Amount(cost, "culture")))
+	ge.addLog(OfficeTrade, "warning", rowid.Sprintf("game.engine.DoBlackMarket.07", "The smuggling run failed. You lost %s.", Amount(cost, "culture")))
 	return false, 0, nil
 }
 
@@ -3331,13 +3399,13 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	}
 	def := ge.Buildings.defs[key]
 	done := buildDoneLog(def)
-	ge.addLog(done, rowid.Sprintf("game.engine.finishBuild.02", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
+	ge.addLog(OfficeBuilding, done, rowid.Sprintf("game.engine.finishBuild.02", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)), logHeadIf(done == "success"), logID("game.engine.finishBuild.02"), logSubj(key))
 	ge.logScholarsArrived(def)
 	ge.fillSoldierPosts()
 	if def.Category == "wonder" || def.Category == "monument" {
 		// Their bonuses join the pools; one a cap keeps from counting says so.
 		for _, capped := range ge.capLinesLocked(def.Effects, true) {
-			ge.addLog("info", capped)
+			ge.addLog(OfficeBuilding, "info", capped)
 		}
 	}
 	// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
@@ -3349,7 +3417,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 			if done == LogRoutine {
 				quip = LogRoutine
 			}
-			ge.addLog(quip, fmt.Sprintf("  [comment]%s[-]", q))
+			ge.addLog(OfficeBuilding, quip, fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
 	ge.Stats.RecordBuild()
@@ -3434,7 +3502,7 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	if actual > before {
 		ge.note(config.BadgeEvGathered, resource)
 	}
-	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.GatherResource.04", "Gathered %s.", Amount(actual-before, resource)))
+	ge.addLog(OfficeStores, LogRoutine, rowid.Sprintf("game.engine.GatherResource.04", "Gathered %s.", Amount(actual-before, resource)), logID("game.engine.GatherResource.04"), logSubj(resource), logGot(LogAmt{resource, actual - before}))
 	return actual, nil
 }
 
@@ -3468,11 +3536,11 @@ func (ge *GameEngine) bankWonderLocked(wonderKey, resource string, amount float6
 	def := ge.Buildings.defs[wonderKey]
 	banked := ge.Buildings.wonderBanks[wonderKey][resource]
 	need := def.BaseCost[resource]
-	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.bankWonderLocked.01", "Banked %s toward %s (%s of %s).",
-		Amount(deposited, resource), def.Name, textfmt.Number(banked), textfmt.Number(need)))
+	ge.addLog(OfficeBuilding, LogRoutine, rowid.Sprintf("game.engine.bankWonderLocked.01", "Banked %s toward %s (%s of %s).",
+		Amount(deposited, resource), def.Name, textfmt.Number(banked), textfmt.Number(need)), logID("game.engine.bankWonderLocked.01"), logSubj(wonderKey), logPaid(LogAmt{resource, deposited}))
 
 	if ge.Buildings.IsWonderBankFull(wonderKey) {
-		ge.addLog("success", rowid.Sprintf("game.engine.bankWonderLocked.02", "%s is fully banked. %s", def.Name, ge.wonderNextStep(wonderKey)))
+		ge.addLog(OfficeBuilding, "success", rowid.Sprintf("game.engine.bankWonderLocked.02", "%s is fully banked. %s", def.Name, ge.wonderNextStep(wonderKey)), logSubj(wonderKey))
 	}
 	return deposited, nil
 }
@@ -3539,6 +3607,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 		}
 	}
 
+	var paid []LogAmt
 	if DevGodMode {
 		// godmode: skip all cost/bank checks, build instantly below
 	} else if def.Category == "wonder" {
@@ -3553,6 +3622,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 		if !ge.Resources.Pay(cost) {
 			return rowid.Errorf("game.engine.startBuildPaid.05", "Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
 		}
+		paid = amts(cost)
 	}
 
 	if !DevGodMode && def.BuildTicks > 0 {
@@ -3568,7 +3638,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 			ge.recalculateRates()
 		}
 		if !quiet {
-			ge.addLog(LogRoutine, rowid.Sprintf("game.engine.startBuildPaid.07", "Started building %s (%s).", def.Name, ge.durationLocked(ticks)))
+			ge.addLog(OfficeBuilding, LogRoutine, rowid.Sprintf("game.engine.startBuildPaid.07", "Started building %s (%s).", def.Name, ge.durationLocked(ticks)), logID("game.engine.startBuildPaid.07"), logSubj(key), logPaid(paid...))
 		}
 	} else {
 		// Instant build
@@ -3578,7 +3648,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 			ge.staffPlanCopy(key)
 		}
 		ge.recalculateRates()
-		ge.addLog(buildDoneLog(def), rowid.Sprintf("game.engine.startBuildPaid.08", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
+		ge.addLog(OfficeBuilding, buildDoneLog(def), rowid.Sprintf("game.engine.startBuildPaid.08", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)), logHeadIf(def.Category == "wonder"), logID("game.engine.startBuildPaid.08"), logSubj(key))
 		ge.publish(EventBuildingBuilt, payload{"building": key})
 		ge.noteBuilt(key, 1)
 	}
@@ -3626,6 +3696,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 
 	built := 0
+	var batchPaid []LogAmt
 	for i := 0; i < count; i++ {
 		// Check MaxCount against fully-built + queued + what we're about to add
 		if def.MaxCount > 0 {
@@ -3644,6 +3715,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		if !ge.Resources.Pay(unitCost) {
 			break
 		}
+		batchPaid = sumAmts(batchPaid, amts(unitCost))
 
 		if def.BuildTicks > 0 {
 			ticks := ge.buildTicksLocked(def)
@@ -3676,10 +3748,10 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		if def.Category == "storage" && ge.Buildings.GetCount(key) > 0 {
 			ge.recalculateRates()
 		}
-		ge.addLog(LogRoutine, rowid.Sprintf("game.engine.BuildMultiple.05", "Queued %s.", buildingCountIn(ge.rules, built, key)))
+		ge.addLog(OfficeBuilding, LogRoutine, rowid.Sprintf("game.engine.BuildMultiple.05", "Queued %s.", buildingCountIn(ge.rules, built, key)), logID("game.engine.BuildMultiple.05"), logSubj(key), logPaid(batchPaid...))
 	} else {
 		ge.recalculateRates()
-		ge.addLog(buildDoneLog(def), rowid.Sprintf("game.engine.BuildMultiple.06", "Built %s (you have %d).", buildingCountIn(ge.rules, built, key), ge.Buildings.GetCount(key)))
+		ge.addLog(OfficeBuilding, buildDoneLog(def), rowid.Sprintf("game.engine.BuildMultiple.06", "Built %s (you have %d).", buildingCountIn(ge.rules, built, key), ge.Buildings.GetCount(key)), logHeadIf(def.Category == "wonder"), logID("game.engine.BuildMultiple.06"), logSubj(key), logPaid(batchPaid...))
 		ge.logScholarsArrived(def)
 		if ge.fillSoldierPosts() > 0 {
 			ge.recalculateRates()
@@ -3715,8 +3787,8 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	}
 	ge.Stats.RecordRecruit(available)
 	ge.holdStaffing()
-	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.RecruitMax.04", "Recruited %s (population %d/%d).",
-		countWorkersGrinder(available), ge.popLocked(), popCap))
+	ge.addLog(OfficePeople, LogRoutine, rowid.Sprintf("game.engine.RecruitMax.04", "Recruited %s (population %d/%d).",
+		countWorkersGrinder(available), ge.popLocked(), popCap), logID("game.engine.RecruitMax.04"), logGot(LogAmt{"workers", float64(available)}))
 	return available, nil
 }
 
@@ -3749,8 +3821,8 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	}
 	ge.Stats.RecordRecruit(count)
 	ge.holdStaffing()
-	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
-		countWorkersNPC(count), ge.popLocked(), popCap))
+	ge.addLog(OfficePeople, LogRoutine, rowid.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
+		countWorkersNPC(count), ge.popLocked(), popCap), logID("game.engine.RecruitWorker.08"), logGot(LogAmt{"workers", float64(count)}))
 	return nil
 }
 
@@ -3891,7 +3963,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 func (ge *GameEngine) staffingChanged(line string) {
 	ge.holdStaffing()
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, line)
+	ge.addLog(OfficePeople, LogRoutine, line)
 }
 
 // checkAmount rejects a resource amount no command can mean: NaN, an
@@ -4010,7 +4082,7 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	ge.holdStaffing()
 	ge.recalculateRates()
 	line := rowid.Sprintf("game.engine.SellBuilding.08", "Sold %s. Refund: %s.", buildingCountIn(ge.rules, n, key), Amounts(got))
-	ge.addLog(LogRoutine, line)
+	ge.addLog(OfficeBuilding, LogRoutine, line)
 	return nil
 }
 
@@ -4039,7 +4111,7 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 		ge.finishResearch(ge.Research.complete())
 	}
 	if !quiet {
-		ge.addLog(LogRoutine, ge.startedResearchLine(def))
+		ge.addLog(OfficeResearch, LogRoutine, ge.startedResearchLine(def), logSubj(techKey))
 	}
 	return nil
 }
@@ -4054,7 +4126,7 @@ func (ge *GameEngine) CancelResearch() error {
 		return rowid.Errorf("game.engine.CancelResearch.01", "No research in progress.")
 	}
 	ge.recalculateRates()
-	ge.addLog("warning", rowid.Sprintf("game.engine.CancelResearch.02", "Research on %s canceled. The work done on it is lost.", ge.rules.Name(rules.KindTech, tech)))
+	ge.addLog(OfficeResearch, "warning", rowid.Sprintf("game.engine.CancelResearch.02", "Research on %s canceled. The work done on it is lost.", ge.rules.Name(rules.KindTech, tech)))
 	return nil
 }
 
@@ -4135,7 +4207,7 @@ func (ge *GameEngine) maybeOfferAncientMemory() {
 	ge.ancientMemoryUsed = true
 	ge.pendingMemoryTech = techKey
 	def, _ := ge.rules.Tech(techKey)
-	ge.addLog("event", rowid.Sprintf("game.engine.maybeOfferAncientMemory.01", "✦ [comment]%s[-] A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor(), def.Name))
+	ge.addLog(OfficeResearch, "event", rowid.Sprintf("game.engine.maybeOfferAncientMemory.01", "✦ [comment]%s[-] A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor(), def.Name))
 }
 
 // selectMemoryTech picks a random tech appropriate to the current age, with the
@@ -4196,9 +4268,9 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	def, _ := ge.rules.Tech(techKey)
 	ge.recalculateRates()
 	if ticks := ge.researchTicksLeft(); ticks > 0 {
-		ge.addLog("success", rowid.Sprintf("game.engine.AcceptAncientMemory.02", "Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ticks)))
+		ge.addLog(OfficeResearch, "success", rowid.Sprintf("game.engine.AcceptAncientMemory.02", "Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ticks)))
 	} else {
-		ge.addLog("success", rowid.Sprintf("game.engine.AcceptAncientMemory.03", "Recovered the memory of %s. It needs scholars researching to go on.", def.Name))
+		ge.addLog(OfficeResearch, "success", rowid.Sprintf("game.engine.AcceptAncientMemory.03", "Recovered the memory of %s. It needs scholars researching to go on.", def.Name))
 	}
 	ge.note(config.BadgeEvMemoryAccepted, techKey)
 	return nil
@@ -4216,7 +4288,7 @@ func (ge *GameEngine) DeclineAncientMemory() {
 	}
 	ge.note(config.BadgeEvMemoryDeclined, ge.pendingMemoryTech)
 	ge.pendingMemoryTech = ""
-	ge.addLog("info", rowid.Line("game.engine.DeclineAncientMemory.01", "You leave the ancient cache sealed. Its memories crumble to dust."))
+	ge.addLog(OfficeResearch, "info", rowid.Line("game.engine.DeclineAncientMemory.01", "You leave the ancient cache sealed. Its memories crumble to dust."))
 }
 
 // LaunchExpedition sends offer n (1 to 9) off the mission board.
@@ -4506,12 +4578,12 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	}
 
 	if offer.Military() {
-		ge.addLog(LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
+		ge.addLog(OfficeArmy, LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
 		if soldiers > 0 {
-			ge.addLog(LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.03", "Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
+			ge.addLog(OfficeArmy, LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.03", "Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
 		} else {
-			ge.addLog(LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.04", "Expedition sent: %s.", offer.Title))
+			ge.addLog(OfficeArmy, LogRoutine, rowid.Sprintf("game.engine.launchExpeditionLocked.04", "Expedition sent: %s.", offer.Title))
 		}
 	}
 	return nil
@@ -4759,7 +4831,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	kitFrom := len(ge.log)
 	ge.startRunLegacyLocked()
 	ge.takeEndingLines(&end, kitFrom, EndLineKit)
-	ge.addLog("info", rowid.Line("game.engine.completePrestige.12", "Type [cyan]help[-] to get started again."))
+	ge.addLog(OfficeGame, "info", rowid.Line("game.engine.completePrestige.12", "Type [cyan]help[-] to get started again."))
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
 	// ge.mu here, so RecordPrestigeFrom must not do I/O or re-enter the engine. The write
@@ -4820,7 +4892,7 @@ func (ge *GameEngine) resetRunLocked(morale float64, outcome string, level int) 
 	// override does not carry into it.
 	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
-	ge.plan = nil
+	ge.plan, ge.planPaused = nil, false
 	ge.log = nil
 	// The history is this run's: the recorder starts over with the run.
 	ge.history = NewRunHistory()
@@ -4902,8 +4974,8 @@ func (ge *GameEngine) Reset() {
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
 
-	ge.addLog("event", rowid.Line("game.engine.Reset.01", "Game wiped. Starting fresh."))
-	ge.addLog("info", rowid.Line("game.engine.Reset.02", "Type [cyan]help[-] for commands."))
+	ge.addLog(OfficeGame, "event", rowid.Line("game.engine.Reset.01", "Game wiped. Starting fresh."))
+	ge.addLog(OfficeGame, "info", rowid.Line("game.engine.Reset.02", "Type [cyan]help[-] for commands."))
 	// God mode is process-wide and outlives the run it was turned on in; left on, it
 	// makes this run free to build, so the run starts dev-touched.
 	if DevGodMode {
@@ -4925,7 +4997,15 @@ func (ge *GameEngine) GetState() GameState {
 	epochDef, _ := ge.rules.Era(ge.currentEpoch)
 
 	logCopy := make([]LogEntry, len(ge.log))
-	copy(logCopy, ge.log)
+	for i, e := range ge.log {
+		e.Paid, e.Gained = append([]LogAmt(nil), e.Paid...), append([]LogAmt(nil), e.Gained...)
+		e.Members = append([]LogMember(nil), e.Members...)
+		for j := range e.Members {
+			m := &e.Members[j]
+			m.Paid, m.Gained = append([]LogAmt(nil), m.Paid...), append([]LogAmt(nil), m.Gained...)
+		}
+		logCopy[i] = e
+	}
 
 	var queue []BuildQueueSnapshot
 	for _, item := range ge.buildQueue {
@@ -5014,6 +5094,7 @@ func (ge *GameEngine) GetState() GameState {
 	workers.SoldiersAway = min(ge.soldiersAway(), workers.Soldiers)
 	workers.TotalPop += workers.Scholars + workers.Soldiers
 	workers.FoodDrain = ge.foodDrainLocked()
+	moraleMovers := ge.moraleMoversLocked()
 
 	milestoneParams := ge.milestoneParamsLocked(ageOrder)
 	milestoneParams.Sight = &sight
@@ -5031,10 +5112,11 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:           nextAgeName,
 		NextAgeBldReqs:        nextAgeBldReqs,
 		Resources:             ge.Resources.Snapshot(),
-		Buildings:             ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras),
+		Buildings:             ge.oneMoreLocked(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras)),
 		Scholars:              ge.scholarsStateLocked(),
 		BuildQueue:            queue,
 		Workers:               workers,
+		MoraleMovers:          moraleMovers,
 		Research:              ge.withResearchTimes(ge.Research.Snapshot(ge.age, ageOrder)),
 		Military:              militarySnap,
 		Milestones:            ge.Milestones.Snapshot(milestoneParams),
@@ -5042,7 +5124,7 @@ func (ge *GameEngine) GetState() GameState {
 		Prestige:              prestigeSnap,
 		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
-		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources()),
+		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources(), ge.routeTerms()),
 		BlackMarket:           ge.blackMarketStatusLocked(),
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,
@@ -5083,6 +5165,7 @@ func (ge *GameEngine) GetState() GameState {
 		MoraleMultiplier:      ge.moraleMultiplier(),
 		Festival:              ge.festivalStatusLocked(resolver),
 		Plan:                  ge.planViews(),
+		PlanPaused:            ge.planPaused,
 		PermanentBonuses:      maps.Clone(ge.permanentBonuses),
 		// Snapshot the resolver's aggregated modifiers for the UI's Active
 		// Multipliers panel. buildResolver reads only already-held state and
@@ -5127,36 +5210,6 @@ func buildDoneLog(def config.BuildingDef) string {
 	return LogRoutine
 }
 
-// addLog appends a log entry (must be called with lock held). logType is the
-// entry's category; see LogRoutine for which categories reach which log.
-func (ge *GameEngine) addLog(logType, message string) {
-	entry := LogEntry{
-		Tick:    ge.tick,
-		Message: message,
-		Type:    logType,
-	}
-	ge.log = append(ge.log, entry)
-	if len(ge.log) > MaxLogSize {
-		ge.log = ge.log[len(ge.log)-MaxLogSize:]
-	}
-}
-
-// AddLog adds a log entry (thread-safe, for external use)
-func (ge *GameEngine) AddLog(logType, message string) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.addLog(logType, message)
-}
-
-// GetLogs returns a copy of the full log (thread-safe)
-func (ge *GameEngine) GetLogs() []LogEntry {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-	logCopy := make([]LogEntry, len(ge.log))
-	copy(logCopy, ge.log)
-	return logCopy
-}
-
 const (
 	MaxOfflineTime    = 24 * time.Hour
 	OfflineEfficiency = 0.5
@@ -5190,7 +5243,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		return
 	}
 
-	ge.addLog("event", rowid.Sprintf("game.engine.applyOfflineProgress.01", "Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
+	ge.addLog(OfficeStores, "event", rowid.Sprintf("game.engine.applyOfflineProgress.01", "Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
 	// The time credited, for the records; the return itself is reported
 	// once the time away has been played through, with what it did.
 	ge.report(Event{Kind: config.BadgeEvAwayTicks, N: float64(offlineTicks)})
@@ -5271,16 +5324,16 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}})
 
 	if len(gains) > 0 {
-		ge.addLog("info", rowid.Sprintf("game.engine.applyOfflineProgress.02", "Offline progress (at %s efficiency):", textfmt.Percent(OfflineEfficiency)))
+		ge.addLog(OfficeStores, "info", rowid.Sprintf("game.engine.applyOfflineProgress.02", "Offline progress (at %s efficiency):", textfmt.Percent(OfflineEfficiency)))
 		for _, res := range sortedKeys(gains) {
-			ge.addLog("info", "  +"+Amount(gains[res], res))
+			ge.addLog(OfficeStores, "info", "  +"+Amount(gains[res], res))
 		}
 	}
 	if !starts.empty() {
-		ge.addLog("info", rowid.Line("game.engine.applyOfflineProgress.03", "While you were away, your plan ")+starts.describe(ge.rules)+".")
+		ge.addLog(OfficeStores, "info", rowid.Line("game.engine.applyOfflineProgress.03", "While you were away, your plan ")+starts.describe(ge.rules)+".")
 	}
 	if staffed.any() {
-		ge.addLog("info", rowid.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
+		ge.addLog(OfficeStores, "info", rowid.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
 	}
 }
 
@@ -5301,7 +5354,7 @@ func (ge *GameEngine) StartTradeRoute(key string) error {
 		return err
 	}
 	ge.useFeature(routeFeatures(key)...)
-	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.StartTradeRoute.01", "Trade route started: %s.", ge.rules.Name(rules.KindRoute, key)))
+	ge.addLog(OfficeTrade, LogRoutine, rowid.Sprintf("game.engine.StartTradeRoute.01", "Trade route started: %s.", ge.rules.Name(rules.KindRoute, key)))
 	return nil
 }
 
@@ -5313,7 +5366,7 @@ func (ge *GameEngine) StopTradeRoute(key string) error {
 	if err := ge.Trade.StopRoute(key); err != nil {
 		return err
 	}
-	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.StopTradeRoute.01", "Trade route stopped: %s.", ge.rules.Name(rules.KindRoute, key)))
+	ge.addLog(OfficeTrade, LogRoutine, rowid.Sprintf("game.engine.StopTradeRoute.01", "Trade route stopped: %s.", ge.rules.Name(rules.KindRoute, key)))
 	return nil
 }
 
@@ -5340,7 +5393,7 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 	if cost > 0 {
 		ge.Resources.Remove("gold", cost)
 	}
-	ge.addLog("info", diplomaticStatusLine(ge.rules.Name(rules.KindCiv, factionKey), status, cost))
+	ge.addLog(OfficeDiplomacy, "info", diplomaticStatusLine(ge.rules.Name(rules.KindCiv, factionKey), status, cost))
 	ge.note(config.BadgeEvCivStatus, status)
 	if status == "allied" {
 		met, allied := 0, 0
@@ -5376,7 +5429,7 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	}
 	ge.useFeature(config.FeatureDiplomacy)
 	ge.Resources.Remove("gold", cost)
-	ge.addLog(LogRoutine, rowid.Sprintf("game.engine.SendGift.01", "Sent the %s a gift: %s, opinion %s.",
+	ge.addLog(OfficeDiplomacy, LogRoutine, rowid.Sprintf("game.engine.SendGift.01", "Sent the %s a gift: %s, opinion %s.",
 		ge.rules.Name(rules.KindCiv, factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	ge.note(config.BadgeEvGiftSent, factionKey)
 	return nil
@@ -5396,8 +5449,8 @@ func (ge *GameEngine) SendTribute(factionKey string) error {
 	}
 	ge.Resources.Remove("gold", goldCost)
 	ge.Resources.Remove("culture", cultureCost)
-	ge.addLog("success", rowid.Sprintf("game.engine.SendTribute.01", "Paid the %s a tribute of %s. The war is over.",
-		ge.rules.Name(rules.KindCiv, factionKey), Amounts(map[string]float64{"gold": goldCost, "culture": cultureCost})))
+	ge.addLog(OfficeDiplomacy, "success", rowid.Sprintf("game.engine.SendTribute.01", "Paid the %s a tribute of %s. The war is over.",
+		ge.rules.Name(rules.KindCiv, factionKey), Amounts(map[string]float64{"gold": goldCost, "culture": cultureCost})), logHead)
 	ge.noteWars(true)
 	return nil
 }
@@ -5416,9 +5469,9 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 	name := ge.rules.Name(rules.KindCiv, factionKey)
 	ge.noteWars(false)
 	if started {
-		ge.addLog("warning", rowid.Sprintf("game.engine.RaidCivRoute.01", "You raided a %s trade route. They declared war.", name))
+		ge.addLog(OfficeDiplomacy, "warning", rowid.Sprintf("game.engine.RaidCivRoute.01", "You raided a %s trade route. They declared war.", name))
 	} else {
-		ge.addLog("warning", rowid.Sprintf("game.engine.RaidCivRoute.02", "You raided a %s trade route. Opinion %s.",
+		ge.addLog(OfficeDiplomacy, "warning", rowid.Sprintf("game.engine.RaidCivRoute.02", "You raided a %s trade route. Opinion %s.",
 			name, textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	}
 	return nil
@@ -5494,7 +5547,7 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 	case ge.Buildings.GetCount(key) > 0:
 		line += rowid.Line("game.engine.upgradeBuildingLocked.05", " The next copy costs ") + Amounts(ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)) + "."
 	}
-	ge.addLog(LogRoutine, line)
+	ge.addLog(OfficeBuilding, LogRoutine, line)
 	return nil
 }
 
@@ -5725,4 +5778,30 @@ func (ge *GameEngine) cheapestTechPrice() float64 {
 		}
 	}
 	return least
+}
+
+// foodWarningTicks is how far ahead the early food warning looks: ten
+// minutes of game time.
+const foodWarningMinutes = 10
+
+// foodWarning says once, ahead of the shortage, that the stock of food will
+// be gone in under ten minutes at the present rate, and says when the
+// shortage is over. If the stock runs out first the starvation lines take
+// over and the warning is closed quietly. Under the write lock.
+func (ge *GameEngine) foodWarning() {
+	food, rate := ge.Resources.Get("food"), ge.Resources.GetRate("food")
+	secs := ge.tickIntervalLocked().Seconds()
+	if ge.foodWarned {
+		if rate >= 0 || food <= 0 {
+			if rate >= 0 && food > 0 {
+				ge.addLog(OfficeStores, "info", rowid.Sprintf("game.engine.foodWarning.02", "Food is holding again after %s.", ge.durationLocked(ge.tick-ge.foodWarnTick)), logTrouble, logSubj("food"))
+			}
+			ge.foodWarned = false
+		}
+		return
+	}
+	if rate < 0 && food > 0 && secs > 0 && food/(-rate)*secs < foodWarningMinutes*60 {
+		ge.foodWarned, ge.foodWarnTick = true, ge.tick
+		ge.addLog(OfficeStores, "warning", rowid.Sprintf("game.engine.foodWarning.01", "Food will run out in about %s at this rate.", textfmt.Duration(time.Duration(food/(-rate)*secs*float64(time.Second)))), logTrouble, logSubj("food"))
+	}
 }

@@ -163,6 +163,9 @@ func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error
 		}
 	}
 
+	// Pictures go down first: a label keeps its cell's picture and writes its
+	// glyph over it, as the window draws it.
+	drawShotPics(img, b, cellW, cellH)
 	for cy := 0; cy < rows; cy++ {
 		for cx := 0; cx < cols; cx++ {
 			c := cells[cy*cols+cx]
@@ -173,6 +176,12 @@ func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error
 			p := paints[cy*cols+cx]
 			o := origin(cx, cy)
 			cell := image.Rect(o.X, o.Y, o.X+cellW, o.Y+cellH)
+			if c.Big != 0 { // the top left of a group at twice the size
+				cell.Max = cell.Max.Add(image.Pt(cellW, cellH))
+				if c.Wide {
+					cell.Max.X += 2 * cellW
+				}
+			}
 			switch {
 			case r >= 0x2580 && r <= 0x259F:
 				drawBlockElement(img, cell, r, p.fg, p.bg)
@@ -180,12 +189,13 @@ func screenImage(b *kit.Buffer, cellW, cellH int, load func() (*shotFonts, error
 				drawBoxLine(img, cell, r, p.fg)
 			case symbolShapes[r] != nil:
 				drawSymbol(img, cell, symbolShapes[r], p.fg)
+			case ferr == nil && c.Big != 0:
+				drawBigGlyph(img, sf, cell, r, p.fg, c.Attr&kit.Bold != 0)
 			case ferr == nil:
 				drawGlyph(img, sf, cell, r, p.fg, c.Attr&kit.Bold != 0)
 			}
 		}
 	}
-	drawShotPics(img, b, cellW, cellH)
 	return img
 }
 
@@ -350,6 +360,26 @@ func drawGlyph(img *image.RGBA, f *shotFonts, cell image.Rectangle, r rune, fg c
 		Dot:  fixed.P(cell.Min.X, base),
 	}
 	d.DrawString(string(r))
+}
+
+// drawBigGlyph draws a letter in a cell twice the size of the font's own: the
+// letter at its size, stretched to twice that without smoothing.
+func drawBigGlyph(img *image.RGBA, f *shotFonts, cell image.Rectangle, r rune, fg color.RGBA, bold bool) {
+	half := image.Rect(0, 0, cell.Dx()/2, cell.Dy()/2)
+	tmp := image.NewRGBA(half)
+	drawGlyph(tmp, f, half, r, fg, bold)
+	for y := cell.Min.Y; y < cell.Max.Y; y++ {
+		for x := cell.Min.X; x < cell.Max.X; x++ {
+			src := tmp.RGBAAt((x-cell.Min.X)/2, (y-cell.Min.Y)/2)
+			if src.A == 0 {
+				continue
+			}
+			dst := img.RGBAAt(x, y)
+			a := uint32(src.A) // the pixel is premultiplied
+			m := func(s, d uint8) uint8 { return uint8(uint32(s) + uint32(d)*(255-a)/255) }
+			img.SetRGBA(x, y, color.RGBA{m(src.R, dst.R), m(src.G, dst.G), m(src.B, dst.B), 255})
+		}
+	}
 }
 
 // blockMask says which quadrants a block element fills: bit 0 upper left,

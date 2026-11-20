@@ -1,17 +1,12 @@
 package ui
 
-import (
-	"strings"
-
-	"github.com/espresso20/ageforge/rowid"
-	"github.com/espresso20/ageforge/theme"
-)
+import "github.com/espresso20/ageforge/rowid"
 
 // panels_table.go is the Panels list as the rich layout shows it
 // (dash_layout.go): the panels in groups by what they are for, each with a
 // line on its job. The table below is the one place that wording lives.
-// TestPanelsTableCoversEveryPanel holds it to sidebarPanels, so a panel
-// added to the list has to be given a group and a line here.
+// TestPanelsTableCoversEveryPanel holds it to the panels' own names, so a
+// panel has to be given a group and a line here.
 
 // panelInfo is one panel: the command that opens it and what it is for.
 type panelInfo struct {
@@ -63,44 +58,3 @@ const (
 	// "milestones", "expedition" and so on at 10).
 	panelNameW = 10
 )
-
-// panelsRichWidth is the inner width the rich list needs: a space, the name
-// column, a space and the longest job line.
-func panelsRichWidth() int { return 1 + panelNameW + 1 + panelJobMax }
-
-// panelsRichRows is the rows the rich list needs inside the box: a heading
-// for each group and a row for each panel.
-func panelsRichRows() int {
-	n := 0
-	for _, g := range panelGroups {
-		n += 1 + len(g.panels)
-	}
-	return n
-}
-
-// panelsRichText is the rich Panels list for a box w cells wide and h rows
-// tall inside (w at least panelsRichWidth and h at least panelsRichRows):
-// a dim heading for each group, then a row for each panel, its name and
-// what it is for in the dim role, the open panel marked in its name. Rows
-// to spare go to blank lines between the groups, the last pair first.
-func panelsRichText(active string, w, h int) string {
-	spare := h - panelsRichRows()
-	var sb strings.Builder
-	for i, g := range panelGroups {
-		if i > 0 && spare >= len(panelGroups)-i {
-			sb.WriteString("\n")
-			spare--
-		}
-		sb.WriteString(" " + theme.Paint(theme.RoleDim, strings.ToUpper(g.title.String())) + "\n")
-		for _, p := range g.panels {
-			name := p.name + strings.Repeat(" ", max(0, panelNameW-len(p.name)))
-			row := " [white]" + name + "[-] "
-			if p.name == active {
-				row = theme.Selected(" "+name) + " "
-			}
-			// The whole row is the panel's: a click anywhere on it opens the panel.
-			sb.WriteString(panelLink(p.name, row+theme.Paint(theme.RoleDim, fitText(p.job.String(), max(0, w-1-panelNameW-1)))) + "\n")
-		}
-	}
-	return sb.String()
-}

@@ -90,8 +90,9 @@ func TestMiniMapFitsAndHides(t *testing.T) {
 }
 
 // TestMiniMapIsASquareUnderPanels: the mini map is in the right column under
-// the Panels list, about square on screen (columns to rows 2.1 to 1), and the
-// Buildings list keeps the whole middle column. On a small window the mini
+// the Panels list, as tall as richMapRows says (about 47% of the column's
+// width, at most the body less 18 rows), and the Buildings list is the top of
+// the middle column, level with the Panels list. On a small window the mini
 // map is not shown and the Panels list is whole; minimap off hides it.
 func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
@@ -107,52 +108,54 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 		if !d.body.miniShown {
 			t.Fatalf("%dx%d: no mini map", sz[0], sz[1])
 		}
-		px, py, pw, ph := d.sidebar.GetRect()
+		px, py, pw, ph := d.nextBox.GetRect()
 		mx, my, mw, mh := d.miniMap.GetRect()
 		bx, by, bw, bh := d.economyTab.buildBox.GetRect()
 		if mx != px || mw != pw || my != py+ph {
 			t.Errorf("%v: mini map %d,%d %dx%d is not under the Panels list %d,%d %dx%d", sz, mx, my, mw, mh, px, py, pw, ph)
 		}
-		if inner, want := mh-2, float64(mw)/2.1; float64(inner) < want-1 || float64(inner) > want+1 {
-			t.Errorf("%v: mini map picture is %d rows for %d columns, want about %.1f", sz, inner, mw, want)
+		if want := richMapRows(mw, ph+mh); mh != want {
+			t.Errorf("%v: mini map is %d rows for %d columns, want %d", sz, mh, mw, want)
 		}
-		if by != py || bx+bw > mx || bh != ph+mh {
-			t.Errorf("%v: Buildings at %d,%d %dx%d is not the whole middle column (Panels %d,%d, %d rows with the map)", sz, bx, by, bw, bh, px, py, ph+mh)
+		if by != py || bx+bw > mx || bh >= ph+mh {
+			t.Errorf("%v: Buildings at %d,%d %dx%d is not the top of the middle column (Panels %d,%d, %d rows with the map)", sz, bx, by, bw, bh, px, py, ph+mh)
 		}
 	}
 	// 153x41 and 120x37, the default windows of a 1080p monitor and a
-	// 14-inch laptop: the map keeps its square (the list goes to two
+	// 14-inch laptop: the map is shown at its row rule (the list goes to two
 	// columns for it), and every panel is listed.
 	for _, sz := range [][2]int{{153, 41}, {120, 37}} {
 		txt := draw(sz[0], sz[1])
-		_, _, mw, mh := d.miniMap.GetRect()
-		if want := float64(mw) / 2.1; !d.body.miniShown || float64(mh-2) < want-1.5 || strings.Contains(txt, "PROGRESS") {
-			t.Errorf("%v: shown = %v with %d picture rows for %d columns; want a square map\n%s", sz, d.body.miniShown, mh-2, mw, txt)
+		_, py, _, ph := d.nextBox.GetRect()
+		_, my, mw, mh := d.miniMap.GetRect()
+		if want := richMapRows(mw, my+mh-py); !d.body.miniShown || mh != want || my-py != ph || strings.Contains(txt, "PROGRESS") {
+			t.Errorf("%v: shown = %v with %d rows for %d columns; want %d under the list\n%s", sz, d.body.miniShown, mh, mw, want, txt)
 		}
-		for _, name := range sidebarPanels {
+		for _, name := range panelNames() {
 			if !strings.Contains(txt, name) {
 				t.Errorf("%v: the Panels list has lost %q", sz, name)
 			}
 		}
 	}
-	// 192x49: the list keeps its own form and the box is shorter than
-	// square, with at least ten picture rows (case B). (The header is two
-	// rows shorter than the top it replaced on a tall window, so the rows
-	// the case had at 51 are these at 49.)
-	draw(192, 49)
-	if _, _, _, mh := d.miniMap.GetRect(); !d.body.miniShown || mh-2 < 10 || mh >= 18 {
-		t.Errorf("192x49: mini map shown = %v, %d rows; want a box under square with 10 picture rows or more", d.body.miniShown, mh)
+	// 192x52: the map has the rows the rule gives it and the list keeps
+	// every panel.
+	txt192 := draw(192, 52)
+	_, py192, _, ph192 := d.nextBox.GetRect()
+	_, my192, mw192, mh192 := d.miniMap.GetRect()
+	if want := richMapRows(mw192, my192+mh192-py192); !d.body.miniShown || mh192 != want || my192-py192 != ph192 {
+		t.Errorf("192x52: mini map shown = %v, %d rows for %d columns, want %d", d.body.miniShown, mh192, mw192, want)
 	}
-	if txt := draw(192, 49); !strings.Contains(txt, "PROGRESS") {
-		t.Errorf("192x49: the Panels list lost its grouped form\n%s", txt)
+	for _, name := range panelNames() {
+		if !strings.Contains(txt192, name) {
+			t.Errorf("192x52: the Panels list has lost %q", name)
+		}
 	}
-	// 160x42: the list steps down a form (a name a row, no groups) so the
-	// map can show, and every panel is still listed (case D).
+	// 160x42: the map shows and every panel is still listed (case D).
 	txt := draw(160, 42)
-	if !d.body.miniShown || strings.Contains(txt, "PROGRESS") {
-		t.Errorf("160x42: shown = %v, or the list kept its grouped form\n%s", d.body.miniShown, txt)
+	if !d.body.miniShown {
+		t.Errorf("160x42: the mini map is not shown\n%s", txt)
 	}
-	for _, name := range sidebarPanels {
+	for _, name := range panelNames() {
 		if !strings.Contains(txt, name) {
 			t.Errorf("160x42: the Panels list has lost %q\n%s", name, txt)
 		}
@@ -168,7 +171,7 @@ func TestMiniMapIsASquareUnderPanels(t *testing.T) {
 	if d.body.miniShown || strings.Contains(txt, "┌ Map ─") {
 		t.Errorf("100x30: the mini map shows\n%s", txt)
 	}
-	for _, name := range sidebarPanels {
+	for _, name := range panelNames() {
 		if !strings.Contains(txt, name) {
 			t.Errorf("100x30: the Panels list has lost %q\n%s", name, txt)
 		}

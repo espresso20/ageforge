@@ -34,7 +34,7 @@ import (
 const sweepTimeout = 4 * time.Second
 
 // sweepOverlays are the panel commands a player can type, and the overlay each
-// should open. The first block mirrors the sidebar list (buildSidebarText).
+// should open. The first block mirrors the Panels list (panelGroups).
 var sweepOverlays = []struct{ cmd, overlay string }{
 	{"milestones", "milestones"},
 	{"badges", "badges"},

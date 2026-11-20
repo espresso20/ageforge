@@ -31,7 +31,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 
 | Key | What it does |
 |---|---|
-| `Tab` | Take the completion. Press it again for the next one (`Shift+Tab` goes back). When more can follow (`plan build `), a space comes with it. |
+| `Tab` | On an empty line of the main view, write the next step's command (the one the Next card shows) into the line; Enter runs it. In a panel, `Tab` is the panel's. With text on the line, take the completion. Press it again for the next one (`Shift+Tab` goes back). When more can follow (`plan build `), a space comes with it. |
 | `→` | Take the completion, when the cursor is at the end of the line. |
 | `Enter` | If the line is already a whole command, run it exactly as typed. If not, and the completion makes it one, run the completion (`adv` runs `advance`). Otherwise run the line as typed, and the game says what is wrong with it. |
 | `↑` / `↓` | Step back and forward through the last 50 commands you ran. |
@@ -42,7 +42,7 @@ In the window the Factions panel has a button for each `diplomacy` verb and trad
 
 Most panels leave the prompt working while they are open, and take only the keys that print nothing. The Wonders, Harbinger and Plan panels use letter keys, so press `Esc` to close one before you type a command. In the window a click closes a panel too: on `Esc close` at its foot, or on the `×` in its top right corner. A right click closes a panel too: it does what `Esc` does on a panel, a dialog or a page, and nothing on the dashboard with no panel open. In a panel that is longer than the screen, `↑`, `↓`, `PgUp`, `PgDn`, `Home` and `End` scroll it while the prompt is empty. In the window the mouse wheel scrolls it as well.
 
-With no panel open, `PgUp` and `PgDn` turn the Buildings list a page of whole entries (the box says how many are above and below). `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. `Esc` saves your game to its own save and returns to the main menu. The Help panel lists every key.
+With no panel open, `PgUp` and `PgDn` turn the Buildings list a page of whole entries (the box says how many are above and below). `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. `Esc` opens the pause card: the game stops, the town dims, and the card offers Resume (`Esc`), Settings (`S`), Save (`V`) and Main menu (`M`), which saves and returns to the main menu. Time spent paused is not play time and is not offline time. Settings holds the text size, window mode, font and theme, the motion, mini map and map glyph settings, and the key list; `Esc` there goes back to the card. The Help panel lists every key.
 
 A keyboard with no Page Up, Page Down, Home or End (a Mac's, for one) is covered too. `Option+↑` and `Option+↓` work as `PgUp` and `PgDn`, and `Option+←` and `Option+→` as `Home` and `End`, on the dashboard and in every panel. Other keyboards can use `Alt` for the same chords. In the Map, `-` and `=` zoom with no modifier at all.
 
@@ -50,7 +50,13 @@ A keyboard with no Page Up, Page Down, Home or End (a Mac's, for one) is covered
 
 The log in the main window says what each command did and what happened in the game: a build started, queued or finished, a gather, a sale, workers recruited or assigned, a share of the roster set, what the roster routine does (`Roster: recruited 3 workers (population 12/20), put 2 idle workers to work.`), a trade, a research started, a plan item added, and events, milestones, age advances, harbingers, warnings and errors. Each line starts with what happened, with no tick number. Routine confirmations are in the plain text color, so events, warnings and errors stand out.
 
-The Logs panel (`logs`) shows the last 50 of the same lines with the tick each one happened on and a mark for its kind: `[*]` an event, `[+]` a success, `[i]` a note, `[!]` a warning, `[X]` an error, and `·` a routine confirmation. Under the lines it shows the tick, age, population, food use and game speed, then your active events, build queue, research and worker assignments.
+The Logs panel (`logs`) is a roll of what happened beside a slate of the town as it stands. The game keeps and saves the last 2,000 lines, folding a repeated line into one with a count (`x8`) and writing a mark where a saved game was loaded.
+
+- **The roll** groups lines under "The last ten minutes", "The last hour", then a band for each day, each band with a summary on its right. An age or epoch starts with a banner. A line has its time, its mark, what happened, what it paid and what it gained. `Space` or a click opens a line to show what was paid, gained and taken, with `Enter` to go to the panel the line is about and `O` to keep only lines like it.
+- **Offices** (Building, Research, Plan, People, Stores, Trade, Diplomacy, Army, World, Game) are on the left, each with a count and a red dot when something new came in. Click one or type its name to show or hide it; `A` shows all and the strip's "none" hides all.
+- **Detail** has three notches: `1` Headlines (ages, wonders, disasters), `2` Town (adds builds, tech, trade and trouble) and `3` Everything (adds each copy, every run and every save).
+- **Find** (`F`) keeps the lines with a word; `N` jumps to the newest line and `Esc` closes the panel.
+- **The slate** says what is under way (builds grouped by building, with the soonest time, and the research), what is wrong, what comes next, the stores with their rates and how long a falling one lasts, and a tally of this sitting.
 
 ---
 
@@ -101,7 +107,7 @@ The plan is a list of builds and techs that the game starts for you, in order, a
 
 | Command | Description |
 |---|---|
-| `plan` | Open the Plan panel: the queue, the detail of each item and an optimize preview. |
+| `plan` | Open the Plan panel: the queue, a schedule bar for each item, the sheet of the picked item and an optimize preview. |
 | `plan build <building> [count]` | Add copies of a building of this age or the next (default 1). The next age's buildings wait for the advance. Adding more of the building at the end of the plan adds to that item. |
 | `plan upgrade <building> [count\|all]` | Plan upgrades for copies you hold (default 1). Each copy upgrades as soon as its price can be paid. |
 | `plan research <tech>` (or `plan res`) | Add a tech and, before it, the techs it still needs (see [The research queue](plan.md#the-research-queue)). Techs start one at a time, in plan order. It takes any tech you can see on your tech tree: a tech of a later age waits for its age. |
@@ -113,6 +119,12 @@ The plan is a list of builds and techs that the game starts for you, in order, a
 | `plan optimize` (or `plan reorder`) | Reorder the planned buildings for the fastest growth, mixing homes and producers, and say how much sooner the plan finishes. It only keeps an order that is faster. See [Optimizing the order](plan.md#optimizing-the-order). |
 | `plan up <n>` | Move item `n` one place up. |
 | `plan down <n>` | Move item `n` one place down. |
+| `plan top <n>` | Move item `n` to the top of the plan. |
+| `plan bottom <n>` | Move item `n` to the bottom of the plan. |
+| `plan move <n> <place>` | Move item `n` to place number `place`. |
+| `plan count <n> <count>` | Set how many copies build or upgrade item `n` holds. |
+| `plan pause` | Stop the plan from starting anything. Items keep their place and hold nothing back. Saved with the game. |
+| `plan resume` | Let the plan run again. |
 | `plan clear` | Empty the plan. |
 
 ```
@@ -130,10 +142,14 @@ In the Plan panel:
 
 | Key | Action |
 |---|---|
-| `↑` / `↓` (or `K` / `J`), `PgUp` / `PgDn` | Pick an item, or page |
+| `↑` / `↓`, `PgUp` / `PgDn`, `Home` / `End` | Pick an item, or page |
+| `Tab` / `Shift+Tab` | Switch the sheet's tab |
 | `A` | Add an item by name (`Enter` adds it below the pick, `Esc` cancels) |
 | `+` / `-` | Change the count of a build or upgrade item |
+| `N` or a digit | Type the count of the picked item |
 | `U` / `D` | Move the picked item up or down |
+| `T` / `B` | Move the picked item to the top or the bottom |
+| `P` | Pause or resume the plan |
 | `X` (or `Delete`) | Remove the picked item |
 | `O` | Preview plan optimize (`Enter` keeps it, `Esc` closes) |
 | `C` | Clear the plan. Press a capital `C` twice. |
@@ -180,7 +196,7 @@ roster auto
 workers auto-recruit off
 ```
 
-The People panel leaves the prompt working. `←` and `→` switch between its Overview, Work, Army and Scholars tabs, `↑` and `↓` pick a row, and `Esc` closes it.
+The People panel leaves the prompt working. `←` and `→` switch between its Overview, Work, Army and Scholars tabs, `↑` and `↓` pick a row, and `Esc` closes it. On the Work tab `A` puts every domain on auto (`roster auto`), `B` opens the buildings panel and `G` turns auto-recruit on or off. On any tab `T` opens the research board; on the Work tab `Enter` closes or opens the picked area's detail.
 
 See [People](workers-and-domains.md) for the domain table and the efficiency formula.
 
@@ -276,7 +292,7 @@ In the window a click on an offer's pin highlights it, a double click asks to se
 |---|---|
 | `trade` | Open the Trade routes panel. |
 | `trade route` (or `trade route list`) | List your active trade routes and the routes you can start. |
-| `trade route start <route>` | Start a trade route. Routes wait for The Wheel, a Bronze Age tech. The Rail Freight route also waits for Railroads, and the Warp Commerce route for Interstellar Trade. |
+| `trade route start <route\|all>` | Start a trade route, or every route you could start. Routes wait for The Wheel, a Bronze Age tech. The Rail Freight route also waits for Railroads, and the Warp Commerce route for Interstellar Trade. |
 | `trade route stop <route>` | Stop an active trade route. |
 | `blackmarket` (or `bm`) | Show the black market's status: its culture cost, the odds and the wait between runs. It opens in the Colonial Age. |
 | `blackmarket <resource>` | Make a smuggling run: spend culture for the same worth in the chosen resource. Five runs in six go through. The sixth time the smugglers vanish with the culture. It waits for the Mercantilism tech. |
@@ -496,7 +512,11 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 |---|---|
 | `status` (or `s`) | Print a status summary: age and game time, every unlocked resource with amount and rate, and your population by class with idle counts, food drain and assignments. |
 | `rates` | Print where each resource's rate comes from: buildings, the [worker output bonus](workers-and-domains.md#worker-output-bonuses), research, events, trade, bonuses, the [Cosmic Legacy](prestige.md#cosmic-legacy), [Era Mastery](prestige.md#era-mastery), prestige and food drain, plus what teaching adds. When a limit holds a bonus pool below what it has earned it says both: `All production: -140% earned, -90% counts.` (see [The all-production pool](resources.md#the-all-production-pool)). |
-| `logs` | Open the Logs panel: recent game log entries with their tick numbers (see [The log](#the-log)). |
+| `logs` | Open the Logs panel at the town level: a roll of what happened and a slate of the town (see [The log](#the-log)). |
+| `logs headlines`, `logs town`, `logs everything` | Open it at that level of detail. |
+| `logs <office>` | Open it on one office, such as `logs trade` or `logs research`. |
+| `logs all` | Open it on every office. |
+| `logs find <words>` | Open it on a search; bare `logs find` clears the search. |
 | `dump` | Export the logs to a file for debugging, in the `logs/` folder of your active account (`data/accounts/<id>/logs/`). The export has the raw tick counts. |
 | `help` | Open the Help panel: the keys, every command and the list of panels. |
 

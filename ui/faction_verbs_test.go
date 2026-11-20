@@ -203,7 +203,9 @@ func TestFactionTributeIsOffOneGoldShortAndOnAtThePrice(t *testing.T) {
 	}
 }
 
-func TestFactionDealButtonCarriesAcceptAndIsOffWhenTaken(t *testing.T) {
+// A card gives its open offers one line and a button to Trade; it has no
+// accept of its own, and a taken offer is not counted.
+func TestFactionOffersLineOpensTrade(t *testing.T) {
 	s := stageFactions(t, 0, func(st *game.GameState, key string) {
 		setFaction(st, key, func(f *game.FactionInfo) {
 			f.Deals = []game.DealInfo{
@@ -213,15 +215,17 @@ func TestFactionDealButtonCarriesAcceptAndIsOffWhenTaken(t *testing.T) {
 			f.DealsBlocked = ""
 		})
 	})
-	one := s.button(t, diplomacyCmd+"accept "+s.key+" 1")
-	two := s.button(t, diplomacyCmd+"accept "+s.key+" 2")
-	if one.off || !two.off {
-		t.Fatalf("offers: first off=%v, taken off=%v", one.off, two.off)
+	if !strings.Contains(s.fv.text, "1 offer open") {
+		t.Errorf("the card lacks its offers line:\n%s", s.fv.text)
 	}
-	s.click(one)
-	s.click(two)
-	if len(s.ran) != 1 || s.ran[0] != one.cmd {
-		t.Errorf("ran %q, want only %q", s.ran, one.cmd)
+	s.click(s.button(t, "trade"))
+	if len(s.ran) != 1 || s.ran[0] != "trade" {
+		t.Errorf("ran %q, want the Trade panel", s.ran)
+	}
+	for _, b := range s.fv.grid.keyset().keys {
+		if strings.HasPrefix(b.cmd, diplomacyCmd+"accept") {
+			t.Errorf("the card has an accept button: %q", b.cmd)
+		}
 	}
 }
 

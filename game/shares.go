@@ -339,7 +339,7 @@ func (ge *GameEngine) recruitFood() (net, perWorker, margin float64) {
 // before Era Mastery multiplies the net rate, read off a food rate and its
 // breakdown. On known ground the rate is k times what is made less what is
 // eaten, while a worker's food (FoodCostPerWorker) and what a food worker
-// grows (foodPerWorker) are per tick before k. Compared as they stood, the
+// grows (workerGain) are per tick before k. Compared as they stood, the
 // rate looked k times richer than it was, and the routine recruited more
 // workers than the food fed. Breakdown.FoodDrain is minus the drain the
 // last rates counted.
@@ -355,25 +355,28 @@ func FoodBeforeMastery(rate float64, b RateBreakdown) float64 { return foodBefor
 // worker output bonus (which is added to them, not multiplied), read off the
 // last rates, times the tech layer's factor on food, times the Cosmic
 // Legacy's.
-func (ge *GameEngine) foodWorkerFactor() float64 {
+func (ge *GameEngine) foodWorkerFactor() float64 { return ge.workerFactor("food") }
+
+// workerFactor is foodWorkerFactor for any resource res.
+func (ge *GameEngine) workerFactor(res string) float64 {
 	bonuses := 1.0
-	if r := ge.Resources.resources["food"]; r != nil && r.Breakdown.BuildingRate > 0 {
+	if r := ge.Resources.resources[res]; r != nil && r.Breakdown.BuildingRate > 0 {
 		bonuses = math.Max(0, 1+r.Breakdown.BonusRate/r.Breakdown.BuildingRate)
 	}
-	return float64(float64(float64(ge.moraleMultiplier()*math.Max(0, bonuses+ge.workerBonus))*ge.Research.OutputFactor("food")) * ge.cosmicLegacyFactor())
+	return float64(float64(float64(ge.moraleMultiplier()*math.Max(0, bonuses+ge.workerBonus))*ge.Research.OutputFactor(res)) * ge.cosmicLegacyFactor())
 }
 
-// foodPerWorker is the food one more worker in building key grows a tick: a
-// full building makes five times an empty one, so each slot adds 80% of the
-// building's food over its slots, times factor (foodWorkerFactor).
-func (ge *GameEngine) foodPerWorker(key string, factor float64) float64 {
+// workerGain is the res one more worker in building key makes a tick: a full
+// building makes five times an empty one, so each slot adds 80% of the
+// building's res over its slots, times factor (workerFactor).
+func (ge *GameEngine) workerGain(key, res string, factor float64) float64 {
 	def := ge.Buildings.defs[key]
 	if def.WorkerCapacity <= 0 {
 		return 0
 	}
 	out := 0.0
 	for _, eff := range def.Effects {
-		if eff.Type == "production" && eff.Target == "food" {
+		if eff.Type == "production" && eff.Target == res {
 			out += eff.Value
 		}
 	}
@@ -389,11 +392,41 @@ func (ge *GameEngine) foodGainAt(sv *staffView, k int, factor float64) float64 {
 	for _, key := range sv.blds[sv.food] {
 		free := ge.slotsFree(key)
 		if k < free {
-			return ge.foodPerWorker(key, factor)
+			return ge.workerGain(key, "food", factor)
 		}
 		k = max(0, k-free)
 	}
 	return 0
+}
+
+// oneMoreLocked sets OneMore on every building of a snapshot that has a free
+// job: what one more worker adds to each resource it makes. Caller holds the
+// lock.
+func (ge *GameEngine) oneMoreLocked(bs map[string]BuildingState) map[string]BuildingState {
+	factor := map[string]float64{}
+	for key, b := range bs {
+		if b.WorkerCapacity <= 0 || b.WorkersAssigned >= b.Count*b.WorkerCapacity {
+			continue
+		}
+		for _, eff := range ge.Buildings.defs[key].Effects {
+			if eff.Type != "production" {
+				continue
+			}
+			f, ok := factor[eff.Target]
+			if !ok {
+				f = ge.workerFactor(eff.Target)
+				factor[eff.Target] = f
+			}
+			if g := ge.workerGain(key, eff.Target, f); g != 0 {
+				if b.OneMore == nil {
+					b.OneMore = map[string]float64{}
+				}
+				b.OneMore[eff.Target] = g
+			}
+		}
+		bs[key] = b
+	}
+	return bs
 }
 
 // staffCounts is what one run of the routine did.
@@ -428,6 +461,10 @@ func (ge *GameEngine) staffByShares(recruit bool) staffCounts {
 		// pass.
 		room = ge.popCapLocked() - ge.popLocked()
 		reserve = popGrowthStep(ge.popLocked())
+		if free <= 0 && ge.growthPausedLocked() {
+			// The waiting are as many as those at work and no job is open.
+			room = 0
+		}
 		if room > 0 && free <= 0 {
 			// Nowhere to put them: the newcomers join the reserve, which only
 			// the food margin can refuse.
@@ -446,9 +483,22 @@ func (ge *GameEngine) staffByShares(recruit bool) staffCounts {
 	c.moved = ge.drainZeroShares(sv)
 	c.placed = ge.placeIdle(sv)
 	if room > 0 {
+		if ge.growthPausedLocked() {
+			// Only open jobs fill; nobody new joins the waiting.
+			reserve = 0
+		}
 		c.hired = ge.recruitByShares(sv, room, reserve)
 	}
 	return c
+}
+
+// growthPausedLocked reports whether automatic growth into the waiting group
+// is paused: someone waits and the waiting are at least as many as those at
+// work. Caller holds the lock.
+func (ge *GameEngine) growthPausedLocked() bool {
+	idle := ge.Workers.IdleCount()
+	working := max(0, ge.popLocked()-idle-ge.scholarTotal()-ge.soldierTotal())
+	return idle >= 1 && idle >= working
 }
 
 // zeroShareStaffed reports whether a domain set to 0 still has workers, so
@@ -634,7 +684,7 @@ func (ge *GameEngine) foodLossOfOne(sv *staffView, factor float64) float64 {
 	keys := sv.blds[sv.food]
 	for j := len(keys) - 1; j >= 0; j-- {
 		if ge.Workers.GetAssignedCount(keys[j]) > 0 {
-			return ge.foodPerWorker(keys[j], factor)
+			return ge.workerGain(keys[j], "food", factor)
 		}
 	}
 	return 0
@@ -681,12 +731,13 @@ func (ge *GameEngine) keepSharesLive() {
 		return
 	}
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, txtRoster.String()+c.describe(ge.popLocked(), ge.popCapLocked())+".")
+	ge.addLog(OfficePeople, LogRoutine, txtRoster.String()+c.describe(ge.popLocked(), ge.popCapLocked())+".",
+		logID("game.shares.keepSharesLive.01"), logGot(LogAmt{"workers", float64(c.hired)}))
 	if before == 0 && c.hired > 0 {
 		// The first recruits of a run (or after everyone died): say once,
 		// as a note rather than a routine line, that this happens on its
 		// own.
-		ge.addLog("info", rowid.Line("game.shares.keepSharesLive.02", "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand."))
+		ge.addLog(OfficePeople, "info", rowid.Line("game.shares.keepSharesLive.02", "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand."))
 	}
 }
 
@@ -895,6 +946,7 @@ const (
 	HeldNone    = ""        // it can grow
 	HeldHousing = "housing" // no room in the housing
 	HeldFood    = "food"    // the food margin test fails (or the store is empty)
+	HeldWork    = "work"    // the waiting are as many as those at work and no job is open
 )
 
 // popHoldLocked says what holds the population back right now, with the net
@@ -911,6 +963,9 @@ func (ge *GameEngine) popHoldLocked() (by string, net float64, feeds int) {
 	case ge.Resources.Get("food") <= 0:
 		return HeldFood, net, feeds
 	case net-per >= margin:
+		if ge.growthPausedLocked() && ge.freeSlots() <= 0 {
+			return HeldWork, net, feeds
+		}
 		return HeldNone, net, feeds
 	}
 	// The food won't feed an idle villager, but a food building with a free
@@ -936,6 +991,7 @@ const (
 	RecruitHousing = "housing" // no housing left
 	RecruitFood    = "food"    // the food income won't feed another worker
 	RecruitStarve  = "starve"  // workers are starving
+	RecruitWork    = "work"    // the waiting are as many as those at work
 )
 
 // RecruitStatus says whether the routine can recruit right now, and if not
@@ -953,6 +1009,8 @@ func RecruitStatus(st GameState) string {
 		return RecruitStarve
 	case ws.HeldBy == HeldFood:
 		return RecruitFood
+	case ws.HeldBy == HeldWork:
+		return RecruitWork
 	}
 	return RecruitActive
 }

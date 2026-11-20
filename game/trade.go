@@ -50,6 +50,9 @@ type ActiveRoute struct {
 	// Starved is transient: true after a run was skipped because the exports
 	// were short, so the warning logs once per shortage, not every run.
 	Starved bool `json:"-"`
+	// Lost counts the runs a disruption or a shortage cost since the route
+	// last delivered: the log says so when it runs again.
+	Lost int `json:"-"`
 }
 
 // routeDisruptedBy returns the first imported resource of def that appears in the
@@ -116,6 +119,60 @@ func (tm *TradeManager) RoutePay(amount float64) float64 {
 	return amount
 }
 
+// RunPay is what one run brings in of an import listed at amount: the techs'
+// term plus bonus (the harbor and ally shares), each a share of the listed
+// amount. Tick pays from it and the state view reports it.
+func (tm *TradeManager) RunPay(amount, bonus float64) float64 {
+	return float64(amount * (tm.RoutePay(1) + bonus))
+}
+
+// PayShare is one share of a run's pay: a label, a percent of the listed
+// import, and where it comes from (ShareTech, ShareBuilding or ShareAlly).
+type PayShare struct {
+	Label   string
+	Percent float64
+	Kind    string
+}
+
+// The kinds of pay share.
+const (
+	ShareTech     = "tech"
+	ShareBuilding = "building"
+	ShareAlly     = "ally"
+)
+
+// RouteTerms is what the engine hands Snapshot beyond the routes: the harbor
+// bonus and its shares by building (sorted: percent, then label), and the
+// allies' bonus and shares for an imported resource.
+type RouteTerms struct {
+	Harbor       float64
+	HarborShares []PayShare
+	Ally         func(res string) (float64, []PayShare)
+}
+
+// payFor works out what a run of def pays for each import and the shares
+// behind it, through RunPay.
+func (tm *TradeManager) payFor(def config.TradeRouteDef, terms RouteTerms) (map[string]float64, map[string][]PayShare) {
+	pay := make(map[string]float64, len(def.Import))
+	shares := make(map[string][]PayShare, len(def.Import))
+	for res, amount := range def.Import {
+		bonus := terms.Harbor
+		list := []PayShare{}
+		if t := tm.RoutePay(1); t != 1 {
+			list = append(list, PayShare{Label: rowid.Line("game.trade.payFor.01", "techs"), Percent: float64((t - 1) * 100), Kind: ShareTech})
+		}
+		list = append(list, terms.HarborShares...)
+		if terms.Ally != nil {
+			b, ally := terms.Ally(res)
+			bonus += b
+			list = append(list, ally...)
+		}
+		pay[res] = tm.RunPay(amount, bonus)
+		shares[res] = list
+	}
+	return pay, shares
+}
+
 // RunTicks is how long one run of a route listed at ticks takes with the
 // techs' cut of route time: rounded down, one tick at least.
 func (tm *TradeManager) RunTicks(ticks int) int {
@@ -175,8 +232,8 @@ func (tm *TradeManager) ActiveRouteCount() int {
 // and passes it in. Disrupted routes (those importing a resource a hostile civ
 // specialises in — see DiplomacyManager.DisruptedResources) are skipped for the
 // cycle with a log line.
-func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64, research func(work float64) string) []string {
-	var messages []string
+func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64, research func(work float64) string) []logNote {
+	var messages []logNote
 
 	routes := tm.routeDefs
 
@@ -198,7 +255,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 
 		// Check building still meets requirements
 		if buildings.CountFrom(def.RequiredBld) < def.MinCount {
-			messages = append(messages, rowid.Sprintf("game.trade.Tick.01", "Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)))
+			messages = append(messages, note(rowid.Sprintf("game.trade.Tick.01", "Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)), logSubj(key), logTrouble))
 			delete(tm.activeRoutes, key)
 			continue
 		}
@@ -211,7 +268,8 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		if route.Disrupted {
 			route.TicksLeft--
 			if route.TicksLeft <= 0 {
-				messages = append(messages, rowid.Sprintf("game.trade.Tick.02", "Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)))
+				route.Lost++
+				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.02", "Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)), logSubj(key), logTrouble))
 				route.TicksLeft = tm.RunTicks(def.TicksPerRun)
 			}
 			continue
@@ -238,7 +296,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				if diplomacy != nil {
 					bonus += diplomacy.GetTradeBonus(res)
 				}
-				imports[res] = float64(amount * (tm.RoutePay(1) + bonus))
+				imports[res] = tm.RunPay(amount, bonus)
 			}
 
 			if canAfford {
@@ -248,29 +306,40 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 
 				// Add imports
+				got := make(map[string]float64, len(imports))
 				for res, actual := range imports {
 					if res == config.ResearchTarget {
 						if research != nil {
 							if said := research(actual); said != "" {
-								messages = append(messages, "  → "+def.Name+rowid.Line("game.trade.Tick.03", " gave ")+said+".")
+								messages = append(messages, note("  → "+def.Name+rowid.Line("game.trade.Tick.03", " gave ")+said+".", logSubj(key)))
 							}
 						}
 						continue
 					}
 					resources.Add(res, actual)
+					got[res] = actual
 				}
 
 				route.CyclesDone++
 				route.Starved = false
+				if route.Lost > 0 {
+					messages = append(messages, note(rowid.Sprintf("game.trade.Tick.05", "Trade route %s is running again after %s lost.", def.Name, textfmt.Count(route.Lost, rowid.Line("game.trade.Tick.06", "run"), rowid.Line("game.trade.Tick.07", "runs"))), logSubj(key), logAs("info")))
+					route.Lost = 0
+				}
+				messages = append(messages, note(rowid.Sprintf("game.trade.Tick.08", "%s delivered %s.", def.Name, Amounts(got)), logSubj(key), logID("game.trade.Tick.08"), logAs(LogRoutine),
+					logLevel(LevelEverything), logPaid(amts(def.Export)...), logGot(amts(got)...)))
 				// A completed cycle warms every civ you have met and are not at war with.
 				if diplomacy != nil {
 					diplomacy.RecordTrade()
 				}
-			} else if !route.Starved {
+			} else {
+				route.Lost++
+			}
+			if !canAfford && !route.Starved {
 				route.Starved = true
 				for _, res := range sortedKeys(def.Export) {
 					if resources.Get(res) < def.Export[res] {
-						messages = append(messages, rowid.Sprintf("game.trade.Tick.04", "%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)))
+						messages = append(messages, note(rowid.Sprintf("game.trade.Tick.04", "%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)), logSubj(key), logTrouble))
 						break
 					}
 				}
@@ -287,7 +356,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 // Snapshot returns the trade state for UI consumption. disrupted is the set of
 // resources currently blockaded by war/embargo (from DiplomacyManager); routes
 // importing one are flagged Disrupted so the overlay can warn the player.
-func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings *BuildingManager, disrupted map[string]bool) TradeState {
+func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings *BuildingManager, disrupted map[string]bool, terms RouteTerms) TradeState {
 	allRoutes := tm.routeDefs
 
 	// Active routes
@@ -301,6 +370,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		route := tm.activeRoutes[key]
 		def := allRoutes[key]
 		blockedBy := tm.routeDisruptedBy(def, disrupted)
+		pay, shares := tm.payFor(def, terms)
 		activeRoutes = append(activeRoutes, ActiveRouteInfo{
 			Name:        def.Name,
 			Key:         key,
@@ -311,6 +381,9 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			Import:      tm.routeImports(def),
 			Disrupted:   blockedBy != "",
 			DisruptedBy: blockedBy,
+			Starved:     route.Starved,
+			Pay:         pay,
+			Shares:      shares,
 		})
 		if blockedBy != "" && !seenDisrupt[blockedBy] {
 			seenDisrupt[blockedBy] = true
@@ -340,6 +413,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			continue
 		}
 		canStart := buildings.CountFrom(def.RequiredBld) >= def.MinCount
+		pay, shares := tm.payFor(def, terms)
 		availableRoutes = append(availableRoutes, TradeRouteInfo{
 			Name:        def.Name,
 			Key:         def.Key,
@@ -349,6 +423,9 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			RequiredBld: def.RequiredBld,
 			MinCount:    def.MinCount,
 			Description: def.Description,
+			CycleTicks:  tm.RunTicks(def.TicksPerRun),
+			Pay:         pay,
+			Shares:      shares,
 		})
 	}
 

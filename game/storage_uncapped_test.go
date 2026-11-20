@@ -312,8 +312,11 @@ func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
 	if got := config.Million - ge.Resources.Get(exp); math.Abs(got-def.Export[exp]) > 1e-6 {
 		t.Errorf("%s taken = %v, want the whole export %v", exp, got, def.Export[exp])
 	}
-	if len(msgs) != 0 {
-		t.Errorf("the run said %q, want silence", msgs)
+	ge.logNotes(OfficeTrade, "warning", msgs)
+	for _, e := range ge.log {
+		if e.Trouble {
+			t.Errorf("the run raised trouble: %q", e.Message)
+		}
 	}
 	if r := ge.Trade.activeRoutes["local_barter"]; r.CyclesDone != 1 || r.Starved {
 		t.Errorf("cycles %d, starved %v, want 1 and false", r.CyclesDone, r.Starved)

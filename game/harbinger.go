@@ -501,10 +501,10 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 		ge.harbinger = lp
 	}
 
-	ge.addLog("event", rowid.Sprintf("game.harbinger.harbingerArriveLastPassage.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), harbingerWarningText(ge.rules, "")))
+	ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.harbinger.harbingerArriveLastPassage.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
+		capFirst(def.Name), harbingerWarningText(ge.rules, "")), logHead)
 	for _, l := range ge.harbingerLinesTold(lp) {
-		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
+		ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 	ge.publishHarbinger(def, "", false)
 	return true
@@ -530,8 +530,8 @@ func (ge *GameEngine) harbingerHandoff() {
 	h.AnnouncedTier = tier
 	h.Lines, h.LineKeys = ge.harbingerSpeak(def, tier)
 
-	ge.addLog("event", rowid.Sprintf("game.harbinger.harbingerHandoff.01", "⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), warning))
+	ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.harbinger.harbingerHandoff.01", "⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
+		capFirst(def.Name), warning), logHead)
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, h.TargetEpoch, true)
 }
@@ -577,7 +577,7 @@ func (ge *GameEngine) harbingerLinesTold(h *HarbingerSave) []string {
 // harbingerLogLines writes the current figure's lines to the log in gray.
 func (ge *GameEngine) harbingerLogLines() {
 	for _, l := range ge.harbingerLinesTold(ge.harbinger) {
-		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
+		ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
 
@@ -1184,7 +1184,7 @@ func (ge *GameEngine) HarbingerAppease() error {
 	h.AppeaseLevel = level
 	def, _ := ge.rules.Harbinger(h.Age)
 	ge.report(Event{Kind: config.BadgeEvAppeased, Subject: def.Key, Attrs: map[string]float64{"level": float64(level)}})
-	ge.addLog("success", rowid.Sprintf("game.harbinger.HarbingerAppease.04", "⚑ %s (Appease %d/%d): paid %s. The chance it strikes is now %.2fx its base.",
+	ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.harbinger.HarbingerAppease.04", "⚑ %s (Appease %d/%d): paid %s. The chance it strikes is now %.2fx its base.",
 		def.AppeaseLabel, level, HarbingerMaxAppease, harbingerCostText(ge.rules, cost), ge.harbingerAppeaseMultiplier()))
 	ge.harbingerFlavorLog(flavor.HarbingerAppeased, "")
 	return nil
@@ -1213,10 +1213,10 @@ func (ge *GameEngine) HarbingerBrace() error {
 	def, _ := ge.rules.Harbinger(h.Age)
 	ge.report(Event{Kind: config.BadgeEvBraced, Subject: def.Key, Attrs: map[string]float64{"level": float64(level)}})
 	if h.TargetEpoch == "" {
-		ge.addLog("success", rowid.Sprintf("game.harbinger.HarbingerBrace.04", "⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
+		ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.harbinger.HarbingerBrace.04", "⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
 			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(ge.rules, cost), LastPassageKeepFor(level)*100, LastPassageKeep*100))
 	} else {
-		ge.addLog("success", rowid.Sprintf("game.harbinger.HarbingerBrace.05", "⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not %d%%) and %.0f%% of stock is kept (not %.0f%%).",
+		ge.addLog(OfficeWorld, "success", rowid.Sprintf("game.harbinger.HarbingerBrace.05", "⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not %d%%) and %.0f%% of stock is kept (not %.0f%%).",
 			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(ge.rules, cost), braceDestroyPct[level], braceDestroyPct[0], braceKeepFrac[level]*100, braceKeepFrac[0]*100))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerBraced, "")
@@ -1243,7 +1243,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 		Attrs: map[string]float64{"last": boolFact(h.TargetEpoch == "")}})
 	if h.TargetEpoch == "" {
 		ge.inviteCatastrophe()
-		ge.addLog("warning", rowid.Sprintf("game.harbinger.HarbingerInvite.02", "⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
+		ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.harbinger.HarbingerInvite.02", "⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
 			def.InviteLabel))
 	} else {
 		if f := ge.fate; f != nil && f.EpochKey == h.EpochKey {
@@ -1255,7 +1255,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 		if h.When == WhenThisAge {
 			when = rowid.Line("game.harbinger.HarbingerInvite.04", "before this age is out")
 		}
-		ge.addLog("warning", rowid.Sprintf("game.harbinger.HarbingerInvite.05", "⚑ %s: you have invited it. The catastrophe will come %s. This cannot be undone.",
+		ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.harbinger.HarbingerInvite.05", "⚑ %s: you have invited it. The catastrophe will come %s. This cannot be undone.",
 			def.InviteLabel, when))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerInvited, "")
@@ -1275,7 +1275,7 @@ func (ge *GameEngine) threadFlavorLog(h *HarbingerSave, moment flavor.Moment, ki
 	}
 	def, _ := ge.rules.Harbinger(h.Age)
 	if l := ge.flavorLine(flavor.Request{Moment: moment, Age: h.Age, Subject: def.Name, Kind: kind}); l != "" {
-		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
+		ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
 
@@ -1350,10 +1350,10 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 	if verdict != "" {
 		msg = verdict
 	}
-	ge.addLog("event", msg)
+	ge.addLog(OfficeWorld, "event", msg, logHead)
 	if came && h.BraceLevel > 0 && epochKey != "" {
 		ge.pendingBraceLevel = h.BraceLevel
-		ge.addLog("info", rowid.Sprintf("game.harbinger.settleHarbinger.09", "  Your preparations hold: if you Endure, %d%% of buildings fall and %.0f%% of stock is kept.",
+		ge.addLog(OfficeWorld, "info", rowid.Sprintf("game.harbinger.settleHarbinger.09", "  Your preparations hold: if you Endure, %d%% of buildings fall and %.0f%% of stock is kept.",
 			braceDestroyPct[h.BraceLevel], braceKeepFrac[h.BraceLevel]*100))
 	}
 	ge.threadFlavorLog(h, moment, kind)

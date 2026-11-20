@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rowid"
 )
 
@@ -26,9 +27,9 @@ func (d *Dashboard) showSaveChoiceModal() {
 		case 0: // "Overwrite"
 			name := d.engine.ActiveSaveName()
 			if err := d.engine.SaveGame(name); err != nil {
-				d.engine.AddLog("error", err.Error())
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", err.Error())
 			} else {
-				d.engine.AddLog("info", rowid.Line("ui.save_modal.showSaveChoiceModal.05", "[positive]Saved → ")+name)
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", rowid.Line("ui.save_modal.showSaveChoiceModal.05", "[positive]Saved → ")+name)
 			}
 			d.app.SetFocus(d.inputField)
 		case 1: // "Branch new"
@@ -36,9 +37,9 @@ func (d *Dashboard) showSaveChoiceModal() {
 				// showSaveNameModal validates the name format; BranchSave guards
 				// against an existing name and logs an error if it's taken.
 				if err := d.engine.BranchSave(name); err != nil {
-					d.engine.AddLog("error", err.Error())
+					d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", err.Error())
 				} else {
-					d.engine.AddLog("info", rowid.Line("ui.save_modal.showSaveChoiceModal.07", "[positive]Branched → ")+name+rowid.Line("ui.save_modal.showSaveChoiceModal.08", " (autosave now follows it)"))
+					d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", rowid.Line("ui.save_modal.showSaveChoiceModal.07", "[positive]Branched → ")+name+rowid.Line("ui.save_modal.showSaveChoiceModal.08", " (autosave now follows it)"))
 				}
 				d.app.SetFocus(d.inputField)
 			})

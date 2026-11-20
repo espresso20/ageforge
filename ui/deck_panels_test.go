@@ -133,7 +133,7 @@ func TestDeckPanelsOnTheDashboard(t *testing.T) {
 			t.Errorf("%s opened %q", name, d.overlayMgr.ActiveName())
 		}
 		cells := drawnDashboard(t, d, pages, 100, 30)
-		foot := rectText(cells, 100, 0, 30-promptRows-2, 100, 1)[0]
+		foot := rectText(cells, 100, 0, 30-barSmallRows-2, 100, 1)[0]
 		wants := []string{"Esc"}
 		if d.decks[name].pg.Hint != "" && !strings.Contains(foot, "PgUp") {
 			// The hint is dropped for the paging keys when the content scrolls.

@@ -33,9 +33,27 @@ var shameMessages = []rowid.Entry{
 // Dashboard is the main gameplay screen. The economy tab is the always-visible
 // background; named overlays (research, trade, military, etc.) are rendered on
 // top of it via the page stack. Only one overlay can be visible at a time.
-// promptRows is the command bar's height: one line inside its border. The
-// Map panel leaves these rows free, so the prompt works while it is open.
-const promptRows = 3
+// The command bar is barRows tall: a typed line at twice the size between
+// blank rows inside its border (6), or one line at normal size (3) when the
+// window is under barBigMinCols by barBigMinRows. Panels leave these rows
+// free, so the prompt works while one is open.
+const (
+	barBigMinCols = 120
+	barBigMinRows = 39
+	barBigRows    = 6
+	barSmallRows  = 3
+)
+
+// barRows is the command bar's height in a w by h window.
+func barRows(w, h int) int {
+	if w >= barBigMinCols && h >= barBigMinRows {
+		return barBigRows
+	}
+	return barSmallRows
+}
+
+// bar is the command bar's height in the window as it was last laid out.
+func (d *Dashboard) bar() int { return barRows(d.screenSize()) }
 
 // The dashboard's other fixed sizes: the rows over the boxes on the smallest
 // terminals (the header, dash_header.go; a bigger terminal gives it one
@@ -55,12 +73,11 @@ type Dashboard struct {
 	// Tabs (only economy is permanent background)
 	economyTab *EconomyTab
 
-	// Sidebar
-	sidebar       *fitView
-	sidebarActive string // the open panel, highlighted in the list
-	workerMiniTV  *fitView
-	peopleH       int  // the People box's height in the classic layout, border included: its lines
-	workerDetail  bool // the terminal has the rows for the People box's food detail line
+	// The Next card and the Panels list (the right column's top box)
+	nextBox      *fitView
+	workerMiniTV *fitView
+	peopleH      int  // the People box's height in the classic layout, border included: its lines
+	workerDetail bool // the terminal has the rows for the People box's food detail line
 
 	// Shared UI
 	logTV *nativeText
@@ -114,13 +131,24 @@ type Dashboard struct {
 
 	overlayMgr *OverlayManager
 	lastState  *game.GameState
+	// next is the next step, worked out from lastState once a refresh.
+	next nextStep
+	// panels is what the account has found and opened (panels_found.go).
+	panels panelView
+
+	// The lessons: the band above the Command box, what was learned and put
+	// off, and the counts some lessons read (lessons.go).
+	lessons                   lessonBook
+	bandBox                   *fitView
+	lessonCard, lessonPanel   string
+	lessonTyped, lessonListed int
 
 	// harbPanel is the Harbinger panel's UI state (feedback line, Invite
 	// confirmation). Owned by the UI goroutine.
 	harbPanel harbingerPanel
 	// planPanel is the Plan panel's UI state (selection, feedback line,
 	// Clear confirmation). Owned by the UI goroutine.
-	planPanel planPanel
+	planPanel *planPanel
 
 	// The maps: the shared model builder, the Map panel and the dashboard's
 	// mini map. UI goroutine only. mapLocal holds the
@@ -147,6 +175,8 @@ type Dashboard struct {
 	statsPanel *statsPanel
 	// historyPanel is the History panel: the metrics of the run.
 	historyPanel *historyPanel
+	// logsPanel is the Logs panel: the roll and the slate.
+	logsPanel *logsPanel
 
 	// decks are the panels drawn as decks of cards (deck_panel.go), by
 	// overlay name.
@@ -163,6 +193,9 @@ type Dashboard struct {
 	miniMap  *miniMap
 	body     *dashBody
 	mapLocal *mapSettings
+	// window is the window the game is in (nil in the terminal), for the
+	// pause card's display settings.
+	window WindowHost
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
 	mapOpen atomic.Bool
@@ -193,6 +226,8 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		peoplePanel:   newPeoplePanel(),
 		statsPanel:    newStatsPanel(),
 		historyPanel:  newHistoryPanel(),
+		planPanel:     newPlanPanel(),
+		logsPanel:     newLogsPanel(),
 		decks:         map[string]*deckPanel{},
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
@@ -203,7 +238,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.build()
 	d.retitle()
 	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
-		d.updateSidebar("")
 		d.returnFocus()
 	})
 	// The text panels' frames fold to ASCII with the map glyphs.
@@ -227,6 +261,8 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	// the command bar too.
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.handToPrompt
+	d.badgePanel.buttons.wire(d.app)
+	d.researchPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("badges", rowid.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
 	d.registerDeck("army", rowid.E("ui.dashboard.NewDashboard.04", "Army"), armyPage).draw = renderArmyField
 	// The Expeditions panel leaves the keyboard with the command bar too.
@@ -236,7 +272,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.expPanel.toPrompt = d.handToPrompt
 	d.expPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
-	d.registerDeck("trade", rowid.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeRoads
+	d.registerDeck("trade", rowid.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradePage).draw = renderTradeBoard
 	d.factions = &factionsView{}
 	d.overlayMgr.Register("factions", rowid.E("ui.dashboard.NewDashboard.07", "Factions"), d.factions.provider)
 	d.factions.wire(d.overlayMgr)
@@ -256,10 +292,17 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.peoplePanel.wire(d.app)
 	d.overlayMgr.RegisterWidget("people", rowid.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
-	d.overlayMgr.Register("logs", rowid.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
+	d.logsPanel.prompt = d.researchPanel.prompt
+	d.logsPanel.toPrompt = d.handToPrompt
+	d.logsPanel.buttons.wire(d.app)
+	d.logsPanel.focus = func() { d.overlayMgr.FocusOn(d.logsPanel) }
+	d.overlayMgr.RegisterWidget("logs", txtLogsTitle, d.logsPanel.open, d.logsPanel.update)
 	d.epochHall = &epochHall{
-		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
-		height: func() int { return d.overlayMgr.screenH },
+		tier: func() mapmodel.GlyphTier { return d.mapSettings().Tier },
+		height: func() int {
+			om := d.overlayMgr
+			return om.screenH - barRows(om.screenW, om.screenH) - d.bandRows(om.screenH)
+		},
 		motion: func() bool { return d.mapSettings().Motion },
 	}
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
@@ -290,18 +333,12 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 		return nil
 	})
 	d.planPanel.engine = d.engine
-	d.planPanel.height = func() int { return d.overlayMgr.screenH }
-	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
-	d.overlayMgr.SetFooter("plan", planFooter)
-	d.overlayMgr.SetKeyHandler("plan", func(event *kit.Key) *kit.Key {
-		// UI goroutine, no engine lock held (see the harbinger handler).
-		if !d.planPanel.handleKey(event, d.engine) {
-			return event
-		}
-		d.overlayMgr.Refresh(d.engine.GetState())
-		return nil
-	})
+	d.planPanel.prompt = d.researchPanel.prompt
+	d.planPanel.toPrompt = d.handToPrompt
+	d.planPanel.buttons.wire(d.app)
+	d.overlayMgr.RegisterWidget("plan", txtBuildPlan, d.planPanel.open, d.planPanel.update)
 	d.historyPanel.settings = d.mapSettings
+	d.peoplePanel.hist = d.engine.History
 	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
 		return d.engine.History(), d.engine.RunArchive(), d.engine.ActiveSaveName()
 	}
@@ -310,7 +347,9 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.historyPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("history", txtHistoryTitle, d.historyPanel.open, d.historyPanel.update)
 	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
-	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
+	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), func(st game.GameState, w int) string {
+		return helpProvider(d.lessonKeys(), st, w)
+	})
 
 	// The Map panel: the map full screen (map, and its aliases citymap and
 	// worldmap). Its settings travel with the account.
@@ -342,13 +381,27 @@ func (d *Dashboard) build() {
 
 	// Sidebar — command panel hints, laid out for the room it has: one
 	// column when the names fit that way, two when the screen is short.
-	d.sidebar = newFitView(func(w, h int) string { return sidebarText(d.sidebarActive, w, h) })
+	d.bandBox = newFitView(func(w, _ int) string { return d.bandText(w) })
+	d.bandBox.body.OnRegion = func(name string, _ int) { d.bandClick(name) }
+	d.nextBox = newFitView(func(w, h int) string { return nextBoxText(d.next, w, h, d.richLayout()) })
 	// A click on a panel's name opens it, as typing the name does.
-	d.sidebar.body.OnRegion = func(name string, _ int) { d.runLine(name) }
+	d.nextBox.body.OnRegion = func(name string, _ int) {
+		switch {
+		case name == regionShow:
+			d.showMe(d.next.card, d.next.panel)
+		case strings.HasPrefix(name, regionThen):
+			if i := int(name[len(regionThen)] - '0'); i < len(d.next.then) {
+				d.showMe(d.next.then[i].card, d.next.then[i].panel)
+			}
+		default:
+			d.lessonListed++
+			d.runLine(name)
+		}
+	}
 	// A click on the mini map opens the Map panel.
 	d.miniMap.onClick = func() { d.runLine("map") }
-	d.sidebar.SetBorder(true)
-	theme.Track(func() { d.sidebar.SetTitleColor(theme.Of(theme.RoleAccent)) })
+	d.nextBox.SetBorder(true)
+	theme.Track(func() { d.nextBox.SetTitleColor(theme.Of(theme.RoleAccent)) })
 
 	// Log panel
 	d.logTV = newNativeText().
@@ -518,6 +571,11 @@ func (d *Dashboard) build() {
 			if d.histIdx != -1 {
 				d.histIdx = -1
 			}
+			// Tab on an empty line of the main view writes the next step's
+			// command; the panels keep Tab for themselves.
+			if event.Code == kit.KeyTab && d.takeNext() {
+				return nil
+			}
 			// Tab, Backtab and → (at the end of the line) take completions.
 			if d.inputField.acceptKey(event) {
 				return nil
@@ -534,7 +592,7 @@ func (d *Dashboard) build() {
 
 	// People box: the population and its four kinds. In the classic layout it
 	// is below the Panels list in the right column, as tall as its lines; in
-	// the rich layout it is the right half of the Under construction row
+	// the rich layout it is the left of the middle column's foot strip
 	// (dash_layout.go).
 	d.workerMiniTV = newFitView(func(w, h int) string {
 		if d.lastState == nil {
@@ -555,14 +613,19 @@ func (d *Dashboard) build() {
 		_, th := d.screenSize()
 		return richPeopleHeight(th)
 	})
+	d.economyTab.richLeft = func() int {
+		w, _ := d.screenSize()
+		left, _, _ := richCols(w)
+		return left
+	}
 
 	// Main horizontal: the economy tab (the full height) and the Panels
 	// column, with the People box under the list unless the layout is rich.
 	d.peopleH = workerMiniBaseRows + 2
-	mainHoriz := newDashBody(d.economyTab.Root(), d.sidebar, d.workerMiniTV, d.miniMap, d.screenSize, func() int { return d.peopleH })
+	mainHoriz := newDashBody(d.economyTab.Root(), d.nextBox, d.workerMiniTV, d.miniMap, d.screenSize, func() int { return d.peopleH })
 	mainHoriz.modelReady = func() bool { return d.miniMap.model != nil }
 	d.body = mainHoriz
-	mainHoriz.switched = func() { d.workerMiniTV.stale = true }
+	mainHoriz.switched = func() { d.workerMiniTV.stale = true; d.titleNext() }
 
 	// Content area is just mainHoriz: no bottom strip
 	d.contentArea = mainHoriz
@@ -571,10 +634,23 @@ func (d *Dashboard) build() {
 	d.root = newNativeFlex().SetDirection(flexRow).
 		AddItem(d.headerTV, headerSmallRows, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
-		AddItem(d.inputField, promptRows, 0, true)
+		AddItem(d.bandBox, 1, 0, false).
+		AddItem(d.inputField, barSmallRows, 0, true)
 	// The header is as tall as the terminal calls for, chosen before the
 	// rows are shared out, so a resize shows the right one at once.
-	d.root.SetDrawFunc(func(_, _, w, h int) { d.root.ResizeItem(d.headerTV, headerHeight(w, h), 0) })
+	d.pages.inset = func(name string) int {
+		if d.overlayMgr != nil && name == d.overlayMgr.ActiveName() {
+			return d.bandRows(d.overlayMgr.screenH)
+		}
+		return 0
+	}
+	d.root.SetDrawFunc(func(_, _, w, h int) {
+		d.root.ResizeItem(d.headerTV, headerHeight(w, h), 0)
+		n := barRows(w, h)
+		d.root.ResizeItem(d.inputField, n, 0)
+		d.root.ResizeItem(d.bandBox, d.bandRows(h), 0)
+		d.inputField.SetBig(n == barBigRows)
+	})
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *kit.Key) *kit.Key {
@@ -613,9 +689,7 @@ func (d *Dashboard) build() {
 			if d.inputField.GetText() == "" && d.economyTab.buildBox.closeOlder() {
 				return nil
 			}
-			d.engine.SaveGame(d.engine.ActiveSaveName())
-			d.engine.Stop()
-			d.pages.SwitchToPage("splash")
+			d.openPause()
 			return nil
 		// Economy tab scroll keys (always available since economy is permanent background)
 		case kit.KeyPgUp:
@@ -646,15 +720,7 @@ func (d *Dashboard) switchOverlay(name string, prep func()) {
 		prep()
 	}
 	d.overlayMgr.Show(name, d.engine.GetState())
-	d.updateSidebar("techs")
 	d.overlayMgr.FocusOn(d.inputField)
-}
-
-func (d *Dashboard) updateSidebar(activeOverlay string) {
-	if d.sidebar != nil && d.sidebarActive != activeOverlay {
-		d.sidebarActive = activeOverlay
-		d.sidebar.changed()
-	}
 }
 
 // panelLink is a panel's name as the Panels list shows it, in a region named
@@ -667,114 +733,6 @@ func clickRegion(name, shown string) string { return `["` + name + `"]` + shown 
 
 // buildLine is the command line that builds one of a building.
 func buildLine(key string) string { return "build " + key }
-
-// sidebarPanels is the Panels list, in order.
-var sidebarPanels = []string{"milestones", "badges", "research", "plan", "charter", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
-
-// buildSidebarText is the Panels list in one column, the open panel
-// highlighted: the list as it shows when the screen is tall enough for it.
-func buildSidebarText(active string) string {
-	var sb strings.Builder
-	sb.WriteString("\n")
-	for _, cmd := range sidebarPanels {
-		if cmd == active {
-			sb.WriteString(" " + panelLink(cmd, theme.Selected(fmt.Sprintf(" %-10s ", cmd))) + "\n")
-		} else {
-			sb.WriteString(" " + panelLink(cmd, fmt.Sprintf("[white]%-10s[-]", cmd)) + "\n")
-		}
-	}
-	return sb.String()
-}
-
-// sidebarText is the Panels list for a box w cells wide and h rows tall
-// inside: one column when every name gets a row (under a blank line when
-// there is a row to spare), else two columns read down then across, so a
-// short screen still lists every panel. When even two columns are too
-// many rows (the smallest screen), the first column stays a name a row and
-// the rest are packed beside it, as many to a row as fit. A box wide and
-// tall enough for it (the rich layout's) lists the panels in groups, each
-// with a line on what it is for (panelsRichText).
-func sidebarText(active string, w, h int) string {
-	if w >= panelsRichWidth() && h >= panelsRichRows() {
-		return panelsRichText(active, w, h)
-	}
-	n := len(sidebarPanels)
-	if h > n {
-		return buildSidebarText(active)
-	}
-	if h == n {
-		return strings.TrimPrefix(buildSidebarText(active), "\n")
-	}
-	cell := func(cmd string, width int) string {
-		padded := cmd + strings.Repeat(" ", max(width-len(cmd), 0))
-		if cmd == active {
-			return panelLink(cmd, theme.Selected(padded))
-		}
-		return panelLink(cmd, "[white]"+padded+"[-]")
-	}
-	// pack writes names as rows of at most room cells, a space between two.
-	pack := func(names []string, room int) [][]string {
-		var rows [][]string
-		used := 0
-		for _, name := range names {
-			if len(rows) == 0 || used+1+len(name) > room {
-				rows = append(rows, nil)
-				used = -1
-			}
-			rows[len(rows)-1] = append(rows[len(rows)-1], name)
-			used += 1 + len(name)
-		}
-		return rows
-	}
-	join := func(names []string) string {
-		cells := make([]string, len(names))
-		for i, name := range names {
-			cells[i] = cell(name, len(name))
-		}
-		return strings.Join(cells, " ")
-	}
-	var sb strings.Builder
-	rows := (n + 1) / 2
-	if rows > h && h > 0 {
-		leftW := 0
-		for _, cmd := range sidebarPanels[:h] {
-			leftW = max(leftW, len(cmd))
-		}
-		right := pack(sidebarPanels[h:], w-leftW-1)
-		if len(right) > h {
-			// Not even that fits: every name, packed across the box.
-			for _, row := range pack(sidebarPanels, w) {
-				sb.WriteString(join(row) + "\n")
-			}
-			return sb.String()
-		}
-		for i := 0; i < h; i++ {
-			sb.WriteString(cell(sidebarPanels[i], leftW))
-			if i < len(right) {
-				sb.WriteString(" " + join(right[i]))
-			}
-			sb.WriteString("\n")
-		}
-		return sb.String()
-	}
-	leftW, rightW := 0, 0
-	for i, cmd := range sidebarPanels {
-		if i < rows {
-			leftW = max(leftW, len(cmd))
-		} else {
-			rightW = max(rightW, len(cmd))
-		}
-	}
-	gap := max(1, min(2, w-leftW-rightW))
-	for i := 0; i < rows; i++ {
-		sb.WriteString(cell(sidebarPanels[i], leftW))
-		if j := i + rows; j < n {
-			sb.WriteString(strings.Repeat(" ", gap) + cell(sidebarPanels[j], rightW))
-		}
-		sb.WriteString("\n")
-	}
-	return sb.String()
-}
 
 // Root returns the root primitive for page registration: the layout, and
 // over it the active theme's ambient effect.
@@ -803,7 +761,7 @@ func (d *Dashboard) drawEffect(scr mapstyle.Cells, x, y, w, h int) {
 		d.fxStart = now()
 	}
 	// Not in the command bar: nothing moves where the player types.
-	h -= promptRows
+	h -= d.bar()
 	drawThemeEffect(scr, x, y, w, h, effect, int(now().Sub(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
 }
 
@@ -831,7 +789,7 @@ func (d *Dashboard) drawOver(p *kit.Painter, bounds image.Rectangle) {
 		d.app.feel.tip.Clear()
 		return
 	}
-	d.app.feel.tip.Paint(p, image.Rect(bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y-promptRows))
+	d.app.feel.tip.Paint(p, image.Rect(bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y-d.bar()))
 }
 
 // StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).
@@ -888,11 +846,21 @@ func (d *Dashboard) StopUpdates() {
 	}
 }
 
+// titleNext titles the right column's top box: Next beside the card, Panels
+// where the list is alone.
+func (d *Dashboard) titleNext() {
+	if d.richLayout() {
+		d.nextBox.SetTitle(txtNextTitle.String())
+	} else {
+		d.nextBox.SetTitle(txtPanels.String())
+	}
+}
+
 // retitle writes the titles on the borders of the dashboard's own boxes, in the
 // script now in force. The People box's title is also written each frame, with
 // the headcount in it when there is room.
 func (d *Dashboard) retitle() {
-	d.sidebar.SetTitle(rowid.Line("ui.dashboard.build.01", " Panels "))
+	d.titleNext()
 	d.logTV.SetTitle(rowid.Line("ui.dashboard.build.02", " Log "))
 	d.inputField.SetTitle(rowid.Line("ui.dashboard.build.13", " Command "))
 	d.workerMiniTV.SetTitle(rowid.Line("ui.dashboard.build.14", " People "))
@@ -903,6 +871,12 @@ func (d *Dashboard) retitle() {
 // Order matters: catastrophe modal and age splash are checked first because they may
 // swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {
+	// The pause card owns the screen and the keyboard: a splash or modal opened
+	// now would take the focus from it, and its close would hand the focus to the
+	// Command box behind the dimmed town. What is pending shows after Resume.
+	if d.engine.Held() {
+		return
+	}
 	// Check for pending age splash (set by bus handler under engine lock)
 	if d.pendingAgeSplash != "" {
 		newAge := d.pendingAgeSplash
@@ -930,6 +904,11 @@ func (d *Dashboard) refresh() {
 
 	state := d.engine.GetState()
 	d.lastState = &state
+	d.notePanels(panelsReached(state), false)
+	d.stepLessons(state)
+	d.next = computeNext(state, d.panels)
+	d.economyTab.buildBox.nextKey = d.next.card
+	d.nextBox.changed()
 
 	// Badges earned since the last refresh: a card and a log line each, and a
 	// line for the theme a badge gives. Here, in the UI goroutine: outside the
@@ -1000,10 +979,9 @@ func (d *Dashboard) refresh() {
 		d.miniMap.pointAt(d.mapPanel)
 	}
 
-	// Update overlay content and sidebar highlight
+	// Update overlay content
 	d.overlayMgr.Refresh(state)
 	d.maybeShowPrestigeCue(state)
-	d.updateSidebar(d.overlayMgr.ActiveName())
 	d.refreshWorkerMini(state)
 }
 
@@ -1022,12 +1000,12 @@ func (d *Dashboard) announceBadges() {
 	if n := d.engine.DrainBadgeCatchUp(); n > 0 {
 		line := game.BadgeCatchUpLine(n)
 		d.toastMgr.Show(line, "green", 5*time.Second)
-		d.engine.AddLog("success", line)
+		d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", line)
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
-		d.engine.AddLog("success", game.BadgeLogLine(v))
+		d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", game.BadgeLogLine(v))
 		if t, ok := theme.ByKey(v.RewardTheme); ok {
-			d.engine.AddLog("success", themeUnlockToast(t.Name.String()))
+			d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", themeUnlockToast(t.Name.String()))
 		}
 	}
 }
@@ -1083,6 +1061,8 @@ func heldByLines(ws game.WorkerState, tickMs, w int) []string {
 	switch ws.HeldBy {
 	case game.HeldHousing:
 		return []string{rowid.Line("ui.dashboard.heldByLines.01", "Held by: housing")}
+	case game.HeldWork:
+		return []string{rowid.Line("ui.dashboard.heldByLines.07", "Held by: no work for more people")}
 	case game.HeldFood:
 		x, unit := rateFigure(ws.FoodNet, tickMs) // "+0.45", "/s"
 		feeds := rowid.Sprintf("ui.dashboard.heldByLines.02", "feeds %d more", ws.FoodFeeds)
@@ -1320,11 +1300,11 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
-	// Every line but debug ones, routine confirmations included, so the
-	// player sees what each command did (log_routing.go).
+	// The town level of the log plus the game office's replies, folded, with
+	// a count after a line that happened more than once.
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
-		if mainLogShows(entry) {
+		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame) {
 			visible = append(visible, entry)
 		}
 	}
@@ -1350,7 +1330,11 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 		case "info":
 			color = "cyan"
 		}
-		fmt.Fprintf(&sb, "[%s]%s[-]\n", color, entry.Message)
+		times := ""
+		if entry.Count > 1 {
+			times = fmt.Sprintf(" ×%d", entry.Count)
+		}
+		fmt.Fprintf(&sb, "[%s]%s%s[-]\n", color, entry.Message, times)
 	}
 	d.logTV.SetText(safeTags(sb.String()))
 	d.logTV.ScrollToEnd()
@@ -1384,7 +1368,7 @@ func (d *Dashboard) showDevUnlockModal() {
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
 				d.engine.NoteDevUnlocked()
-				d.engine.AddLog("info", rowid.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", rowid.Line("ui.dashboard.showDevUnlockModal.01", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999)."))
 				d.app.SetFocus(d.inputField)
 			} else {
 				d.app.SetFocus(d.inputField)
@@ -1473,6 +1457,7 @@ func (d *Dashboard) submitInput() {
 		return
 	}
 	d.remember(text)
+	d.lessonTyped++
 	d.runLine(text)
 }
 
@@ -1547,7 +1532,7 @@ func (d *Dashboard) runLine(text string) {
 	if game.DevModeActive && strings.HasPrefix(cmd, "/") {
 		result := game.DevConsoleCommand(cmd, d.engine)
 		if result != "" {
-			d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
+			d.engine.AddLog(game.OfficeGame, game.LevelEverything, "info", "[positive]dev → "+result+"[-]")
 		}
 		return
 	}
@@ -1567,6 +1552,11 @@ func (d *Dashboard) runLine(text string) {
 		d.app.SetFocus(page)
 		return
 	}
+	if fields := strings.Fields(cmd); len(fields) > 0 {
+		if name := panelNamed(fields[0]); name != "" {
+			d.notePanels([]string{name}, true)
+		}
+	}
 	result := HandleCommand(text, d.engine)
 	if result.EpochCard {
 		result = epochCardReply(d.epochHall.card(d.engine.GetState()))
@@ -1585,15 +1575,15 @@ func (d *Dashboard) runLine(text string) {
 	if result.OverlayName == "harbinger" {
 		d.harbPanel.reset()
 	}
-	if result.OverlayName == "plan" {
-		d.planPanel.reset()
-	}
 	if result.OverlayName == "map" {
 		d.mapPanel.world = result.MapWorld
 		d.mapOpen.Store(true)
 	}
 	if result.OverlayName == "tree" {
 		d.treePanel.request(result.ResearchZoom, result.ResearchCard)
+	}
+	if result.OverlayName == "logs" {
+		d.logsPanel.request(result.Logs)
 	}
 	if result.OverlayName == "badges" {
 		d.badgePanel.request(result.Badges)
@@ -1608,7 +1598,6 @@ func (d *Dashboard) runLine(text string) {
 	if result.OverlayName != "" {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
-		d.updateSidebar(result.OverlayName)
 		if _, ok := d.barOverlays[result.OverlayName]; ok || d.overlayMgr.keepsBar(result.OverlayName) {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
@@ -1626,7 +1615,7 @@ func (d *Dashboard) runLine(text string) {
 		// A badge this command earned is announced first, so the reply, which the
 		// player asked for, is the last line in the log and stays in view.
 		d.announceBadges()
-		d.engine.AddLog(result.Type, result.Message)
+		d.engine.AddLog(game.OfficeGame, game.LevelEverything, result.Type, result.Message)
 	}
 }
 
@@ -1647,5 +1636,27 @@ func (d *Dashboard) returnFocus() {
 	case d.overlayMgr != nil && d.overlayMgr.Focus():
 	default:
 		d.app.SetFocus(d.inputField)
+	}
+}
+
+// takeNext writes the next step's command on the empty line as typed text,
+// and reports whether it did. Nothing runs until Enter.
+func (d *Dashboard) takeNext() bool {
+	if d.inputField.GetText() != "" || d.next.cmd == "" || (d.overlayMgr != nil && d.overlayMgr.HasActive()) {
+		return false
+	}
+	d.inputField.setText(d.next.cmd)
+	return true
+}
+
+// showMe takes the player to a step: the card of a building, picked and in
+// view as after a click, or a panel, opened. It builds and starts nothing.
+func (d *Dashboard) showMe(card, panel string) {
+	if card != "" {
+		d.economyTab.buildBox.show(card)
+		return
+	}
+	if panel != "" {
+		d.runLine(panel)
 	}
 }

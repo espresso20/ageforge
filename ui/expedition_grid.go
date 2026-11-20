@@ -148,6 +148,18 @@ func (g *xgrid) rput(xr, y int, s string, k xk) {
 	g.put(xr-len([]rune(s))+1, y, s, k)
 }
 
+// band lays the picked entry's ground under a block, keeping what is drawn.
+func (g *xgrid) band(x, y, w, h int) {
+	for j := y; j < y+h; j++ {
+		for i := x; i < x+w; i++ {
+			if c := g.at(i, j); g.in(i, j) {
+				c.fl |= cfSel
+				g.store(i, j, c)
+			}
+		}
+	}
+}
+
 // fill clears a block.
 func (g *xgrid) fill(x, y, w, h int) {
 	for j := 0; j < h; j++ {
@@ -229,6 +241,8 @@ func (g *xgrid) fold() {
 // expPalette is the active theme's colours for the panel.
 type expPalette struct {
 	styles [xCount]kit.Style
+	// band is the ground of a cell flagged cfSel: a picked entry's band.
+	band kit.Color
 }
 
 func newExpPalette() *expPalette {
@@ -238,7 +252,7 @@ func newExpPalette() *expPalette {
 		return kit.Style{}.Background(bg).Foreground(theme.Legible(c, bg, ratio))
 	}
 	role := func(r theme.Role, ratio float64) kit.Style { return on(theme.Of(r), ratio) }
-	p := &expPalette{}
+	p := &expPalette{band: theme.Mix(bg, theme.Of(theme.RoleSelection), 0.3)}
 	s := &p.styles
 	s[xText] = role(theme.RoleText, 4.5)
 	s[xDim] = role(theme.RoleDim, 3)
@@ -305,6 +319,9 @@ func (p *expPalette) style(c xcell) kit.Style {
 	st := p.styles[c.k]
 	if c.fl&cfItalic != 0 {
 		st = st.Italic(true)
+	}
+	if c.fl&cfSel != 0 {
+		st = st.Background(p.band)
 	}
 	return st
 }

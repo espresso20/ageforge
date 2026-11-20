@@ -49,6 +49,12 @@ func (f *nativeInput) Layout(r image.Rectangle) {
 	f.box.Layout(r)
 }
 
+// SetBig draws the line at twice the size (kit.Input.Big).
+func (f *nativeInput) SetBig(on bool) *nativeInput {
+	f.in.Big = on
+	return f
+}
+
 func (f *nativeInput) SetLabel(s string) *nativeInput {
 	f.in.Prompt = s
 	return f

@@ -104,20 +104,18 @@ func TestBoardEnterQueuesWhileOneIsInWork(t *testing.T) {
 func TestBoardMouse(t *testing.T) {
 	ge := classicalGame(t)
 	p := boardOn(ge, 279, 74)
-	var row, btn, lane *boardHit
+	var row, lane *boardHit
 	for i := range p.hits {
 		h := &p.hits[i]
 		switch {
 		case h.kind == hitTech && h.id != p.view.sel && row == nil:
 			row = h
-		case h.kind == hitQueue:
-			btn = h
 		case h.kind == hitLane && lane == nil:
 			lane = h
 		}
 	}
-	if row == nil || btn == nil || lane == nil {
-		t.Fatalf("hits missing: row %v, queue button %v, lane %v", row, btn, lane)
+	if row == nil || lane == nil {
+		t.Fatalf("hits missing: row %v, lane %v", row, lane)
 	}
 	press := func(r image.Rectangle, clicks int) {
 		p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: r.Min.X + 1, Y: r.Min.Y + 1, Clicks: clicks})
@@ -131,10 +129,16 @@ func TestBoardMouse(t *testing.T) {
 	}
 	before := len(ge.GetState().Research.Queue)
 	paintAlone(p, 279, 74)
-	for _, h := range p.hits {
-		if h.kind == hitQueue {
-			press(h.r, 1)
+	p.buttons.press = func(k kit.Key) { p.routeKey(&k, "") }
+	queued := false
+	for _, k := range p.keys.keyset().keys {
+		if k.key.Rune == 'Q' && !k.r.Empty() {
+			press(k.r, 1)
+			queued = true
 		}
+	}
+	if !queued {
+		t.Fatal("no Queue button on the board")
 	}
 	if n := len(ge.GetState().Research.Queue); n != before+1 {
 		t.Errorf("the Queue button left %d queued, want %d", n, before+1)

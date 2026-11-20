@@ -527,7 +527,7 @@ func TestAdvanceFlashGivesWay(t *testing.T) {
 
 // The Help panel lists the command, the panel and its keys.
 func TestHelpListsTheAdvancePanel(t *testing.T) {
-	help := strings.Join(strings.Fields(untag(helpProvider(game.GameState{}, 100))), " ")
+	help := strings.Join(strings.Fields(untag(helpProvider(nil, game.GameState{}, 100))), " ")
 	wantAll(t, "the Help panel", help, "charter", "The Advance panel", "Pick a pillar", "the same as the advance command")
 }
 

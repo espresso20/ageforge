@@ -96,10 +96,8 @@ func renderScreens(t *testing.T, w, h int) map[string][]simCell {
 			t.Fatalf("plan %s: %v", it.key, err)
 		}
 	}
-	d.planPanel.note, d.planPanel.noteGood = "Removed 1 × Farm.", true
 	shot("overlay:plan", "plan")
 	engine.PlanClear()
-	d.planPanel.reset()
 
 	picker := CreateThemePickerPage(d.app, pages, nil, "dashboard")
 	pages.AddPage(themePickerPage, picker, true, true)

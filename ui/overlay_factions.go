@@ -93,8 +93,6 @@ func factionsProvider(state game.GameState, w int, rec *btnRec) string {
 	// ─── Not Yet Met ───
 	writeUndiscoveredRoster(&sb, pending)
 
-	sb.WriteString(rowid.Line("ui.overlay_factions.factionsProvider.09", " [gray]Deals: diplomacy deals <civ> · diplomacy accept <civ> <n> · plan deal <civ> <n>[-]\n"))
-
 	return sb.String()
 }
 
@@ -360,8 +358,8 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 		fmt.Fprintf(sb, "   %s\n", strings.Join(parts, "  "))
 	}
 
-	// Trade deals: what this civ offers now, or why it offers nothing.
-	writeFactionDeals(sb, f, state, usable, def.Key, rec)
+	// Offers: one line with a button to the Trade panel, where they are taken.
+	writeFactionOffers(sb, f, usable, rec)
 
 	// Action hint: what the status asks, then the buttons that carry the
 	// commands. An allied civ has nothing to add to them.
@@ -526,10 +524,27 @@ func diplomacyThreshold(status string, opinion int, key string, allyCost float64
 	}
 }
 
-// writeFactionDeals renders a civ's trade deals on its card: one numbered
-// line per offer (the number `diplomacy accept` takes), or why the civ offers
-// nothing. Theme roles only.
-func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int, key string, rec *btnRec) {
+// writeFactionOffers is the one line a civ's card gives its open offers: the
+// count and a button to the Trade panel, which holds them. No offers, no line.
+func writeFactionOffers(sb *strings.Builder, f game.FactionInfo, usable int, rec *btnRec) {
+	n := 0
+	for _, d := range f.Deals {
+		if !d.Taken {
+			n++
+		}
+	}
+	if f.DealsBlocked != "" || n == 0 {
+		return
+	}
+	btn := actionSpec{label: rowid.Line("ui.overlay_factions.writeFactionOffers.02", "Trade"), kind: keyPlain, cmd: "trade"}
+	rec.mark(sb, usable-runeLen(btn.label)-2, btn)
+	fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleDim, rowid.Sprintf("ui.overlay_factions.writeFactionOffers.01", "%s open", textfmt.Count(n, rowid.Line("ui.overlay_factions.writeFactionOffers.03", "offer"), rowid.Line("ui.overlay_factions.writeFactionOffers.04", "offers")))))
+}
+
+// writeFactionDeals renders a civ's trade deals for `diplomacy deals`: one
+// numbered line per offer (the number `diplomacy accept` takes), or why the
+// civ offers nothing. Theme roles only.
+func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int) {
 	if f.DealsBlocked != "" {
 		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, rowid.Line("ui.overlay_factions.writeFactionDeals.01", "Deals: none while they are ")+f.DealsBlocked+"."))
 		return
@@ -541,15 +556,7 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 	fmt.Fprintf(sb, "   %s %s\n", theme.Paint(theme.RoleLabel, rowid.Line("ui.overlay_factions.writeFactionDeals.03", "Deals:")),
 		theme.Paint(theme.RoleDim, rowid.Line("ui.overlay_factions.writeFactionDeals.04", "new offers in ")+formatTicks(f.DealRefreshIn, state)))
 	for _, d := range f.Deals {
-		// The line leaves room at its end for Accept, which sits on it.
-		room := usable - 4
-		if rec != nil {
-			btn := dealButton(state, key, d)
-			chip := runeLen(btn.label) + 2
-			rec.mark(sb, usable-chip, btn)
-			room -= chip + 1
-		}
-		fmt.Fprintf(sb, "    %s\n", dealLine(d, state, room))
+		fmt.Fprintf(sb, "    %s\n", dealLine(d, state, usable-4))
 	}
 }
 

@@ -87,6 +87,11 @@ type Cell struct {
 	Attr   Attr
 	Wide   bool // R covers this cell and the next
 	Cont   bool // the right half of a wide glyph: nothing is drawn here
+	// Big marks a cell of a 2x2 group that shows one glyph at twice the size
+	// (Painter.PrintBig): 1 is the top left, which holds the glyph, 2 the top
+	// right, 3 the bottom left, 4 the bottom right. The other three are Cont.
+	// A wide glyph has two groups side by side, the second all Cont.
+	Big uint8
 	// Pic is one more than the index, in the buffer's Pics, of the picture
 	// whose pixels this cell shows; 0 for none. Whatever is painted on the
 	// cell afterwards takes the cell back.
@@ -113,6 +118,8 @@ type Buffer struct {
 	// Cursor is where the text cursor shows, when CursorOn.
 	Cursor   image.Point
 	CursorOn bool
+	// CursorBig draws the cursor twice as tall (a cursor in a Big line).
+	CursorBig bool
 	// Pointer is the shape the mouse pointer takes where it is.
 	Pointer Pointer
 	// Pics are the pictures painted this frame (see Painter.Picture).
@@ -144,7 +151,7 @@ func (b *Buffer) Reset() {
 	for i := range b.Cells {
 		b.Cells[i] = blank
 	}
-	b.CursorOn = false
+	b.CursorOn, b.CursorBig = false, false
 	b.Pics = b.Pics[:0]
 }
 

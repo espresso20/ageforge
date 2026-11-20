@@ -14,11 +14,12 @@ import (
 )
 
 // stats_lifetime.go is the Stats page's Lifetime part: the account as a
-// record board. A plaque and three counts, the ladder of ages reached, the
+// record board. A plaque and four counts, the ladder of ages reached, the
 // best run of each count and the badge families.
 
 var (
 	txtFamilies = rowid.E("ui.stats_lifetime.txtFamilies.01", "Badge families")
+	txtBadgePts = rowid.E("ui.stats_lifetime.txtBadgePts.01", "Badge points")
 	txtFastest  = rowid.E("ui.stats_lifetime.txtFastest.01", "Fastest")
 	txtBestRun  = rowid.E("ui.stats_lifetime.txtBestRun.01", "Best run")
 	txtPickAge  = rowid.E("ui.stats_lifetime.txtPickAge.01", "pick age")
@@ -67,10 +68,11 @@ func (pg *statsPage) lifetime(st game.GameState, w int, wide bool, grow int) int
 	tiles := []statsTile{{span: 2, plaque: pl},
 		countTile(txtPrestiges.String(), "wonder", as.TotalPrestiges),
 		countTile(txtCivs.String(), "diplomacy", as.CivilizationsStarted),
-		{name: txtBadgesEarn.String(), text: fmt.Sprintf("%d/%d", bs.Earned, total), toks: toks, kind: "trade"}}
-	n := 3 // narrower: the plaque takes a row, the three counts the next
+		{name: txtBadgesEarn.String(), text: fmt.Sprintf("%d/%d", bs.Earned, total), toks: toks, kind: "trade"},
+		countTile(txtBadgePts.String(), "culture", bs.Points)}
+	n := 4 // narrower: the plaque takes a row, the four counts the next
 	if wide {
-		n = 5
+		n = 6
 	} else {
 		tiles[0].span = n
 	}

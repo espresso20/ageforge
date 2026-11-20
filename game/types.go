@@ -31,9 +31,12 @@ type GameState struct {
 	NextAgeBldReqs       map[string]int
 	Resources            map[string]ResourceState
 	Buildings            map[string]BuildingState
-	BuildQueue           []BuildQueueSnapshot
-	Workers              WorkerState
-	Research             ResearchState
+	// MoraleMovers is what moves morale a minute, one entry per term that is
+	// not zero (the terms updateMoraleTick applies).
+	MoraleMovers []MoraleMover
+	BuildQueue   []BuildQueueSnapshot
+	Workers      WorkerState
+	Research     ResearchState
 	// Scholars is the town's scholars and what they do (scholars.go).
 	Scholars       ScholarsState
 	Military       MilitaryState
@@ -127,6 +130,8 @@ type GameState struct {
 	// Plan is the build plan in order, each item with the price of its next
 	// start and whether it could start now (plan.go).
 	Plan []PlanItemView
+	// PlanPaused is whether the plan is held (PlanSetPaused).
+	PlanPaused bool
 	// PermanentBonuses is the authoritative runtime map of all cumulative
 	// permanent bonuses (epoch events, legacy, milestones, etc.).
 	// Populated in GetState(); not stored in save JSON.
@@ -300,6 +305,10 @@ type BuildingState struct {
 	WorkerDomain    string
 	WorkerCapacity  int // per-building-instance capacity
 	WorkersAssigned int // total workers assigned across all instances
+	// OneMore is what one more worker in this building adds to each resource's
+	// rate (a rate as Resources gives it); nil when the building is full or
+	// has no jobs.
+	OneMore map[string]float64
 	// PendingUpgrade is the building an older building held in copies can be
 	// upgraded to; "" if none.
 	PendingUpgrade string
@@ -380,15 +389,6 @@ type WorkerDomainState struct {
 	IdleCount   int
 	Assignments map[string]int
 	Unlocked    bool
-}
-
-// LogEntry is a timestamped game log message
-type LogEntry struct {
-	Tick    int
-	Message string
-	// Type is the category: "info", "success", "warning", "error", "event"
-	// or LogRoutine. It decides the color and the logs panel's tag.
-	Type string
 }
 
 // LogRoutine is the log category for routine confirmations: a line whose
@@ -840,6 +840,13 @@ type ActiveRouteInfo struct {
 	Import      map[string]float64
 	Disrupted   bool   // true when blockaded by war/embargo (income suspended)
 	DisruptedBy string // the imported resource that is blockaded (if Disrupted)
+	// Starved is true after a run was skipped for want of the export.
+	Starved bool
+	// Pay is what a run really brings in of each import, and Shares what it
+	// is made of (the techs, harbor buildings, allies); Pay is the listed
+	// amount times 1 plus the shares.
+	Pay    map[string]float64
+	Shares map[string][]PayShare
 }
 
 // TradeRouteInfo represents an available trade route for UI
@@ -852,6 +859,10 @@ type TradeRouteInfo struct {
 	RequiredBld string
 	MinCount    int
 	Description string
+	// CycleTicks is the run's period as it would be once started.
+	CycleTicks int
+	Pay        map[string]float64
+	Shares     map[string][]PayShare
 }
 
 // === Diplomacy Types ===

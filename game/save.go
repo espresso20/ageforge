@@ -140,6 +140,8 @@ type GameSave struct {
 	Morale float64 `json:"morale,omitempty"`
 	// RunHistory is the run's recorder: its measures and marks (history.go).
 	RunHistory *RunHistory `json:"run_history,omitempty"`
+	// Log is the log, gzipped compact JSON in base64 (logentry.go).
+	Log string `json:"log,omitempty"`
 	// RunID names the run (run_archive.go). A save without one is given one on load.
 	RunID string `json:"run_id,omitempty"`
 	// Integrity fields
@@ -164,6 +166,8 @@ type GameSave struct {
 	AccountID string `json:"account_id,omitempty"`
 	// Plan is the build plan (plan.go), in order.
 	Plan []PlanItem `json:"plan,omitempty"`
+	// PlanPaused is whether the plan was held.
+	PlanPaused bool `json:"plan_paused,omitempty"`
 	// WorkerShares, AutoRecruitOff and StaffHoldUntil are the worker shares
 	// (shares.go): the split the player set (domain → percent; none means
 	// every domain is on auto), auto-recruit turned off (it is on by
@@ -497,6 +501,8 @@ const AutosaveName = "autosave"
 // NOTE: SaveGame acquires only an RLock for the snapshot, so it can run
 // concurrently with reads but not concurrent writes (doTick).
 func (ge *GameEngine) SaveGame(filename string) error {
+	// Time held so far is not time played: settle it before the snapshot.
+	ge.settle(false)
 	// Take the read lock for the snapshot + marshal so doTick cannot mutate
 	// maps/slices while json.Marshal is iterating over them.
 	ge.mu.RLock()
@@ -531,6 +537,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	if err := writeFileAtomic(filepath.Join(dir, filename+".json"), data); err != nil {
 		return fmt.Errorf("could not write the save file: %w", err)
 	}
+	ge.noteSaved(time.Now())
 	if played != nil {
 		// The record is a convenience: a save that was written is a save,
 		// whether or not the settings file could be.
@@ -652,9 +659,11 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CosmicLegacy:       ge.cosmicLegacy,
 		Morale:             ge.morale,
 		RunHistory:         ge.history,
+		Log:                ge.logForSave(),
 		RunID:              ge.runID,
 		AccountID:          ge.saveAccountIDLocked(),
 		Plan:               cloneSlice(ge.plan),
+		PlanPaused:         ge.planPaused,
 		WorkerShares:       cloneMap(ge.workerShares),
 		AutoRecruitOff:     ge.autoRecruitOff,
 		StaffHoldUntil:     ge.staffHoldUntil,
@@ -938,6 +947,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	} else {
 		ge.history = NewRunHistory()
 	}
+	ge.liveStamps = true
+	ge.log = logFromSave(save.Log)
+	ge.logSeam()
 	ge.runID = save.RunID
 	if ge.runID == "" {
 		ge.runID = newRunID()
@@ -950,6 +962,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// to what the plan accepts; items that can no longer start drop out, with
 	// a log line, on the next tick.
 	ge.plan = loadPlanIn(ge.rules, save.Plan)
+	ge.planPaused = save.PlanPaused && len(ge.plan) > 0
 	ge.planLog = loadPlanTemplate(ge.rules, save.PlanLog)
 	// The worker shares: a hand-edited map keeps its known domains, each
 	// percent from 0 to 100, and the wait can't outlast one worker command.
@@ -1000,6 +1013,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	// Apply offline progress for time since save
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
+	ge.noteSaved(save.Timestamp)
 
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
 	// modal the player closed in the old session is shown again). Handlers run

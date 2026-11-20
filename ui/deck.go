@@ -426,12 +426,8 @@ func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) 
 // row of those three when roomy says the card has them. Either carries the card's command, so a click runs it and the pointer
 // resting on it shows it in the command bar. It returns the rows it takes.
 func (g *xgrid) deckAction(x, y int, c *deckCard, picked, roomy bool) int {
-	if picked {
-		a := actionSpec{kind: keyPrimary, label: c.Action, key: "Enter", cmd: c.Command, sign: signPlay}
-		if c.Danger {
-			a.kind, a.sign = keyDanger, signStop
-		}
-		g.actionButton(x, y, a)
+	if picked && !c.Danger { // a card that ends something keeps the small chip, picked or not
+		g.actionButton(x, y, actionSpec{kind: keyPrimary, label: c.Action, key: "Enter", cmd: c.Command, sign: signPlay})
 		return actionRows
 	}
 	if roomy { // the row of the picked card's label, when the card has the room

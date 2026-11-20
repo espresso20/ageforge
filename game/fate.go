@@ -345,8 +345,8 @@ func (ge *GameEngine) fateArrive() bool {
 	h.AnnouncedTier = tier
 	h.Lines, h.LineKeys = ge.harbingerSpeak(def, tier)
 
-	ge.addLog("event", rowid.Sprintf("game.fate.fateArrive.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), ge.fateWarningText(h)))
+	ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.fate.fateArrive.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
+		capFirst(def.Name), ge.fateWarningText(h)), logHead)
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, f.EpochKey, false)
 	return true
