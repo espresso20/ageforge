@@ -69,21 +69,22 @@ func TestFestivalButtonIsOffWhenItCannotRun(t *testing.T) {
 	}
 }
 
-func TestFestivalCardShowsTheCapNoteBeforeTheSpend(t *testing.T) {
+func TestFestivalAskShowsTheCapNoteBeforeTheSpend(t *testing.T) {
 	const note = "capped: no effect now"
-	if s := festivalStage(t, nil); strings.Contains(s.p.grid.String(), "capped") {
-		t.Fatal("the card shows a cap note when the whole buff counts")
+	if s := festivalStage(t, nil); strings.Contains(s.key(t, festivalCmd).ask, "capped") {
+		t.Fatal("the question shows a cap note when the whole buff counts")
 	}
 	s := festivalStage(t, func(st *game.GameState) { st.Festival.CapNote = note })
-	if !strings.Contains(s.p.grid.String(), note) {
-		t.Errorf("the card does not show the cap note %q", note)
+	k := s.key(t, festivalCmd)
+	if !strings.Contains(k.ask, note) {
+		t.Errorf("the question %q does not show the cap note %q", k.ask, note)
 	}
-	if k := s.key(t, festivalCmd); k.off {
+	if k.off {
 		t.Error("the button is off although the festival can be held")
 	}
 }
 
-func TestFestivalCardIsNotDrawnWhileLocked(t *testing.T) {
+func TestFestivalButtonIsNotDrawnWhileLocked(t *testing.T) {
 	s := festivalStage(t, func(st *game.GameState) {
 		feats := map[string]game.FeatureState{}
 		for k, v := range st.Features {
@@ -99,11 +100,8 @@ func TestFestivalCardIsNotDrawnWhileLocked(t *testing.T) {
 			t.Fatal("a button exists while festivals are locked")
 		}
 	}
-	if strings.Contains(s.p.grid.String(), txtFestival.String()) {
-		t.Error("the card is drawn while festivals are locked")
-	}
-	if on := festivalStage(t, nil); !strings.Contains(on.p.grid.String(), txtFestival.String()) {
-		t.Error("the card is not drawn while festivals are open")
+	if on := festivalStage(t, nil); !strings.Contains(on.p.grid.String(), txtFestivalHold.String()) {
+		t.Error("the button is not drawn while festivals are open")
 	}
 }
 

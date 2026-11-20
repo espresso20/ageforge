@@ -196,7 +196,7 @@ roster auto
 workers auto-recruit off
 ```
 
-The People panel leaves the prompt working. `←` and `→` switch between its Overview, Work, Army and Scholars tabs, `↑` and `↓` pick a row, and `Esc` closes it.
+The People panel leaves the prompt working. `←` and `→` switch between its Overview, Work, Army and Scholars tabs, `↑` and `↓` pick a row, and `Esc` closes it. On the Work tab `A` puts every domain on auto (`roster auto`), `B` opens the buildings panel and `G` turns auto-recruit on or off. On any tab `T` opens the research board; on the Work tab `Enter` closes or opens the picked area's detail.
 
 See [People](workers-and-domains.md) for the domain table and the efficiency formula.
 

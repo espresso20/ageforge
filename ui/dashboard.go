@@ -321,6 +321,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.planPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("plan", txtBuildPlan, d.planPanel.open, d.planPanel.update)
 	d.historyPanel.settings = d.mapSettings
+	d.peoplePanel.hist = d.engine.History
 	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
 		return d.engine.History(), d.engine.RunArchive(), d.engine.ActiveSaveName()
 	}
@@ -1107,6 +1108,8 @@ func heldByLines(ws game.WorkerState, tickMs, w int) []string {
 	switch ws.HeldBy {
 	case game.HeldHousing:
 		return []string{rowid.Line("ui.dashboard.heldByLines.01", "Held by: housing")}
+	case game.HeldWork:
+		return []string{rowid.Line("ui.dashboard.heldByLines.07", "Held by: no work for more people")}
 	case game.HeldFood:
 		x, unit := rateFigure(ws.FoodNet, tickMs) // "+0.45", "/s"
 		feeds := rowid.Sprintf("ui.dashboard.heldByLines.02", "feeds %d more", ws.FoodFeeds)
