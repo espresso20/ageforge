@@ -255,3 +255,34 @@ func TestRouteFlow_FoodStockNeverRunsDry(t *testing.T) {
 		t.Errorf("food %v at a rate of %v after the routes spent the stock, want a store above 0 and a rate that is not negative", food.Amount, food.Rate)
 	}
 }
+
+// The board reads a route's share of income off the state, against the same
+// gross the engine sized the route on, so it can exceed 100%: a route that
+// brings 6 times the wood the town cuts is 600% of its wood income.
+func TestRouteFlow_ShareIsAgainstGrossIncome(t *testing.T) {
+	ge, _ := flowEngine(t, "local_barter", 2)
+	for key := range ge.Resources.resources {
+		ge.Resources.UnlockResource(key)
+	}
+	ge.recalculateRates()
+	wood := ge.Resources.resources["wood"]
+	made := wood.Rate - wood.Breakdown.TradeFlow // what the town makes, trade left out
+	st := ge.GetState().Trade
+	if got, want := st.Share("wood", wood.Breakdown.TradeFlow), wood.Breakdown.TradeFlow/made; math.Abs(got-want) > 1e-9 || got <= 0 {
+		t.Errorf("share of wood income = %v, want %v", got, want)
+	}
+	if st.Share("nothing", 1) != 0 {
+		t.Error("a good the town makes none of has a share")
+	}
+}
+
+// Research has a price level (its scholars' buildings, like any flow
+// resource), so a route that imports it brings some.
+func TestRouteFlow_ResearchImportPays(t *testing.T) {
+	ge, def := flowEngine(t, "triangular_trade", 1)
+	ge.Buildings.counts[def.RequiredBld] = def.MinCount
+	ge.recalculateRates()
+	if got := ge.Trade.activeRoutes[def.Key].Research; got <= 0 {
+		t.Errorf("research brought = %v, want more than 0", got)
+	}
+}

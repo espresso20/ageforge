@@ -1,6 +1,7 @@
 package game
 
 import (
+	"maps"
 	"math"
 	"sort"
 
@@ -156,14 +157,14 @@ func (tm *TradeManager) timeFactor() float64 {
 }
 
 // pricing is the age whose price levels value def: age itself, or the latest
-// before it that prices everything the route trades but research (a level
+// before it that prices everything the route trades (a level
 // is missing for gold in the last ages, and for some goods in others). ""
 // when no age does.
 func (tm *TradeManager) pricing(def config.TradeRouteDef, age string) string {
 	i, _ := tm.rules.Index(age)
 	priced := func(res []string, age string) bool {
 		for _, r := range res {
-			if r != config.ResearchTarget && tm.rules.DealPriceLevel(r, age) <= 0 {
+			if tm.rules.DealPriceLevel(r, age) <= 0 {
 				return false
 			}
 		}
@@ -493,6 +494,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		AvailableRoutes:    availableRoutes,
 		DisruptedResources: disruptedResources,
 		Speed:              tm.timeFactor(),
+		Gross:              maps.Clone(tm.gross),
 	}
 }
 

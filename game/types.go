@@ -832,6 +832,18 @@ type TradeState struct {
 	DisruptedResources []string
 	// Speed is the techs' multiplier on every route's flow (1 with none).
 	Speed float64
+	// Gross is what the town makes of each resource a tick before trade: the
+	// income a route is sized on and its share is read against.
+	Gross map[string]float64
+}
+
+// Share is perTick of res as a share of the town's income of it (0 when the
+// town makes none): the figure the routes are sized on and the board shows.
+func (t TradeState) Share(res string, perTick float64) float64 {
+	if g := t.Gross[res]; g > 0 {
+		return perTick / g
+	}
+	return 0
 }
 
 // ActiveRouteInfo represents a started trade route for UI. Export and Import

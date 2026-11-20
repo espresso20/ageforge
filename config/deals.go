@@ -86,7 +86,12 @@ func FlowDealLevels(defs []BuildingDef, pos map[string]int) map[string]map[strin
 			continue
 		}
 		for _, e := range d.Effects {
-			if e.Type != "production" || e.Value <= 0 || !flowResources[e.Target] {
+			if e.Type == "research" {
+				e.Target = ResearchTarget // a scholars' building makes research like any flow resource
+			} else if e.Type != "production" || !flowResources[e.Target] {
+				continue
+			}
+			if e.Value <= 0 {
 				continue
 			}
 			if vals[d.RequiredAge] == nil {

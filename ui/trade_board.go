@@ -120,8 +120,8 @@ func tradeRoutes(st game.GameState) []tradeRoute {
 		r.out, r.in, r.base = flows(out, k), flows(in, k), in
 		r.size = a.Owned
 		for _, f := range r.in {
-			if rs := st.Resources[f.key]; f.key != config.ResearchTarget && r.share == "" && rs.Rate > 0 && f.tick > 0 {
-				r.share = rowid.Sprintf("ui.trade_board.tradeRoutes.01", "%.0f%% of %s", math.Min(100, f.tick/rs.Rate*100), f.good)
+			if sh := st.Trade.Share(f.key, f.tick); f.key != config.ResearchTarget && r.share == "" && sh > 0 {
+				r.share = rowid.Sprintf("ui.trade_board.tradeRoutes.01", "%.0f%% of %s", sh*100, f.good)
 			}
 		}
 		switch {
