@@ -152,7 +152,7 @@ func (ge *GameEngine) planNeeds(views []PlanItemView, iv time.Duration) []PlanNe
 		it := ge.plan[i]
 		cost := func() map[string]float64 {
 			switch {
-			case it.Kind == PlanBuild && ge.Buildings.defs[it.Key].Category == "wonder", it.Kind == PlanDeal, it.Kind == PlanExpedition:
+			case it.Kind == PlanBuild && ge.Buildings.defs[it.Key].Category == "wonder", it.Kind == PlanExpedition:
 				return v.Cost
 			case it.Kind == PlanBuild:
 				return ge.Buildings.CopyCost(it.Key, ahead[it.Key], ge.buildQueue)

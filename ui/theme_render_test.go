@@ -75,6 +75,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]simCell {
 
 	// The Factions panel with trade deals: a civ with open offers (one of
 	// them unaffordable) and a hostile one that offers none.
+	townWithGoods(engine)
 	for _, c := range []struct {
 		key     string
 		opinion int

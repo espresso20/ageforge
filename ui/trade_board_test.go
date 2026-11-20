@@ -104,8 +104,8 @@ func offerTown(t *testing.T) game.GameState {
 	st.Resources["food"] = game.ResourceState{Amount: 100}
 	a, b := st.Diplomacy.Factions[fs[0].Key], st.Diplomacy.Factions[fs[1].Key]
 	a.Discovered, a.Status, a.Name = true, "neutral", "Alpha"
-	a.Deals = []game.DealInfo{{Num: 1, Kind: game.DealWant, Give: "food", GiveAmt: 10, Get: "gold", GetAmt: 5},
-		{Num: 2, Kind: game.DealWant, Give: "food", GiveAmt: 1e12, Get: "gold", GetAmt: 5}}
+	a.Deals = []game.DealInfo{{Num: 1, Kind: game.DealBoost, Give: "food", GiveAmt: 10, Res: "gold", Amt: 5},
+		{Num: 2, Kind: game.DealBoost, Give: "food", GiveAmt: 1e12, Res: "gold", Amt: 5}}
 	b.Discovered, b.Status, b.Name, b.Deals, b.DealsBlocked = true, "embargo", "Beta", nil, "under your embargo"
 	st.Diplomacy.Factions[fs[0].Key], st.Diplomacy.Factions[fs[1].Key] = a, b
 	return st
@@ -141,7 +141,7 @@ func TestTradeOffers_BoardAndDeck(t *testing.T) {
 		t.Errorf("offer card command = %q, want %q", card.Command, want)
 	}
 	// Too small for the board, the deck lists the same offers.
-	if out := deckText(pg); !strings.Contains(out, "Alpha · Sell") || !strings.Contains(out, "2 open · 1 you can pay now") {
+	if out := deckText(pg); !strings.Contains(out, "Alpha · Boost") || !strings.Contains(out, "2 open · 1 you can pay now") {
 		t.Errorf("the deck lacks the offers:\n%s", out)
 	}
 }
@@ -152,7 +152,7 @@ func TestTradeOffers_Scroll(t *testing.T) {
 	st := offerTown(t)
 	f := st.Diplomacy.Factions[st.Ruleset().Factions()[0].Key]
 	for n := 3; n <= 60; n++ {
-		f.Deals = append(f.Deals, game.DealInfo{Num: n, Kind: game.DealWant, Give: "food", GiveAmt: 1, Get: "gold", GetAmt: 5})
+		f.Deals = append(f.Deals, game.DealInfo{Num: n, Kind: game.DealBoost, Give: "food", GiveAmt: 1, Res: "gold", Amt: 5})
 	}
 	st.Diplomacy.Factions[st.Ruleset().Factions()[0].Key] = f
 	pg := tradePage(st)
@@ -173,5 +173,17 @@ func firstOffer(pg deckPage) int {
 		if !ok || strings.HasPrefix(c.Command, "diplomacy accept") {
 			return n
 		}
+	}
+}
+
+func TestTradeActiveGiftsListsBoostsAndKnowhow(t *testing.T) {
+	var st game.GameState
+	if got := tradeActiveGifts(st); got != nil {
+		t.Fatalf("no gifts must give no block, got %v", got)
+	}
+	st.Diplomacy.Boosts = []game.BoostInfo{{Res: "stone", TicksLeft: 300}}
+	ls := tradeActiveGifts(st)
+	if len(ls) != 2 || !strings.Contains(ls[1].Value, "+25% stone") {
+		t.Fatalf("want the heading and the boost, got %v", ls)
 	}
 }

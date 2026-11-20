@@ -544,10 +544,10 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 		Resources: map[string]game.ResourceState{"stone": {Amount: 100}, "iron": {Amount: config.Million}},
 		Diplomacy: game.DiplomacyState{Factions: map[string]game.FactionInfo{
 			"riverlands_tribes": {Name: "Riverlands Tribes", Discovered: true, Status: "neutral", DealRefreshIn: 900, Deals: []game.DealInfo{
-				{Num: 1, Kind: game.DealWant, Give: "stone", GiveAmt: 2100, Get: "food", GetAmt: 3000},
-				{Num: 2, Kind: game.DealFavor, Give: "iron", GiveAmt: 727, Standing: 5},
-				{Num: 3, Kind: game.DealSell, Give: "iron", GiveAmt: 10, Get: "food", GetAmt: 12, Taken: true},
-				{Num: 4, Kind: game.DealWant, Give: "iron_ore", GiveAmt: 50, Get: "dark_matter", GetAmt: 2},
+				{Num: 1, Kind: game.DealBoost, Give: "stone", GiveAmt: 2100, Res: "food", Amt: 3000},
+				{Num: 2, Kind: game.DealKnowhow, Give: "iron", GiveAmt: 727, Res: "food"},
+				{Num: 3, Kind: game.DealBoost, Give: "iron", GiveAmt: 10, Res: "food", Amt: 12, Taken: true},
+				{Num: 4, Kind: game.DealBoost, Give: "iron_ore", GiveAmt: 50, Res: "dark_matter", Amt: 2},
 			}},
 			"ironhold_clans": {Name: "Ironhold Clans", Discovered: true, Status: "neutral", AtWar: true, DealsBlocked: "at war with you"},
 		}},
@@ -568,22 +568,22 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	out := plainText(raw)
 	wantAll(t, "deals", out,
 		"Deals: new offers in",
-		"1. Sell: give 2.1K stone → get 3K food",
-		"2. Goodwill: give 727 iron → get +5 opinion",
-		"3. Buy: give 10 iron → get 12 food  taken",
+		"1. Boost: give 2.1K stone → +25% food",
+		"2. Know-how: give 727 iron → know-how: +5% food",
+		"3. Boost: give 10 iron → +25% food",
 		"Deals: none while they are at war with you.",
 	)
-	// 100 stone can't pay 2.1K: the price is painted Negative; the favor's
+	// 100 stone can't pay 2.1K: the price is painted Negative; the know-how's
 	// iron is affordable and painted Highlight.
 	if l := lineContaining(raw, "1."); !strings.Contains(l, "[negative]2.1K stone") {
 		t.Errorf("unaffordable price not in the Negative role: %q", l)
 	}
-	if l := lineContaining(raw, "Goodwill:"); !strings.Contains(l, "[highlight]727 iron") {
+	if l := lineContaining(raw, "Know-how:"); !strings.Contains(l, "[highlight]727 iron") {
 		t.Errorf("affordable price not in the Highlight role: %q", l)
 	}
 	// Every deal line, painted or not, reads exactly as game.DealTerms words it.
 	for _, d := range state.Diplomacy.Factions["riverlands_tribes"].Deals {
-		want := strconv.Itoa(d.Num) + ". " + game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, textfmt.Number)
+		want := strconv.Itoa(d.Num) + ". " + game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Res, d.Amt, textfmt.Number, func(n int) string { return formatTicks(n, state) })
 		if got := plainText(dealLine(d, state, panelWidth)); !strings.HasPrefix(got, want) {
 			t.Errorf("deal line %q does not start with %q", got, want)
 		}
@@ -600,10 +600,8 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	}
 }
 
-// TestDiplomacyDealCommands drives `diplomacy deals`, `diplomacy accept`,
-// `plan deal` and the deal-number completion against a live engine. A new
-// game may hold the price of a deal or not, and a civ may offer one deal
-// only, so the plan item is added before any deal is taken.
+// TestDiplomacyDealCommands drives `diplomacy deals`, `diplomacy accept`
+// and the deal-number completion against a live engine.
 func TestDiplomacyDealCommands(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SeedRNG(1)
@@ -611,6 +609,8 @@ func TestDiplomacyDealCommands(t *testing.T) {
 	if res := HandleCommand("diplomacy deals", engine); !strings.Contains(res.Message, "not met anyone") {
 		t.Errorf("deals before first contact: %q", res.Message)
 	}
+	must(t, engine.EnterAgeForTest("colonial_age"))
+	townWithGoods(engine)
 	must(t, engine.MeetFactionForTest("riverlands_tribes", 30))
 	deals := engine.GetState().Diplomacy.Factions["riverlands_tribes"].Deals
 	if len(deals) == 0 {
@@ -629,14 +629,6 @@ func TestDiplomacyDealCommands(t *testing.T) {
 	}
 	if got := comp("diplomacy accept riv"); len(got) != 1 || strings.TrimSpace(got[0]) != "diplomacy accept riverlands_tribes" {
 		t.Errorf("civs suggested: %v", got)
-	}
-	if res := HandleCommand("plan deal riverlands_tribes 1", engine); res.Type != game.LogRoutine {
-		t.Errorf("plan deal: %+v", res)
-	}
-	label := game.DealKindLabel(deals[0].Kind) + ": give "
-	if st := engine.GetState(); len(st.Plan) != 1 || st.Plan[0].Kind != game.PlanDeal ||
-		!strings.HasPrefix(st.Plan[0].Name, "deal with the Riverlands Tribes ("+label) || !strings.Contains(st.Plan[0].Name, ", get ") {
-		t.Errorf("plan after plan deal: %+v", st.Plan)
 	}
 	// Taking deal 1 either goes through or says what is short; a second
 	// take of a taken deal is refused.
@@ -754,5 +746,14 @@ func TestFactionsProvider_BackstoryWrapsNotCut(t *testing.T) {
 				t.Errorf("no line holds the backstory start")
 			}
 		}
+	}
+}
+
+// townWithGoods gives engine a town that makes goods, has room for people and
+// holds stock to pay with, so civilizations have gifts to offer it.
+func townWithGoods(engine *game.GameEngine) {
+	engine.SetTownForTest(map[string]int{"wood_camp": 80, "hut": 20, "gathering_camp": 10}, 0)
+	for _, r := range []string{"wood", "food", "stone", "iron", "iron_ore", "gold", "coal", "marble"} {
+		engine.SetStockForTest(r, 1e9)
 	}
 }

@@ -89,6 +89,7 @@ type GameSave struct {
 	ChainsCompleted  []string                      `json:"chains_completed,omitempty"`
 	CurrentTitle     string                        `json:"current_title,omitempty"`
 	PermanentBonuses map[string]float64            `json:"permanent_bonuses"`
+	Boosts           []GiftBoost                   `json:"gift_boosts,omitempty"`
 	BuildQueue       []BuildQueueItem              `json:"build_queue"`
 	Prestige         PrestigeSave                  `json:"prestige"`
 	Trade            TradeSave                     `json:"trade"`
@@ -607,6 +608,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		ChainsCompleted:  ge.Milestones.GetChainsCompleted(),
 		CurrentTitle:     ge.Milestones.savedTitle(),
 		PermanentBonuses: orEmpty(maps.Clone(ge.permanentBonuses)),
+		Boosts:           slices.Clone(ge.boosts),
 		Prestige: PrestigeSave{
 			Level:         ge.Prestige.level,
 			PrestigeFloor: ge.Prestige.floor,
@@ -854,6 +856,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)
 	ge.Milestones.LoadState(save.Milestones, save.ChainsCompleted, save.CurrentTitle)
 
+	ge.boosts = slices.DeleteFunc(slices.Clone(save.Boosts), func(b GiftBoost) bool { return ge.Resources.resources[b.Res] == nil })
 	if save.PermanentBonuses != nil {
 		ge.permanentBonuses = save.PermanentBonuses
 	}

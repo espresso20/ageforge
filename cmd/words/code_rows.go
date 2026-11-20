@@ -357,7 +357,6 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 var framePieces = map[string]string{
 	"game.advance_view.monumentRows.03": "needs … first",
 	"game.advance_view.monumentRows.04": "needs … first",
-	"game.plan_deal.planDealCheck.02":   "needs … researched",
 	"game.shares.keepSharesLive.01":     "Roster: ….",
 	"flavor.resource.phraseStores.01":   "your … stores",
 	"flavor.resource.phraseStores.02":   "your … stores",

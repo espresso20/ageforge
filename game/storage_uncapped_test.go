@@ -249,40 +249,6 @@ func TestUncapped_NothingOverflowsIntoTheWonder(t *testing.T) {
 	}
 }
 
-// A deal whose goods are more than the store holds is taken, and charged:
-// there is no room to run out of.
-func TestUncapped_DealIntoAFullStoreIsTaken(t *testing.T) {
-	ge := dealEngine(t, "colonial_age")
-	meet(ge, "merchant_guild", 30)
-	ge.mu.Lock()
-	idx := -1
-	for i, d := range ge.Diplomacy.factions["merchant_guild"].Deals {
-		if d.Get != "" && !d.Taken {
-			idx = i
-			break
-		}
-	}
-	if idx < 0 {
-		ge.mu.Unlock()
-		t.Fatal("setup: the guild offers no deal that pays goods")
-	}
-	d := ge.Diplomacy.factions["merchant_guild"].Deals[idx]
-	ge.Resources.resources[d.Give].Amount = d.GiveAmt * 3
-	ge.Resources.resources[d.Get].Amount = baseStore(d.Get) // a base store's worth
-	give, get := ge.Resources.Get(d.Give), ge.Resources.Get(d.Get)
-	ge.mu.Unlock()
-
-	if _, err := ge.AcceptFactionDeal("merchant_guild", idx+1); err != nil {
-		t.Fatalf("deal into a full store: %v", err)
-	}
-	if got := ge.Resources.Get(d.Get); math.Abs(got-(get+d.GetAmt)) > 1e-6 {
-		t.Errorf("%s = %v after the deal, want %v: the whole lot", d.Get, got, get+d.GetAmt)
-	}
-	if got := ge.Resources.Get(d.Give); math.Abs(got-(give-d.GiveAmt)) > 1e-6 {
-		t.Errorf("%s = %v after the deal, want %v", d.Give, got, give-d.GiveAmt)
-	}
-}
-
 // A trade route's flow runs into a full store: the import is not capped away.
 func TestUncapped_RouteFlowIntoAFullStoreStillComesIn(t *testing.T) {
 	ge := newSeededEngine(9)

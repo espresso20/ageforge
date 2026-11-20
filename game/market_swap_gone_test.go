@@ -47,18 +47,18 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 		t.Errorf("a route took %v %s and paid %v %s a tick, want %v and %v", took, exp, paid, imp, gout[exp], re.Trade.RoutePay(gin[imp]))
 	}
 
-	// Deals still pay: the offer's goods for its price, once.
+	// Deals still pay: the offer's price, once.
 	de := dealEngine(t, "colonial_age")
 	meet(de, "merchant_guild", 0)
 	de.mu.RLock()
 	d := de.Diplomacy.factions["merchant_guild"].Deals[0]
-	give0, get0 := de.Resources.Get(d.Give), de.Resources.Get(d.Get)
+	give0 := de.Resources.Get(d.Give)
 	de.mu.RUnlock()
 	if _, err := de.AcceptFactionDeal("merchant_guild", 1); err != nil {
 		t.Fatal(err)
 	}
-	if give1, get1 := de.Resources.Get(d.Give), de.Resources.Get(d.Get); give1 != give0-d.GiveAmt || get1 != get0+d.GetAmt {
-		t.Errorf("a deal moved %s %v→%v and %s %v→%v, want -%v and +%v", d.Give, give0, give1, d.Get, get0, get1, d.GiveAmt, d.GetAmt)
+	if give1 := de.Resources.Get(d.Give); give1 != give0-d.GiveAmt {
+		t.Errorf("a deal moved %s %v→%v, want -%v", d.Give, give0, give1, d.GiveAmt)
 	}
 
 	// The black market still pays: a win on iron is the stake's minutes of

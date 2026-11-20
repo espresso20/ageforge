@@ -190,7 +190,7 @@ func determinismFingerprint(ge *GameEngine) string {
 		fs := ge.Diplomacy.factions[k]
 		fmt.Fprintf(&b, "civ %s op %d war %v status %s deals %d/%d/%s\n", k, fs.Opinion, fs.AtWar, fs.Status, fs.DealRound, fs.DealTicks, fs.DealsFor)
 		for _, d := range fs.Deals {
-			fmt.Fprintf(&b, "  deal %d %s %s %x %s %x %d %v\n", d.ID, d.Kind, d.Give, math.Float64bits(d.GiveAmt), d.Get, math.Float64bits(d.GetAmt), d.Standing, d.Taken)
+			fmt.Fprintf(&b, "  deal %d %s %s %x %s %x %v\n", d.ID, d.Kind, d.Give, math.Float64bits(d.GiveAmt), d.Res, math.Float64bits(d.Amt), d.Taken)
 		}
 	}
 	for _, lb := range ge.Diplomacy.lentBatches {

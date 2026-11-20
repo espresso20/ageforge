@@ -49,6 +49,11 @@ func TestDigitalToCosmicMechanics(t *testing.T) {
 			ge.Resources.UnlockResource(res)
 			r.Amount = 100 * config.Billion
 		}
+		for k := range ge.Buildings.defs { // a town that makes many goods and has room
+			ge.Buildings.counts[k] = 5
+		}
+		ge.permanentBonuses["population"] += 100
+		ge.recalculateRates()
 		most := 0
 		for seed := int64(1); seed <= 40; seed++ {
 			most = max(most, len(rollFactionDeals(def, FactionState{Discovered: true, Opinion: 30, Status: "friendly"}, ge.newDealEnv(), newSeededEngine(seed).gameRNG(), 1)))

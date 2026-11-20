@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -151,7 +152,7 @@ func TestPlanTemplateWithinPlanCap(t *testing.T) {
 	ge.mu.Lock()
 	ge.plan = nil
 	for i := range MaxPlanItems - 1 {
-		ge.plan = append(ge.plan, PlanItem{Kind: PlanDeal, Key: "riverlands_tribes", Deal: i + 1, Count: 1})
+		ge.plan = append(ge.plan, PlanItem{Kind: PlanExpedition, Key: "e" + strconv.Itoa(i), Count: 1})
 	}
 	ge.mu.Unlock()
 	ge.SetLegacyForTest(LegacyKit{Plan: plan}, true)

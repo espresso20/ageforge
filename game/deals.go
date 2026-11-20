@@ -1,8 +1,11 @@
 package game
 
 import (
+	"cmp"
+	"maps"
 	"math"
 	"math/rand"
+	"slices"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
@@ -11,57 +14,64 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// Faction trade deals: each civilization you have met offers a small,
-// rotating set of trades, derived from its data the way factionProfile
-// derives its boons. There are no per-civ tables; a civ's specialty,
-// personality and strength and your standing with it decide everything.
+// Faction offers: each civilization you have met offers a small, rotating
+// set of gifts, derived from its data the way factionProfile derives its
+// boons. There are no per-civ tables; a civ's specialty, personality and
+// strength and your standing with it decide everything.
 //
-// Rules (site/docs/trade.md, Trade deals):
+// An offer is a cost, a lump of one of your goods (never the civ's own
+// specialty), and one gift that goods cannot buy. Goods trade for goods on
+// the trade routes (trade.go), not here.
 //
-//   - Kinds (keys are the civ's side; the player sees Buy, Sell, Favor and
-//     Rare, see DealTerms). A "sell" deal is the civ's specialty for one of your
-//     construction resources. A "want" deal is the civ asking for one of the
-//     resources you hold most of (most minutes of income first) and paying in its
-//     specialty, a little better than a sell. A "favor" deal pays for the
-//     same kind of ask in standing instead of goods. A "rare" deal is an
-//     isolationist's: a construction resource of the NEXT age that this age
-//     does not price, at a steep 0.6 of its next-age parity.
-//   - Rates. A deal stands on its own: its rate is the ratio of the two
-//     resources' price levels (rules.Set.DealPriceLevel, which also values
-//     flow resources) times mult, 0.84-1.0 of parity. A deal never beats
-//     parity.
-//   - Personality. Mercantile civs offer one more deal, at better rates and
-//     in bigger lots, and ask more than they sell. Aggressive civs offer one
-//     fewer at worse rates and ask for favours more. Isolationists offer one
-//     deal (two when allied), a rare one when the next age has a good for
-//     them to sell, their specialty otherwise.
-//   - Standing. Neutral civs offer 2 deals, friendly (friendly status or
-//     opinion 25+) 3, allied 4; rates and lot sizes rise with it. Civs at war,
-//     under embargo, rival or with opinion at or below -50 offer nothing and
-//     accept nothing. Standing from deals stops at opinion 50: they can bring
-//     a civ to the edge of an alliance, never past it, and never out of a war.
+// Rules (site/docs/factions.md, Offers):
+//
+//   - Gifts. A boost (DealBoost) adds dealBoostShare to the gross output of one
+//     resource the town makes, for dealBoostTicks ticks of play (stretched for
+//     the age); the resource is one of the top dealWantPool producers, the
+//     civ's specialty preferred. A research gift (DealResearch) is instant
+//     progress on the tech in progress, no more than it still needs. People
+//     (DealPeople) join the idle pool, within the housing. Know-how
+//     (DealKnowhow) is the civ's own perk, permanent: dealKnowhowShare more of
+//     its specialty, once per civ per run.
+//   - Prices, in price units of the age (a unit of res is
+//     rules.Set.DealPriceLevel(res) of it). mult is 0.84-1.0 of parity by
+//     standing and personality; a gift is worth mult of what is paid. A boost
+//     costs dealBoostWorth of the units of output it adds over its run, over
+//     mult. Research gives dealResearchWorth x the lot's units at research's
+//     level, times mult. People give the lot's units times mult over one
+//     worker's worth: the food it eats a tick for one rotation of offers
+//     (headFood x refresh, at food's level). Know-how costs dealKnowhowUnits.
+//   - Personality. Mercantile civs offer one more offer, in bigger lots.
+//     Aggressive civs offer one fewer, at worse rates. Isolationists offer one
+//     (two when allied).
+//   - Standing. Neutral civs offer 2, friendly (friendly status or opinion
+//     25+) 3, allied 4. Civs at war, under embargo, rival or with opinion at
+//     or below -50 offer nothing and accept nothing. An accepted offer adds
+//     dealTradeStanding opinion, up to dealStandingCap: offers can bring a
+//     civ to the edge of an alliance, never past it, and never out of a war.
+//     Know-how is offered at opinion dealStandingCap or allied, in the first
+//     slot of a set only.
 //   - Size. A lot is 1.5 price units of the age, times 0.9 + 0.1 per point of
 //     strength, the standing and personality factors and a 0.75-1.25 roll,
-//     capped so the goods come to half a good stock of the resource and the
-//     price to 80% of one (dealEnv.size: minutes of your own income of it).
+//     capped so the price comes to 80% of a good stock of the resource
+//     (dealEnv.size: minutes of your own income of it). Know-how is not
+//     capped: it is saved up for.
 //   - Refresh. Offers rotate every dealRefreshTicks ticks of play (stretched
 //     for the age, dealRefreshIn) and on an age advance. The timer counts
-//     ticks of live play only: offline catch-up does not advance it, so a
-//     player who checks in finds the offers they left (and a plan can take
-//     one while they are away).
+//     ticks of live play only: offline catch-up does not advance it.
 //   - Determinism. Rolls come off the engine's seeded rng in roster order,
-//     three draws per slot whether or not the slot yields a deal. A blocked
+//     three draws per slot whether or not the slot yields an offer. A blocked
 //     civ draws nothing. Offers, taken flags and the timer are saved.
 
-// Deal kinds.
+// Offer kinds, by gift.
 const (
-	DealSell  = "sell"
-	DealWant  = "want"
-	DealFavor = "favor"
-	DealRare  = "rare"
+	DealBoost    = "boost"
+	DealResearch = "research"
+	DealPeople   = "people"
+	DealKnowhow  = "knowhow"
 )
 
-// Deal tuning, grouped so balancing is a data edit.
+// Offer tuning, grouped so balancing is a data edit.
 const (
 	// dealRefreshTicks is how many ticks of live play an offer set lasts
 	// (an hour at 1x) on the base curve; dealRefreshIn stretches it.
@@ -69,23 +79,19 @@ const (
 
 	// dealHostileOpinion: at or below this opinion a civ will not trade.
 	dealHostileOpinion = -50
-	// dealStandingCap is the opinion deals can raise a civ to, no further.
+	// dealStandingCap is the opinion offers can raise a civ to, no further.
 	dealStandingCap = 50
-	// dealFavorStanding is what a favor deal pays; dealTradeStanding what
-	// any other accepted deal adds.
-	dealFavorStanding = 5
+	// dealTradeStanding is what an accepted offer adds.
 	dealTradeStanding = 1
 
 	// Rates as a multiple of parity.
 	dealRateNeutral       = 0.88
 	dealRateFriendly      = 0.92
 	dealRateAllied        = 0.96
-	dealWantBonus         = 0.03
 	dealMercantileBonus   = 0.02
 	dealAggressivePenalty = 0.04
 	dealRateMin           = 0.84
 	dealRateMax           = 1.0
-	dealRareRate          = 0.6
 
 	// Lot size in price units of the age.
 	dealLotBase         = 1.5
@@ -94,44 +100,57 @@ const (
 	dealLotFriendly     = 1.25
 	dealLotAllied       = 1.5
 	dealLotMercantile   = 1.2
-	dealLotRare         = 2.0
 	dealLotJitter       = 0.5 // lots vary from 1 - J/2 to 1 + J/2
-	// dealGetShare / dealGiveShare cap a lot at these shares of a good stock
-	// of the resource (dealEnv.size).
-	dealGetShare  = 0.5
+	// dealGiveShare caps a price at this share of a good stock of the
+	// resource (dealEnv.size).
 	dealGiveShare = 0.8
 	// dealWantPool is how many of the resources you hold most of (in minutes
-	// of your income of each) a want or favor deal chooses from.
+	// of your income of each) a price chooses from, and how many top
+	// producers a boost chooses from.
 	dealWantPool = 3
 
-	// dealIDStride spaces deal IDs by round: ID = round*stride + slot + 1.
+	// The gifts. A boost is dealBoostShare more output for dealBoostTicks
+	// base ticks (20 minutes at 1x, stretched for the age); it costs
+	// dealBoostWorth of the output it adds.
+	dealBoostShare = 0.25
+	dealBoostTicks = 600
+	dealBoostWorth = 0.6
+	// dealResearchWorth is the research a lot buys, as a multiple of its value.
+	dealResearchWorth = 1.25
+	// Know-how: dealKnowhowShare more of the civ's specialty, for
+	// dealKnowhowUnits price units, in the first slot of a set with
+	// probability dealKnowhowOdds.
+	dealKnowhowShare = 0.05
+	dealKnowhowUnits = 10
+	dealKnowhowOdds  = 0.4
+
+	// dealIDStride spaces offer IDs by round: ID = round*stride + slot + 1.
 	dealIDStride = 16
 )
 
-// FactionDeal is one offer, as saved. Give is what you pay; Get what you
-// receive ("" for a favor deal, which pays Standing instead).
+// FactionDeal is one offer, as saved. Give is what you pay. Res and Amt say
+// the gift: a boost's resource and ticks, a research gift's work, the number
+// of people, a know-how's resource.
 type FactionDeal struct {
-	ID       int     `json:"id"`
-	Kind     string  `json:"kind"`
-	Give     string  `json:"give"`
-	GiveAmt  float64 `json:"give_amt"`
-	Get      string  `json:"get,omitempty"`
-	GetAmt   float64 `json:"get_amt,omitempty"`
-	Standing int     `json:"standing,omitempty"`
-	Taken    bool    `json:"taken,omitempty"`
+	ID      int     `json:"id"`
+	Kind    string  `json:"kind"`
+	Give    string  `json:"give"`
+	GiveAmt float64 `json:"give_amt"`
+	Res     string  `json:"res,omitempty"`
+	Amt     float64 `json:"amt,omitempty"`
+	Taken   bool    `json:"taken,omitempty"`
 }
 
 // DealInfo is one offer for the UI. Num is what `diplomacy accept` takes.
 type DealInfo struct {
-	Num      int
-	ID       int
-	Kind     string
-	Give     string
-	GiveAmt  float64
-	Get      string
-	GetAmt   float64
-	Standing int
-	Taken    bool
+	Num     int
+	ID      int
+	Kind    string
+	Give    string
+	GiveAmt float64
+	Res     string
+	Amt     float64
+	Taken   bool
 }
 
 // dealBlocked is why a civ will not trade with you ("" if it will).
@@ -149,7 +168,7 @@ func dealBlocked(fs FactionState) string {
 	return ""
 }
 
-// dealTier is your standing for deals: 0 neutral, 1 friendly, 2 allied.
+// dealTier is your standing for offers: 0 neutral, 1 friendly, 2 allied.
 func dealTier(fs FactionState) int {
 	switch {
 	case fs.Status == "allied":
@@ -183,39 +202,14 @@ func (env dealEnv) slots(personality string, tier int) int {
 	return dealSlots(personality, tier) + max(env.extraSlots, 0)
 }
 
-// dealKind picks a slot's kind from its first draw.
-func dealKind(personality string, r float64) string {
-	var sell, want float64
-	switch personality {
-	case "isolationist":
-		return DealRare
-	case "mercantile":
-		sell, want = 0.5, 0.9
-	case "aggressive":
-		sell, want = 0.45, 0.65
-	default: // peaceful
-		sell, want = 0.55, 0.8
-	}
-	switch {
-	case r < sell:
-		return DealSell
-	case r < want:
-		return DealWant
-	}
-	return DealFavor
-}
-
-// dealMult is a deal's rate as a multiple of parity.
-func dealMult(personality string, tier int, kind string) float64 {
+// dealMult is a gift as a multiple of parity.
+func dealMult(personality string, tier int) float64 {
 	m := dealRateNeutral
 	switch tier {
 	case 1:
 		m = dealRateFriendly
 	case 2:
 		m = dealRateAllied
-	}
-	if kind == DealWant {
-		m += dealWantBonus
 	}
 	switch personality {
 	case "mercantile":
@@ -227,7 +221,7 @@ func dealMult(personality string, tier int, kind string) float64 {
 }
 
 // dealLot is a slot's size in price units of the age; r is its third draw.
-func dealLot(def config.FactionDef, tier int, kind string, r float64) float64 {
+func dealLot(def config.FactionDef, tier int, r float64) float64 {
 	str := min(max(def.Strength, 1), 5)
 	lot := dealLotBase * (dealLotStrengthBase + float64(dealLotPerStrength*float64(str)))
 	switch tier {
@@ -239,21 +233,7 @@ func dealLot(def config.FactionDef, tier int, kind string, r float64) float64 {
 	if def.Personality == "mercantile" {
 		lot *= dealLotMercantile
 	}
-	if kind == DealRare {
-		lot *= dealLotRare
-	}
 	return lot * (1 - dealLotJitter/2 + float64(dealLotJitter*r))
-}
-
-// dealRate is what a deal pays per unit of from, given its parity multiple:
-// the ratio of the two resources' deal price levels times mult. ok is false
-// when either has no price level in age.
-func dealRate(set *rules.Set, from, to, age string, mult float64) (float64, bool) {
-	lf, lt := set.DealPriceLevel(from, age), set.DealPriceLevel(to, age)
-	if lf <= 0 || lt <= 0 {
-		return 0, false
-	}
-	return lt / lf * mult, true
 }
 
 // roundDeal rounds a deal amount to 3 significant figures, up for what you
@@ -269,24 +249,34 @@ func roundDeal(v float64, up bool) float64 {
 	return math.Floor(v*mag) / mag
 }
 
-// dealEnv is what deal generation reads of your empire.
+// dealEnv is what offer generation reads of your empire.
 type dealEnv struct {
-	// rules prices the deals: the engine's ruleset (nil reads the core set).
-	rules     *rules.Set
-	age, next string
-	// extraSlots is what the techs add to the deals every civilization
-	// offers in a set (config.MechanicDealSlots).
+	// rules prices the offers: the engine's ruleset (nil reads the core set).
+	rules *rules.Set
+	age   string
+	// extraSlots is what the techs add to the offers every civilization
+	// makes in a set (config.MechanicDealSlots).
 	extraSlots int
 	unlocked   map[string]bool
 	amount     map[string]float64
 	// size is, per resource, what a good stock of it comes to for the town:
 	// minutes of the town's own income of it in the current age
-	// (rules.Set.StockOf). A lot is capped at shares of it and the resources
-	// held most are the ones whose amount is the most of it.
+	// (rules.Set.StockOf). A price is capped at a share of it and the
+	// resources held most are the ones whose amount is the most of it.
 	size map[string]float64
+	// income is what the town makes of each resource a tick.
+	income map[string]float64
+	// researchLeft is what the tech in progress still needs (0 with none).
+	researchLeft float64
+	// room is how many people the housing has room for; headFood is the food
+	// one eats a tick.
+	room     int
+	headFood float64
+	// boostTicks is how long a boost runs; refresh how long a set of offers lasts.
+	boostTicks, refresh int
 }
 
-// newDealEnv captures the engine's side of deal generation. Under the lock.
+// newDealEnv captures the engine's side of offer generation. Under the lock.
 //
 // What counts as unlocked is the age table's list up to the current age,
 // the set a save records (getUnlockedState), rather than the live flags, so
@@ -296,46 +286,55 @@ func (ge *GameEngine) newDealEnv() dealEnv {
 		rules:      ge.rules,
 		extraSlots: int(ge.Research.Mechanic(config.MechanicDealSlots)),
 		age:        ge.age,
-		next:       ge.progress.GetNextAge(ge.age),
 		unlocked:   map[string]bool{},
 		amount:     map[string]float64{},
 		size:       map[string]float64{},
+		income:     map[string]float64{},
+		headFood:   ge.Workers.FoodCostPerWorker(),
+		boostTicks: ge.stretchTicks(dealBoostTicks),
+		refresh:    dealRefreshIn(ge.rules, ge.age),
 	}
 	for _, k := range ge.getUnlockedState().Resources {
 		env.unlocked[k] = true
 	}
 	for _, k := range ge.Resources.order {
 		env.amount[k] = ge.Resources.Get(k)
-		env.size[k] = ge.rules.StockOf(k, ge.age, 1, ge.incomeOf(k))
+		env.income[k] = ge.incomeOf(k)
+		env.size[k] = ge.rules.StockOf(k, ge.age, 1, env.income[k])
 	}
+	if ge.Workers.IsUnlocked() {
+		env.room = max(ge.workerCapLocked()-ge.Workers.TotalPop(), 0)
+	}
+	env.researchLeft = ge.researchLeftLocked()
 	return env
 }
 
-// fullest is up to dealWantPool of res, the most held first (amount over a
-// good stock of it, then key), which is what a want or favor deal asks for.
-func (env dealEnv) fullest(res []string) []string {
-	out := append([]string(nil), res...)
-	fill := func(r string) float64 {
-		if s := env.size[r]; s > 0 {
-			return env.amount[r] / s
-		}
+// researchLeftLocked is the work the tech in progress still needs (0 with none).
+func (ge *GameEngine) researchLeftLocked() float64 {
+	if ge.Research.currentTech == "" {
 		return 0
 	}
-	// Insertion sort: short lists, stable, no map order.
-	for i := 1; i < len(out); i++ {
-		for j := i; j > 0; j-- {
-			a, b := out[j-1], out[j]
-			if fill(b) > fill(a) || (fill(b) == fill(a) && b < a) {
-				out[j-1], out[j] = b, a
-				continue
-			}
-			break
+	return max(ge.Research.defs[ge.Research.currentTech].Cost-ge.Research.progress, 0)
+}
+
+// top is up to dealWantPool of res by descending score, ties by key.
+func top(res []string, score func(string) float64) []string {
+	out := slices.Clone(res)
+	slices.SortFunc(out, func(a, b string) int {
+		return cmp.Or(cmp.Compare(score(b), score(a)), cmp.Compare(a, b))
+	})
+	return out[:min(len(out), dealWantPool)]
+}
+
+// fullest is up to dealWantPool of res, the most held first (amount over a
+// good stock of it, then key), which is what a price is paid from.
+func (env dealEnv) fullest(res []string) []string {
+	return top(res, func(k string) float64 {
+		if s := env.size[k]; s > 0 {
+			return env.amount[k] / s
 		}
-	}
-	if len(out) > dealWantPool {
-		out = out[:dealWantPool]
-	}
-	return out
+		return 0
+	})
 }
 
 // dealPick is the element of s a draw in [0,1) selects.
@@ -344,30 +343,22 @@ func dealPick(s []string, r float64) string {
 	return s[min(max(i, 0), len(s)-1)]
 }
 
-// fit sizes a goods deal: give and get scaled down together until get is
-// within dealGetShare of a good stock of it and give within dealGiveShare of
-// one, then rounded against you. ok is false when a side rounds below 1.
-func (env dealEnv) fit(d *FactionDeal, rate float64) bool {
-	if d.Get != "" {
-		if cap := dealGetShare * env.size[d.Get]; d.GetAmt > cap {
-			d.GetAmt = cap
-			d.GiveAmt = d.GetAmt / rate
+// payWith picks the good an offer is paid in: one of your fullest priced
+// resources (amount over a good stock of it) other than the civ's specialty
+// and skip, by draw r. lv is its price level; "" when there is none.
+func (env dealEnv) payWith(def config.FactionDef, skip string, r float64) (give string, lv float64) {
+	set := orCore(env.rules)
+	var cands []string
+	for _, res := range set.PricedResources(env.age) {
+		if res != def.Specialty && res != skip && env.unlocked[res] {
+			cands = append(cands, res)
 		}
 	}
-	if cap := dealGiveShare * env.size[d.Give]; d.GiveAmt > cap {
-		d.GiveAmt = cap
-		if d.Get != "" {
-			d.GetAmt = d.GiveAmt * rate
-		}
+	if cands = env.fullest(cands); len(cands) == 0 {
+		return "", 0
 	}
-	d.GiveAmt = roundDeal(d.GiveAmt, true)
-	if d.Get != "" {
-		d.GetAmt = roundDeal(d.GetAmt, false)
-		if d.GetAmt < 1 {
-			return false
-		}
-	}
-	return d.GiveAmt >= 1 && d.GiveAmt <= env.size[d.Give]
+	give = dealPick(cands, r)
+	return give, set.DealPriceLevel(give, env.age)
 }
 
 // rollFactionDeals rolls a civ's offers for one round. Blocked civs get none
@@ -380,7 +371,7 @@ func rollFactionDeals(def config.FactionDef, fs FactionState, env dealEnv, rng *
 	var out []FactionDeal
 	for slot := 0; slot < env.slots(def.Personality, tier); slot++ {
 		r1, r2, r3 := rng.Float64(), rng.Float64(), rng.Float64()
-		d, ok := makeDeal(def, fs, tier, env, r1, r2, r3)
+		d, ok := makeDeal(def, fs, tier, env, slot == 0, r1, r2, r3)
 		if !ok || hasSameDeal(out, d) {
 			continue
 		}
@@ -390,147 +381,108 @@ func rollFactionDeals(def config.FactionDef, fs FactionState, env dealEnv, rng *
 	return out
 }
 
-// hasSameDeal reports whether ds already offers d's trade.
+// hasSameDeal reports whether ds already offers d's gift.
 func hasSameDeal(ds []FactionDeal, d FactionDeal) bool {
 	for _, x := range ds {
-		if x.Kind == d.Kind && x.Give == d.Give && x.Get == d.Get {
+		if x.Kind == d.Kind && x.Give == d.Give && x.Res == d.Res {
 			return true
 		}
 	}
 	return false
 }
 
-// makeDeal builds one slot's offer. A kind that has nothing to offer falls
-// back to a sell (for a rare), then to a favor.
-func makeDeal(def config.FactionDef, fs FactionState, tier int, env dealEnv, r1, r2, r3 float64) (FactionDeal, bool) {
-	kind := dealKind(def.Personality, r1)
-	canFavor := fs.Opinion < dealStandingCap
-	if kind == DealFavor && !canFavor {
-		kind = DealWant
-	}
-	lot := dealLot(def, tier, kind, r3)
-	switch kind {
-	case DealRare:
-		if d, ok := rareDeal(def, env, lot, r2); ok {
-			return d, true
-		}
-		if d, ok := goodsDeal(def, tier, env, DealSell, dealLot(def, tier, DealSell, r3), r2); ok {
-			return d, true
-		}
-	case DealSell, DealWant:
-		if d, ok := goodsDeal(def, tier, env, kind, lot, r2); ok {
-			return d, true
+// knowhowOpen reports whether the civ may offer its know-how: earned by
+// standing (the cap, or allied), not yet had, with a specialty that has a price.
+func knowhowOpen(def config.FactionDef, fs FactionState, env dealEnv) bool {
+	return !fs.Knowhow && (fs.Status == "allied" || fs.Opinion >= dealStandingCap) &&
+		env.unlocked[def.Specialty] && orCore(env.rules).DealPriceLevel(def.Specialty, env.age) > 0
+}
+
+// makeDeal builds one slot's offer. The first draw picks the gift (a boost
+// half the time, research a quarter, people a quarter; know-how only in the
+// first slot); a gift the town cannot use falls to the next.
+func makeDeal(def config.FactionDef, fs FactionState, tier int, env dealEnv, first bool, r1, r2, r3 float64) (FactionDeal, bool) {
+	if first && r1 < dealKnowhowOdds && knowhowOpen(def, fs, env) {
+		if give, lv := env.payWith(def, "", r3); lv > 0 {
+			return FactionDeal{Kind: DealKnowhow, Give: give, GiveAmt: roundDeal(float64(dealKnowhowUnits*lv), true), Res: def.Specialty}, true
 		}
 	}
-	if canFavor {
-		return favorDeal(def, env, dealLot(def, tier, DealFavor, r3), r2)
+	mult, lot := dealMult(def.Personality, tier), dealLot(def, tier, r3)
+	makers := [...]func() (FactionDeal, bool){
+		func() (FactionDeal, bool) { return boostDeal(def, env, mult, r2, r3) },
+		func() (FactionDeal, bool) { return researchDeal(def, env, mult, lot, r3) },
+		func() (FactionDeal, bool) { return peopleDeal(def, env, mult, lot, r3) },
+	}
+	start := 0
+	if r1 >= 0.5 {
+		start = 1 + int((r1-0.5)*4)
+	}
+	for i := range makers {
+		if d, ok := makers[(start+i)%len(makers)](); ok {
+			return d, true
+		}
 	}
 	return FactionDeal{}, false
 }
 
-// goodsDeal is a sell or want deal: the civ's specialty for one of your
-// construction resources. A sell takes any of them (the draw picks); a want
-// takes one of your fullest.
-func goodsDeal(def config.FactionDef, tier int, env dealEnv, kind string, lot, r float64) (FactionDeal, bool) {
+// boostDeal is a timed boost of one of your top producers (the civ's
+// specialty when it is making any and the draw prefers it), paid at
+// dealBoostWorth of the output it adds over its run, over mult.
+func boostDeal(def config.FactionDef, env dealEnv, mult, r2, r3 float64) (FactionDeal, bool) {
 	set := orCore(env.rules)
-	get := def.Specialty
-	if get == "" || !env.unlocked[get] {
-		return FactionDeal{}, false
-	}
-	mult := dealMult(def.Personality, tier, kind)
 	var cands []string
-	for _, res := range set.PricedResources(env.age) {
-		if res == get || !env.unlocked[res] {
-			continue
-		}
-		if _, ok := dealRate(set, res, get, env.age, mult); ok {
+	for _, res := range slices.Sorted(maps.Keys(env.income)) {
+		if env.unlocked[res] && env.income[res] > 0 && set.DealPriceLevel(res, env.age) > 0 {
 			cands = append(cands, res)
 		}
 	}
-	if kind == DealWant {
-		cands = env.fullest(cands)
-	}
-	if len(cands) == 0 {
+	tops := top(cands, func(k string) float64 { return env.income[k] / set.DealPriceLevel(k, env.age) })
+	if len(tops) == 0 {
 		return FactionDeal{}, false
 	}
-	give := dealPick(cands, r)
-	rate, _ := dealRate(set, give, get, env.age, mult)
-	d := FactionDeal{Kind: kind, Give: give, Get: get}
-	if kind == DealSell {
-		// A sell is sized by the goods, a want by what it asks for.
-		if lv := set.DealPriceLevel(get, env.age); lv > 0 {
-			d.GetAmt = lot * lv
-			d.GiveAmt = d.GetAmt / rate
-		}
+	res := dealPick(tops, r2)
+	if r2 < 0.5 && slices.Contains(cands, def.Specialty) {
+		res = def.Specialty
 	}
-	if d.GiveAmt == 0 {
-		d.GiveAmt = lot * set.DealPriceLevel(give, env.age)
-		d.GetAmt = d.GiveAmt * rate
-	}
-	if !env.fit(&d, rate) {
+	give, lv := env.payWith(def, res, r3)
+	if lv <= 0 {
 		return FactionDeal{}, false
 	}
-	return d, true
+	// Price units of output the boost adds.
+	units := float64(float64(dealBoostShare*env.income[res])*float64(env.boostTicks)) / set.DealPriceLevel(res, env.age)
+	d := FactionDeal{Kind: DealBoost, Give: give, GiveAmt: roundDeal(float64(units*dealBoostWorth/mult*lv), true), Res: res, Amt: float64(env.boostTicks)}
+	return d, d.GiveAmt >= 1 && d.GiveAmt <= float64(dealGiveShare*env.size[give])
 }
 
-// favorDeal is an ask paid in standing: one of your fullest construction
-// resources (not the civ's own specialty) for dealFavorStanding opinion.
-func favorDeal(def config.FactionDef, env dealEnv, lot, r float64) (FactionDeal, bool) {
+// researchDeal is progress on the tech in progress: dealResearchWorth of the
+// lot's value, at research's level and mult, no more than the tech still needs.
+func researchDeal(def config.FactionDef, env dealEnv, mult, lot, r3 float64) (FactionDeal, bool) {
 	set := orCore(env.rules)
-	var cands []string
-	for _, res := range set.PricedResources(env.age) {
-		if res != def.Specialty && env.unlocked[res] {
-			cands = append(cands, res)
-		}
-	}
-	cands = env.fullest(cands)
-	if len(cands) == 0 {
+	lr := set.DealPriceLevel(config.ResearchTarget, env.age)
+	give, lv := env.payWith(def, "", r3)
+	if env.researchLeft <= 0 || lr <= 0 || lv <= 0 {
 		return FactionDeal{}, false
 	}
-	give := dealPick(cands, r)
-	d := FactionDeal{Kind: DealFavor, Give: give, GiveAmt: lot * set.DealPriceLevel(give, env.age), Standing: dealFavorStanding}
-	if !env.fit(&d, 0) {
-		return FactionDeal{}, false
-	}
-	return d, true
+	per := float64(dealResearchWorth * mult * lr) // research per price unit paid
+	units := min(lot, env.researchLeft/per, float64(dealGiveShare*env.size[give])/lv)
+	d := FactionDeal{Kind: DealResearch, Give: give, GiveAmt: roundDeal(float64(units*lv), true), Res: config.ResearchTarget, Amt: roundDeal(float64(units*per), false)}
+	return d, d.GiveAmt >= 1 && d.Amt > 0
 }
 
-// rareDeal is an isolationist's offer: a construction resource of the next
-// age that this age does not price and that you can already hold,
-// for one of yours that both ages price, at dealRareRate of next-age parity.
-func rareDeal(def config.FactionDef, env dealEnv, lot, r float64) (FactionDeal, bool) {
+// peopleDeal is workers for the idle pool: the lot's value times mult over
+// the value of one worker (the food it eats a tick for one rotation of
+// offers, at food's level), within the housing.
+func peopleDeal(def config.FactionDef, env dealEnv, mult, lot, r3 float64) (FactionDeal, bool) {
 	set := orCore(env.rules)
-	if env.next == "" {
+	lf := set.DealPriceLevel("food", env.age)
+	give, lv := env.payWith(def, "", r3)
+	if env.room < 1 || lf <= 0 || lv <= 0 {
 		return FactionDeal{}, false
 	}
-	var gives []string
-	for _, res := range set.PricedResources(env.age) {
-		if env.unlocked[res] && set.DealPriceLevel(res, env.next) > 0 {
-			gives = append(gives, res)
-		}
-	}
-	var gets []string
-	for _, res := range set.PricedResources(env.next) {
-		if !env.unlocked[res] || set.DealPriceLevel(res, env.age) > 0 {
-			continue
-		}
-		gets = append(gets, res)
-	}
-	if len(gets) == 0 || len(gives) == 0 {
-		return FactionDeal{}, false
-	}
-	// One draw picks both: the goods first, the price from what is left of it.
-	i := min(int(r*float64(len(gets))), len(gets)-1)
-	get := gets[i]
-	rest := float64(r*float64(len(gets))) - float64(i)
-	give := dealPick(gives, rest)
-	rate := set.DealPriceLevel(get, env.next) / set.DealPriceLevel(give, env.next) * dealRareRate
-	d := FactionDeal{Kind: DealRare, Give: give, Get: get, GiveAmt: lot * set.DealPriceLevel(give, env.age)}
-	d.GetAmt = d.GiveAmt * rate
-	if !env.fit(&d, rate) {
-		return FactionDeal{}, false
-	}
-	return d, true
+	head := float64(env.headFood*float64(env.refresh)) / lf // price units of one worker
+	n := min(math.Floor(float64(lot*mult)/head), math.Floor(float64(dealGiveShare*env.size[give])/lv*mult/head), float64(env.room))
+	d := FactionDeal{Kind: DealPeople, Give: give, GiveAmt: roundDeal(float64(n*head/mult*lv), true), Res: "workers", Amt: n}
+	return d, n >= 1 && d.GiveAmt >= 1
 }
 
 // dealRefreshIn is how long an offer set lasts in age: dealRefreshTicks
@@ -577,16 +529,21 @@ func (ge *GameEngine) dealProblem(fs *FactionState, d FactionDeal) (blocked, sho
 	if why := dealBlocked(*fs); why != "" {
 		return rowid.Line("game.deals.dealProblem.01", "they are ") + why, ""
 	}
-	if d.Taken {
+	switch {
+	case d.Taken:
 		return rowid.Line("game.deals.dealProblem.02", "already taken"), ""
-	}
-	if fs.DealsFor != ge.age {
+	case fs.DealsFor != ge.age:
 		return rowid.Line("game.deals.dealProblem.03", "the offer lapsed with the age"), ""
-	}
-	for _, r := range []string{d.Give, d.Get} {
-		if r != "" && !ge.Resources.IsUnlocked(r) {
-			return ResourceName(r) + rowid.Line("game.deals.dealProblem.04", " is not unlocked yet"), ""
-		}
+	case !ge.Resources.IsUnlocked(d.Give):
+		return ResourceName(d.Give) + rowid.Line("game.deals.dealProblem.04", " is not unlocked yet"), ""
+	case d.Kind == DealKnowhow && fs.Knowhow:
+		return rowid.Line("game.deals.dealProblem.05", "you already have their know-how"), ""
+	case d.Kind == DealKnowhow && fs.Status != "allied" && fs.Opinion < dealStandingCap:
+		return rowid.Line("game.deals.dealProblem.08", "they do not trust you enough for their know-how"), ""
+	case d.Kind == DealResearch && ge.Research.currentTech == "":
+		return rowid.Line("game.deals.dealProblem.06", "nothing is being researched"), ""
+	case d.Kind == DealPeople && ge.workerCapLocked()-ge.Workers.TotalPop() < int(d.Amt):
+		return rowid.Line("game.deals.dealProblem.07", "there is no housing for the people"), ""
 	}
 	if !(ge.Resources.Get(d.Give) >= d.GiveAmt) {
 		return "", d.Give
@@ -609,66 +566,85 @@ func (ge *GameEngine) findDeal(key string, id int) (*FactionState, int) {
 	return fs, -1
 }
 
-// takeDeal applies deal i of civ def: pays, receives, raises standing (to
-// dealStandingCap at most) and marks it taken. The caller has checked
+// takeDeal applies deal i of civ def: pays, gives the gift, raises standing
+// (to dealStandingCap at most) and marks it taken. The caller has checked
 // dealProblem. Under the write lock.
 func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) FactionDeal {
 	d := &fs.Deals[i]
 	ge.useFeature(config.FeatureDiplomacy)
-	ge.Resources.Remove(d.Give, d.GiveAmt)
-	gain := d.Standing
-	if d.Get != "" {
-		ge.Resources.Add(d.Get, d.GetAmt)
-		fs.TradeCount++
-		gain = dealTradeStanding
+	// A research gift that now lands for less than offered (the tech needs
+	// less than it did) is paid for in proportion.
+	pay, amt := d.GiveAmt, d.Amt
+	if d.Kind == DealResearch {
+		if amt = min(d.Amt, ge.researchLeftLocked()); amt < d.Amt {
+			pay = min(d.GiveAmt, roundDeal(float64(d.GiveAmt*amt)/d.Amt, true))
+		}
 	}
+	ge.Resources.Remove(d.Give, pay)
+	switch d.Kind {
+	case DealBoost:
+		ge.addBoost(d.Res, int(d.Amt))
+	case DealResearch:
+		ge.Stats.ResearchWork += amt
+		ge.Research.progress += amt
+		if done := ge.Research.CompleteIfFull(); done != "" {
+			ge.finishResearch(done)
+		}
+	case DealPeople:
+		if ge.Workers.Recruit(int(d.Amt), ge.workerCapLocked()) {
+			ge.Stats.RecordRecruit(int(d.Amt))
+			ge.holdStaffing()
+		}
+	case DealKnowhow:
+		fs.Knowhow = true
+		ge.recalculateRates()
+	}
+	fs.TradeCount++
 	if fs.Opinion < dealStandingCap {
-		fs.Opinion = min(fs.Opinion+gain, dealStandingCap)
+		fs.Opinion = min(fs.Opinion+dealTradeStanding, dealStandingCap)
 	}
 	if fs.Status == "neutral" && fs.Opinion >= 25 {
 		fs.Status = "friendly"
 	}
 	d.Taken = true
 	ge.note(config.BadgeEvDeal, def.Key)
-	ge.addLog(OfficeTrade, "success", rowid.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, dealLogTerms(*d)), logSubj(def.Key), logPaid(LogAmt{d.Give, d.GiveAmt}), logDealGot(d))
+	ge.addLog(OfficeTrade, "success", rowid.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, DealTerms(d.Kind, d.Give, pay, d.Res, amt, textfmt.Number, ge.durationLocked)), logSubj(def.Key), logPaid(LogAmt{d.Give, pay}))
 	return *d
 }
 
-// DealKindLabel is a deal's kind from the player's side: the civ selling
-// its specialty is your Buy, the civ wanting your goods is your Sell.
+// DealKindLabel is an offer's kind from the player's side: the gift.
 func DealKindLabel(kind string) string {
 	switch kind {
-	case DealWant:
-		return rowid.Line("game.deals.DealKindLabel.01", "Sell")
-	case DealFavor:
-		return rowid.Line("game.deals.DealKindLabel.02", "Goodwill") // display only: the saved kind key stays "favor"
-	case DealRare:
-		return rowid.Line("game.deals.DealKindLabel.03", "Rare")
+	case DealResearch:
+		return rowid.Line("game.deals.DealKindLabel.01", "Research")
+	case DealPeople:
+		return rowid.Line("game.deals.DealKindLabel.02", "People")
+	case DealKnowhow:
+		return rowid.Line("game.deals.DealKindLabel.03", "Know-how")
 	}
-	return rowid.Line("game.deals.DealKindLabel.04", "Buy")
+	return rowid.Line("game.deals.DealKindLabel.04", "Boost")
 }
 
-// DealGets is what a deal pays you: "966K food" or "+5 opinion".
-func DealGets(get string, getAmt float64, standing int, num func(float64) string) string {
-	if get == "" {
-		return rowid.Sprintf("game.deals.DealGets.01", "+%d opinion", standing)
+// DealGift is what an offer gives you: "+25% stone 20m", "research +3.2K",
+// "+4 workers", "know-how: +5% stone". num formats amounts, dur a number of
+// ticks as a time.
+func DealGift(kind, res string, amt float64, num func(float64) string, dur func(int) string) string {
+	switch kind {
+	case DealResearch:
+		return rowid.Sprintf("game.deals.DealGift.01", "research +%s", num(amt))
+	case DealPeople:
+		return rowid.Sprintf("game.deals.DealGift.02", "+%s workers", num(amt))
+	case DealKnowhow:
+		return rowid.Sprintf("game.deals.DealGift.03", "know-how: +%s%% %s", num(float64(dealKnowhowShare*100)), ResourceName(res))
 	}
-	return num(getAmt) + " " + ResourceName(get)
+	return rowid.Sprintf("game.deals.DealGift.04", "+%s%% %s %s", num(float64(dealBoostShare*100)), ResourceName(res), dur(int(amt)))
 }
 
-// DealTerms is how every surface words a deal, from the player's side:
-// "Buy: give 876M iron ore → get 966K food", "Goodwill: give 899M steel →
-// get +5 opinion". The Factions panel, `diplomacy deals` and `diplomacy
-// accept` use it; num formats the amounts. The log and the plan label use
-// dealLogTerms, the same terms as a clause.
-func DealTerms(kind, give string, giveAmt float64, get string, getAmt float64, standing int, num func(float64) string) string {
-	return rowid.Sprintf("game.deals.DealTerms.01", "%s: give %s %s → get %s", DealKindLabel(kind), num(giveAmt), ResourceName(give), DealGets(get, getAmt, standing, num))
-}
-
-// dealLogTerms is a deal's terms as a clause for the log and the plan
-// label: "Buy: give 876M iron ore, get 966K food".
-func dealLogTerms(d FactionDeal) string {
-	return rowid.Sprintf("game.deals.dealLogTerms.01", "%s: give %s, get %s", DealKindLabel(d.Kind), Amount(d.GiveAmt, d.Give), DealGets(d.Get, d.GetAmt, d.Standing, textfmt.Number))
+// DealTerms is how every surface words an offer, from the player's side:
+// "Boost: give 876M iron ore → +25% stone 20m". The Factions panel,
+// `diplomacy deals` and `diplomacy accept` use it, and the log.
+func DealTerms(kind, give string, giveAmt float64, res string, amt float64, num func(float64) string, dur func(int) string) string {
+	return rowid.Sprintf("game.deals.DealTerms.01", "%s: give %s %s → %s", DealKindLabel(kind), num(giveAmt), ResourceName(give), DealGift(kind, res, amt, num, dur))
 }
 
 // AcceptFactionDeal takes offer n (1-based, as the Factions panel and
@@ -711,17 +687,7 @@ func dealInfos(fs *FactionState, age string) []DealInfo {
 	}
 	out := make([]DealInfo, 0, len(fs.Deals))
 	for i, d := range fs.Deals {
-		info := DealInfo{Num: i + 1, ID: d.ID, Kind: d.Kind, Give: d.Give, GiveAmt: d.GiveAmt,
-			Get: d.Get, GetAmt: d.GetAmt, Standing: d.Standing, Taken: d.Taken}
-		out = append(out, info)
+		out = append(out, DealInfo{Num: i + 1, ID: d.ID, Kind: d.Kind, Give: d.Give, GiveAmt: d.GiveAmt, Res: d.Res, Amt: d.Amt, Taken: d.Taken})
 	}
 	return out
-}
-
-// logDealGot is the goods a deal brought, if it brought any.
-func logDealGot(d *FactionDeal) logOpt {
-	if d.Get == "" {
-		return func(*logWrite) {}
-	}
-	return logGot(LogAmt{d.Get, d.GetAmt})
 }

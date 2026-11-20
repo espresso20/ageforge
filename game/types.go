@@ -257,6 +257,8 @@ type RateBreakdown struct {
 	// MasteryRate is what Era Mastery adds: the net rate × (k − 1) on known
 	// ground (mastery.go), 0 on new ground.
 	MasteryRate float64
+	// GiftRate is what the running boosts from civilizations' offers add (gifts.go).
+	GiftRate float64
 	// PrestigeRate is what lifetime prestige points add after production pools,
 	// at the same final stage as Era Mastery.
 	PrestigeRate float64
@@ -896,6 +898,13 @@ type DiplomacyState struct {
 	// BoonCrews are the workers faction boons have lent (Extra Hands), one
 	// entry per crew, oldest first. They go home when TicksLeft runs out.
 	BoonCrews []BoonWorkerLoan
+	Boosts    []BoostInfo // gift boosts running
+}
+
+// BoostInfo is one running gift boost.
+type BoostInfo struct {
+	Res       string
+	TicksLeft int
 }
 
 // FactionInfo represents an NPC civilization for UI
@@ -919,4 +928,5 @@ type FactionInfo struct {
 	Deals         []DealInfo
 	DealsBlocked  string
 	DealRefreshIn int
+	Knowhow       bool // the civ's perk is earned (gifts.go)
 }

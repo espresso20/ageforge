@@ -156,6 +156,8 @@ type GameEngine struct {
 
 	// Permanent bonuses from milestones
 	permanentBonuses map[string]float64
+	// boosts are the running boosts from civilizations' offers (gifts.go).
+	boosts []GiftBoost
 	// workerBonus is the worker output bonus the last rates pass applied
 	// (gather_rate, floored): what workers add to their buildings is raised
 	// by this share. The worker shares routine reads it to know what one
@@ -1487,6 +1489,10 @@ func (ge *GameEngine) doTick() {
 	// Apply resource rates (production - consumption).
 	ge.noteProduced(1)
 	ge.Resources.ApplyRates()
+	// A boost's last tick is paid with the boost, as time away pays it.
+	if ge.expireBoosts() {
+		ge.recalculateRates()
+	}
 	// The faith and culture measures follow the tick's income (faith.go,
 	// culture.go).
 	ge.accrueFaith(1)
@@ -2098,6 +2104,8 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	ge.applyGiftBoosts()
+
 	// Research production effects (a tech that is the first source of a
 	// resource), added one effect at a time in the manager's fixed order.
 	for _, eff := range ge.Research.flatEffects() {
@@ -2195,7 +2203,7 @@ func (ge *GameEngine) recalculateRates() {
 		if r != nil {
 			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
 				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.TradeFlow + r.Breakdown.FoodDrain +
-				r.Breakdown.LegacyRate + r.Breakdown.PrestigeRate + r.Breakdown.MasteryRate
+				r.Breakdown.LegacyRate + r.Breakdown.PrestigeRate + r.Breakdown.MasteryRate + r.Breakdown.GiftRate
 			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
 	}
@@ -3356,6 +3364,7 @@ func (ge *GameEngine) buildResolver() *Resolver {
 	r.AddAll(ge.eventModifiers())
 	r.AddAll(ge.moraleModifiers())
 	r.AddAll(ge.diplomacyModifiers())
+	r.AddAll(ge.knowhowModifiers())
 	r.AddAll(ge.scholarModifiers())
 	return r
 }
@@ -4924,6 +4933,7 @@ func (ge *GameEngine) resetRunLocked(morale float64, outcome string, level int) 
 	// The run's timers start over, as in a new game. A stale ageReady let
 	// `advance` skip the Stone Age's requirements before the first tick.
 	ge.ageReady = false
+	ge.boosts = nil
 	ge.starvationTicks = 0
 	ge.autoExpeditionTicksLeft = 0
 	ge.autoExpeditionStarved = false
@@ -5133,7 +5143,7 @@ func (ge *GameEngine) GetState() GameState {
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
 		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources(), ge.routeTerms()),
 		BlackMarket:           ge.blackMarketStatusLocked(),
-		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
+		Diplomacy:             ge.diplomacySnap(ageOrder),
 		Log:                   logCopy,
 		Stats:                 ge.Stats.Snapshot(),
 		TickSpeedBonus:        ge.tickSpeedBonus,
@@ -5268,6 +5278,10 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		if k := ge.fateNextEventIn(); k > 0 && k < n {
 			n = k
 		}
+		// And at the end of a boost, so it counts only while it runs.
+		if k := ge.boostEndIn(); k > 0 && k < n {
+			n = k
+		}
 		// The routes spend the stock once for the whole step, so their share
 		// is worked out for it.
 		if ge.Trade.ActiveRouteCount() > 0 {
@@ -5294,6 +5308,9 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		}
 		changed := ge.advanceBuildQueue(n)
 		if ge.advanceResearch(n, OfflineEfficiency, &starts) {
+			changed = true
+		}
+		if ge.expireBoosts() {
 			changed = true
 		}
 		if changed {

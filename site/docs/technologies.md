@@ -259,7 +259,7 @@ Some commands wait for a tech. Until it is researched, the command is refused wi
 | Command | Opened by | Age |
 |---|---|---|
 | Trade routes (`trade route start <route>`) | The Wheel | Bronze |
-| Diplomacy: gifts, alliances, rivalries, embargoes and deals (`diplomacy ...`, `plan deal`) | Envoys | Classical |
+| Diplomacy: gifts, alliances, rivalries, embargoes and offers (`diplomacy ...`) | Envoys | Classical |
 | Festivals (`festival confirm yes`) | Drama | Classical |
 | The black market (`blackmarket <resource>`) | Mercantilism | Colonial |
 | The Rail Freight route (`trade route start rail_freight`) | Railroads | Industrial |

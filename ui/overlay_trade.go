@@ -92,7 +92,7 @@ func tradeOffersSection(state game.GameState, routes []tradeRoute) (deckSection,
 		for _, d := range c.offers {
 			sec.Cards = append(sec.Cards, deckCard{
 				Title:  c.name + " · " + game.DealKindLabel(d.Kind),
-				Lines:  []deckLine{{rowid.Line("ui.overlay_trade.tradeOffersSection.03", "You give"), tradeOfferGive(d), 0}, {rowid.Line("ui.overlay_trade.tradeOffersSection.04", "You get"), tradeOfferGet(d), xGood}},
+				Lines:  []deckLine{{rowid.Line("ui.overlay_trade.tradeOffersSection.03", "You give"), tradeOfferGive(d), 0}, {rowid.Line("ui.overlay_trade.tradeOffersSection.04", "You get"), tradeOfferGet(state, d), xGood}},
 				Action: rowid.Line("ui.overlay_trade.tradeOffersSection.05", "accept"), Command: tradeOfferCmd(c.key, d),
 				Quiet: !tradePayable(state, d)})
 		}

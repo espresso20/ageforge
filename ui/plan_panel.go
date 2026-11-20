@@ -19,7 +19,7 @@ import (
 // while the bar is empty, or all keys while its name or number box is open.
 
 // What the tray's tabs hold, in order.
-var planTabs = [6]string{game.PlanBuild, game.PlanUpgrade, game.PlanResearch, game.PlanAdvance, game.PlanExpedition, game.PlanDeal}
+var planTabs = [5]string{game.PlanBuild, game.PlanUpgrade, game.PlanResearch, game.PlanAdvance, game.PlanExpedition}
 
 type planMode uint8
 
@@ -254,8 +254,6 @@ func (p *planPanel) add(e planEntry) {
 			err = p.engine.PlanAddAdvance()
 		case game.PlanExpedition:
 			err = p.engine.PlanAddExpedition(e.key)
-		case game.PlanDeal:
-			err = p.engine.PlanAddDeal(e.key, e.n)
 		}
 		if err != nil {
 			return "", err

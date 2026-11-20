@@ -164,7 +164,7 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 	lastRoute := routes[len(routes)-1].Key
 	cmds := []string{
 		"diplomacy deals ironhold_clans", "diplomacy deals iron", "diplomacy gift iron", "diplomacy gift ironhold_clans",
-		"diplomacy ally merchant_guild", "diplomacy accept ironhold_clans 1", "plan deal ironhold_clans 1",
+		"diplomacy ally merchant_guild", "diplomacy accept ironhold_clans 1",
 		"research " + lastTech, "plan research " + lastTech, "trade route start " + lastRoute,
 		"expedition 9", "blackmarket gold", "prestige confirm yes",
 	}
@@ -181,7 +181,7 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 
 	// Completion offers no civilization before first contact.
 	comp := NewAutoCompleter(engine)
-	for _, line := range []string{"diplomacy deals ", "diplomacy ally ", "diplomacy gift ", "diplomacy deals i", "plan deal ", "diplomacy accept "} {
+	for _, line := range []string{"diplomacy deals ", "diplomacy ally ", "diplomacy gift ", "diplomacy deals i", "diplomacy accept "} {
 		if got := comp(line); len(got) > 0 {
 			t.Errorf("completion for %q offers %v before first contact", line, got)
 		}

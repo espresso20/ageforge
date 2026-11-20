@@ -2185,7 +2185,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		return infoReply(rowid.Line("ui.input.cmdDiplomacyDeals.01", "You have not met anyone to trade with yet. Scouting expeditions make first contact."))
 	}
-	lines = append(lines, theme.Paint(theme.RoleDim, rowid.Line("ui.input.cmdDiplomacyDeals.02", "Take one with: diplomacy accept <civ> <n> (or plan deal <civ> <n>)")))
+	lines = append(lines, theme.Paint(theme.RoleDim, rowid.Line("ui.input.cmdDiplomacyDeals.02", "Take one with: diplomacy accept <civ> <n>")))
 	return infoReply(strings.Join(lines, "\n"))
 }
 
@@ -2645,20 +2645,6 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 	case "trade":
 		// The plan's sell orders are gone with the market's swap.
 		return errorReply(unknownCommandText("plan trade"))
-	case "deal":
-		usage := usageFor("plan deal")
-		if len(rest) < 2 {
-			return errorReply(usage)
-		}
-		n, err := parseCount(rest[len(rest)-1])
-		if err != nil {
-			return usageError(usage, err)
-		}
-		civ := civKey(rest[:len(rest)-1])
-		if err := engine.PlanAddDeal(civ, n); err != nil {
-			return errorResult(err)
-		}
-		return routineReply(rowid.Sprintf("ui.input.cmdPlan.15", "Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)))
 	case "expedition":
 		if len(rest) == 0 {
 			return errorReply(usageFor("plan expedition"))

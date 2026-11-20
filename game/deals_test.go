@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"math"
+	"math/rand"
 	"reflect"
 	"strings"
 	"testing"
@@ -20,21 +21,21 @@ func testDealEnv(age string) dealEnv {
 	order := config.AgeOrder()
 	ages := config.AgeByKey()
 	env := dealEnv{age: age, unlocked: map[string]bool{}, amount: map[string]float64{}, size: map[string]float64{}}
-	for i, a := range order {
+	for _, a := range order {
 		for _, r := range ages[a].UnlockResources {
 			env.unlocked[r] = true
 		}
 		if a == age {
-			if i+1 < len(order) {
-				env.next = order[i+1]
-			}
 			break
 		}
 	}
+	env.income = map[string]float64{}
 	for i, r := range config.BaseResources() {
 		env.size[r.Key] = config.Sextillion
 		env.amount[r.Key] = float64(i+1) * config.Quintillion
+		env.income[r.Key] = float64(i+1) * 1000
 	}
+	env.researchLeft, env.room, env.headFood, env.boostTicks, env.refresh = 1e12, 50, 0.1, 600, 1800
 	return env
 }
 
@@ -69,186 +70,6 @@ var (
 	alliedState  = FactionState{Discovered: true, Status: "allied", Opinion: 60}
 )
 
-// TestDeals_PerPersonality rolls every civ at the age its specialty first
-// trades, neutral and allied, and checks what each personality promises.
-func TestDeals_PerPersonality(t *testing.T) {
-	for _, def := range config.BaseFactions() {
-		age := dealAge(def)
-		env := testDealEnv(age)
-		for _, fs := range []FactionState{neutralState, alliedState} {
-			ds := rollFactionDeals(def, fs, env, testRNG(), 1)
-			tier := dealTier(fs)
-			if len(ds) == 0 || len(ds) > dealSlots(def.Personality, tier) {
-				t.Errorf("%s %s in %s: %d deals, want 1..%d", def.Key, fs.Status, age, len(ds), dealSlots(def.Personality, tier))
-			}
-			ids := map[int]bool{}
-			for _, d := range ds {
-				if ids[d.ID] {
-					t.Errorf("%s: duplicate deal ID %d", def.Key, d.ID)
-				}
-				ids[d.ID] = true
-				checkDeal(t, def, fs, env, d)
-			}
-		}
-	}
-
-	// Slot counts: mercantile > peaceful > aggressive; isolationists offer
-	// one, two when allied; standing adds slots.
-	for _, c := range []struct {
-		pers string
-		tier int
-		want int
-	}{{"peaceful", 0, 2}, {"peaceful", 1, 3}, {"peaceful", 2, 4}, {"mercantile", 0, 3}, {"mercantile", 2, 5},
-		{"aggressive", 0, 1}, {"aggressive", 2, 3}, {"isolationist", 0, 1}, {"isolationist", 1, 1}, {"isolationist", 2, 2}} {
-		if got := dealSlots(c.pers, c.tier); got != c.want {
-			t.Errorf("dealSlots(%s, %d) = %d, want %d", c.pers, c.tier, got, c.want)
-		}
-	}
-	// Rates rise with standing, mercantile pays best, aggressive worst, and
-	// every one stays from dealRateMin of parity up to parity.
-	for _, pers := range []string{"peaceful", "mercantile", "aggressive", "isolationist"} {
-		for _, kind := range []string{DealSell, DealWant} {
-			prev := 0.0
-			for tier := 0; tier <= 2; tier++ {
-				m := dealMult(pers, tier, kind)
-				if m < dealRateMin || m > 1 || m < prev {
-					t.Errorf("dealMult(%s, %d, %s) = %v (previous tier %v)", pers, tier, kind, m, prev)
-				}
-				prev = m
-			}
-		}
-	}
-	if !(dealMult("mercantile", 0, DealSell) > dealMult("peaceful", 0, DealSell) && dealMult("peaceful", 0, DealSell) > dealMult("aggressive", 0, DealSell)) {
-		t.Error("mercantile should pay best and aggressive worst")
-	}
-	// Lots grow with standing and strength; mercantile lots are bigger.
-	merchant := factionDef(t, "merchant_guild")
-	if !(dealLot(merchant, 2, DealSell, 0.5) > dealLot(merchant, 1, DealSell, 0.5) && dealLot(merchant, 1, DealSell, 0.5) > dealLot(merchant, 0, DealSell, 0.5)) {
-		t.Error("lots should grow with standing")
-	}
-	weak, strong := factionDef(t, "riverlands_tribes"), factionDef(t, "ironhold_clans")
-	if dealLot(strong, 0, DealSell, 0.5) <= dealLot(weak, 0, DealSell, 0.5) {
-		t.Error("lots should grow with strength")
-	}
-
-	// The isolationist Directorate offers the next age's goods: oil, which
-	// the Atomic Age prices nowhere and the Modern Age builds with.
-	dir := factionDef(t, "atomic_directorate")
-	ds := rollFactionDeals(dir, neutralState, testDealEnv("atomic_age"), testRNG(), 1)
-	if len(ds) != 1 || ds[0].Kind != DealRare || ds[0].Get != "oil" {
-		t.Fatalf("Directorate in the Atomic Age offers %+v, want one rare oil deal", ds)
-	}
-
-	// A mercantile civ offers more than an aggressive one at the same standing.
-	guild := rollFactionDeals(merchant, neutralState, testDealEnv(dealAge(merchant)), testRNG(), 1)
-	clans := rollFactionDeals(strong, neutralState, testDealEnv(dealAge(strong)), testRNG(), 1)
-	if len(guild) <= len(clans) {
-		t.Errorf("Merchant Guild offers %d deals, Ironhold Clans %d; mercantile should offer more", len(guild), len(clans))
-	}
-}
-
-// checkDeal asserts one deal's terms: its kind fits, amounts are positive and
-// fit the stores, a goods deal beats the market where the market trades the
-// pair and never beats parity, a favor pays standing.
-func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv, d FactionDeal) {
-	t.Helper()
-	if !(d.GiveAmt >= 1) || d.GiveAmt > env.size[d.Give] || !env.unlocked[d.Give] {
-		t.Errorf("%s %+v: bad price", def.Key, d)
-	}
-	switch d.Kind {
-	case DealFavor:
-		if d.Get != "" || d.Standing != dealFavorStanding || fs.Opinion >= dealStandingCap {
-			t.Errorf("%s %+v: bad favor", def.Key, d)
-		}
-		return
-	case DealRare:
-		if def.Personality != "isolationist" || rules.Core().DealPriceLevel(d.Get, env.age) > 0 {
-			t.Errorf("%s %+v: rare deal from a non-isolationist or for goods this age prices", def.Key, d)
-		}
-		return
-	case DealSell, DealWant:
-		if d.Get != def.Specialty {
-			t.Errorf("%s %+v: goods deal not in the specialty %s", def.Key, d, def.Specialty)
-		}
-	default:
-		t.Errorf("%s: unknown kind %q", def.Key, d.Kind)
-		return
-	}
-	if !(d.GetAmt >= 1) || d.GetAmt > dealGetShare*env.size[d.Get]*1.001 {
-		t.Errorf("%s %+v: bad goods amount", def.Key, d)
-	}
-	// A deal stands on its own: the ratio of the two price levels times its
-	// multiple (dealRateMin to 1 of parity, good to the 3 figures an amount
-	// is rounded to), whatever any market would pay.
-	rate := d.GetAmt / d.GiveAmt
-	lf, lt := rules.Core().DealPriceLevel(d.Give, env.age), rules.Core().DealPriceLevel(d.Get, env.age)
-	if lf > 0 && lt > 0 {
-		if rate > lt/lf*1.001 {
-			t.Errorf("%s %+v: rate %v beats parity %v", def.Key, d, rate, lt/lf)
-		}
-		if rate < lt/lf*dealRateMin*0.99 {
-			t.Errorf("%s %+v: rate %v is under %v of parity %v", def.Key, d, rate, dealRateMin, lt/lf)
-		}
-	}
-}
-
-// TestDeals_NoneWhenHostile: at war, embargoed, rival or hostile civs offer
-// nothing, draw nothing, and refuse to trade.
-func TestDeals_NoneWhenHostile(t *testing.T) {
-	def := factionDef(t, "riverlands_tribes")
-	env := testDealEnv("bronze_age")
-	for name, fs := range map[string]FactionState{
-		"war":     {Discovered: true, Status: "neutral", AtWar: true},
-		"embargo": {Discovered: true, Status: "embargo"},
-		"rival":   {Discovered: true, Status: "rival"},
-		"hostile": {Discovered: true, Status: "neutral", Opinion: dealHostileOpinion},
-	} {
-		rng := testRNG()
-		if ds := rollFactionDeals(def, fs, env, rng, 1); ds != nil {
-			t.Errorf("%s: offered %v", name, ds)
-		}
-		if rng.Int63() != testRNG().Int63() {
-			t.Errorf("%s: a blocked civ drew from the rng", name)
-		}
-		if dealBlocked(fs) == "" {
-			t.Errorf("%s: not blocked", name)
-		}
-	}
-	if dealBlocked(FactionState{Discovered: true, Status: "neutral", Opinion: dealHostileOpinion + 1}) != "" {
-		t.Error("opinion just above the hostile line should trade")
-	}
-
-	// In the engine: offers rolled while friendly are hidden and refused
-	// once the civ is embargoed, and neither the panel nor accept shows them.
-	ge := dealEngine(t, "bronze_age")
-	meet(ge, "riverlands_tribes", 0)
-	if n := len(ge.GetState().Diplomacy.Factions["riverlands_tribes"].Deals); n == 0 {
-		t.Fatal("no offers while neutral")
-	}
-	noErr(t, ge.SetDiplomaticStatus("riverlands_tribes", "embargo"))
-	f := ge.GetState().Diplomacy.Factions["riverlands_tribes"]
-	if len(f.Deals) != 0 || f.DealsBlocked == "" {
-		t.Errorf("embargoed civ still shows %d deals (blocked %q)", len(f.Deals), f.DealsBlocked)
-	}
-	before := ge.GetState().Resources
-	if _, err := ge.AcceptFactionDeal("riverlands_tribes", 1); err == nil || !strings.Contains(err.Error(), "embargo") {
-		t.Errorf("accept under embargo: %v", err)
-	}
-	if !reflect.DeepEqual(before, ge.GetState().Resources) {
-		t.Error("a refused deal changed resources")
-	}
-	// At war, the next roll is empty.
-	ge.mu.Lock()
-	ge.Diplomacy.factions["riverlands_tribes"].AtWar = true
-	ge.Diplomacy.factions["riverlands_tribes"].DealTicks = dealRefreshFor(ge.age)
-	ge.tickFactionDeals()
-	n := len(ge.Diplomacy.factions["riverlands_tribes"].Deals)
-	ge.mu.Unlock()
-	if n != 0 {
-		t.Errorf("a civ at war rolled %d deals", n)
-	}
-}
-
 // dealEngine is a seeded engine in age with every earlier unlock and roomy,
 // half-full stores.
 func dealEngine(t *testing.T, age string) *GameEngine {
@@ -269,6 +90,13 @@ func dealEngine(t *testing.T, age string) *GameEngine {
 	for _, r := range ge.Resources.resources {
 		r.Amount = 500 * config.Trillion
 	}
+	// A town that makes wood and has room for people, so boosts and people
+	// are both on offer.
+	ge.mu.Lock()
+	ge.Buildings.counts["wood_camp"] = 20
+	ge.permanentBonuses["population"] += 100
+	ge.recalculateRates()
+	ge.mu.Unlock()
 	return ge
 }
 
@@ -281,105 +109,453 @@ func meet(ge *GameEngine, key string, opinion int) {
 	ge.tickFactionDeals()
 }
 
-// TestDeals_AcceptOnce: taking a deal pays its price and delivers its goods
-// or standing exactly once.
-func TestDeals_AcceptOnce(t *testing.T) {
+// takeOffer takes offer n of civ key, as the player would.
+func (ge *GameEngine) takeOffer(key string, n int) error {
+	_, err := ge.AcceptFactionDeal(key, n)
+	return err
+}
+
+// TestDeals_RollsEveryCiv: each civ's offers are gifts (never goods for
+// goods), paid in goods other than its specialty, within its slots.
+func TestDeals_RollsEveryCiv(t *testing.T) {
+	gifts := map[string]bool{DealBoost: true, DealResearch: true, DealPeople: true, DealKnowhow: true}
+	for _, def := range config.BaseFactions() {
+		env := testDealEnv(dealAge(def))
+		for _, fs := range []FactionState{neutralState, alliedState} {
+			ds := rollFactionDeals(def, fs, env, testRNG(), 1)
+			if n := env.slots(def.Personality, dealTier(fs)); len(ds) == 0 || len(ds) > n {
+				t.Errorf("%s %s: %d offers, want 1..%d", def.Key, fs.Status, len(ds), n)
+			}
+			for _, d := range ds {
+				if !gifts[d.Kind] || d.Give == def.Specialty || d.Give == d.Res || !(d.GiveAmt >= 1) || !env.unlocked[d.Give] {
+					t.Errorf("%s: bad offer %+v", def.Key, d)
+				}
+				if d.Kind == DealKnowhow && (d.Res != def.Specialty || fs.Status != "allied") {
+					t.Errorf("%s: know-how %+v at %s", def.Key, d, fs.Status)
+				}
+			}
+		}
+	}
+	for _, pers := range []string{"peaceful", "mercantile", "aggressive", "isolationist"} {
+		prev := 0.0
+		for tier := 0; tier <= 2; tier++ {
+			if m := dealMult(pers, tier); m < dealRateMin || m > 1 || m < prev {
+				t.Errorf("dealMult(%s, %d) = %v (previous tier %v)", pers, tier, m, prev)
+			} else {
+				prev = m
+			}
+		}
+	}
+	merchant := factionDef(t, "merchant_guild")
+	if !(dealLot(merchant, 2, 0.5) > dealLot(merchant, 1, 0.5) && dealLot(merchant, 1, 0.5) > dealLot(merchant, 0, 0.5)) {
+		t.Error("lots should grow with standing")
+	}
+}
+
+// TestDeals_NoGoodsForGoods: no offer kind other than the four gifts exists,
+// and the offer carries no goods to receive.
+func TestDeals_NoGoodsForGoods(t *testing.T) {
+	for _, f := range []string{"Get", "GetAmt"} {
+		if _, ok := reflect.TypeOf(FactionDeal{}).FieldByName(f); ok {
+			t.Errorf("FactionDeal still has %s", f)
+		}
+	}
+	for _, def := range config.BaseFactions() {
+		env := testDealEnv(dealAge(def))
+		for seed := int64(0); seed < 30; seed++ {
+			for _, d := range rollFactionDeals(def, alliedState, env, rand.New(rand.NewSource(seed)), 1) {
+				switch d.Kind {
+				case DealBoost, DealResearch, DealPeople, DealKnowhow:
+				default:
+					t.Fatalf("%s rolled a %q offer", def.Key, d.Kind)
+				}
+			}
+		}
+	}
+}
+
+// TestDeals_GiftMath pins each gift's formula against the price levels.
+func TestDeals_GiftMath(t *testing.T) {
+	def := factionDef(t, "riverlands_tribes")
+	env := testDealEnv("bronze_age")
+	set := rules.Core()
+	lv := func(r string) float64 { return set.DealPriceLevel(r, env.age) }
+	const mult = 0.9
+	near := func(what string, got, want float64) {
+		t.Helper()
+		if math.Abs(got-want) > 0.01*want {
+			t.Errorf("%s = %v, want %v", what, got, want)
+		}
+	}
+
+	// Boost: 0.6 of the output it adds, over mult, in the paid good's units.
+	d, ok := boostDeal(def, env, mult, 0.9, 0.1)
+	if !ok || d.Kind != DealBoost || d.Amt != 600 {
+		t.Fatalf("boost = %+v, %v", d, ok)
+	}
+	added := dealBoostShare * env.income[d.Res] * 600 / lv(d.Res)
+	near("boost price", d.GiveAmt, added*dealBoostWorth/mult*lv(d.Give))
+	if d2, ok := boostDeal(def, env, mult, 0.1, 0.1); !ok || d2.Res != def.Specialty {
+		t.Errorf("boost on %q, want the specialty %s", d2.Res, def.Specialty)
+	}
+
+	// Research: 1.25 x lot x mult at research's level, for lot units paid.
+	d, ok = researchDeal(def, env, mult, 2, 0.1)
+	if !ok {
+		t.Fatal("no research offer")
+	}
+	near("research gift", d.Amt, 2*dealResearchWorth*mult*lv(config.ResearchTarget))
+	near("research price", d.GiveAmt, 2*lv(d.Give))
+	small := env
+	small.researchLeft = d.Amt / 4
+	if c, ok := researchDeal(def, small, mult, 2, 0.1); !ok || c.Amt > small.researchLeft || c.GiveAmt > d.GiveAmt/3.9 {
+		t.Errorf("capped research = %+v (left %v, uncapped %+v)", c, small.researchLeft, d)
+	}
+	small.researchLeft = 0
+	if _, ok := researchDeal(def, small, mult, 2, 0.1); ok {
+		t.Error("research offered with nothing being researched")
+	}
+
+	// People: lot x mult over a worker's worth (food eaten for one rotation).
+	head := env.headFood * float64(env.refresh) / lv("food")
+	d, ok = peopleDeal(def, env, mult, 2, 0.1)
+	n := math.Floor(2 * mult / head)
+	if n > float64(env.room) {
+		n = float64(env.room)
+	}
+	if !ok || d.Amt != n || d.Amt < 1 {
+		t.Fatalf("people = %+v (want %v workers)", d, n)
+	}
+	near("people price", d.GiveAmt, n*head/mult*lv(d.Give))
+	tight := env
+	tight.room = 1
+	if d, _ := peopleDeal(def, tight, mult, 2, 0.1); d.Amt != 1 {
+		t.Errorf("people with room for 1 = %v", d.Amt)
+	}
+	tight.room = 0
+	if _, ok := peopleDeal(def, tight, mult, 2, 0.1); ok {
+		t.Error("people offered with no room")
+	}
+}
+
+// TestDeals_NoneWhenHostile: blocked civs offer nothing, draw nothing and
+// refuse to trade.
+func TestDeals_NoneWhenHostile(t *testing.T) {
+	def := factionDef(t, "riverlands_tribes")
+	env := testDealEnv("bronze_age")
+	for name, fs := range map[string]FactionState{
+		"war":     {Discovered: true, Status: "neutral", AtWar: true},
+		"embargo": {Discovered: true, Status: "embargo"},
+		"rival":   {Discovered: true, Status: "rival"},
+		"hostile": {Discovered: true, Status: "neutral", Opinion: dealHostileOpinion},
+	} {
+		rng := testRNG()
+		if dealBlocked(fs) == "" {
+			t.Errorf("%s: not blocked", name)
+		}
+		if ds := rollFactionDeals(def, fs, env, rng, 1); ds != nil {
+			t.Errorf("%s: offered %v", name, ds)
+		}
+		if rng.Int63() != testRNG().Int63() {
+			t.Errorf("%s: a blocked civ drew from the rng", name)
+		}
+	}
+}
+
+// giftEngine is a colonial-age engine with a wood camp running, one civ met
+// and its offers replaced by deals.
+func giftEngine(t *testing.T, deals ...FactionDeal) *GameEngine {
+	t.Helper()
 	ge := dealEngine(t, "colonial_age")
 	meet(ge, "merchant_guild", 0)
-	ge.mu.RLock()
-	d := ge.Diplomacy.factions["merchant_guild"].Deals[0]
-	give0, get0 := ge.Resources.Get(d.Give), ge.Resources.Get(d.Get)
-	ge.mu.RUnlock()
+	ge.mu.Lock()
+	ge.Buildings.counts["wood_camp"] = 20
+	ge.Diplomacy.factions["merchant_guild"].Deals = deals
+	ge.recalculateRates()
+	ge.mu.Unlock()
+	return ge
+}
 
-	got, err := ge.AcceptFactionDeal("merchant_guild", 1)
-	if err != nil {
-		t.Fatal(err)
+func woodRate(ge *GameEngine) float64 {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.Resources.resources["wood"].Rate
+}
+
+// TestGifts_BoostRatesAndExpiry: an accepted boost adds a quarter of the
+// resource's gross rate as its own breakdown line, extends instead of
+// stacking, and ends on its tick.
+func TestGifts_BoostRatesAndExpiry(t *testing.T) {
+	ge := giftEngine(t,
+		FactionDeal{ID: 1, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 100},
+		FactionDeal{ID: 2, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 50})
+	base := woodRate(ge)
+	if base <= 0 {
+		t.Fatal("no wood production")
 	}
-	if got.ID != d.ID || !got.Taken {
-		t.Errorf("accepted %+v, want deal %d taken", got, d.ID)
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	if got := woodRate(ge); math.Abs(got-1.25*base) > 1e-9*base {
+		t.Fatalf("boosted wood rate %v, want %v", got, 1.25*base)
 	}
+	ge.mu.RLock()
+	gift := ge.Resources.resources["wood"].Breakdown.GiftRate
+	end := ge.boosts[0].End
+	ge.mu.RUnlock()
+	if math.Abs(gift-0.25*base) > 1e-9*base {
+		t.Errorf("breakdown gift line %v, want %v", gift, 0.25*base)
+	}
+	noErr(t, ge.takeOffer("merchant_guild", 2))
+	ge.mu.RLock()
+	n, end2 := len(ge.boosts), ge.boosts[0].End
+	ge.mu.RUnlock()
+	if n != 1 || end2 != end+50 {
+		t.Errorf("a second boost made %d boosts ending %d, want one ending %d", n, end2, end+50)
+	}
+	if got := woodRate(ge); math.Abs(got-1.25*base) > 1e-9*base {
+		t.Errorf("two boosts stacked: rate %v", got)
+	}
+	ge.mu.Lock()
+	ge.tick = end2 - 2
+	ge.mu.Unlock()
+	ge.doTick() // tick end2-1: still running
+	if woodRate(ge) < 1.2*base {
+		t.Fatal("the boost ended early")
+	}
+	ge.doTick() // tick end2: over
+	ge.mu.RLock()
+	left := len(ge.boosts)
+	ge.mu.RUnlock()
+	if left != 0 || math.Abs(woodRate(ge)-base) > 1e-3*base {
+		t.Errorf("after its end: %d boosts, rate %v, want 0 and %v", left, woodRate(ge), base)
+	}
+}
+
+// TestGifts_BoostOffline: time away counts a boost only while it runs.
+func TestGifts_BoostOffline(t *testing.T) {
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 100})
+	base := woodRate(ge)
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	ge.mu.Lock()
+	ge.Resources.resources["wood"].Amount = 0
+	away := 400 * ge.tickIntervalLocked()
+	ge.mu.Unlock()
+	ge.SimulateOffline(away)
+	ge.mu.RLock()
+	got, boosts := ge.Resources.resources["wood"].Amount, len(ge.boosts)
+	ge.mu.RUnlock()
+	want := base * OfflineEfficiency * (400 + 0.25*100)
+	if boosts != 0 || math.Abs(got-want) > 0.05*want {
+		t.Errorf("wood after 400 ticks away: %v (boosts left %d), want about %v", got, boosts, want)
+	}
+}
+
+// TestGifts_ResearchCapped: research lands whole, never past what the tech
+// needs, completes it when it fills, and is refused with none in progress.
+func TestGifts_ResearchCapped(t *testing.T) {
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealResearch, Give: "stone", GiveAmt: 10, Res: config.ResearchTarget, Amt: 1e18})
+	if err := ge.takeOffer("merchant_guild", 1); err == nil || !strings.Contains(err.Error(), "nothing is being researched") {
+		t.Errorf("research with nothing in progress: %v", err)
+	}
+	ge.mu.Lock()
+	keys := ge.Research.StartableTechs(ge.age, ge.progress.GetAgeOrder())
+	ge.mu.Unlock()
+	if len(keys) == 0 {
+		t.Fatal("nothing to research")
+	}
+	noErr(t, ge.StartResearch(keys[0]))
+	ge.mu.Lock()
+	ge.Research.progress = 0
+	cost := ge.Research.defs[keys[0]].Cost
+	ge.Diplomacy.factions["merchant_guild"].Deals[0].Amt = cost / 4
+	ge.mu.Unlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	ge.mu.RLock()
+	got := ge.Research.progress
+	ge.mu.RUnlock()
+	if math.Abs(got-cost/4) > 1e-9*cost {
+		t.Errorf("progress %v, want a quarter of %v", got, cost)
+	}
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Deals = []FactionDeal{{ID: 9, Kind: DealResearch, Give: "stone", GiveAmt: 10, Res: config.ResearchTarget, Amt: 1e18}}
+	ge.mu.Unlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	ge.mu.RLock()
+	done, cur := ge.Research.researched[keys[0]], ge.Research.currentTech
+	ge.mu.RUnlock()
+	if !done || cur != "" {
+		t.Errorf("a gift past the cost left the tech unfinished (done %v, current %q)", done, cur)
+	}
+}
+
+// TestGifts_PeopleRespectTheCap: people join up to the housing; an offer for
+// more than fits is refused.
+func TestGifts_PeopleRespectTheCap(t *testing.T) {
+	ge := giftEngine(t,
+		FactionDeal{ID: 1, Kind: DealPeople, Give: "stone", GiveAmt: 10, Res: "workers", Amt: 3},
+		FactionDeal{ID: 2, Kind: DealPeople, Give: "stone", GiveAmt: 10, Res: "workers", Amt: 1e6})
+	ge.mu.RLock()
+	before := ge.Workers.TotalPop()
+	ge.mu.RUnlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	ge.mu.RLock()
+	after := ge.Workers.TotalPop()
+	ge.mu.RUnlock()
+	if after != before+3 {
+		t.Errorf("population %d -> %d, want +3", before, after)
+	}
+	if err := ge.takeOffer("merchant_guild", 2); err == nil || !strings.Contains(err.Error(), "housing") {
+		t.Errorf("people past the housing: %v", err)
+	}
+}
+
+// TestGifts_KnowhowOncePerCiv: know-how is offered only at the cap or allied,
+// once; it adds its share of the specialty and survives a save.
+func TestGifts_KnowhowOncePerCiv(t *testing.T) {
+	isolateAccountDir(t)
+	def := factionDef(t, "merchant_guild")
+	env := testDealEnv("colonial_age")
+	low := FactionState{Discovered: true, Status: "friendly", Opinion: 30}
+	had := alliedState
+	had.Knowhow = true
+	found := 0
+	for seed := int64(0); seed < 40; seed++ {
+		for _, d := range rollFactionDeals(def, low, env, rand.New(rand.NewSource(seed)), 1) {
+			if d.Kind == DealKnowhow {
+				t.Fatalf("know-how offered at opinion %d", low.Opinion)
+			}
+		}
+		n := 0
+		for _, d := range rollFactionDeals(def, alliedState, env, rand.New(rand.NewSource(seed)), 1) {
+			if d.Kind == DealKnowhow {
+				n++
+			}
+		}
+		if n > 1 {
+			t.Fatalf("%d know-hows in one rotation", n)
+		}
+		found += n
+		for _, d := range rollFactionDeals(def, had, env, rand.New(rand.NewSource(seed)), 1) {
+			if d.Kind == DealKnowhow {
+				t.Fatal("know-how offered again after it was earned")
+			}
+		}
+	}
+	if found == 0 {
+		t.Fatal("an allied civ never offered know-how")
+	}
+
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealKnowhow, Give: "stone", GiveAmt: 10, Res: def.Specialty})
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Opinion = dealStandingCap
+	ge.Buildings.counts["wood_camp"] = 20
+	base := ge.Resources.resources[def.Specialty].Rate
+	ge.mu.Unlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	ge.mu.RLock()
+	got := ge.Resources.resources[def.Specialty].Rate
+	ge.mu.RUnlock()
+	if base > 0 && !(got > base) {
+		t.Errorf("%s rate %v -> %v after know-how", def.Specialty, base, got)
+	}
+	b := saveAndLoad(t, ge, "knowhow")
+	b.mu.RLock()
+	earned := b.Diplomacy.factions["merchant_guild"].Knowhow
+	b.mu.RUnlock()
+	if !earned {
+		t.Error("earned know-how lost through save and load")
+	}
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Deals = []FactionDeal{{ID: 5, Kind: DealKnowhow, Give: "stone", GiveAmt: 10, Res: def.Specialty}}
+	ge.mu.Unlock()
+	if err := ge.takeOffer("merchant_guild", 1); err == nil {
+		t.Error("took the same know-how twice")
+	}
+}
+
+// TestGifts_BoostsSaveAndLoad: running boosts survive a save and load.
+func TestGifts_BoostsSaveAndLoad(t *testing.T) {
+	isolateAccountDir(t)
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 500})
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	b := saveAndLoad(t, ge, "boosts")
+	b.mu.RLock()
+	got, want := b.boosts, ge.boosts
+	b.mu.RUnlock()
+	if !reflect.DeepEqual(got, want) || len(want) != 1 {
+		t.Errorf("boosts after load %v, want %v", got, want)
+	}
+}
+
+// TestDeals_PlanDealIsGone: a plan holds builds, techs and the rest, not deals.
+func TestDeals_PlanDealIsGone(t *testing.T) {
+	if _, ok := reflect.TypeOf(PlanItem{}).FieldByName("Deal"); ok {
+		t.Error("PlanItem still carries a deal")
+	}
+}
+
+// TestDeals_AcceptOnce: taking an offer pays once, adds standing and a trade,
+// and a second accept is refused.
+func TestDeals_AcceptOnce(t *testing.T) {
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 100})
+	ge.mu.RLock()
+	stone := ge.Resources.Get("stone")
+	ge.mu.RUnlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
 	ge.mu.RLock()
 	fs := ge.Diplomacy.factions["merchant_guild"]
-	give1, get1, op, trades := ge.Resources.Get(d.Give), ge.Resources.Get(d.Get), fs.Opinion, fs.TradeCount
+	paid, op, trades := stone-ge.Resources.Get("stone"), fs.Opinion, fs.TradeCount
 	ge.mu.RUnlock()
-	if give1 != give0-d.GiveAmt || get1 != get0+d.GetAmt {
-		t.Errorf("%s %v→%v (price %v), %s %v→%v (goods %v)", d.Give, give0, give1, d.GiveAmt, d.Get, get0, get1, d.GetAmt)
+	if paid != 10 || op != dealTradeStanding || trades != 1 {
+		t.Errorf("paid %v, opinion %d, trades %d", paid, op, trades)
 	}
-	if op != dealTradeStanding || trades != 1 {
-		t.Errorf("opinion %d, trades %d after one deal; want %d, 1", op, trades, dealTradeStanding)
-	}
-	if _, err := ge.AcceptFactionDeal("merchant_guild", 1); err == nil || !strings.Contains(err.Error(), "already taken") {
+	if err := ge.takeOffer("merchant_guild", 1); err == nil || !strings.Contains(err.Error(), "already taken") {
 		t.Errorf("second accept: %v", err)
 	}
-	ge.mu.RLock()
-	if ge.Resources.Get(d.Give) != give1 || ge.Resources.Get(d.Get) != get1 {
-		t.Error("the second accept moved resources")
-	}
-	ge.mu.RUnlock()
-	if f := ge.GetState().Diplomacy.Factions["merchant_guild"]; !f.Deals[0].Taken {
-		t.Error("the panel does not show the deal taken")
-	}
-
-	// Short of the price: refused, nothing moves.
-	ge.mu.Lock()
-	d2 := ge.Diplomacy.factions["merchant_guild"].Deals[1]
-	ge.Resources.resources[d2.Give].Amount = d2.GiveAmt / 2
-	ge.mu.Unlock()
-	if _, err := ge.AcceptFactionDeal("merchant_guild", 2); err == nil || !strings.Contains(err.Error(), "Not enough") {
-		t.Errorf("unaffordable accept: %v", err)
-	}
 	for _, bad := range []int{0, 99} {
-		if _, err := ge.AcceptFactionDeal("merchant_guild", bad); err == nil {
+		if ge.takeOffer("merchant_guild", bad) == nil {
 			t.Errorf("accept %d: no error", bad)
 		}
 	}
-	if _, err := ge.AcceptFactionDeal("nobody", 1); err == nil {
-		t.Error("accept from an unknown civ: no error")
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Deals[0].Taken = false
+	ge.Resources.resources["stone"].Amount = 1
+	ge.mu.Unlock()
+	if err := ge.takeOffer("merchant_guild", 1); err == nil || !strings.Contains(err.Error(), "Not enough") {
+		t.Errorf("unaffordable accept: %v", err)
 	}
 }
 
-// TestDeals_StandingCap: deals raise opinion to dealStandingCap and no
-// further, and never lower one a gift already raised past it.
+// TestDeals_StandingCap: offers raise opinion to dealStandingCap and no
+// further, and never lower one already past it.
 func TestDeals_StandingCap(t *testing.T) {
-	ge := dealEngine(t, "bronze_age")
-	meet(ge, "riverlands_tribes", 0)
-	favor := func(id, opinion int) int {
+	ge := giftEngine(t)
+	take := func(id, opinion int) int {
 		ge.mu.Lock()
-		fs := ge.Diplomacy.factions["riverlands_tribes"]
+		fs := ge.Diplomacy.factions["merchant_guild"]
 		fs.Opinion = opinion
-		fs.Deals = []FactionDeal{{ID: id, Kind: DealFavor, Give: "wood", GiveAmt: 10, Standing: dealFavorStanding}}
+		fs.Deals = []FactionDeal{{ID: id, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 10}}
 		ge.mu.Unlock()
-		if _, err := ge.AcceptFactionDeal("riverlands_tribes", 1); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.takeOffer("merchant_guild", 1))
 		ge.mu.RLock()
 		defer ge.mu.RUnlock()
-		return ge.Diplomacy.factions["riverlands_tribes"].Opinion
+		return ge.Diplomacy.factions["merchant_guild"].Opinion
 	}
-	if got := favor(100, 10); got != 10+dealFavorStanding {
-		t.Errorf("favor from 10: opinion %d", got)
+	if got := take(100, 10); got != 10+dealTradeStanding {
+		t.Errorf("from 10: opinion %d", got)
 	}
-	if got := favor(101, dealStandingCap-2); got != dealStandingCap {
-		t.Errorf("favor near the cap: opinion %d, want %d", got, dealStandingCap)
+	if got := take(101, dealStandingCap); got != dealStandingCap {
+		t.Errorf("at the cap: opinion %d", got)
 	}
-	if got := favor(102, 70); got != 70 {
-		t.Errorf("favor above the cap: opinion %d, want 70 untouched", got)
-	}
-	// Friendly status follows the opinion, as for a gift.
-	if st := ge.GetState().Diplomacy.Factions["riverlands_tribes"].Status; st != "friendly" {
-		t.Errorf("status %q after deals past 25 opinion", st)
+	if got := take(102, 70); got != 70 {
+		t.Errorf("above the cap: opinion %d, want 70 untouched", got)
 	}
 }
 
-// TestDeals_Refresh: offers roll on first contact, hold for dealRefreshFor
-// (the base hour, stretched like the age) ticks of play, re-roll then and on
-// an age advance, and do not move while the player is offline.
+// TestDeals_Refresh: offers roll on first contact, hold for a rotation of
+// live play, re-roll then and on an age advance, and do not move offline.
 func TestDeals_Refresh(t *testing.T) {
 	ge := dealEngine(t, "colonial_age")
 	refresh := dealRefreshFor("colonial_age")
-	if refresh != config.StretchTicks("colonial_age", dealRefreshTicks) || refresh <= dealRefreshTicks {
-		t.Fatalf("colonial refresh = %d ticks, want the base %d stretched", refresh, dealRefreshTicks)
-	}
 	meet(ge, "merchant_guild", 20)
 	state := func() FactionState {
 		ge.mu.RLock()
@@ -389,8 +565,8 @@ func TestDeals_Refresh(t *testing.T) {
 		return fs
 	}
 	first := state()
-	if first.DealRound != 1 || first.DealTicks != 0 || first.DealsFor != "colonial_age" || len(first.Deals) == 0 {
-		t.Fatalf("after first contact: round %d ticks %d for %q, %d deals", first.DealRound, first.DealTicks, first.DealsFor, len(first.Deals))
+	if first.DealRound != 1 || first.DealsFor != "colonial_age" || len(first.Deals) == 0 {
+		t.Fatalf("after first contact: round %d for %q, %d deals", first.DealRound, first.DealsFor, len(first.Deals))
 	}
 	tick := func(n int) {
 		ge.mu.Lock()
@@ -403,36 +579,19 @@ func TestDeals_Refresh(t *testing.T) {
 	if s := state(); s.DealRound != 1 || !reflect.DeepEqual(s.Deals, first.Deals) {
 		t.Fatalf("offers rotated early: round %d", s.DealRound)
 	}
-	if left := ge.GetState().Diplomacy.Factions["merchant_guild"].DealRefreshIn; left != 1 {
-		t.Errorf("refresh in %d ticks, want 1", left)
-	}
-
-	// Offline: a day away moves neither the timer nor the offers.
 	ge.SimulateOffline(20 * time.Hour)
-	if s := state(); s.DealRound != 1 || s.DealTicks != refresh-1 || !reflect.DeepEqual(s.Deals, first.Deals) {
+	if s := state(); s.DealRound != 1 || s.DealTicks != refresh-1 {
 		t.Fatalf("offline moved the offers: round %d, ticks %d", s.DealRound, s.DealTicks)
 	}
-
 	tick(1)
-	second := state()
-	if second.DealRound != 2 || second.DealTicks != 0 {
-		t.Fatalf("after %d ticks: round %d, ticks %d", refresh, second.DealRound, second.DealTicks)
+	if s := state(); s.DealRound != 2 || s.DealTicks != 0 {
+		t.Fatalf("after %d ticks: round %d, ticks %d", refresh, s.DealRound, s.DealTicks)
 	}
-	for _, d := range second.Deals {
-		if d.ID <= dealIDStride*2 || d.ID > dealIDStride*3 {
-			t.Errorf("round 2 deal ID %d outside its round", d.ID)
-		}
-	}
-
-	// An age advance re-rolls on the next tick, whatever the timer says.
 	ge.mu.Lock()
 	ge.advanceAge("industrial_age")
 	ge.pendingCatastrophe = ""
 	ge.mu.Unlock()
-	if n := len(ge.GetState().Diplomacy.Factions["merchant_guild"].Deals); n != 0 {
-		t.Errorf("colonial offers still shown in the Industrial Age (%d)", n)
-	}
-	if _, err := ge.AcceptFactionDeal("merchant_guild", 1); err == nil {
+	if err := ge.takeOffer("merchant_guild", 1); err == nil {
 		t.Error("took a colonial offer in the Industrial Age")
 	}
 	tick(1)
@@ -441,16 +600,14 @@ func TestDeals_Refresh(t *testing.T) {
 	}
 }
 
-// TestDeals_SaveLoadRoundTrip: offers, taken flags, the round and the timer
-// survive a save and load exactly.
-func TestDeals_SaveLoadRoundTrip(t *testing.T) {
+// TestDeals_SaveLoadAndDeterminism: offers, taken flags, the round and the
+// timer survive a save and load; the same seed rolls the same offers.
+func TestDeals_SaveLoadAndDeterminism(t *testing.T) {
 	isolateAccountDir(t)
 	ge := dealEngine(t, "colonial_age")
 	meet(ge, "merchant_guild", 30)
 	meet(ge, "riverlands_tribes", 10)
-	if _, err := ge.AcceptFactionDeal("merchant_guild", 1); err != nil {
-		t.Fatal(err)
-	}
+	_ = ge.takeOffer("merchant_guild", 1)
 	ge.mu.Lock()
 	for i := 0; i < 123; i++ {
 		ge.tickFactionDeals()
@@ -466,132 +623,106 @@ func TestDeals_SaveLoadRoundTrip(t *testing.T) {
 		wj, _ := json.Marshal(want)
 		t.Fatalf("round trip:\n got %s\nwant %s", gj, wj)
 	}
-	if !want["merchant_guild"].Deals[0].Taken || want["merchant_guild"].DealTicks == 0 {
-		t.Fatal("the scenario saved no taken deal or timer; the test would pass vacuously")
+	roll := func(seed int64) string {
+		e := dealEngine(t, "colonial_age")
+		e.SeedRNG(seed)
+		for _, key := range []string{"riverlands_tribes", "ironhold_clans", "merchant_guild"} {
+			meet(e, key, 30)
+		}
+		e.mu.RLock()
+		defer e.mu.RUnlock()
+		j, _ := json.Marshal(e.Diplomacy.GetFactionsForSave())
+		return string(j)
 	}
-
-	// A civ saved before deals existed carries none of the new fields and
-	// rolls a fresh set on its first tick.
-	old, _ := json.Marshal(FactionState{Discovered: true, Status: "neutral"})
-	if strings.Contains(string(old), "deal") {
-		t.Errorf("empty deal fields are not omitted: %s", old)
+	if roll(3) != roll(3) || roll(3) == roll(4) {
+		t.Error("offers are not a function of the seed")
 	}
 }
 
-// TestDeals_Deterministic: the same seed rolls the same offers, a different
-// seed different ones.
-func TestDeals_Deterministic(t *testing.T) {
-	roll := func(seed int64) string {
-		ge := dealEngine(t, "colonial_age")
-		ge.SeedRNG(seed)
-		for _, key := range []string{"riverlands_tribes", "ironhold_clans", "merchant_guild"} {
-			meet(ge, key, 30)
+// TestDeals_Wording pins how an offer reads.
+func TestDeals_Wording(t *testing.T) {
+	num := textfmt.Number
+	dur := func(int) string { return "20m" }
+	for _, c := range []struct {
+		kind, res string
+		amt       float64
+		want      string
+	}{
+		{DealBoost, "stone", 600, "Boost: give 876M coal → +25% stone 20m"},
+		{DealResearch, config.ResearchTarget, 3200, "Research: give 876M coal → research +3.2K"},
+		{DealPeople, "workers", 4, "People: give 876M coal → +4 workers"},
+		{DealKnowhow, "stone", 0, "Know-how: give 876M coal → know-how: +5% stone"},
+	} {
+		if got := DealTerms(c.kind, "coal", 876*config.Million, c.res, c.amt, num, dur); got != c.want {
+			t.Errorf("DealTerms(%s) = %q, want %q", c.kind, got, c.want)
+		}
+	}
+}
+
+// TestGifts_KnowhowRefusedWhenStandingFell: the opinion gate holds at accept,
+// not only when the offer is rolled.
+func TestGifts_KnowhowRefusedWhenStandingFell(t *testing.T) {
+	def := factionDef(t, "merchant_guild")
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealKnowhow, Give: "stone", GiveAmt: 10, Res: def.Specialty})
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Opinion = dealStandingCap - 1
+	ge.mu.Unlock()
+	stone := ge.Resources.Get("stone")
+	if err := ge.takeOffer("merchant_guild", 1); err == nil || !strings.Contains(err.Error(), "trust") {
+		t.Fatalf("know-how below the opinion gate: %v", err)
+	}
+	if ge.Resources.Get("stone") != stone {
+		t.Error("a refused know-how was paid for")
+	}
+	ge.mu.Lock()
+	ge.Diplomacy.factions["merchant_guild"].Status = "allied"
+	ge.mu.Unlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+}
+
+// TestGifts_ResearchPaidInProportion: a research gift that lands for less than
+// offered costs less, and an unaffordable one is refused with nothing spent.
+func TestGifts_ResearchPaidInProportion(t *testing.T) {
+	ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealResearch, Give: "stone", GiveAmt: 100, Res: config.ResearchTarget, Amt: 1e18})
+	ge.mu.Lock()
+	keys := ge.Research.StartableTechs(ge.age, ge.progress.GetAgeOrder())
+	ge.mu.Unlock()
+	noErr(t, ge.StartResearch(keys[0]))
+	ge.mu.Lock()
+	cost := ge.Research.defs[keys[0]].Cost
+	ge.Research.progress = cost - cost/10 // a tenth left
+	ge.Diplomacy.factions["merchant_guild"].Deals[0].Amt = cost / 2
+	stone := ge.Resources.Get("stone")
+	ge.mu.Unlock()
+	noErr(t, ge.takeOffer("merchant_guild", 1))
+	ge.mu.RLock()
+	paid := stone - ge.Resources.Get("stone")
+	ge.mu.RUnlock()
+	if math.Abs(paid-20) > 0.5 { // a tenth of the tech of a half-tech lot: 100 * 0.1/0.5
+		t.Errorf("paid %v for a fifth of the lot, want about 20", paid)
+	}
+}
+
+// TestGifts_BoostLastsItsTicksLive: a boost of 10 ticks adds 10 ticks of a
+// quarter of the rate, as time away does, no more and no less.
+func TestGifts_BoostLastsItsTicksLive(t *testing.T) {
+	run := func(take bool) float64 {
+		ge := giftEngine(t, FactionDeal{ID: 1, Kind: DealBoost, Give: "stone", GiveAmt: 10, Res: "wood", Amt: 10})
+		if take {
+			noErr(t, ge.takeOffer("merchant_guild", 1))
+		}
+		ge.mu.Lock()
+		ge.Resources.resources["wood"].Amount = 0
+		ge.mu.Unlock()
+		for range 14 {
+			ge.doTick()
 		}
 		ge.mu.RLock()
 		defer ge.mu.RUnlock()
-		j, _ := json.Marshal(ge.Diplomacy.GetFactionsForSave())
-		return string(j)
+		return ge.Resources.resources["wood"].Amount
 	}
-	if a, b := roll(3), roll(3); a != b {
-		t.Fatalf("same seed, different offers:\n%s\n%s", a, b)
-	}
-	if roll(3) == roll(4) {
-		t.Error("different seeds rolled identical offers")
-	}
-}
-
-// TestDeals_Plan: a planned deal waits for its price (holding it from items
-// below), is taken once, and drops out when its offer rotates away.
-func TestDeals_Plan(t *testing.T) {
-	ge := dealEngine(t, "colonial_age")
-	meet(ge, "merchant_guild", 30)
-	ge.mu.Lock()
-	d := ge.Diplomacy.factions["merchant_guild"].Deals[0]
-	ge.Resources.resources[d.Give].Amount = d.GiveAmt / 2
-	ge.mu.Unlock()
-	noErr(t, ge.PlanAddDeal("merchant_guild", 1))
-	if err := ge.PlanAddDeal("merchant_guild", 1); err == nil {
-		t.Error("planned the same deal twice")
-	}
-	if err := ge.PlanAddDeal("merchant_guild", 99); err == nil {
-		t.Error("planned a deal that doesn't exist")
-	}
-	ge.mu.Lock()
-	ge.runPlanTick()
-	views := ge.planViews()
-	ge.mu.Unlock()
-	if len(views) != 1 || views[0].Status != PlanStatusWaiting || views[0].Short != d.Give || math.Abs(views[0].Progress-0.5) > 1e-9 {
-		t.Fatalf("waiting deal item: %+v", views)
-	}
-	ge.mu.Lock()
-	ge.Resources.resources[d.Give].Amount = d.GiveAmt * 3
-	get0 := ge.Resources.Get(d.Get)
-	ge.runPlanTick()
-	taken := ge.Diplomacy.factions["merchant_guild"].Deals[0].Taken
-	left, get1 := len(ge.plan), ge.Resources.Get(d.Get)
-	ge.mu.Unlock()
-	if !taken || left != 0 || get1 != get0+d.GetAmt {
-		t.Fatalf("after the price came in: taken %v, %d items left, %s %v→%v", taken, left, d.Get, get0, get1)
-	}
-
-	// A planned deal whose offers rotate away drops out with a log line.
-	noErr(t, ge.PlanAddDeal("merchant_guild", 2))
-	ge.mu.Lock()
-	ge.Diplomacy.factions["merchant_guild"].DealTicks = dealRefreshFor(ge.age)
-	ge.tickFactionDeals()
-	ge.runPlanTick()
-	left = len(ge.plan)
-	ge.mu.Unlock()
-	if left != 0 {
-		t.Error("a deal item outlived its offer")
-	}
-	if !logHas(ge, "the offer is gone") {
-		t.Error("no log line for the dropped deal item")
-	}
-}
-
-// TestDeals_Wording: every surface words a deal from the player's side,
-// "<Kind>: give X → get Y", with the civ selling its specialty as your Buy
-// and the civ wanting your goods as your Sell; the log line and the plan
-// label carry the same terms.
-func TestDeals_Wording(t *testing.T) {
-	num := textfmt.Number
-	for _, c := range []struct {
-		d    FactionDeal
-		want string
-	}{
-		{FactionDeal{Kind: DealSell, Give: "coal", GiveAmt: 876 * config.Million, Get: "food", GetAmt: 966_000}, "Buy: give 876M coal → get 966K food"},
-		{FactionDeal{Kind: DealWant, Give: "iron_ore", GiveAmt: 440 * config.Million, Get: "food", GetAmt: 877_000}, "Sell: give 440M iron ore → get 877K food"},
-		{FactionDeal{Kind: DealFavor, Give: "steel", GiveAmt: 899 * config.Million, Standing: 5}, "Goodwill: give 899M steel → get +5 opinion"},
-		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7 * config.Billion, Get: "oil", GetAmt: 3.3 * config.Billion}, "Rare: give 25.7B electricity → get 3.3B oil"},
-	} {
-		if got := DealTerms(c.d.Kind, c.d.Give, c.d.GiveAmt, c.d.Get, c.d.GetAmt, c.d.Standing, num); got != c.want {
-			t.Errorf("DealTerms(%s) = %q, want %q", c.d.Kind, got, c.want)
-		}
-	}
-	// The log and the plan label word the same terms as a clause.
-	if got, want := dealLogTerms(FactionDeal{Kind: DealSell, Give: "iron_ore", GiveAmt: 876 * config.Million, Get: "food", GetAmt: 966_000}), "Buy: give 876M iron ore, get 966K food"; got != want {
-		t.Errorf("dealLogTerms = %q, want %q", got, want)
-	}
-
-	ge := dealEngine(t, "colonial_age")
-	meet(ge, "merchant_guild", 30)
-	noErr(t, ge.PlanAddDeal("merchant_guild", 2))
-	ge.mu.Lock()
-	d1, d2 := ge.Diplomacy.factions["merchant_guild"].Deals[0], ge.Diplomacy.factions["merchant_guild"].Deals[1]
-	held := ge.Resources.resources[d2.Give].Amount
-	ge.Resources.resources[d2.Give].Amount = 0
-	views := ge.planViews()
-	ge.Resources.resources[d2.Give].Amount = held // deal 1 may be paid in the same goods
-	ge.mu.Unlock()
-	if want := "deal with the Merchant Guild (" + dealLogTerms(d2) + ")"; len(views) != 1 || views[0].Name != want {
-		t.Errorf("plan label %+v, want %q", views, want)
-	}
-	if _, err := ge.AcceptFactionDeal("merchant_guild", 1); err != nil {
-		t.Fatal(err)
-	}
-	want := "Deal with the Merchant Guild. " + dealLogTerms(d1) + "."
-	if !logHasLine(ge, want) {
-		t.Errorf("no log line %q", want)
+	base := woodRate(giftEngine(t))
+	if extra, want := run(true)-run(false), float64(0.25*base*10); math.Abs(extra-want) > 0.01*want {
+		t.Errorf("a 10-tick boost added %v wood, want %v", extra, want)
 	}
 }

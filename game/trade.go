@@ -43,10 +43,9 @@ type TradeManager struct {
 	// gross is what the town makes of each resource a tick before any trade
 	// flow (set by Flows), which sizes every route.
 	gross map[string]float64
-	// levels keeps RoutePriceLevel per good and age; order the sorted keys of
+	// order is the sorted keys of
 	// activeRoutes (routes are only added, so a length check keeps it true).
-	levels map[[2]string]float64
-	order  []string
+	order []string
 	// The throttle's scratch, kept between calls.
 	legs          []routeLeg
 	demand, share map[string]float64
@@ -194,18 +193,10 @@ func (tm *TradeManager) timeFactor() float64 {
 	return 1
 }
 
-// priceLevel is rules' RoutePriceLevel, kept: it walks the ages.
+// priceLevel is rules' RoutePriceLevel (kept by the set, so the state view
+// can read it under a read lock).
 func (tm *TradeManager) priceLevel(res, age string) float64 {
-	k := [2]string{res, age}
-	if l, ok := tm.levels[k]; ok {
-		return l
-	}
-	if tm.levels == nil {
-		tm.levels = map[[2]string]float64{}
-	}
-	l := tm.rules.RoutePriceLevel(res, age)
-	tm.levels[k] = l
-	return l
+	return tm.rules.RoutePriceLevel(res, age)
 }
 
 // routeKeys is the started routes' keys in order, kept between calls.
