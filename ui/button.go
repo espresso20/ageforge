@@ -170,8 +170,7 @@ func (p *expPalette) tone(k xk, bg bool) color.RGBA {
 	if bg {
 		c = st.Bg
 	}
-	rgba, _ := c.RGBA()
-	return rgba
+	return pixelInk(c)
 }
 
 // keyLook is the colours of a key in a state: the ramp of its face, the ink
