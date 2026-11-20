@@ -365,7 +365,7 @@ func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key strin
 				rate = eff.Value * float64(count) * (unstaffedShare + byWorkers)
 				if rank != nil {
 					// A domain's rank adds that share of what its workers make.
-					rate += eff.Value * float64(count) * byWorkers * rank(def.WorkerDomain)
+					rate = float64(eff.Value * float64(count) * byWorkers * (1 + rank(def.WorkerDomain))) + float64(eff.Value*float64(count)*unstaffedShare)
 				}
 				workerOutput[eff.Target] += float64(eff.Value * float64(count) * byWorkers)
 			} else {
