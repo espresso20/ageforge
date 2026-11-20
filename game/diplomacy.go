@@ -251,10 +251,9 @@ func (dm *DiplomacyManager) AddPassiveOpinion(totalPerTick float64) int {
 		fs.OpinionAccum += per
 		if fs.OpinionAccum >= 1.0 {
 			whole := int(fs.OpinionAccum)
-			fs.Opinion += whole
+			fs.addOpinion(whole)
 			fs.OpinionAccum -= float64(whole)
-			if fs.Opinion > opinionMax {
-				fs.Opinion = opinionMax
+			if fs.Opinion >= opinionMax {
 				fs.OpinionAccum = 0
 			}
 		}
@@ -351,8 +350,18 @@ func (dm *DiplomacyManager) StateOf(key string) (FactionState, bool) {
 }
 
 // addOpinion moves a faction's opinion by delta, within [-100, 100].
+// A neutral civ whose opinion reaches 25 turns friendly, whatever raised it.
 func (fs *FactionState) addOpinion(delta int) {
 	fs.Opinion = min(max(fs.Opinion+delta, opinionMin), opinionMax)
+	fs.warm()
+}
+
+// warm makes a neutral civ friendly once its opinion is 25 or more. Status
+// never falls back with opinion: only the player's choices and war move it down.
+func (fs *FactionState) warm() {
+	if fs.Status == "neutral" && fs.Opinion >= 25 {
+		fs.Status = "friendly"
+	}
 }
 
 // applyPersonalityDrift nudges each discovered civ's opinion toward the
@@ -608,11 +617,6 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 	}
 
 	fs.addOpinion(dm.GiftGain())
-
-	// Auto-upgrade to friendly if opinion hits 25+
-	if fs.Status == "neutral" && fs.Opinion >= 25 {
-		fs.Status = "friendly"
-	}
 
 	return cost, nil
 }

@@ -521,3 +521,28 @@ func (dm *DiplomacyManager) LentWorkerTotal() int {
 	}
 	return total
 }
+
+// TestStatus_FollowsOpinion: a neutral civ turns friendly at opinion 25
+// however the opinion rose, and nothing else changes status.
+func TestStatus_FollowsOpinion(t *testing.T) {
+	fs := &FactionState{Discovered: true, Status: "neutral", Opinion: 20}
+	fs.addOpinion(4)
+	if fs.Status != "neutral" {
+		t.Errorf("opinion 24: %s", fs.Status)
+	}
+	fs.addOpinion(1)
+	if fs.Status != "friendly" {
+		t.Errorf("opinion 25: %s", fs.Status)
+	}
+	fs.addOpinion(-30)
+	if fs.Status != "friendly" {
+		t.Errorf("status fell with opinion: %s", fs.Status)
+	}
+	for _, st := range []string{"rival", "embargo", "allied"} {
+		o := &FactionState{Discovered: true, Status: st, Opinion: 10}
+		o.addOpinion(50)
+		if o.Status != st {
+			t.Errorf("%s became %s", st, o.Status)
+		}
+	}
+}

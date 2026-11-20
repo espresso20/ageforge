@@ -35,6 +35,7 @@ func testDealEnv(age string) dealEnv {
 		env.amount[r.Key] = float64(i+1) * config.Quintillion
 		env.income[r.Key] = float64(i+1) * 1000
 	}
+	env.cap = 500
 	env.researchLeft, env.room, env.headFood, env.boostTicks, env.refresh = 1e12, 50, 0.1, 600, 1800
 	return env
 }
@@ -743,5 +744,73 @@ func TestGifts_BoostRefusedWhenNothingMade(t *testing.T) {
 	}
 	if ge.Resources.Get("stone") != stone {
 		t.Error("a refused boost was paid for")
+	}
+}
+
+// TestDeals_BoardIsMixed: at opinion 100 in the Industrial Age no civ offers
+// more than one people offer, a civ that qualifies leads with its know-how, and
+// boosts and people both appear.
+func TestDeals_BoardIsMixed(t *testing.T) {
+	ge := dealEngine(t, "industrial_age")
+	ge.mu.Lock()
+	ge.Buildings.counts["coal_plant"] = 20 // a producer with a price
+	ge.recalculateRates()
+	ge.mu.Unlock()
+	for _, def := range config.BaseFactions() {
+		meet(ge, def.Key, 100)
+	}
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	env := ge.newDealEnv()
+	kinds := map[string]int{}
+	for key, fs := range ge.Diplomacy.factions {
+		people := 0
+		for _, d := range fs.Deals {
+			kinds[d.Kind]++
+			if d.Kind == DealPeople {
+				people++
+			}
+		}
+		if people > 1 {
+			t.Errorf("%s offers %d people offers", key, people)
+		}
+		def := factionDef(t, key)
+		if knowhowOpen(def, *fs, env) && (len(fs.Deals) == 0 || fs.Deals[0].Kind != DealKnowhow) {
+			t.Errorf("%s qualifies for know-how but offers %+v", key, fs.Deals)
+		}
+	}
+	if kinds[DealBoost] == 0 || kinds[DealPeople] == 0 || kinds[DealKnowhow] == 0 {
+		t.Errorf("board lacks a kind: %v", kinds)
+	}
+}
+
+// TestDeals_BoostPaidInWhatFits: a boost whose price is too much for the drawn
+// good's stock is paid in another good rather than dropped.
+func TestDeals_BoostPaidInWhatFits(t *testing.T) {
+	def := factionDef(t, "merchant_guild")
+	env := testDealEnv("industrial_age")
+	base, ok := boostDeal(def, env, 0.9, 0.9, 0)
+	if !ok {
+		t.Fatal("no boost on roomy stores")
+	}
+	for k := range env.size {
+		env.size[k], env.amount[k] = 1, 1 // every good's stock is too small ...
+	}
+	env.size["steel"], env.amount["steel"] = config.Sextillion, 2*config.Sextillion // ... but steel's
+	d, ok := boostDeal(def, env, 0.9, 0.9, 0.99)
+	if !ok || d.Give != "steel" || base.Res == "steel" {
+		t.Errorf("boost = %+v, %v; want it paid in steel (boosting %s)", d, ok, base.Res)
+	}
+}
+
+// TestDeals_PeopleCappedByHomes: a people offer is no more than a tenth of
+// the homes' capacity, however big the lot.
+func TestDeals_PeopleCappedByHomes(t *testing.T) {
+	def := factionDef(t, "merchant_guild")
+	env := testDealEnv("industrial_age")
+	env.room, env.cap = 1000, 1000
+	d, ok := peopleDeal(def, env, 1, 1e6, 0.5)
+	if !ok || d.Amt != 100 {
+		t.Errorf("people = %+v, %v; want 100", d, ok)
 	}
 }
