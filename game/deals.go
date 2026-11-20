@@ -630,7 +630,7 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 	}
 	d.Taken = true
 	ge.note(config.BadgeEvDeal, def.Key)
-	ge.addLog("success", rowid.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, dealLogTerms(*d)))
+	ge.addLog(OfficeTrade, "success", rowid.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, dealLogTerms(*d)), logSubj(def.Key), logPaid(LogAmt{d.Give, d.GiveAmt}), logDealGot(d))
 	return *d
 }
 
@@ -716,4 +716,12 @@ func dealInfos(fs *FactionState, age string) []DealInfo {
 		out = append(out, info)
 	}
 	return out
+}
+
+// logDealGot is the goods a deal brought, if it brought any.
+func logDealGot(d *FactionDeal) logOpt {
+	if d.Get == "" {
+		return func(*logWrite) {}
+	}
+	return logGot(LogAmt{d.Get, d.GetAmt})
 }

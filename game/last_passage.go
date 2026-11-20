@@ -140,8 +140,8 @@ func (ge *GameEngine) rollLastPassage() bool {
 func (ge *GameEngine) triggerLastPassage(source string) {
 	ge.pendingLastPassage = true
 	name, _ := ge.rules.LastPassage()
-	ge.addLog("warning", rowid.Sprintf("game.last_passage.triggerLastPassage.01", "☄ %s has come. The civilization cannot pass out of this age unmarked.", name))
-	ge.addLog("warning", rowid.Line("game.last_passage.triggerLastPassage.02", "  Type 'catastrophe' to choose Endure or Succumb. Only prestige waits; the run goes on until you choose."))
+	ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.last_passage.triggerLastPassage.01", "☄ %s has come. The civilization cannot pass out of this age unmarked.", name), logHead)
+	ge.addLog(OfficeWorld, "warning", rowid.Line("game.last_passage.triggerLastPassage.02", "  Type 'catastrophe' to choose Endure or Succumb. Only prestige waits; the run goes on until you choose."))
 	ge.publish(EventEpochEventFired, payload{
 		"event_key":  config.LastPassageKey,
 		"event_name": name,
@@ -265,11 +265,11 @@ func (ge *GameEngine) runEndingLines(how prestigeEnding, points, full int) []Log
 	case lastPassageEndured:
 		keep := LastPassageKeepFor(ge.lastPassageBraceLevel())
 		ge.resolveHarbinger("", true)
-		ge.addLog("warning", rowid.Sprintf("game.last_passage.runEndingLines.01", "☄ Endure: %s. %s", name, flavorText))
-		ge.addLog("warning", rowid.Sprintf("game.last_passage.runEndingLines.02", "  You keep %.0f%% of this run's prestige points: %d of %d.", keep*100, points, full))
+		ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.last_passage.runEndingLines.01", "☄ Endure: %s. %s", name, flavorText), logHead)
+		ge.addLog(OfficeWorld, "warning", rowid.Sprintf("game.last_passage.runEndingLines.02", "  You keep %.0f%% of this run's prestige points: %d of %d.", keep*100, points, full))
 	case lastPassageSuccumbed:
 		ge.resolveHarbinger("", true)
-		ge.addLog("event", rowid.Sprintf("game.last_passage.runEndingLines.03", "☄ Succumb: %s took everything this run had. No prestige points from it.", name))
+		ge.addLog(OfficeWorld, "event", rowid.Sprintf("game.last_passage.runEndingLines.03", "☄ Succumb: %s took everything this run had. No prestige points from it.", name), logHead)
 	}
 	ge.logRunEnding()
 
@@ -291,7 +291,7 @@ func (ge *GameEngine) logRunEnding() {
 		}
 	}
 	if l := ge.flavorLine(req); l != "" {
-		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
+		ge.addLog(OfficeWorld, "info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
 

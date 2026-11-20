@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -47,7 +48,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	btnRow, btns := choiceRow([]choice{
 		{label: acceptLabel, key: acceptKey, kind: keyPrimary, sign: signTick, press: func() {
 			if err := d.engine.AcceptAncientMemory(); err != nil {
-				d.engine.AddLog("error", rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.07", "Could not recover the memory: ")+err.Error())
+				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.07", "Could not recover the memory: ")+err.Error())
 			}
 			d.closeAncientMemoryModal()
 		}},

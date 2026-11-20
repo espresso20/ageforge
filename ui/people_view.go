@@ -203,10 +203,10 @@ type stackPart struct {
 
 // peopleEvent says whether a log line is about people: someone recruited,
 // moved in, starved or fell.
-func peopleEvent(e game.LogEntry) bool { return e.About(game.TagPeople) }
+func peopleEvent(e game.LogEntry) bool { return e.Office == game.OfficePeople }
 
 // armyEvent says whether a log line is about soldiers.
-func armyEvent(e game.LogEntry) bool { return e.About(game.TagArmy) }
+func armyEvent(e game.LogEntry) bool { return e.Office == game.OfficeArmy }
 
 // recentLog is the newest n log lines (newest first) that keep accepts.
 func recentLog(st game.GameState, keep func(game.LogEntry) bool, n int) []game.LogEntry {

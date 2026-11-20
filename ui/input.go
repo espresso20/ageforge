@@ -47,6 +47,9 @@ type CommandResult struct {
 	// Badges says how the Ranks screen (OverlayName "badges") opens: on a
 	// tab, a domain's badges, or a badge. The zero value is the Ranks tab.
 	Badges badgeRequest
+	// Logs says how the Logs panel (OverlayName "logs") opens: at a level, on
+	// an office, on every office or on a Find.
+	Logs logsRequest
 	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
 	// the account; with no account loaded the dashboard keeps it for the
@@ -624,6 +627,38 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 	return successReply()
 }
 
+// cmdLogs opens the Logs panel: bare, at a level ("logs headlines"), on one
+// office ("logs trade"), on every office ("logs all") or on a Find ("logs
+// find clay pots"; bare "logs find" clears it).
+func cmdLogs(args []string, _ *game.GameEngine) CommandResult {
+	res := panelReply("logs")
+	if len(args) == 0 {
+		return res
+	}
+	w := strings.ToLower(args[0])
+	switch w {
+	case "headlines":
+		res.Logs = logsRequest{level: game.LevelHeadline}
+	case "town":
+		res.Logs = logsRequest{level: game.LevelTown}
+	case "everything":
+		res.Logs = logsRequest{level: game.LevelEverything}
+	case "all":
+		res.Logs = logsRequest{all: true}
+	case "find":
+		res.Logs = logsRequest{setFind: true, find: strings.Join(args[1:], " ")}
+	default:
+		for _, o := range game.Offices() {
+			if strings.EqualFold(o.Name(), w) {
+				res.Logs = logsRequest{office: o}
+				return res
+			}
+		}
+		return errorReply(rowid.Sprintf("ui.input.cmdLogs.01", "Logs have no %q. Try headlines, town, everything, all, an office such as trade, or find <words>.", args[0]))
+	}
+	return res
+}
+
 func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	logs := engine.GetLogs()
@@ -684,7 +719,17 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	// All log entries
 	sb.WriteString(fmt.Sprintf("\n=== Log Entries (%d) ===\n", len(logs)))
 	for _, entry := range logs {
-		sb.WriteString(fmt.Sprintf("T%-5d [%-7s] %s\n", entry.Tick, entry.Type, entry.Message))
+		clock, times := "--:--:--", ""
+		if entry.At > 0 {
+			clock = time.Unix(entry.At, 0).Format("15:04:05")
+		}
+		if entry.Count > 1 {
+			times = fmt.Sprintf(" x%d", entry.Count)
+		}
+		if entry.Seam {
+			clock = "-- seam --"
+		}
+		sb.WriteString(fmt.Sprintf("T%-5d %s [%-7s] %s%s\n", entry.Tick, clock, entry.Type, entry.Message, times))
 	}
 
 	if err := os.WriteFile(filename, []byte(sb.String()), 0644); err != nil {

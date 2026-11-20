@@ -347,7 +347,7 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	if skipped > 0 {
 		line += rowid.Sprintf("game.legacy.applyPlanTemplateLocked.07", " %s can't be planned yet.", countPlanItems(skipped))
 	}
-	ge.addLog(LogRoutine, line)
+	ge.addLog(OfficePlan, LogRoutine, line)
 }
 
 // ===== Old Friends =====
@@ -367,7 +367,7 @@ func (ge *GameEngine) meetOldFriendsLocked() {
 			continue
 		}
 		if _, ok := ge.Diplomacy.DiscoverFaction(key); ok {
-			ge.addLog("event", rowid.Sprintf("game.legacy.meetOldFriendsLocked.01", "Old friends: the %s remember your people and make contact again.", def.Name))
+			ge.addLog(OfficeDiplomacy, "event", rowid.Sprintf("game.legacy.meetOldFriendsLocked.01", "Old friends: the %s remember your people and make contact again.", def.Name), logHead)
 		}
 	}
 }
@@ -438,7 +438,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 // holds the write lock.
 func (ge *GameEngine) startRunLegacyLocked() {
 	if ge.applyLegacySharesLocked() {
-		ge.addLog("info", rowid.Line("game.legacy.startRunLegacyLocked.01", "Roster: your shares carry over. ")+sharesLine(ge.rules, ge.workerShares)+".")
+		ge.addLog(OfficePeople, "info", rowid.Line("game.legacy.startRunLegacyLocked.01", "Roster: your shares carry over. ")+sharesLine(ge.rules, ge.workerShares)+".")
 	}
 	ge.applyPlanTemplateLocked()
 	ge.meetOldFriendsLocked()
