@@ -90,3 +90,18 @@ func TestNextBoxText(t *testing.T) {
 		t.Error("a step with no command has a Show me button")
 	}
 }
+
+// A THEN item shows its panel word only when the panel is on the Panels list.
+func TestThenPanelWord(t *testing.T) {
+	s := nextStep{title: "Build a mill", then: []nextItem{
+		{title: "Study the stars", detail: "one lesson", panel: "research"},
+		{title: "Call the feast", detail: "one lesson", panel: "festival"},
+	}}
+	out := strings.Join(cardRows(s, 40, cardCut{then: 2}), "\n")
+	if !strings.Contains(out, "research") {
+		t.Errorf("a THEN item on a real panel lost its panel word:\n%s", out)
+	}
+	if strings.Contains(out, "festival") {
+		t.Errorf("a main-view THEN item showed a panel word:\n%s", out)
+	}
+}

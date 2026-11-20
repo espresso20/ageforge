@@ -1009,8 +1009,9 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 	if c.key == b.nextKey && b.nextKey != "" {
 		plate := txtNextStep.String()
 		if at := tx + n + runeLen(count) + 1; at+runeLen(plate) <= tx+room {
-			st := kit.Style{}.Foreground(theme.Of(theme.RoleOnAccent)).Background(theme.Of(theme.RoleAccent)).Bold(true)
-			lab(at, 0, plate, st)
+			// Label keeps the cell's own background, so the plate fills its cells first.
+			p.Fill(image.Rect(rect.Min.X+at, rect.Min.Y, rect.Min.X+at+runeLen(plate), rect.Min.Y+1), theme.Of(theme.RoleLabel))
+			lab(at, 0, plate, kit.Style{}.Foreground(theme.Of(theme.RoleBackground)).Bold(true))
 		}
 	}
 	if c.reason != "" {

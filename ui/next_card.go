@@ -38,6 +38,19 @@ const (
 	panelRuleRows = 1
 )
 
+// isPanel reports whether name is a panel on the Panels list. A step that
+// lives on the main view (a festival, say) names no panel and shows no word.
+func isPanel(name string) bool {
+	for _, g := range panelGroups {
+		for _, p := range g.panels {
+			if p.name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // cell is a piece of a row with the cells it takes.
 type cell struct {
 	s string
@@ -188,7 +201,7 @@ func cardRows(s nextStep, T int, cut cardCut) []string {
 	if s.cmd != "" {
 		btn := clickRegion(regionShow, theme.TagFgBgAttr(theme.RoleText, theme.RoleChip, "b")+txtShowMe.String()+theme.Reset)
 		if T >= tabMinT {
-			btn += "   " + theme.TagFgBg(theme.RoleDim, theme.RoleChip) + txtTabKey.String() + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(txtTabKey.String())-4))
+			btn += "   " + theme.TagFgBgAttr(theme.RoleOnAccent, theme.RoleAccent, "b") + txtTabKey.String() + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(txtTabKey.String())-4))
 		}
 		rows = append(rows, "", x(btn))
 	}
@@ -200,7 +213,7 @@ func cardRows(s nextStep, T int, cut cardCut) []string {
 			}
 			title, word := fitText(it.title, T), it.panel
 			line := bodyText(title)
-			if word != "" && runeLen(title)+2+len(word) <= T {
+			if word != "" && isPanel(word) && runeLen(title)+2+len(word) <= T {
 				line += strings.Repeat(" ", T-runeLen(title)-len(word)) + dimText(word)
 			}
 			link := func(s string) string { return clickRegion(regionThen+string(rune('0'+i)), s) }
