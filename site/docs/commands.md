@@ -50,7 +50,13 @@ A keyboard with no Page Up, Page Down, Home or End (a Mac's, for one) is covered
 
 The log in the main window says what each command did and what happened in the game: a build started, queued or finished, a gather, a sale, workers recruited or assigned, a share of the roster set, what the roster routine does (`Roster: recruited 3 workers (population 12/20), put 2 idle workers to work.`), a trade, a research started, a plan item added, and events, milestones, age advances, harbingers, warnings and errors. Each line starts with what happened, with no tick number. Routine confirmations are in the plain text color, so events, warnings and errors stand out.
 
-The Logs panel (`logs`) shows the last 50 of the same lines with the tick each one happened on and a mark for its kind: `[*]` an event, `[+]` a success, `[i]` a note, `[!]` a warning, `[X]` an error, and `·` a routine confirmation. Under the lines it shows the tick, age, population, food use and game speed, then your active events, build queue, research and worker assignments.
+The Logs panel (`logs`) is a roll of what happened beside a slate of the town as it stands. The game keeps and saves the last 2,000 lines, folding a repeated line into one with a count (`x8`) and writing a mark where a saved game was loaded.
+
+- **The roll** groups lines under "The last ten minutes", "The last hour", then a band for each day, each band with a summary on its right. An age or epoch starts with a banner. A line has its time, its mark, what happened, what it paid and what it gained. `Space` or a click opens a line to show what was paid, gained and taken, with `Enter` to go to the panel the line is about and `O` to keep only lines like it.
+- **Offices** (Building, Research, Plan, People, Stores, Trade, Diplomacy, Army, World, Game) are on the left, each with a count and a red dot when something new came in. Click one or type its name to show or hide it; `A` shows all and the strip's "none" hides all.
+- **Detail** has three notches: `1` Headlines (ages, wonders, disasters), `2` Town (adds builds, tech, trade and trouble) and `3` Everything (adds each copy, every run and every save).
+- **Find** (`F`) keeps the lines with a word; `N` jumps to the newest line and `Esc` closes the panel.
+- **The slate** says what is under way (builds grouped by building, with the soonest time, and the research), what is wrong, what comes next, the stores with their rates and how long a falling one lasts, and a tally of this sitting.
 
 ---
 
@@ -496,7 +502,11 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 |---|---|
 | `status` (or `s`) | Print a status summary: age and game time, every unlocked resource with amount and rate, and your population by class with idle counts, food drain and assignments. |
 | `rates` | Print where each resource's rate comes from: buildings, the [worker output bonus](workers-and-domains.md#worker-output-bonuses), research, events, trade, bonuses, the [Cosmic Legacy](prestige.md#cosmic-legacy), [Era Mastery](prestige.md#era-mastery), prestige and food drain, plus what teaching adds. When a limit holds a bonus pool below what it has earned it says both: `All production: -140% earned, -90% counts.` (see [The all-production pool](resources.md#the-all-production-pool)). |
-| `logs` | Open the Logs panel: recent game log entries with their tick numbers (see [The log](#the-log)). |
+| `logs` | Open the Logs panel at the town level: a roll of what happened and a slate of the town (see [The log](#the-log)). |
+| `logs headlines`, `logs town`, `logs everything` | Open it at that level of detail. |
+| `logs <office>` | Open it on one office, such as `logs trade` or `logs research`. |
+| `logs all` | Open it on every office. |
+| `logs find <words>` | Open it on a search; bare `logs find` clears the search. |
 | `dump` | Export the logs to a file for debugging, in the `logs/` folder of your active account (`data/accounts/<id>/logs/`). The export has the raw tick counts. |
 | `help` | Open the Help panel: the keys, every command and the list of panels. |
 
