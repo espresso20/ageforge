@@ -257,7 +257,28 @@ func (p *logsPanel) paintRoll(p2 *kit.Painter, org image.Point, cw, ch int) {
 			p2.Picture(image.Rect(org.X+l.Body.X, org.Y+y, org.X+l.Body.Right(), org.Y+y+1),
 				p.pic(func() *image.RGBA { return logroll.SeamRow(l.Body.W*cw, ch, (l.Body.W*cw-gap)/2, gap, logsSeed) }, "seam", gap, l.Body.W))
 			say(l.Body.X+(l.Body.W-runeLen(row.text))/2, y, row.text, logroll.Dim, false)
+		case rowDetail:
+			strip(logroll.RowOpen)
+			say(l.Text.X+2, y, row.label, logroll.Dim, true)
+			say(l.Text.X+10, y, fit(row.text, l.Text.W-12), logroll.Ink, false)
+		case rowGo:
+			strip(logroll.RowOpen)
+			plate := func(x int, key string) int {
+				w := runeLen(key) + 2
+				p2.Picture(image.Rect(org.X+x, org.Y+y, org.X+x+w, org.Y+y+1), p.pic(func() *image.RGBA { return solid(w*cw, ch, logroll.Brass) }, "key", w))
+				say(x+1, y, key, logroll.Light, true)
+				return x + w + 1
+			}
+			x := plate(l.Text.X+2, "Enter")
+			say(x, y, fmt.Sprintf(txtLogsGoTo.String(), game.Office(row.e.Office).Name()), logroll.Ink, false)
+			plate(p.goSplit(row), "O")
+			say(p.goSplit(row)+4, y, txtLogsOnly.String(), logroll.Ink, false)
 		default:
+			if row.kind == rowLine && row.e.Banner {
+				strip(logroll.RowBanner)
+				say(l.Body.X+(l.Body.W-runeLen(row.text))/2, y, row.text, logroll.NavyInk, true)
+				break
+			}
 			p.paintLine(p2, org, y, i, row, strip, cw, ch)
 		}
 		if i == p.sel && !p.follow {
@@ -277,8 +298,7 @@ func (p *logsPanel) paintLine(p2 *kit.Painter, org image.Point, y, i int, row lo
 		strip(logroll.RowOpen)
 		ink, bg = logroll.Dim, logroll.Band
 	case head:
-		strip(logroll.RowBanner)
-		ink, bg = logroll.NavyInk, logroll.Navy
+		ink = logroll.Navy
 	case e.Trouble:
 		ink = logroll.Rust
 	case e.Office == game.OfficeGame && e.Level == game.LevelEverything:

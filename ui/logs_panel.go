@@ -27,8 +27,11 @@ var (
 	txtLogsNone  = rowid.E("ui.logs_panel.words.04", "No line says that.")
 	txtLogsFind  = rowid.E("ui.logs_panel.words.05", "Find")
 	txtLogsSmall = rowid.E("ui.logs_panel.words.07", "Make the window larger to read the log.")
-	txtLogsBands = [...]rowid.Entry{rowid.E("ui.logs_panel.bands.01", "Last 10 minutes"), rowid.E("ui.logs_panel.bands.02", "Last hour"),
+	txtLogsBands = [...]rowid.Entry{rowid.E("ui.logs_panel.bands.01", "The last ten minutes"), rowid.E("ui.logs_panel.bands.02", "The last hour"),
 		rowid.E("ui.logs_panel.bands.03", "Earlier today"), rowid.E("ui.logs_panel.bands.04", "Yesterday")}
+	txtLogsOpen   = [...]rowid.Entry{rowid.E("ui.logs_panel.open.01", "Paid"), rowid.E("ui.logs_panel.open.02", "Gained"), rowid.E("ui.logs_panel.open.03", "Took")}
+	txtLogsGoTo   = rowid.E("ui.logs_panel.words.17", "Go to %s")
+	txtLogsOnly   = rowid.E("ui.logs_panel.words.18", "Only lines like this")
 	txtLogsLevels = [...]rowid.Entry{rowid.E("ui.logs_panel.levels.01", "Headlines"), rowid.E("ui.logs_panel.levels.02", "Town"), rowid.E("ui.logs_panel.levels.03", "Everything")}
 )
 
@@ -44,6 +47,8 @@ const (
 	rowSeam
 	rowMember
 	rowEarlier
+	rowDetail // a label and what it holds, under an opened line
+	rowGo     // the opened line's two buttons
 )
 
 // logRow is one row of the roll.
@@ -51,6 +56,7 @@ type logRow struct {
 	kind         logRowKind
 	e            game.LogEntry
 	text, tally  string
+	label        string // rowDetail: Paid, Gained or Took
 	at           int64
 	paid, gained []game.LogAmt
 	key          string
@@ -159,7 +165,7 @@ func (p *logsPanel) amounts(a []game.LogAmt, sign string) string {
 // matches tells whether every word of Find is a whole word of the line: its
 // text, its kept members' text or what it paid and gained.
 func (p *logsPanel) matches(e game.LogEntry) bool {
-	hay := e.Message + " " + p.amounts(e.Paid, "") + " " + p.amounts(e.Gained, "")
+	hay := kit.Strip(e.Message) + " " + p.amounts(e.Paid, "") + " " + p.amounts(e.Gained, "")
 	for _, m := range e.Members {
 		hay += " " + m.Text
 	}
@@ -228,7 +234,7 @@ func (p *logsPanel) band(at int64) string {
 // build makes the rows. A stamp hides its office but never a headline.
 func (p *logsPanel) build() {
 	rows, band, bi := p.rows[:0], "", 0
-	var counts [11]int
+	var sum bandSum
 	for _, e := range p.state.Log {
 		if e.Seam {
 			if p.find == "" && len(rows) > 0 {
@@ -241,19 +247,14 @@ func (p *logsPanel) build() {
 			continue
 		}
 		if b := p.band(e.At); b != band {
-			band, counts = b, [11]int{}
+			band, sum = b, bandSum{}
 			rows, bi = append(rows, logRow{kind: rowBand, text: b}), len(rows)
 		}
-		counts[e.Office]++
-		rows[bi].tally = p.tallyText(counts)
-		rows = append(rows, logRow{kind: rowLine, e: e, text: e.Message, at: e.At, paid: e.Paid, gained: e.Gained, key: fmt.Sprint(e.At, e.Tick, e.ID, e.Office)})
-		if e.Count > 1 && p.opened[rows[len(rows)-1].key] {
-			if n := e.Earlier(); n > 0 {
-				rows = append(rows, logRow{kind: rowEarlier, e: e, text: rowid.Sprintf("ui.logs_panel.words.06", "%d earlier lines", n)})
-			}
-			for _, m := range e.Members {
-				rows = append(rows, logRow{kind: rowMember, e: e, text: m.Text, at: m.At, paid: m.Paid, gained: m.Gained})
-			}
+		sum.add(e)
+		rows[bi].tally = sum.text()
+		rows = append(rows, logRow{kind: rowLine, e: e, text: kit.Strip(e.Message), at: e.At, paid: e.Paid, gained: e.Gained, key: fmt.Sprint(e.At, e.Tick, e.ID, e.Office)})
+		if p.opened[rows[len(rows)-1].key] {
+			rows = p.openRows(rows, e)
 		}
 	}
 	for i := range rows {
@@ -265,20 +266,80 @@ func (p *logsPanel) build() {
 	p.clamp()
 }
 
-// tallyText names the three offices with most lines in a band.
-func (p *logsPanel) tallyText(counts [11]int) string {
-	var offs []int
-	for o := 1; o <= 10; o++ {
-		if counts[o] > 0 {
-			offs = append(offs, o)
+// bandSum counts what a band of the roll holds.
+type bandSum struct{ built, mile, tech, workers int }
+
+func (b *bandSum) add(e game.LogEntry) {
+	switch {
+	case e.Office == game.OfficeBuilding && e.Type == "success":
+		b.built += max(1, e.Count)
+	case e.Office == game.OfficeResearch && e.Type == "success":
+		b.tech += max(1, e.Count)
+	case e.Office == game.OfficeWorld && e.Type == "success" && e.Level == game.LevelHeadline && e.Subject != "":
+		b.mile++
+	}
+	for _, a := range e.Gained {
+		if a.Res == "workers" {
+			b.workers += int(a.N)
 		}
 	}
-	slices.SortStableFunc(offs, func(a, b int) int { return counts[b] - counts[a] })
-	parts := make([]string, 0, 3)
-	for _, o := range offs[:min(3, len(offs))] {
-		parts = append(parts, fmt.Sprintf("%s %d", game.Office(o).Name(), counts[o]))
+}
+
+// text is the band's summary: its three largest counts, largest first.
+func (b bandSum) text() string {
+	type part struct {
+		n    int
+		text string
 	}
-	return strings.Join(parts, " · ")
+	var parts []part
+	add := func(n int, s string) {
+		if n > 0 {
+			parts = append(parts, part{n, s})
+		}
+	}
+	add(b.workers, rowid.Sprintf("ui.logs_panel.sum.01", "%d workers", b.workers))
+	add(b.built, rowid.Sprintf("ui.logs_panel.sum.02", "%d built", b.built))
+	if b.mile == 1 {
+		add(1, rowid.Sprintf("ui.logs_panel.sum.03", "%d milestone", 1))
+	} else {
+		add(b.mile, rowid.Sprintf("ui.logs_panel.sum.04", "%d milestones", b.mile))
+	}
+	if b.tech == 1 {
+		add(1, rowid.Sprintf("ui.logs_panel.sum.05", "%d tech", 1))
+	} else {
+		add(b.tech, rowid.Sprintf("ui.logs_panel.sum.06", "%d techs", b.tech))
+	}
+	slices.SortStableFunc(parts, func(x, y part) int { return y.n - x.n })
+	out := make([]string, 0, 3)
+	for _, q := range parts[:min(3, len(parts))] {
+		out = append(out, q.text)
+	}
+	return strings.Join(out, ", ")
+}
+
+// goCmd is the command that opens the panel an office's lines belong to.
+var goCmd = [11]string{game.OfficeBuilding: "buildings", game.OfficeResearch: "research", game.OfficePlan: "plan", game.OfficePeople: "people",
+	game.OfficeStores: "buildings", game.OfficeTrade: "trade", game.OfficeDiplomacy: "factions", game.OfficeArmy: "army", game.OfficeWorld: "map"}
+
+// openRows adds what an opened line holds under it: what it paid, gained and
+// took, the lines a fold keeps, and the two buttons.
+func (p *logsPanel) openRows(rows []logRow, e game.LogEntry) []logRow {
+	if s := p.amounts(e.Paid, "-"); s != "" {
+		rows = append(rows, logRow{kind: rowDetail, e: e, label: txtLogsOpen[0].String(), text: s})
+	}
+	if s := p.amounts(e.Gained, "+"); s != "" {
+		rows = append(rows, logRow{kind: rowDetail, e: e, label: txtLogsOpen[1].String(), text: s})
+	}
+	if e.Count > 1 && e.At > e.FirstAt {
+		rows = append(rows, logRow{kind: rowDetail, e: e, label: txtLogsOpen[2].String(), text: textfmt.Duration(time.Duration(e.At-e.FirstAt) * time.Second)})
+	}
+	if n := e.Earlier(); e.Count > 1 && n > 0 {
+		rows = append(rows, logRow{kind: rowEarlier, e: e, text: rowid.Sprintf("ui.logs_panel.words.06", "%d earlier lines", n)})
+	}
+	for _, m := range e.Members {
+		rows = append(rows, logRow{kind: rowMember, e: e, text: kit.Strip(m.Text), at: m.At, paid: m.Paid, gained: m.Gained})
+	}
+	return append(rows, logRow{kind: rowGo, e: e})
 }
 
 // height is how many rows of the roll show at once.
@@ -320,12 +381,21 @@ func (p *logsPanel) scrollBy(d int) {
 }
 
 func (p *logsPanel) toggleFold() {
-	if p.sel < 0 || p.sel >= len(p.rows) || p.rows[p.sel].kind != rowLine || p.rows[p.sel].e.Count < 2 {
+	if p.sel < 0 || p.sel >= len(p.rows) || p.rows[p.sel].kind != rowLine {
 		return
 	}
-	k := p.rows[p.sel].key
+	k, at := p.rows[p.sel].key, p.sel
 	p.opened[k] = !p.opened[k]
 	p.build()
+	// bring the whole opened group into view
+	end := at
+	for end+1 < len(p.rows) && p.rows[end+1].kind != rowLine && p.rows[end+1].kind != rowBand && p.rows[end+1].kind != rowSeam {
+		end++
+	}
+	if end >= p.top+p.height() {
+		p.top = max(min(at, end-p.height()+1), p.top)
+		p.follow = false
+	}
 }
 
 func (p *logsPanel) setLevel(l int) {
@@ -338,6 +408,46 @@ func (p *logsPanel) toggleOffice(o int) {
 		p.on[o] = !p.on[o]
 		p.build()
 	}
+}
+
+// selLine is the line the cursor is on or under: the opened line a detail row
+// belongs to.
+func (p *logsPanel) selLine() (logRow, bool) {
+	for i := min(p.sel, len(p.rows)-1); i >= 0; i-- {
+		switch p.rows[i].kind {
+		case rowLine:
+			return p.rows[i], true
+		case rowBand, rowSeam:
+			return logRow{}, false
+		}
+	}
+	return logRow{}, false
+}
+
+// goTo opens the panel the opened line belongs to; false if the line is not
+// open or has no panel.
+func (p *logsPanel) goTo() bool {
+	row, ok := p.selLine()
+	if !ok || !p.opened[row.key] || p.buttons.run == nil || goCmd[row.e.Office] == "" {
+		return false
+	}
+	p.buttons.run(goCmd[row.e.Office])
+	return true
+}
+
+// only keeps the line's office and no other.
+func (p *logsPanel) only() {
+	if row, ok := p.selLine(); ok {
+		p.on = [11]bool{}
+		p.on[row.e.Office] = true
+		p.build()
+	}
+}
+
+// goSplit is the column where the second button of an opened line's last row
+// starts.
+func (p *logsPanel) goSplit(row logRow) int {
+	return p.lay.Text.X + 2 + 7 + 1 + runeLen(fmt.Sprintf(txtLogsGoTo.String(), game.Office(row.e.Office).Name())) + 4
 }
 
 // setAll turns every office on or off.
@@ -377,7 +487,9 @@ func (p *logsPanel) routeKey(ev *kit.Key, prompt string) bool {
 	case kit.KeyEnd:
 		p.moveTo(len(p.rows) - 1)
 	case kit.KeyEnter:
-		p.toggleFold()
+		if !p.goTo() {
+			p.toggleFold()
+		}
 	case kit.KeyRune:
 		switch r := ev.Rune; {
 		case r >= '1' && r <= '3':
@@ -424,7 +536,7 @@ func (p *logsPanel) Key(k kit.Key) bool {
 			p.startFind()
 			return true
 		case c == "O":
-			p.toggleFold()
+			p.only()
 			return true
 		case c == "N":
 			p.moveTo(len(p.rows) - 1)
@@ -467,7 +579,14 @@ func (p *logsPanel) Mouse(m kit.Mouse) bool {
 		if i := p.rowAt(pt.Y); i >= 0 {
 			p.moveTo(i)
 			p.follow = false
-			p.toggleFold()
+			switch row := p.rows[i]; {
+			case row.kind == rowGo && pt.X >= p.goSplit(row):
+				p.only()
+			case row.kind == rowGo:
+				p.goTo()
+			default:
+				p.toggleFold()
+			}
 		}
 	case l.Mode == logroll.Full && pt.Y == l.Rack.Y && pt.X >= l.Rack.X+8 && pt.X < l.Rack.X+17:
 		p.setAll(pt.X < l.Rack.X+13)
@@ -523,7 +642,7 @@ func (p *logsPanel) PointerAt(at image.Point) kit.Pointer {
 	pt, l := at.Sub(p.Bounds().Min), p.lay
 	acts := l.Find.In(pt.X, pt.Y) || l.Mode == logroll.Full && pt.Y == l.Rack.Y && pt.X >= l.Rack.X+8 && pt.X < l.Rack.X+17 || l.Rail.In(pt.X, pt.Y) || p.plate().In(pt.X, pt.Y) && p.unseen() > 0
 	if i := p.rowAt(pt.Y); l.Body.In(pt.X, pt.Y) && i >= 0 {
-		acts = acts || p.rows[i].e.Count > 1 && p.rows[i].kind == rowLine
+		acts = acts || p.rows[i].kind == rowLine || p.rows[i].kind == rowGo
 	}
 	for _, s := range append(l.Stamps[:], l.Stops[:]...) {
 		acts = acts || s.In(pt.X, pt.Y) && l.Mode != logroll.Placeholder
