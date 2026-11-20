@@ -1006,18 +1006,20 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 	count := " x" + textfmt.Int(c.owned)
 	n := lab(tx, 0, fitText(c.name, max(room-runeLen(count), 1)), inkOf(look.text, true))
 	lab(tx+n, 0, count, inkOf(look.dim, false))
+	from := tx + n + runeLen(count)
 	if c.key == b.nextKey && b.nextKey != "" {
 		plate := txtNextStep.String()
-		if at := tx + n + runeLen(count) + 1; at+runeLen(plate) <= tx+room {
+		if at := from + 1; at+runeLen(plate) <= tx+room {
 			// Label keeps the cell's own background, so the plate fills its cells first.
 			p.Fill(image.Rect(rect.Min.X+at, rect.Min.Y, rect.Min.X+at+runeLen(plate), rect.Min.Y+1), theme.Of(theme.RoleLabel))
 			lab(at, 0, plate, kit.Style{}.Foreground(theme.Of(theme.RoleBackground)).Bold(true))
+			from = at + runeLen(plate)
 		}
 	}
 	if c.reason != "" {
-		row, from, to := 0, tx+n+runeLen(count), tx+room
+		row, to := 0, tx+room
 		if pc.reasonRow > 0 {
-			row, from, to = pc.reasonRow, tx, tx+room
+			row, from = pc.reasonRow, tx
 		}
 		b.paintReason(lab, pal, look, c, row, from, to)
 	}
