@@ -255,4 +255,9 @@ func TestARightClickGoesBackInTheRunningApp(t *testing.T) {
 	if h.frontPage() != "dashboard" {
 		t.Errorf("after the right click the page in front is %q, want the dashboard", h.frontPage())
 	}
+	// On the pause card it resumes, as Esc does.
+	h.key(kit.KeyEsc, 0)
+	h.waitFor("the pause card", 5*time.Second, func() bool { return h.frontPage() == pausePage })
+	rightClick()
+	h.waitFor("the dashboard after a right click on the pause card", 5*time.Second, func() bool { return h.frontPage() == "dashboard" })
 }
