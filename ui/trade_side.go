@@ -277,7 +277,7 @@ func drawTradeOffers(g *xgrid, st game.GameState, routes []tradeRoute, side trad
 		}
 	}
 	foot := allyTradeNotes(st.Diplomacy)
-	foot = append(foot, deckLine{Value: rowid.Line("ui.trade_side.drawTradeOffers.08", "each finished run: +1 opinion with every civilization not at war"), K: xDim})
+	foot = append(foot, deckLine{Value: rowid.Line("ui.trade_side.drawTradeOffers.08", "each route that runs: +1 opinion a minute with every civilization not at war"), K: xDim})
 	rows = append(rows, tradeRow{kind: 'f'})
 	for _, l := range foot {
 		rows = append(rows, tradeRow{kind: 'f', segs: []xseg{{l.Value, l.K}}})

@@ -109,7 +109,7 @@ func tradeRoutes(st game.GameState) []tradeRoute {
 			k = float64(r.run * r.scale)
 		}
 		r.out, r.in = flows(out, k), flows(in, k)
-		r.size = int(r.scale*float64(def.MinCount) + 0.5)
+		r.size = a.Owned
 		for _, f := range r.in {
 			if rs := st.Resources[f.key]; f.key != config.ResearchTarget && r.share == "" && rs.Rate > 0 && f.tick > 0 {
 				r.share = rowid.Sprintf("ui.trade_board.tradeRoutes.01", "%.0f%% of %s", math.Min(100, f.tick/rs.Rate*100), f.good)
@@ -296,7 +296,7 @@ func tradeExtras(st game.GameState, r tradeRoute, lim int) (ex []tradeExtra) {
 		ex = append(ex, tradeExtra{rowid.Line("ui.trade_board.tradeExtras.04", "time"), tradeWrap(text(append(ss, rowid.Sprintf("ui.trade_board.tradeExtras.12", "= flow x%.2f", r.speed))...), tcSends, lim, 2)})
 	}
 	if r.size > 0 && r.state != "ready" && r.state != "locked" {
-		ex = append(ex, tradeExtra{rowid.Line("ui.trade_board.tradeExtras.11", "size"), [][]xseg{{{rowid.Sprintf("ui.trade_board.tradeExtras.13", "%d of %d buildings: flow x%.2f the gate's", r.size, r.minCount, r.scale), xText}}}})
+		ex = append(ex, tradeExtra{rowid.Line("ui.trade_board.tradeExtras.11", "size"), [][]xseg{{{rowid.Sprintf("ui.trade_board.tradeExtras.13", "%d of the %d needed: flow x%.1f", r.size, r.minCount, r.scale), xText}}}})
 	}
 	var cells [][]xseg
 	for i, fl := range [][]tradeFlow{r.out, r.in} {
@@ -375,7 +375,7 @@ func drawTradeEntry(g *xgrid, st game.GameState, r tradeRoute, ex []tradeExtra, 
 	ms := st.TickIntervalMs
 	switch r.state {
 	case "running", "ready":
-		g.put(tcName, y+1, rowid.Line("ui.trade_board.drawTradeEntry.03", "a minute"), xDim)
+		g.put(tcName, y+1, rowid.Line("ui.trade_board.drawTradeEntry.03", "per minute"), xDim)
 		g.putFit(tcSends, y+1, tcBrings-tcSends-3, tradeJoin(r.out, true, -1, ms), xDim)
 		g.putFit(tcBrings, y+1, tcShare-tcBrings-1, tradeJoin(r.in, true, 1, ms), xDim)
 	case "short":
