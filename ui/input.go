@@ -40,7 +40,7 @@ type CommandResult struct {
 	// MapWorld opens the Map panel (OverlayName "map") on the known world.
 	MapWorld bool
 	// ResearchZoom ("close" or "far") and ResearchCard (a tech key) say how
-	// the Research panel (OverlayName "techs") opens: at that zoom, on that
+	// the tech tree (OverlayName "tree") opens: at that zoom, on that
 	// tech's card. Empty leaves the panel as it was.
 	ResearchZoom string
 	ResearchCard string
@@ -1542,7 +1542,7 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	if subcmd == "tree" {
 		switch zoom := strings.ToLower(strings.Join(args[1:], " ")); zoom {
 		case "", "close", "far":
-			return CommandResult{OverlayName: "techs", ResearchZoom: zoom}
+			return CommandResult{OverlayName: "tree", ResearchZoom: zoom}
 		}
 		return errorReply(usageFor("research tree"))
 	}
@@ -1553,7 +1553,7 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 		if def, ok := state.Ruleset().Tech(key); !ok || !game.SightOf(&state).Age(def.Age) {
 			return errorReply(rowid.Line("ui.input.cmdResearch.01", "No tech '") + strings.Join(args[1:], " ") + rowid.Line("ui.input.cmdResearch.02", "' in sight. Type research to see the tree."))
 		}
-		return CommandResult{OverlayName: "techs", ResearchCard: key}
+		return CommandResult{OverlayName: "tree", ResearchCard: key}
 	}
 	if subcmd == "cancel" {
 		if err := engine.CancelResearch(); err != nil {

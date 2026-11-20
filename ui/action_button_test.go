@@ -321,7 +321,7 @@ func TestAClickOnAnOpenTechCardsStartStartsTheResearch(t *testing.T) {
 	ge.GrantTechsForTest("language", "tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "woodworking", "bronze_working", "currency", "masonry", "the_wheel", "mathematics", "iron_smelting")
 	ge.SetTownForTest(map[string]int{"story_circle": 5, "elders_hall": 5, "scriptorium": 5, "agora": 7}, 0)
 	ge.SetStockForTest("knowledge", 1e6)
-	p := newResearchPanel()
+	p := newTreePanel()
 	p.engine = ge
 	p.w, p.h = 120, 37
 	p.wireButtons(newAppLoop())

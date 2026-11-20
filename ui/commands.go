@@ -236,7 +236,7 @@ func registry() []*Command {
 			}},
 
 		// Research, Expeditions & Army
-		{Name: "research", Run: cmdResearch, Aliases: []string{"res"}, Section: secResearch, Panel: rowid.Line("ui.help.panels.research", "The tech tree: a map of every tech in sight"),
+		{Name: "research", Run: cmdResearch, Aliases: []string{"res"}, Section: secResearch, Panel: rowid.Line("ui.help.panels.research", "The Research board: what can start, the queue, the ten lanes; T opens the tech tree"),
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
 			Help: []Usage{{"research <tech>", rowid.Line("ui.help.commands.research", "Research a tech")}},
 			Subs: []*Command{

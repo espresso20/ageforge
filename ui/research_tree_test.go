@@ -325,7 +325,7 @@ func TestHelpListsResearchKeys(t *testing.T) {
 		if end := strings.Index(section, "═══ Shortcuts"); end > 0 {
 			section = section[:end]
 		}
-		for _, k := range researchKeys {
+		for _, k := range treeKeys {
 			if !strings.Contains(section, "  "+k.key) {
 				t.Errorf("%d columns: the Help panel's Research section does not list %s", screenW, k.key)
 			}
@@ -334,7 +334,7 @@ func TestHelpListsResearchKeys(t *testing.T) {
 	}
 	// Every key the panel routes is one the Help panel names.
 	listed := ""
-	for _, k := range researchKeys {
+	for _, k := range treeKeys {
 		listed += k.key + " " + k.what.String() + " "
 	}
 	wantAll(t, "the Research panel's key list", listed, "Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "Enter", "Esc")
@@ -347,7 +347,7 @@ func TestResearchTreePaintsInEveryTheme(t *testing.T) {
 	eachThemeInline(t, func(th theme.Theme) {
 		for _, size := range treeSizes {
 			w, h := size[0], size[1]-promptRows
-			p := newResearchPanel()
+			p := newTreePanel()
 			p.view.sel = "road_building"
 			p.SetRect(0, 0, w, h)
 			p.update(st)
@@ -475,7 +475,7 @@ func TestResearchTreeKeepsTheSpoilerRule(t *testing.T) {
 			t.Errorf("research card %s: %+v, want a refusal that does not name it", def.Key, res)
 		}
 	}
-	if res := cmdResearch([]string{"card", "road", "building"}, ge); res.OverlayName != "techs" || res.ResearchCard != "road_building" {
+	if res := cmdResearch([]string{"card", "road", "building"}, ge); res.OverlayName != "tree" || res.ResearchCard != "road_building" {
 		t.Errorf("research card road building: %+v", res)
 	}
 }
@@ -551,7 +551,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 // prompt's.
 func TestResearchPanelKeys(t *testing.T) {
 	ge := classicalGame(t)
-	p := newResearchPanel()
+	p := newTreePanel()
 	p.engine = ge
 	p.w, p.h = 80, 21
 	p.update(ge.GetState())
@@ -963,7 +963,7 @@ func TestResearchEffectSentenceCarriesTheEffectTag(t *testing.T) {
 // the wheel moves the selection.
 func TestResearchPanelMouse(t *testing.T) {
 	ge := classicalGame(t)
-	p := newResearchPanel()
+	p := newTreePanel()
 	p.engine = ge
 	p.w, p.h = 80, 21
 	p.update(ge.GetState())
