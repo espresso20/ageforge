@@ -33,24 +33,33 @@ syncTheme();
 // ---- the install box ---------------------------------------------------------
 const BASE = "https://github.com/espresso20/ageforge/releases/latest/download/";
 const OS = {
-  mac: ["curl -fLo ageforge " + BASE + "ageforge-macos-arm64 && chmod +x ageforge && ./ageforge", "For Apple Silicon. On an Intel Mac, use ageforge-macos-amd64 instead."],
-  linux: ["curl -fLo ageforge " + BASE + "ageforge-linux-amd64 && chmod +x ageforge && ./ageforge", "For x86_64. On ARM, use ageforge-linux-arm64 instead."],
-  win: ["iwr " + BASE + "ageforge-windows-amd64.exe -OutFile ageforge.exe; .\\ageforge.exe", "Paste it into PowerShell in Windows Terminal."],
+  mac: ["AgeForge-macos.zip", "Download for macOS", "One app for Apple Silicon and Intel Macs. The first time, macOS asks you to allow it: see Installation."],
+  linux: ["AgeForge-linux-amd64.tar.gz", "Download for Linux", "For x86_64. Unpack it and run AgeForge/ageforge."],
+  win: ["AgeForge-windows.zip", "Download for Windows", "Unzip it and run AgeForge.exe. If a blue SmartScreen box appears, choose More info, then Run anyway."],
 };
 let os = /Win/.test(navigator.platform) ? "win" : /Linux/.test(navigator.platform) ? "linux" : "mac";
 function setOS(k) {
   os = k;
-  $("cmd").textContent = OS[k][0];
-  $("note").textContent = OS[k][1];
+  const [asset, label, note] = OS[k];
+  const dl = $("dl");
+  dl.href = BASE + asset;
+  dl.textContent = label;
+  const n = $("note");
+  n.textContent = "";
+  if (k === "mac") {
+    // the note's one link goes to the Compendium's install page
+    const a = document.createElement("a");
+    a.href = "docs/#/getting-started";
+    a.textContent = "Installation";
+    const [before, after] = note.split("Installation");
+    n.append(before, a, after);
+  } else {
+    n.textContent = note;
+  }
   document.querySelectorAll(".inst-os button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.os === k)));
 }
 document.querySelectorAll(".inst-os button").forEach(b => b.addEventListener("click", () => setOS(b.dataset.os)));
 setOS(os);
-$("copy").addEventListener("click", () => {
-  const done = t => { $("copy").textContent = t; $("status").textContent = t; setTimeout(() => { $("copy").textContent = "Copy"; $("status").textContent = ""; }, 1500); };
-  const pick = () => { const r = document.createRange(); r.selectNodeContents($("cmd")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); done("Selected"); };
-  try { navigator.clipboard.writeText(OS[os][0]).then(() => done("Copied"), pick); } catch (e) { pick(); }
-});
 
 // ---- the plate: one ink as engraved, the game's own colors as played ----------
 const plate = $("plate"), btn = $("toggle");
