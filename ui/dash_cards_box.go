@@ -124,6 +124,8 @@ type buildBox struct {
 	// scroll the pick into view.
 	pickAt int
 	reveal bool
+	// nextKey is the card of the next step, which carries a plate.
+	nextKey string
 	// older says the box lists the older buildings the town holds in place of
 	// the ones to build, and olderN is how many kinds there are.
 	older  bool
@@ -273,6 +275,17 @@ func (b *buildBox) pick(key string) {
 	b.picked, b.pickAt, b.pickTip = key, max(slices.Index(b.order, key), 0), !b.in
 	b.refreshDetail()
 	b.dirty = true
+}
+
+// show picks the card of key and brings it into view, as a click on it would
+// leave it, opening the quiet row when it is in it.
+func (b *buildBox) show(key string) {
+	b.closeOlder()
+	if i := slices.Index(b.order, key); i >= b.shown {
+		b.expanded = true
+	}
+	b.pick(key)
+	b.reveal = true
 }
 
 // toggleOlder switches the box between the buildings to build and the older
@@ -993,6 +1006,13 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 	count := " x" + textfmt.Int(c.owned)
 	n := lab(tx, 0, fitText(c.name, max(room-runeLen(count), 1)), inkOf(look.text, true))
 	lab(tx+n, 0, count, inkOf(look.dim, false))
+	if c.key == b.nextKey && b.nextKey != "" {
+		plate := txtNextStep.String()
+		if at := tx + n + runeLen(count) + 1; at+runeLen(plate) <= tx+room {
+			st := kit.Style{}.Foreground(theme.Of(theme.RoleOnAccent)).Background(theme.Of(theme.RoleAccent)).Bold(true)
+			lab(at, 0, plate, st)
+		}
+	}
 	if c.reason != "" {
 		row, from, to := 0, tx+n+runeLen(count), tx+room
 		if pc.reasonRow > 0 {

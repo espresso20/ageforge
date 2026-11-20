@@ -132,6 +132,8 @@ type Dashboard struct {
 
 	overlayMgr *OverlayManager
 	lastState  *game.GameState
+	// next is the next step, worked out from lastState once a refresh.
+	next nextStep
 
 	// harbPanel is the Harbinger panel's UI state (feedback line, Invite
 	// confirmation). Owned by the UI goroutine.
@@ -539,6 +541,11 @@ func (d *Dashboard) build() {
 			// Any other key: exit history mode and update draft
 			if d.histIdx != -1 {
 				d.histIdx = -1
+			}
+			// Tab on an empty line of the main view writes the next step's
+			// command; the panels keep Tab for themselves.
+			if event.Code == kit.KeyTab && d.takeNext() {
+				return nil
 			}
 			// Tab, Backtab and → (at the end of the line) take completions.
 			if d.inputField.acceptKey(event) {
@@ -962,6 +969,8 @@ func (d *Dashboard) refresh() {
 
 	state := d.engine.GetState()
 	d.lastState = &state
+	d.next = computeNext(state)
+	d.economyTab.buildBox.nextKey = d.next.card
 
 	// Badges earned since the last refresh: a card and a log line each, and a
 	// line for the theme a badge gives. Here, in the UI goroutine: outside the
@@ -1685,5 +1694,27 @@ func (d *Dashboard) returnFocus() {
 	case d.overlayMgr != nil && d.overlayMgr.Focus():
 	default:
 		d.app.SetFocus(d.inputField)
+	}
+}
+
+// takeNext writes the next step's command on the empty line as typed text,
+// and reports whether it did. Nothing runs until Enter.
+func (d *Dashboard) takeNext() bool {
+	if d.inputField.GetText() != "" || d.next.cmd == "" || (d.overlayMgr != nil && d.overlayMgr.HasActive()) {
+		return false
+	}
+	d.inputField.setText(d.next.cmd)
+	return true
+}
+
+// showMe takes the player to a step: the card of a building, picked and in
+// view as after a click, or a panel, opened. It builds and starts nothing.
+func (d *Dashboard) showMe(card, panel string) {
+	if card != "" {
+		d.economyTab.buildBox.show(card)
+		return
+	}
+	if panel != "" {
+		d.runLine(panel)
 	}
 }
