@@ -458,13 +458,9 @@ func TestFactionsOverlayWiring(t *testing.T) {
 	if res := HandleCommand("diplomacy gift riverlands_tribes", engine); res.OverlayName != "" {
 		t.Errorf("diplomacy with arguments opened overlay %q, want an action result", res.OverlayName)
 	}
-	// 3. The sidebar lists it, and highlights it when it is the active overlay.
-	sidebar := buildSidebarText("factions")
-	if !strings.Contains(sidebar, "factions") {
-		t.Errorf("sidebar is missing the factions entry:\n%s", sidebar)
-	}
-	if !strings.Contains(sidebar, "[onaccent:accent] factions") {
-		t.Errorf("sidebar entry does not highlight under the registered overlay name:\n%s", sidebar)
+	// 3. The Panels list names it.
+	if list := strings.Join(panelRows(formWords, 60, panelView{}), "\n"); !strings.Contains(list, "factions") {
+		t.Errorf("the Panels list is missing the factions entry:\n%s", list)
 	}
 	// 4. The command registry (and so completion) has it.
 	if lookup(registry(), "factions") == nil {

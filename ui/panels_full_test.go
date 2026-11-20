@@ -27,7 +27,7 @@ var fullSizes = [][2]int{{80, 24}, {100, 30}, {160, 45}, {120, 36}, {157, 46}, {
 // panelCommands are the commands that open the panels of the Panels list, and
 // the one more overlay a command opens (the Buildings list).
 func panelCommands() []string {
-	return append(append([]string(nil), sidebarPanels...), "buildings")
+	return append(append([]string(nil), panelNames()...), "buildings")
 }
 
 // poisonedStage is a dashboard in the Medieval Age with a page of poison over

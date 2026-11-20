@@ -112,12 +112,12 @@ func magnitudeCells(ratio float64, width int, plain bool) string {
 // trendCells is the line of vals in resTrendCells cells, the newest at the
 // right, scaled between its own lowest and highest. Fewer than two points
 // leave it blank; a flat run sits at the middle.
-func trendCells(vals []float64, plain bool, color string) string {
-	if len(vals) > resTrendCells {
-		vals = vals[len(vals)-resTrendCells:]
+func trendCells(vals []float64, plain bool, color string, cells int) string {
+	if len(vals) > cells {
+		vals = vals[len(vals)-cells:]
 	}
 	if len(vals) < 2 {
-		return strings.Repeat(" ", resTrendCells)
+		return strings.Repeat(" ", cells)
 	}
 	ramp := trendRamp
 	if plain {
@@ -128,7 +128,7 @@ func trendCells(vals []float64, plain bool, color string) string {
 		lo, hi = min(lo, v), max(hi, v)
 	}
 	var b strings.Builder
-	b.WriteString(strings.Repeat(" ", resTrendCells-len(vals)))
+	b.WriteString(strings.Repeat(" ", cells-len(vals)))
 	b.WriteString("[" + color + "]")
 	for _, v := range vals {
 		i := len(ramp) / 2

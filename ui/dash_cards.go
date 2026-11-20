@@ -46,6 +46,8 @@ var (
 	txtSell    = rowid.E("ui.dash_cards.txtSell.01", "Sell")
 	txtUpgrade = rowid.E("ui.dash_cards.txtUpgrade.01", "Upgrade")
 	txtOlder   = rowid.E("ui.dash_cards.txtOlder.01", "older buildings")
+	// txtNextStep is the plate on the card of the next step.
+	txtNextStep = rowid.E("ui.dash_cards.txtNextStep.01", " next step ")
 )
 
 // nearShare is the share of a price in hand from which a card that cannot be

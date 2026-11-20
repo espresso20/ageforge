@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/rowid"
@@ -43,6 +44,10 @@ type accountSettings struct {
 	// (current_game.go). A name with no save behind it is ignored.
 	LastPlayed string `json:"last_played,omitempty"`
 	MainGame   string `json:"main_game,omitempty"`
+	// Found is the panels the account has found and Opened those it has
+	// opened (panels.go in ui): a found panel is on the list for good.
+	Found  []string `json:"found,omitempty"`
+	Opened []string `json:"opened,omitempty"`
 }
 
 // settingsLocked returns the account's settings, read from its slot the
@@ -139,4 +144,29 @@ func (a *Account) SetTitle(title string, held []string) error {
 		s.Title = title
 		a.badgeRev++ // the badge summary carries the title worn
 	})
+}
+
+// PanelsSeen is the panels the account has found and the ones it has opened.
+func (a *Account) PanelsSeen() (found, opened []string) {
+	s := a.readSettings()
+	return slices.Clone(s.Found), slices.Clone(s.Opened)
+}
+
+// NotePanels adds panels to the found and opened lists. It writes the
+// settings file only when a list changes.
+func (a *Account) NotePanels(found, opened []string) error {
+	s := a.readSettings()
+	grow := func(have, add []string) []string {
+		for _, n := range add {
+			if !slices.Contains(have, n) {
+				have = append(have, n)
+			}
+		}
+		return have
+	}
+	f, o := grow(slices.Clone(s.Found), found), grow(slices.Clone(s.Opened), opened)
+	if len(f) == len(s.Found) && len(o) == len(s.Opened) {
+		return nil
+	}
+	return a.editSettings(func(s *accountSettings) { s.Found, s.Opened = grow(s.Found, f), grow(s.Opened, o) })
 }

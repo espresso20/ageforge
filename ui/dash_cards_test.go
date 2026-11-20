@@ -15,7 +15,7 @@ import (
 )
 
 // cardTown is a dashboard on a fresh game in its first age with a big stock
-// of what the first buildings cost, laid out on a 160 by 45 screen.
+// of what the first buildings cost, laid out on a 160 by 60 screen (the Buildings box is shorter than the body, so the list needs the rows).
 func cardTown(t *testing.T) (*Dashboard, *stage, *game.GameEngine) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
@@ -26,7 +26,7 @@ func cardTown(t *testing.T) (*Dashboard, *stage, *game.GameEngine) {
 	}
 	d, pages := newTestDashboard(eng)
 	d.refresh()
-	st := newStage(pages, 160, 45)
+	st := newStage(pages, 160, 60)
 	d.refresh()
 	st.paint()
 	return d, st, eng
@@ -629,8 +629,8 @@ func TestEveryBuildingHasASign(t *testing.T) {
 	}
 }
 
-// The left column is 46 cells at 160 columns and the cards have the rest of
-// the economy tab; a narrower screen shares them as it always did. The cards
+// The left column is about 30% of the width (richCols) and the cards' box the
+// middle column's share of the economy tab. The cards
 // hold at every width: inside the box, one under another, every price whole,
 // the Build buttons in one column inside the box.
 func TestCardsAtEveryWidth(t *testing.T) {
@@ -638,7 +638,7 @@ func TestCardsAtEveryWidth(t *testing.T) {
 	for _, c := range []struct {
 		w, h        int
 		left, cards int // the box widths; cards 0 where only the layout rules are checked
-	}{{100, 30, 0, 0}, {120, 40, 43, 44}, {160, 45, 46, 81}, {240, 60, 46, 161}} {
+	}{{100, 30, 0, 0}, {120, 40, 43, 44}, {160, 45, 48, 75}, {240, 60, 72, 113}} {
 		d, pages, _ := stagedDashboard(t, "medieval_age")
 		cells := drawnDashboard(t, d, pages, c.w, c.h)
 		_, _, lw, _ := d.economyTab.leftCol.GetRect()

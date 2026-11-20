@@ -478,11 +478,13 @@ func detailTown(t *testing.T, w, h int) (*Dashboard, *stage, []string) {
 	return d, st, rows[title:]
 }
 
-// At a small size every word of the detail's notice and description is on
-// screen and no row of it ends in an ellipsis; the buttons are where they are
-// drawn.
-func TestTheDetailReadsInFullInASmallWindow(t *testing.T) {
-	d, st, rows := detailTown(t, 157, 46)
+// Where the Buildings box has the rows (the foot strip takes 14 of the middle
+// column's, so a 157-wide window needs 58 rows) every word of the detail's
+// notice and description is on screen and no row of it ends in an ellipsis;
+// the buttons are where they are drawn. A shorter box gives lines up in order
+// (TestTheDetailGivesUpLinesInOrder).
+func TestTheDetailReadsInFullWhereTheBoxHasRoom(t *testing.T) {
+	d, st, rows := detailTown(t, 157, 58)
 	box := d.economyTab.buildBox
 	det := box.detail
 	text := strings.Join(rows, " ")

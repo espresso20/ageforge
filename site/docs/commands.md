@@ -31,7 +31,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 
 | Key | What it does |
 |---|---|
-| `Tab` | Take the completion. Press it again for the next one (`Shift+Tab` goes back). When more can follow (`plan build `), a space comes with it. |
+| `Tab` | On an empty line of the main view, write the next step's command (the one the Next card shows) into the line; Enter runs it. In a panel, `Tab` is the panel's. With text on the line, take the completion. Press it again for the next one (`Shift+Tab` goes back). When more can follow (`plan build `), a space comes with it. |
 | `→` | Take the completion, when the cursor is at the end of the line. |
 | `Enter` | If the line is already a whole command, run it exactly as typed. If not, and the completion makes it one, run the completion (`adv` runs `advance`). Otherwise run the line as typed, and the game says what is wrong with it. |
 | `↑` / `↓` | Step back and forward through the last 50 commands you ran. |

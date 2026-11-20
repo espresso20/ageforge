@@ -34,8 +34,8 @@ func TestFaithRowShowsTheStrengthTheRollsRead(t *testing.T) {
 		if strings.Contains(row, "prestige bonus") {
 			t.Errorf("strength %v: the row promises a prestige bonus nothing gives: %q", c.strength, row)
 		}
-		if filled := strings.Count(row, "▓"); bar != resBarMax || filled != int(c.strength*float64(bar)) {
-			t.Errorf("strength %v: the bar has %d of %d cells filled, want %d of %d", c.strength, filled, bar, int(c.strength*resBarMax), resBarMax)
+		if filled := strings.Count(row, "▓"); bar < 1 || filled != int(c.strength*float64(bar)) {
+			t.Errorf("strength %v: the bar has %d of %d cells filled, want %d of %d", c.strength, filled, bar, int(c.strength*float64(bar)), bar)
 		}
 	}
 	// A town holding no faith at all is told so.
