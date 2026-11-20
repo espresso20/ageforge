@@ -139,7 +139,7 @@ var retiredDocText = []struct {
 	{regexp.MustCompile(`×1\.5 per tier`), "worker tiers scale food by 1.12, not 1.5"},
 	{regexp.MustCompile(`(?i)advances? automatically`), "the player types advance"},
 	{regexp.MustCompile(`(?i)quick-save`), "Esc closes a panel, or saves and returns to the main menu"},
-	{regexp.MustCompile(`darwin-arm64|darwin-amd64`), "release assets are named ageforge-macos-*"},
+	{regexp.MustCompile(`darwin-arm64|darwin-amd64`), "the macOS release asset is AgeForge-macos.zip"},
 	{regexp.MustCompile(`(?i)clear input`), "Ctrl+C has no handler; it quits"},
 	{regexp.MustCompile(`library_of_congress`), "no such building"},
 	{regexp.MustCompile(`(?i)reach colonial age`), "first contact comes from expeditions"},
