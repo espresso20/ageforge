@@ -35,7 +35,7 @@ func TestPeopleNamesFollowTheAge(t *testing.T) {
 		st.Workers.TotalPop, st.Workers.MaxPop, st.Workers.TotalIdle, st.Workers.Scholars = 40, 50, 7, 3
 		st.Workers.Soldiers = 9
 		box := plainText(peopleBoxText(st, 0, true))
-		over := renderPeople(st, peopleView{}, 100, 30).String()
+		over := peopleText(st, peopleView{}, peopleBigW, peopleBigH)
 		for _, key := range config.PeopleTerms() {
 			name := config.Term(age, key).Many
 			if !strings.Contains(box, name) {
@@ -140,15 +140,15 @@ func TestPeoplePanelOpensAndSwitchesTabs(t *testing.T) {
 // Every tab draws at 80x24 and 100x30 with its frame whole: no row spills
 // past the border, the tab row and the key bar are there, and the panel
 // names the age's words.
-func TestPeopleTabsFitAt80x24And100x30(t *testing.T) {
+func TestPeopleTabsFitAtEverySize(t *testing.T) {
 	st := peopleTown(t)
-	for _, size := range [][2]int{{80, 24}, {100, 30}, {80, 21}} {
+	for _, size := range [][2]int{{150, 38}, {157, 43}, {230, 54}, {279, 71}} {
 		w, h := size[0], size[1]
 		for tab, tabName := range peopleTabs {
 			name := tabName.String()
 			for row := 0; row < 3; row++ {
 				v := peopleView{tab: tab, row: row}
-				g := renderPeople(st, v, w, h)
+				g := renderPeopleGrid(st, v, w, h)
 				where := fmt.Sprintf("%s row %d at %dx%d", name, row, w, h)
 				// The frame is whole.
 				for y := 1; y < h-1; y++ {
@@ -172,17 +172,35 @@ func TestPeopleTabsFitAt80x24And100x30(t *testing.T) {
 	}
 }
 
-// The Overview lists the kinds, the homes and what has happened lately.
+// The Overview names the kinds, the three tiles and what needs doing.
 func TestPeopleOverviewContent(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "bronze_age")
-	eng.AddLog(game.OfficePeople, game.LevelEverything, "success", "3 scribes moved in with the Scriptorium.")
-	eng.AddLog(game.OfficeGame, game.LevelEverything, "info", "Something about trade that is not about people.")
-	st := eng.GetState()
-	text := renderPeople(st, peopleView{}, 100, 30).String()
-	wantAll(t, "the Overview", text, "Your people", "Homes ", "Craftsfolk", "Villagers", "Spearmen", "Scribes", "Food ", "Lately", "3 scribes moved in with the Scriptorium.")
-	if strings.Contains(text, "not about people") {
-		t.Errorf("Lately lists a line that is not about people:\n%s", text)
+	text := peopleText(eng.GetState(), peopleView{}, peopleBigW, peopleBigH)
+	wantAll(t, "the Overview", text, "Craftsfolk", "Villagers", "Spearmen", "Scribes", "At work", "Waiting", "Needs you", "Morale", "Food", "Homes", "Open Work")
+}
+
+// Below the smallest size the Overview is one centred line; at it, the
+// picture and its words are whole.
+func TestPeopleOverviewSizes(t *testing.T) {
+	st := peopleTown(t)
+	small, o := renderPeople(st, peopleView{}, nil, peopleMinW-1, peopleMinH)
+	if o != nil || strings.Count(strings.TrimSpace(strings.ReplaceAll(small.String(), "│", "")), "small") != 1 {
+		t.Errorf("below the smallest size the panel draws %v:\n%s", o, small.String())
+	}
+	for _, size := range [][2]int{{157, 43}, {157, 40}, {279, 68}, {279, 71}} {
+		g, o := renderPeople(st, peopleView{}, nil, size[0], size[1])
+		if o == nil {
+			t.Fatalf("%dx%d: no Overview", size[0], size[1])
+		}
+		for _, wd := range o.words {
+			if wd.x < 1 || wd.x+runeLen(wd.s) > size[0]-1 || wd.y < 3 || wd.y >= size[1]-2 {
+				t.Errorf("%dx%d: %q at %d,%d is outside the picture", size[0], size[1], wd.s, wd.x, wd.y)
+			}
+		}
+		if len(g.hits) < 4 {
+			t.Errorf("%dx%d: %d card hits", size[0], size[1], len(g.hits))
+		}
 	}
 }
 
@@ -190,30 +208,10 @@ func TestPeopleOverviewContent(t *testing.T) {
 // tab lists the desks and the research.
 func TestPeopleArmyAndScholarsTabs(t *testing.T) {
 	st := peopleTown(t)
-	army := renderPeople(st, peopleView{tab: tabArmy}, 100, 30).String()
-	wantAll(t, "the Army tab", army, "Military buildings", "Away", "Trade Trek to the Cedar Pass", "20 Spearmen", "Defense")
-	scholars := renderPeople(st, peopleView{tab: tabScholars}, 100, 30).String()
-	wantAll(t, "the Scholars tab", scholars, "Desks", "Research", "Studying", "scribes", "How to speed research")
-}
-
-// The stacked bar gives each kind its share of the homes and leaves the empty
-// homes dim.
-func TestPeopleStackBar(t *testing.T) {
-	g := newXGrid(40, 1)
-	stackBar(g, 0, 0, 40, []stackPart{{20, xWork}, {10, xRes}, {5, xLore}}, 70)
-	count := map[xk]int{}
-	for x := 0; x < 40; x++ {
-		count[g.at(x, 0).k]++
-	}
-	if count[xWork] != 11 || count[xRes] != 6 || count[xLore] != 3 || count[xFaint] != 20 {
-		t.Errorf("bar cells by kind: %v", count)
-	}
-	// Past the homes the bar fills and each kind keeps its share of the people.
-	g = newXGrid(30, 1)
-	stackBar(g, 0, 0, 30, []stackPart{{50, xWork}, {50, xRes}}, 60)
-	if g.at(29, 0).k != xRes || g.at(0, 0).k != xWork || g.at(14, 0).k != xWork || g.at(15, 0).k != xRes {
-		t.Errorf("an overfull bar: %q", g.Lines()[0])
-	}
+	army := renderPeopleGrid(st, peopleView{tab: tabArmy}, 157, 43).String()
+	wantAll(t, "the Army tab", army, "Military buildings", "Away", "Trade Trek to the Cedar Pass", "20 Spearmen", "Rank and defense")
+	scholars := renderPeopleGrid(st, peopleView{tab: tabScholars}, 157, 43).String()
+	wantAll(t, "the Scholars tab", scholars, "Desks", "Research", "Pick research", "scribes", "How to speed research")
 }
 
 // The four kinds have colours of their own in every theme.
@@ -243,13 +241,13 @@ func TestPeopleArmyTabShowsPosts(t *testing.T) {
 		b.Count = map[string]int{"war_camp": 3, "barracks": 2}[key]
 		st.Buildings[key] = b
 	}
-	for _, size := range [][2]int{{80, 24}, {100, 30}} {
-		army := renderPeople(st, peopleView{tab: tabArmy}, size[0], size[1]).String()
+	for _, size := range [][2]int{{150, 38}, {157, 43}} {
+		army := renderPeopleGrid(st, peopleView{tab: tabArmy}, size[0], size[1]).String()
 		wantAll(t, fmt.Sprintf("the Army tab at %dx%d", size[0], size[1]), army, "27/27 posted", "32/32 posted")
 	}
 	// A building short of its posts says so in the same words.
 	st.Military.Posts[0].Posted = 20
-	if army := renderPeople(st, peopleView{tab: tabArmy}, 100, 30).String(); !strings.Contains(army, "20/27 posted") {
+	if army := renderPeopleGrid(st, peopleView{tab: tabArmy}, 157, 43).String(); !strings.Contains(army, "20/27 posted") {
 		t.Errorf("a short post is not shown:\n%s", army)
 	}
 	// The box reads the town's soldiers.
@@ -266,7 +264,7 @@ func TestPeoplePanelMouse(t *testing.T) {
 	st := peopleTown(t)
 	p := newPeoplePanel()
 	p.open(st)
-	p.Layout(image.Rect(0, 0, 100, 30))
+	p.Layout(image.Rect(0, 0, peopleBigW, peopleBigH))
 	press := func(pt image.Point) bool {
 		return p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: 1})
 	}
@@ -286,7 +284,7 @@ func TestPeoplePanelMouse(t *testing.T) {
 	if !press(tabCell(tabArmy)) || p.view.tab != tabArmy || p.view.row != 0 {
 		t.Errorf("a click on the Army tab: tab %d row %d", p.view.tab, p.view.row)
 	}
-	p.Layout(image.Rect(0, 0, 100, 30))
+	p.Layout(image.Rect(0, 0, peopleBigW, peopleBigH))
 	if peopleRows(st, tabArmy) > 1 {
 		if !press(centre(hitRow, 1)) || p.view.row != 1 {
 			t.Errorf("a click on the second building picked row %d", p.view.row)
@@ -301,5 +299,35 @@ func TestPeoplePanelMouse(t *testing.T) {
 	p.view.row = 0
 	if !p.Mouse(kit.Mouse{Kind: kit.MouseWheel, Wheel: 1}) || (peopleRows(st, tabArmy) > 1 && p.view.row != 1) {
 		t.Errorf("the wheel left the pick on row %d", p.view.row)
+	}
+}
+
+// T opens the research board from any tab; Enter closes and opens the picked
+// work area's detail, on the Work tab only and never over typed text.
+func TestPeopleResearchAndEnterKeys(t *testing.T) {
+	engine, _ := expFixture(t)
+	p := newPeoplePanel()
+	p.open(engine.GetState())
+	var ran []string
+	p.buttons.run = func(c string) { ran = append(ran, c) }
+	if !p.routeKey(newKey(kit.KeyRune, 't', 0), "") || len(ran) != 1 || ran[0] != "research" {
+		t.Errorf("T ran %v, want research", ran)
+	}
+	if p.routeKey(newKey(kit.KeyRune, 't', 0), "x") {
+		t.Error("T was taken with text in the prompt")
+	}
+	if p.routeKey(newKey(kit.KeyEnter, 0, 0), "") {
+		t.Error("Enter was taken off the Work tab")
+	}
+	p.view.tab = tabWork
+	if p.routeKey(newKey(kit.KeyEnter, 0, 0), "x") {
+		t.Error("Enter was taken with text in the prompt")
+	}
+	if !p.routeKey(newKey(kit.KeyEnter, 0, 0), "") || !p.view.shut {
+		t.Error("Enter did not close the detail")
+	}
+	p.pick(0)
+	if p.view.shut {
+		t.Error("picking an area left the detail closed")
 	}
 }

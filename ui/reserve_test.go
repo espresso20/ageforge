@@ -67,14 +67,17 @@ func TestReserve_DashboardBox(t *testing.T) {
 func TestReserve_PeoplePanel(t *testing.T) {
 	for _, c := range []struct{ by, held, recruit string }{
 		{game.HeldHousing, "held by housing", "held by housing"},
-		{game.HeldFood, "held by food (+0.225 food/s feeds 4 more)", "held by food"},
+		{game.HeldFood, "held by food", "held by food"},
 	} {
 		st := reserveState(t, c.by, 0.45, 4)
-		over := renderPeople(st, peopleView{tab: tabOverview}, 100, 30).String()
+		over := peopleText(st, peopleView{tab: tabOverview}, peopleBigW, peopleBigH)
 		if !strings.Contains(over, "Clanfolk") || !strings.Contains(over, c.held) {
 			t.Errorf("held by %q: the Overview lacks the reserve or %q:\n%s", c.by, c.held, over)
 		}
-		work := renderPeople(st, peopleView{tab: tabWork}, 100, 30).String()
+		if c.by == game.HeldFood && !strings.Contains(over, "feeds 4 more") {
+			t.Errorf("the Overview does not say how many more the food feeds:\n%s", over)
+		}
+		work := renderPeopleGrid(st, peopleView{tab: tabWork}, 157, 43).String()
 		if !strings.Contains(work, c.recruit) || strings.Contains(work, "every worker slot is filled") {
 			t.Errorf("held by %q: the Work tab's auto-recruit line does not say %q, or still blames the slots:\n%s", c.by, c.recruit, work)
 		}

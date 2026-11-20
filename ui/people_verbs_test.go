@@ -35,8 +35,16 @@ func stagePeople(t *testing.T, tab int, mut func(*game.GameState)) *peopleStage 
 	s.p.buttons.press = func(k kit.Key) { s.p.take(k) }
 	s.p.buttons.run = func(c string) { s.ran = append(s.ran, c) }
 	s.p.buttons.confirm = func(q, _, c string) { s.asked = append(s.asked, q+"|"+c) }
-	s.p.Layout(image.Rect(0, 0, 100, 30))
+	s.p.Layout(s.rect())
 	return s
+}
+
+// rect is the panel's rectangle: the Overview takes the large layout.
+func (s *peopleStage) rect() image.Rectangle {
+	if s.p.view.tab == tabOverview {
+		return image.Rect(0, 0, peopleBigW, peopleBigH)
+	}
+	return image.Rect(0, 0, 157, 43)
 }
 
 // key is the button that carries cmd.
@@ -57,7 +65,7 @@ func (s *peopleStage) click(k xkey) {
 	for _, kind := range []kit.MouseKind{kit.MousePress, kit.MouseRelease} {
 		s.p.Mouse(kit.Mouse{Kind: kind, Button: kit.ButtonLeft, X: pt.X, Y: pt.Y, Clicks: 1})
 	}
-	s.p.Layout(image.Rect(0, 0, 100, 30))
+	s.p.Layout(s.rect())
 }
 
 // setBuilding edits one building of the snapshot.
@@ -173,7 +181,7 @@ func TestPeopleRecruitRunsTheChosenCountAndIsOffWithoutRoom(t *testing.T) {
 			st.Workers.TotalPop, st.Workers.MaxPop = 100, 200
 		})
 		s.p.view.buy = c.buy
-		s.p.Layout(image.Rect(0, 0, 100, 30))
+		s.p.Layout(s.rect())
 		s.click(s.key(t, c.line))
 		if len(s.ran) != 1 || s.ran[0] != c.line {
 			t.Errorf("choice %d ran %q, want %q once", c.buy, s.ran, c.line)
@@ -187,7 +195,7 @@ func TestPeopleRecruitRunsTheChosenCountAndIsOffWithoutRoom(t *testing.T) {
 		t.Error("recruit one is off with room for five")
 	}
 	s.p.view.buy = buyTen
-	s.p.Layout(image.Rect(0, 0, 100, 30))
+	s.p.Layout(s.rect())
 	ten := s.key(t, "recruit 10")
 	if !ten.off {
 		t.Error("recruit ten is on with room for five")
@@ -328,7 +336,7 @@ func TestPeopleWorkRowsStayPutWhateverIsPicked(t *testing.T) {
 			t.Skipf("only %d buildings in the first area", len(bs))
 		}
 		s.p.view.sub = sub
-		s.p.Layout(image.Rect(0, 0, 100, 30))
+		s.p.Layout(s.rect())
 		var ys []int
 		var steps []xkey
 		var dismiss *xkey
