@@ -349,7 +349,7 @@ func TestScholarsCommand(t *testing.T) {
 	if got := NewAutoCompleter(ge)("schol"); !slices.Contains(got, "scholars") {
 		t.Errorf("completing schol = %v", got)
 	}
-	if help := HandleCommand("help scholars", ge); help.OverlayName != "help" || !strings.Contains(untag(helpProvider(ge.GetState(), 120)), "scholars <percent>") {
+	if help := HandleCommand("help scholars", ge); help.OverlayName != "help" || !strings.Contains(untag(helpProvider(nil, ge.GetState(), 120)), "scholars <percent>") {
 		t.Errorf("help scholars = %+v, or the Help panel does not list scholars <percent>", help)
 	}
 	// A town with no scholars says so in the engine's words.

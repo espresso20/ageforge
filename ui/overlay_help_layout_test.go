@@ -14,7 +14,7 @@ import (
 func TestHelpKeepsTwoColumns(t *testing.T) {
 	for _, screenW := range []int{80, 100, 120, 144, 200} {
 		width := overlayTextWidth(screenW)
-		lines := strings.Split(visible(safeTags(helpProvider(game.GameState{}, screenW))), "\n")
+		lines := strings.Split(visible(safeTags(helpProvider(nil, game.GameState{}, screenW))), "\n")
 		wrapped := 0
 		for i, line := range lines {
 			if n := runeLen(line); n > width {
@@ -44,6 +44,6 @@ func TestHelpKeepsTwoColumns(t *testing.T) {
 		}
 	}
 	// The dashboard's own keys are listed, the new one among them.
-	help := visible(safeTags(helpProvider(game.GameState{}, 0)))
+	help := visible(safeTags(helpProvider(nil, game.GameState{}, 0)))
 	wantAll(t, "the Help panel", help, "The dashboard", "PgUp/PgDn - Scroll the Buildings list", resourcePageKeyName+"    - The next page of the Resources box")
 }

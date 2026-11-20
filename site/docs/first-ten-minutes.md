@@ -1,6 +1,6 @@
 # Your First Age
 
-A walkthrough of the Primitive Age, your first age. It goes further than the Getting started guide that the game shows at the end of the Buildings list during your first 30 minutes of play in the Primitive and Stone Ages.
+A walkthrough of the Primitive Age, your first age. It goes further than the short lessons the game shows on a band above the Command box.
 
 ---
 
@@ -11,7 +11,7 @@ On a first visit the game asks you to name your account, then opens its [main me
 You are in the Primitive Age. The screen shows:
 - The header across the top: your account name, `Primitive Age`, the year, `People 0/0` and `Morale 50%`, then a long bar to the Stone Age with the four pillars, and what it is waiting on. Each part takes a click
 - The Resources box, the Under construction box (with the People box beside it on a big window) and the Log on the left
-- The Buildings list in the middle, with the Getting started guide at the end of it while it shows
+- The Buildings list in the middle
 - The Next card at the top right on a big window: the next step, with a Show me button that takes you to it (`Tab` on an empty command line writes its command), and the next three things after it. Under it the Panels list names each panel (and what it is for); on a smaller window the list stands alone
 
 Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. A mini map sits under that box from 80 columns by 36 rows (`minimap off` hides it).

@@ -467,7 +467,7 @@ func TestFactionsOverlayWiring(t *testing.T) {
 		t.Error("the command registry is missing \"factions\"")
 	}
 	// 5. Help advertises it.
-	if help := helpProvider(game.GameState{}, panelWidth); !strings.Contains(help, "factions") {
+	if help := helpProvider(nil, game.GameState{}, panelWidth); !strings.Contains(help, "factions") {
 		t.Error("help panel does not advertise the factions command")
 	}
 }

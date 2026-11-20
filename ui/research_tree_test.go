@@ -316,7 +316,7 @@ func TestResearchTreeLaneRow(t *testing.T) {
 // the rows to the panel's two columns).
 func TestHelpListsResearchKeys(t *testing.T) {
 	for _, screenW := range []int{0, 80, 144} {
-		help := visible(safeTags(helpProvider(game.GameState{}, screenW)))
+		help := visible(safeTags(helpProvider(nil, game.GameState{}, screenW)))
 		at := strings.Index(help, "The Research panel")
 		if at < 0 {
 			t.Fatal("the Help panel has no Research panel section")

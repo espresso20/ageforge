@@ -159,7 +159,7 @@ func TestWorkersCompletion(t *testing.T) {
 // People panel's Work tab shows the roster and what auto-recruit is doing.
 func TestWorkersHelpAndPanel(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
-	help := helpProvider(game.GameState{}, 0)
+	help := helpProvider(nil, game.GameState{}, 0)
 	wantAll(t, "the Help panel", help, "roster", "roster auto", "workers auto-recruit", "Put every domain back on auto", "workers share still works", "people")
 	if strings.Contains(help, "workers share <") || strings.Count(help, "workers share") != 1 {
 		t.Error("the Help panel lists the roster's old name as a command")

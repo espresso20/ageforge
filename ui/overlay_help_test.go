@@ -15,7 +15,7 @@ func TestHelpProviderDevSectionGated(t *testing.T) {
 
 	// Dev mode OFF — no section, no commands.
 	game.DevModeActive = false
-	off := helpProvider(game.GameState{}, 0)
+	off := helpProvider(nil, game.GameState{}, 0)
 	if strings.Contains(off, "Developer console") {
 		t.Fatal("help must not show the Developer Console section when dev mode is off")
 	}
@@ -28,7 +28,7 @@ func TestHelpProviderDevSectionGated(t *testing.T) {
 	// Dev mode ON — section + every command present.
 	game.DevModeActive = true
 	defer func() { game.DevModeActive = false }()
-	on := helpProvider(game.GameState{}, 0)
+	on := helpProvider(nil, game.GameState{}, 0)
 	if !strings.Contains(on, "Developer console") {
 		t.Fatal("help must show the Developer Console section when dev mode is on")
 	}

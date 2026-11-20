@@ -57,7 +57,7 @@ func TestMapZoomKeys(t *testing.T) {
 // and zoom keys at any width, and names no second map.
 func TestHelpListsMapZoomKeys(t *testing.T) {
 	for _, screenW := range []int{0, 80, 120, 200} {
-		help := visible(safeTags(helpProvider(game.GameState{}, screenW)))
+		help := visible(safeTags(helpProvider(nil, game.GameState{}, screenW)))
 		at := strings.Index(help, "The Map panel")
 		if at < 0 {
 			t.Fatal("the Help panel has no Map section")
