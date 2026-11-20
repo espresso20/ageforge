@@ -18,7 +18,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
-	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
 )
@@ -408,7 +407,7 @@ func SetDataDirForTest(dir string) (restore func()) {
 }
 
 // rootDataDir returns the data ROOT: data/ next to the binary, resolved via
-// os.Executable + EvalSymlinks (a Steam build uses the user config folder instead; see steam.DataDir). Falls back to a CWD-relative "data" if the binary path
+// os.Executable + EvalSymlinks (a release build uses the user config folder instead; see DataHome). Falls back to a CWD-relative "data" if the binary path
 // cannot be determined, or to the test override (dataDirOverride) when set. This is the
 // top of the tree — the active-account pointer (<root>/active-account) and the per-account
 // slots (<root>/accounts/<id>/) live directly under it (the accounts design §3.1).
@@ -432,27 +431,35 @@ var (
 	binaryDataPath string
 )
 
-// binaryDataDir is data/ next to the running binary (a Steam build uses the user config folder instead; see steam.DataDir). The binary does not move
+// DataHome is set at link time (-X .../game.DataHome=user) in release builds.
+// "user" keeps the data in AgeForge under the OS user config folder instead of
+// beside the binary, which an installed .app or a read-only folder cannot hold.
+var DataHome = ""
+
+// binaryDataDir is data/ next to the running binary, or the user config folder
+// when DataHome is "user". The binary does not move
 // while it runs, and resolving it walks every component of its path with a
 // stat each (EvalSymlinks), which GetState's save check paid on every
 // snapshot, so it is resolved once.
 func binaryDataDir() string {
-	binaryDataOnce.Do(func() {
-		if d := steam.DataDir(); d != "" {
-			binaryDataPath = d
-			return
-		}
-		binaryDataPath = "data"
-		exe, err := os.Executable()
-		if err != nil {
-			return
-		}
-		if exe, err = filepath.EvalSymlinks(exe); err != nil {
-			return
-		}
-		binaryDataPath = filepath.Join(filepath.Dir(exe), "data")
-	})
+	binaryDataOnce.Do(func() { binaryDataPath = resolveBinaryDataDir() })
 	return binaryDataPath
+}
+
+func resolveBinaryDataDir() string {
+	if DataHome == "user" {
+		if dir, err := os.UserConfigDir(); err == nil {
+			return filepath.Join(dir, "AgeForge")
+		}
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return "data"
+	}
+	if exe, err = filepath.EvalSymlinks(exe); err != nil {
+		return "data"
+	}
+	return filepath.Join(filepath.Dir(exe), "data")
 }
 
 // saveDirectory returns the ACTIVE account's save directory:
