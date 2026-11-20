@@ -18,6 +18,9 @@ type nativePages struct {
 	// setFocus is how the stack hands the keyboard on, once it has been
 	// given it (Focus passes it on).
 	setFocus func(p Primitive)
+	// inset is the rows a page leaves free at the foot (nil for none): the
+	// band a panel's own lesson shows on.
+	inset func(name string) int
 }
 
 type nativePage struct {
@@ -186,7 +189,11 @@ func (p *nativePages) Layout(r image.Rectangle) {
 		switch {
 		case !pg.visible:
 		case pg.resize:
-			place(pg.w, r, off)
+			pr := r
+			if p.inset != nil {
+				pr.Max.Y = max(pr.Max.Y-p.inset(pg.name), pr.Min.Y)
+			}
+			place(pg.w, pr, off)
 		default:
 			// A page that keeps its own size is where it put itself.
 			x, y, w, h := pg.item.GetRect()

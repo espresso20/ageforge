@@ -295,8 +295,11 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.logsPanel.focus = func() { d.overlayMgr.FocusOn(d.logsPanel) }
 	d.overlayMgr.RegisterWidget("logs", txtLogsTitle, d.logsPanel.open, d.logsPanel.update)
 	d.epochHall = &epochHall{
-		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
-		height: func() int { om := d.overlayMgr; return om.screenH - barRows(om.screenW, om.screenH) },
+		tier: func() mapmodel.GlyphTier { return d.mapSettings().Tier },
+		height: func() int {
+			om := d.overlayMgr
+			return om.screenH - barRows(om.screenW, om.screenH) - d.bandRows(om.screenH)
+		},
 		motion: func() bool { return d.mapSettings().Motion },
 	}
 	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
@@ -632,6 +635,12 @@ func (d *Dashboard) build() {
 		AddItem(d.inputField, barSmallRows, 0, true)
 	// The header is as tall as the terminal calls for, chosen before the
 	// rows are shared out, so a resize shows the right one at once.
+	d.pages.inset = func(name string) int {
+		if d.overlayMgr != nil && name == d.overlayMgr.ActiveName() {
+			return d.bandRows(d.overlayMgr.screenH)
+		}
+		return 0
+	}
 	d.root.SetDrawFunc(func(_, _, w, h int) {
 		d.root.ResizeItem(d.headerTV, headerHeight(w, h), 0)
 		n := barRows(w, h)
