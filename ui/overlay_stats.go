@@ -79,11 +79,8 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.18", " [gold]Highest age ever:[-]       %s\n", highestAge))
 
-		// The badges in a few lines; the badge case has them all. The views
-		// come with the spoiler rules applied.
-		for _, line := range badgeDigestLines(as.Badges, as.BadgeSummary) {
-			sb.WriteString(" " + line + "\n")
-		}
+		// The badges in a line; the Ranks screen has them all.
+		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_stats.statsProvider.20", " [gold]Badges earned:[-]          %d, %s points\n", as.BadgeSummary.Earned, wholeNumber(as.BadgeSummary.Points)))
 	}
 
 	// Epoch & Legacy section

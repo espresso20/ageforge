@@ -13,6 +13,11 @@ import (
 	"github.com/espresso20/ageforge/rowid"
 )
 
+var (
+	txtRunsCommandBelow = rowid.E("ui.badge_case.drawKeys.15", "runs the command below")
+	txtEscCloses        = rowid.E("ui.badge_case.drawCard.01", " Esc closes ")
+)
+
 // research_tree.go draws the Research panel: the tech tree as a map.
 //
 // Everything here is a pure function of a game snapshot, a size and a view

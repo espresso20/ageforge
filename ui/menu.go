@@ -21,6 +21,8 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
+var txtCountOfTotal = rowid.E("ui.badge_case.drawTitle.02", "%d of %d")
+
 // menu.go is the main menu: the page the game opens on and returns to.
 //
 // An account with a game sees its own town behind the menu (the town

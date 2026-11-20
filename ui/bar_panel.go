@@ -103,7 +103,7 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 		},
 		"badges": {
 			routeKey:   d.badgePanel.routeKey,
-			closeFirst: d.badgePanel.closeCard,
+			closeFirst: d.badgePanel.closeBack,
 			update:     d.badgePanel.update,
 		},
 		"expedition": {

@@ -1,31 +1,29 @@
 package ui
 
 import (
-	"time"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
-// menu_badges.go opens the badge case from the main menu. The case is the
-// same panel the game opens (badge_panel.go): it draws from the account's
-// badges, which need no game loaded, so here it has the whole screen and
-// the keyboard to itself. Esc closes an open badge, then the case.
+// menu_badges.go opens the Ranks screen from the main menu. It is the same
+// panel the game opens (ranks_panel.go): it draws from the account's badges,
+// which need no game loaded, so here it has the whole screen and the keyboard
+// to itself. Esc steps back to the Ranks tab, then closes.
 
-// menuBadgesPage is the page the case is shown on from the menu.
+// menuBadgesPage is the page the screen is shown on from the menu.
 const menuBadgesPage = "menu_badges"
 
-// menuBadges is the badge case as a page of its own.
+// menuBadges is the Ranks screen as a page of its own.
 type menuBadges struct {
-	*badgePanel
+	*ranksPanel
 	close func()
 }
 
-// Key: the case's own keys, and Esc (or q) to close.
+// Key: the screen's own keys, and Esc (or q) to close.
 func (b *menuBadges) Key(k kit.Key) bool {
 	switch {
 	case k.Code == kit.KeyEsc, k.Code == kit.KeyRune && (k.Rune == 'q' || k.Rune == 'Q'):
-		if !b.closeCard() {
+		if !b.closeBack() {
 			b.close()
 		}
 	default:
@@ -34,13 +32,11 @@ func (b *menuBadges) Key(k kit.Key) bool {
 	return true
 }
 
-// openMenuBadges shows the badge case over the menu and returns to
+// openMenuBadges shows the Ranks screen over the menu and returns to
 // returnPage when it is closed.
 func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) {
-	p := newBadgePanel()
-	p.buttons.press = app.Key
-	p.settings = func() mapSettings { return resolveMapSettings(engine.Account()) }
-	// The case reads a snapshot's account part and nothing else of it.
+	p := newRanksPanel()
+	// The screen reads a snapshot's account part and nothing else of it.
 	st := game.GameState{}
 	if engine.Account() != nil {
 		views, sum := engine.Badges()
@@ -48,33 +44,10 @@ func openMenuBadges(app *appLoop, pages *nativePages, engine *game.GameEngine, r
 	}
 	p.update(st)
 
-	// A coin in its show is redrawn at the coins' rate while the case is open.
-	stop := make(chan struct{})
-	b := &menuBadges{badgePanel: p}
+	b := &menuBadges{ranksPanel: p}
 	b.close = func() {
-		select {
-		case <-stop:
-		default:
-			close(stop)
-		}
 		pages.RemovePage(menuBadgesPage)
 		pages.SwitchToPage(returnPage)
-	}
-	if p.motion {
-		go func() {
-			tk := time.NewTicker(coinStep)
-			defer tk.Stop()
-			for {
-				select {
-				case <-tk.C:
-					if p.moving.Load() {
-						app.QueueUpdateDraw(func() {})
-					}
-				case <-stop:
-					return
-				}
-			}
-		}()
 	}
 	pages.AddPage(menuBadgesPage, b, true, true)
 	app.SetFocus(b)
