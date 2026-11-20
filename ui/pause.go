@@ -74,8 +74,7 @@ func (d *Dashboard) closePause() {
 
 // toMenu saves and leaves for the main menu, as Esc did before the card.
 func (d *Dashboard) toMenu() {
-	d.pages.RemovePage(pausePage)
-	d.engine.Release()
+	d.closePause()
 	d.engine.SaveGame(d.engine.ActiveSaveName())
 	d.engine.Stop()
 	d.pages.SwitchToPage("splash")
@@ -189,14 +188,7 @@ func (d *Dashboard) nextTheme() {
 	}
 	for i, t := range open {
 		if t.Key == theme.Active().Key {
-			n := open[(i+1)%len(open)]
-			if theme.SetActive(n.Key) == nil {
-				theme.Restyle()
-				if acct != nil {
-					_ = acct.SetActiveTheme(n.Key)
-				}
-			}
-			return
+			cmdTheme([]string{open[(i+1)%len(open)].Key}, d.engine)
 		}
 	}
 }
@@ -299,11 +291,12 @@ func (p *pauseLayer) Paint(pt *kit.Painter) {
 	pt.Box(p.box, kit.BorderLine, kit.Style{Fg: kit.Role(theme.RoleAccent)})
 	x0, y := p.box.Min.X+3, p.box.Min.Y
 	paintLightType(pt, x0, y+2, "PAUSED", kit.Style{Fg: kit.Role(theme.RoleAccent), Bg: bg})
-	dim, text := kit.Style{Fg: kit.Role(theme.RoleDim), Bg: bg}, kit.Style{Fg: kit.Role(theme.RoleText), Bg: bg}
+	sty := func(r theme.Role) kit.Style { return kit.Style{Fg: kit.Role(r), Bg: bg} }
+	dim, text := sty(theme.RoleDim), sty(theme.RoleText)
 	foot := rowid.Line("ui.pause.paint.01", "Leaving saves your game first.")
 	if p.view == pauseMain {
 		x1 := x0 + 30
-		pt.Print(x1, y+8, p.box.Max.X-x1-2, rowid.Line("ui.pause.paint.02", "This sitting"), kit.Style{Fg: kit.Role(theme.RoleAccent), Bg: bg})
+		pt.Print(x1, y+8, p.box.Max.X-x1-2, rowid.Line("ui.pause.paint.02", "This sitting"), sty(theme.RoleAccent))
 		st := p.d.engine.GetState()
 		saved := rowid.Line("ui.pause.paint.07", "not yet")
 		if t := p.d.engine.SavedAt(); !t.IsZero() {
@@ -318,7 +311,7 @@ func (p *pauseLayer) Paint(pt *kit.Painter) {
 			pt.Print(x1, y+10+2*i, 14, kv[0], dim)
 			pt.Print(x1+15, y+10+2*i, p.box.Max.X-x1-17, kv[1], text)
 		}
-		pt.Print(x1, y+19, 12, p.note, kit.Style{Fg: kit.Role(theme.RolePositive), Bg: bg})
+		pt.Print(x1, y+19, 12, p.note, sty(theme.RolePositive))
 	} else {
 		foot = rowid.Line("ui.pause.paint.08", "Esc goes back to the pause card.")
 		for i, row := range p.rows {
@@ -327,7 +320,7 @@ func (p *pauseLayer) Paint(pt *kit.Painter) {
 		if p.view == pauseKeysTab {
 			for i, k := range pauseKeyList() {
 				cx, cy := x0+(i/4)*33, y+9+2*(i%4)
-				pt.Print(cx, cy, 9, k[0], kit.Style{Fg: kit.Role(theme.RoleHighlight), Bg: bg})
+				pt.Print(cx, cy, 9, k[0], sty(theme.RoleHighlight))
 				pt.Print(cx+10, cy, 22, k[1], text)
 			}
 		}
@@ -353,18 +346,17 @@ func (p *pauseLayer) Key(k kit.Key) bool {
 	switch k.Code {
 	case kit.KeyEsc:
 		if p.view != pauseMain {
-			p.go2(pauseMain)
 			p.at = 1
-			p.refocus()
+			p.go2(pauseMain)
 		} else {
 			p.d.closePause()
 		}
 	case kit.KeyTab, kit.KeyDown, kit.KeyRight, kit.KeyBacktab, kit.KeyUp, kit.KeyLeft:
-		by := 1
+		by := len(p.btns) + 1 // forward; back is one short of a lap
 		if k.Code == kit.KeyBacktab || k.Code == kit.KeyUp || k.Code == kit.KeyLeft {
-			by = -1
+			by = len(p.btns) - 1
 		}
-		p.at = ((p.at+by)%len(p.btns) + len(p.btns)) % len(p.btns)
+		p.at = (p.at + by) % len(p.btns)
 		p.d.app.SetFocus(p.btns[p.at])
 	case kit.KeyRune:
 		if do, ok := p.press[k.Rune|0x20]; ok {
@@ -386,38 +378,24 @@ func (p *pauseLayer) Focus(delegate func(p Primitive)) {
 // HasFocus reports whether the card or one of its buttons has the keyboard.
 func (p *pauseLayer) HasFocus() bool { return p.focused() != nil || p.primBase.HasFocus() }
 
-// pauseGlyphs is the light 5 by 7 type of the heading: one-unit strokes,
-// seven rows a letter, pressed two rows to a cell with half blocks.
-var pauseGlyphs = map[rune][7]string{
-	'P': {"####.", "#...#", "#...#", "####.", "#....", "#....", "#...."},
-	'A': {".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"},
-	'U': {"#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."},
-	'S': {".####", "#....", "#....", ".###.", "....#", "....#", "####."},
-	'E': {"#####", "#....", "#....", "####.", "#....", "#....", "#####"},
-	'D': {"####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."},
+// pauseGlyphs is the light 5 by 7 type of the heading, rows top to bottom,
+// one-unit strokes, pressed two rows to a cell with half blocks.
+var pauseGlyphs = map[rune]string{
+	'P': "####./#...#/#...#/####./#..../#..../#....", 'A': ".###./#...#/#...#/#####/#...#/#...#/#...#",
+	'U': "#...#/#...#/#...#/#...#/#...#/#...#/.###.", 'S': ".####/#..../#..../.###./....#/....#/####.",
+	'E': "#####/#..../#..../####./#..../#..../#####", 'D': "####./#...#/#...#/#...#/#...#/#...#/####.",
 }
 
 // paintLightType draws s in pauseGlyphs, four rows tall, from x, y.
 func paintLightType(p *kit.Painter, x, y int, s string, st kit.Style) {
 	for _, r := range s {
-		g := pauseGlyphs[r]
+		g := strings.Split(pauseGlyphs[r]+"/.....", "/") // an eighth, empty row
 		for row := 0; row < 4; row++ {
-			var line []rune
+			var out []rune
 			for c := 0; c < 5; c++ {
-				top := g[2*row][c] == '#'
-				bot := 2*row+1 < 7 && g[2*row+1][c] == '#'
-				switch {
-				case top && bot:
-					line = append(line, '█')
-				case top:
-					line = append(line, '▀')
-				case bot:
-					line = append(line, '▄')
-				default:
-					line = append(line, ' ')
-				}
+				out = append(out, []rune(" ▄▀█")[b2i(g[2*row][c] == '#')*2+b2i(g[2*row+1][c] == '#')])
 			}
-			p.Print(x, y+row, 5, string(line), st)
+			p.Print(x, y+row, 5, string(out), st)
 		}
 		x += 6
 	}

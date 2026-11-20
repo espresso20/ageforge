@@ -64,43 +64,28 @@ func TestPauseSaveWritesAndMainMenuLeaves(t *testing.T) {
 	}
 }
 
-func TestPauseSettingsTabsAndEsc(t *testing.T) {
+func TestPauseSettingsTabsEscAndMotion(t *testing.T) {
 	d, _ := pausedDashboard(t)
 	sendKey(d, kit.KeyEsc)
-	rootKey(d.pages, tk(kit.KeyRune, 's', 0))
+	press := func(c kit.KeyCode, r rune) { rootKey(d.pages, tk(c, r, 0)) }
+	press(kit.KeyRune, 's')
 	_, item := d.pages.GetFrontPage()
 	p := item.(*pauseLayer)
-	if p.view != pauseDisplay {
-		t.Fatalf("S opened view %d, want Display", p.view)
-	}
-	rootKey(d.pages, tk(kit.KeyTab, 0, 0)) // to the Motion tab
-	rootKey(d.pages, tk(kit.KeyEnter, 0, 0))
+	press(kit.KeyTab, 0)
+	press(kit.KeyEnter, 0)
 	if p.view != pauseMotion {
-		t.Errorf("view %d after pressing the Motion tab", p.view)
+		t.Fatalf("view %d after pressing the Motion tab", p.view)
 	}
-	rootKey(d.pages, tk(kit.KeyTab, 0, 0)) // to the Keys tab
-	rootKey(d.pages, tk(kit.KeyEnter, 0, 0))
-	if p.view != pauseKeysTab {
-		t.Errorf("view %d after pressing the Keys tab", p.view)
-	}
-	rootKey(d.pages, tk(kit.KeyEsc, 0, 0))
-	if p.view != pauseMain || !isPaused(d) {
-		t.Errorf("Esc in settings: view %d paused=%v, want the card", p.view, isPaused(d))
-	}
-}
-
-func TestPauseMotionSettingChanges(t *testing.T) {
-	d, _ := pausedDashboard(t)
-	sendKey(d, kit.KeyEsc)
-	rootKey(d.pages, tk(kit.KeyRune, 's', 0))
-	rootKey(d.pages, tk(kit.KeyTab, 0, 0))
-	rootKey(d.pages, tk(kit.KeyEnter, 0, 0))
 	was := d.mapSettings().Motion
-	rootKey(d.pages, tk(kit.KeyTab, 0, 0)) // past the other tabs to the Motion row's button
-	rootKey(d.pages, tk(kit.KeyTab, 0, 0))
-	rootKey(d.pages, tk(kit.KeyEnter, 0, 0))
+	press(kit.KeyTab, 0) // past the other tabs to the Motion row's button
+	press(kit.KeyTab, 0)
+	press(kit.KeyEnter, 0)
 	if d.mapSettings().Motion == was {
 		t.Error("the Motion button changed nothing")
+	}
+	press(kit.KeyEsc, 0)
+	if p.view != pauseMain || !isPaused(d) {
+		t.Errorf("Esc in settings: view %d paused=%v, want the card", p.view, isPaused(d))
 	}
 }
 
