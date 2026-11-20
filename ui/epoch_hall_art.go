@@ -10,8 +10,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -537,10 +537,10 @@ func (c *hallCtx) track(v hallView) {
 	c.y++
 	var after []string
 	if len(v.ahead) > 0 {
-		after = append(after, vibe.Sprintf("ui.epoch_hall.hallFrontText.09", "next: %s", v.ahead[0]))
+		after = append(after, rowid.Sprintf("ui.epoch_hall.hallFrontText.09", "next: %s", v.ahead[0]))
 	}
 	if v.unseen > 0 {
-		after = append(after, vibe.Sprintf("ui.epoch_hall.hallFrontText.03", "%d more to come", v.unseen))
+		after = append(after, rowid.Sprintf("ui.epoch_hall.hallFrontText.03", "%d more to come", v.unseen))
 	}
 	if len(after) > 0 {
 		c.paragraph(strings.Join(after, " "+c.mark("·", "-")+" "), dim)
@@ -597,7 +597,7 @@ func (c *hallCtx) medalOn(v game.BadgeView, x, y int, mini bool) {
 // frame of that colour.
 func (c *hallCtx) badges(list []game.BadgeView) {
 	if len(list) == 0 {
-		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.05", "No badges earned yet."), c.role(theme.RoleDim))
+		c.paragraph(rowid.Line("ui.epoch_hall.hallFrontText.05", "No badges earned yet."), c.role(theme.RoleDim))
 		return
 	}
 	gap := 2
@@ -663,7 +663,7 @@ var hallTagRe = regexp.MustCompile(`\[[a-zA-Z0-9#:\-]*\]`)
 // feats draws the feats as one block, centred, a coloured icon to a line.
 func (c *hallCtx) feats(v hallView) {
 	if len(v.feats) == 0 {
-		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.07", "No feats yet. They come with the ages."), c.role(theme.RoleDim))
+		c.paragraph(rowid.Line("ui.epoch_hall.hallFrontText.07", "No feats yet. They come with the ages."), c.role(theme.RoleDim))
 		return
 	}
 	icons := [4]string{c.mark("✸", "*"), c.mark("◈", "@"), c.mark("★", "*"), c.mark("»", ">")}

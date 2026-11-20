@@ -12,8 +12,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -1050,7 +1050,7 @@ func TestArrivalGivesWay(t *testing.T) {
 	}
 
 	s = newArrivalShow()
-	s.om.Register("notes", vibe.E("test.notes", "Notes"), func(game.GameState, int) string { return "notes" })
+	s.om.Register("notes", rowid.E("test.notes", "Notes"), func(game.GameState, int) string { return "notes" })
 	a = s.advance(stoneToBronze())
 	_, cur, _ := stoneToBronze()
 	if !s.om.Show("notes", cur) {

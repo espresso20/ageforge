@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/espresso20/ageforge/detmath"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // The calendar: the year each age begins, for the Advance panel's march of
@@ -116,19 +116,19 @@ const deepTime = 100000
 func epochName(ago int) string {
 	switch {
 	case ago >= 66000000:
-		return vibe.Line("config.age_years.epoch.late_cretaceous", "Late Cretaceous")
+		return rowid.Line("config.age_years.epoch.late_cretaceous", "Late Cretaceous")
 	case ago >= 56000000:
-		return vibe.Line("config.age_years.epoch.paleocene", "Paleocene")
+		return rowid.Line("config.age_years.epoch.paleocene", "Paleocene")
 	case ago >= 33900000:
-		return vibe.Line("config.age_years.epoch.eocene", "Eocene")
+		return rowid.Line("config.age_years.epoch.eocene", "Eocene")
 	case ago >= 23000000:
-		return vibe.Line("config.age_years.epoch.oligocene", "Oligocene")
+		return rowid.Line("config.age_years.epoch.oligocene", "Oligocene")
 	case ago >= 5300000:
-		return vibe.Line("config.age_years.epoch.miocene", "Miocene")
+		return rowid.Line("config.age_years.epoch.miocene", "Miocene")
 	case ago >= 2580000:
-		return vibe.Line("config.age_years.epoch.pliocene", "Pliocene")
+		return rowid.Line("config.age_years.epoch.pliocene", "Pliocene")
 	}
-	return vibe.Line("config.age_years.epoch.pleistocene", "Pleistocene")
+	return rowid.Line("config.age_years.epoch.pleistocene", "Pleistocene")
 }
 
 // YearLabel writes a year as the panel shows it, rounded by how far off it
@@ -148,15 +148,15 @@ func YearLabel(year int) string {
 		if r := roundTo(ago, step); r > 0 {
 			ago = r
 		}
-		return vibe.Sprintf("config.age_years.YearLabel.bc", "c. %s BC", groupThousands(ago))
+		return rowid.Sprintf("config.age_years.YearLabel.bc", "c. %s BC", groupThousands(ago))
 	}
 	switch {
 	case year < 1700:
-		return vibe.Sprintf("config.age_years.YearLabel.ad", "c. %s AD", strconv.Itoa(max(roundTo(year, 50), 1)))
+		return rowid.Sprintf("config.age_years.YearLabel.ad", "c. %s AD", strconv.Itoa(max(roundTo(year, 50), 1)))
 	case year < 2100:
-		return vibe.Sprintf("config.age_years.YearLabel.decade", "%ds", year/10*10)
+		return rowid.Sprintf("config.age_years.YearLabel.decade", "%ds", year/10*10)
 	}
-	return vibe.Sprintf("config.age_years.YearLabel.century", "%s century", ordinal(year/100+1))
+	return rowid.Sprintf("config.age_years.YearLabel.century", "%s century", ordinal(year/100+1))
 }
 
 // roundTo rounds n to the nearest multiple of step, halves up.
@@ -167,14 +167,14 @@ func ordinal(n int) string {
 	if n%100 < 11 || n%100 > 13 {
 		switch n % 10 {
 		case 1:
-			return vibe.Sprintf("config.age_years.ordinal.st", "%dst", n)
+			return rowid.Sprintf("config.age_years.ordinal.st", "%dst", n)
 		case 2:
-			return vibe.Sprintf("config.age_years.ordinal.nd", "%dnd", n)
+			return rowid.Sprintf("config.age_years.ordinal.nd", "%dnd", n)
 		case 3:
-			return vibe.Sprintf("config.age_years.ordinal.rd", "%drd", n)
+			return rowid.Sprintf("config.age_years.ordinal.rd", "%drd", n)
 		}
 	}
-	return vibe.Sprintf("config.age_years.ordinal.th", "%dth", n)
+	return rowid.Sprintf("config.age_years.ordinal.th", "%dth", n)
 }
 
 // groupThousands writes n with a comma between each three digits.

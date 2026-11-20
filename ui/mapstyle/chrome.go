@@ -7,8 +7,8 @@ import (
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -68,7 +68,7 @@ func (v *view) begin(f Frame) *inks {
 // drawNoMap says there is no map yet, for a frame with no model.
 func drawNoMap(cv *Canvas) {
 	dim := NewPalette(0).Style(mapmodel.CDim)
-	cv.Text(1, 0, 0, vibe.Line("ui.mapstyle.roguelike.chrome.Draw.01", "No map yet."), dim)
+	cv.Text(1, 0, 0, rowid.Line("ui.mapstyle.roguelike.chrome.Draw.01", "No map yet."), dim)
 }
 
 // drawHeader is the top row: settlement, age, epoch, weather, people, idle,
@@ -88,9 +88,9 @@ func (v *view) drawHeader(cv *Canvas, width int, m *mapmodel.Model, zoom string)
 		style kit.Style
 	}{
 		{string(weatherRune(m, v.tier)) + " " + m.Clock.String() + "  ", ink},
-		{vibe.Line("ui.mapstyle.roguelike.chrome.header.01", "pop ") + strconv.Itoa(m.Workers.Pop) + "  ", ink},
-		{vibe.Line("ui.mapstyle.roguelike.chrome.header.02", "idle ") + strconv.Itoa(m.Workers.Idle), idle},
-		{vibe.Line("ui.mapstyle.roguelike.chrome.header.03", "  civs ") + strconv.Itoa(m.DiscoveredCount()) + "/" + strconv.Itoa(len(m.Factions)), ink},
+		{rowid.Line("ui.mapstyle.roguelike.chrome.header.01", "pop ") + strconv.Itoa(m.Workers.Pop) + "  ", ink},
+		{rowid.Line("ui.mapstyle.roguelike.chrome.header.02", "idle ") + strconv.Itoa(m.Workers.Idle), idle},
+		{rowid.Line("ui.mapstyle.roguelike.chrome.header.03", "  civs ") + strconv.Itoa(m.DiscoveredCount()) + "/" + strconv.Itoa(len(m.Factions)), ink},
 		{"  " + zoom + " ", ink.Bold(true)},
 	}
 	for ; len(segments) > 0; segments = segments[1:] { // drop from the left until it fits
@@ -148,11 +148,11 @@ func (v *view) news(m *mapmodel.Model, width int) (string, kit.Style) {
 	case headline != "":
 		return headline, v.ink.Role(theme.RolePositive)
 	case m.Catastrophe.Pending != "":
-		return mapmodel.Clip(vibe.Line("ui.mapstyle.roguelike.chrome.news.01", "DANGER: ")+m.Catastrophe.PendingName+vibe.Line("ui.mapstyle.roguelike.chrome.news.02", " is upon you"), width), danger
+		return mapmodel.Clip(rowid.Line("ui.mapstyle.roguelike.chrome.news.01", "DANGER: ")+m.Catastrophe.PendingName+rowid.Line("ui.mapstyle.roguelike.chrome.news.02", " is upon you"), width), danger
 	case m.Flows.Worst != "" && v.changes:
-		return mapmodel.Clip(vibe.Line("ui.mapstyle.roguelike.chrome.news.03", "stuck: ")+m.Flows.Worst, width), v.ink.Role(theme.RoleWarning)
+		return mapmodel.Clip(rowid.Line("ui.mapstyle.roguelike.chrome.news.03", "stuck: ")+m.Flows.Worst, width), v.ink.Role(theme.RoleWarning)
 	}
-	return vibe.Line("ui.mapstyle.roguelike.chrome.news.04", "all quiet"), v.ink.Style(mapmodel.CDim)
+	return rowid.Line("ui.mapstyle.roguelike.chrome.news.04", "all quiet"), v.ink.Style(mapmodel.CDim)
 }
 
 // drawBottom is the news, the two inspector lines and the status line, whose
@@ -161,25 +161,25 @@ func (v *view) drawBottom(cv *Canvas, width, height int, m *mapmodel.Model, in I
 	text, style := v.news(m, width-2)
 	cv.Text(1, height-4, width-2, text, style)
 	dim := v.ink.Style(mapmodel.CDim)
-	short := vibe.Line("ui.mapstyle.roguelike.chrome.bottom.02", "arrows move  -/= or PgUp/PgDn zoom  Tab next")
+	short := rowid.Line("ui.mapstyle.roguelike.chrome.bottom.02", "arrows move  -/= or PgUp/PgDn zoom  Tab next")
 	hints := short
 	if width >= 100 {
-		hints = vibe.Line("ui.mapstyle.roguelike.chrome.bottom.01", "arrows move  Shift fast  -/= or PgUp/PgDn zoom  Tab next  Home center  map flows")
+		hints = rowid.Line("ui.mapstyle.roguelike.chrome.bottom.01", "arrows move  Shift fast  -/= or PgUp/PgDn zoom  Tab next  Home center  map flows")
 	}
 	switch {
 	case !ok:
-		cv.Text(1, height-3, width-2, vibe.Line("ui.mapstyle.roguelike.chrome.bottom.03", "cursor hidden; move it with the arrow keys"), v.ink.Style(mapmodel.CText))
+		cv.Text(1, height-3, width-2, rowid.Line("ui.mapstyle.roguelike.chrome.bottom.03", "cursor hidden; move it with the arrow keys"), v.ink.Style(mapmodel.CText))
 	default:
 		cv.Text(1, height-3, width-2, "▸ "+strings.Join(append([]string{in.Title}, in.Lines...), " · "), v.ink.Role(theme.RoleBright).Bold(true))
 		if in.Command == "" {
-			cv.Text(3, height-2, width-4, vibe.Line("ui.mapstyle.roguelike.chrome.bottom.04", "nothing to type here; Tab jumps to the next building"), dim)
+			cv.Text(3, height-2, width-4, rowid.Line("ui.mapstyle.roguelike.chrome.bottom.04", "nothing to type here; Tab jumps to the next building"), dim)
 		} else {
-			x := cv.Text(3, height-2, width-4, vibe.Line("ui.mapstyle.roguelike.chrome.bottom.05", "type: "), dim)
+			x := cv.Text(3, height-2, width-4, rowid.Line("ui.mapstyle.roguelike.chrome.bottom.05", "type: "), dim)
 			cv.Text(x, height-2, width-x-1, in.Command, v.ink.Style(mapmodel.CAccent).Bold(true))
 		}
 	}
 	if v.flows {
-		zoom += vibe.Line("ui.mapstyle.roguelike.chrome.bottom.06", " · flows")
+		zoom += rowid.Line("ui.mapstyle.roguelike.chrome.bottom.06", " · flows")
 	}
 	x := cv.Text(1, height-1, width-2, zoom, v.ink.Style(mapmodel.CLabel))
 	if x+2+TextLen(hints) > width-1 {
@@ -202,7 +202,7 @@ func (v *view) drawSidebar(cv *Canvas, m *mapmodel.Model, x0, y0, width, height 
 	if !v.flows {
 		return y
 	}
-	cv.Text(x0+2, y, width-3, vibe.Line("ui.mapstyle.roguelike.chrome.sidebar.01", "FLOWS"), v.ink.Style(mapmodel.CAccent).Bold(true))
+	cv.Text(x0+2, y, width-3, rowid.Line("ui.mapstyle.roguelike.chrome.sidebar.01", "FLOWS"), v.ink.Style(mapmodel.CAccent).Bold(true))
 	for _, line := range v.flowLines(m) {
 		if y++; y < y0+height {
 			v.drawFlowLine(cv, x0+2, y, width-3, line)
@@ -231,11 +231,11 @@ func (v *view) flowLines(m *mapmodel.Model) []flowLine {
 	for _, store := range flows.Draining {
 		draining = append(draining, strings.ToLower(store.Name))
 	}
-	add(len(flows.Draining) > 0, vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.01", "DRAIN"), strings.Join(draining, ", "), mapmodel.CDanger)
-	add(flows.IdleWorkers > 0, vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.02", "IDLE "), plural(flows.IdleWorkers, vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.03", "worker"), vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.04", "workers")), mapmodel.CIdle)
+	add(len(flows.Draining) > 0, rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.01", "DRAIN"), strings.Join(draining, ", "), mapmodel.CDanger)
+	add(flows.IdleWorkers > 0, rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.02", "IDLE "), plural(flows.IdleWorkers, rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.03", "worker"), rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.04", "workers")), mapmodel.CIdle)
 	short := len(flows.Understaffed) + len(flows.Idle)
-	add(short > 0, vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.05", "SHORT"), plural(short, vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.06", "building"), vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.07", "buildings")), mapmodel.CIdle)
-	add(len(lines) == 0, vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.08", "OK   "), vibe.Line("ui.mapstyle.roguelike.chrome.flowLines.09", "nothing stuck"), mapmodel.CFresh)
+	add(short > 0, rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.05", "SHORT"), plural(short, rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.06", "building"), rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.07", "buildings")), mapmodel.CIdle)
+	add(len(lines) == 0, rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.08", "OK   "), rowid.Line("ui.mapstyle.roguelike.chrome.flowLines.09", "nothing stuck"), mapmodel.CFresh)
 	for i, share := range flows.Shares {
 		if i == 5 || share.Share <= 0 {
 			break
@@ -291,7 +291,7 @@ func (v *view) drawFlowsBox(cv *Canvas, m *mapmodel.Model, x, y, width, maxHeigh
 	for i, corner := range corners {
 		cv.Put(corner[0], corner[1], []rune("┌┐└┘")[i], border)
 	}
-	cv.Text(x+2, y, width-4, vibe.Line("ui.mapstyle.roguelike.chrome.box.01", "FLOWS"), v.ink.Style(mapmodel.CAccent).Bold(true))
+	cv.Text(x+2, y, width-4, rowid.Line("ui.mapstyle.roguelike.chrome.box.01", "FLOWS"), v.ink.Style(mapmodel.CAccent).Bold(true))
 	for i := 0; i < len(lines) && i < height-2; i++ {
 		v.drawFlowLine(cv, x+1, y+1+i, width-2, lines[i])
 	}
@@ -300,10 +300,10 @@ func (v *view) drawFlowsBox(cv *Canvas, m *mapmodel.Model, x, y, width, maxHeigh
 // drawCompactBars draws the first and last lines of the compact view: the age
 // and the people, and the news.
 func (v *view) drawCompactBars(cv *Canvas, r Rect, m *mapmodel.Model) {
-	title := strings.TrimSuffix(m.AgeName, " Age") + vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.02", " · pop ") + strconv.Itoa(m.Workers.Pop)
+	title := strings.TrimSuffix(m.AgeName, " Age") + rowid.Line("ui.mapstyle.roguelike.chrome.DrawCompact.02", " · pop ") + strconv.Itoa(m.Workers.Pop)
 	x := cv.Text(0, 0, r.W, title, v.ink.Style(mapmodel.CAccent).Bold(true))
 	if m.Workers.Idle > 0 {
-		cv.Text(x, 0, r.W-x, vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.03", " · idle ")+strconv.Itoa(m.Workers.Idle), v.ink.Style(mapmodel.CIdle).Bold(true))
+		cv.Text(x, 0, r.W-x, rowid.Line("ui.mapstyle.roguelike.chrome.DrawCompact.03", " · idle ")+strconv.Itoa(m.Workers.Idle), v.ink.Style(mapmodel.CIdle).Bold(true))
 	}
 	if r.H >= 2 {
 		text, style := v.news(m, r.W)
@@ -313,7 +313,7 @@ func (v *view) drawCompactBars(cv *Canvas, r Rect, m *mapmodel.Model) {
 
 // drawLegend lists the signs of the building lines the town has.
 func (v *view) drawLegend(cv *Canvas, mp *Palette, x, y, w, h int, m *mapmodel.Model) {
-	cv.Text(x, y, w, vibe.Line("ui.mapstyle.roguelike.chrome.drawLegend.01", "LEGEND"), mp.Style(mapmodel.CAccent).Bold(true))
+	cv.Text(x, y, w, rowid.Line("ui.mapstyle.roguelike.chrome.drawLegend.01", "LEGEND"), mp.Style(mapmodel.CAccent).Bold(true))
 	for i, l := range m.Lineages {
 		if i+1 >= h {
 			return

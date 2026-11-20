@@ -6,7 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // The mission board: three offers of each open tier, rolled up front. The
@@ -78,7 +78,7 @@ type MissionOffer struct {
 	// Words are the words the three texts above were drawn from, by place in
 	// their age's lists. An offer the game made holds them, and a save holds
 	// them in place of the texts, so what a save says does not depend on the
-	// script the game was read in (VibeMode); draw writes the texts again
+	// ruleset the game was read in; draw writes the texts again
 	// from the words of the script in force. An offer with no Words is
 	// written by hand (a test's) and its texts are what they are.
 	Words OfferWords `json:"words,omitzero"`
@@ -107,7 +107,7 @@ type OfferWords struct {
 
 // ruinsFound is what a ruins offer's description says before the place.
 func ruinsFound() string {
-	return vibe.Line("game.mission_board.ruinsFound.01", "Found by this mission near the ruins at ")
+	return rowid.Line("game.mission_board.ruinsFound.01", "Found by this mission near the ruins at ")
 }
 
 // ruinsFoundPlain is ruinsFound for an offer written by hand: it has no words
@@ -323,11 +323,11 @@ func (b *MissionBoard) take(n, tick int) (*MissionOffer, error) {
 // slot is board slot n (1-based), or why there is no such offer.
 func (b *MissionBoard) slot(n int) (*boardSlot, error) {
 	if n < 1 || n > len(b.Slots) {
-		return nil, vibe.Errorf("game.mission_board.slot.01", "there is no offer %d. The board has offers 1 to %d. Type expedition to see them", n, len(b.Slots))
+		return nil, rowid.Errorf("game.mission_board.slot.01", "there is no offer %d. The board has offers 1 to %d. Type expedition to see them", n, len(b.Slots))
 	}
 	slot := &b.Slots[n-1]
 	if slot.Offer == nil {
-		return nil, vibe.Errorf("game.mission_board.slot.02", "offer %d has been taken. A new one comes in a few minutes", n)
+		return nil, rowid.Errorf("game.mission_board.slot.02", "offer %d has been taken. A new one comes in a few minutes", n)
 	}
 	return slot, nil
 }

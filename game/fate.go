@@ -5,8 +5,8 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Fated dooms: when a catastrophe strikes is decided at random, in secret.
@@ -345,7 +345,7 @@ func (ge *GameEngine) fateArrive() bool {
 	h.AnnouncedTier = tier
 	h.Lines, h.LineKeys = ge.harbingerSpeak(def, tier)
 
-	ge.addLog("event", vibe.Sprintf("game.fate.fateArrive.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
+	ge.addLog("event", rowid.Sprintf("game.fate.fateArrive.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), ge.fateWarningText(h)))
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, f.EpochKey, false)
@@ -384,11 +384,11 @@ func (ge *GameEngine) fateWhen(def config.HarbingerDef) string {
 func (ge *GameEngine) fateWarningText(h *HarbingerSave) string {
 	switch h.When {
 	case WhenThisAge:
-		return vibe.Line("game.fate.fateWarningText.01", "impending doom before this age is out")
+		return rowid.Line("game.fate.fateWarningText.01", "impending doom before this age is out")
 	case WhenThisEra:
-		return vibe.Sprintf("game.fate.fateWarningText.02", "impending doom before the %s ends", eraName(ge.rules, h.EpochKey))
+		return rowid.Sprintf("game.fate.fateWarningText.02", "impending doom before the %s ends", eraName(ge.rules, h.EpochKey))
 	}
-	return vibe.Line("game.fate.fateWarningText.03", "impending doom")
+	return rowid.Line("game.fate.fateWarningText.03", "impending doom")
 }
 
 // strikeBase is the chance a fated doom strikes by the faith band right now,
@@ -456,12 +456,12 @@ func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 	f.Resolved, f.ResolvedTick, f.AtAdvance = FateRevealed, ge.tick, true
 	if h := ge.fateThread(); h != nil {
 		def, _ := ge.rules.Harbinger(h.Age)
-		window := vibe.Line("game.fate.revealFalseProphet.01", "This age ends")
+		window := rowid.Line("game.fate.revealFalseProphet.01", "This age ends")
 		if eraEnds {
-			window = vibe.Sprintf("game.fate.revealFalseProphet.02", "The %s ends", eraName(ge.rules, f.EpochKey))
+			window = rowid.Sprintf("game.fate.revealFalseProphet.02", "The %s ends", eraName(ge.rules, f.EpochKey))
 		}
 		ge.settleHarbinger(f.EpochKey, false,
-			vibe.Sprintf("game.fate.revealFalseProphet.03", "⚑ %s without the doom %s foretold. The warning had been invented from the start.", window, def.Name))
+			rowid.Sprintf("game.fate.revealFalseProphet.03", "⚑ %s without the doom %s foretold. The warning had been invented from the start.", window, def.Name))
 	}
 }
 
@@ -470,7 +470,7 @@ func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 // is foretold first. again says what to do to meet it.
 func errHarbingerAtGate(set *rules.Set, h *HarbingerSave, warning, again string) error {
 	def, _ := set.Harbinger(h.Age)
-	return vibe.Errorf("game.fate.errHarbingerAtGate.01", "%s stands in your way, warning of %s. Type 'harbinger' to answer, or %s again to meet it.", capFirst(def.Name), warning, again)
+	return rowid.Errorf("game.fate.errHarbingerAtGate.01", "%s stands in your way, warning of %s. Type 'harbinger' to answer, or %s again to meet it.", capFirst(def.Name), warning, again)
 }
 
 // fateBeforeAdvance runs before every age advance to next (the advance
@@ -504,7 +504,7 @@ func (ge *GameEngine) fateBeforePrestige() error {
 	if !f.open() || f.EpochKey != ge.currentEpoch || !ge.rules.IsFinalEra(f.EpochKey) {
 		return nil
 	}
-	return ge.fateAtPassage(true, vibe.Line("game.fate.fateBeforePrestige.01", "confirm prestige"), "prestiging")
+	return ge.fateAtPassage(true, rowid.Line("game.fate.fateBeforePrestige.01", "confirm prestige"), "prestiging")
 }
 
 // fateAtPassage settles the open doom at a passage the player reached first:

@@ -5,7 +5,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -21,12 +21,12 @@ import (
 // researchKeys are the Research panel's keys as the Help panel lists them:
 // the key, then what it does.
 var researchKeys = []keyHelp{
-	{"Arrows", vibe.E("ui.research_panel.researchKeys.02", "Move to the nearest tech that way; the view follows")},
-	{"Tab", vibe.E("ui.research_panel.researchKeys.04", "Next tech you can start (Shift-Tab: the one before)")},
-	{"PgUp/PgDn", vibe.E("ui.research_panel.researchKeys.05", "Zoom out to a tech a line, and back in")},
-	{"Home", vibe.E("ui.research_panel.researchKeys.07", "Back to your current age")},
-	{"Enter", vibe.E("ui.research_panel.researchKeys.09", "Open the selected tech's card; on the card, do what its last line says (with something typed, Tab and Enter act on the prompt instead)")},
-	{"Esc", vibe.E("ui.research_panel.researchKeys.11", "Close the card, then the panel")},
+	{"Arrows", rowid.E("ui.research_panel.researchKeys.02", "Move to the nearest tech that way; the view follows")},
+	{"Tab", rowid.E("ui.research_panel.researchKeys.04", "Next tech you can start (Shift-Tab: the one before)")},
+	{"PgUp/PgDn", rowid.E("ui.research_panel.researchKeys.05", "Zoom out to a tech a line, and back in")},
+	{"Home", rowid.E("ui.research_panel.researchKeys.07", "Back to your current age")},
+	{"Enter", rowid.E("ui.research_panel.researchKeys.09", "Open the selected tech's card; on the card, do what its last line says (with something typed, Tab and Enter act on the prompt instead)")},
+	{"Esc", rowid.E("ui.research_panel.researchKeys.11", "Close the card, then the panel")},
 }
 
 // researchPanel is the Research overlay primitive.

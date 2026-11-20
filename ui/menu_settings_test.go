@@ -23,7 +23,7 @@ func TestMenuShowsSettingsNotThemes(t *testing.T) {
 func TestMenuSettingsRowsSave(t *testing.T) {
 	r := newMenuRig(t)
 	r.press('s')
-	if !r.m.settings || ids(r.m.view.items) != "set_theme set_vibe set_glyphs set_motion set_minimap set_discord set_back" {
+	if !r.m.settings || ids(r.m.view.items) != "set_theme set_glyphs set_motion set_minimap set_discord set_back" {
 		t.Fatalf("Settings page not open: %v %q", r.m.settings, ids(r.m.view.items))
 	}
 	// Motion: Enter flips it and the account holds it.

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -38,7 +38,6 @@ const (
 
 	// The Settings page's rows.
 	miSetTheme   = "set_theme"
-	miSetVibe    = "set_vibe"
 	miSetGlyphs  = "set_glyphs"
 	miSetMotion  = "set_motion"
 	miSetMinimap = "set_minimap"
@@ -323,7 +322,7 @@ func (sc *menuScene) entryAt(pt image.Point) int {
 }
 
 // menuKeysHint is the line that says how the menu is driven.
-var menuKeysHint = vibe.E("ui.menu_page.menuKeysHint.01", "↑ ↓ choose · Enter open")
+var menuKeysHint = rowid.E("ui.menu_page.menuKeysHint.01", "↑ ↓ choose · Enter open")
 
 // renderTown draws the town page.
 func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *menuTown, mf mapstyle.Frame) {
@@ -359,7 +358,7 @@ func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *m
 
 // txtOneTerminal ends the line under the town page's wordmark. The README
 // banner (BannerImage) says it too, so it has one id.
-var txtOneTerminal = vibe.E("ui.menu_page.renderTown.01", " ages, one terminal ")
+var txtOneTerminal = rowid.E("ui.menu_page.renderTown.01", " ages, one terminal ")
 
 // menuTagline is the line under the town page's wordmark, a blank at each
 // end so it stands on a ground of its own.
@@ -378,13 +377,13 @@ func spacedOptions(options []string) []string {
 }
 
 // txtThe is said the same way on several screens, so it has one id.
-var txtThe = vibe.E("ui.menu_page.renderForge.12", "the ")
+var txtThe = rowid.E("ui.menu_page.renderForge.12", "the ")
 
 // txtAges is said the same way on several screens, so it has one id.
-var txtAges = vibe.E("ui.menu_page.renderForge.04", " AGES")
+var txtAges = rowid.E("ui.menu_page.renderForge.04", " AGES")
 
 // txtAlmanacOf is said the same way on several screens, so it has one id.
-var txtAlmanacOf = vibe.E("ui.menu_page.renderForge.03", "AN ALMANAC OF ")
+var txtAlmanacOf = rowid.E("ui.menu_page.renderForge.03", "AN ALMANAC OF ")
 
 // renderForge draws the forge page.
 func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
@@ -396,7 +395,7 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	// The plate: the fire, with the anvil standing in front of it.
 	sc.forge.draw(g, pal, L.px+1, L.py+1, sc.strike, v.plain)
 	g.box(L.px, L.py, L.pw, L.ph, true, pal.dim)
-	if plate := fitOption([]string{vibe.Line("ui.menu_page.renderForge.01", " Plate I. The forge "), vibe.Line("ui.menu_page.renderForge.02", " The forge ")}, L.pw-4); plate != "" {
+	if plate := fitOption([]string{rowid.Line("ui.menu_page.renderForge.01", " Plate I. The forge "), rowid.Line("ui.menu_page.renderForge.02", " The forge ")}, L.pw-4); plate != "" {
 		g.textOn(L.px+centred(L.pw, runeLen(plate)), L.py+L.ph-1, plate, pal.dim, pal.bg, false)
 	}
 	sc.sparks.draw(g, pal)
@@ -408,9 +407,9 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	}
 	ax, _ := sc.anvilAt()
 	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, (ax-float64(L.wx))/float64(menuWordW*L.sx), v.plain)
-	tags := []string{vibe.Line("ui.menu_page.renderForge.07", "begun at a campfire")}
+	tags := []string{rowid.Line("ui.menu_page.renderForge.07", "begun at a campfire")}
 	if v.edition != "" {
-		tags = []string{vibe.Line("ui.menu_page.renderForge.08", "begun at a campfire · the ") + v.edition + vibe.Line("ui.menu_page.renderForge.09", " edition, much enlarged"), vibe.Line("ui.menu_page.renderForge.10", "begun at a campfire")}
+		tags = []string{rowid.Line("ui.menu_page.renderForge.08", "begun at a campfire · the ") + v.edition + rowid.Line("ui.menu_page.renderForge.09", " edition, much enlarged"), rowid.Line("ui.menu_page.renderForge.10", "begun at a campfire")}
 	}
 	if tag := fitOption(tags, inside); tag != "" {
 		g.text(centred(L.w, runeLen(tag)), L.tag, tag, pal.ink, false)
@@ -419,7 +418,7 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	for x := L.mx - 1; x < L.px+L.pw; x++ {
 		g.put(x, L.rule, '─', pal.faint)
 	}
-	g.text(L.mx, L.rule, vibe.Line("ui.menu_page.renderForge.11", " CONTENTS "), pal.accent, true)
+	g.text(L.mx, L.rule, rowid.Line("ui.menu_page.renderForge.11", " CONTENTS "), pal.accent, true)
 	sc.drawElite(g, pal, v, L.mx+11, L.rule, L.px+L.pw-2-(L.mx+11), false)
 	sc.drawMenu(g, pal, v, true)
 
@@ -429,7 +428,7 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	var feet []string
 	for _, ver := range v.versions {
 		if v.edition != "" {
-			feet = append(feet, txtThe.String()+v.edition+vibe.Line("ui.menu_page.renderForge.13", " edition · ")+ver)
+			feet = append(feet, txtThe.String()+v.edition+rowid.Line("ui.menu_page.renderForge.13", " edition · ")+ver)
 		}
 	}
 	feet = append(feet, v.versions...)
@@ -538,7 +537,7 @@ func ternaryColor(cond bool, a, b kit.Color) kit.Color {
 }
 
 // txtGameTitle is said the same way on several screens, so it has one id.
-var txtGameTitle = vibe.E("ui.menu_page.renderCompact.01", "AGEFORGE")
+var txtGameTitle = rowid.E("ui.menu_page.renderCompact.01", "AGEFORGE")
 
 // renderCompact draws the page for a terminal under the game's least
 // size: the name and the list, nothing that moves.

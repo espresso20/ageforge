@@ -941,15 +941,15 @@ func TestQuantityInflection(t *testing.T) {
 		{"dark_matter", 2, "2 dark matter"},
 	}
 	for _, c := range cases {
-		if got := phraseQuantityAs(c.key, c.n, false); got != c.want {
-			t.Errorf("phraseQuantityAs(%q, %d) = %q, want %q", c.key, c.n, got, c.want)
+		if got := phraseQuantity(c.key, c.n); got != c.want {
+			t.Errorf("phraseQuantity(%q, %d) = %q, want %q", c.key, c.n, got, c.want)
 		}
 	}
-	if got := phraseStoresAs("food", false); got != "your food stores" {
-		t.Errorf("phraseStoresAs(food) = %q", got)
+	if got := phraseStores("food"); got != "your food stores" {
+		t.Errorf("phraseStores(food) = %q", got)
 	}
-	if got := phraseHaulAs("quantum_flux", false); got != "a haul of quantum flux" {
-		t.Errorf("phraseHaulAs(quantum_flux) = %q", got)
+	if got := phraseHaul("quantum_flux"); got != "a haul of quantum flux" {
+		t.Errorf("phraseHaul(quantum_flux) = %q", got)
 	}
 	if got := resourceLabel(""); got != "supplies" {
 		t.Errorf("resourceLabel(\"\") = %q, want the generic fallback", got)

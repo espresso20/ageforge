@@ -7,7 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/world"
 )
 
@@ -53,71 +53,71 @@ func (h *hostState) clear() {
 
 // The home system's names are rows shared with the terminal's inspector.
 var (
-	solName   = vibe.E("ui.mapstyle.space.sun.01", "Sol")
-	moonName  = vibe.E("ui.mapstyle.space.moon.01", "The Moon")
-	satName   = vibe.E("ui.mapstyle.space.satellite.01", "Satellite")
-	stnName   = vibe.E("ui.mapstyle.space.station.name", "Orbital Space Station")
-	plutoName = vibe.E("ui.mapstyle.space.planet.pluto", "Pluto")
+	solName   = rowid.E("ui.mapstyle.space.sun.01", "Sol")
+	moonName  = rowid.E("ui.mapstyle.space.moon.01", "The Moon")
+	satName   = rowid.E("ui.mapstyle.space.satellite.01", "Satellite")
+	stnName   = rowid.E("ui.mapstyle.space.station.name", "Orbital Space Station")
+	plutoName = rowid.E("ui.mapstyle.space.planet.pluto", "Pluto")
 )
 
 // moonNames are the major moons by the world's keys.
-var moonNames = map[string]vibe.Entry{
-	"phobos":    vibe.E("ui.mapstyle.space.moon.phobos", "Phobos"),
-	"deimos":    vibe.E("ui.mapstyle.space.moon.deimos", "Deimos"),
-	"io":        vibe.E("ui.mapstyle.space.moon.io", "Io"),
-	"europa":    vibe.E("ui.mapstyle.space.moon.europa", "Europa"),
-	"ganymede":  vibe.E("ui.mapstyle.space.moon.ganymede", "Ganymede"),
-	"callisto":  vibe.E("ui.mapstyle.space.moon.callisto", "Callisto"),
-	"enceladus": vibe.E("ui.mapstyle.space.moon.enceladus", "Enceladus"),
-	"rhea":      vibe.E("ui.mapstyle.space.moon.rhea", "Rhea"),
-	"titan":     vibe.E("ui.mapstyle.space.moon.titan", "Titan"),
-	"iapetus":   vibe.E("ui.mapstyle.space.moon.iapetus", "Iapetus"),
-	"miranda":   vibe.E("ui.mapstyle.space.moon.miranda", "Miranda"),
-	"titania":   vibe.E("ui.mapstyle.space.moon.titania", "Titania"),
-	"oberon":    vibe.E("ui.mapstyle.space.moon.oberon", "Oberon"),
-	"triton":    vibe.E("ui.mapstyle.space.moon.triton", "Triton"),
-	"charon":    vibe.E("ui.mapstyle.space.moon.charon", "Charon"),
+var moonNames = map[string]rowid.Entry{
+	"phobos":    rowid.E("ui.mapstyle.space.moon.phobos", "Phobos"),
+	"deimos":    rowid.E("ui.mapstyle.space.moon.deimos", "Deimos"),
+	"io":        rowid.E("ui.mapstyle.space.moon.io", "Io"),
+	"europa":    rowid.E("ui.mapstyle.space.moon.europa", "Europa"),
+	"ganymede":  rowid.E("ui.mapstyle.space.moon.ganymede", "Ganymede"),
+	"callisto":  rowid.E("ui.mapstyle.space.moon.callisto", "Callisto"),
+	"enceladus": rowid.E("ui.mapstyle.space.moon.enceladus", "Enceladus"),
+	"rhea":      rowid.E("ui.mapstyle.space.moon.rhea", "Rhea"),
+	"titan":     rowid.E("ui.mapstyle.space.moon.titan", "Titan"),
+	"iapetus":   rowid.E("ui.mapstyle.space.moon.iapetus", "Iapetus"),
+	"miranda":   rowid.E("ui.mapstyle.space.moon.miranda", "Miranda"),
+	"titania":   rowid.E("ui.mapstyle.space.moon.titania", "Titania"),
+	"oberon":    rowid.E("ui.mapstyle.space.moon.oberon", "Oberon"),
+	"triton":    rowid.E("ui.mapstyle.space.moon.triton", "Triton"),
+	"charon":    rowid.E("ui.mapstyle.space.moon.charon", "Charon"),
 }
 
 // lockLines say which age opens a frame the player's age has not reached.
 // Placeholders: the words are rewritten in the sheets.
-var lockLines = map[string]vibe.Entry{
-	world.AgeInterstellar: vibe.E("ui.mapstyle.space.lock.interstellar_age", "Opens in the Interstellar Age."),
-	world.AgeGalactic:     vibe.E("ui.mapstyle.space.lock.galactic_age", "Opens in the Galactic Age."),
-	world.AgeQuantum:      vibe.E("ui.mapstyle.space.lock.quantum_age", "Opens in the Quantum Age."),
-	world.AgeTranscendent: vibe.E("ui.mapstyle.space.lock.transcendent_age", "Opens in the Transcendent Age."),
+var lockLines = map[string]rowid.Entry{
+	world.AgeInterstellar: rowid.E("ui.mapstyle.space.lock.interstellar_age", "Opens in the Interstellar Age."),
+	world.AgeGalactic:     rowid.E("ui.mapstyle.space.lock.galactic_age", "Opens in the Galactic Age."),
+	world.AgeQuantum:      rowid.E("ui.mapstyle.space.lock.quantum_age", "Opens in the Quantum Age."),
+	world.AgeTranscendent: rowid.E("ui.mapstyle.space.lock.transcendent_age", "Opens in the Transcendent Age."),
 }
 
 // heldLines say whether the people hold a sector or can go to a star. Placeholders.
 type hl struct{ zone, held bool }
 
-var heldLines = map[hl]vibe.Entry{
-	{true, true}:   vibe.E("ui.mapstyle.space.sector.held", "Held by your people."),
-	{true, false}:  vibe.E("ui.mapstyle.space.sector.free", "Not yet reached by your people."),
-	{false, true}:  vibe.E("ui.mapstyle.space.star.held", "Inside your territory."),
-	{false, false}: vibe.E("ui.mapstyle.space.star.out", "Outside your reach."),
+var heldLines = map[hl]rowid.Entry{
+	{true, true}:   rowid.E("ui.mapstyle.space.sector.held", "Held by your people."),
+	{true, false}:  rowid.E("ui.mapstyle.space.sector.free", "Not yet reached by your people."),
+	{false, true}:  rowid.E("ui.mapstyle.space.star.held", "Inside your territory."),
+	{false, false}: rowid.E("ui.mapstyle.space.star.out", "Outside your reach."),
 }
 
 // Uncertain places: what a Quantum place that is not settled yet is called,
 // and what it says about itself. Placeholders: Adam rewrites the words.
 var (
-	uncertainName = vibe.E("ui.mapstyle.space.uncertain.name", "Uncertain")
-	uncertainLook = vibe.E("ui.mapstyle.space.uncertain.look", "Uncertain. Look closer to settle it.")
-	settledLook   = vibe.E("ui.mapstyle.space.uncertain.settled", "Settled.")
-	tooFarLine    = vibe.E("ui.mapstyle.space.web.too_far", "Too far to enter.")
-	localGroup    = vibe.E("ui.mapstyle.space.web.local_group", "Local Group")
+	uncertainName = rowid.E("ui.mapstyle.space.uncertain.name", "Uncertain")
+	uncertainLook = rowid.E("ui.mapstyle.space.uncertain.look", "Uncertain. Look closer to settle it.")
+	settledLook   = rowid.E("ui.mapstyle.space.uncertain.settled", "Settled.")
+	tooFarLine    = rowid.E("ui.mapstyle.space.web.too_far", "Too far to enter.")
+	localGroup    = rowid.E("ui.mapstyle.space.web.local_group", "Local Group")
 )
 
 var (
 	namesOnce sync.Once
-	nameOf    map[string]vibe.Entry
+	nameOf    map[string]rowid.Entry
 )
 
 // SkyName is how a label key of the world model reads, or "" for a key with no
 // name. It is the host's lookup: the window draws these beside the objects.
 func SkyName(key string) string {
 	namesOnce.Do(func() {
-		nameOf = map[string]vibe.Entry{
+		nameOf = map[string]rowid.Entry{
 			"sol":           solName,
 			"the_moon":      moonName,
 			"satellite":     satName,

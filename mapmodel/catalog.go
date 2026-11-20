@@ -6,8 +6,8 @@ import (
 	"slices"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Lineage keys the model groups buildings by. They are the config lineages,
@@ -55,13 +55,13 @@ var ageIndex = func() map[string]int {
 }()
 
 // LineageNames are the player-facing names of each lineage.
-var LineageNames = map[string]vibe.Entry{
-	LinHousing: vibe.E("map.lineage.housing", "housing"), LinFood: vibe.E("map.lineage.food", "farms and food"), LinWood: vibe.E("map.lineage.organic_extraction", "wood and fibre"),
-	LinMines: vibe.E("map.lineage.geological_extraction", "quarries and mines"), LinMetal: vibe.E("map.lineage.metallurgy", "metalworks"), LinEngineer: vibe.E("map.lineage.engineering", "engineering"),
-	LinEnergy: vibe.E("map.lineage.energy", "power"), LinHarbor: vibe.E("map.lineage.harbor", "harbor"), LinHacker: vibe.E("map.lineage.hacker", "hacker dens"),
-	LinKnowledge: vibe.E("map.lineage.knowledge", "knowledge"), LinFaith: vibe.E("map.lineage.faith", "faith"), LinCulture: vibe.E("map.lineage.culture_arts", "culture"), LinMonument: vibe.E("map.lineage.monument", "monuments"),
-	LinTrade: vibe.E("map.lineage.trade", "trade"), LinStorage: vibe.E("map.lineage.storage", "storage"), LinMilitary: vibe.E("map.lineage.military", "military"), LinDiplomacy: vibe.E("map.lineage.diplomacy", "diplomacy"),
-	LinWonder: vibe.E("map.lineage.wonder", "wonders"),
+var LineageNames = map[string]rowid.Entry{
+	LinHousing: rowid.E("map.lineage.housing", "housing"), LinFood: rowid.E("map.lineage.food", "farms and food"), LinWood: rowid.E("map.lineage.organic_extraction", "wood and fibre"),
+	LinMines: rowid.E("map.lineage.geological_extraction", "quarries and mines"), LinMetal: rowid.E("map.lineage.metallurgy", "metalworks"), LinEngineer: rowid.E("map.lineage.engineering", "engineering"),
+	LinEnergy: rowid.E("map.lineage.energy", "power"), LinHarbor: rowid.E("map.lineage.harbor", "harbor"), LinHacker: rowid.E("map.lineage.hacker", "hacker dens"),
+	LinKnowledge: rowid.E("map.lineage.knowledge", "knowledge"), LinFaith: rowid.E("map.lineage.faith", "faith"), LinCulture: rowid.E("map.lineage.culture_arts", "culture"), LinMonument: rowid.E("map.lineage.monument", "monuments"),
+	LinTrade: rowid.E("map.lineage.trade", "trade"), LinStorage: rowid.E("map.lineage.storage", "storage"), LinMilitary: rowid.E("map.lineage.military", "military"), LinDiplomacy: rowid.E("map.lineage.diplomacy", "diplomacy"),
+	LinWonder: rowid.E("map.lineage.wonder", "wonders"),
 }
 
 // LineageName is the name of a lineage as it reads now ("" for a key with none).

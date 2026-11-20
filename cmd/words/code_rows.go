@@ -31,7 +31,7 @@ const (
 )
 
 // numberSuffix is a number with a unit tacked on, as a decade reads: "%ds". Only a text the code
-// already tells through a vibe call counts, so a duration ("%ds") stays out.
+// already tells through a rowid call counts, so a duration ("%ds") stays out.
 var numberSuffix = regexp.MustCompile(`^%d[a-z]+$`)
 
 // keyish matches a single token that reads as a key: lower case, digits and
@@ -106,24 +106,24 @@ type fileNote struct {
 }
 
 type codeReader struct {
-	c      *catalog
-	f      *srcFile
-	note   fileNote
-	n      map[string]int              // rows made so far, by function
-	vibed  map[string]bool             // the row ids the file's vibe calls carry: they are theirs for good
-	dupFn  map[string]bool             // function names more than one receiver has
-	prose  map[*ast.CompositeLit]bool  // lists and maps that hold worded text
-	parent map[*unit]*ast.CompositeLit // the list or map a unit is an element of
+	c       *catalog
+	f       *srcFile
+	note    fileNote
+	n       map[string]int              // rows made so far, by function
+	carried map[string]bool             // the row ids the file's rowid calls carry: they are theirs for good
+	dupFn   map[string]bool             // function names more than one receiver has
+	prose   map[*ast.CompositeLit]bool  // lists and maps that hold worded text
+	parent  map[*unit]*ast.CompositeLit // the list or map a unit is an element of
 }
 
 func newCodeReader(c *catalog, f *srcFile, units []*unit) *codeReader {
 	cr := &codeReader{
-		c: c, f: f, note: noteFor(f), n: map[string]int{}, vibed: map[string]bool{}, dupFn: map[string]bool{},
+		c: c, f: f, note: noteFor(f), n: map[string]int{}, carried: map[string]bool{}, dupFn: map[string]bool{},
 		prose: map[*ast.CompositeLit]bool{}, parent: map[*unit]*ast.CompositeLit{},
 	}
 	for _, u := range units {
-		if u.vibeID != "" {
-			cr.vibed[u.vibeID] = true
+		if u.rowID != "" {
+			cr.carried[u.rowID] = true
 		}
 	}
 	seen := map[string]string{}
@@ -151,13 +151,13 @@ func newCodeReader(c *catalog, f *srcFile, units []*unit) *codeReader {
 				if kv, ok := el.(*ast.KeyValueExpr); ok {
 					v = kv.Value
 				}
-				// A vibe call counts as the text it carries, so wiring a text leaves its
-				// list as it was. The exception is vibe.Line outside the map files: it
+				// A rowid call counts as the text it carries, so wiring a text leaves its
+				// list as it was. The exception is rowid.Line outside the map files: it
 				// is not seen through, so a single lower-case word in one is still
 				// judged as a possible key, even in a list of worded text. This keeps
 				// the log and screens exports unchanged.
 				if call, ok := v.(*ast.CallExpr); ok {
-					if s, ok := vibeCarried(call); ok && (cr.note.area == areaMap || !isVibeLine(call)) {
+					if s, ok := rowCarried(call); ok && (cr.note.area == areaMap || !isRowLine(call)) {
 						v = s
 					}
 				}
@@ -185,16 +185,16 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	if cr.note.skip != "" {
 		return nil, cr.note.skip
 	}
-	if u.vibeKey {
-		return nil, whyKey // the row id of a vibe call
+	if u.rowKey {
+		return nil, whyKey // the row id of a rowid call
 	}
-	if !hasWord(u.text) && !(u.vibeID != "" && numberSuffix.MatchString(u.text)) {
+	if !hasWord(u.text) && !(u.rowID != "" && numberSuffix.MatchString(u.text)) {
 		return nil, whyNoWords
 	}
 	for _, marker := range cr.c.rules.readBack {
-		// A text inside a vibe call is the line as it is told, not the line kept
-		// in the save, so the markers are looked for only in texts with no vibe id.
-		if u.vibeID == "" && strings.Contains(u.text, marker) {
+		// A text inside a rowid call is the line as it is told, not the line kept
+		// in the save, so the markers are looked for only in texts with no row id.
+		if u.rowID == "" && strings.Contains(u.text, marker) {
 			return nil, whyReadBack
 		}
 	}
@@ -242,8 +242,8 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	}
 	maybeWord := false
 	// The singular of a count noun ("nanobot") reads like a key, and sits in a
-	// vibe call: the flavor package tells it in the script's words, so it is shown.
-	flavorWord := strings.HasPrefix(u.vibeID, "flavor.")
+	// rowid call: the flavor package tells it in the script's words, so it is shown.
+	flavorWord := strings.HasPrefix(u.rowID, "flavor.")
 	if keyLike(u.text) && !flavorWord && !single && !noun && !cr.prose[cr.parent[u]] {
 		if !cr.c.mightBeShown(u) {
 			return nil, whyKey
@@ -268,11 +268,11 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	if fn == "" {
 		fn = "top"
 	}
-	// A row id is its place in its function (the nth text of it), unless a vibe
+	// A row id is its place in its function (the nth text of it), unless a rowid
 	// call carries the id: that id stays with the text wherever it moves. A
 	// number held by such an id is skipped for the texts that have none.
-	if u.vibeID != "" {
-		r.id = u.vibeID
+	if u.rowID != "" {
+		r.id = u.rowID
 	} else {
 		for {
 			cr.n[fn]++
@@ -281,7 +281,7 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 			if cr.f.dir == "." {
 				r.id = "main" + "." + strings.TrimPrefix(r.id, ".")
 			}
-			if !cr.vibed[r.id] {
+			if !cr.carried[r.id] {
 				break
 			}
 		}
@@ -300,7 +300,7 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 			r.unsure = true
 			what = "An error from the plumbing under the game (files, the network), which may never be shown as written"
 		}
-	case isLog:
+	case isLog && !single:
 		r.kind = kindMessage
 		what = "A line in the game log"
 		r.seen = seenNews
@@ -336,7 +336,7 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	}
 	where := what + " " + cr.note.place + "."
 	pattern := ""
-	if p, ok := framePieces[u.vibeID]; ok {
+	if p, ok := framePieces[u.rowID]; ok {
 		pattern = p
 	} else if u.chain != nil && u.chain.parts >= 1 && strings.TrimSpace(u.chain.pattern) != strings.TrimSpace(u.text) {
 		pattern = u.chain.pattern

@@ -16,8 +16,8 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/platform/steam"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -41,7 +41,7 @@ import (
 // eliteLine is a mark, the words and a mark: the forge master's line.
 type eliteLine struct {
 	left  string
-	words vibe.Entry
+	words rowid.Entry
 	right string
 }
 
@@ -52,11 +52,11 @@ func (e eliteLine) strings() [3]string { return [3]string{e.left, e.words.String
 // eliteLines are shown on the menu to an account that holds a save with a
 // forge master's proof: a mark, the words, a mark.
 var eliteLines = []eliteLine{
-	{"⚒", vibe.E("ui.menu.eliteLines.01", "MASTER FORGER"), "⚒"},
-	{"{", vibe.E("ui.menu.eliteLines.02", "TOUCHED BY THE SOURCE"), "}"},
-	{"✦", vibe.E("ui.menu.eliteLines.03", "ARCHITECT OF THE FORGE"), "✦"},
-	{"<", vibe.E("ui.menu.eliteLines.04", "REALITY.EXE PATCHED"), ">"},
-	{"⚙", vibe.E("ui.menu.eliteLines.05", "THE FIRST MAKER"), "⚙"},
+	{"⚒", rowid.E("ui.menu.eliteLines.01", "MASTER FORGER"), "⚒"},
+	{"{", rowid.E("ui.menu.eliteLines.02", "TOUCHED BY THE SOURCE"), "}"},
+	{"✦", rowid.E("ui.menu.eliteLines.03", "ARCHITECT OF THE FORGE"), "✦"},
+	{"<", rowid.E("ui.menu.eliteLines.04", "REALITY.EXE PATCHED"), ">"},
+	{"⚙", rowid.E("ui.menu.eliteLines.05", "THE FIRST MAKER"), "⚙"},
 }
 
 // menuStrikeHold is how long a choice waits for its strike to be drawn
@@ -157,7 +157,7 @@ func newMainMenu(app *appLoop, pages *nativePages, engine *game.GameEngine, curr
 	if steam.Build {
 		// Steam delivers updates; the entry only says so.
 		m.checkUpdates = func() {
-			showUpdateMsg(app, pages, vibe.Line("ui.menu.newMainMenu.01", "Steam keeps this game up to date."))
+			showUpdateMsg(app, pages, rowid.Line("ui.menu.newMainMenu.01", "Steam keeps this game up to date."))
 		}
 	}
 	m.refresh(true)
@@ -177,7 +177,7 @@ func (m *mainMenu) fingerprint() string {
 		mainGame, last := acct.GameRecord()
 		fmt.Fprintf(&sb, "%s|%s|%s|", acct.AccountID, mainGame, last)
 	}
-	fmt.Fprintf(&sb, "%d|%v|%v|", set.Tier, set.Motion, vibe.On()) // the words follow VibeMode too
+	fmt.Fprintf(&sb, "%d|%v|", set.Tier, set.Motion)
 	entries, _ := os.ReadDir(filepath.Join(game.DataDir(), "saves"))
 	for _, e := range entries {
 		if fi, err := e.Info(); err == nil {
@@ -231,7 +231,7 @@ func (m *mainMenu) continueDetails(st *game.GameState) {
 		age = ageDisplay(st.Age)
 	}
 	// Count writes a large population short ("8.31K people").
-	people := textfmt.Count(st.Workers.TotalPop, vibe.Line("ui.menu.continueDetails.01", "person"), vibe.Line("ui.menu.continueDetails.02", "people"))
+	people := textfmt.Count(st.Workers.TotalPop, rowid.Line("ui.menu.continueDetails.01", "person"), rowid.Line("ui.menu.continueDetails.02", "people"))
 	var details []string
 	if m.town != nil && m.town.name != "" {
 		details = append(details, m.town.name+" · "+age+" · "+people)
@@ -258,7 +258,7 @@ func menuCaptions(town *menuTown, st *game.GameState) []string {
 	}
 	var out []string
 	if name != "" && st.Prestige.Level > 0 {
-		out = append(out, vibe.Sprintf("ui.menu.menuCaptions.01", "%s · %s · ★ Prestige level %d", name, age, st.Prestige.Level))
+		out = append(out, rowid.Sprintf("ui.menu.menuCaptions.01", "%s · %s · ★ Prestige level %d", name, age, st.Prestige.Level))
 	}
 	if name != "" {
 		out = append(out, name+" · "+age)
@@ -280,7 +280,7 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	if m.settings {
 		items = m.settingsItems()
 	} else if m.hasCur {
-		items = append(items, menuItem{id: miContinue, label: vibe.Line("ui.menu.buildViewWith.01", "Continue"), key: 'c', extras: m.contExtras, details: m.contDetails})
+		items = append(items, menuItem{id: miContinue, label: rowid.Line("ui.menu.buildViewWith.01", "Continue"), key: 'c', extras: m.contExtras, details: m.contDetails})
 	}
 	if !m.settings {
 		items = append(items, m.mainItems(badges)...)
@@ -301,20 +301,20 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	m.view.edition = menuEdition(m.version)
 	m.view.versions = []string{m.version}
 	if m.update {
-		m.view.versions = []string{m.version + vibe.Line("ui.menu.buildViewWith.09", " · update available (u)"), m.version + vibe.Line("ui.menu.buildViewWith.10", " · update (u)"), m.version}
+		m.view.versions = []string{m.version + rowid.Line("ui.menu.buildViewWith.09", " · update available (u)"), m.version + rowid.Line("ui.menu.buildViewWith.10", " · update (u)"), m.version}
 	}
 }
 
 // mainItems are the main menu's entries after Continue.
 func (m *mainMenu) mainItems(badges []string) []menuItem {
 	return append([]menuItem(nil),
-		menuItem{id: miNew, label: vibe.Line("ui.menu.buildViewWith.02", "New game"), key: 'n'},
-		menuItem{id: miLoad, label: vibe.Line("ui.menu.buildViewWith.03", "Load game"), key: 'l'},
-		menuItem{id: miBadges, label: vibe.Line("ui.menu.buildViewWith.04", "Badges"), key: 'b', extras: badges},
-		menuItem{id: miSettings, label: vibe.Line("ui.menu.settings.01", "Settings"), key: 's'},
-		menuItem{id: miAccounts, label: vibe.Line("ui.menu.buildViewWith.06", "Accounts"), key: 'a'},
-		menuItem{id: miUpdates, label: vibe.Line("ui.menu.buildViewWith.07", "Check for updates"), key: 'u'},
-		menuItem{id: miQuit, label: vibe.Line("ui.menu.buildViewWith.08", "Quit"), key: 'q'},
+		menuItem{id: miNew, label: rowid.Line("ui.menu.buildViewWith.02", "New game"), key: 'n'},
+		menuItem{id: miLoad, label: rowid.Line("ui.menu.buildViewWith.03", "Load game"), key: 'l'},
+		menuItem{id: miBadges, label: rowid.Line("ui.menu.buildViewWith.04", "Badges"), key: 'b', extras: badges},
+		menuItem{id: miSettings, label: rowid.Line("ui.menu.settings.01", "Settings"), key: 's'},
+		menuItem{id: miAccounts, label: rowid.Line("ui.menu.buildViewWith.06", "Accounts"), key: 'a'},
+		menuItem{id: miUpdates, label: rowid.Line("ui.menu.buildViewWith.07", "Check for updates"), key: 'u'},
+		menuItem{id: miQuit, label: rowid.Line("ui.menu.buildViewWith.08", "Quit"), key: 'q'},
 	)
 }
 
@@ -629,7 +629,7 @@ func (m *mainMenu) open(id string) {
 		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash")
 		m.pages.AddPage(themePickerPage, page, true, true)
 		m.app.SetFocus(page)
-	case miSetVibe, miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord, miSetFont:
+	case miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord, miSetFont:
 		m.changeSetting(id, 1)
 	case miSetBack:
 		m.closeSettings()
@@ -654,12 +654,12 @@ func (m *mainMenu) continueGame() {
 	name := m.cur.Save.Name
 	if err := m.engine.LoadGame(name); err != nil {
 		// It was readable a moment ago: say what happened and read again.
-		showUpdateMsg(m.app, m.pages, vibe.Sprintf("ui.menu.continueGame.01", "Could not open '%s'.\n\n%v", name, err))
+		showUpdateMsg(m.app, m.pages, rowid.Sprintf("ui.menu.continueGame.01", "Could not open '%s'.\n\n%v", name, err))
 		m.refresh(true)
 		return
 	}
 	m.leave()
-	m.engine.AddLog("success", vibe.Line("ui.menu.continueGame.02", "Game loaded."))
+	m.engine.AddLog("success", rowid.Line("ui.menu.continueGame.02", "Game loaded."))
 	m.pages.SwitchToPage("dashboard")
 	go m.engine.Start()
 }

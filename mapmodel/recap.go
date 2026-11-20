@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // recap.go is the "while you were away" digest. A Visit is a small snapshot
@@ -135,7 +135,7 @@ type Recap struct {
 func recap(m *Model, st *game.GameState, v *Visit) Recap {
 	r := Recap{}
 	if m.Catastrophe.Pending != "" {
-		r.Items = append(r.Items, NewsItem{Kind: NewsCatastrophe, Text: m.Catastrophe.PendingName + vibe.Line("mapmodel.recap.recap.01", " is upon you"), Bad: true})
+		r.Items = append(r.Items, NewsItem{Kind: NewsCatastrophe, Text: m.Catastrophe.PendingName + rowid.Line("mapmodel.recap.recap.01", " is upon you"), Bad: true})
 	}
 	if v == nil {
 		return r
@@ -146,7 +146,7 @@ func recap(m *Model, st *game.GameState, v *Visit) Recap {
 	r.HasBaseline = true
 	r.Since = m.Tick - v.Tick
 	if v.Age != "" && v.Age != m.Age {
-		r.Items = append(r.Items, NewsItem{Kind: NewsAge, Text: vibe.Line("mapmodel.recap.recap.02", "entered the ") + m.AgeName})
+		r.Items = append(r.Items, NewsItem{Kind: NewsAge, Text: rowid.Line("mapmodel.recap.recap.02", "entered the ") + m.AgeName})
 	}
 	cur := map[string]int{}
 	for _, b := range m.Buildings {
@@ -173,14 +173,14 @@ func recap(m *Model, st *game.GameState, v *Visit) Recap {
 	slices.SortStableFunc(r.Lost, byN)
 	for _, w := range m.Wonders {
 		if w.Delta {
-			r.Items = append(r.Items, NewsItem{Kind: NewsWonder, Text: w.Name + vibe.Line("mapmodel.recap.recap.03", " completed")})
+			r.Items = append(r.Items, NewsItem{Kind: NewsWonder, Text: w.Name + rowid.Line("mapmodel.recap.recap.03", " completed")})
 		}
 	}
 	if len(r.Built) > 0 {
 		var parts []string
 		for i, c := range r.Built {
 			if i == 3 {
-				parts = append(parts, vibe.Line("mapmodel.recap.recap.04", "and ")+strconv.Itoa(len(r.Built)-3)+vibe.Line("mapmodel.recap.recap.05", " more"))
+				parts = append(parts, rowid.Line("mapmodel.recap.recap.04", "and ")+strconv.Itoa(len(r.Built)-3)+rowid.Line("mapmodel.recap.recap.05", " more"))
 				break
 			}
 			parts = append(parts, "+"+strconv.Itoa(c.N)+" "+c.Name)
@@ -194,33 +194,33 @@ func recap(m *Model, st *game.GameState, v *Visit) Recap {
 		was, known := v.Relations[f.Key]
 		switch {
 		case !known:
-			r.Items = append(r.Items, NewsItem{Kind: NewsCiv, Text: vibe.Line("mapmodel.recap.recap.06", "met the ") + f.Name})
+			r.Items = append(r.Items, NewsItem{Kind: NewsCiv, Text: rowid.Line("mapmodel.recap.recap.06", "met the ") + f.Name})
 		case f.Relation == RelWar && was != RelWar:
-			r.Items = append(r.Items, NewsItem{Kind: NewsWar, Text: vibe.Line("mapmodel.recap.recap.07", "the ") + f.Name + vibe.Line("mapmodel.recap.recap.08", " declared war"), Bad: true})
+			r.Items = append(r.Items, NewsItem{Kind: NewsWar, Text: rowid.Line("mapmodel.recap.recap.07", "the ") + f.Name + rowid.Line("mapmodel.recap.recap.08", " declared war"), Bad: true})
 		case was == RelWar && f.Relation != RelWar:
-			r.Items = append(r.Items, NewsItem{Kind: NewsPeace, Text: vibe.Line("mapmodel.recap.recap.09", "peace with the ") + f.Name})
+			r.Items = append(r.Items, NewsItem{Kind: NewsPeace, Text: rowid.Line("mapmodel.recap.recap.09", "peace with the ") + f.Name})
 		case f.Relation == RelAllied && was != RelAllied:
-			r.Items = append(r.Items, NewsItem{Kind: NewsCiv, Text: vibe.Line("mapmodel.recap.recap.10", "allied with the ") + f.Name})
+			r.Items = append(r.Items, NewsItem{Kind: NewsCiv, Text: rowid.Line("mapmodel.recap.recap.10", "allied with the ") + f.Name})
 		}
 	}
 	if n := len(m.Routes) - v.Routes; n > 0 {
-		r.Items = append(r.Items, NewsItem{Kind: NewsRoute, Text: plural(n, vibe.Line("mapmodel.recap.recap.11", "trade route"), vibe.Line("mapmodel.recap.recap.12", "trade routes")) + vibe.Line("mapmodel.recap.recap.13", " opened")})
+		r.Items = append(r.Items, NewsItem{Kind: NewsRoute, Text: plural(n, rowid.Line("mapmodel.recap.recap.11", "trade route"), rowid.Line("mapmodel.recap.recap.12", "trade routes")) + rowid.Line("mapmodel.recap.recap.13", " opened")})
 	}
 	if n := m.Expeditions.Completed - v.Completed; n > 0 {
-		r.Items = append(r.Items, NewsItem{Kind: NewsExpedition, Text: plural(n, vibe.Line("mapmodel.recap.recap.14", "expedition"), vibe.Line("mapmodel.recap.recap.15", "expeditions")) + vibe.Line("mapmodel.recap.recap.16", " came home")})
+		r.Items = append(r.Items, NewsItem{Kind: NewsExpedition, Text: plural(n, rowid.Line("mapmodel.recap.recap.14", "expedition"), rowid.Line("mapmodel.recap.recap.15", "expeditions")) + rowid.Line("mapmodel.recap.recap.16", " came home")})
 	}
 	if m.Harbinger != nil && m.Harbinger.Name != v.Harbinger {
-		r.Items = append(r.Items, NewsItem{Kind: NewsHarbinger, Text: m.Harbinger.Name + vibe.Line("mapmodel.recap.recap.17", " has come"), Bad: true})
+		r.Items = append(r.Items, NewsItem{Kind: NewsHarbinger, Text: m.Harbinger.Name + rowid.Line("mapmodel.recap.recap.17", " has come"), Bad: true})
 	}
 	if len(r.Lost) > 0 {
 		lost := 0
 		for _, c := range r.Lost {
 			lost += c.N
 		}
-		r.Items = append(r.Items, NewsItem{Kind: NewsLost, Text: plural(lost, vibe.Line("mapmodel.recap.recap.18", "building"), vibe.Line("mapmodel.recap.recap.19", "buildings")) + vibe.Line("mapmodel.recap.recap.20", " lost or upgraded"), Bad: true})
+		r.Items = append(r.Items, NewsItem{Kind: NewsLost, Text: plural(lost, rowid.Line("mapmodel.recap.recap.18", "building"), rowid.Line("mapmodel.recap.recap.19", "buildings")) + rowid.Line("mapmodel.recap.recap.20", " lost or upgraded"), Bad: true})
 	}
 	if d := m.Workers.Pop - v.Pop; d > 0 && v.Pop > 0 {
-		r.Items = append(r.Items, NewsItem{Kind: NewsPop, Text: "+" + strconv.Itoa(d) + vibe.Line("mapmodel.recap.recap.21", " people")})
+		r.Items = append(r.Items, NewsItem{Kind: NewsPop, Text: "+" + strconv.Itoa(d) + rowid.Line("mapmodel.recap.recap.21", " people")})
 	}
 	return r
 }
@@ -245,7 +245,7 @@ func (r Recap) Headline(max int) string {
 	}
 	s := strings.Join(parts, " · ")
 	if r.HasBaseline && r.Since > 0 {
-		s = vibe.Line("mapmodel.recap.Headline.01", "since your last visit (") + Duration(r.Since) + "): " + s
+		s = rowid.Line("mapmodel.recap.Headline.01", "since your last visit (") + Duration(r.Since) + "): " + s
 	}
 	return Clip(s, max)
 }

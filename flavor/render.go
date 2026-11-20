@@ -168,7 +168,7 @@ func render(t tmpl, req Request, rng *rand.Rand) Result {
 		drew = bank[i]
 	}
 
-	plain := fillAs(t.compose(draws), req, false)
+	plain := fillAs(t.compose(draws), req)
 	return Result{
 		Text:     plain,
 		Plain:    plain,
@@ -325,8 +325,7 @@ var ageIndex = sync.OnceValue(func() map[string]int {
 // fillAs substitutes the placeholders in an assembled sentence. Every
 // placeholder this package understands is listed here; anything unrecognised is
 // left alone (and caught by TestNoUnfilledPlaceholders). The frames the game
-// words itself ("your ... stores", "a haul of ...") are the script's when told is
-// set, and the game's own English when it is not.
+// words itself ("your ... stores", "a haul of ...") are the game's own English.
 //
 // Placeholders:
 //
@@ -340,17 +339,17 @@ var ageIndex = sync.OnceValue(func() map[string]int {
 //	{amt}        Request.Amount rounded, K/M formatted ("1.23M")
 //	{n}          Request.Count, bare
 //	{ticks}      Request.Ticks, bare
-func fillAs(s string, req Request, told bool) string {
+func fillAs(s string, req Request) string {
 	if !strings.ContainsRune(s, '{') {
 		return s
 	}
 	amt := roundAmount(req.Amount)
 	return strings.NewReplacer(
 		"{subject}", req.Subject,
-		"{res}", resourceLabelAs(req.Resource, told),
-		"{res_stores}", phraseStoresAs(req.Resource, told),
-		"{res_haul}", phraseHaulAs(req.Resource, told),
-		"{amt_res}", phraseQuantityAs(req.Resource, amt, told),
+		"{res}", resourceLabel(req.Resource),
+		"{res_stores}", phraseStores(req.Resource),
+		"{res_haul}", phraseHaul(req.Resource),
+		"{amt_res}", phraseQuantity(req.Resource, amt),
 		"{amt}", textfmt.Int(amt),
 		"{n}", textfmt.Int(req.Count),
 		"{ticks}", strconv.Itoa(req.Ticks),

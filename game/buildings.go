@@ -11,8 +11,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // BuildingManager manages all buildings, including production buildings, wonders,
@@ -209,10 +209,10 @@ func closestKey[V any](input string, keys map[string]V) string {
 // unknownKeyError is the refusal for a key the player mistyped:
 // "Unknown tech 'x'. Did you mean 'y'? Type research list to see what you can
 // research." The suggestion part is dropped when nothing is close.
-func unknownKeyError[V any](kind, input string, keys map[string]V, hint string, say func(string) string) error {
-	msg := vibe.Sprintf("game.buildings.unknownKeyError.01", "Unknown %s '%s'.", kind, input)
+func unknownKeyError[V any](kind, input string, keys map[string]V, hint string) error {
+	msg := rowid.Sprintf("game.buildings.unknownKeyError.01", "Unknown %s '%s'.", kind, input)
 	if s := closestKey(input, keys); s != "" && s != input {
-		msg += vibe.Sprintf("game.buildings.unknownKeyError.02", " Did you mean '%s'?", say(s))
+		msg += rowid.Sprintf("game.buildings.unknownKeyError.02", " Did you mean '%s'?", s)
 	}
 	if hint != "" {
 		msg += " " + hint
@@ -334,7 +334,7 @@ const (
 // Buildings with WorkerDomain set use: rate = base × count × (0.20 + 0.80 × assigned/totalCap).
 // Buildings without workers use: rate = base × count (unchanged behaviour).
 func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(key string) int) map[string]float64 {
-	rates, _ := bm.productionWithWorkerOutput(getAssigned)
+	rates, _ := bm.productionWithWorkerOutput(getAssigned, nil)
 	return rates
 }
 
@@ -342,8 +342,10 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(key string) i
 // part of it that workers add: base × count × 0.80 × assigned/totalCap for
 // every building with worker slots. That part is "worker output", what a
 // worker output bonus (gather_rate) raises; an unstaffed building's 20%,
-// wonders and ruins have none.
-func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key string) int) (rates, workerOutput map[string]float64) {
+// wonders and ruins have none. rank, when set, gives the share a worker
+// domain's rank adds to the workers' part (the engine's bonus, ranks.go);
+// WorkerScaledProduction is the listed output without it.
+func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key string) int, rank func(domain string) float64) (rates, workerOutput map[string]float64) {
 	rates = make(map[string]float64)
 	workerOutput = make(map[string]float64)
 	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
@@ -361,6 +363,10 @@ func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key strin
 				}
 				byWorkers := float64(staffedShare * fillRatio)
 				rate = eff.Value * float64(count) * (unstaffedShare + byWorkers)
+				if rank != nil {
+					// A domain's rank adds that share of what its workers make.
+					rate = float64(eff.Value*float64(count)*byWorkers*(1+rank(def.WorkerDomain))) + float64(eff.Value*float64(count)*unstaffedShare)
+				}
 				workerOutput[eff.Target] += float64(eff.Value * float64(count) * byWorkers)
 			} else {
 				rate = eff.Value * float64(count)
@@ -436,16 +442,16 @@ func (bm *BuildingManager) LoadCounts(counts map[string]int) {
 func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float64, rm *ResourceManager) (float64, error) {
 	def, ok := bm.defs[wonderKey]
 	if !ok {
-		return 0, unknownKeyError(vibe.Line("game.buildings.BankResource.01", "wonder"), wonderKey, bm.defs, vibe.Line("game.buildings.BankResource.02", "Type wonders to see them."), bm.typedBuilding)
+		return 0, unknownKeyError(rowid.Line("game.buildings.BankResource.01", "wonder"), wonderKey, bm.defs, rowid.Line("game.buildings.BankResource.02", "Type wonders to see them."))
 	}
 	if def.Category != "wonder" {
-		return 0, vibe.Errorf("game.buildings.BankResource.03", "%s is not a wonder", def.Name)
+		return 0, rowid.Errorf("game.buildings.BankResource.03", "%s is not a wonder", def.Name)
 	}
 	if !bm.IsUnlocked(wonderKey) {
-		return 0, vibe.Errorf("game.buildings.BankResource.04", "%s is not unlocked yet", def.Name)
+		return 0, rowid.Errorf("game.buildings.BankResource.04", "%s is not unlocked yet", def.Name)
 	}
 	if bm.counts[wonderKey] > 0 {
-		return 0, vibe.Errorf("game.buildings.BankResource.05", "%s is already built", def.Name)
+		return 0, rowid.Errorf("game.buildings.BankResource.05", "%s is already built", def.Name)
 	}
 	required, exists := def.BaseCost[resource]
 	if !exists {
@@ -453,25 +459,25 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 		for _, k := range sortedKeys(def.BaseCost) {
 			needs = append(needs, ResourceName(k))
 		}
-		return 0, vibe.Errorf("game.buildings.BankResource.06", "%s doesn't need %s (it needs %s)", def.Name, ResourceName(resource), strings.Join(needs, ", "))
+		return 0, rowid.Errorf("game.buildings.BankResource.06", "%s doesn't need %s (it needs %s)", def.Name, ResourceName(resource), strings.Join(needs, ", "))
 	}
 	banked := bm.wonderBanks[wonderKey][resource]
 	remaining := required - banked
 	if remaining <= 0.001 {
-		return 0, vibe.Errorf("game.buildings.BankResource.07", "%s already has all the %s it needs", def.Name, ResourceName(resource))
+		return 0, rowid.Errorf("game.buildings.BankResource.07", "%s already has all the %s it needs", def.Name, ResourceName(resource))
 	}
 	if amount > remaining {
 		amount = remaining
 	}
 	have := rm.Get(resource)
 	if have < 0.001 {
-		return 0, vibe.Errorf("game.buildings.BankResource.08", "you have no %s to bank", ResourceName(resource))
+		return 0, rowid.Errorf("game.buildings.BankResource.08", "you have no %s to bank", ResourceName(resource))
 	}
 	if have < amount {
-		return 0, vibe.Errorf("game.buildings.BankResource.09", "not enough %s: need %s, have %s", ResourceName(resource), textfmt.Number(amount), textfmt.Number(have))
+		return 0, rowid.Errorf("game.buildings.BankResource.09", "not enough %s: need %s, have %s", ResourceName(resource), textfmt.Number(amount), textfmt.Number(have))
 	}
 	if !rm.Pay(map[string]float64{resource: amount}) {
-		return 0, vibe.Errorf("game.buildings.BankResource.10", "not enough %s", ResourceName(resource))
+		return 0, rowid.Errorf("game.buildings.BankResource.10", "not enough %s", ResourceName(resource))
 	}
 	if bm.wonderBanks[wonderKey] == nil {
 		bm.wonderBanks[wonderKey] = make(map[string]float64)
@@ -915,10 +921,4 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		out[key] = bs
 	}
 	return out
-}
-
-// typedBuilding is key as a player types it: the name the screen shows, in the
-// shape of a key, while VibeMode is on.
-func (bm *BuildingManager) typedBuilding(key string) string {
-	return bm.rules.Typed(rules.KindBuilding, key)
 }

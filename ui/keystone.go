@@ -3,8 +3,7 @@ package ui
 import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // The tech tree's lock, as the panels show it. An age's wonder needs one
@@ -37,18 +36,18 @@ func wonderKeystoneLine(state game.GameState, key string) string {
 	}
 	def, _ := state.Ruleset().Building(key)
 	if researched {
-		return vibe.Sprintf("ui.keystone.wonderKeystoneLine.01", "[green]✓ Keystone: %s, researched[-]", name)
+		return rowid.Sprintf("ui.keystone.wonderKeystoneLine.01", "[green]✓ Keystone: %s, researched[-]", name)
 	}
-	return vibe.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, state.Ruleset().Typed(rules.KindTech, def.RequiredTech))
+	return rowid.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, def.RequiredTech)
 }
 
 // wonderBuildLine is what a full wonder bank says to do next: build it, or
 // research its keystone first.
 func wonderBuildLine(state game.GameState, key string) string {
 	if name, researched, ok := wonderKeystone(state, key); ok && !researched {
-		return vibe.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, state.Ruleset().Typed(rules.KindBuilding, key))
+		return rowid.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, key)
 	}
-	return vibe.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", state.Ruleset().Typed(rules.KindBuilding, key))
+	return rowid.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", key)
 }
 
 // keystoneMark is the tag a tech carries in the research lists when a
@@ -58,5 +57,5 @@ func keystoneMark(ts game.TechState) string {
 	if ts.Kind != config.TechKeystone || ts.KeystoneOf == "" {
 		return ""
 	}
-	return vibe.Sprintf("ui.keystone.keystoneMark.01", "  [gold]★ keystone: %s[-]", game.BuildingName(ts.KeystoneOf))
+	return rowid.Sprintf("ui.keystone.keystoneMark.01", "  [gold]★ keystone: %s[-]", game.BuildingName(ts.KeystoneOf))
 }

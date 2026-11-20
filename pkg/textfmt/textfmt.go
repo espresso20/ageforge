@@ -2,7 +2,7 @@
 // are formatted. ui, game, boon and flavor all import it, so a panel, a log line
 // and a flavor sentence print the same amount the same way: 950, 12.5K, 1.23M.
 //
-// It imports only the standard library and vibe (for the one word List adds), and
+// It imports only the standard library and rowid (for the one word List adds), and
 // nothing of the game, so any package may import it.
 package textfmt
 
@@ -15,7 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // units are the suffixes Number prints, smallest first, each a thousand of the
@@ -229,7 +229,7 @@ func List(items []string) string {
 	case 1:
 		return items[0]
 	}
-	return strings.Join(items[:len(items)-1], ", ") + vibe.Line("pkg.textfmt.textfmt.List.01", " and ") + items[len(items)-1]
+	return strings.Join(items[:len(items)-1], ", ") + rowid.Line("pkg.textfmt.textfmt.List.01", " and ") + items[len(items)-1]
 }
 
 func trimZeros(s string) string {

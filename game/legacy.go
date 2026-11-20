@@ -6,8 +6,8 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // The legacy kit (Pacing v2, PR 6): three prestige shop items that carry a
@@ -306,7 +306,7 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 
 // countPlanItems counts plan items.
 func countPlanItems(n int) string {
-	return textfmt.Count(n, vibe.Line("game.legacy.applyPlanTemplateLocked.02", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.03", "items"))
+	return textfmt.Count(n, rowid.Line("game.legacy.applyPlanTemplateLocked.02", "item"), rowid.Line("game.legacy.applyPlanTemplateLocked.03", "items"))
 }
 
 // applyPlanTemplateLocked adds the template's slice for the current age to
@@ -340,12 +340,12 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	if added+skipped+full == 0 {
 		return
 	}
-	line := vibe.Sprintf("game.legacy.applyPlanTemplateLocked.01", "Plan Template: added %s for the %s.", countPlanItems(added), ge.rules.Name(rules.KindAge, ge.age))
+	line := rowid.Sprintf("game.legacy.applyPlanTemplateLocked.01", "Plan Template: added %s for the %s.", countPlanItems(added), ge.rules.Name(rules.KindAge, ge.age))
 	if full > 0 {
-		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.04", " The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, countPlanItems(full))
+		line += rowid.Sprintf("game.legacy.applyPlanTemplateLocked.04", " The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, countPlanItems(full))
 	}
 	if skipped > 0 {
-		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.07", " %s can't be planned yet.", countPlanItems(skipped))
+		line += rowid.Sprintf("game.legacy.applyPlanTemplateLocked.07", " %s can't be planned yet.", countPlanItems(skipped))
 	}
 	ge.addLog(LogRoutine, line)
 }
@@ -367,7 +367,7 @@ func (ge *GameEngine) meetOldFriendsLocked() {
 			continue
 		}
 		if _, ok := ge.Diplomacy.DiscoverFaction(key); ok {
-			ge.addLog("event", vibe.Sprintf("game.legacy.meetOldFriendsLocked.01", "Old friends: the %s remember your people and make contact again.", def.Name))
+			ge.addLog("event", rowid.Sprintf("game.legacy.meetOldFriendsLocked.01", "Old friends: the %s remember your people and make contact again.", def.Name))
 		}
 	}
 }
@@ -438,7 +438,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 // holds the write lock.
 func (ge *GameEngine) startRunLegacyLocked() {
 	if ge.applyLegacySharesLocked() {
-		ge.addLogAbout("info", TagPeople, vibe.Line("game.legacy.startRunLegacyLocked.01", "Roster: your shares carry over. ")+sharesLine(ge.rules, ge.workerShares)+".")
+		ge.addLog("info", rowid.Line("game.legacy.startRunLegacyLocked.01", "Roster: your shares carry over. ")+sharesLine(ge.rules, ge.workerShares)+".")
 	}
 	ge.applyPlanTemplateLocked()
 	ge.meetOldFriendsLocked()

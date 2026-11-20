@@ -34,7 +34,7 @@ type MissionReturn struct {
 	// Words, Age, Grand, Rare and Loot are what Label, Title, Place and Haul
 	// were drawn from: the offer's words, age, kind and Legendary mark, and
 	// the loot by resource. A save holds them in place of those four texts,
-	// so it reads the same in any script (VibeMode); draw writes the texts
+	// so it holds no text; draw writes the texts
 	// again. An entry with no Words is written by hand and its texts stay.
 	Words OfferWords         `json:"words,omitzero"`
 	Age   string             `json:"age,omitempty"`

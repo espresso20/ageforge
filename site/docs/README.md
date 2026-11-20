@@ -25,7 +25,7 @@ AgeForge opens in its own window as a single binary, built with Go. You steer by
 - 77 milestones in 6 chains, with civilization titles.
 - Prestige from the Medieval Age on: start over with points that become a lasting production bonus in every age. Plan Template, Roster and Old Friends carry over after your first prestige.
 - Era Mastery: when a run ends (by a prestige or a Succumb), each age it finished runs faster in later runs, 2x after one completion and up to 4.2x after ten. An age six or more ages behind your record runs at 4x at once.
-- Every panel opens full screen. VibeMode (`vibemode on`) swaps the game's words for a second script in GenZ slang.
+- Every panel opens full screen.
 
 ---
 

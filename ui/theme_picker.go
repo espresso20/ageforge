@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -21,17 +21,17 @@ const themePickerPage = "theme_picker"
 // player can see the highlight color a theme will use. Matches the §7 spec set.
 var swatchRoles = []struct {
 	role  theme.Role
-	label vibe.Entry
+	label rowid.Entry
 }{
-	{theme.RoleBackground, vibe.E("ui.theme_picker.swatchRoles.01", "Background")},
-	{theme.RoleSurface, vibe.E("ui.theme_picker.swatchRoles.02", "Surface")},
-	{theme.RoleText, vibe.E("ui.theme_picker.swatchRoles.03", "Text")},
-	{theme.RoleAccent, vibe.E("ui.theme_picker.swatchRoles.04", "Accent")},
-	{theme.RolePositive, vibe.E("ui.theme_picker.swatchRoles.05", "Positive")},
-	{theme.RoleNegative, vibe.E("ui.theme_picker.swatchRoles.06", "Negative")},
-	{theme.RoleHighlight, vibe.E("ui.theme_picker.swatchRoles.07", "Highlight")},
-	{theme.RoleDim, vibe.E("ui.theme_picker.swatchRoles.08", "Dim")},
-	{theme.RoleSelection, vibe.E("ui.theme_picker.swatchRoles.09", "Selection")},
+	{theme.RoleBackground, rowid.E("ui.theme_picker.swatchRoles.01", "Background")},
+	{theme.RoleSurface, rowid.E("ui.theme_picker.swatchRoles.02", "Surface")},
+	{theme.RoleText, rowid.E("ui.theme_picker.swatchRoles.03", "Text")},
+	{theme.RoleAccent, rowid.E("ui.theme_picker.swatchRoles.04", "Accent")},
+	{theme.RolePositive, rowid.E("ui.theme_picker.swatchRoles.05", "Positive")},
+	{theme.RoleNegative, rowid.E("ui.theme_picker.swatchRoles.06", "Negative")},
+	{theme.RoleHighlight, rowid.E("ui.theme_picker.swatchRoles.07", "Highlight")},
+	{theme.RoleDim, rowid.E("ui.theme_picker.swatchRoles.08", "Dim")},
+	{theme.RoleSelection, rowid.E("ui.theme_picker.swatchRoles.09", "Selection")},
 }
 
 // pickerRow is one list row: either a group heading (th == nil) or a theme.
@@ -130,16 +130,16 @@ func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEn
 	title := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
-		SetText(vibe.Line("ui.theme_picker.CreateThemePickerPage.01", "[gold]═══ Themes ═══[-]"))
+		SetText(rowid.Line("ui.theme_picker.CreateThemePickerPage.01", "[gold]═══ Themes ═══[-]"))
 
 	subtitle := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
-		SetText(vibe.Line("ui.theme_picker.CreateThemePickerPage.02", "[gray]The preview is live. Pick a theme that reads well in your terminal; light or dark, every theme paints its own background.[-]"))
+		SetText(rowid.Line("ui.theme_picker.CreateThemePickerPage.02", "[gray]The preview is live. Pick a theme that reads well in your terminal; light or dark, every theme paints its own background.[-]"))
 
 	// ── Theme list ───────────────────────────────────────────────────────────
 	p.list = newNativeList()
-	p.list.SetBorder(true).SetTitle(vibe.Line("ui.theme_picker.CreateThemePickerPage.03", " Themes "))
+	p.list.SetBorder(true).SetTitle(rowid.Line("ui.theme_picker.CreateThemePickerPage.03", " Themes "))
 	// Selection colors are late-bound Refs, so they follow the live preview with
 	// no Track closure (theme/screen.go).
 	p.list.SetSelectedBackgroundColor(theme.Ref(theme.RoleSelection)).
@@ -386,14 +386,14 @@ func themeGroupHeading(name string) string {
 func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
 	label := "  " + t.Name.String()
 	if t.Key == activeKey {
-		label = "[gold]● " + t.Name.String() + vibe.Line("ui.theme_picker.themeRowLabel.01", " (current)[-]")
+		label = "[gold]● " + t.Name.String() + rowid.Line("ui.theme_picker.themeRowLabel.01", " (current)[-]")
 	}
 	label += "  [dim]" + strings.ToLower(t.Variant()) + "[-]"
 	if t.Accessible {
-		label += vibe.Line("ui.theme_picker.themeRowLabel.02", "  [cyan]accessible[-]")
+		label += rowid.Line("ui.theme_picker.themeRowLabel.02", "  [cyan]accessible[-]")
 	}
 	if !available {
-		label += vibe.Line("ui.theme_picker.themeRowLabel.03", "  [gray]🔒 locked[-]")
+		label += rowid.Line("ui.theme_picker.themeRowLabel.03", "  [gray]🔒 locked[-]")
 	}
 	return label
 }
@@ -411,16 +411,16 @@ func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
 // cannot see yet); nil shows it as written.
 func themeDetailText(t theme.Theme, available bool, st *game.GameState) string {
 	var lines []string
-	lines = append(lines, vibe.Sprintf("ui.theme_picker.themeDetailText.01", "[gold]%s[-]  [dim]%s theme · %s[-]", t.Name.String(), t.Variant(), t.Group()))
+	lines = append(lines, rowid.Sprintf("ui.theme_picker.themeDetailText.01", "[gold]%s[-]  [dim]%s theme · %s[-]", t.Name.String(), t.Variant(), t.Group()))
 	if t.Blurb.String() != "" {
 		lines = append(lines, "[gray]"+t.Blurb.String()+"[-]")
 	}
 	if t.Accessible {
-		note := vibe.Line("ui.theme_picker.themeDetailText.02", "[cyan]Accessible:[-] [gray]colorblind-safe or high-contrast, always unlocked[-]")
+		note := rowid.Line("ui.theme_picker.themeDetailText.02", "[cyan]Accessible:[-] [gray]colorblind-safe or high-contrast, always unlocked[-]")
 		if t.GainGlyph != "" || t.LossGlyph != "" {
 			// Show the signed glyphs so the shape-based ± encoding is visible in the
 			// picker itself (the theming design §7).
-			note += vibe.Sprintf("ui.theme_picker.themeDetailText.03", " [gray](gain %s / loss %s)[-]", t.GainGlyph, t.LossGlyph)
+			note += rowid.Sprintf("ui.theme_picker.themeDetailText.03", " [gray](gain %s / loss %s)[-]", t.GainGlyph, t.LossGlyph)
 		}
 		lines = append(lines, note)
 	}
@@ -434,9 +434,9 @@ func themeDetailText(t theme.Theme, available bool, st *game.GameState) string {
 			hint = themeUnlockHint(t, *st) // never an age the player cannot see yet
 		}
 		if hint == "" {
-			hint = vibe.Line("ui.theme_picker.themeDetailText.04", "unlocked by a milestone")
+			hint = rowid.Line("ui.theme_picker.themeDetailText.04", "unlocked by a milestone")
 		}
-		lines = append(lines, vibe.Sprintf("ui.theme_picker.themeDetailText.05", "[red]🔒 Locked:[-] [gray]%s[-]", hint))
+		lines = append(lines, rowid.Sprintf("ui.theme_picker.themeDetailText.05", "[red]🔒 Locked:[-] [gray]%s[-]", hint))
 	}
 	lines = append(lines, "") // blank spacer before the swatch block
 	lines = append(lines, themeSwatches(t))
@@ -462,9 +462,9 @@ func themeSwatches(t theme.Theme) string {
 // footer idiom (footerButton lives in load_game.go).
 func themeFooterBar() string {
 	return "  " + strings.Join([]string{
-		footerButton("↑↓", vibe.Line("ui.theme_picker.themeFooterBar.01", "Preview")),
-		footerButton("Enter", vibe.Line("ui.theme_picker.themeFooterBar.03", "Keep")),
-		footerButton("Esc", vibe.Line("ui.theme_picker.themeFooterBar.05", "Cancel")),
+		footerButton("↑↓", rowid.Line("ui.theme_picker.themeFooterBar.01", "Preview")),
+		footerButton("Enter", rowid.Line("ui.theme_picker.themeFooterBar.03", "Keep")),
+		footerButton("Esc", rowid.Line("ui.theme_picker.themeFooterBar.05", "Cancel")),
 	}, "  ") + "  "
 }
 
@@ -501,7 +501,7 @@ func drawThemeSample(screen mapstyle.Cells, x, y, w, h int, th theme.Theme) {
 	// Canvas.
 	bg := col(theme.RoleBackground)
 	fill(x, y, x+w, y+h, bg)
-	put(x+1, y, vibe.Line("ui.theme_picker.drawThemeSample.01", "Sample: ")+th.Name.String()+" ("+th.Variant()+")", col(theme.RoleDim), bg, false)
+	put(x+1, y, rowid.Line("ui.theme_picker.drawThemeSample.01", "Sample: ")+th.Name.String()+" ("+th.Variant()+")", col(theme.RoleDim), bg, false)
 
 	// Surface panel with a border.
 	px0, py0, px1, py1 := x+1, y+1, x+w-1, y+h
@@ -539,24 +539,24 @@ func drawThemeSample(screen mapstyle.Cells, x, y, w, h int, th theme.Theme) {
 			put(xx, yy, gain+"12.5/s", col(theme.RolePositive), surf, false)
 		},
 		func(yy int) {
-			xx := put(px0+2, yy, vibe.Line("ui.theme_picker.drawThemeSample.04", "Wood "), col(theme.RoleLabel), surf, false)
+			xx := put(px0+2, yy, rowid.Line("ui.theme_picker.drawThemeSample.04", "Wood "), col(theme.RoleLabel), surf, false)
 			xx = put(xx, yy, "340 ", col(theme.RoleHighlight), surf, false)
 			put(xx, yy, loss+"3.1/s", col(theme.RoleNegative), surf, false)
 		},
 		func(yy int) {
-			xx := put(px0+2, yy, vibe.Line("ui.theme_picker.drawThemeSample.05", "Body text "), col(theme.RoleText), surf, false)
-			put(xx, yy, vibe.Line("ui.theme_picker.drawThemeSample.06", "and a dim hint"), col(theme.RoleDim), surf, false)
+			xx := put(px0+2, yy, rowid.Line("ui.theme_picker.drawThemeSample.05", "Body text "), col(theme.RoleText), surf, false)
+			put(xx, yy, rowid.Line("ui.theme_picker.drawThemeSample.06", "and a dim hint"), col(theme.RoleDim), surf, false)
 		},
 		func(yy int) {
 			sel := col(theme.RoleSelection)
-			xx := put(px0+2, yy, vibe.Line("ui.theme_picker.drawThemeSample.07", " ▸ selected row "), col(theme.RoleSelectionText), sel, false)
+			xx := put(px0+2, yy, rowid.Line("ui.theme_picker.drawThemeSample.07", " ▸ selected row "), col(theme.RoleSelectionText), sel, false)
 			_ = xx
 		},
 		func(yy int) {
 			xx := put(px0+2, yy, " Enter ", col(theme.RoleOnAccent), col(theme.RoleAccent), true)
-			xx = put(xx, yy, vibe.Line("ui.theme_picker.drawThemeSample.09", " Keep "), col(theme.RoleText), col(theme.RoleChip), true)
+			xx = put(xx, yy, rowid.Line("ui.theme_picker.drawThemeSample.09", " Keep "), col(theme.RoleText), col(theme.RoleChip), true)
 			xx = put(xx, yy, "  ", col(theme.RoleText), surf, false)
-			put(xx, yy, vibe.Line("ui.theme_picker.drawThemeSample.10", " danger "), col(theme.RoleOnNegative), col(theme.RoleNegative), true)
+			put(xx, yy, rowid.Line("ui.theme_picker.drawThemeSample.10", " danger "), col(theme.RoleOnNegative), col(theme.RoleNegative), true)
 		},
 	}
 	for i, ln := range lines {

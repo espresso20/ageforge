@@ -31,7 +31,7 @@ import (
 var lookupBudget = map[string]lookupCount{
 	"game":     {config: 6, core: 12},
 	"ui":       {config: 20, core: 0},
-	"mapmodel": {config: 2, core: 2},
+	"mapmodel": {config: 1, core: 2},
 }
 
 type lookupCount struct{ config, core int }
@@ -60,6 +60,8 @@ var pureConfig = map[string]bool{
 	"GatePillar": true, "GatePillars": true, "PillarName": true,
 	"YearBetween": true, "YearLabel": true,
 	"IsResourceEnded": true, "AlwaysAvailableResources": true,
+	// The rank a domain's badge points reach: a formula on its argument.
+	"RankFor": true,
 }
 
 const (

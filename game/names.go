@@ -6,8 +6,8 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // names.go turns config keys into the names a player reads. Every log line,
@@ -88,7 +88,7 @@ func CivName(key string) string {
 // bare-resource targets that milestones and events use.
 func EffectTargetName(target string) string {
 	if _, ok := rules.Core().Resource(target); ok {
-		return ResourceName(target) + vibe.Line("game.names.EffectTargetName.02", " production")
+		return ResourceName(target) + rowid.Line("game.names.EffectTargetName.02", " production")
 	}
 	return config.EffectTargetLabel(target)
 }

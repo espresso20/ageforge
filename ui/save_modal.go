@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/rowid"
 )
 
 // saveChoicePage is the unique page name for the Overwrite/Branch save prompt.
@@ -19,8 +19,8 @@ const branchNamePage = "branch_name"
 func (d *Dashboard) showSaveChoiceModal() {
 	active := d.engine.ActiveSaveName()
 
-	text := vibe.Sprintf("ui.save_modal.showSaveChoiceModal.01", "Save %q?", active)
-	buttons := []string{vibe.Line("ui.save_modal.showSaveChoiceModal.02", "Overwrite"), vibe.Line("ui.save_modal.showSaveChoiceModal.03", "Branch new"), vibe.Line("ui.save_modal.showSaveChoiceModal.04", "Cancel")}
+	text := rowid.Sprintf("ui.save_modal.showSaveChoiceModal.01", "Save %q?", active)
+	buttons := []string{rowid.Line("ui.save_modal.showSaveChoiceModal.02", "Overwrite"), rowid.Line("ui.save_modal.showSaveChoiceModal.03", "Branch new"), rowid.Line("ui.save_modal.showSaveChoiceModal.04", "Cancel")}
 	modal := showButtonModal(d.app, d.pages, saveChoicePage, text, buttons, func(button int, _ string) {
 		switch button {
 		case 0: // "Overwrite"
@@ -28,17 +28,17 @@ func (d *Dashboard) showSaveChoiceModal() {
 			if err := d.engine.SaveGame(name); err != nil {
 				d.engine.AddLog("error", err.Error())
 			} else {
-				d.engine.AddLog("info", vibe.Line("ui.save_modal.showSaveChoiceModal.05", "[positive]Saved → ")+name)
+				d.engine.AddLog("info", rowid.Line("ui.save_modal.showSaveChoiceModal.05", "[positive]Saved → ")+name)
 			}
 			d.app.SetFocus(d.inputField)
 		case 1: // "Branch new"
-			showSaveNameModal(d.app, d.pages, vibe.Line("ui.save_modal.showSaveChoiceModal.06", " Branch a new save "), branchNamePage, d.inputField, func(name string) {
+			showSaveNameModal(d.app, d.pages, rowid.Line("ui.save_modal.showSaveChoiceModal.06", " Branch a new save "), branchNamePage, d.inputField, func(name string) {
 				// showSaveNameModal validates the name format; BranchSave guards
 				// against an existing name and logs an error if it's taken.
 				if err := d.engine.BranchSave(name); err != nil {
 					d.engine.AddLog("error", err.Error())
 				} else {
-					d.engine.AddLog("info", vibe.Line("ui.save_modal.showSaveChoiceModal.07", "[positive]Branched → ")+name+vibe.Line("ui.save_modal.showSaveChoiceModal.08", " (autosave now follows it)"))
+					d.engine.AddLog("info", rowid.Line("ui.save_modal.showSaveChoiceModal.07", "[positive]Branched → ")+name+rowid.Line("ui.save_modal.showSaveChoiceModal.08", " (autosave now follows it)"))
 				}
 				d.app.SetFocus(d.inputField)
 			})

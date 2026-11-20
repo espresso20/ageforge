@@ -1,12 +1,11 @@
-// Package words holds what the copy tools and VibeMode share: the ids of the
-// text a player reads, and the VibeMode script itself.
+// Package words holds what the copy tools share: the ids of the text a player
+// reads.
 //
 // Every line of text in the game has a row id (building.lumber_mill.name,
 // tech.pottery.description). cmd/words reads the Go source to export the rows to
-// sheets, and the ruleset overlay reads the same ids off the live definitions to
-// swap a row's text for its VibeMode line. The table both use is here: FieldIDs
-// says how a definition's text field becomes an id, so the two cannot name a row
-// differently.
+// sheets, and the ruleset overlay reads the same ids off the live definitions.
+// The table both use is here: FieldIDs says how a definition's text field becomes
+// an id, so the two cannot name a row differently.
 package words
 
 import (

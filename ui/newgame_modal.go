@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -35,7 +35,7 @@ func showAccountNameModal(app *appLoop, pages *nativePages, restoreFocus Primiti
 	var openEntry func(prefill string)
 
 	openEntry = func(prefill string) {
-		showSaveNameModalOpts(app, pages, vibe.Line("ui.newgame_modal.showAccountNameModal.01", " Name your AgeForge account "), accountNamePage, restoreFocus, prefill, func(name string) {
+		showSaveNameModalOpts(app, pages, rowid.Line("ui.newgame_modal.showAccountNameModal.01", " Name your AgeForge account "), accountNamePage, restoreFocus, prefill, func(name string) {
 			// Don't create yet — confirm the name first, since it IS the identity.
 			showAccountNameConfirmModal(app, pages, name, onConfirm, func() {
 				// Re-type: reopen the entry modal pre-filled with what they typed.
@@ -53,8 +53,8 @@ func showAccountNameModal(app *appLoop, pages *nativePages, restoreFocus Primiti
 // cancelled into a no-account state: its own Esc/close routes to onRetype (re-enter),
 // consistent with the entry modal's Esc-accepts policy.
 func showAccountNameConfirmModal(app *appLoop, pages *nativePages, name string, onCreate func(name string), onRetype func()) {
-	text := vibe.Sprintf("ui.newgame_modal.showAccountNameConfirmModal.01", "Create your AgeForge account as %q?\nThis name is your identity. To restore your account on another device, enter it exactly as written here.", name)
-	buttons := []string{vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.02", "Create"), vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.03", "Re-type")}
+	text := rowid.Sprintf("ui.newgame_modal.showAccountNameConfirmModal.01", "Create your AgeForge account as %q?\nThis name is your identity. To restore your account on another device, enter it exactly as written here.", name)
+	buttons := []string{rowid.Line("ui.newgame_modal.showAccountNameConfirmModal.02", "Create"), rowid.Line("ui.newgame_modal.showAccountNameConfirmModal.03", "Re-type")}
 	modal := showButtonModal(app, pages, accountNameConfirmPage, text, buttons, func(button int, _ string) {
 		if button == 0 { // "Create"
 			onCreate(name)
@@ -74,7 +74,7 @@ func showAccountNameConfirmModal(app *appLoop, pages *nativePages, name string, 
 //
 // restoreFocus is the splash menu primitive to refocus on cancel.
 func showNewGameNameModal(app *appLoop, pages *nativePages, restoreFocus Primitive, onConfirm func(name string)) {
-	showSaveNameModal(app, pages, vibe.Line("ui.newgame_modal.showNewGameNameModal.01", " Name your civilization "), newGameNamePage, restoreFocus, onConfirm)
+	showSaveNameModal(app, pages, rowid.Line("ui.newgame_modal.showNewGameNameModal.01", " Name your civilization "), newGameNamePage, restoreFocus, onConfirm)
 }
 
 // showSaveNameModal pops a centered, bordered name-entry prompt. The input is
@@ -110,7 +110,7 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		initial = game.GenerateSaveName()
 	}
 	input := newNativeInput().
-		SetLabel(vibe.Line("ui.newgame_modal.showSaveNameModalOpts.01", "Name: ")).
+		SetLabel(rowid.Line("ui.newgame_modal.showSaveNameModalOpts.01", "Name: ")).
 		SetText(initial).
 		SetFieldWidth(40).
 		// Dark slate field with white text — the default light field
@@ -122,14 +122,14 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 	errTV.SetBackgroundColor(theme.Of(theme.RoleSurface))
 	input.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
-	escHint := vibe.Line("ui.newgame_modal.showSaveNameModalOpts.02", "Esc: cancel")
+	escHint := rowid.Line("ui.newgame_modal.showSaveNameModalOpts.02", "Esc: cancel")
 	if escAccepts {
-		escHint = vibe.Line("ui.newgame_modal.showSaveNameModalOpts.03", "Esc: accept")
+		escHint = rowid.Line("ui.newgame_modal.showSaveNameModalOpts.03", "Esc: accept")
 	}
 	hintTV := newNativeText().
 		SetDynamicColors(true).
 		SetTextAlign(kit.AlignCenter).
-		SetText(vibe.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")
+		SetText(rowid.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")
 	hintTV.SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	// closeAndRestore removes the modal page and restores focus to focusReturn.

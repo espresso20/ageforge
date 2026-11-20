@@ -22,7 +22,7 @@
 //
 // Decoupling is the whole point, and it mirrors package boon exactly. This package
 // imports AT MOST config (for the resource vocabulary and the canonical age order),
-// vibe (which reads the VibeMode script and imports nothing of the game) and the
+// rowid (the row-id wrappers, which import nothing of the game) and the
 // standard library. It does NOT import game — that would be an import
 // cycle and would defeat the isolation that makes the generator unit-testable on
 // its own. All knowledge of the outside world enters through one seam:
@@ -241,8 +241,7 @@ type Request struct {
 // set of literal fragments to match against.
 type Result struct {
 	// Text is the finished, markup-free sentence. Empty for an unknown Moment.
-	// While VibeMode is on and the script has a line for the sentence, it is
-	// the script's words; it is what a log line tells.
+	// It is what a log line tells.
 	Text string
 	// Plain is the same line in the game's own English, whatever the switch
 	// says. It is what a line that is kept (saved, compared) holds: nothing of
