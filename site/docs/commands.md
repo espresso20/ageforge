@@ -101,7 +101,7 @@ The plan is a list of builds and techs that the game starts for you, in order, a
 
 | Command | Description |
 |---|---|
-| `plan` | Open the Plan panel: the queue, the detail of each item and an optimize preview. |
+| `plan` | Open the Plan panel: the queue, a schedule bar for each item, the sheet of the picked item and an optimize preview. |
 | `plan build <building> [count]` | Add copies of a building of this age or the next (default 1). The next age's buildings wait for the advance. Adding more of the building at the end of the plan adds to that item. |
 | `plan upgrade <building> [count\|all]` | Plan upgrades for copies you hold (default 1). Each copy upgrades as soon as its price can be paid. |
 | `plan research <tech>` (or `plan res`) | Add a tech and, before it, the techs it still needs (see [The research queue](plan.md#the-research-queue)). Techs start one at a time, in plan order. It takes any tech you can see on your tech tree: a tech of a later age waits for its age. |
@@ -113,6 +113,12 @@ The plan is a list of builds and techs that the game starts for you, in order, a
 | `plan optimize` (or `plan reorder`) | Reorder the planned buildings for the fastest growth, mixing homes and producers, and say how much sooner the plan finishes. It only keeps an order that is faster. See [Optimizing the order](plan.md#optimizing-the-order). |
 | `plan up <n>` | Move item `n` one place up. |
 | `plan down <n>` | Move item `n` one place down. |
+| `plan top <n>` | Move item `n` to the top of the plan. |
+| `plan bottom <n>` | Move item `n` to the bottom of the plan. |
+| `plan move <n> <place>` | Move item `n` to place number `place`. |
+| `plan count <n> <count>` | Set how many copies build or upgrade item `n` holds. |
+| `plan pause` | Stop the plan from starting anything. Items keep their place and hold nothing back. Saved with the game. |
+| `plan resume` | Let the plan run again. |
 | `plan clear` | Empty the plan. |
 
 ```
@@ -130,10 +136,14 @@ In the Plan panel:
 
 | Key | Action |
 |---|---|
-| `↑` / `↓` (or `K` / `J`), `PgUp` / `PgDn` | Pick an item, or page |
+| `↑` / `↓`, `PgUp` / `PgDn`, `Home` / `End` | Pick an item, or page |
+| `Tab` / `Shift+Tab` | Switch the sheet's tab |
 | `A` | Add an item by name (`Enter` adds it below the pick, `Esc` cancels) |
 | `+` / `-` | Change the count of a build or upgrade item |
+| `N` or a digit | Type the count of the picked item |
 | `U` / `D` | Move the picked item up or down |
+| `T` / `B` | Move the picked item to the top or the bottom |
+| `P` | Pause or resume the plan |
 | `X` (or `Delete`) | Remove the picked item |
 | `O` | Preview plan optimize (`Enter` keeps it, `Esc` closes) |
 | `C` | Clear the plan. Press a capital `C` twice. |
