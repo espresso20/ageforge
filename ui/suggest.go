@@ -122,7 +122,7 @@ func (c *completer) complete(line string) bool {
 	if game.DevModeActive && len(words) > 0 && strings.HasPrefix(words[0], "/") {
 		return true
 	}
-	p, ok := parse(c.cmds, words)
+	p, ok := parse(c.cmds, plainNames(c.cmds, words, c.engine.Rules()))
 	return ok && p.complete(c.valid)
 }
 
