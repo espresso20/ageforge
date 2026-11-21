@@ -112,8 +112,8 @@ func followUps(c *catalog, root string, changes []change, o importOptions, out i
 				fmt.Fprintf(out, "      and %d more files\n", found-12)
 			}
 		}
-		fmt.Fprintln(out, "  wiki: a page under site/, to edit by hand. generated: a picture of the game, redrawn with")
-		fmt.Fprintln(out, "  go test -tags mapcapture -run TestWriteSiteScreens ./ui. test: a test that quotes the name.")
+		fmt.Fprintln(out, "  wiki: a page under site/, to edit by hand. generated: a picture of the game, from a generator that went with the test suite.")
+		fmt.Fprintln(out, "  test: a test that quotes the name.")
 	}
 	// Any other rewritten line that the wiki quotes word for word.
 	if stale := wikiQuotes(root, changes); len(stale) > 0 {

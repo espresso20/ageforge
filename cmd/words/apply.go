@@ -434,7 +434,7 @@ func importSheets(root, dir string, o importOptions, out io.Writer) error {
 	}
 	fmt.Fprintf(out, "\n%s %d, refused %d, unchanged %d\n", summary, len(res.changes), len(res.refused), res.unchanged)
 	if !o.dryRun && len(res.changes) > 0 {
-		fmt.Fprintln(out, "Next: go test ./...")
+		fmt.Fprintln(out, "Next: go build ./... and go vet ./...")
 	}
 	return nil
 }
