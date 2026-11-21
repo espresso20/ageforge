@@ -1439,7 +1439,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 	button := act == actStart || act == actPlan
 	btn := 0
 	if button {
-		btn = actionRows + 1
+		btn = chipRows + 1
 	}
 	ch := len(lines) + 2 + btn
 	if badge {
@@ -1473,17 +1473,12 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		out.styledText(x0+tx, y0+1+i, l)
 	}
 	if button && ch >= btn+3 {
-		a := actionSpec{kind: keyPrimary, label: startWord(), key: "Enter", sign: signPlay}
+		a := chipSpec{kind: keyAccent, label: startWord(), key: "Enter"}
 		if act == actPlan {
 			a.off, a.key = true, "" // Enter adds it to the plan, which is what the text says
 		}
-		by := y0 + ch - 1 - actionRows
-		for dy := 0; dy < actionRows; dy++ {
-			for dx := 0; dx < actionW(a.label, a.key, a.sign); dx++ {
-				out.put(x0+tx+dx, by+dy, ' ', tsText, -1)
-			}
-		}
-		m.keys.action(x0+tx, by, a, func(x, y int, text string) { out.text(x, y, text, tsText, -1) })
+		by := y0 + ch - 1 - chipRows
+		m.keys.chip(x0+tx, by, a, func(x, y int, text string) { out.text(x, y, text, tsText, -1) })
 	}
 }
 

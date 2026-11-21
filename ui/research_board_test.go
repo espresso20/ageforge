@@ -133,8 +133,9 @@ func TestBoardMouse(t *testing.T) {
 	queued := false
 	for _, k := range p.keys.keyset().keys {
 		if k.key.Rune == 'Q' && !k.r.Empty() {
-			press(k.r, 1)
+			p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: k.r.Min.X + 1, Y: k.r.Min.Y, Clicks: 1})
 			queued = true
+			break
 		}
 	}
 	if !queued {

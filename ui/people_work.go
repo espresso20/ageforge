@@ -60,7 +60,7 @@ func (c peopleBody) band(big, sub, chip, note string, col color.RGBA, parts []ba
 		}
 	}
 	if ctl != "" {
-		g.chip(x+w-chipW-1, c.y+1, ctl, keySteel, ctlCmd, "", "", false)
+		g.chip(x+w-chipW-1, c.y+1, chipSpec{kind: keySteel, label: ctl, cmd: ctlCmd})
 	}
 	g.putFit(nx+14, c.y+h-2, x+w-chipW-(nx+14)-2, note, xDim)
 }

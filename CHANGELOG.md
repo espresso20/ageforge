@@ -7,6 +7,8 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- Every button is one quiet flat plate: muted at rest, a thin outline or accent text on the accent kinds, and an accent fill with bold type under the pointer or when picked. The three-row shaded action button is gone; gather, advance, army, expedition, faction, harbinger, wonder, prestige and dialog buttons are the same one-row plate, and the picked row of the Buildings box keeps its small Build plate with the Enter hint beside it.
+- A click on a Gather button gathers 25. Typing `gather food` still gathers 3.
 - `Map glyphs` changes the Map and the mini map only. In ascii mode it no longer folds the rest of the main view, the panels, the menu, the arrival and ending screens or the research tree to plain characters; the Buildings box dims behind the pause card as it does in unicode mode and its cards lose the `#` gutter.
 - Trade routes start on their own. A route whose age is reached and whose buildings are owned starts at once, with a "Route started" line in the log, and one that was ready while the game was away starts when it is back. A route you stop stays stopped, saved as stopped, until `trade route start <route>`; a route held for want of its building still resumes by itself. The "ready" state, the start all button and `trade route start all` are gone.
 

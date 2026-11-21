@@ -175,12 +175,12 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 	hints, _ := keyHints(rowid.Line("ui.newgame_modal.showSaveNameModalOpts.04", "[gray]Enter: confirm  ·  Tab: reroll name  ·  ") + escHint + "[-]")
 	var choices []choice
 	for _, h := range hints {
-		c := choice{label: h[1], key: h[0], kind: keyPlain}
+		c := choice{label: h[1], key: h[0], kind: keySteel}
 		switch h[0] {
 		case "Enter":
-			c.kind, c.sign, c.press = keyPrimary, signTick, submit
+			c.kind, c.press = keyAccent, submit
 		case "Esc":
-			c.sign, c.press = signCross, escape
+			c.press = escape
 		case "Tab":
 			c.press = reroll
 		}
@@ -195,7 +195,7 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
-		AddItem(buttons, actionRows, 0, false)
+		AddItem(buttons, chipRows, 0, false)
 	framed(inner, title, theme.RoleAccent).SetBackgroundColor(theme.Of(theme.RoleSurface))
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
@@ -204,7 +204,7 @@ func showSaveNameModalOpts(app *appLoop, pages *nativePages, title, pageName str
 	// Height is sized to the exact content (input, gap, error, gap, buttons + 2 border). An oversized
 	// box would leave unallocated interior rows that no primitive paints, and
 	// those rows would show the dashboard through them.
-	modal := centeredModal(inner, 66, 4+actionRows+2)
+	modal := centeredModal(inner, 66, 4+chipRows+2)
 	takeKeys(modal, map[kit.KeyCode]func(){kit.KeyEsc: escape, kit.KeyTab: reroll, kit.KeyBacktab: reroll})
 
 	pages.AddPage(pageName, modal, true, true)

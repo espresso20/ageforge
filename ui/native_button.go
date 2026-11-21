@@ -13,14 +13,12 @@ type nativeButton struct {
 	*nativeHost
 	kit.Base
 	btn *kit.Button
-	// act, when set, draws the button as an action button of that kind (three
-	// rows, action_button.go); plates are the pictures it has drawn.
+	// act, when set, draws the button as a one-row button of that kind
+	// (chip.go); plates are the pictures it has drawn.
 	act    keyKind
 	acting bool
-	// key is the key the button names on its cap ("" for none), and sign its
-	// picture.
-	key  string
-	sign signKind
+	// key is the key the button names on its cap ("" for none).
+	key string
 	// off draws the button unavailable.
 	off    bool
 	ground kit.Color
@@ -69,15 +67,14 @@ func (b *nativeButton) Layout(r image.Rectangle) {
 	b.btn.Layout(r)
 }
 
-// asAction makes the button an action button of kind, with the key it names
-// and its sign.
-func (b *nativeButton) asAction(kind keyKind, ground kit.Color, key string, sign signKind) *nativeButton {
-	b.act, b.acting, b.ground, b.key, b.sign = kind, true, ground, key, sign
+// asAction makes the button a plate of kind, with the key it names.
+func (b *nativeButton) asAction(kind keyKind, ground kit.Color, key string) *nativeButton {
+	b.act, b.acting, b.ground, b.key = kind, true, ground, key
 	return b
 }
 
-// actionWidth is the cells the button takes as an action button.
-func (b *nativeButton) actionWidth() int { return actionW(b.btn.Label, b.key, b.sign) }
+// actionWidth is the cells the button takes as a plate.
+func (b *nativeButton) actionWidth() int { return chipW(b.btn.Label, b.key) }
 
 // Paint shows the button as it is now: with the focus the primitive holds.
 func (b *nativeButton) Paint(p *kit.Painter) {
@@ -89,7 +86,7 @@ func (b *nativeButton) Paint(p *kit.Painter) {
 	b.btn.Paint(p)
 }
 
-// paintAction draws the button as an action button: lit while the pointer
+// paintAction draws the button as a plate: lit while the pointer
 // or the keyboard is on it, sunk while it is held.
 func (b *nativeButton) paintAction(p *kit.Painter) {
 	r := b.Bounds()
@@ -104,10 +101,10 @@ func (b *nativeButton) paintAction(p *kit.Painter) {
 		st = keyHover
 	}
 	g := newXGrid(r.Dx(), r.Dy())
-	g.actionButton(0, 0, actionSpec{kind: b.act, label: b.btn.Label, key: b.key, sign: b.sign, off: b.off})
+	g.chip(0, 0, chipSpec{kind: b.act, label: b.btn.Label, key: b.key, off: b.off})
 	pal := newExpPalette()
 	pal.styles[xText] = pal.styles[xText].Background(b.ground)
-	b.plates.paintAction(p, g.keyset(), r.Min, pal, g.keys[0], st, pictureCell != nil)
+	b.plates.paintKey(p, g.keyset(), r.Min, pal, g.keys[0], st, pictureCell != nil)
 }
 
 // Key: Enter presses; every other key is the caller's.

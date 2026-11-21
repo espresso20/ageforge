@@ -58,25 +58,6 @@ func TestCardSignClearsText(t *testing.T) {
 	}
 }
 
-func TestActionSignClearsLabel(t *testing.T) {
-	pal := newExpPalette()
-	l := pal.look(keyPrimary, keyRest)
-	for name, c := range roomCells {
-		cw, ch := c[0], c[1]
-		var ps plateSet
-		cols := actionSignRoom(cw, ch) + 8
-		with := ps.action(l, keyRest, cols, cw, ch, signPlay, 0, 0, 0)
-		without := ps.action(l, keyRest, cols, cw, ch, signNone, 0, 0, 0)
-		right := lastDiffX(with, without)
-		if right == 0 {
-			t.Fatalf("%s: the sign drew nothing", name)
-		}
-		if text := actionSignRoom(cw, ch) * cw; text < right {
-			t.Errorf("%s: the label starts at pixel %d, the sign ends at %d", name, text, right)
-		}
-	}
-}
-
 func TestPicRoomRoundsUp(t *testing.T) {
 	for _, c := range []struct{ right, gap, cw, want int }{{47, 1, 7, 7}, {48, 1, 7, 7}, {49, 1, 7, 8}, {10, 0, 10, 1}, {11, 0, 10, 2}, {5, 0, 0, 0}} {
 		if got := picRoom(c.right, c.gap, c.cw); got != c.want {

@@ -509,7 +509,6 @@ func (d *Dashboard) build() {
 		return d.cardLine()
 	}
 	d.app.line, d.app.confirm = d.pressLine, d.askLine
-	d.app.feel.motion = func() bool { return d.mapSettings().Motion }
 	d.app.feel.tip.Cell = d.tipCell
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
 	d.inputField.SetBorder(true)
@@ -809,7 +808,7 @@ func (d *Dashboard) StartUpdates() {
 				// is enough, since its frame counter runs on the clock.
 				// So does a theme with an ambient effect, and a key button that is sinking.
 				other = !other
-				if d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.app.feel.glinting() || d.mapOpen.Load() || d.expPanel.moving.Load() || d.decks["trade"].moving.Load() || d.fxOn.Load()) {
+				if d.app.feel.busy() || d.app.feel.tip.Waiting() || d.inputField.echoing() || other && (d.mapOpen.Load() || d.expPanel.moving.Load() || d.decks["trade"].moving.Load() || d.fxOn.Load()) {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)

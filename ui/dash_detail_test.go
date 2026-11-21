@@ -23,27 +23,25 @@ func pickCard(t *testing.T, d *Dashboard, st *stage, key string) {
 	st.paint()
 }
 
-func TestOnlyThePickedCardHasThePrimaryButton(t *testing.T) {
+func TestOnlyThePickedCardsBuildPlateIsInThePickedState(t *testing.T) {
 	d, st, _ := cardTown(t)
 	box := d.economyTab.buildBox
 	pickCard(t, d, st, "hut")
-	three, rest := 0, 0
+	picked := 0
 	for _, pc := range box.placed {
 		k := box.cardKeys.keys[pc.build]
-		switch {
-		case k.r.Dy() == actionRows:
-			three++
-			if pc.card.key != "hut" || k.kind != keyPrimary {
-				t.Errorf("%s has a three-row button of kind %v", pc.card.key, k.kind)
-			}
-		case k.r.Dy() == 1 && k.kind == keyAccent:
-			rest++
-		default:
+		if k.r.Dy() != chipRows || k.kind != keyAccent {
 			t.Errorf("%s has a button %v high of kind %v", pc.card.key, k.r.Dy(), k.kind)
 		}
+		if k.picked {
+			picked++
+			if pc.card.key != "hut" {
+				t.Errorf("%s is picked", pc.card.key)
+			}
+		}
 	}
-	if three != 1 || rest != len(box.placed)-1 {
-		t.Errorf("%d primary buttons and %d one-row keys for %d cards", three, rest, len(box.placed))
+	if picked != 1 {
+		t.Errorf("%d Build plates in the picked state for %d cards, want 1", picked, len(box.placed))
 	}
 }
 
@@ -524,7 +522,7 @@ func TestTheDetailReadsInFullWhereTheBoxHasRoom(t *testing.T) {
 // held to two rows with an ellipsis on the second; the title, the notice and
 // the workers stay.
 func TestTheDetailGivesUpLinesInOrder(t *testing.T) {
-	d, _, _ := detailTown(t, 157, 46)
+	d, _, _ := detailTown(t, 130, 45)
 	box := d.economyTab.buildBox
 	_, _, bw, _ := box.GetRect()
 	p := box.planDetail(bw)

@@ -41,9 +41,9 @@ func TestDialogChoicesAreActionButtons(t *testing.T) {
 		for _, b := range d.buttons {
 			kinds, keys = append(kinds, b.act), append(keys, b.key)
 		}
-		wantKinds, wantKeys := []keyKind{keyPrimary, keyPlain, keyPlain}, []string{"Enter", "", "Esc"}
+		wantKinds, wantKeys := []keyKind{keyAccent, keySteel, keySteel}, []string{"Enter", "", "Esc"}
 		if danger {
-			wantKinds, wantKeys = []keyKind{keyPlain, keyPlain, keyDanger}, []string{"Esc", "", ""}
+			wantKinds, wantKeys = []keyKind{keySteel, keySteel, keyAlert}, []string{"Esc", "", ""}
 		}
 		if !reflect.DeepEqual(kinds, wantKinds) || !reflect.DeepEqual(keys, wantKeys) {
 			t.Errorf("danger %v: kinds %v keys %v, want %v %v", danger, kinds, keys, wantKinds, wantKeys)
@@ -52,7 +52,7 @@ func TestDialogChoicesAreActionButtons(t *testing.T) {
 		st := newStage(d, 70, 20)
 		for i, b := range d.buttons {
 			x, y, _, _ := b.GetRect()
-			st.click(x+1, y+1)
+			st.click(x+1, y)
 			if n := len(got); n != i+1 || got[n-1] != i {
 				t.Errorf("danger %v: a click on button %d gave %v", danger, i, got)
 			}
@@ -66,13 +66,13 @@ func TestChoiceRowClicks(t *testing.T) {
 	keepTheme(t)
 	var got []string
 	mk := func(name string, off bool) choice {
-		return choice{label: name, key: "K", kind: keyPlain, off: off, press: func() { got = append(got, name) }}
+		return choice{label: name, key: "K", kind: keySteel, off: off, press: func() { got = append(got, name) }}
 	}
 	row, bs := choiceRow([]choice{mk("one", false), mk("two", true), mk("three", false)}, 2, -1)
-	st := newStage(row, 70, actionRows)
+	st := newStage(row, 70, chipRows)
 	for _, b := range bs {
 		x, y, _, _ := b.GetRect()
-		st.click(x+1, y+1)
+		st.click(x+1, y)
 	}
 	if !reflect.DeepEqual(got, []string{"one", "three"}) {
 		t.Errorf("the clicks pressed %v", got)

@@ -46,13 +46,13 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	acceptKey, acceptLabel := splitKeyed(rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept"))
 	declineKey, declineLabel := splitKeyed(rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline"))
 	btnRow, btns := choiceRow([]choice{
-		{label: acceptLabel, key: acceptKey, kind: keyPrimary, sign: signTick, press: func() {
+		{label: acceptLabel, key: acceptKey, kind: keyAccent, press: func() {
 			if err := d.engine.AcceptAncientMemory(); err != nil {
 				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.07", "Could not recover the memory: ")+err.Error())
 			}
 			d.closeAncientMemoryModal()
 		}},
-		{label: declineLabel, key: declineKey, kind: keyPlain, sign: signCross, press: func() {
+		{label: declineLabel, key: declineKey, kind: keySteel, press: func() {
 			d.engine.DeclineAncientMemory()
 			d.closeAncientMemoryModal()
 		}},
@@ -64,10 +64,10 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		AddItem(newNativeBox(), 1, 0, false).
 		AddItem(body, 7, 0, false).
 		AddItem(newNativeBox(), 1, 0, false).
-		AddItem(btnRow, actionRows, 0, true)
+		AddItem(btnRow, chipRows, 0, true)
 	framed(inner, rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.09", " ✦ Ancient Memory "), theme.RoleAccent)
 
-	modal := centeredModal(inner, 64, 14+actionRows)
+	modal := centeredModal(inner, 64, 14+chipRows)
 
 	// Tab/arrows cycle the buttons; a/d are shortcuts for Accept/Decline.
 	ring := newButtonRing(d.app, func(p Primitive) { d.memFocus = p })

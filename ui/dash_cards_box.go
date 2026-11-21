@@ -45,9 +45,6 @@ const (
 	// buildColNarrow without it: the key goes where the box has no room.
 	buildColWide, buildColNarrow = 16, 9
 	buildKeyFrom                 = 64 // inner width from which the picked card's button shows its key
-	// gatherTallRows is the inner height from which the Gather buttons are
-	// three rows tall; a shorter box has them one row.
-	gatherTallRows = 22
 	// gatherAges is how many of the first ages show the Gather buttons.
 	gatherAges = 2
 	// compactBelow is the inner width under which a card is stacked: its Build
@@ -56,8 +53,10 @@ const (
 	compactBelow = 40
 	// compactWords is where a stacked card's words start.
 	compactWords = 3
-	// compactKeyW is the cells of a stacked card's Build key.
+	// compactKeyW is the cells of a card's Build key, and chipKeyW the cells
+	// the picked card's Enter hint takes left of it.
 	compactKeyW = 7
+	chipKeyW    = 6
 	// buyKeyBase is the first of the private runes the buy keys press.
 	buyKeyBase = 0xE000
 )
@@ -86,9 +85,6 @@ type placedCard struct {
 	// the card has none.
 	compact           bool
 	keyRow, reasonRow int
-	// small says the card's Build button is a one-row key: every card but the
-	// picked one. build is -1 for a card that has no button.
-	small bool
 }
 
 // buildBox is the Buildings box.
@@ -467,20 +463,11 @@ func (b *buildBox) drawAt(w, h, d int) {
 	for c := buyChoice(0); c < buyChoices; c++ {
 		r := image.Rect(x, 1, x+runeLen(words[c]), 2)
 		g.put(x, 1, words[c], xKeycap)
-		kind := keySteel
-		if c == b.buy {
-			kind = keyAccent
-		}
-		set.keys = append(set.keys, xkey{key: buyKey(c), r: r, cap: r, kind: kind})
+		set.keys = append(set.keys, xkey{key: buyKey(c), r: r, cap: r, kind: keySteel, picked: c == b.buy})
 		x = r.Max.X + 1
 	}
 	top := 3
 	if b.st.CanGatherByHand() && b.gatherAge() {
-		tall := ih >= gatherTallRows
-		rowH := 1
-		if tall {
-			rowH = actionRows
-		}
 		gx, gy := 2, top
 		for _, res := range []string{"food", "wood", "stone"} {
 			rs, ok := b.st.Resources[res]
@@ -488,26 +475,13 @@ func (b *buildBox) drawAt(w, h, d int) {
 				continue
 			}
 			name := rowid.Sprintf("ui.dash_cards_box.draw.01", "Gather %s", rs.Name)
-			cmd := command("gather", res)
-			word := " " + name + " "
-			wide := runeLen(word)
-			if tall {
-				wide = actionW(name, "", signNone)
+			if gx > 2 && gx+chipW(name, "") > w-1 {
+				gx, gy = 2, gy+1
 			}
-			if gx > 2 && gx+wide > w-1 {
-				gx, gy = 2, gy+rowH+min(1, rowH-1)
-			}
-			if tall {
-				gx = g.actionButton(gx, gy, actionSpec{kind: keyPlain, label: name, cmd: cmd}) + 1
-				continue
-			}
-			r := image.Rect(gx, gy, gx+wide, gy+1)
-			g.put(gx, gy, word, xKeycap)
-			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keySteel, cmd: cmd})
-			gx = r.Max.X + 1
+			gx = set.chip(gx, gy, chipSpec{kind: keySteel, label: name, cmd: command("gather", res, gatherClick)}, func(x, y int, text string) { g.put(x, y, text, xKeycap) }) + 1
 		}
 		if gx > 2 || gy > top {
-			top = gy + rowH + 1
+			top = gy + 2
 		}
 	}
 	b.strip = &keySet{keys: append([]xkey(nil), set.keys[stripFrom:]...), glyph: set.glyph}
@@ -599,28 +573,15 @@ func (b *buildBox) drawAt(w, h, d int) {
 			word := " " + txtBuild.String() + " "
 			r := image.Rect(kx, y+keyRow, kx+compactKeyW, y+keyRow+1)
 			g.put(kx, y+keyRow, fitText(word, compactKeyW), xKeycap)
-			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild, why: c.reason})
-		case c.key == b.picked:
-			// The picked card has the one primary button.
-			by := y + (rows-actionRows)/2
-			bxx := 1 + iw - bw - 1
-			spec := actionSpec{kind: keyPrimary, label: txtBuild.String(), cmd: c.cmd, off: !c.canBuild, why: c.reason}
-			if c.canBuild && bw == buildColWide {
-				spec.key = "Enter"
-			}
-			g.fill(bxx, by, bw, actionRows)
-			at := bxx + (bw-actionW(spec.label, spec.key, signNone))/2
-			set.action(at, by, spec, func(x, y int, text string) { g.put(x, y, text, xText) })
-			last := &set.keys[len(set.keys)-1]
-			last.r = image.Rect(bxx, by, bxx+bw, by+actionRows)
+			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild, why: c.reason, picked: c.key == b.picked})
 		default:
-			// Every other card has a one-row key on its middle row, at the
-			// right of the Build column.
-			kx, ky := 1+iw-compactKeyW-1, y+(rows-actionRows)/2+1
+			// Every card has a one-row key on its middle row, at the right of
+			// the Build column; the picked one is drawn as under the pointer,
+			// with the Enter key that builds it dim beside it.
+			kx, ky := 1+iw-compactKeyW-1, y+(rows-chipRows)/2
 			r := image.Rect(kx, ky, kx+compactKeyW, ky+1)
 			g.put(kx, ky, fitText(" "+txtBuild.String()+" ", compactKeyW), xKeycap)
-			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild, why: c.reason})
-			pc.small = true
+			set.keys = append(set.keys, xkey{r: r, cap: r, kind: keyAccent, cmd: c.cmd, off: !c.canBuild, why: c.reason, picked: c.key == b.picked})
 		}
 		if !c.older {
 			pc.build = len(set.keys) - 1 - cardFrom
@@ -1029,11 +990,10 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 	}
 	key := b.cardKeys.keys[pc.build]
 	st := b.stateOf(key, hot, isHot)
-	if pc.compact || pc.small {
-		b.k.paintKey(p, b.cardKeys, org, &cp, key, st, pix)
-		return
+	b.k.paintKey(p, b.cardKeys, org, &cp, key, st, pix)
+	if key.picked && !key.off && !pc.compact && bw == buildColWide {
+		lab(key.r.Min.X-chipKeyW-1, key.r.Min.Y-pc.y, "Enter", inkOf(look.dim, false))
 	}
-	b.k.paintAction(p, b.cardKeys, org, &cp, key, st, pix)
 }
 
 // paintReason writes what stops a card: the reason, then the wait, as much as

@@ -88,15 +88,14 @@ func (p *pauseLayer) build() {
 		for _, a := range []struct {
 			label, key string
 			kind       keyKind
-			sign       signKind
 			do         func()
 		}{
-			{rowid.Line("ui.pause.build.01", "Resume"), "Esc", keyPrimary, signPlay, p.d.closePause},
-			{rowid.Line("ui.pause.build.02", "Settings"), "S", keyPlain, signNone, func() { p.go2(pauseDisplay) }},
-			{rowid.Line("ui.pause.build.03", "Save"), "V", keyPlain, signNone, p.save},
-			{rowid.Line("ui.pause.build.04", "Main menu"), "M", keyPlain, signNone, p.d.toMenu},
+			{rowid.Line("ui.pause.build.01", "Resume"), "Esc", keyAccent, p.d.closePause},
+			{rowid.Line("ui.pause.build.02", "Settings"), "S", keySteel, func() { p.go2(pauseDisplay) }},
+			{rowid.Line("ui.pause.build.03", "Save"), "V", keySteel, p.save},
+			{rowid.Line("ui.pause.build.04", "Main menu"), "M", keySteel, p.d.toMenu},
 		} {
-			b := newNativeButton(a.label).SetSelectedFunc(a.do).asAction(a.kind, ground, a.key, a.sign)
+			b := newNativeButton(a.label).SetSelectedFunc(a.do).asAction(a.kind, ground, a.key)
 			p.acts, p.btns = append(p.acts, b), append(p.btns, b)
 			if a.key != "Esc" {
 				p.press[rune(strings.ToLower(a.key)[0])] = a.do
@@ -247,7 +246,7 @@ func (p *pauseLayer) Layout(r image.Rectangle) {
 			bw = max(bw, b.actionWidth())
 		}
 		for i, b := range p.acts {
-			placeAt(b, x0, y+8+4*i, bw, actionRows, off)
+			placeAt(b, x0, y+8+4*i, bw, chipRows, off)
 		}
 		return
 	}

@@ -41,11 +41,10 @@ func keyHints(s string) (hints [][2]string, rest string) {
 }
 
 // choice is a button of a dialog's row: what it says, the key it names, its
-// colour and sign, and what it does.
+// colour, and what it does.
 type choice struct {
 	label, key string
 	kind       keyKind
-	sign       signKind
 	off        bool
 	press      func()
 }
@@ -56,7 +55,7 @@ func choiceRow(cs []choice, gap, focus int) (*nativeFlex, []*nativeButton) {
 	row := newNativeFlex().SetDirection(flexColumn).AddItem(surfaceBox(), 0, 1, false)
 	var out []*nativeButton
 	for i, c := range cs {
-		b := newNativeButton(c.label).asAction(c.kind, theme.Of(theme.RoleSurface), c.key, c.sign)
+		b := newNativeButton(c.label).asAction(c.kind, theme.Of(theme.RoleSurface), c.key)
 		b.off = c.off
 		if c.press != nil && !c.off {
 			b.SetSelectedFunc(c.press)
