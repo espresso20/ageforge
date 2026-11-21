@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -138,31 +137,6 @@ func TestHeaderRowAGivesWayInOrder(t *testing.T) {
 		}
 		if w >= 100 && !strings.Contains(line, "People") {
 			t.Errorf("width %d: no People on the first row: %q", w, line)
-		}
-	}
-}
-
-// TestHeaderFoldsToASCII: every mark the header draws has a plain form.
-func TestHeaderFoldsToASCII(t *testing.T) {
-	v := headerFixture(t)
-	v.Notice = "★ Badge earned: Stonecutter"
-	ready := *v.Led
-	ready.v.AllStand, ready.v.Ready = true, true
-	ready.Pillars = append([]ledgerPillar(nil), ready.Pillars...)
-	for i := range ready.Pillars {
-		ready.Pillars[i].Met, ready.Pillars[i].Share = true, 1
-	}
-	for _, led := range []*ledgerData{v.Led, &ready} {
-		v.Led = led
-		g := renderHeader(v, 160, 3)
-		g.fold()
-		for y, line := range strings.Split(g.String(), "\n") {
-			for _, r := range line {
-				if r > 0x7e || r == '?' {
-					t.Errorf("row %d has %q after the fold: %q", y, string(r), line)
-					break
-				}
-			}
 		}
 	}
 }
@@ -344,13 +318,6 @@ func TestHeaderNotice(t *testing.T) {
 	v.Notice = strings.Repeat("long notice ", 20)
 	if top := renderHeader(v, 80, 2).Lines()[0]; runeLen(top) != 80 || !strings.Contains(top, "Esc") || !strings.Contains(top, "…") {
 		t.Errorf("a very long notice: %q", top)
-	}
-}
-
-// The plain tier folds the header the dashboard draws.
-func TestHeaderPlainTier(t *testing.T) {
-	if !headerPlain(mapSettings{Tier: mapmodel.TierASCII}) || headerPlain(mapSettings{Tier: mapmodel.TierUnicode}) {
-		t.Error("headerPlain does not follow the glyph tier")
 	}
 }
 

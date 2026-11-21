@@ -40,7 +40,7 @@ func bannerGrid(ages int) (*mGrid, *menuPalette) {
 	}
 	drawMenuStars(g, pal, high, 0)
 	drawMenuStars(g, pal, low, 0)
-	drawWordmark(g, pal, centred(bannerW, menuWordW*2), bannerWordY, 2, 0, 0, 0.5, false)
+	drawWordmark(g, pal, centred(bannerW, menuWordW*2), bannerWordY, 2, 0, 0, 0.5)
 	tag := menuTagline(ages)
 	g.textOn(centred(bannerW, runeLen(tag)), bannerTagY, tag, pal.ink, pal.bg, false)
 	return g, pal

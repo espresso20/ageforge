@@ -343,7 +343,7 @@ func (b *buildBox) stateOf(key, hot xkey, isHot bool) keyState {
 }
 
 // paintDetail paints the detail's keys and its note.
-func (b *buildBox) paintDetail(p *kit.Painter, pal *expPalette, org image.Point, pix, plain bool) {
+func (b *buildBox) paintDetail(p *kit.Painter, pal *expPalette, org image.Point, pix bool) {
 	if b.det == nil {
 		return
 	}
@@ -363,9 +363,6 @@ func (b *buildBox) paintDetail(p *kit.Painter, pal *expPalette, org image.Point,
 	ink := inkOf(pal.tone(xDim, false), false)
 	if bad {
 		ink = inkOf(pal.tone(xBad, false), false)
-	}
-	if plain {
-		text = foldToASCII(text)
 	}
 	if b.noteBeside {
 		r := b.noteRows[0]

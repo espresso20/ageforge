@@ -120,7 +120,6 @@ type endView struct {
 	captions []string
 	lines    []endLine
 	prompt   string
-	plain    bool
 	motion   bool
 }
 
@@ -239,12 +238,8 @@ func endLayoutFor(w, h int, v *endView) endLayout {
 	L.l0, L.l1 = 2, h-5
 
 	// The word: as large as the screen holds, which is larger than an
-	// era's name gets. The plain glyph set has no half cells.
-	modes := []ironMode{{sx: 3, sy: 3}, {sx: 2, sy: 3}, {sx: 2, sy: 2}, {sx: 1, sy: 3}, {sx: 1, sy: 2}}
-	if !v.plain {
-		modes = append(modes, ironMode{sy: 2, half: true})
-	}
-	modes = append(modes, ironMode{sx: 1, sy: 1})
+	// era's name gets.
+	modes := []ironMode{{sx: 3, sy: 3}, {sx: 2, sy: 3}, {sx: 2, sy: 2}, {sx: 1, sy: 3}, {sx: 1, sy: 2}, {sy: 2, half: true}, {sx: 1, sy: 1}}
 	L.caption = wrapWords(v.complete, w-8)
 	if len(L.caption) > 2 {
 		L.caption = L.caption[:2]
@@ -284,7 +279,7 @@ type endReck struct {
 }
 
 // endLineSegs is a line's runs of ink at count n (for a counting line).
-func endLineSegs(l endLine, n int, pal *menuPalette, plain bool) []infoSeg {
+func endLineSegs(l endLine, n int, pal *menuPalette) []infoSeg {
 	var segs []infoSeg
 	switch l.kind {
 	case elAge:
@@ -297,11 +292,6 @@ func endLineSegs(l endLine, n int, pal *menuPalette, plain bool) []infoSeg {
 			for i := range segs {
 				segs[i].bold = true
 			}
-		}
-	}
-	if plain {
-		for i := range segs {
-			segs[i].text = plainSafe(segs[i].text)
 		}
 	}
 	return segs
@@ -319,7 +309,7 @@ func endReckFor(v *endView, pal *menuPalette, w int) endReck {
 		r.first = append(r.first, len(r.rows))
 		r.at = append(r.at, t)
 		r.silent = append(r.silent, l.kind == elVerdict)
-		for _, row := range wrapInfo(infoLine{segs: endLineSegs(l, l.count, pal, v.plain)}, w) {
+		for _, row := range wrapInfo(infoLine{segs: endLineSegs(l, l.count, pal)}, w) {
 			r.rows = append(r.rows, row)
 			r.of = append(r.of, i)
 		}
@@ -568,14 +558,6 @@ func (sc *endScene) endHint(g *mGrid, pal *menuPalette, v *endView) {
 	}
 }
 
-// emberGlyph is the last point of light.
-func emberGlyph(plain bool) rune {
-	if plain {
-		return '*'
-	}
-	return '•'
-}
-
 // centreText writes a line centred on a row, in ink that reads on what is
 // behind it.
 func centreText(g *mGrid, pal *menuPalette, y int, s string, ink kit.Color, bold bool) {
@@ -595,7 +577,7 @@ func (sc *endScene) render(pal *menuPalette, v *endView, old, cur *menuTown, mf 
 		case beatReckoning:
 			line = v.complete
 			if line == "" && len(v.lines) > 0 {
-				line = plainOf(endLineSegs(v.lines[0], v.lines[0].count, pal, v.plain))
+				line = plainOf(endLineSegs(v.lines[0], v.lines[0].count, pal))
 			}
 		case beatStrike:
 			line = strings.ToUpper(endWord.String())
@@ -686,7 +668,7 @@ func (sc *endScene) drawEmber(g *mGrid, pal *menuPalette, v *endView, k float64)
 	if !v.prestige {
 		ink = pal.dim
 	}
-	g.set(sc.L.ex, sc.L.ey, emberGlyph(v.plain), theme.Mix(pal.bg, ink, k), pal.bg, true)
+	g.set(sc.L.ex, sc.L.ey, '•', theme.Mix(pal.bg, ink, k), pal.bg, true)
 }
 
 // drawReckoning: in the dark, what the run earned, a line at a time.
@@ -718,7 +700,7 @@ func (sc *endScene) drawReckoning(g *mGrid, pal *menuPalette, v *endView, f int,
 		}
 		if line.kind == elCount && age < endCountUp {
 			n := line.count * (age + 1) / endCountUp
-			row = infoLine{segs: endLineSegs(line, n, pal, v.plain)}
+			row = infoLine{segs: endLineSegs(line, n, pal)}
 		}
 		// It lands hot and cools to its ink; a verdict does not glow.
 		k := 0.0
@@ -773,7 +755,7 @@ func (sc *endScene) drawStrike(g *mGrid, pal *menuPalette, v *endView) {
 	}
 	heat := func(px, py int) float64 { return ironHeat(px, py, pw, sc.t, sc.strike, 0.5) - cold }
 	if p.ok {
-		drawIron(g, pal, p.rows, p.x, p.y, p.mode, heat, v.plain)
+		drawIron(g, pal, p.rows, p.x, p.y, p.mode, heat)
 	} else {
 		centreText(g, pal, p.y, spaced(strings.ToUpper(endWord.String())), rampAt(&pal.heat, 0.5+0.5*sc.heat), true)
 	}
@@ -782,11 +764,7 @@ func (sc *endScene) drawStrike(g *mGrid, pal *menuPalette, v *endView) {
 	}
 	// A star for every prestige so far, as many as the row holds.
 	if n := min(sc.level, (L.w-8)/2); n > 0 && L.stars < L.hint-1 {
-		star := "★"
-		if v.plain {
-			star = "*"
-		}
-		centreText(g, pal, L.stars, strings.TrimSpace(strings.Repeat(star+" ", n)), rampAt(&pal.heat, 0.8), true)
+		centreText(g, pal, L.stars, strings.TrimSpace(strings.Repeat("★ ", n)), rampAt(&pal.heat, 0.8), true)
 	}
 	for i, line := range L.caption {
 		if L.capRow+i < L.hint {
@@ -807,12 +785,9 @@ func (sc *endScene) drawBeginning(g *mGrid, pal *menuPalette, v *endView, cur *m
 	sc.lightUp(g, pal)
 	sc.sparks.draw(g, pal)
 	if L.wsx > 0 {
-		drawWordmark(g, pal, L.wx, L.wy, L.wsx, sc.t, sc.strike, 0.5, v.plain)
+		drawWordmark(g, pal, L.wx, L.wy, L.wsx, sc.t, sc.strike, 0.5)
 	}
 	if capt := fitOption(v.captions, L.w-4); capt != "" {
-		if v.plain {
-			capt = plainSafe(capt)
-		}
 		centreText(g, pal, L.dawnCap, capt, pal.ink, true)
 	}
 }

@@ -88,10 +88,6 @@ func TestPaintLaysPlatesOnlyWithPictures(t *testing.T) {
 			t.Errorf("with pictures cell %d is %+v, want the plate and the cap text", x, c)
 		}
 	}
-	g.fold()
-	if len(paintWith().Pics) != 0 {
-		t.Error("a folded grid still got plates")
-	}
 }
 
 func TestAMousePressSinksTheKeyUntilReleaseAndATypedKeyForTwoSteps(t *testing.T) {

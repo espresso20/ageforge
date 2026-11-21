@@ -17,7 +17,7 @@ func TestResourceRowsFor_ExcludesEndedResources(t *testing.T) {
 		},
 	}
 
-	rows := resourceRowsFor(st, nil, false)
+	rows := resourceRowsFor(st, nil)
 	names := make(map[string]bool)
 	for _, r := range rows {
 		names[r.name] = true

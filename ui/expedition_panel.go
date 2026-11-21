@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
@@ -52,7 +51,7 @@ type expeditionPanel struct {
 	flashAt   time.Time
 	w, h      int // the last size drawn at
 
-	// settings reads the glyph tier and the motion setting.
+	// settings reads the motion setting.
 	settings func() mapSettings
 
 	now   func() time.Time
@@ -165,20 +164,13 @@ func (p *expeditionPanel) Layout(r image.Rectangle) {
 		return
 	}
 	p.w, p.h = r.Dx(), r.Dy()
-	motion, plain := true, false
-	if p.settings != nil {
-		set := p.settings()
-		motion, plain = set.Motion, set.Tier == mapmodel.TierASCII
-	}
+	motion := p.settings == nil || p.settings().Motion
 	v := p.view
 	v.frame = p.frame(motion)
 	if v.flash != "" && p.now().Sub(p.flashAt) > expFlashFor {
 		p.view.flash, v.flash = "", ""
 	}
 	p.grid = renderExpedition(p.state, v, p.w, p.h)
-	if plain {
-		p.grid.fold()
-	}
 	sc := p.scene()
 	p.moving.Store(motion && (len(sc.acts) > 0 && v.report || len(sc.offers) > 0 && !v.report))
 }

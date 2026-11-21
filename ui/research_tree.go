@@ -164,10 +164,9 @@ func (m *treeModel) left(n *treeNode) int {
 	return n.cx - m.geom.badgeW/2
 }
 
-// buildTree lays out every tech the player may see. ascii picks emblems
-// the plain glyph tier can draw. sel is the selected tech, whose chain of
+// buildTree lays out every tech the player may see. sel is the selected tech, whose chain of
 // prerequisites the lines light up ("" for none).
-func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *treeModel {
+func buildTree(state game.GameState, geom treeGeom, sel string) *treeModel {
 	set := state.Ruleset()
 	sight := game.SightOf(&state)
 	here, _ := set.Index(state.Age)
@@ -282,7 +281,7 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 			} else {
 				m.inReach++
 			}
-			n.emblem = techEmblem(t, m.lanes[n.lane], ascii)
+			n.emblem = techEmblem(t, m.lanes[n.lane])
 			for _, p := range t.Prerequisites {
 				n.needs = append(n.needs, edge{from: p})
 			}
@@ -316,14 +315,7 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 }
 
 // techEmblem is the one glyph in a tech's badge: its own, or its lane's.
-// The plain tier draws the first letter of the tech's letterhead instead.
-func techEmblem(t config.TechDef, lane config.TechLaneDef, ascii bool) rune {
-	if ascii {
-		for _, r := range techCode(t) {
-			return r
-		}
-		return '*'
-	}
+func techEmblem(t config.TechDef, lane config.TechLaneDef) rune {
 	for _, s := range []string{t.Emblem, lane.Emblem} {
 		for _, r := range s {
 			return r
@@ -701,7 +693,6 @@ type treeView struct {
 	far    bool   // the far zoom
 	card   bool   // the selected tech's card is open
 	note   string // what the last action said, on the card
-	ascii  bool   // the plain glyph tier
 	prompt bool   // something is typed in the command bar
 }
 
@@ -750,7 +741,7 @@ func shortAge(name string, room int) string {
 func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid {
 	out := newTGrid(w, h)
 	m.cardAt = image.Rectangle{}
-	m.keys = keySet{plain: v.ascii, glyph: func(x, y int) rune { return out.c[y*out.w+x].r }}
+	m.keys = keySet{glyph: func(x, y int) rune { return out.c[y*out.w+x].r }}
 	if w < 20 || h < 8 {
 		out.text(0, 0, rowid.Line("ui.research_tree.renderTree.01", "Research: make the window larger."), tsText, -1)
 		return out
@@ -863,9 +854,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 			room = min(room, edge-4-lx)
 		}
 		label := ""
-		if v.ascii {
-			label = laneLabel(l.Name, room)
-		} else if short := laneLabel(l.Name, room-2); short != "" {
+		if short := laneLabel(l.Name, room-2); short != "" {
 			label = l.Emblem + " " + short
 		}
 		if label == "" {
@@ -948,10 +937,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	// The status line and the key bar.
 	status := clipRunes(m.statusLine(state, v), w)
 	out.text(0, h-2, status, tsText, -1)
-	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", rowid.Line("ui.research_tree.renderTree.13", "next you can start")}, {"PgUp PgDn " + pageKeysHint(v.ascii), rowid.Line("ui.research_tree.renderTree.15", "zoom")}, {"Home", rowid.Line("ui.research_tree.renderTree.17", "your age")}, {"Enter", "card"}, {"Esc", "close"}}
-	if v.ascii {
-		keys[0][0] = "Arrows"
-	}
+	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", rowid.Line("ui.research_tree.renderTree.13", "next you can start")}, {"PgUp PgDn ⌥↑↓", rowid.Line("ui.research_tree.renderTree.15", "zoom")}, {"Home", rowid.Line("ui.research_tree.renderTree.17", "your age")}, {"Enter", "card"}, {"Esc", "close"}}
 	if w < 100 {
 		keys = [][2]string{keys[0], {"Tab", "next"}, keys[2], keys[4], keys[5]}
 	}
@@ -1043,11 +1029,7 @@ func (m *treeModel) statusLine(state game.GameState, v treeView) string {
 	if !v.card {
 		parts = append(parts, rowid.Line("ui.research_tree.statusLine.04", "Enter opens its card"))
 	}
-	s := strings.Join(parts, " · ")
-	if v.ascii {
-		s = strings.ReplaceAll(strings.ReplaceAll(s, "▸", ">"), "·", "-")
-	}
-	return s
+	return strings.Join(parts, " · ")
 }
 
 // opensText is what a tech opens, in a few words: commands, buildings, a
@@ -1510,19 +1492,6 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 func startWord() string { return "start" }
 
 // ----- the plain glyph tier -----
-
-// plainFold is what the plain tier draws for the marks and edges the map
-// uses, where the map model's own fold would lose the difference between
-// two of them (a dashed edge and a solid one, the filled part of a bar and
-// the rest).
-var plainFold = map[rune]rune{
-	'✓': 'v', '★': '*', '▾': 'v', '⟳': '~', '▸': '>', '◂': '<', '◇': '+', '▲': '^', '▼': 'v',
-	'┄': '.', '┆': ':', '▓': '#', '░': '.', '█': '#', '▒': '+', '▌': '|', '▐': '|', '▄': '_', '▀': '"',
-	'…': '.', '·': '-', '←': '<', '→': '>', '↑': '^', '↓': 'v',
-}
-
-// foldPlain rewrites a grid for the plain glyph tier: nothing but ASCII.
-func foldPlain(g *tGrid) { g.foldWith(plainFold) }
 
 // plainBar is a bar of width cells filled to the fraction f, as the card
 // draws it (no color tags: the card sets its own styles).

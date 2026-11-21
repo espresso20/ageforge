@@ -36,16 +36,7 @@ var glintRunes = [4]rune{'·', '✧', '✦', '✧'}
 var (
 	// rainGlyphs is what falls: half-width kana and digits, or letters and
 	// digits in the plain tier.
-	rainGlyphs      = []rune("ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789")
-	rainGlyphsPlain = []rune("0123456789ABCDEFHJKLMNPRSTUVXYZ")
-	inkRain0        = ink(theme.BadgeRain0)
-	rainInks        = [6]ink{inkRain0, inkRain0 + 1, inkRain0 + 2, inkRain0 + 3, inkRain0 + 4, inkRain0 + 5}
+	rainGlyphs = []rune("ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789")
+	inkRain0   = ink(theme.BadgeRain0)
+	rainInks   = [6]ink{inkRain0, inkRain0 + 1, inkRain0 + 2, inkRain0 + 3, inkRain0 + 4, inkRain0 + 5}
 )
-
-// rainSet is the rain's glyphs for a glyph tier.
-func rainSet(plain bool) []rune {
-	if plain {
-		return rainGlyphsPlain
-	}
-	return rainGlyphs
-}

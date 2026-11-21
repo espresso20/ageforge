@@ -13,7 +13,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -68,7 +67,7 @@ func TestEpochHallFrontPage(t *testing.T) {
 			t.Fatalf("%s: setup: nothing is unseen", name)
 		}
 		for _, dim := range [][2]int{{200, 50}, {80, 24}} {
-			txt := untag(hallFrontText(st, dim[0], dim[1], 0))
+			txt := untag(hallFrontText(st, dim[0], dim[1]))
 			if strings.Contains(txt, "…") {
 				t.Errorf("%s %dx%d: prose cut off:\n%s", name, dim[0], dim[1], txt)
 			}
@@ -80,9 +79,9 @@ func TestEpochHallFrontPage(t *testing.T) {
 			wantAll(t, name, txt, "Highlights", "Ages", "Top badges", "Feats", "more to come")
 		}
 	}
-	txt := untag(hallFrontText(early, 120, 40, 0))
+	txt := untag(hallFrontText(early, 120, 40))
 	wantAll(t, "early", txt, "No badges earned yet.")
-	txt = untag(hallFrontText(late, 120, 40, 0))
+	txt = untag(hallFrontText(late, 120, 40))
 	wantAll(t, "late", txt, "Legend Four", "Epic Two", "Rare Three", "Uncommon Five", "Common One")
 	if strings.Contains(txt, "Unearned Six") || strings.Contains(txt, "Common Seven") {
 		t.Errorf("late: shows more than the five rarest earned:\n%s", txt)
@@ -166,7 +165,7 @@ func TestEpochHallTotalsAreCentred(t *testing.T) {
 	for name, st := range map[string]game.GameState{"early": game.NewGameEngine().GetState(), "late": late} {
 		for _, dim := range [][2]int{{200, 50}, {400, 100}, {100, 30}} {
 			w := overlayTextWidth(dim[0])
-			first, last := firstBox(t, hallFrontText(st, dim[0], dim[1], 0))
+			first, last := firstBox(t, hallFrontText(st, dim[0], dim[1]))
 			// The row's middle against the page's, in half cells.
 			if d := first + last + 1 - w; d < -4 || d > 4 {
 				t.Errorf("%s %dx%d: totals row spans %d..%d on a page %d wide, off centre", name, dim[0], dim[1], first, last, w)
@@ -177,7 +176,7 @@ func TestEpochHallTotalsAreCentred(t *testing.T) {
 
 func TestEpochHallBannerHasManyColours(t *testing.T) {
 	for _, mo := range []bool{false, true} {
-		c := newHallCtx(196, 50, 0, hallMotion{on: mo, t: 3})
+		c := newHallCtx(196, 50, hallMotion{on: mo, t: 3})
 		c.banner("Stone Era", 0, 1)
 		seen := map[any]bool{}
 		for _, cell := range c.g.c {
@@ -193,22 +192,13 @@ func TestEpochHallBannerHasManyColours(t *testing.T) {
 
 func TestEpochHallMotion(t *testing.T) {
 	st := lateHallState(t, "galactic_age")
-	a := hallFront(st, 200, 50, 0, hallMotion{t: 1})
-	b := hallFront(st, 200, 50, 0, hallMotion{t: 97.3})
+	a := hallFront(st, 200, 50, hallMotion{t: 1})
+	b := hallFront(st, 200, 50, hallMotion{t: 97.3})
 	if a != b {
 		t.Error("with motion off the page changed between two frames")
 	}
-	if on := hallFront(st, 200, 50, 0, hallMotion{on: true, t: 1}); on == hallFront(st, 200, 50, 0, hallMotion{on: true, t: 5}) {
+	if on := hallFront(st, 200, 50, hallMotion{on: true, t: 1}); on == hallFront(st, 200, 50, hallMotion{on: true, t: 5}) {
 		t.Error("with motion on the page does not move")
-	}
-}
-
-func TestEpochHallPlainTierIsASCII(t *testing.T) {
-	st := lateHallState(t, "galactic_age")
-	for _, r := range untag(hallFrontText(st, 200, 50, mapmodel.TierASCII)) {
-		if r > 0x7e && r != '\n' {
-			t.Fatalf("the plain tier drew %q", r)
-		}
 	}
 }
 
@@ -219,7 +209,7 @@ func TestEpochHallMonochromeHasNoHue(t *testing.T) {
 		t.Skip(err)
 	}
 	hexRe := regexp.MustCompile(`\[#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})[:\]]`)
-	for _, m := range hexRe.FindAllStringSubmatch(hallFrontText(lateHallState(t, "galactic_age"), 200, 50, 0), -1) {
+	for _, m := range hexRe.FindAllStringSubmatch(hallFrontText(lateHallState(t, "galactic_age"), 200, 50), -1) {
 		if m[1] != m[2] || m[2] != m[3] {
 			t.Fatalf("a hue in Monochrome: #%s%s%s", m[1], m[2], m[3])
 		}
@@ -253,7 +243,7 @@ func TestEpochHallDump(t *testing.T) {
 	late.Buildings = map[string]game.BuildingState{"x": {Count: 1284}}
 	for name, st := range map[string]game.GameState{"early": early, "late": late} {
 		for _, dim := range [][2]int{{400, 100}, {200, 50}, {100, 30}} {
-			txt := hallFront(st, dim[0], dim[1], 0, hallMotion{on: true, t: 2})
+			txt := hallFront(st, dim[0], dim[1], hallMotion{on: true, t: 2})
 			must(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s-%dx%d.txt", name, dim[0], dim[1])), []byte(txt), 0o644))
 		}
 	}
@@ -275,20 +265,12 @@ func TestEpochHallBigPointIsLit(t *testing.T) {
 			t.Errorf("sx %d: rows differ in width", sx)
 		}
 	}
-	// On the plain tier the point is a '#'.
-	c := newHallCtx(196, 50, mapmodel.TierASCII, hallMotion{})
-	c.y = 1
-	c.tiles([]hallStat{{value: "48.2K", big: "48.2K", label: "Population"}})
-	txt := untag(c.render())
-	if strings.ContainsAny(txt, "█▀▄") {
-		t.Errorf("plain tile still has block glyphs:\n%s", txt)
-	}
 }
 
 func TestEpochHallTilesShareAHeightAndTheBarSitsInside(t *testing.T) {
 	late := lateHallState(t, "galactic_age")
 	for _, dim := range [][2]int{{200, 50}, {100, 30}, {100, 24}} {
-		lines := strings.Split(untag(hallFrontText(late, dim[0], dim[1], 0)), "\n")
+		lines := strings.Split(untag(hallFrontText(late, dim[0], dim[1])), "\n")
 		top, bottom := -1, -1
 		for i, l := range lines {
 			if top < 0 && strings.Contains(l, "╭") {

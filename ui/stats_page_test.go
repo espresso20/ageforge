@@ -161,7 +161,7 @@ func TestStatsScrollStopsAtBothEnds(t *testing.T) {
 	}
 }
 
-func TestStatsPictureCountsAndPlainCells(t *testing.T) {
+func TestStatsPictureCounts(t *testing.T) {
 	st := statsFixture(t, 6, 12, 5*time.Hour)
 	p := laidStats(t, st, 160, 40, true)
 	if got, want := len(p.page.pics), 6+6+12; got != want {
@@ -187,11 +187,6 @@ func TestStatsPictureCountsAndPlainCells(t *testing.T) {
 		b := paintAlone(overBar(pl), 160, 40+barBigRows)
 		if len(b.Pics) != 0 {
 			t.Errorf("part %d: pictures in the plain tier", part)
-		}
-		for i, c := range b.Cells {
-			if c.R > 127 {
-				t.Fatalf("part %d: cell %d,%d holds %q", part, i%b.W, i/b.W, c.R)
-			}
 		}
 	}
 }
@@ -388,40 +383,6 @@ func TestStatsSmallSectionsGoUnderTheShorterColumn(t *testing.T) {
 		p := laidStats(t, statsFixture(t, c.ages, c.res, time.Hour), 160, 40, true)
 		if d := p.page.ends[0] - p.page.ends[1]; d > 6 || d < -6 {
 			t.Errorf("%d ages, %d resources: columns end at %v", c.ages, c.res, p.page.ends)
-		}
-	}
-}
-
-func TestStatsTilesShareOneScaleAndClearTheirSigns(t *testing.T) {
-	in := newStatsInk(newExpPalette())
-	for _, w := range []int{100, 120, 160} {
-		for _, st := range []game.GameState{statsFixture(t, 22, 24, 190*time.Hour), statsFixture(t, 1, 3, 5*time.Hour+12*time.Minute)} {
-			p := laidStats(t, st, w, 40, true)
-			var heights []int
-			for _, pc := range p.page.pics {
-				if !strings.HasPrefix(pc.key, "tile") {
-					continue
-				}
-				img := pc.draw(12, 24, false, in)
-				box := image.Rectangle{}
-				for y := 0; y < img.Rect.Dy(); y++ {
-					for x := 0; x < img.Rect.Dx(); x++ {
-						if img.RGBAAt(x, y) == in.face {
-							box = box.Union(image.Rect(x, y, x+1, y+1))
-						}
-					}
-				}
-				heights = append(heights, box.Dy())
-				if k := max(1, 24/21); box.Min.X-40*k < 12 {
-					t.Errorf("w %d: numeral starts %d px after the sign, want a cell", w, box.Min.X-40*k)
-				}
-			}
-			for _, h := range heights {
-				if h != heights[0] {
-					t.Errorf("w %d: numeral heights differ: %v", w, heights)
-					break
-				}
-			}
 		}
 	}
 }

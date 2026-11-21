@@ -55,8 +55,6 @@ type keySet struct {
 	keys []xkey
 	// tabs are the panel's tabs (tabs.go).
 	tabs []tabPlate
-	// plain is set once the grid is folded to ASCII: its keys stay chips.
-	plain bool
 	// glyph reads the rune a cell of the grid holds.
 	glyph func(x, y int) rune
 }

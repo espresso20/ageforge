@@ -38,22 +38,19 @@ func classicalGame(t *testing.T) *game.GameEngine {
 
 // drawTree lays the tree out and renders the panel as the panel does.
 func drawTree(st game.GameState, w, h int, v treeView) (*treeModel, treeView, *tGrid) {
-	m := buildTree(st, treeGeomFor(w, v.far), v.ascii, v.sel)
+	m := buildTree(st, treeGeomFor(w, v.far), v.sel)
 	if m.by[v.sel] == nil {
 		v.sel = m.home()
-		m = buildTree(st, treeGeomFor(w, v.far), v.ascii, v.sel)
+		m = buildTree(st, treeGeomFor(w, v.far), v.sel)
 	}
 	m.follow(&v, w, h)
 	g := renderTree(st, m, v, w, h)
-	if v.ascii {
-		foldPlain(g)
-	}
 	return m, v, g
 }
 
 // cardOf is a tech's card as plain text, a paragraph a line.
 func cardOf(st game.GameState, key string) string {
-	m := buildTree(st, treeGeomFor(120, false), false, key)
+	m := buildTree(st, treeGeomFor(120, false), key)
 	var out []string
 	for _, s := range m.cardSentences(st, m.by[key], "") {
 		out = append(out, strings.Map(func(r rune) rune {
@@ -89,7 +86,7 @@ func treeDrawsEveryTechWhole(t *testing.T, st game.GameState, sel string) {
 	for _, w := range []int{80, 120} {
 		for _, far := range []bool{false, true} {
 			geom := treeGeomFor(w, far)
-			m := buildTree(st, geom, false, sel)
+			m := buildTree(st, geom, sel)
 			if m.by[sel] == nil {
 				t.Fatalf("%s is not on the map", sel)
 			}
@@ -199,46 +196,37 @@ func treeAtEverySize(t *testing.T, st game.GameState, sels ...string) {
 	for _, size := range treeSizes {
 		w, h := size[0], size[1]-barRows(size[0], size[1])
 		for _, far := range []bool{false, true} {
-			for _, ascii := range []bool{false, true} {
-				for _, sel := range sels {
-					m, v, g := drawTree(st, w, h, treeView{sel: sel, far: far, ascii: ascii})
-					if g.w != w || g.h != h {
-						t.Fatalf("%dx%d: rendered %dx%d", w, h, g.w, g.h)
-					}
-					n := m.by[sel]
-					ox, oy, mw, mh := mapRect(m.geom, w, h)
-					left, top := m.left(n)-v.vx, n.top-v.vy
-					if left < 0 || left+m.geom.badgeW > mw || top < 0 || m.bottom(n)-v.vy >= mh {
-						t.Errorf("%dx%d far=%v: the selected %s is clipped (badge at %d,%d in a map of %dx%d)", w, h, far, sel, left, top, mw, mh)
-					}
-					if got := g.at(ox+n.cx-v.vx, oy+n.top-v.vy+m.geom.nameH+m.geom.badgeH/2).r; !ascii && got != n.emblem {
-						t.Errorf("%dx%d far=%v: %s's emblem is not where the view puts it (found %q)", w, h, far, sel, got)
-					}
-					text := g.String()
-					lines := strings.Split(text, "\n")
-					if !strings.Contains(lines[0], "RESEARCH") || !strings.Contains(lines[h-1], "Esc") {
-						t.Errorf("%dx%d far=%v: the title or the key bar is missing", w, h, far)
-					}
-					if !strings.Contains(lines[h-2], n.def.Name) {
-						t.Errorf("%dx%d far=%v: the status line does not name %s: %q", w, h, far, sel, lines[h-2])
-					}
-					if ascii {
-						for _, r := range text {
-							if r >= 0x80 {
-								t.Fatalf("%dx%d far=%v: the plain tier draws %q", w, h, far, r)
-							}
-						}
-					}
-					// The card: inside the map, every paragraph of it.
-					_, _, cg := drawTree(st, w, h, treeView{sel: sel, far: far, ascii: ascii, card: true})
-					ct := cg.String()
-					if !strings.Contains(ct, strings.ToUpper(n.def.Name)) || !strings.Contains(ct, "Esc closes the card") {
-						t.Errorf("%dx%d far=%v: no card for %s", w, h, far, sel)
-					}
-					for y, line := range strings.Split(ct, "\n") {
-						if strings.ContainsAny(line, "╭╰") && strings.Contains(line, "─────────") && (y < oy || y >= oy+mh) && !far {
-							t.Errorf("%dx%d: the card's frame is outside the map (row %d)", w, h, y)
-						}
+			for _, sel := range sels {
+				m, v, g := drawTree(st, w, h, treeView{sel: sel, far: far})
+				if g.w != w || g.h != h {
+					t.Fatalf("%dx%d: rendered %dx%d", w, h, g.w, g.h)
+				}
+				n := m.by[sel]
+				ox, oy, mw, mh := mapRect(m.geom, w, h)
+				left, top := m.left(n)-v.vx, n.top-v.vy
+				if left < 0 || left+m.geom.badgeW > mw || top < 0 || m.bottom(n)-v.vy >= mh {
+					t.Errorf("%dx%d far=%v: the selected %s is clipped (badge at %d,%d in a map of %dx%d)", w, h, far, sel, left, top, mw, mh)
+				}
+				if got := g.at(ox+n.cx-v.vx, oy+n.top-v.vy+m.geom.nameH+m.geom.badgeH/2).r; got != n.emblem {
+					t.Errorf("%dx%d far=%v: %s's emblem is not where the view puts it (found %q)", w, h, far, sel, got)
+				}
+				text := g.String()
+				lines := strings.Split(text, "\n")
+				if !strings.Contains(lines[0], "RESEARCH") || !strings.Contains(lines[h-1], "Esc") {
+					t.Errorf("%dx%d far=%v: the title or the key bar is missing", w, h, far)
+				}
+				if !strings.Contains(lines[h-2], n.def.Name) {
+					t.Errorf("%dx%d far=%v: the status line does not name %s: %q", w, h, far, sel, lines[h-2])
+				}
+				// The card: inside the map, every paragraph of it.
+				_, _, cg := drawTree(st, w, h, treeView{sel: sel, far: far, card: true})
+				ct := cg.String()
+				if !strings.Contains(ct, strings.ToUpper(n.def.Name)) || !strings.Contains(ct, "Esc closes the card") {
+					t.Errorf("%dx%d far=%v: no card for %s", w, h, far, sel)
+				}
+				for y, line := range strings.Split(ct, "\n") {
+					if strings.ContainsAny(line, "╭╰") && strings.Contains(line, "─────────") && (y < oy || y >= oy+mh) && !far {
+						t.Errorf("%dx%d: the card's frame is outside the map (row %d)", w, h, y)
 					}
 				}
 			}
@@ -376,7 +364,7 @@ func TestResearchTreePaintsInEveryTheme(t *testing.T) {
 func TestResearchTreeTellsStatesApartByShape(t *testing.T) {
 	st := classicalGame(t).GetState()
 	geom := treeGeomFor(120, false)
-	m := buildTree(st, geom, false, "")
+	m := buildTree(st, geom, "")
 	g := m.canvas(st, "")
 	badge := func(key string) string {
 		n := m.by[key]
@@ -417,7 +405,7 @@ func TestResearchTreeTellsStatesApartByShape(t *testing.T) {
 		t.Errorf("a next-age tech is drawn as a badge, not a block:\n%s", b)
 	}
 	// The far zoom keeps a mark for each state too.
-	far := buildTree(st, treeGeomFor(80, true), false, "")
+	far := buildTree(st, treeGeomFor(80, true), "")
 	fg := far.canvas(st, "")
 	for key, want := range map[string]string{"mathematics": "✓π", "philosophy": "⟳Φ", "animal_husbandry": "(♞)", "imperial_legions": "┆⚑┆", "theology": "░Θ░"} {
 		n := far.by[key]
@@ -532,7 +520,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 	if card := cardOf(es, "zz_join"); !strings.Contains(card, "It builds on Tool Making. It needs one of Zz Left or Zz Right. You hold Zz Left.") {
 		t.Errorf("an either-or group's card:\n%s", card)
 	}
-	em := buildTree(es, treeGeomFor(120, false), false, "zz_join")
+	em := buildTree(es, treeGeomFor(120, false), "zz_join")
 	dashed := 0
 	for _, c := range em.lines {
 		if c.dashed && !c.solid {
@@ -799,45 +787,34 @@ func emblemsSitOnTheGrid(t *testing.T, name string, st game.GameState, last stri
 	lanes := config.TechLaneByKey()
 	for _, w := range []int{80, 120} {
 		for _, far := range []bool{false, true} {
-			for _, ascii := range []bool{false, true} {
-				geom := treeGeomFor(w, far)
-				m := buildTree(st, geom, ascii, "")
-				g := m.canvas(st, "")
-				if ascii {
-					foldPlain(g)
+			geom := treeGeomFor(w, far)
+			m := buildTree(st, geom, "")
+			g := m.canvas(st, "")
+			if len(m.nodes) != early || early != wantNodes {
+				t.Fatalf("from %s, %d far=%v: %d techs on the map, the ages in sight hold %d (want %d)", name, w, far, len(m.nodes), early, wantNodes)
+			}
+			for _, n := range m.nodes {
+				want := []rune(n.def.Emblem)[0]
+				if n.emblem != want {
+					t.Errorf("%d far=%v %s carries %q, want %q", w, far, n.key, n.emblem, want)
 				}
-				if len(m.nodes) != early || early != wantNodes {
-					t.Fatalf("from %s, %d far=%v: %d techs on the map, the ages in sight hold %d (want %d)", name, w, far, len(m.nodes), early, wantNodes)
+				if n.def.Emblem == lanes[n.def.Lane].Emblem && n.key != "tool_making" && n.key != "primitive_writing" && n.key != "military_tactics" && n.key != "transcendence" {
+					t.Errorf("%s wears its lane's glyph %q: a tech of a filled-in age has an emblem of its own", n.key, n.def.Emblem)
 				}
-				for _, n := range m.nodes {
-					want := []rune(n.def.Emblem)[0]
-					if ascii {
-						want = rune(n.def.Code[0])
-					}
-					if n.emblem != want {
-						t.Errorf("%d far=%v plain=%v: %s carries %q, want %q", w, far, ascii, n.key, n.emblem, want)
-					}
-					if !ascii && n.def.Emblem == lanes[n.def.Lane].Emblem && n.key != "tool_making" && n.key != "primitive_writing" && n.key != "military_tactics" && n.key != "transcendence" {
-						t.Errorf("%s wears its lane's glyph %q: a tech of a filled-in age has an emblem of its own", n.key, n.def.Emblem)
-					}
-					ex, ey := n.cx, n.top+geom.nameH+geom.badgeH/2
-					if geom.pill {
-						ex, ey = m.left(n)+1, n.top
-					}
-					if got := g.at(ex, ey).r; got != want {
-						t.Errorf("%d far=%v plain=%v: %s has %q on its emblem's cell (%d,%d), want %q", w, far, ascii, n.key, got, ex, ey, want)
-					}
-					if ascii && (want < 'A' || want > 'Z') {
-						t.Errorf("%s has no letter for the plain tier: %q", n.key, want)
-					}
-					// The cells either side belong to the badge, never to a
-					// glyph that spilled over: a close badge keeps them
-					// blank or shaded.
-					if !geom.pill {
-						for _, dx := range []int{-1, 1} {
-							if r := g.at(ex+dx, ey).r; r != ' ' && r != '░' && r != '.' && r != ':' {
-								t.Errorf("%d plain=%v: %s has %q beside its emblem", w, ascii, n.key, r)
-							}
+				ex, ey := n.cx, n.top+geom.nameH+geom.badgeH/2
+				if geom.pill {
+					ex, ey = m.left(n)+1, n.top
+				}
+				if got := g.at(ex, ey).r; got != want {
+					t.Errorf("%d far=%v %s has %q on its emblem's cell (%d,%d), want %q", w, far, n.key, got, ex, ey, want)
+				}
+				// The cells either side belong to the badge, never to a
+				// glyph that spilled over: a close badge keeps them
+				// blank or shaded.
+				if !geom.pill {
+					for _, dx := range []int{-1, 1} {
+						if r := g.at(ex+dx, ey).r; r != ' ' && r != '░' && r != '.' && r != ':' {
+							t.Errorf("%d: %s has %q beside its emblem", w, n.key, r)
 						}
 					}
 				}
@@ -859,7 +836,7 @@ func TestCapstonesReadByShape(t *testing.T) {
 	}
 	for _, w := range []int{80, 120} {
 		geom := treeGeomFor(w, false)
-		m := buildTree(st, geom, false, "scholasticism")
+		m := buildTree(st, geom, "scholasticism")
 		ready, waiting := m.by["scholasticism"], m.by["guilds"]
 		if ready.mark != markReady || waiting.mark != markLocked {
 			t.Fatalf("%d: Scholasticism is %v and Guilds %v, want ready and waiting", w, ready.mark, waiting.mark)
@@ -880,7 +857,7 @@ func TestCapstonesReadByShape(t *testing.T) {
 			t.Errorf("%d: Feudalism, an optional tech, is drawn %q", w, rows[0])
 		}
 	}
-	if got := buildTree(st, treeGeomFor(120, false), false, "guilds").statusLine(st, treeView{sel: "guilds"}); !strings.Contains(got, "waits for what it needs") {
+	if got := buildTree(st, treeGeomFor(120, false), "guilds").statusLine(st, treeView{sel: "guilds"}); !strings.Contains(got, "waits for what it needs") {
 		t.Errorf("the status line for Guilds: %q", got)
 	}
 	if card := cardOf(st, "guilds"); !strings.Contains(card, "With it, buildings cost 4% less and construction takes 8% less time") {
@@ -891,7 +868,7 @@ func TestCapstonesReadByShape(t *testing.T) {
 	must(t, ge.StartResearch("scholasticism"))
 	st = ge.GetState()
 	geom := treeGeomFor(120, false)
-	m := buildTree(st, geom, false, "scholasticism")
+	m := buildTree(st, geom, "scholasticism")
 	n := m.by["scholasticism"]
 	if rows := badgeRows(geom, n, 0.4); n.mark != markRunning || !strings.Contains(rows[len(rows)-1], "▓▓░░░") {
 		t.Errorf("a capstone in progress is drawn %q", rows[len(rows)-1])
@@ -913,7 +890,7 @@ func TestCapstonesReadByShape(t *testing.T) {
 func TestResearchEffectSentenceCarriesTheEffectTag(t *testing.T) {
 	ge := classicalGame(t)
 	st := ge.GetState()
-	m := buildTree(st, treeGeomFor(120, false), false, "road_building")
+	m := buildTree(st, treeGeomFor(120, false), "road_building")
 	sents := m.cardSentences(st, m.by["road_building"], "")
 	const effect = "Road Building gives +8% gold production."
 	if !strings.Contains(sents[0], string(swEffect)+effect) {
@@ -1022,7 +999,7 @@ func TestResearchCardSaysFlatOutputPerSecond(t *testing.T) {
 			if e.Kind != config.EffectFlatOutput {
 				continue
 			}
-			if buildTree(st, treeGeomFor(120, false), false, def.Key).by[def.Key] == nil {
+			if buildTree(st, treeGeomFor(120, false), def.Key).by[def.Key] == nil {
 				continue
 			}
 			seen++

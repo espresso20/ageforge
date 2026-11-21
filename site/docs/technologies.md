@@ -226,7 +226,7 @@ With something typed in the command bar, `Tab` and `Enter` belong to the command
 
 In the window the mouse works too: a click on a tech opens its card, a click outside the open card closes it, and the wheel moves the selection up and down.
 
-The glyphs follow your `map glyphs` setting: with `map glyphs ascii` the tree is drawn in plain ASCII, with letters for emblems. What research adds up to (every bonus your techs give together, and what research speed does to the times) is on the Stats panel, under Research bonuses.
+`map glyphs` changes the Map and the mini map only; the tree draws the same either way. What research adds up to (every bonus your techs give together, and what research speed does to the times) is on the Stats panel, under Research bonuses.
 
 ---
 

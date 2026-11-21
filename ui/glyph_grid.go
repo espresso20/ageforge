@@ -1,8 +1,6 @@
 package ui
 
-import (
-	"github.com/espresso20/ageforge/mapmodel"
-)
+import ()
 
 // glyph_grid.go is the block of cells the drawn panels render into before
 // anything reaches the screen: the Research panel and the badge case (tGrid,
@@ -62,7 +60,7 @@ type gcell[K comparable] struct {
 	ink ink
 }
 
-// glyphGrid is a grid of gcells, with the plain glyph tier's fold.
+// glyphGrid is a grid of gcells, .
 type glyphGrid[K comparable] struct {
 	grid[gcell[K]]
 }
@@ -74,25 +72,4 @@ func newGlyphGrid[K comparable](w, h int) glyphGrid[K] {
 // set writes rune r painted as k.
 func (g *glyphGrid[K]) set(x, y int, r rune, k K) {
 	g.store(x, y, gcell[K]{r: r, k: k, lane: -1})
-}
-
-// foldWith rewrites the grid for the plain glyph tier: nothing but ASCII.
-// table is the panel's own fold, for the marks and edges where the map
-// model's fold would lose the difference between two of them; what it does
-// not list folds as the map does.
-func (g *glyphGrid[K]) foldWith(table map[rune]rune) {
-	for i := range g.c {
-		g.c[i].r = foldRune(g.c[i].r, table)
-	}
-}
-
-// foldRune is r in ASCII: as table has it, else as the map model folds it.
-func foldRune(r rune, table map[rune]rune) rune {
-	if r < 0x80 {
-		return r
-	}
-	if folded, ok := table[r]; ok {
-		return folded
-	}
-	return mapmodel.Fold(r, mapmodel.TierASCII)
 }

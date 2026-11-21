@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"math"
-	"strconv"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -57,9 +56,6 @@ func (pg *statsPage) lifetime(st game.GameState, w int, wide bool, grow int) int
 	if bs.HiddenCounted {
 		total += bs.Hidden
 	}
-	toks, _ := numToks(commas(float64(bs.Earned)), false)
-	den, _ := numToks("/"+strconv.Itoa(total), true)
-	toks = append(toks, den...)
 	pl := &statsPlaque{name: as.DisplayName, title: bs.Title}
 	if bs.NextTitle != "" {
 		pl.bar, pl.frac = true, math.Min(1, float64(bs.Points)/float64(max(1, bs.NextTitleAt)))
@@ -68,7 +64,7 @@ func (pg *statsPage) lifetime(st game.GameState, w int, wide bool, grow int) int
 	tiles := []statsTile{{span: 2, plaque: pl},
 		countTile(txtPrestiges.String(), "wonder", as.TotalPrestiges),
 		countTile(txtCivs.String(), "diplomacy", as.CivilizationsStarted),
-		{name: txtBadgesEarn.String(), text: fmt.Sprintf("%d/%d", bs.Earned, total), toks: toks, kind: "trade"},
+		{name: txtBadgesEarn.String(), text: fmt.Sprintf("%d/%d", bs.Earned, total), kind: "trade"},
 		countTile(txtBadgePts.String(), "culture", bs.Points)}
 	n := 4 // narrower: the plaque takes a row, the four counts the next
 	if wide {
@@ -110,7 +106,7 @@ func (pg *statsPage) layPlaque(t *statsTile, nr int) {
 	th := r.Dy()
 	pg.pics = append(pg.pics, statsPic{r: r, key: fmt.Sprint("plaque", w, th, nr),
 		draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
-			return statsTilePic(w, th, nr+1, cw, ch, nil, "", false, nil, in)
+			return statsTilePic(w, th, nr+1, cw, ch, "", false, in)
 		}})
 	pg.labels = append(pg.labels,
 		statsLabel{x + 1, y, acc, xDim, ""}, statsLabel{x + len(acc) + 3, y, fitText(pl.name, w-len(acc)-4), xBright, ""},

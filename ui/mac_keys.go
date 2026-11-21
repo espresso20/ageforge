@@ -29,12 +29,3 @@ func macKeys(k *kit.Key) *kit.Key {
 	}
 	return &kit.Key{Code: to}
 }
-
-// pageKeysHint is how a key bar spells Option+Up and Option+Down beside
-// PgUp and PgDn. The plain glyph set has no ⌥, so it spells the chord out.
-func pageKeysHint(plain bool) string {
-	if plain {
-		return "Alt+Up/Dn"
-	}
-	return "⌥↑↓"
-}
