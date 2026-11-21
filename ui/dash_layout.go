@@ -28,6 +28,10 @@ const (
 	richLeftMin  = 46
 	richMidMin   = 44
 	richRightMin = 33
+	// richMidMax is the widest the Middle column is drawn: a building card's
+	// name, price and Build button read as one line at this width, and wider
+	// only puts empty cells between them.
+	richMidMax = 90
 	// richPeopleRows is the People box's height, border included, in the rich
 	// layout: the headcount, the bar, the four kinds and one line on what
 	// holds the population back. richPeopleDetailRows adds the second line of
@@ -54,7 +58,7 @@ func dashRich(w, h int) bool { return w >= richMinCols && h >= richMinRows }
 // richCols is the rich layout's column widths on a w-cell terminal: Left about
 // 30% and Right about 23% of the width (each at least its minimum), Middle the
 // rest. When Middle would come out under richMidMin, Left gives up the
-// difference.
+// difference; over richMidMax, Left and Right share what is over.
 func richCols(w int) (left, mid, right int) {
 	left = max(richLeftMin, (30*w+50)/100)
 	right = max(richRightMin, (23*w+50)/100)
@@ -62,6 +66,11 @@ func richCols(w int) (left, mid, right int) {
 	if mid < richMidMin {
 		left -= richMidMin - mid
 		mid = richMidMin
+	}
+	if over := mid - richMidMax; over > 0 {
+		mid = richMidMax
+		left += (over + 1) / 2
+		right += over / 2
 	}
 	return left, mid, right
 }
