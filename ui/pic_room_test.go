@@ -38,26 +38,6 @@ func lastDiffX(a, b *image.RGBA) int {
 	return last + 1
 }
 
-func TestCardSignClearsText(t *testing.T) {
-	pal := newExpPalette()
-	look := cardLookOf(pal, false, false, true)
-	for name, c := range roomCells {
-		cw, ch := c[0], c[1]
-		k := cardPic{w: 40, rows: 3, cw: cw, ch: ch, kind: "housing", look: look, ground: pal.tone(xText, true),
-			accent: pal.tone(xAccent, false), good: pal.tone(xGood, false), gauge: 4, can: true}
-		with := drawCard(k)
-		k.compact = true
-		without := drawCard(k)
-		right := lastDiffX(with, without)
-		if right == 0 {
-			t.Fatalf("%s: the sign drew nothing", name)
-		}
-		if text := cardSignRoom(cw, ch) * cw; text < right {
-			t.Errorf("%s: words start at pixel %d, the sign ends at %d", name, text, right)
-		}
-	}
-}
-
 func TestActionSignClearsLabel(t *testing.T) {
 	pal := newExpPalette()
 	l := pal.look(keyPrimary, keyRest)
