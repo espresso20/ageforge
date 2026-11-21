@@ -117,7 +117,8 @@ func (l *ledger) resourceOrder(state game.GameState) []string {
 // the wonder's bank, what is left to bank against the stock.
 //
 // A resource is named as short only when the building the Next step names
-// (focus) or one under construction needs it and the stock falls short.
+// (focus) or a wonder with something banked needs it and the stock falls
+// short: a building going up is paid for.
 func (l *ledger) blockers(state game.GameState, focus string) {
 	d := &l.data
 	d.Waits, d.Then, d.Short = d.Waits[:0], "", d.Short[:0]
@@ -134,17 +135,8 @@ func (l *ledger) blockers(state game.GameState, focus string) {
 		}
 	}
 
-	building := map[string]bool{}
-	if focus != "" {
-		building[focus] = true
-	}
-	for _, q := range state.BuildQueue {
-		building[q.Key] = true
-	}
-	for key := range building {
-		if _, ok := state.Ruleset().Building(key); ok {
-			short(buildingPrice(&state, key, state.Buildings[key]), nil)
-		}
+	if _, ok := state.Ruleset().Building(focus); ok {
+		short(buildingPrice(&state, focus, state.Buildings[focus]), nil)
 	}
 	var build *game.GateRow
 	bankOpen := false
@@ -157,13 +149,12 @@ func (l *ledger) blockers(state game.GameState, focus string) {
 			switch r.Kind {
 			case game.GateRowCount:
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d/%d", r.Label, r.Have, r.Need))
-
 			case game.GateRowAmount:
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %s/%s", r.Label, textfmt.Number(r.Value), textfmt.Number(r.Target)))
 			case game.GateRowShare:
 				bankOpen = true
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d%%", r.Label, r.Have))
-				if def, ok := state.Ruleset().Building(r.Key); ok && building[r.Key] {
+				if def, ok := state.Ruleset().Building(r.Key); ok && (r.Key == focus || len(state.Buildings[r.Key].WonderBank) > 0) {
 					short(def.BaseCost, state.Buildings[r.Key].WonderBank)
 				}
 			default:

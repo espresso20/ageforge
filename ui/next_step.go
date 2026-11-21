@@ -33,10 +33,11 @@ const (
 	ruleAdvance  = "advance"
 	ruleResearch = "research"
 	ruleIdle     = "idle"
+	ruleDry      = "dry"
+	ruleIncome   = "income"
 	ruleScholars = "scholars"
 	ruleHomes    = "homes"
 	ruleGate     = "gate"
-	ruleDry      = "dry"
 	ruleNone     = "none"
 )
 
@@ -71,15 +72,21 @@ func (s nextStep) item() nextItem {
 }
 
 // computeNext works the next step out of a snapshot: the first rule that
-// matches is NOW, then come the next three things.
+// matches is NOW, then come the next three things. What cannot wait comes
+// first, then what makes the town run by itself, then the gate.
 func computeNext(st game.GameState, v panelView) nextStep {
 	n := nextCtx{st: st, cards: buildCards(st, buyOne), set: st.Ruleset()}
 	var steps []nextStep
 	for _, rule := range []func(*nextCtx) (nextStep, bool){
 		(*nextCtx).choice, (*nextCtx).advance, (*nextCtx).research, (*nextCtx).idle,
-		(*nextCtx).scholars, (*nextCtx).homes, (*nextCtx).gate, (*nextCtx).dry,
+		(*nextCtx).dry, (*nextCtx).income, (*nextCtx).scholars, (*nextCtx).homes, (*nextCtx).gate,
 	} {
-		if s, ok := rule(&n); ok && (s.panel == "" || v.has(s.panel)) {
+		s, ok := rule(&n)
+		if !ok || s.panel != "" && !v.has(s.panel) {
+			continue
+		}
+		// Two rules that ask for the same building are one step.
+		if s.card == "" || !slices.ContainsFunc(steps, func(o nextStep) bool { return o.card == s.card }) {
 			steps = append(steps, s)
 		}
 	}
@@ -140,6 +147,16 @@ func (n *nextCtx) going(ok func(bs game.BuildingState, def config.BuildingDef) b
 	})
 }
 
+// stands reports whether a building the test accepts stands.
+func (n *nextCtx) stands(ok func(bs game.BuildingState, def config.BuildingDef) bool) bool {
+	for key, bs := range n.st.Buildings {
+		if def, has := n.set.Building(key); has && bs.Count > 0 && ok(bs, def) {
+			return true
+		}
+	}
+	return false
+}
+
 // copies is how many of key are going up.
 func (n *nextCtx) copies(key string) int {
 	c := 0
@@ -158,6 +175,15 @@ func (n *nextCtx) want(ok func(bs game.BuildingState, def config.BuildingDef) bo
 		return buildCard{}, false
 	}
 	return n.pick(ok)
+}
+
+// makes accepts a building that brings res in.
+func makes(res string) func(game.BuildingState, config.BuildingDef) bool {
+	return func(_ game.BuildingState, def config.BuildingDef) bool {
+		return slices.ContainsFunc(def.Effects, func(e config.Effect) bool {
+			return e.Type == "production" && e.Target == res && e.Value > 0
+		})
+	}
 }
 
 // isHome accepts a building that houses people.
@@ -396,11 +422,7 @@ func (n *nextCtx) dry() (nextStep, bool) {
 	if res == "" {
 		return nextStep{}, false
 	}
-	c, ok := n.want(func(_ game.BuildingState, def config.BuildingDef) bool {
-		return slices.ContainsFunc(def.Effects, func(e config.Effect) bool {
-			return e.Type == "production" && e.Target == res && e.Value > 0
-		})
-	})
+	c, ok := n.want(makes(res))
 	if !ok {
 		return nextStep{}, false
 	}
@@ -409,6 +431,28 @@ func (n *nextCtx) dry() (nextStep, bool) {
 	return n.build(ruleDry, rowid.Sprintf("ui.next_step.dry.01", "%s is running out", name),
 		rowid.Sprintf("ui.next_step.dry.02", "none left in %s", left),
 		[]string{rowid.Sprintf("ui.next_step.dry.03", "%s runs out in %s.", name, left), rowid.Sprintf("ui.next_step.dry.04", "A %s makes more.", c.name)}, c), true
+}
+
+// income: a resource the town still gathers by hand has no building that
+// brings it in, standing or going up. A town with no home builds that first.
+func (n *nextCtx) income() (nextStep, bool) {
+	if !n.st.CanGatherByHand() || n.st.Workers.MaxPop == 0 && !n.going(isHome) {
+		return nextStep{}, false
+	}
+	for _, res := range handRes {
+		if r := n.st.Resources[res]; !r.Unlocked || r.Rate > 0 || n.stands(makes(res)) {
+			continue
+		}
+		c, ok := n.want(makes(res))
+		if !ok {
+			continue
+		}
+		name := game.ResourceName(res)
+		return n.build(ruleIncome, rowid.Sprintf("ui.next_step.income.01", "Build a %s", c.name),
+			rowid.Sprintf("ui.next_step.income.02", "nothing brings %s in yet", name),
+			[]string{rowid.Sprintf("ui.next_step.income.03", "Only hands bring %s in so far.", name), rowid.Sprintf("ui.next_step.income.04", "A %s brings it in by itself.", c.name)}, c), true
+	}
+	return nextStep{}, false
 }
 
 // passive lists the things that follow the matching steps, in a fixed order:

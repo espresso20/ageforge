@@ -44,8 +44,8 @@ func (v panelView) newCount() int {
 
 // panelsReached is the panels the state has made findable. Charter and the
 // map and stats: a building stands. Milestones: one has progress. Badges: one
-// is earned. Expedition: the
-// board has a slot, or a party is out or has come home. Army: a post stands.
+// is earned. Expedition: the board has a slot and there are people to send,
+// or a party is out or has come home. Army: a post stands.
 // Harbinger: one is present or has been. Epoch: a catastrophe is possible,
 // pending or on record.
 func panelsReached(st game.GameState) []string {
@@ -72,7 +72,7 @@ func panelsReached(st game.GameState) []string {
 		out = append(out, "factions")
 	}
 	m := st.Military
-	if len(m.Board) > 0 || len(m.Active) > 0 || m.CompletedCount > 0 {
+	if len(m.Board) > 0 && st.Workers.TotalPop > 0 || len(m.Active) > 0 || m.CompletedCount > 0 {
 		out = append(out, "expedition")
 	}
 	if m.SoldierCap > 0 || m.SoldiersAway > 0 {
