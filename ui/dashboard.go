@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -1540,6 +1541,9 @@ func (d *Dashboard) runLine(text string) {
 		d.app.Stop()
 		return
 	}
+	if d.screenLine(cmd) {
+		return
+	}
 	// Route /commands to dev exec when dev mode is active
 	if game.DevModeActive && strings.HasPrefix(cmd, "/") {
 		result := game.DevConsoleCommand(cmd, d.engine)
@@ -1629,6 +1633,37 @@ func (d *Dashboard) runLine(text string) {
 		d.announceBadges()
 		d.engine.AddLog(game.OfficeGame, game.LevelEverything, result.Type, result.Message)
 	}
+}
+
+// screenLine runs the commands that are the dashboard's own (buy, pause,
+// settings, menu, new) and reports whether line was one.
+func (d *Dashboard) screenLine(line string) bool {
+	f := strings.Fields(strings.ToLower(line))
+	if len(f) == 0 {
+		return false
+	}
+	switch f[0] {
+	case "buy":
+		if len(f) == 2 {
+			if i := slices.Index(buyArgs[:], f[1]); i >= 0 {
+				d.economyTab.buildBox.setBuy(buyChoice(i))
+				return true
+			}
+		}
+		d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", usageFor("buy"))
+	case "pause", "settings":
+		if d.pages.HasPage(pausePage) {
+			break
+		}
+		if p := d.openPause(); f[0] == "settings" {
+			p.go2(pauseDisplay)
+		}
+	case "menu", "new":
+		d.toMenu()
+	default:
+		return false
+	}
+	return true
 }
 
 // returnFocus gives the keyboard back when a window over the dashboard
