@@ -379,11 +379,17 @@ func (p *mapPanel) handleKey(ev *kit.Key) bool {
 // plain text.
 var barTags = regexp.MustCompile(`\[[a-zA-Z0-9#:,\-]*\]`)
 
+// replyLine is the first line of a command's answer without its colour tags,
+// and whether the command failed.
+func replyLine(res CommandResult) (msg string, bad bool) {
+	msg, _, _ = strings.Cut(res.Message, "\n")
+	return strings.TrimSpace(barTags.ReplaceAllString(msg, "")), res.Type == "error" || res.Type == "warning"
+}
+
 // reply puts what a command typed with the panel open did on the key bar,
 // since the log is behind the map: its first line, or that it ran.
 func (p *mapPanel) reply(cmd string, res CommandResult) {
-	msg, _, _ := strings.Cut(res.Message, "\n")
-	msg = strings.TrimSpace(barTags.ReplaceAllString(msg, ""))
+	msg, _ := replyLine(res)
 	if msg == "" {
 		msg = rowid.Line("ui.map_panel.reply.01", "Ran ") + cmd + "."
 	}

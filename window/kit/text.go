@@ -19,6 +19,9 @@ type Text struct {
 	// inside one (see the ["name"] tag), and with 2 for the second click of
 	// a double click.
 	OnRegion func(name string, clicks int)
+	// OnHover, when set, is called with the region the pointer came to rest
+	// on, "" when it left the regions.
+	OnHover func(name string)
 
 	hover   string // the region under the pointer, where a click acts on regions
 	text    string
@@ -181,6 +184,9 @@ func (t *Text) Mouse(m Mouse) bool {
 		was := t.hover
 		if t.hover = ""; m.Kind == MouseMove {
 			t.hover = t.regionAt(m.Pt())
+		}
+		if t.hover != was && t.OnHover != nil {
+			t.OnHover(t.hover)
 		}
 		return t.hover != was
 	case MousePress:

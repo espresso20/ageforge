@@ -3,6 +3,7 @@ package ui
 import (
 	"image"
 	"reflect"
+	"strconv"
 	"unicode"
 
 	"github.com/espresso20/ageforge/game"
@@ -136,16 +137,27 @@ func (p *planPanel) closeFirst() bool {
 	return had
 }
 
-// act runs one engine call, shows what it says and takes the state again.
-func (p *planPanel) act(f func() (string, error)) {
-	msg, err := f()
-	p.note, p.good = msg, err == nil
-	if err != nil {
-		p.note = err.Error()
+// run presses a command line for the panel: the line goes through the
+// command bar, whose reply is the feedback, and the panel takes the state again.
+func (p *planPanel) run(line string) {
+	p.note, p.armed = "", false
+	if p.buttons.run == nil {
+		return
 	}
-	p.armed = false
-	p.update(p.engine.GetState())
+	p.buttons.run(line)
+	if p.engine != nil {
+		p.update(p.engine.GetState())
+	}
 }
+
+// reply puts what a command run over the panel did in its note.
+func (p *planPanel) reply(_ string, res CommandResult) {
+	msg, bad := replyLine(res)
+	p.note, p.good = msg, !bad
+}
+
+// at is the 1-based number the plan commands give the selected item.
+func (p *planPanel) at() string { return strconv.Itoa(p.sel + 1) }
 
 func (p *planPanel) selectTo(i int) {
 	if n := p.n(); n > 0 {
@@ -156,13 +168,12 @@ func (p *planPanel) selectTo(i int) {
 
 // move shifts the selected item by d places; it stays selected.
 func (p *planPanel) move(d int) {
-	p.act(func() (string, error) {
-		to, err := p.engine.PlanMove(p.sel+1, d)
-		if err == nil {
-			p.sel = to - 1
-		}
-		return "", err
-	})
+	to := clamp(p.sel+d, 0, max(0, len(p.st.Plan)-1))
+	if to == p.sel {
+		return
+	}
+	p.run("plan move " + p.at() + " " + strconv.Itoa(to+1))
+	p.sel = to
 }
 
 func (p *planPanel) moveTo(top bool) {
@@ -173,25 +184,18 @@ func (p *planPanel) moveTo(top bool) {
 	p.move(d)
 }
 
-func (p *planPanel) remove() {
-	p.act(func() (string, error) {
-		name, err := p.engine.PlanRemove(p.sel + 1)
-		return rowid.Sprintf("ui.plan_panel.remove.01", "Removed %s.", name), err
-	})
-}
+func (p *planPanel) remove() { p.run("plan remove " + p.at()) }
 
 func (p *planPanel) setCount(count int) {
-	p.act(func() (string, error) {
-		_, err := p.engine.PlanSetCount(p.sel+1, count)
-		return "", err
-	})
+	p.run("plan count " + p.at() + " " + strconv.Itoa(max(1, count)))
 }
 
 func (p *planPanel) pause() {
-	p.act(func() (string, error) {
-		p.engine.PlanSetPaused(!p.st.PlanPaused)
-		return "", nil
-	})
+	if p.st.PlanPaused {
+		p.run("plan resume")
+		return
+	}
+	p.run("plan pause")
 }
 
 // clear asks first: the second press empties the plan.
@@ -201,11 +205,8 @@ func (p *planPanel) clear() {
 		p.relayout()
 		return
 	}
-	p.act(func() (string, error) {
-		n := p.engine.PlanClear()
-		p.sel = 0
-		return rowid.Sprintf("ui.plan_panel.clear.01", "Cleared %d items.", n), nil
-	})
+	p.run("plan clear")
+	p.sel = 0
 }
 
 // optimize shows the better order; Enter keeps it, Esc leaves the plan as it is.
@@ -225,10 +226,7 @@ func (p *planPanel) optimize() {
 
 func (p *planPanel) keep() {
 	p.mode = planQueue
-	p.act(func() (string, error) {
-		_, err := p.engine.PlanOptimize()
-		return rowid.Line("ui.plan_panel.keep.01", "Kept the new order."), err
-	})
+	p.run("plan optimize")
 }
 
 // setTab shows tray tab t.
@@ -238,45 +236,49 @@ func (p *planPanel) setTab(t int) {
 	p.relayout()
 }
 
+// planLine is the command that plans entry e.
+func planLine(e planEntry) string {
+	switch e.kind {
+	case game.PlanBuild:
+		return "plan build " + e.key + " 1"
+	case game.PlanUpgrade:
+		return "plan upgrade " + e.key + " 1"
+	case game.PlanResearch:
+		return "plan research " + e.key
+	case game.PlanAdvance:
+		return "plan advance"
+	case game.PlanExpedition:
+		return "plan expedition " + e.key
+	}
+	return ""
+}
+
 // add puts entry e in the plan, just below the selection.
 func (p *planPanel) add(e planEntry) {
+	line := planLine(e)
+	if line == "" || p.engine == nil {
+		return
+	}
 	before := len(p.st.Plan)
-	p.act(func() (string, error) {
-		var err error
-		switch e.kind {
-		case game.PlanBuild:
-			_, err = p.engine.PlanAddBuild(e.key, 1)
-		case game.PlanUpgrade:
-			_, err = p.engine.PlanAddUpgrade(e.key, 1)
-		case game.PlanResearch:
-			_, err = p.engine.PlanAddResearchChain(e.key)
-		case game.PlanAdvance:
-			err = p.engine.PlanAddAdvance()
-		case game.PlanExpedition:
-			err = p.engine.PlanAddExpedition(e.key)
+	p.run(line)
+	// New items land at the end; take them up to just below the selection.
+	after := len(p.engine.GetState().Plan)
+	at := p.sel + 2
+	if before == 0 {
+		at = 1
+	}
+	for i := 0; i < after-before; i++ {
+		from := before + 1 + i
+		if at+i != from {
+			p.run("plan move " + strconv.Itoa(from) + " " + strconv.Itoa(at+i))
 		}
-		if err != nil {
-			return "", err
-		}
-		// New items land at the end; take them up to just below the selection.
-		after := len(p.engine.GetState().Plan)
-		at := p.sel + 2
-		if before == 0 {
-			at = 1
-		}
-		for i := 0; i < after-before; i++ {
-			from := before + 1 + i
-			if _, err := p.engine.PlanMove(from, at+i-from); err != nil {
-				break
-			}
-		}
-		p.sel = max(0, min(at-1, after-1))
-		if after == before {
-			p.sel = max(0, after-1) // merged into the last item
-		}
-		p.mode, p.input = planQueue, ""
-		return rowid.Sprintf("ui.plan_panel.add.01", "Added %s.", e.label), nil
-	})
+	}
+	p.sel = max(0, min(at-1, after-1))
+	if after == before {
+		p.sel = max(0, after-1) // merged into the last item
+	}
+	p.mode, p.input = planQueue, ""
+	p.relayout()
 }
 
 // routeKey takes a key if it is one of the panel's.

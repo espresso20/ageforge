@@ -89,8 +89,8 @@ type barOverlay struct {
 }
 
 // newBarOverlays is the panels that leave the keyboard with the command bar,
-// by overlay name. Only the Map has a key bar of its own to say what a command
-// typed over it did, because the log is behind it.
+// by overlay name. The ones with a line of their own for it say what a command
+// run over them did, because the log is behind them.
 func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 	overlays := map[string]barOverlay{
 		"map": {
@@ -101,6 +101,7 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 		"techs": {
 			routeKey:   d.researchPanel.routeKey,
 			closeFirst: d.researchPanel.closeLane,
+			reply:      d.researchPanel.reply,
 			update:     d.researchPanel.update,
 		},
 		"tree": {
@@ -116,6 +117,7 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 		"expedition": {
 			routeKey:   d.expPanel.routeKey,
 			closeFirst: d.expPanel.closeConfirm,
+			reply:      d.expPanel.reply,
 			update:     d.expPanel.update,
 		},
 		"stats": {
@@ -133,6 +135,7 @@ func (d *Dashboard) newBarOverlays() map[string]barOverlay {
 		"plan": {
 			routeKey:   d.planPanel.routeKey,
 			closeFirst: d.planPanel.closeFirst,
+			reply:      d.planPanel.reply,
 			update:     d.planPanel.update,
 		},
 		"people": {

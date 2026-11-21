@@ -75,6 +75,7 @@ Balance values are defined in ticks (a tech costs so many ticks of research, an 
 | Command | Description |
 |---|---|
 | `build <building> [count\|max]` | Start building copies of a building (default 1). A count builds as many as you can pay for, up to that number. `max` builds as many as you can pay for, up to the building's limit. A building from an earlier age is refused (see `upgrade`), and one that waits for a tech names it. The age's wonder is the exception: it is paid through its bank. Bare `build` lists the buildings you have unlocked, with how many you have, what each costs and whether you can afford it. |
+| `buy <1\|10\|max>` | Set how many copies the Build buttons in the Buildings box build and price. The x1, x10 and max buttons run this line. |
 | `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost. Their workers go back to idle. The Sell button in a building's pane asks first. Wonders, storage and knowledge buildings can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. |
 | `upgrade` | List the older buildings you hold: copies, the building each becomes, the price of the next copy, how many you can pay for now, and what blocks the next one. |
 | `upgrade <building> [count\|all]` | Turn copies of an older building into its line's building for your age, one copy at a time, each at half the price of a new copy of that building. With a count it upgrades that many. With no count, or with `all`, it goes through every copy you hold. It stops at the first copy it cannot pay for or at the new building's max count, and says how many it upgraded and why it stopped. A building that waits for a tech refuses and names it. The copy keeps its workers. Storage and knowledge buildings are never upgraded. |
@@ -209,7 +210,8 @@ See [People](workers-and-domains.md) for the domain table and the efficiency for
 | `research card <tech>` | Open the tree on a tech's card: what it does, how long it takes and what it needs. It opens only on a tech you can already see. |
 | `techs` | Opens the Research board. |
 | `research list` | List the techs you can research now, with the time each would take your scholars. A ★ marks the keystone its age's wonder needs. Under the list: the tech in progress with its bar, percent and time left, the queue in order, and your scholars. |
-| `research <tech>` | Start researching a tech. It costs no resources, only scholars' time. It needs its prerequisites and its age. |
+| `research <tech>` | Start researching a tech. It costs no resources, only scholars' time. It needs its prerequisites and its age. When another tech is in work, or this one cannot start yet, it joins the queue with the techs it needs, as Enter does on the Research board. |
+| `research drop <tech>` | Take a tech out of the research queue. |
 | `research cancel` | Cancel the current research. The work done on it is lost. |
 | `scholars` | Show your scholars: the kinds and counts, how many research and how many teach, and what teaching adds to what workers make. |
 | `scholars <percent>` | Set the share of your scholars that research, a whole percent from 0 to 100 (100 by default). The rest teach. |
@@ -542,9 +544,13 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `load <name>` | Load that save directly. |
 | `saves` | List all save files. |
 | `save list` | Same as `saves`. |
+| `pause` | Pause the game and open the pause card. |
+| `settings` | Pause the game and open the card on its settings. |
+| `menu` | Save to the active save, stop the game and go to the main menu. |
+| `new` | The same as `menu`; New game on the menu starts a run. |
 | `quit` | Save your game to its own save and quit. `Ctrl+C` leaves the same way. |
 
-With no panel open, `Esc` saves to your active save, stops the game and returns to the main menu. With a panel open, it closes the panel.
+With no panel open, `Esc` opens the pause card, whose Main menu button runs `menu`. With a panel open, it closes the panel.
 
 The game autosaves to your active save every 60 seconds and again when `Esc` takes you to the main menu. Saves live in your active account's slot, `data/accounts/<id>/saves/`, inside the `data/` folder next to the `ageforge` binary.
 
