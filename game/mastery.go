@@ -261,8 +261,8 @@ func (ge *GameEngine) noteRunAgesLocked() {
 
 // SetMasteryForTest sets the mastery of every age in mastery and the record,
 // as a veteran's save would carry them, and starts the run's grace tracking
-// at the new speed. A test hook for other packages (the smoke suite's
-// veteran preset); not reachable from play.
+// at the new speed. A test hook for other packages (a veteran preset); not
+// reachable from play.
 func (ge *GameEngine) SetMasteryForTest(mastery map[string]int, record string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()

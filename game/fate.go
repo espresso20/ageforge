@@ -549,7 +549,7 @@ func (ge *GameEngine) restoreFateState(save *GameSave) {
 // and one that can be fated, striking strikeOffset ticks after the era was
 // entered (its EntryTick, or now if it has no fate yet). The lead is kept
 // (or set to its midpoint), the doom is open again, and no harbinger has come
-// for it. For tests and the smoke suite: never reachable from play.
+// for it. For tests and dev tools: never reachable from play.
 func (ge *GameEngine) ForceFateForTest(epochKey string, strikeOffset int) error {
 	return ge.forceFate(epochKey, true, false, strikeOffset)
 }
@@ -602,7 +602,7 @@ func (ge *GameEngine) forceFate(epochKey string, fated, falseProphet bool, strik
 }
 
 // FateForTest returns a copy of the current era's fate (nil when it has none).
-// It reads hidden state: for tests and the smoke report only, never the UI.
+// It reads hidden state: for tests and reports only, never the UI.
 func (ge *GameEngine) FateForTest() *FateSave {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()

@@ -83,7 +83,7 @@ type CultureSave = FaithSave
 // whose run totals are m, in [0,1]: CultureDevotionOf × CultureKeptOf /
 // CultureFullSets. 0 until the town's culture buildings have made something
 // and there is a moderate set to measure them against. Pure: the rule
-// itself, for the engine and for the smoke suite's static check.
+// itself, for the engine and for the static checks.
 func CultureStrengthOf(held float64, m CultureSave) float64 {
 	strength := float64(CultureDevotionOf(m)*CultureKeptOf(held, m)) / CultureFullSets
 	if strength > 1 {

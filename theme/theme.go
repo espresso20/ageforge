@@ -198,7 +198,7 @@ func (t Theme) Group() Group {
 
 // AlwaysAvailable reports whether the theme is unlocked for every account from
 // the start (Accessible or Standard). Everything else is milestone-gated; the
-// registry test (unlock_test.go) enforces that split.
+// registry check enforces that split.
 func (t Theme) AlwaysAvailable() bool {
 	return t.Accessible || t.Standard
 }

@@ -9,7 +9,7 @@
 // map stays thin.
 //
 // The model is deterministic across machines (it follows the float rules
-// for simulation code and the smoke harness fingerprints it), cheap (a few
+// for simulation code, and a fingerprint holds it to that), cheap (a few
 // milliseconds for a late-game state, the seed-derived world and town plan
 // cached per seed by Builder) and never touches the engine.
 package mapmodel

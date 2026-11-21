@@ -27,11 +27,7 @@ go run main.go
 ```
 
 ## Testing
-```bash
-go test ./...     # every PR; the static checks run inside go test ./smoke
-make smoke        # the static checks alone (go test ./smoke -count=1)
-```
-There is no test bot. See CONTRIBUTING.md, "Smoke testing".
+There is no test suite at the moment; a new one is planned. Check changes with `go build ./...` and `go vet ./...`.
 
 ## Website & Wiki Sync Rule
 **Any change to the game MUST also update the appropriate pages in `site/`.**
@@ -59,7 +55,7 @@ This project is large. Burning main context on file reads is wasteful. Follow th
 **Subagent rules:**
 - Use the `builder` or `investigator` agent for read+write tasks (see the model rules below); `subagent_type=general-purpose` with an explicit `model` where they do not exist
 - Use `subagent_type=Explore` for read-only research across multiple files
-- Every subagent prompt must be **fully self-contained**: list exact files to read, exact changes needed, verify with `go build ./...` and `go test ./...`, return a summary of changes made
+- Every subagent prompt must be **fully self-contained**: list exact files to read, exact changes needed, verify with `go build ./...` and `go vet ./...`, return a summary of changes made
 - One subagent at a time unless Adam asks for speed. Parts that touch different folders may run in separate worktrees; parts that touch the same files run one after another
 - Cut work so one part fits one context (by package or folder). A subagent that runs out of room has wasted its run
 
@@ -69,7 +65,7 @@ This project is large. Burning main context on file reads is wasteful. Follow th
 - Where those agent types do not exist (a remote session), use `subagent_type=general-purpose` with `model: "haiku"` or `model: "sonnet"`. Never run a subagent on Opus or Fable unless Adam asks
 - Every spec says what is already done, what is left, what done looks like and what to report. Long specs go in a file outside the repository
 - Subagents commit and push in small steps and stop at a clean checkpoint when cut off
-- There is no test bot; pacing is checked by the reference model and static checks in `smoke/`, and by Adam's play
+- There is no test bot; pacing is checked by the reference model in `config/pacing.go`, and by play
 
 **Never read these files in main context** (too large — always delegate):
 - `config/buildings_new*.go`, `config/ages.go`, `config/buildings.go`

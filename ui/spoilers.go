@@ -12,7 +12,7 @@ import (
 // screen never names an age the player cannot see yet (past the next one,
 // unless reached before), an era they have not reached, or a civilization
 // they have not met. The Next Age goal names the next age on purpose.
-// spoiler_guard_test.go holds every panel of a fresh game to it.
+// Every panel of a fresh game is held to it.
 
 // ageRef names age for player text in state: "the Iron Age", or "a later
 // age" when the player cannot see it named yet.

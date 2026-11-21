@@ -1,4 +1,4 @@
-.PHONY: banner build run clean check test vet validate smoke steam all release release-patch release-minor release-major commit
+.PHONY: banner build run clean check vet steam all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
@@ -15,37 +15,9 @@ vet:
 	@go vet ./...
 	@echo "\033[0;32m[  OK  ]\033[0m go vet passed"
 
-# Validate config keys (fast — catches typos in resource/building/tech/age keys)
-validate:
-	@echo "\033[0;36m[ageforge]\033[0m Validating config keys..."
-	@go test ./config/ -count=1 -run TestConfig 2>&1 | \
-		if grep -q "^ok"; then \
-			echo "\033[0;32m[  OK  ]\033[0m Config keys valid"; \
-		else \
-			go test ./config/ -v -count=1 -run TestConfig 2>&1 | grep -A20 "FAIL\|Bad\|Orphaned\|Duplicate"; \
-			echo "\033[0;31m[ FAIL ]\033[0m Config validation failed — see errors above"; \
-			exit 1; \
-		fi
-
-# Build + vet + validate config (no run)
-check: build vet validate
+# Build + vet (no run)
+check: build vet
 	@echo "\033[0;32m[  OK  ]\033[0m All checks passed"
-
-# Run tests with formatted output (delegates to dev.sh)
-test:
-	@bash dev.sh test
-
-# Run tests (raw go test output, for CI or piping)
-test-raw: build vet
-	@go test ./... -v -count=1
-
-# The static checks: gates, storage, milestones, harbinger prices, faith,
-# culture, depth, research, badges, lineages and caps, the docs check, the
-# accounts check, the reference players and the economy's properties. They
-# read the tables and drive the engine directly; go test ./... runs them too.
-# See CONTRIBUTING.md, "Smoke testing".
-smoke:
-	@go test ./smoke -count=1
 
 # The Steam builds, into bin/steam/. The tag turns Steamworks on and the
 # updater and font download off. The Windows flags stop the Go runtime

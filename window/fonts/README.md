@@ -5,7 +5,7 @@ All fonts are under the SIL Open Font License; each has its `OFL-*.txt`.
 - `JetBrainsMono-*.ttf`, `DepartureMono-Regular.otf`: the two faces the player picks (whole fonts).
 - `NotoSans*.ttf`, `NotoEmoji-Regular.ttf`, `NotoSansJP-Regular.ttf`, `NotoSansExtra.ttf`: fallbacks for the runes the two faces lack. Each is **cut down to the runes the game prints**, listed in `subset/<name>.txt`. Block and box drawing (U+2500 to U+259F) are drawn as shapes in `glyph.go` and need no font.
 
-`runes_test.go` fails when the game prints a rune that no font or shape covers. To add one: put it in the list of the first fallback that has it (order: Symbols2, Symbols, Math, Canadian Aboriginal, JP, Emoji, Extra), then re-cut.
+A rune that no font or shape covers must not reach the screen. To add one: put it in the list of the first fallback that has it (order: Symbols2, Symbols, Math, Canadian Aboriginal, JP, Emoji, Extra), then re-cut.
 
 ## Re-cutting
 

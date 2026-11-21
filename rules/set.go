@@ -128,8 +128,7 @@ type Set struct {
 	// olderIn is, by age key, UpgradeKeys for that age.
 	olderIn map[string]map[string]string
 
-	names  [numKinds]map[string]string
-	counts map[string]int
+	names [numKinds]map[string]string
 
 	// gatesV2 says the gates are measured (GateMeasure); measures are the
 	// numbers, by the age left.
@@ -187,7 +186,6 @@ func Compile(src Source) *Set {
 	s.indexDefs()
 	s.derive()
 	s.buildNames()
-	s.buildCounts()
 	s.badgeExpeditions, s.badgeThemes = slices.Clone(src.BadgeExpeditions), slices.Clone(src.BadgeThemes)
 	s.buildBadges(src.Badges, src.BadgeFamilies)
 	s.missionWords = slices.Clone(src.MissionWords)

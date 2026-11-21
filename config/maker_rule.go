@@ -9,9 +9,8 @@ import (
 // has to come from a building, at the same standard as every other producer.
 // The tables are authored (the building files, MakerPaybackTicks and
 // MakerFills below); this file is the derivation the cold start reads
-// (MakerStandard), and a test recomputes the standard, the holes and every
-// filled output from it (maker_audit_test.go holds the audit: MakerHoles,
-// MakerPaybacks and what they call).
+// (MakerStandard). The standard, the holes and every filled output follow from
+// it (MakerHoles, MakerPaybacks and what they call).
 //
 // The standard. A maker of an age pays back its own price in the same number
 // of ticks. Measure a building's first copy in the age's price units
@@ -49,7 +48,7 @@ import (
 // by a fill.
 
 // MakerPaybackTicks is payback(A) for every age, in ticks: the median payback
-// of the age's healthy makers, typed here and recomputed by a test. It is what
+// of the age's healthy makers, typed here. It is what
 // the old payback rule set the ages' buildings by (DealPaybackTicks still
 // holds that rule's figures, for the flow resources). Outputs did not move when
 // new copies took NewCopyPriceFactor, so every payback is that much longer: the
@@ -89,7 +88,7 @@ var MakerPaybackTicks = map[string]float64{
 // Hub) or whose age's price levels moved under it: its output is re-derived
 // from its price, so it sits on the standard again; it is read as a maker that
 // is there too. The building tables hold the output; MakerFills is the
-// record of why, and a test proves it against the rules.
+// record of why.
 type MakerFill struct {
 	Age, Material, Building string
 	Rule                    int
@@ -263,8 +262,8 @@ const (
 // MakerShortage is a shortage the owner accepts: the carried required copies,
 // at listed output, need Targets targets of Age to make what the gate and the
 // wonder ask of Material, and the player covers the rest with a few more of the
-// older buildings. A test holds each to the lingering reference player's stay
-// (smoke) and to the tables (config).
+// older buildings. Each must match the lingering reference player's stay and
+// the tables.
 type MakerShortage struct {
 	Age, Material string
 	Targets       float64

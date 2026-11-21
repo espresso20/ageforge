@@ -14,9 +14,8 @@ import (
 //
 //   - completion (suggest.go): the ghost text, Tab and the Enter rules;
 //   - the Help panel (overlay_help.go): sections, usage rows, panels, shortcuts;
-//   - the smoke docsync scenario: registry against site/docs/commands.md,
-//     both ways;
-//   - the smoke fuzz scenario: its command corpus.
+//   - the docs check: registry against site/docs/commands.md, both ways;
+//   - the command fuzz check: its command corpus.
 //
 // HandleCommand (input.go) looks a typed name up here and calls the command's
 // Run; TestRegistryMatchesDispatcher holds the words a Run takes and the words
@@ -455,7 +454,7 @@ var devCommands = []devCommand{
 	{"/record", "/record <age_key>", "Set the record (the deepest age ever entered)"},
 }
 
-// CommandInfo is a registry entry as the smoke suite sees it.
+// CommandInfo is a registry entry as the checks see it.
 type CommandInfo struct {
 	Names []string // the name, then its aliases
 	// Subs are the subcommand paths under the command, one or two words deep
@@ -468,8 +467,8 @@ type CommandInfo struct {
 	Dangerous bool
 }
 
-// Commands lists the player commands from the registry, for the smoke
-// suite's docsync and fuzz scenarios.
+// Commands lists the player commands from the registry, for the docs and
+// fuzz checks.
 func Commands() []CommandInfo {
 	var out []CommandInfo
 	for _, c := range registry() {

@@ -22,7 +22,7 @@ type completer struct {
 	engine *game.GameEngine
 	cmds   []*Command
 	// snapshot returns the state to suggest from. nil: engine.GetState()
-	// on every call, uncached (the smoke suite's use).
+	// on every call, uncached.
 	snapshot func() *game.GameState
 
 	// Every value each game-thing kind can ever take, for checking typed

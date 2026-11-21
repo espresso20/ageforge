@@ -82,7 +82,6 @@ Or use `make`:
 |---------|-------------|
 | `make build` | Compile the binary |
 | `make run` | Build and launch |
-| `make test` | Run all tests |
 | `make commit` | Interactive commit helper (conventional commits) |
 
 ## How to Play

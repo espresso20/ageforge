@@ -39,7 +39,7 @@ const slotMark = "~"
 // prose was fine sentence by sentence and unreadable forty lines at a time.
 //
 // The fix is not a better adjective in a doc comment. It is a QUOTA, declared per
-// sentence and asserted in a test, so the mix is structural. Two axes:
+// sentence and checked against the catalog, so the mix is structural. Two axes:
 //
 //	register — how much wit the sentence carries. Most of a catalog must be rPlain:
 //	           a flat circumstantial fact, reported without a raised eyebrow. Comedy

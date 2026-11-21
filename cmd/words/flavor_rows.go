@@ -103,7 +103,7 @@ const flavorFolder = "flavor/text"
 func (fr *flavorReader) read(c *catalog) ([]*row, error) {
 	folder := filepath.Join(c.m.root, filepath.FromSlash(flavorFolder))
 	if _, err := os.Stat(folder); os.IsNotExist(err) {
-		return nil, nil // a partial tree, as the tests use
+		return nil, nil // a partial tree
 	}
 	entries, err := flavor.ReadEntries(os.DirFS(folder))
 	if err != nil {

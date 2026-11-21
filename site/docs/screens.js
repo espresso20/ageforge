@@ -4,8 +4,7 @@
 //
 //   <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age.</figcaption></figure>
 //
-// This Docsify plugin fetches screens/dashboard.json (written by
-// TestWriteSiteScreens, ui/site_screens_test.go) when the figure nears the
+// This Docsify plugin fetches screens/dashboard.json when the figure nears the
 // viewport and draws it above the caption: one block per row, one span per
 // color run, and every character outside ASCII in a box one cell wide, so a
 // fallback font cannot break the grid. The font is sized so the screen fits

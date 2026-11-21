@@ -43,8 +43,7 @@ func (s *countingSource) skip(n uint64) {
 
 // maxRNGReplay caps how many steps a load will replay to restore a stream
 // position: a few seconds of stepping at worst, and orders of magnitude past
-// any real run (the smoke suite's longest runs draw well under one step per
-// tick). A save claiming more has been edited; it gets a stream restarted
+// any real run (real runs draw well under one step per tick). A save claiming more has been edited; it gets a stream restarted
 // from the seed instead of a hung load.
 const maxRNGReplay = 1 << 31
 
