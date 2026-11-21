@@ -39,30 +39,26 @@ var scanned = []struct {
 }
 
 // notScanned are the module's other packages, each with why no player reads
-// its strings. TestEveryPackageIsAccountedFor fails on a package in neither
-// list, so a new package cannot go unread by accident.
+// its strings. A new package belongs in one of the two lists, so it cannot go
+// unread by accident.
 var notScanned = map[string]string{
-	"cmd/words":             "this tool",
-	"cmd/bannerpng":         "README banner generator, no player text",
-	"smoke":                 "the smoke suite",
-	"window":                "the window host: fonts, keys and drawing, no player text (the font row is in ui)",
-	"window/fonts":          "the bundled font files, no player text",
-	"window/mapview":        "the window map renderer: pixels from the world model, no player text",
-	"window/kit":            "the UI kit: widgets that paint cells, no player text (screens in ui give it their words)",
-	"world":                 "the space model for the map: catalogues and internal keys, no player text (the ui reads the game's own words)",
-	"rowid":                 "the row-id wrapper, no text of its own",
-	"detmath":               "arithmetic, no text",
-	"pkg/wirebadge":         "badge shield drawing: pixels only, no player text",
-	"mapgen":                "the map engine: art, hues and internal keys, no player text (the ui reads the game's own words)",
-	"mapmodel/fixture":      "test fixtures",
-	"pkg/planboard":         "pixel pictures for the Plan panel, no text of its own",
-	"pkg/sprites":           "pixel art",
-	"pkg/peopledash":        "pixel painter for the People panel: numerals, blocks and drawings, no player text",
-	"pkg/logroll":           "pixel art for the Logs panel, no player text",
-	"platform/steam":        "the Steamworks door: no player text",
-	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",
-	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
-	"ui/mapstyle/styletest": "checks shared by the map tests, never shown in the game",
+	"cmd/words":      "this tool",
+	"cmd/bannerpng":  "README banner generator, no player text",
+	"window":         "the window host: fonts, keys and drawing, no player text (the font row is in ui)",
+	"window/fonts":   "the bundled font files, no player text",
+	"window/mapview": "the window map renderer: pixels from the world model, no player text",
+	"window/kit":     "the UI kit: widgets that paint cells, no player text (screens in ui give it their words)",
+	"world":          "the space model for the map: catalogues and internal keys, no player text (the ui reads the game's own words)",
+	"rowid":          "the row-id wrapper, no text of its own",
+	"detmath":        "arithmetic, no text",
+	"pkg/wirebadge":  "badge shield drawing: pixels only, no player text",
+	"mapgen":         "the map engine: art, hues and internal keys, no player text (the ui reads the game's own words)",
+	"pkg/planboard":  "pixel pictures for the Plan panel, no text of its own",
+	"pkg/sprites":    "pixel art",
+	"pkg/peopledash": "pixel painter for the People panel: numerals, blocks and drawings, no player text",
+	"pkg/logroll":    "pixel art for the Logs panel, no player text",
+	"platform/steam": "the Steamworks door: no player text",
+	"pkg/wordlist":   "reads the plain-text word lists, no text of its own",
 }
 
 type scanMode int
