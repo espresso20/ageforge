@@ -282,7 +282,16 @@ func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Styl
 	}
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, base)
 	p.row = make([]rune, r.W)
-	p.keys = keySet{glyph: func(x, _ int) rune { return p.row[x] }}
+	// The close button sits in the panel's top right cell, as in a framed
+	// panel; its glyphs come from the top row, the bar's from the bottom one.
+	cx, closeRunes := r.W-closeButtonCols, []rune(" × ")
+	p.keys = keySet{glyph: func(x, y int) rune {
+		if y == 0 && x >= cx && x-cx < len(closeRunes) {
+			return closeRunes[x-cx]
+		}
+		return p.row[x]
+	}}
+	p.keys.closeButton(r.W, func(int, int, string, bool) {})
 	// The key prompts are recorded on the bar's row, which is the panel's last.
 	_, _, _, ph := p.GetRect()
 	// put writes text at x on the bar and keeps it in row, where the key

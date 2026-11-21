@@ -47,13 +47,17 @@ func (p *logsPanel) Layout(r image.Rectangle) {
 		g := newXGrid(r.Dx(), r.Dy())
 		s := txtLogsSmall.String()
 		g.put(max(0, (r.Dx()-runeLen(s))/2), r.Dy()/2, s, xDim)
+		g.closeButton(r.Dx())
 		p.chrome = g
 		return
 	}
-	g := newXGrid(p.lay.Keys.W, 1)
-	x := g.keyButton(0, 0, "F", txtLogsFindKey.String())
-	x = g.keyButton(x+1, 0, "N", txtLogsNewKey.String())
-	g.keyButton(x+1, 0, "Esc", txtLogsEscKey.String())
+	// The keys' grid runs from the Find keys to the right edge, two rows, so
+	// the close button sits in the panel's top right corner.
+	g := newXGrid(r.Dx()-p.lay.Keys.X, 2)
+	x := g.keyButton(0, 1, "F", txtLogsFindKey.String())
+	x = g.keyButton(x+1, 1, "N", txtLogsNewKey.String())
+	g.keyButton(x+1, 1, "Esc", txtLogsEscKey.String())
+	g.closeButton(g.w)
 	p.chrome = g
 	p.clamp()
 }
@@ -114,6 +118,7 @@ func (p *logsPanel) Paint(p2 *kit.Painter) {
 	pal, org, l := newExpPalette(), r.Min, p.lay
 	if l.Mode == logroll.Placeholder {
 		paintExpeditionKit(p2, p.chrome, org, pal)
+		p.buttons.paint(p2, p.chrome, org, pal)
 		return
 	}
 	cw, ch := cellPixels()
@@ -201,7 +206,9 @@ func (p *logsPanel) Paint(p2 *kit.Painter) {
 		say(q.X+1, q.Y, fit(rowid.Sprintf("ui.logs_panel.words.02", "%d new lines", n), q.W-2), logroll.Light, true)
 	}
 	p.paintSlate(p2, org, cw, ch)
-	paintExpeditionKit(p2, p.chrome, p.keysOrigin(), pal)
+	if pictureCell == nil {
+		paintExpeditionKit(p2, p.chrome, p.keysOrigin(), pal)
+	}
 	p.buttons.paint(p2, p.chrome, p.keysOrigin(), pal)
 }
 
