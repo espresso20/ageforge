@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"maps"
 	"strings"
 
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -56,61 +55,8 @@ func (s *Set) Name(kind Kind, key string) string {
 	return textfmt.Capitalize(strings.ReplaceAll(key, "_", " "))
 }
 
-// The quantities Counts reports, as the docs word them.
+// Lineages that the wonder and monument rules single out.
 const (
-	CountAges        = "ages"
-	CountBuildings   = "buildings"
-	CountTechs       = "technologies"
-	CountMilestones  = "milestones"
-	CountChains      = "milestone chains"
-	CountResources   = "resources"
-	CountEras        = "epochs"
-	CountDomains     = "worker domains"
-	CountShopItems   = "prestige shop items"
-	CountLineages    = "lineages"
-	CountLines       = "building lines"
-	CountWonders     = "wonders"
-	CountCivs        = "civilizations"
-	CountRoutes      = "trade routes"
-	CountLineageBld  = "lineage buildings"
-	CountStorage     = "storage buildings"
-	CountMonuments   = "cultural monuments"
-	CountStandalone  = "standalone buildings"
-	lineageStorage   = "storage"
 	lineageWonder    = "wonder"
 	lineageMonuments = "monument"
 )
-
-func (s *Set) buildCounts() {
-	c := map[string]int{
-		CountAges: len(s.ages), CountBuildings: len(s.buildings), CountTechs: len(s.techs),
-		CountMilestones: len(s.milestones), CountChains: len(s.chains), CountResources: len(s.resources),
-		CountEras: len(s.eras), CountDomains: len(s.domains), CountShopItems: len(s.shop),
-		CountCivs: len(s.factions), CountRoutes: len(s.routes),
-	}
-	lineages, lines := map[string]bool{}, map[string]bool{}
-	for _, d := range s.buildings {
-		switch {
-		case d.Category == "wonder":
-			c[CountWonders]++
-		case d.Category == "storage":
-			c[CountStorage]++
-		case d.Category == "monument":
-			c[CountMonuments]++
-		case d.LineageKey != "" && d.LineageKey != lineageStorage && d.LineageKey != lineageWonder && d.LineageKey != lineageMonuments:
-			c[CountLineageBld]++
-			lineages[d.LineageKey] = true
-			lines[d.Line()] = true
-		default:
-			c[CountStandalone]++
-		}
-	}
-	c[CountLineages] = len(lineages)
-	c[CountLines] = len(lines)
-	s.counts = c
-}
-
-// Counts returns the numbers the docs quote about the game: how many ages,
-// buildings, technologies and so on the set defines, keyed by the Count
-// constants.
-func (s *Set) Counts() map[string]int { return maps.Clone(s.counts) }
