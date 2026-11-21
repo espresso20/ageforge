@@ -278,11 +278,15 @@ func shortOf(state game.GameState, cost map[string]float64) (reason, wait string
 // orderCards sorts cards into the order the box lists them: the ones that can
 // be built, cheapest first, then the near ones, closest first, then the
 // rest, closest first. It returns the keys and how many are in the first two
-// groups (the ones listed before the quiet row).
-func orderCards(cards []buildCard) (keys []string, shown int) {
+// groups (the ones listed before the quiet row). The card of the Next step
+// (first) leads whatever group it is in.
+func orderCards(cards []buildCard, first string) (keys []string, shown int) {
 	sorted := append([]buildCard(nil), cards...)
 	sort.SliceStable(sorted, func(i, j int) bool {
 		a, b := sorted[i], sorted[j]
+		if a.key != b.key && (a.key == first || b.key == first) && first != "" {
+			return a.key == first
+		}
 		if a.group != b.group {
 			return a.group < b.group
 		}
@@ -296,7 +300,7 @@ func orderCards(cards []buildCard) (keys []string, shown int) {
 	})
 	for _, c := range sorted {
 		keys = append(keys, c.key)
-		if c.group != groupLater {
+		if c.group != groupLater || c.key == first {
 			shown++
 		}
 	}

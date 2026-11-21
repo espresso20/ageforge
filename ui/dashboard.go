@@ -914,6 +914,9 @@ func (d *Dashboard) refresh() {
 	d.notePanels(panelsReached(state), false)
 	d.next = computeNext(state, d.panels)
 	d.stepLessons(state)
+	if d.economyTab.buildBox.nextKey != d.next.card {
+		d.economyTab.buildBox.resort = true
+	}
 	d.economyTab.buildBox.nextKey = d.next.card
 	d.economyTab.buildBox.nextCmd = d.next.cmd
 	d.nextBox.changed()

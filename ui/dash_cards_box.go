@@ -204,7 +204,7 @@ func (b *buildBox) recompute() {
 		have[c.key] = true
 	}
 	if b.order == nil || b.resort || !b.in || built != b.built {
-		b.order, b.shown = orderCards(b.cards)
+		b.order, b.shown = orderCards(b.cards, b.nextKey)
 		b.resort = false
 	} else {
 		// The order stays: what is gone leaves it and what is new comes last.
