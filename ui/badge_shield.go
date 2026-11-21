@@ -15,11 +15,11 @@ import (
 )
 
 // badgeShield draws a badge's wire shield for a block of cols by rows cells,
-// pixels square at a 7 by 15 cell (cols a multiple of 3). Earned shows full
+// one pixel to a screen pixel at a 7 by 15 cell. Earned shows full
 // colour with a halo; the rest a dim outline. An integrity badge has no tier
 // and gets nothing. It writes nothing outside the picture it returns.
 func badgeShield(v game.BadgeView, cols, rows int) *image.RGBA {
-	w, h := cols*7/3, rows*5
+	w, h := cols*7, rows*15
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	if v.Level < config.BadgeBronze {
 		return img
@@ -30,12 +30,12 @@ func badgeShield(v game.BadgeView, cols, rows int) *image.RGBA {
 	if !v.Earned {
 		col, halo = wirebadge.Mix(col, bg, .55), color.RGBA{}
 	}
-	s := min(1, float64(w)/104, float64(h)/92)
+	s := min(1, float64(w)/250, float64(h)/270)
 	wirebadge.Draw(func(x, y int, c color.RGBA) {
 		if image.Pt(x, y).In(img.Rect) {
 			img.SetRGBA(x, y, c)
 		}
-	}, w/2, int((float64(h)-88*s)/2+34*s), t, v.Domain, col, halo, s)
+	}, w/2, int(float64(h)/2+54*s), t, v.Domain, col, halo, s)
 	return img
 }
 
