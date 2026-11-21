@@ -2,11 +2,11 @@ package ui
 
 import (
 	"image"
+	"strconv"
 	"sync/atomic"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -335,22 +335,14 @@ func (p *expeditionPanel) say(text string, good bool) {
 	p.view.flash, p.view.flashGood, p.flashAt = text, good, p.now()
 }
 
-// send sends the highlighted offer through the same call as the typed
-// command.
+// send sends the highlighted offer through the typed command, by its place
+// on the board.
 func (p *expeditionPanel) send() {
 	p.view.confirm = false
 	sc := p.scene()
-	if len(sc.offers) == 0 {
+	if len(sc.offers) == 0 || p.engine == nil || p.buttons.run == nil {
 		return
 	}
-	o := *sc.offers[sc.selected(p.view.sel)].offer
-	if p.engine == nil {
-		return
-	}
-	if err := p.engine.LaunchExpedition(o.Number); err != nil {
-		p.say(textfmt.Sentence(err.Error()), false)
-	} else {
-		p.say(rowid.Line("ui.expedition_panel.send.01", "Sent: ")+goingTo(o.Label, o.Place)+rowid.Line("ui.expedition_panel.send.02", ". Back in ")+expDur(o.DurationMin, p.state)+rowid.Line("ui.expedition_panel.send.03", ". Tab to follow it."), true)
-	}
+	p.buttons.run("expedition " + strconv.Itoa(sc.offers[sc.selected(p.view.sel)].offer.Number))
 	p.update(p.engine.GetState())
 }
