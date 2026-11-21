@@ -85,7 +85,11 @@ func (p *peoplePanel) Layout(r image.Rectangle) {
 	if p.hist != nil {
 		hist = p.hist()
 	}
-	p.grid, p.scene = renderPeople(p.state, p.view, p.buy(), hist, p.w, p.h)
+	var buy buyChoice
+	if p.buy != nil {
+		buy = p.buy()
+	}
+	p.grid, p.scene = renderPeople(p.state, p.view, buy, hist, p.w, p.h)
 }
 
 // Paint puts the panel on the kit's painter in theme colors.
