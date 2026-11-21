@@ -258,7 +258,7 @@ func (o *peopleOverview) cards(y, h int) {
 			share = int(math.Round(float64(k.count) * 100 / float64(ws.TotalPop)))
 		}
 		pt := fmt.Sprintf("%d%%", share)
-		pw := (peopledash.NumW(pt, o.big, pctScale) + s.cw - 1) / s.cw
+		pw := (s.numW(pt, o.big, pctScale) + s.cw - 1) / s.cw
 		s.num(cx+cw-pw-2, y+1, pt, s.pal.Dim, o.big, pctScale)
 		nr := y + 1 + s.numH(true, numScale)
 		// A short card drops the count line so the blocks keep clear of the words.
@@ -355,6 +355,8 @@ func (o *peopleOverview) morale(x, y, w, h int) {
 	r := clamp((h-4)*s.ch-70, 40, 170)
 	cx, cy := s.px(x+2)+r+12, s.py(y+2)+r+14
 	s.cv.Dial(cx, cy, r, st.Morale, floor, top)
+	lv := fmt.Sprintf("%d%%", max(int(math.Round(st.Morale*100)), 0))
+	s.setNum(cx-s.numW(lv, true, 5)/2, cy+18, lv, s.pal.Text, true, 5, true)
 	rc := x + 2 + (2*r+30)/s.cw + 2
 	rw := x + w - 2 - rc
 	if rw < 14 {

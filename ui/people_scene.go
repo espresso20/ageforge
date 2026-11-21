@@ -3,6 +3,7 @@ package ui
 import (
 	"image"
 	"image/color"
+	"image/draw"
 
 	"github.com/espresso20/ageforge/pkg/peopledash"
 	"github.com/espresso20/ageforge/theme"
@@ -79,14 +80,56 @@ func (s *pScene) txR(c, r int, t string, col color.RGBA, bold bool) {
 	s.tx(c-runeLen(t), r, t, col, bold)
 }
 
+// numType is the big type a numeral of the given scale is set in: bold ones
+// in heavy strokes, thin ones in light.
+func numType(bold bool, scale int) (n, wt int) {
+	switch {
+	case !bold:
+		return 3, 1
+	case scale >= 5:
+		return 5, 3
+	}
+	return 3, 2
+}
+
+// setNum sets t with the top left of its digits at pixel x, y (paint is false
+// to measure only) and returns the pixel after it. Each glyph takes its own
+// ink's width, so a point or comma does not leave a hole.
+func (s *pScene) setNum(x, y int, t string, col color.RGBA, bold bool, scale int, paint bool) int {
+	n, wt := numType(bold, scale)
+	col.A = 255
+	digit := inkBounds(bigImage("0", n, wt, col))
+	x0 := x
+	for _, r := range t {
+		img := bigImage(string(r), n, wt, col)
+		ink := inkBounds(img)
+		ink.Min.Y, ink.Max.Y = digit.Min.Y, digit.Max.Y
+		if paint {
+			at := image.Rectangle{Min: image.Pt(x, y), Max: image.Pt(x+ink.Dx(), y+ink.Dy())}
+			draw.Draw(s.cv.Img, at.Intersect(s.cv.Img.Rect), img, ink.Min, draw.Over)
+		}
+		x += ink.Dx() + 2*n
+	}
+	if x > x0 {
+		x -= 2 * n
+	}
+	return x
+}
+
+// numW is the pixel width of a numeral.
+func (s *pScene) numW(t string, bold bool, scale int) int {
+	return s.setNum(0, 0, t, color.RGBA{}, bold, scale, false)
+}
+
 // num paints a numeral at a cell and returns the first free cell after it.
 func (s *pScene) num(c, r int, t string, col color.RGBA, bold bool, scale int) int {
-	return (s.cv.Num(s.px(c), s.py(r)+2, t, col, bold, scale)+s.cw+1)/s.cw + 1
+	return (s.setNum(s.px(c), s.py(r)+2, t, col, bold, scale, true)+s.cw+1)/s.cw + 2
 }
 
 // numH is the rows a numeral takes.
 func (s *pScene) numH(bold bool, scale int) int {
-	return (peopledash.NumH(bold, scale) + 2 + s.ch - 1) / s.ch
+	n, wt := numType(bold, scale)
+	return (inkBounds(bigImage("0", n, wt, color.RGBA{A: 255})).Dy() + 2 + s.ch - 1) / s.ch
 }
 
 // chipAt paints a one-row chip of word on col at a cell; the next free cell comes back.

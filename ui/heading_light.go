@@ -136,6 +136,23 @@ func bigImage(s string, n, wt int, fg color.RGBA) *image.RGBA {
 	return img
 }
 
+// inkBounds is the box of pixels img actually lights.
+func inkBounds(img *image.RGBA) (r image.Rectangle) {
+	r = image.Rectangle{Min: img.Rect.Max, Max: img.Rect.Min}
+	for y := img.Rect.Min.Y; y < img.Rect.Max.Y; y++ {
+		for x := img.Rect.Min.X; x < img.Rect.Max.X; x++ {
+			if img.RGBAAt(x, y).A != 0 {
+				r.Min.X, r.Min.Y = min(r.Min.X, x), min(r.Min.Y, y)
+				r.Max.X, r.Max.Y = max(r.Max.X, x+1), max(r.Max.Y, y+1)
+			}
+		}
+	}
+	if r.Min.X > r.Max.X {
+		return image.Rectangle{}
+	}
+	return r
+}
+
 // paintBig sets s in big type n rows tall, strokes wt thick, with its top
 // left at (x, y), and returns the cell after it.
 func paintBig(p *kit.Painter, x, y int, s string, n, wt int, fg color.RGBA) int {
