@@ -933,7 +933,8 @@ func (d *Dashboard) refresh() {
 		if d.pages.HasPage(catastrophePage) {
 			d.closeCatastropheModal() // e.g. a save without a pending catastrophe was loaded
 		}
-	} else if d.catModalShown != pending && !d.overlayMgr.FullScreenUp() {
+	} else if d.catModalShown != pending && !d.overlayMgr.FullScreenUp() && d.inputField.GetText() == "" {
+		// Not over a half-typed command: it waits for the prompt to be empty.
 		if d.pages.HasPage(catastrophePage) {
 			d.pages.RemovePage(catastrophePage) // stale modal for a different epoch
 		}
@@ -944,7 +945,7 @@ func (d *Dashboard) refresh() {
 	// Ancient Memory offer modal — same single-show pattern as the catastrophe modal.
 	if state.PendingMemoryTech == "" {
 		d.memoryModalShown = "" // reset so a future run's cache can show fresh
-	} else if d.memoryModalShown == "" && !d.overlayMgr.FullScreenUp() {
+	} else if d.memoryModalShown == "" && !d.overlayMgr.FullScreenUp() && d.inputField.GetText() == "" {
 		// Not over the film of the run that just ended: the new run's
 		// first window waits for it.
 		d.memoryModalShown = state.PendingMemoryTech

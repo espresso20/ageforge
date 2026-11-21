@@ -80,7 +80,7 @@ Balance values are defined in ticks (a tech costs so many ticks of research, an 
 | `upgrade <building> [count\|all]` | Turn copies of an older building into its line's building for your age, one copy at a time, each at half the price of a new copy of that building. With a count it upgrades that many. With no count, or with `all`, it goes through every copy you hold. It stops at the first copy it cannot pay for or at the new building's max count, and says how many it upgraded and why it stopped. A building that waits for a tech refuses and names it. The copy keeps its workers. Storage and knowledge buildings are never upgraded. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it). When the requirements are not met it says so and points at `charter`. |
 | `charter` | Open the Advance panel: the four pillars the next age asks for, the march of ages with a calendar year, and what the next age brings. See [The Advance Panel](advance.md). |
-| `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. The Gather buttons in the Buildings box gather 25 per click. With Tool Making researched every gather brings 2 more. Gathering by hand ends after the Medieval Age. |
+| `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 25 by default and at most 25 per use. The Gather buttons in the Buildings box run the same command. With Tool Making researched every gather brings 2 more. Gathering by hand ends after the Medieval Age. |
 | `buildings` | Open the Buildings panel: every building of the ages you have reached, grouped by age, with how many you have built and, for a building that waits for a tech, the research it needs. |
 
 In the Advance panel, `↑` and `↓` pick a pillar, `Enter` advances once all four stand (the same as `advance`) and `Esc` closes it. The prompt keeps working while it is open.
@@ -468,8 +468,18 @@ The chart shows up to three measures at once (keys 1 to 0 for the core ten), wit
 | Command | Description |
 |---|---|
 | `catastrophe` (or `cat`) | Reopen the Endure or Succumb choice for a pending catastrophe or Last Passage. With nothing pending, show the outlook as you can know it: the doom a harbinger present foretells, or that no harbinger has come and the era is quiet, for now (in the Cosmic Era, the odds of the Last Passage at your next prestige take that line's place). |
+| `catastrophe endure` | Endure the pending catastrophe or Last Passage without opening the window. |
+| `catastrophe succumb` | Succumb to it. The choice is final, so Enter on a completion guess only fills the line and waits for a second Enter. |
 
-A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `E` endures, `S` succumbs and `Esc` closes it without choosing. The header shows a pending chip until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
+A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `Tab` and the arrows move between the buttons, `Enter` or a click presses the one picked (the keyboard starts on the way out) and `Esc` closes it without choosing; a letter key does nothing. A click runs the same `catastrophe endure` or `catastrophe succumb` line. The window waits to open while the Command line has text. The header shows a pending chip until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
+
+Early in a new run an old cache may offer an Ancient Memory: one tech researched free of prerequisites at half speed. It opens as a window; the buttons run the same lines as these commands.
+
+| Command | Description |
+|---|---|
+| `memory` | Show the ancient memory on offer, if any. |
+| `memory accept` | Accept it and start researching the tech. |
+| `memory decline` | Leave the cache sealed; the offer is gone. |
 
 ---
 

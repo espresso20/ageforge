@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
@@ -43,17 +42,15 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 			rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.04", "  [red]• It takes twice as long to research[-]\n") +
 			rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.05", "  [gray]Only one such memory surfaces per civilization.[-]"))
 
-	acceptKey, acceptLabel := splitKeyed(rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept"))
-	declineKey, declineLabel := splitKeyed(rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline"))
+	_, acceptLabel := splitKeyed(rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept"))
+	_, declineLabel := splitKeyed(rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline"))
 	btnRow, btns := choiceRow([]choice{
-		{label: acceptLabel, key: acceptKey, kind: keyAccent, press: func() {
-			if err := d.engine.AcceptAncientMemory(); err != nil {
-				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.ancient_memory_modal.showAncientMemoryModal.07", "Could not recover the memory: ")+err.Error())
-			}
+		{label: acceptLabel, kind: keyAccent, press: func() {
+			d.pressLine("memory accept")
 			d.closeAncientMemoryModal()
 		}},
-		{label: declineLabel, key: declineKey, kind: keySteel, press: func() {
-			d.engine.DeclineAncientMemory()
+		{label: declineLabel, kind: keySteel, press: func() {
+			d.pressLine("memory decline")
 			d.closeAncientMemoryModal()
 		}},
 	}, 2, 0)
@@ -69,10 +66,10 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 
 	modal := centeredModal(inner, 64, 14+chipRows)
 
-	// Tab/arrows cycle the buttons; a/d are shortcuts for Accept/Decline.
+	// Tab and the arrows cycle the buttons; Enter or a click presses one.
 	ring := newButtonRing(d.app, func(p Primitive) { d.memFocus = p })
-	ring.add(btnAccept, 'a')
-	ring.add(btnDecline, 'd')
+	ring.add(btnAccept)
+	ring.add(btnDecline)
 	modal.SetInputCapture(func(event *kit.Key) *kit.Key {
 		if ring.key(event) {
 			return nil

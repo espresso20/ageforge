@@ -160,8 +160,7 @@ func registry() []*Command {
 		// Actions
 		{Name: "gather", Run: cmdGather, Aliases: []string{"g"}, Section: secActions,
 			Args: []Arg{{Kind: ArgGatherResource, Words: []string{"food", "wood", "stone"}}, optCount},
-			Help: []Usage{{"gather <food|wood|stone> [amount]", rowid.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (default ") + strconv.Itoa(int(gatherDefaultYield)) +
-				rowid.Line("ui.help.commands.gather.2", ", max ") + strconv.Itoa(int(gatherMaxYield)) + rowid.Line("ui.help.commands.gather.3", " per use; the early ages only)")}}},
+			Help: []Usage{{"gather <food|wood|stone> [amount]", rowid.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (") + strconv.Itoa(int(gatherMaxYield)) + rowid.Line("ui.help.commands.gather.3", " per use at most; the early ages only)")}}},
 		{Name: "build", Run: cmdBuild, Aliases: []string{"b"}, Section: secActions,
 			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
 			Help: []Usage{{"build <building> [count|max]", rowid.Line("ui.help.commands.build", "Build copies of a building (default 1)")}}},
@@ -320,7 +319,18 @@ func registry() []*Command {
 			Help: []Usage{{"festival", rowid.Line("ui.help.commands.festival", "Spend culture for a temporary production boost")}},
 			Subs: []*Command{festivalConfirm}},
 		{Name: "catastrophe", Run: cmdCatastrophe, Aliases: []string{"cat"}, Section: secWonders,
-			Help: []Usage{{"catastrophe", rowid.Line("ui.help.commands.catastrophe", "Reopen a pending catastrophe or Last Passage (or show the outlook)")}}},
+			Help: []Usage{
+				{"catastrophe", rowid.Line("ui.help.commands.catastrophe", "Reopen a pending catastrophe or Last Passage (or show the outlook)")},
+				{"catastrophe endure", rowid.Line("ui.help.commands.catastrophe.endure", "Endure the pending catastrophe or Last Passage")},
+				{"catastrophe succumb", rowid.Line("ui.help.commands.catastrophe.succumb", "Succumb to the pending catastrophe or Last Passage")},
+			},
+			Subs: []*Command{{Name: "endure"}, {Name: "succumb", Dangerous: true}}},
+		{Name: "memory", Run: cmdMemory, Section: secWonders, BareOK: true,
+			Help: []Usage{
+				{"memory", rowid.Line("ui.help.commands.memory", "Show the ancient memory on offer")},
+				{"memory accept|decline", rowid.Line("ui.help.commands.memory.answer", "Accept the ancient memory offer, or leave the cache sealed")},
+			},
+			Subs: []*Command{{Name: "accept"}, {Name: "decline"}}},
 		{Name: "harbinger", Run: cmdHarbinger, Aliases: []string{"harb"}, Section: secWonders, BareOK: true,
 			Panel: rowid.Line("ui.help.panels.harbinger", "The harbinger's warning & your answers (alias: harb)"),
 			Help: []Usage{
