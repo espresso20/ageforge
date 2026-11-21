@@ -2362,6 +2362,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	if line := ge.masteryEntryLine(newAge, prevK); line != "" {
 		ge.addLog(OfficeWorld, "info", line)
 	}
+	if pastMedievalForGather(ge.rules, newAge) && !pastMedievalForGather(ge.rules, oldAge) {
+		ge.addLog(OfficeWorld, "info", rowid.Line("game.engine.advanceAge.08", "Gathering by hand has ended. Buildings and workers bring everything in now."))
+	}
 	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
 	// Age transitions are rare, so it fires every time.
 	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance, ge.quipRNG()); q != "" {
