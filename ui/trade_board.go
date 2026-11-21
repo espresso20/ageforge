@@ -660,7 +660,7 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 			x = g.put(x, 1, fmt.Sprintf("%d %s", count[s], word), k)
 		}
 	}
-	g.put(2, 4, strings.Repeat("─", end-2), xDim)
+	g.put(2, 4, strings.Repeat("─", end-2), xFaint)
 	g.put(tcName, 3, rowid.Line("ui.trade_board.renderTradeBoard.04", "ROUTE"), xDim)
 	g.put(tcSends, 3, rowid.Line("ui.trade_board.renderTradeBoard.05", "IN"), xDim)
 	g.put(tcPipe, 3, "━━►", xDim)
