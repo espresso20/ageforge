@@ -68,6 +68,7 @@ func renderMileRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 	inner := w - 4
 	trackW := inner - mileLabelW
 	perRow := max(trackW/mileStep, 1)
+	const top = 3 // the first row of the roads
 	viewH := h - deckChrome - 2 - mileDetailH
 
 	// Where each road goes: two rows a line of stones, a blank row after.
@@ -78,7 +79,7 @@ func renderMileRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 		total += 2*max((len(s.Cards)+perRow-1)/perRow, 1) + 1
 	}
 	total = max(total-1, 1)
-	lay := deckLayout{cards: make([]image.Rectangle, pg.count()), total: total, viewH: viewH}
+	lay := deckLayout{cards: make([]image.Rectangle, pg.count()), total: total, viewH: viewH, top: top}
 	scroll = clamp(scroll, 0, max(0, total-viewH))
 
 	tall := newXGrid(inner, total)
@@ -144,7 +145,6 @@ func renderMileRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 	}
 
 	// The roads in view, then the picked stone in full under them.
-	const top = 3
 	for yy := 0; yy < viewH && scroll+yy < total; yy++ {
 		for xx := 0; xx < inner; xx++ {
 			g.store(2+xx, top+yy, tall.at(xx, scroll+yy))
@@ -154,12 +154,6 @@ func renderMileRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 	for _, ht := range tall.hits {
 		if r := ht.r.Add(image.Pt(2, top-scroll)).Intersect(view); !r.Empty() {
 			g.hits = append(g.hits, xhit{ht.id, ht.n, r})
-		}
-	}
-	if total > viewH {
-		mark, size := top+scroll*viewH/total, max(1, viewH*viewH/total)
-		for i := 0; i < size && mark+i < top+viewH; i++ {
-			g.set(w-1, mark+i, '┃', xAccent)
 		}
 	}
 	if picked != nil {
