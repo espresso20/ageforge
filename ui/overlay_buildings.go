@@ -45,7 +45,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 		}
 	}
 
-	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_buildings.buildingsProvider.01", "[gold]═══ Buildings: %d built, %d unlocked ═══[-]\n", totalBuilt, totalUnlocked))
+	sb.WriteString(headLine(rowid.Sprintf("ui.overlay_buildings.buildingsProvider.01", "Buildings: %d built, %d unlocked", totalBuilt, totalUnlocked), 0) + "\n")
 	sb.WriteString(rowid.Line("ui.overlay_buildings.buildingsProvider.02", " [gray]Every age so far. Build with: build <key> (current age only).[-]\n\n"))
 
 	for i := 0; i <= currentIdx; i++ {

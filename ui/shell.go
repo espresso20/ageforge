@@ -107,10 +107,10 @@ func (g *xgrid) head(x, y, w int, s string) {
 
 // headLine is head for a text panel: the section's name as a markup line (no
 // newline), in the title colour and bold, then a faint rule out to width
-// cells. A width of 0 (the text's width is not known) draws no rule.
+// cells. A width of 0, or one that stands for no limit, draws no rule.
 func headLine(s string, width int) string {
 	out := "[" + theme.TagName(theme.RoleHighlight) + "::b]" + s + theme.Reset
-	if n := width - runeLen(s) - 1; n > 0 {
+	if n := width - runeLen(s) - 1; n > 0 && width < 1<<10 {
 		out += " " + theme.Paint(theme.RoleDim, strings.Repeat("─", n))
 	}
 	return out
