@@ -744,6 +744,8 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 const (
 	gatherDefaultYield = 3.0
 	gatherMaxYield     = 25.0
+	// gatherClick is what a click on a Gather button asks for: the cap.
+	gatherClick = "25"
 )
 
 // txtPerUse is said the same way on several screens, so it has one id.

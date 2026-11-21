@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/window/kit"
@@ -208,21 +207,21 @@ func TestThePickedCardIsThePromptsPreview(t *testing.T) {
 	if len(d.cmdHistory) != runs+1 || d.cmdHistory[runs] != "build gathering_camp" || ownedAndQueued(eng, "gathering_camp") != before+1 {
 		t.Errorf("Enter on the empty prompt ran %v and built %d, want one build of the picked card", d.cmdHistory[runs:], ownedAndQueued(eng, "gathering_camp")-before)
 	}
-	// Only the picked card's button carries a key.
+	// Only the picked card's button is drawn picked.
 	d.refresh()
 	st.paint()
 	keys := 0
 	for _, pc := range box.placed {
-		if k := box.cardKeys.keys[pc.build]; k.key != (kit.Key{}) {
+		if k := box.cardKeys.keys[pc.build]; k.picked {
 			keys++
 			// The build moved the pick to the card now in its place.
 			if pc.card.key != box.picked {
-				t.Errorf("the button of %s carries a key", pc.card.key)
+				t.Errorf("the button of %s is drawn picked", pc.card.key)
 			}
 		}
 	}
 	if keys != 1 {
-		t.Errorf("%d Build buttons carry a key, want the picked card's alone", keys)
+		t.Errorf("%d Build buttons are drawn picked, want the picked card's alone", keys)
 	}
 	// A panel over the dashboard takes the preview away.
 	d.inputField.echo = ""
@@ -243,16 +242,16 @@ func TestGatherButtonsInTheAgesThatGather(t *testing.T) {
 			cmds = append(cmds, k.cmd)
 		}
 	}
-	if len(cmds) < 2 || cmds[0] != "gather food" || cmds[1] != "gather wood" {
+	if len(cmds) < 2 || cmds[0] != "gather food 25" || cmds[1] != "gather wood 25" {
 		t.Fatalf("the first age's strip has the gather commands %v", cmds)
 	}
 	before := eng.GetState().Resources["food"].Amount
 	for _, k := range box.strip.keys {
-		if k.cmd == "gather food" {
+		if k.cmd == "gather food 25" {
 			p := centre(d, k.r)
 			runs := len(d.cmdHistory)
 			st.click(p.X, p.Y)
-			if len(d.cmdHistory) != runs+1 || d.cmdHistory[runs] != "gather food" {
+			if len(d.cmdHistory) != runs+1 || d.cmdHistory[runs] != "gather food 25" {
 				t.Errorf("a click on Gather ran %v", d.cmdHistory[runs:])
 			}
 		}
@@ -576,28 +575,13 @@ func TestTheWheelAndPageKeysTurnTheCards(t *testing.T) {
 	}
 }
 
-// Every building maps to one of the 18 kinds; every sign is 13 by 13 of # and
-// . and no two are alike; each kind has a tint and a glyph.
-func TestEveryBuildingHasASign(t *testing.T) {
+// Every sign is 13 by 13 of # and . and no two are alike; each kind has a
+// tint.
+func TestEverySignIsWellFormed(t *testing.T) {
 	if len(signKinds) != 18 {
 		t.Fatalf("%d kinds, want 18", len(signKinds))
 	}
-	isKind := map[string]bool{}
 	for _, k := range signKinds {
-		isKind[k] = true
-	}
-	used := map[string]int{}
-	for key, def := range config.BuildingByKey() {
-		k := signKindOf(def)
-		if !isKind[k] {
-			t.Errorf("%s has the kind %q, which has no sign", key, k)
-		}
-		used[k]++
-	}
-	for _, k := range signKinds {
-		if used[k] == 0 {
-			t.Errorf("no building has the kind %q", k)
-		}
 		pat := signPix[k]
 		if len(pat) != 13 {
 			t.Errorf("the %s sign has %d rows", k, len(pat))
@@ -614,9 +598,6 @@ func TestEveryBuildingHasASign(t *testing.T) {
 		}
 		if _, ok := signTints[k]; !ok {
 			t.Errorf("no tint for %s", k)
-		}
-		if signGlyphs[k] == 0 || signGlyphsPlain[k] == 0 || signGlyphsPlain[k] > 0x7e {
-			t.Errorf("the %s glyphs are %q and %q", k, signGlyphs[k], signGlyphsPlain[k])
 		}
 	}
 	for i, a := range signKinds {
@@ -693,18 +674,17 @@ func TestPickedCardKeepsItsButtonAtNarrowWidths(t *testing.T) {
 		bx, by, bw, bh := box.GetRect()
 		_, _ = bx, by
 		inner := image.Rect(0, 0, bw, bh)
-		tall := 0
+		picked := 0
 		for _, k := range box.cardKeys.keys {
-			if k.r.Dy() >= actionRows {
-				tall++
+			if k.r.Dy() != chipRows {
+				t.Errorf("%dx%d: a Build button is %d rows", c.w, c.h, k.r.Dy())
+			}
+			if k.picked {
+				picked++
 			}
 		}
-		want := 1
-		if box.placed[0].compact {
-			want = 0 // a stacked card keeps its one-row key
-		}
-		if tall != want {
-			t.Errorf("%dx%d: %d three-row buttons among the cards, want %d", c.w, c.h, tall, want)
+		if picked != 1 {
+			t.Errorf("%dx%d: %d Build buttons drawn picked, want 1", c.w, c.h, picked)
 		}
 		end := 0
 		for i, pc := range box.placed {

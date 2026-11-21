@@ -2,7 +2,7 @@
 
 Research gives your civilization lasting bonuses. 203 technologies span all 22 ages, and each one changes your production, military power, housing, building costs or times, research time, a number in one of the game's mechanics, or what you can build or do, for the rest of the run. A tech's bonus is small and counts in full: no cap holds it back (see [How tech bonuses stack](#how-tech-bonuses-stack)). Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
 
-<figure class="screen" data-screen="research-board"><figcaption>The Research board in the Classical Age: the tech in work with its clock, the queue under it, the techs that can start with the time each takes, and what comes up. A window wide enough also shows the picked tech's detail and the ten lanes.</figcaption></figure>
+<figure class="screen" data-screen="research-board"><figcaption>The Research board in the Classical Age: the tech in work with its clock and a bar across the board, the techs that can start with the time each takes, and what comes up. A window wide enough also shows the queue as a column and the picked tech's detail.</figcaption></figure>
 
 ---
 
@@ -142,7 +142,7 @@ Cancels the current research. The work done on it is lost.
 ```
 research
 ```
-With no arguments, opens the Research board (so does `techs`): the tech in work with its clock and the queue, the techs you can start with the time each takes, the ones coming up, and your progress in the ten lanes. `Enter` starts the picked tech, or queues it when one is in work, and a capital `Q` queues it. A capital `L` shows one lane and `Esc` shows them all again. A capital `T` opens the whole tech tree on the pick (`research tree` opens it directly). The letters count as keys only when the prompt is empty. The mouse works on every row and button. See [Reading the tech tree](#reading-the-tech-tree).
+With no arguments, opens the Research board (so does `techs`): the tech in work with its clock and a bar, the techs you can start with the time each takes, the ones coming up, and, on a wide window, the queue as a column (each tech with its time and when it starts) beside the picked tech's detail; a window tall enough also shows your progress in the ten lanes. Queued techs keep their rows, marked `#2`, `#3` and so on by their place in the queue. `Enter` starts the picked tech, or queues it when one is in work, with the techs it still needs, and a line under the bar says what was added. A capital `Q` queues it, and `Backspace` or `Delete` takes a queued tech out of the queue. A capital `L` shows one lane and `Esc` shows them all again. A capital `T` opens the whole tech tree on the pick (`research tree` opens it directly). The letters count as keys only when the prompt is empty. The mouse works on every row and button. See [Reading the tech tree](#reading-the-tech-tree).
 
 ---
 

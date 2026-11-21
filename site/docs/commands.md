@@ -80,7 +80,7 @@ Balance values are defined in ticks (a tech costs so many ticks of research, an 
 | `upgrade <building> [count\|all]` | Turn copies of an older building into its line's building for your age, one copy at a time, each at half the price of a new copy of that building. With a count it upgrades that many. With no count, or with `all`, it goes through every copy you hold. It stops at the first copy it cannot pay for or at the new building's max count, and says how many it upgraded and why it stopped. A building that waits for a tech refuses and names it. The copy keeps its workers. Storage and knowledge buildings are never upgraded. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it). When the requirements are not met it says so and points at `charter`. |
 | `charter` | Open the Advance panel: the four pillars the next age asks for, the march of ages with a calendar year, and what the next age brings. See [The Advance Panel](advance.md). |
-| `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. With Tool Making researched every gather brings 2 more. Gathering by hand ends after the Medieval Age. |
+| `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. The Gather buttons in the Buildings box gather 25 per click. With Tool Making researched every gather brings 2 more. Gathering by hand ends after the Medieval Age. |
 | `buildings` | Open the Buildings panel: every building of the ages you have reached, grouped by age, with how many you have built and, for a building that waits for a tech, the research it needs. |
 
 In the Advance panel, `↑` and `↓` pick a pillar, `Enter` advances once all four stand (the same as `advance`) and `Esc` closes it. The prompt keeps working while it is open.
@@ -204,7 +204,7 @@ See [People](workers-and-domains.md) for the domain table and the efficiency for
 
 | Command | Description |
 |---|---|
-| `research` | Open the Research board: the tech in work, the queue, the techs you can start, what comes up and the ten lanes (see [Technologies](technologies.md#how-research-works)). |
+| `research` | Open the Research board: the tech in work, the queue, the techs you can start and what comes up (see [Technologies](technologies.md#how-research-works)). |
 | `research tree [close\|far]` | Open the tech tree as a map (see [Reading the Tech Tree](technologies.md#reading-the-tech-tree)), zoomed in on big badges (`close`) or out on the whole tree (`far`). |
 | `research card <tech>` | Open the tree on a tech's card: what it does, how long it takes and what it needs. It opens only on a tech you can already see. |
 | `techs` | Opens the Research board. |
@@ -227,6 +227,7 @@ The Research board (`research`) leaves the prompt working and takes only the key
 | `Up` / `Down` | Pick the previous or next tech |
 | `Enter` | Start the picked tech; while another is in work, add it to the queue |
 | `Q` | Queue the picked tech, with the techs it still needs |
+| `Backspace` / `Delete` | Take the picked tech out of the queue |
 | `L` | Show only the picked tech's lane; `Esc` shows every lane again |
 | `T` | Open the whole tech tree on the picked tech |
 | `Esc` | Close the lane filter, then the board |
@@ -393,7 +394,7 @@ minimap off
 worldmap
 ```
 
-`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows from 80 columns by 36 rows (37 rows from 100 columns wide; every window of 120 columns by 36 rows or more) the dashboard shows a mini map under the Panels list, square when there is room. On smaller windows it is not shown, and `minimap off` hides it anywhere.
+`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows from 80 columns by 36 rows (37 rows from 100 columns wide; every window of 120 columns by 36 rows or more) the dashboard shows a mini map under the Panels list, shorter than square on a large window, where the Panels list needs its rows. On smaller windows it is not shown, and `minimap off` hides it anywhere.
 
 The prompt keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing:
 

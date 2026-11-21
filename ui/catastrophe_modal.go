@@ -103,7 +103,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		hint:    hint,
 	}
 	// Rows: header, gap, endure, gap, succumb, gap, buttons, hint, + 2 border.
-	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + actionRows + 1 + 2
+	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + chipRows + 1 + 2
 	return l
 }
 
@@ -151,7 +151,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 		succumb: strings.Join(succumbLines, "\n"),
 		hint:    rowid.Line("ui.catastrophe_modal.buildLastPassageModalLayout.11", "[gray]Esc: decide later · prestige waits · type 'catastrophe' to reopen[-]"),
 	}
-	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + actionRows + 1 + 2
+	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + chipRows + 1 + 2
 	return l
 }
 
@@ -210,14 +210,14 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		laterKey, laterLabel = hints[0][0], hints[0][1]
 	}
 	choices := []choice{
-		{label: laterLabel, key: laterKey, kind: keyPlain, sign: signCross, press: d.closeCatastropheModal},
-		{label: endureLabel, key: endureKey, kind: keyDanger, press: func() {
+		{label: laterLabel, key: laterKey, kind: keySteel, press: d.closeCatastropheModal},
+		{label: endureLabel, key: endureKey, kind: keyAlert, press: func() {
 			if err := endure(); err != nil {
 				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
 			}
 			d.closeCatastropheModal()
 		}},
-		{label: succumbLabel, key: succumbKey, kind: keyDanger, off: !succumbOpen, press: func() {
+		{label: succumbLabel, key: succumbKey, kind: keyAlert, off: !succumbOpen, press: func() {
 			if err := succumb(); err != nil {
 				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.04", "Succumb failed: ")+err.Error())
 			}
@@ -234,7 +234,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(surfaceText(l.succumb, kit.AlignLeft), lineCount(l.succumb), 0, false).
 		AddItem(surfaceBox(), 1, 0, false).
-		AddItem(btnRow, actionRows, 0, true).
+		AddItem(btnRow, chipRows, 0, true).
 		AddItem(surfaceText("[gray]"+hintRest+"[-]", kit.AlignCenter), 1, 0, false)
 	framed(inner, l.title, theme.RoleNegative).SetBackgroundColor(theme.Of(theme.RoleSurface))
 

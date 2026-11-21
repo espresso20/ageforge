@@ -30,6 +30,7 @@ var boardKeys = []keyHelp{
 	{"Q", rowid.E("ui.research_board.boardKeys.03", "Queue the picked tech, with the techs it needs (a capital letter, on an empty prompt)")},
 	{"L", rowid.E("ui.research_board.boardKeys.04", "Hold the board to the picked tech's lane, and again to show every lane (a capital letter)")},
 	{"T", rowid.E("ui.research_board.boardKeys.05", "Open the whole tree on the picked tech (a capital letter)")},
+	{"Del", rowid.E("ui.research_board.boardKeys.07", "Take the picked tech out of the queue (Backspace or Delete, on an empty prompt)")},
 	{"Esc", rowid.E("ui.research_board.boardKeys.06", "Show every lane again, then close")},
 }
 
@@ -52,8 +53,11 @@ type boardModel struct {
 	lanes         []config.TechLaneDef
 	inLane        map[string]int // techs of every age in each lane: counts only, no names
 	laneOf        map[string]config.TechLaneDef
-	tick          float64 // seconds a tick takes
-	age           int     // the current age's place
+	tick          float64        // seconds a tick takes
+	age           int            // the current age's place
+	pos           map[string]int // the place in the queue of the tech in work (1) and each queued tech
+	start         map[string]int // seconds until each queued tech starts
+	left, wait    int            // seconds the tech in work has left, and until the queue ends
 }
 
 func buildBoard(state game.GameState) *boardModel {
@@ -63,7 +67,7 @@ func buildBoard(state game.GameState) *boardModel {
 	m := &boardModel{
 		state: state, byKey: map[string]*boardTech{}, queued: map[string]bool{},
 		leads: map[string][]string{}, lanes: set.TechLanes(), laneOf: map[string]config.TechLaneDef{},
-		tick: tickInterval(state).Seconds(),
+		tick: tickInterval(state).Seconds(), pos: map[string]int{}, start: map[string]int{},
 	}
 	m.age, _ = set.Index(state.Age)
 	for _, l := range m.lanes {
@@ -88,11 +92,23 @@ func buildBoard(state game.GameState) *boardModel {
 			m.leads[k] = append(m.leads[k], t.def.Key)
 		}
 		switch {
-		case t.ts.Researched, t.def.Key == rs.CurrentTech, m.queued[t.def.Key]:
-		case t.ts.Available:
+		case t.ts.Researched:
+		case t.ts.Available, t.def.Key == rs.CurrentTech:
 			m.ready = append(m.ready, t)
 		default:
 			m.coming = append(m.coming, t)
+		}
+	}
+	n := 0
+	if rs.CurrentTech != "" {
+		n, m.pos[rs.CurrentTech], m.left = 1, 1, int(float64(rs.TicksLeft)*m.tick+0.5)
+	}
+	m.wait = m.left
+	for _, k := range rs.Queue {
+		if q := m.byKey[k]; q != nil {
+			n++
+			m.pos[k], m.start[k] = n, m.wait
+			m.wait += q.secs
 		}
 	}
 	sort.SliceStable(m.ready, func(i, j int) bool { return m.ready[i].secs < m.ready[j].secs })
@@ -175,6 +191,14 @@ func timeOf(secs int) string {
 	return clock(secs)
 }
 
+// headFit is a name that fits cells of heading, cut with an ellipsis.
+func headFit(s string, cells int) string {
+	if headWidth(s) <= cells {
+		return s
+	}
+	return clipRunes(s, max(cells/2-1, 0)) + "…"
+}
+
 // effectLines is an effect a line, two lines at most, the rest counted.
 func effectLines(items []string, w int) []string {
 	out := items[:min(len(items), 2)]
@@ -215,7 +239,8 @@ func wrapList(items []string, sep string, w, n int) []string {
 type boardView struct {
 	sel        string // the picked tech
 	lane       string // the lane the board is held to, "" for all
-	note       string // what the game answered to the last Enter or Q
+	note       string // what the game answered to the last Enter, Q or Del
+	bad        bool   // the note is a refusal
 	rtop, ctop int    // the first row shown of each list
 }
 
@@ -312,6 +337,7 @@ type boardGeo struct {
 	detail                                  bool
 	yHead, y0, maxReady                     int
 	strips, by                              int
+	qh, dy                                  int // the queue's rows, and where the detail starts under it
 	lanes                                   bool
 }
 
@@ -338,7 +364,9 @@ func (p *researchPanel) geometry() boardGeo {
 	g.maxReady = min(7, max(2, (h-24)/6))
 	g.strips = h - 29
 	g.by = g.strips - 5
-	g.lanes = g.detail && h >= 60
+	g.qh = min(max(h/5, 8), 14)
+	g.dy = g.yHead + g.qh + 1
+	g.lanes = g.detail && g.by-3-g.dy >= 28
 	if !g.lanes {
 		g.by = h - 9
 	}
@@ -393,6 +421,11 @@ func (p *researchPanel) routeKey(ev *kit.Key, prompt string) bool {
 			return false
 		}
 		p.handleKey(ev.Code)
+	case kit.KeyBackspace, kit.KeyDelete:
+		if prompt != "" {
+			return false
+		}
+		p.unqueue()
 	case kit.KeyRune:
 		if prompt != "" || ev.Mod&(kit.ModCtrl|kit.ModAlt) != 0 || !unicode.IsUpper(ev.Rune) {
 			return false
@@ -474,23 +507,40 @@ func (p *researchPanel) pick(key string) {
 
 // act starts the picked tech, or queues it: Enter starts one that can start
 // while nothing is in work and queues any other; queue always queues. What
-// the game answers goes in the note.
+// was done, or what the game refused, goes in the note.
 func (p *researchPanel) act(queue bool) {
 	t := p.selected()
 	if t == nil || p.engine == nil {
 		return
 	}
 	var err error
+	p.view.note, p.view.bad = "", false
 	if queue || !t.ts.Available || p.model.state.Research.CurrentTech != "" {
-		err = p.engine.PlanAddResearch(t.def.Key)
+		var chain []string
+		if chain, err = p.engine.PlanAddResearchChain(t.def.Key); err == nil {
+			p.view.note = rowid.Sprintf("ui.research_board.act.01", "queued %s", t.def.Name)
+			if n := len(chain) - 1; n > 0 {
+				p.view.note += rowid.Sprintf("ui.research_board.act.02", " and %d %s it needs", n, map[bool]string{true: "tech", false: "techs"}[n == 1])
+			}
+		}
 	} else {
 		err = p.engine.StartResearch(t.def.Key)
 	}
-	p.view.note = ""
 	if err != nil {
-		p.view.note = err.Error()
+		p.view.note, p.view.bad = err.Error(), true
 	}
 	p.update(p.engine.GetState())
+}
+
+// unqueue takes the picked tech out of the queue.
+func (p *researchPanel) unqueue() {
+	t := p.selected()
+	if t == nil || p.engine == nil || !p.model.queued[t.def.Key] {
+		return
+	}
+	p.engine.DequeueTech(t.def.Key)
+	p.update(p.engine.GetState())
+	p.view.note, p.view.bad = rowid.Sprintf("ui.research_board.unqueue.01", "took %s out of the queue", t.def.Name), false
 }
 
 func (p *researchPanel) Mouse(m kit.Mouse) bool {
@@ -595,7 +645,7 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 	// The tint under the picked row and the detail column goes down first.
 	tint := theme.Mix(bg, sc, 0.10)
 	if g.detail {
-		s.fill(g.rx-2, g.yHead-1, w-1-(g.rx-2), max(h-3-(g.yHead-1)-1, 0), tint)
+		s.fill(g.rx-2, g.dy-1, w-1-(g.rx-2), max(h-3-(g.dy-1)-1, 0), tint)
 	}
 	shown := p.ready[min(p.view.rtop, len(p.ready)):min(p.view.rtop+g.maxReady, len(p.ready))]
 	if i >= 0 && i < len(p.ready) && i-p.view.rtop < len(shown) {
@@ -623,7 +673,13 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 		s.text(4, y, " "+label+" ", txt, true)
 		s.right(g.tEnd+1, y, " "+right+" ", dim, false)
 	}
-	divider(g.yHead+1, "READY NOW", fmt.Sprintf("%d can start", len(p.ready)))
+	idle := 0
+	for _, t := range p.ready {
+		if m.pos[t.def.Key] == 0 {
+			idle++
+		}
+	}
+	divider(g.yHead+1, "READY NOW", fmt.Sprintf("%d can start", idle))
 	if len(p.ready) == 0 {
 		s.text(g.cTech, g.y0, "nothing can start yet", dim, false)
 	}
@@ -632,12 +688,7 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 	for _, t := range p.ready {
 		maxCost = max(maxCost, t.def.Cost)
 	}
-	wait := rs.TicksLeft
-	for _, k := range rs.Queue {
-		if q := m.byKey[k]; q != nil {
-			wait += q.ts.TicksNeeded
-		}
-	}
+	accent := kit.Role(theme.RoleAccent)
 	for n, t := range shown {
 		y := g.y0 + n*3
 		on := t.def.Key == p.view.sel
@@ -648,14 +699,20 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 		}
 		p.hits = append(p.hits, boardHit{image.Rect(1, y-1, g.tEnd+2, y+2), hitTech, t.def.Key})
 		head(3, y, timeOf(t.secs), tc)
-		head(g.cTech, y, clipRunes(t.def.Name, (g.cLane-2-g.cTech)/2), lc)
+		head(g.cTech, y, headFit(t.def.Name, g.cLane-2-g.cTech), lc)
 		s.text(g.cLane, y, m.laneShort(t.def.Lane), lc, false)
 		s.text(g.cCost, y, config.FormatAmount(t.def.Cost), bright, true)
 		s.bar(g.cCost, y+1, g.bw, t.def.Cost/maxCost, lc, dimmed(lc, 0.2), '▀')
 		for j, ln := range effectLines(m.effects(t), g.cStat-3-g.cUnl) {
 			s.text(g.cUnl, y+j, ln, kit.Role(theme.RoleEffect), false)
 		}
-		switch {
+		switch k := t.def.Key; {
+		case k == rs.CurrentTech:
+			s.text(g.cStat, y, "in work", lc, true)
+			s.text(g.cStat, y+1, clock(m.left)+" left", dim, false)
+		case m.queued[k]:
+			s.text(g.cStat, y, fmt.Sprintf("#%d", m.pos[k]), accent, true)
+			s.text(g.cStat, y+1, "starts in "+clock(m.start[k]), dim, false)
 		case t.secs == 0:
 			s.text(g.cStat, y, "NO SCHOLARS", kit.Role(theme.RoleWarning), true)
 			s.text(g.cStat, y+1, "none are researching", dim, false)
@@ -664,7 +721,7 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 			if rs.CurrentTech == "" {
 				s.text(g.cStat, y+1, "starts now", dim, false)
 			} else {
-				s.text(g.cStat, y+1, "starts in "+clock(int(float64(wait)*m.tick)), dim, false)
+				s.text(g.cStat, y+1, "starts in "+clock(m.wait), dim, false)
 			}
 		}
 		var on2 []string
@@ -704,7 +761,11 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 		s.text(g.cLane, y, m.laneShort(t.def.Lane), lc, false)
 		s.text(g.cCost, y, config.FormatAmount(t.def.Cost), tc, false)
 		s.text(g.cUnl, y, fitText(m.effects(t)[0], g.cStat-3-g.cUnl), tc, false)
-		x := s.text(g.cStat, y, "needs", dim, false) + 1
+		x := g.cStat
+		if m.queued[t.def.Key] {
+			x = s.text(x, y, fmt.Sprintf("#%d", m.pos[t.def.Key]), accent, true) + 1
+		}
+		x = s.text(x, y, "needs", dim, false) + 1
 		needs := p.needsOf(t)
 		for j, n := range needs {
 			room, wd := g.tEnd+1-x, runeLen(n.s)
@@ -729,11 +790,14 @@ func (p *researchPanel) Paint(pt *kit.Painter) {
 		s.text(3, y, fmt.Sprintf("%d more techs wait in later ages", later), dim, false)
 	}
 
+	if g.detail {
+		p.paintQueue(s, g, tint)
+	}
 	if g.detail && sel != nil {
 		p.paintDetail(s, g, sel, sc, head)
 	}
 	s.rule(2, h-3, w-4, faint)
-	s.footKeys(keys, h-2, [][2]string{{"↑ ↓", "row"}, {"Enter", "research"}, {"Q", "queue"}, {"L", "one lane"}, {"T", "the whole tree"}, {"Esc", "close"}}, dim)
+	s.footKeys(keys, h-2, [][2]string{{"↑ ↓", "row"}, {"Enter", "research"}, {"Q", "queue"}, {"Del", "unqueue"}, {"L", "one lane"}, {"T", "the whole tree"}, {"Esc", "close"}}, dim)
 	capitals(keys)
 	p.buttons.paint(pt, keys, r.Min, newExpPalette())
 }
@@ -780,13 +844,21 @@ func (p *researchPanel) needsOf(t *boardTech) []boardNeed {
 	return out
 }
 
-// paintTop is the tech in work with its clock, and the queue as one timeline.
+// paintTop is the tech in work with its clock and a bar across the board,
+// and under it what the last key did.
 func (p *researchPanel) paintTop(s rankPaint, w int, head func(x, y int, str string, c kit.Color) int) {
 	m := p.model
 	rs := m.state.Research
 	bg := theme.Of(theme.RoleBackground)
 	txt, dim, bright := kit.Role(theme.RoleText), kit.Role(theme.RoleDim), kit.Role(theme.RoleBright)
 	s.text(3, 2, "NOW RESEARCHING", dim, false)
+	if p.view.note != "" {
+		c := txt
+		if p.view.bad {
+			c = kit.Role(theme.RoleWarning)
+		}
+		s.text(3, 7, fitText(p.view.note, w-6), c, false)
+	}
 	cur := m.byKey[rs.CurrentTech]
 	if cur == nil {
 		s.text(3, 3, "nothing is in work", txt, false)
@@ -794,67 +866,85 @@ func (p *researchPanel) paintTop(s rankPaint, w int, head func(x, y int, str str
 		return
 	}
 	lc := theme.Hue(m.laneOf[cur.def.Lane].Hue, bg)
-	fx := head(3, 3, clipRunes(cur.def.Name, 20), lc) + 2
+	fx := head(3, 3, headFit(cur.def.Name, 40), lc) + 2
 	x := s.text(fx, 3, strings.ToUpper(m.laneOf[cur.def.Lane].Name), lc, true)
 	s.text(x+3, 3, m.ageName(cur.def.Age), dim, false)
 	s.text(fx, 4, fitText(strings.Join(m.effects(cur), "   "), w-fx-30), kit.Role(theme.RoleEffect), false)
 
-	left, total := int(float64(rs.TicksLeft)*m.tick+0.5), int(float64(rs.TotalTicks)*m.tick+0.5)
-	frac := 0.0
-	if rs.Price > 0 {
-		frac = rs.Progress / rs.Price
-	}
 	s.right(w-3, 2, "TIME LEFT", dim, false)
 	if rs.NeedsScholars {
 		s.right(w-3, 3, "no scholar is researching", kit.Role(theme.RoleWarning), false)
 	} else {
-		str := clock(left)
+		str := clock(m.left)
 		head(w-3-headWidth(str), 3, str, bright)
 	}
+	s.bar(3, 6, w-6, p.progress(), lc, theme.Mix(bg, lc, 0.28), '▄')
+}
 
-	// The queue as one timeline: each tech as wide as the time it takes.
-	items := []*boardTech{cur}
+// progress is how far the tech in work has come, from 0 to 1.
+func (p *researchPanel) progress() float64 {
+	if rs := p.model.state.Research; rs.Price > 0 {
+		return rs.Progress / rs.Price
+	}
+	return 0
+}
+
+// paintQueue is the queue as a column: the tech in work with its bar, then
+// the queued techs, each with its own time and when it starts.
+func (p *researchPanel) paintQueue(s rankPaint, g boardGeo, tint kit.Color) {
+	m := p.model
+	rs := m.state.Research
+	bg := theme.Of(theme.RoleBackground)
+	txt, dim, bright := kit.Role(theme.RoleText), kit.Role(theme.RoleDim), kit.Role(theme.RoleBright)
+	rx, rw := g.rx, g.rw
+	var items []*boardTech
+	if cur := m.byKey[rs.CurrentTech]; cur != nil {
+		items = append(items, cur)
+	}
 	for _, k := range rs.Queue {
 		if q := m.byKey[k]; q != nil {
 			items = append(items, q)
 		}
 	}
-	sum := 0
-	for _, t := range items {
-		sum += max(t.secs, 1)
+	s.text(rx, g.yHead, "QUEUE", dim, false)
+	noun := "techs"
+	if len(items) == 1 {
+		noun = "tech"
 	}
-	tw := w - 6 - (len(items) - 1)
-	x, wait := 3, left
-	for i, t := range items {
-		c := theme.Hue(m.laneOf[t.def.Lane].Hue, bg)
-		bw := int(float64(tw)*float64(max(t.secs, 1))/float64(sum) + 0.5)
-		if i == len(items)-1 {
-			bw = w - 3 - x
-		}
-		if i == 0 {
-			s.bar(x, 6, bw, frac, c, theme.Mix(bg, c, 0.28), '▄')
-			lx := s.text(x, 7, fmt.Sprintf("%d%%", int(frac*100+0.5)), bright, true)
-			s.text(lx+2, 7, fmt.Sprintf("%s of %s done", clock(total-left), clock(total)), dim, false)
-		} else {
-			s.bar(x, 6, bw, 0, c, theme.Mix(bg, c, 0.28), '▄')
-			lab := "NEXT"
-			if i > 1 {
-				lab = "THEN"
-			}
-			// The name comes first; the start time is left out when the
-			// bar is too short to hold it.
-			dur := clock(t.secs)
-			lx := s.text(x, 7, lab, dim, false)
-			lx = s.text(lx+2, 7, fitText(t.def.Name, max(x+bw-lx-2-len(dur)-2, 4)), c, true)
-			lx = s.text(lx+2, 7, dur, txt, false)
-			if start := "starts in " + clock(wait); lx+2+len(start) <= x+bw {
-				s.text(lx+2, 7, start, dim, false)
-			}
-			wait += t.secs
-		}
-		x += bw + 1
+	s.right(rx+rw, g.yHead, fmt.Sprintf("%d %s · %s", len(items), noun, clock(m.wait)), txt, false)
+	s.rule(rx, g.yHead+1, rw, faintCol())
+	rows := g.qh - 3
+	if len(items) > rows {
+		rows--
 	}
-	s.right(w-3, 7, "the queue ends in "+clock(wait), dim, false)
+	if len(rs.Queue) == 0 {
+		s.text(rx, g.yHead+2+min(len(items), 1), rowid.Line("ui.research_board.paintQueue.empty", "Enter on a tech starts it, Q queues it"), dim, false)
+	}
+	const nw = 22
+	for i, t := range items[:min(len(items), rows)] {
+		y := g.yHead + 2 + i
+		lc := theme.Hue(m.laneOf[t.def.Lane].Hue, bg)
+		on := t.def.Key == p.view.sel
+		if on {
+			s.fill(rx-1, y, rw+2, 1, tint)
+		}
+		p.hits = append(p.hits, boardHit{image.Rect(rx-1, y, rx+rw+1, y+1), hitTech, t.def.Key})
+		if t.def.Key == rs.CurrentTech {
+			s.text(rx, y, "▌", lc, false)
+			s.text(rx+2, y, fitText(t.def.Name, nw), lc, true)
+			s.bar(rx+nw+3, y, rw-nw-12, p.progress(), lc, theme.Mix(bg, lc, 0.28), '▄')
+			s.right(rx+rw, y, clock(m.left), bright, true)
+			continue
+		}
+		s.text(rx, y, fmt.Sprintf("%2d", m.pos[t.def.Key]), dim, false)
+		s.text(rx+3, y, "▌", lc, false)
+		s.text(rx+5, y, fitText(t.def.Name, nw), lc, on)
+		s.text(rx+nw+6, y, clock(t.secs), txt, false)
+		s.right(rx+rw, y, "starts in "+clock(m.start[t.def.Key]), dim, false)
+	}
+	if more := len(items) - rows; more > 0 {
+		s.text(rx, g.yHead+2+rows, fmt.Sprintf("+%d more", more), dim, false)
+	}
 }
 
 // paintDetail is the picked tech's column: its numbers, what it gives, its
@@ -865,8 +955,8 @@ func (p *researchPanel) paintDetail(s rankPaint, g boardGeo, t *boardTech, sc ki
 	bg := theme.Of(theme.RoleBackground)
 	txt, dim, bright := kit.Role(theme.RoleText), kit.Role(theme.RoleDim), kit.Role(theme.RoleBright)
 	faint, eff := faintCol(), kit.Role(theme.RoleEffect)
-	rx, rw, y := g.rx, g.rw, g.yHead
-	nx := head(rx, y, clipRunes(t.def.Name, (rw-14)/2), sc) + 2
+	rx, rw, y := g.rx, g.rw, g.dy
+	nx := head(rx, y, headFit(t.def.Name, rw-14), sc) + 2
 	s.text(nx, y, strings.ToUpper(m.laneOf[t.def.Lane].Name), sc, true)
 	s.text(nx, y+1, m.ageName(t.def.Age), dim, false)
 	s.rule(rx, y+2, rw, theme.Mix(bg, sc, 0.35))
@@ -965,15 +1055,12 @@ func (p *researchPanel) paintDetail(s rankPaint, g boardGeo, t *boardTech, sc ki
 
 	// The buttons keep their place above the lanes.
 	off, why := t.ts.Researched, rowid.Line("ui.research_board.paintDetail.researched", "Already researched")
-	b1 := actionSpec{kind: keyPrimary, label: "Research", key: "Enter", sign: signPlay, off: off, why: why}
-	b2 := actionSpec{kind: keyPlain, label: "Queue", key: "Q", off: off, why: why}
+	b1 := chipSpec{kind: keyAccent, label: "Research", key: "Enter", off: off, why: why}
+	b2 := chipSpec{kind: keySteel, label: "Queue", key: "Q", off: off, why: why}
 	by := g.by
-	bx := p.keys.actionButton(rx, by-1, b1) + 2
-	p.keys.actionButton(bx, by-1, b2)
+	bx := p.keys.chip(rx, by, b1) + 2
+	p.keys.chip(bx, by, b2)
 	capitals(p.keys)
-	if p.view.note != "" {
-		s.text(rx, by+3, fitText(p.view.note, rw), kit.Role(theme.RoleWarning), false)
-	}
 	if g.lanes {
 		s.rule(rx, g.strips-2, rw, theme.Mix(bg, sc, 0.35))
 		p.paintLanes(s, g, t)

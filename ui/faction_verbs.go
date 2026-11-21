@@ -64,7 +64,7 @@ func raidAsk(name string) string {
 // factionVerbs is a civilization's buttons: Gift, the most used, leads, and
 // Tribute takes its place while the civ is at war. A verb the engine would
 // refuse is off.
-func factionVerbs(state game.GameState, def config.FactionDef, f game.FactionInfo) []actionSpec {
+func factionVerbs(state game.GameState, def config.FactionDef, f game.FactionInfo) []chipSpec {
 	locked := false
 	if _, l := featureRefusal(state, config.FeatureDiplomacy); l {
 		locked = true
@@ -73,21 +73,21 @@ func factionVerbs(state game.GameState, def config.FactionDef, f game.FactionInf
 	culture := state.Resources["culture"].Amount
 	tributeGold, tributeCulture := game.TributePrice(def)
 	dip := state.Diplomacy
-	verb := func(label, sub string, kind keyKind, off bool) actionSpec {
-		return actionSpec{label: label, kind: kind, cmd: diplomacyCmd + sub + " " + def.Key, off: off}
+	verb := func(label, sub string, kind keyKind, off bool) chipSpec {
+		return chipSpec{label: label, kind: kind, cmd: diplomacyCmd + sub + " " + def.Key, off: off}
 	}
-	gift, tribute := keyPrimary, keyPlain
+	gift, tribute := keyAccent, keySteel
 	if f.AtWar {
-		gift, tribute = keyPlain, keyPrimary
+		gift, tribute = keySteel, keyAccent
 	}
-	raid := verb(txtVerbRaid.String(), "raid", keyDanger, false)
+	raid := verb(txtVerbRaid.String(), "raid", keyAlert, false)
 	raid.ask, raid.yes = raidAsk(def.Name), raid.label
-	return []actionSpec{
+	return []chipSpec{
 		verb(txtVerbGift.String(), "gift", gift, locked || gold < dip.GiftCost),
-		verb(txtVerbAlly.String(), "ally", keyPlain, locked || f.Status == "allied" || f.Opinion < game.AllyOpinion || gold < dip.AllyCost),
-		verb(txtVerbRival.String(), "rival", keyPlain, locked || f.Status == "rival"),
-		verb(txtVerbEmbargo.String(), "embargo", keyPlain, locked || f.Status == "embargo"),
-		verb(txtVerbNeutral.String(), "neutral", keyPlain, f.Status == "neutral"),
+		verb(txtVerbAlly.String(), "ally", keySteel, locked || f.Status == "allied" || f.Opinion < game.AllyOpinion || gold < dip.AllyCost),
+		verb(txtVerbRival.String(), "rival", keySteel, locked || f.Status == "rival"),
+		verb(txtVerbEmbargo.String(), "embargo", keySteel, locked || f.Status == "embargo"),
+		verb(txtVerbNeutral.String(), "neutral", keySteel, f.Status == "neutral"),
 		verb(txtVerbTribute.String(), "tribute", tribute, !f.AtWar || gold < tributeGold || culture < tributeCulture),
 		raid,
 	}

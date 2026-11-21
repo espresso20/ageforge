@@ -169,7 +169,7 @@ func (c *deckCard) height(cw int, picked bool) int {
 	if c.Command != "" {
 		h++
 		if picked {
-			h += actionRows - 1
+			h += chipRows - 1
 		}
 	}
 	if c.Why != "" {
@@ -203,7 +203,7 @@ func layChips(chips []deckChip, w int) (at []image.Point, rows int) {
 func (g *xgrid) deckChips(x, y, w int, chips []deckChip) int {
 	at, rows := layChips(chips, w)
 	for i, c := range chips {
-		g.chip(x+at[i].X, y+at[i].Y, fitText(c.Word, max(w-2, 1)), keyAccent, c.Command, "", "", c.Off)
+		g.chip(x+at[i].X, y+at[i].Y, chipSpec{kind: keyAccent, label: fitText(c.Word, max(w-2, 1)), cmd: c.Command, off: c.Off})
 	}
 	return rows
 }
@@ -322,9 +322,8 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deck
 	for _, k := range tall.keys {
 		if r := k.r.Add(shift).Intersect(view); !r.Empty() {
 			// A key cut by the view is only a hit; a whole one keeps its look.
-			whole := k.r.Add(shift).In(view)
 			k.r, k.cap, k.word = r, k.cap.Add(shift), k.word.Add(shift)
-			if !whole && k.kind.action() || !k.cap.In(view) && !k.cap.Empty() {
+			if !k.cap.In(view) && !k.cap.Empty() {
 				k.cap, k.word = image.Rectangle{}, image.Rectangle{}
 			}
 			g.keys = append(g.keys, k)
@@ -421,7 +420,7 @@ func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) 
 	}
 	y += g.deckChips(x+2, y, cw-4, c.Chips)
 	if c.Command != "" {
-		g.deckAction(x+2, y, c, picked, y+actionRows < r.Max.Y)
+		g.deckAction(x+2, y, c, picked, y+chipRows < r.Max.Y)
 	}
 }
 
@@ -431,14 +430,14 @@ func drawDeckCard(g *xgrid, c *deckCard, r image.Rectangle, picked bool, n int) 
 // resting on it shows it in the command bar. It returns the rows it takes.
 func (g *xgrid) deckAction(x, y int, c *deckCard, picked, roomy bool) int {
 	if picked && !c.Danger { // a card that ends something keeps the small chip, picked or not
-		g.actionButton(x, y, actionSpec{kind: keyPrimary, label: c.Action, key: "Enter", cmd: c.Command, sign: signPlay})
-		return actionRows
+		g.chip(x, y, chipSpec{kind: keyAccent, label: c.Action, key: "Enter", cmd: c.Command})
+		return chipRows
 	}
 	if roomy { // the row of the picked card's label, when the card has the room
 		y++
 	}
 	end := g.put(x, y, " "+c.Action+" ", xKeyName)
-	g.keys = append(g.keys, xkey{r: image.Rect(x, y, end, y+1), cmd: c.Command, kind: keyPlain})
+	g.keys = append(g.keys, xkey{r: image.Rect(x, y, end, y+1), cmd: c.Command, kind: keySteel})
 	return 1
 }
 

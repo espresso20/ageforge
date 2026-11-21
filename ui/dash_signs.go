@@ -3,45 +3,18 @@ package ui
 import (
 	"image"
 	"image/color"
-
-	"github.com/espresso20/ageforge/config"
 )
 
-// dash_signs.go is the sign on a build card: a picture for each kind of
-// building, struck on a slab in the kind's tint. A kind is a lineage of
-// buildings (food, knowledge, military), so the signs are few.
+// dash_signs.go is the Statistics page's signs: a picture for each kind,
+// struck on a slab in the kind's tint.
 
-// signKinds are the kinds of building, in the order the signs are listed.
+// signSlab is the side of a sign's slab in art pixels.
+const signSlab = 36
+
+// signKinds are the kinds, in the order the signs are listed.
 var signKinds = []string{
 	"housing", "food", "storage", "knowledge", "faith", "culture", "military", "trade", "wood",
 	"stone", "metal", "engineering", "monument", "energy", "hacker", "harbor", "wonder", "diplomacy",
-}
-
-// lineageKind is the kind of each lineage of buildings.
-var lineageKind = map[string]string{
-	"housing": "housing", "food": "food", "storage": "storage", "knowledge": "knowledge",
-	"faith": "faith", "culture_arts": "culture", "military": "military", "trade": "trade",
-	"organic_extraction": "wood", "geological_extraction": "stone", "metallurgy": "metal",
-	"engineering": "engineering", "monument": "monument", "energy": "energy", "hacker": "hacker",
-	"harbor": "harbor", "wonder": "wonder",
-}
-
-// signKindOf is the kind of a building: its lineage's; a building with none
-// (the diplomacy buildings, the nano foundry) goes by its category, then by
-// what it makes.
-func signKindOf(def config.BuildingDef) string {
-	if k, ok := lineageKind[def.LineageKey]; ok {
-		return k
-	}
-	switch def.Category {
-	case "diplomacy":
-		return "diplomacy"
-	case "housing", "storage", "military", "monument", "wonder":
-		return def.Category
-	case "research":
-		return "knowledge"
-	}
-	return "metal"
 }
 
 // signTints is the colour of each kind's slab.
@@ -54,21 +27,7 @@ var signTints = map[string]color.RGBA{
 	"harbor": {0x3a, 0x8f, 0xc8, 255}, "wonder": {0xf0, 0xe2, 0xb8, 255}, "diplomacy": {0xe8, 0xa0, 0xa0, 255},
 }
 
-// signGlyphs is the one cell a kind is drawn in where there are no pictures.
-var signGlyphs = map[string]rune{
-	"housing": '⌂', "food": '♣', "storage": '▣', "knowledge": '≡', "faith": '†', "culture": '☺', "military": '‡',
-	"trade": '$', "wood": '♠', "stone": '▲', "metal": '♦', "engineering": '⚙', "monument": '▮', "energy": 'ϟ',
-	"hacker": '>', "harbor": '≈', "wonder": '★', "diplomacy": '⚑',
-}
-
-// signGlyphsPlain is signGlyphs in ASCII.
-var signGlyphsPlain = map[string]rune{
-	"housing": 'H', "food": 'F', "storage": 'S', "knowledge": 'K', "faith": 'f', "culture": 'C', "military": 'M',
-	"trade": '$', "wood": 'W', "stone": 'R', "metal": 'I', "engineering": 'E', "monument": 'U', "energy": 'e',
-	"hacker": '>', "harbor": 'h', "wonder": '*', "diplomacy": 'D',
-}
-
-// signArt is the sign of each kind as 13 by 13 art pixels; a # is struck.
+// signPix is the sign of each kind as 13 by 13 art pixels; a # is struck.
 var signPix = map[string][]string{
 	"housing": {
 		"......#......",
@@ -351,7 +310,7 @@ var signPix = map[string][]string{
 // pulled toward the ground.
 func drawSign(a art, x0, y0 int, kind string, tint color.RGBA, dull float64, ground color.RGBA) {
 	R := rampOf(toward(tint, ground, dull))
-	slab := image.Rect(x0, y0, x0+cardSignArtW, y0+cardSignArtW)
+	slab := image.Rect(x0, y0, x0+signSlab, y0+signSlab)
 	a.fill(slab, 1, R.deep)
 	f := slab.Inset(1)
 	a.fill(f, 1, R.dark)
@@ -397,4 +356,12 @@ func drawSign(a art, x0, y0 int, kind string, tint color.RGBA, dull float64, gro
 			dot(x, y, c)
 		}
 	}
+}
+
+// bayer4 is the ordered dither the shading of pictures steps through.
+var bayer4 = [4][4]float64{
+	{0 / 16.0, 8 / 16.0, 2 / 16.0, 10 / 16.0},
+	{12 / 16.0, 4 / 16.0, 14 / 16.0, 6 / 16.0},
+	{3 / 16.0, 11 / 16.0, 1 / 16.0, 9 / 16.0},
+	{15 / 16.0, 7 / 16.0, 13 / 16.0, 5 / 16.0},
 }

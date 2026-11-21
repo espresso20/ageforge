@@ -68,7 +68,7 @@ func TestHarbingerAppeaseAndBraceRunTheirCommandOnce(t *testing.T) {
 	s := stageHarbinger(t, true)
 	for _, sub := range []string{"appease", "brace"} {
 		k := s.button(t, harbingerCmd+sub)
-		if k.off || k.kind != keyPlain {
+		if k.off || k.kind != keySteel {
 			t.Fatalf("%s is %v off=%v, want plain and on", sub, k.kind, k.off)
 		}
 		s.ran = nil
@@ -99,7 +99,7 @@ func TestHarbingerAnswersAreOffWhenUnaffordable(t *testing.T) {
 func TestHarbingerInviteAsksFirst(t *testing.T) {
 	s := stageHarbinger(t, false)
 	k := s.button(t, harbingerCmd+"invite")
-	if k.kind != keyDanger || k.off {
+	if k.kind != keyAlert || k.off {
 		t.Fatalf("Invite is %v off=%v, want a danger button that is on", k.kind, k.off)
 	}
 	s.click(k)

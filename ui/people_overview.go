@@ -210,7 +210,7 @@ func (o *peopleOverview) needs(y, h int) {
 		room := col - 5
 		if n.chip != "" {
 			room -= runeLen(n.chip) + 3
-			o.g.chip(cx+col-runeLen(n.chip)-3, y+h/2, n.chip, keySteel, n.cmd, "", "", false)
+			o.g.chip(cx+col-runeLen(n.chip)-3, y+h/2, chipSpec{kind: keySteel, label: n.chip, cmd: n.cmd})
 		}
 		s.tx(tx, y+(h-1)/2, fitText(n.head, room), s.pal.Text, true)
 		if h > 2 {
@@ -459,12 +459,12 @@ func (o *peopleOverview) homes(x, y, w, h int) {
 	row += 2
 	cx := x + 2
 	for _, ch := range []struct{ word, cmd string }{{"+1", "recruit 1"}, {"+10", "recruit 10"}, {rowid.Line("ui.people_overview.homes.02", "Max"), "recruit max"}} {
-		cx = o.g.chip(cx, row, ch.word, keyPrimary, ch.cmd, "", "", free == 0) + 1
+		cx = o.g.chip(cx, row, chipSpec{kind: keyAccent, label: ch.word, cmd: ch.cmd, off: free == 0}) + 1
 	}
 	auto, on := rowid.Line("ui.people_overview.homes.03", "Auto growth on"), "workers auto-recruit off"
 	if !ws.AutoRecruit {
 		auto, on = rowid.Line("ui.people_overview.homes.04", "Auto growth off"), "workers auto-recruit on"
 	}
-	o.g.chip(cx+1, row, auto, keySteel, on, "", "", false)
+	o.g.chip(cx+1, row, chipSpec{kind: keySteel, label: auto, cmd: on})
 	s.tx(x+2, row+2, fitText(recruitText(o.st), w-4), s.pal.Dim, false)
 }

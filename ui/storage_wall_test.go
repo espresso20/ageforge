@@ -40,7 +40,7 @@ func flat(rows []string) string {
 
 // panelPages draws the dashboard with the Buildings box opened and turns it
 // through its pages, returning each page's rows inside the frame, without the
-// card's edge (the gauge and the sign), until the last one.
+// card's edge (the gauge), until the last one.
 func panelPages(t *testing.T, d *Dashboard, pages *nativePages, w, h int) [][]string {
 	t.Helper()
 	var out [][]string
@@ -49,10 +49,7 @@ func panelPages(t *testing.T, d *Dashboard, pages *nativePages, w, h int) [][]st
 	for i := 0; i < 40; i++ {
 		cells := drawnDashboard(t, d, pages, w, h)
 		x, y, bw, bh := box.GetRect()
-		edge := cardGlyphCols
-		if bw-2 < compactBelow {
-			edge = compactWords
-		}
+		edge := cardWords
 		var rows []string
 		for _, r := range rectText(cells, w, x+1+edge, y+1, bw-2-edge, bh-2) {
 			rows = append(rows, r)

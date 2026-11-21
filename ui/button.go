@@ -19,8 +19,8 @@ import (
 
 // keyKind is the colour of a key: the accent for a key that acts, steel for
 // one that moves, the close button's own, and the alert colour for a key that
-// removes something. The action buttons (three rows tall, action_button.go)
-// are primary in the accent, plain in steel and danger in the alert colour.
+// removes something. A kind differs from another only in the outline it rests
+// in and the colour it takes under the pointer.
 type keyKind uint8
 
 const (
@@ -28,13 +28,7 @@ const (
 	keySteel
 	keyClose
 	keyAlert
-	keyPrimary
-	keyPlain
-	keyDanger
 )
-
-// action reports whether the kind is an action button's.
-func (k keyKind) action() bool { return k >= keyPrimary }
 
 // keyState is how a key looks: at rest, under the pointer, pressed or
 // unavailable.
@@ -81,12 +75,6 @@ type keyFeel struct {
 	// tip is the tooltip of the screen: a button that is off, a price, a rate
 	// each aim it when the pointer rests; a key or a click takes it away.
 	tip kit.Tip
-	// motion says whether the motion setting is on (nil: off); glintOn is set
-	// by a paint that drew a button's glint and wake is the time (Unix
-	// nanoseconds) from which the next pose of it is due.
-	motion  func() bool
-	glintOn atomic.Bool
-	wake    atomic.Int64
 }
 
 func (f *keyFeel) clock() time.Time {
@@ -177,44 +165,60 @@ func (p *expPalette) tone(k xk, bg bool) color.RGBA {
 // of its cap, and the colours the unavailable key is drawn in.
 type keyLook struct {
 	ramp keyRamp
-	// cap is the ramp of the small keycap on an action button.
-	cap     keyRamp
-	ink     color.RGBA
-	chip    color.RGBA // the unavailable key's face
-	edge    color.RGBA // and its rim
-	ground  color.RGBA
-	word    color.RGBA // the word's ink
-	wordBar color.RGBA // the bar behind the word under the pointer
+	// face and rim are the plate's fill and outline, ink its label's colour.
+	face, rim color.RGBA
+	ink       color.RGBA
+	chip      color.RGBA // the unavailable key's face
+	edge      color.RGBA // and its rim
+	ground    color.RGBA
+	word      color.RGBA // the word's ink
+	wordBar   color.RGBA // the bar behind the word under the pointer
 }
 
-// look is the colours of a key of kind in st. Light comes from the upper
-// left: a lifted key is lighter, a sunk one darker.
+// look is the colours of a key of kind in st. A key at rest is quiet: a flat
+// plate close to the ground, steel kinds with no outline and the others
+// outlined in their hue. Under the pointer or picked it fills with the hue
+// (the accent for a steel key) and pressed it darkens.
 func (p *expPalette) look(kind keyKind, st keyState) keyLook {
 	ground, text, dim := p.tone(xText, true), p.tone(xText, false), p.tone(xDim, false)
 	chip, accent := p.tone(xKeyName, true), p.tone(xKeycap, true)
-	base, capBase := accent, toward(accent, keyWhite, .78)
+	base, hue := accent, accent
+	quiet := kind == keySteel || kind == keyClose
 	switch kind {
-	case keySteel, keyPlain:
+	case keySteel:
 		base = toward(chip, text, .42)
-		capBase = accent
-	case keyDanger, keyAlert:
+	case keyAlert:
 		base = p.tone(xBad, false)
-		capBase = toward(base, keyWhite, .78)
+		hue = base
 	case keyClose:
 		base = toward(chip, text, .42)
-		if st != keyRest && st != keyOff {
-			base = p.tone(xBad, false)
-		}
+		hue = p.tone(xBad, false)
 	}
-	r := rampOf(base)
+	l := keyLook{ramp: rampOf(base), chip: toward(chip, ground, .45), edge: toward(chip, ground, .1), ground: ground, word: text,
+		wordBar: toward(ground, accent, .16)}
 	switch st {
 	case keyHover:
-		r = keyRamp{r.deep, r.dark, toward(r.base, r.pale, .45), toward(r.pale, keyWhite, .4)}
+		l.face = toward(hue, keyWhite, .1)
 	case keyPressed:
-		r = keyRamp{r.deep, r.dark, toward(r.base, r.dark, .35), r.base}
+		l.face = toward(hue, keyBlack, .3)
+	case keyOff:
+		l.face = l.chip
+	case keyRest:
+		if quiet {
+			l.face = toward(ground, chip, .55)
+			l.ink = toward(text, ground, .2)
+		} else {
+			l.face = toward(ground, hue, .06)
+			l.rim = toward(hue, ground, .4)
+			l.ink = toward(hue, keyWhite, .15)
+		}
 	}
-	l := keyLook{ramp: r, cap: rampOf(capBase), ink: inkOn(r.base), chip: toward(chip, ground, .45), edge: toward(chip, ground, .1), ground: ground, word: text,
-		wordBar: toward(ground, accent, .16)}
+	if st != keyRest {
+		l.ink = inkOn(l.face)
+	}
+	if l.rim == (color.RGBA{}) {
+		l.rim = l.face
+	}
 	if st == keyOff {
 		l.ink, l.word = toward(dim, ground, .2), toward(dim, ground, .25)
 	}
@@ -224,16 +228,15 @@ func (p *expPalette) look(kind keyKind, st keyState) keyLook {
 // plateKey is what a plate was drawn for: the cap's size in cells and
 // pixels, the state, and the colours that went into it.
 type plateKey struct {
-	st                     keyState
-	cols, cw, ch           int
-	base, chip, edge, back color.RGBA
+	st                          keyState
+	cols, cw, ch                int
+	face, rim, chip, edge, back color.RGBA
 }
 
 // plateSet is the plates a presser has drawn. A plate that has been painted
 // is never drawn on again: the window keeps one picture per image.
 type plateSet struct {
 	m     map[plateKey]*image.RGBA
-	acts  map[actionKey]*image.RGBA
 	sw    map[switchKey]*image.RGBA
 	tabs  map[tabKey]*image.RGBA
 	bytes int
@@ -244,20 +247,20 @@ type plateSet struct {
 // past its bound.
 func (s *plateSet) fit(cw, ch int) {
 	if s.cell != [2]int{cw, ch} || s.bytes > plateSetMax {
-		s.m, s.acts, s.sw, s.tabs, s.cell, s.bytes = nil, nil, nil, nil, [2]int{cw, ch}, 0
+		s.m, s.sw, s.tabs, s.cell, s.bytes = nil, nil, nil, [2]int{cw, ch}, 0
 	}
 }
 
 // plate is the picture of a key cap cols cells wide in state st.
 func (s *plateSet) plate(l keyLook, st keyState, cols, cw, ch int) *image.RGBA {
 	s.fit(cw, ch)
-	key := plateKey{st, cols, cw, ch, l.ramp.base, l.chip, l.edge, l.ground}
+	key := plateKey{st, cols, cw, ch, l.face, l.rim, l.chip, l.edge, l.ground}
 	img, ok := s.m[key]
 	if !ok {
 		if s.m == nil {
 			s.m = map[plateKey]*image.RGBA{}
 		}
-		img = drawPlate(key, l.ramp)
+		img = drawPlate(key)
 		s.m[key] = img
 		s.bytes += len(img.Pix)
 	}
@@ -298,19 +301,18 @@ func (a art) fill(r image.Rectangle, n int, c color.RGBA) {
 	}
 }
 
-// drawPlate draws a key: a face with chamfered corners over a skirt. A
-// lifted key shows more skirt, a pressed one sinks into it, and an
-// unavailable one lies flat and checkered toward the ground. The canvas is
-// the cap's cells, so it shows pixel for pixel; art pixels are
-// max(1, height/21) real ones.
-func drawPlate(pk plateKey, R keyRamp) *image.RGBA {
+// drawPlate draws a key: a flat face with a corner cut off each end, in an
+// outline when it has one. A pressed or unavailable key is drawn as it is; an
+// unavailable one is checkered toward the ground. The canvas is the cap's
+// cells, so it shows pixel for pixel; art pixels are max(1, height/21) real
+// ones.
+func drawPlate(pk plateKey) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, pk.cols*pk.cw, pk.ch))
 	k := max(1, pk.ch/21)
 	a := art{img, k}
 	W, H := (img.Rect.Dx()+k-1)/k, (img.Rect.Dy()+k-1)/k
-	x0, x1 := 1, W-1 // a pixel of air each side keeps neighbours apart
+	f := image.Rect(1, 2, W-1, H-2) // a pixel of air each side keeps neighbours apart
 	if pk.st == keyOff {
-		f := image.Rect(x0, 2, x1, H-2)
 		a.fill(f, 2, pk.edge)
 		in := f.Inset(1)
 		for y := in.Min.Y; y < in.Max.Y; y++ {
@@ -324,25 +326,8 @@ func drawPlate(pk plateKey, R keyRamp) *image.RGBA {
 		}
 		return img
 	}
-	top, bot := 1, H-3
-	switch pk.st {
-	case keyHover:
-		top, bot = 0, H-4
-	case keyPressed:
-		top, bot = 3, H-1
-	}
-	face := image.Rect(x0, top, x1, bot)
-	skirt := image.Rect(x0, top+6, x1, H)
-	a.fill(skirt, 2, R.deep)
-	a.fill(image.Rect(skirt.Min.X+1, face.Max.Y-2, skirt.Max.X-1, skirt.Max.Y-1), 0, R.dark)
-	a.fill(face, 2, R.deep)
-	in := face.Inset(1)
-	a.fill(in, 1, R.base)
-	a.hline(in.Min.X+1, in.Max.X-1, in.Min.Y, R.pale)
-	a.hline(in.Min.X+1, in.Max.X-1, in.Max.Y-1, R.dark)
-	if pk.st == keyPressed {
-		a.hline(in.Min.X+1, in.Max.X-1, in.Min.Y, R.dark)
-	}
+	a.fill(f, 1, pk.rim)
+	a.fill(f.Inset(1), 1, pk.face)
 	return img
 }
 
@@ -359,21 +344,6 @@ func (k *keyPresser) paint(p *kit.Painter, h keyHolder, org image.Point, pal *ex
 	hot, isHot := k.lit(s)
 	pix := pictureCell != nil
 	for i, key := range s.keys {
-		if key.kind.action() {
-			if !key.word.Empty() {
-				st := keyRest
-				switch {
-				case key.off:
-					st = keyOff
-				case k.press != nil && k.sunkButton(key):
-					st = keyPressed
-				case k.press != nil && isHot && hot.r == key.r:
-					st = keyHover
-				}
-				k.paintAction(p, s, org, pal, key, st, pix)
-			}
-			continue
-		}
 		if key.cap.Empty() {
 			continue
 		}
@@ -389,9 +359,9 @@ func (k *keyPresser) paint(p *kit.Painter, h keyHolder, org image.Point, pal *ex
 			switch {
 			case o.off:
 				st = keyOff
-			case k.press != nil && st != keyOff && !o.still && k.sense().sunk(o.key):
+			case k.press != nil && st != keyOff && !o.still && k.sunkButton(o):
 				st = keyPressed
-			case k.press != nil && st == keyRest && isHot && hot.cap == o.cap:
+			case k.press != nil && st == keyRest && isHot && hot.cap == o.cap, st == keyRest && o.picked:
 				st = keyHover
 			}
 		}
@@ -423,7 +393,7 @@ func (k *keyPresser) paintKey(p *kit.Painter, g *keySet, org image.Point, pal *e
 	if name := []rune(" " + escClose()[0] + " "); key.kind == keyClose && (st == keyHover || st == keyPressed) && len(name) == key.r.Dx() {
 		cap, label = key.r.Add(org), name
 	}
-	ink := kit.Style{}.Foreground(theme.RGB(l.ink.R, l.ink.G, l.ink.B)).Bold(st != keyOff)
+	ink := kit.Style{}.Foreground(theme.RGB(l.ink.R, l.ink.G, l.ink.B)).Bold(st == keyHover || st == keyPressed)
 	if pix {
 		cw, ch := pictureCell()
 		p.Fill(cap, theme.RGB(l.ground.R, l.ground.G, l.ground.B))
@@ -432,14 +402,7 @@ func (k *keyPresser) paintKey(p *kit.Painter, g *keySet, org image.Point, pal *e
 		}
 		p.Label(cap.Min.X, cap.Min.Y, kit.Escape(string(label)), ink)
 	} else {
-		face, fg := l.ramp.base, l.ink
-		switch st {
-		case keyPressed:
-			face, fg = l.ink, l.ramp.base
-		case keyOff:
-			face = l.chip
-		}
-		cell := ink.Foreground(theme.RGB(fg.R, fg.G, fg.B)).Background(theme.RGB(face.R, face.G, face.B))
+		cell := ink.Foreground(theme.RGB(l.ink.R, l.ink.G, l.ink.B)).Background(theme.RGB(l.face.R, l.face.G, l.face.B))
 		// A chip that runs a command is bracketed in its own padding, so
 		// chips on rows one above the other read as two.
 		if n := len(label); key.cmd != "" && key.cap == key.r && n >= 3 {

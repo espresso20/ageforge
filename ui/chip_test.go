@@ -3,7 +3,6 @@ package ui
 import (
 	"bytes"
 	"image"
-	"strings"
 	"testing"
 	"time"
 
@@ -12,11 +11,11 @@ import (
 )
 
 // actionGrid is a grid with one action button of each kind in a row.
-func actionGrid(a ...actionSpec) *xgrid {
-	g := newXGrid(80, actionRows+1)
+func actionGrid(a ...chipSpec) *xgrid {
+	g := newXGrid(80, chipRows+1)
 	x := 1
 	for _, s := range a {
-		x = g.actionButton(x, 1, s) + 1
+		x = g.chip(x, 1, s) + 1
 	}
 	return g
 }
@@ -28,15 +27,15 @@ func click(k *keyPresser, g keyHolder, x, y int) {
 
 func TestAClickOnACommandButtonRunsItsLineOnceAndAnOffOneRunsNothing(t *testing.T) {
 	g := actionGrid(
-		actionSpec{kind: keyPrimary, label: "send", key: "Enter", cmd: "expedition mist"},
-		actionSpec{kind: keyPlain, label: "stop", cmd: "trade route stop x", sign: signStop},
-		actionSpec{kind: keyPrimary, label: "send", key: "Enter", cmd: "never", off: true},
+		chipSpec{kind: keyAccent, label: "send", key: "Enter", cmd: "expedition mist"},
+		chipSpec{kind: keySteel, label: "stop", cmd: "trade route stop x"},
+		chipSpec{kind: keyAccent, label: "send", key: "Enter", cmd: "never", off: true},
 	)
 	var ran []string
 	var pressed []kit.Key
 	k := keyPresser{press: func(k kit.Key) { pressed = append(pressed, k) }, run: func(c string) { ran = append(ran, c) }}
 	for _, b := range g.keys {
-		click(&k, g, b.r.Min.X+1, b.r.Min.Y+1)
+		click(&k, g, b.r.Min.X+1, b.r.Min.Y)
 	}
 	if len(ran) != 2 || ran[0] != "expedition mist" || ran[1] != "trade route stop x" {
 		t.Errorf("clicks ran %q", ran)
@@ -47,18 +46,18 @@ func TestAClickOnACommandButtonRunsItsLineOnceAndAnOffOneRunsNothing(t *testing.
 }
 
 func TestAKeyButtonWithoutALinePressesItsKey(t *testing.T) {
-	g := actionGrid(actionSpec{kind: keyPrimary, label: "start", key: "Enter", sign: signPlay})
+	g := actionGrid(chipSpec{kind: keyAccent, label: "start", key: "Enter"})
 	var ran []string
 	var pressed []kit.Key
 	k := keyPresser{press: func(k kit.Key) { pressed = append(pressed, k) }, run: func(c string) { ran = append(ran, c) }}
-	click(&k, g, 3, 2)
+	click(&k, g, 3, 1)
 	if len(ran) != 0 || len(pressed) != 1 || pressed[0].Code != kit.KeyEnter {
 		t.Errorf("a click ran %q and pressed %v, want Enter alone", ran, pressed)
 	}
 }
 
 func TestAClickSinksTheButtonUntilItIsUpEvenWithoutAKey(t *testing.T) {
-	g := actionGrid(actionSpec{kind: keyPlain, label: "stop", cmd: "stop it"})
+	g := actionGrid(chipSpec{kind: keySteel, label: "stop", cmd: "stop it"})
 	now := time.Unix(100, 0)
 	k := keyPresser{press: func(kit.Key) {}, run: func(string) {}, feel: &keyFeel{now: func() time.Time { return now }}}
 	b := g.keys[0]
@@ -73,148 +72,47 @@ func TestAClickSinksTheButtonUntilItIsUpEvenWithoutAKey(t *testing.T) {
 	}
 }
 
-func TestTheActionButtonsWidthIsWhatIsDrawn(t *testing.T) {
-	keepTheme(t)
-	withPictures(t)
-	pal := newExpPalette()
-	for _, s := range []actionSpec{
-		{kind: keyPrimary, label: "send", key: "Enter"},
-		{kind: keyPlain, label: "cancel", key: "Esc", sign: signCross},
-		{kind: keyDanger, label: "stop", sign: signStop},
+func TestAChipsWidthIsItsTextAndItIsOneRow(t *testing.T) {
+	for _, s := range []chipSpec{
+		{kind: keyAccent, label: "send", key: "Enter"},
+		{kind: keySteel, label: "cancel", key: "Esc"},
+		{kind: keyAlert, label: "stop"},
 	} {
 		g := actionGrid(s)
-		w := actionW(s.label, s.key, s.sign)
-		if g.keys[0].r.Dx() != w || g.keys[0].r.Dy() != actionRows {
-			t.Errorf("%q takes %v, want %d by %d", s.label, g.keys[0].r, w, actionRows)
-		}
-		b := kit.NewBuffer(80, 4)
-		p := kit.NewPainter(b)
-		paintExpeditionKit(p, g, image.Point{}, pal)
-		var k keyPresser
-		k.paint(p, g, image.Point{}, pal)
-		if len(b.Pics) != 1 || b.Pics[0].Rect != g.keys[0].r || b.Pics[0].Img.Rect.Dx() != w*10 || b.Pics[0].Img.Rect.Dy() != actionRows*21 {
-			t.Errorf("%q: pictures %+v for a button of %v", s.label, b.Pics, g.keys[0].r)
-		}
-		for x, want := range []rune(s.label) {
-			if c := b.At(g.keys[0].word.Min.X+x, 2); c.R != want || c.Pic == 0 {
-				t.Errorf("%q: label cell %d is %+v", s.label, x, c)
-			}
+		if g.keys[0].r.Dx() != chipW(s.label, s.key) || g.keys[0].r.Dy() != chipRows {
+			t.Errorf("%q takes %v, want %d by %d", s.label, g.keys[0].r, chipW(s.label, s.key), chipRows)
 		}
 	}
 }
 
-func TestActionPlatesAreCachedAndKindsAndStatesDiffer(t *testing.T) {
+func TestChipPlatesAreCachedAndKindsAndStatesDiffer(t *testing.T) {
 	keepTheme(t)
 	pal := newExpPalette()
 	var set plateSet
-	plate := func(kind keyKind, st keyState, pose int) *image.RGBA {
-		return set.action(pal.look(kind, st), st, 16, 10, 21, signTick, 11, 7, pose)
+	plate := func(kind keyKind, st keyState) *image.RGBA {
+		return set.plate(pal.look(kind, st), st, 8, 10, 21)
 	}
-	if plate(keyPrimary, keyRest, 0) != plate(keyPrimary, keyRest, 0) {
+	if plate(keyAccent, keyRest) != plate(keyAccent, keyRest) {
 		t.Error("the same button twice is two pictures")
 	}
-	// An unavailable button lies flat in the ground's colours, whatever its kind.
 	seen := map[string]*image.RGBA{}
-	for _, kind := range []keyKind{keyPrimary, keyPlain, keyDanger} {
+	for _, kind := range []keyKind{keyAccent, keySteel, keyAlert} {
 		for _, st := range []keyState{keyRest, keyHover, keyPressed, keyOff} {
-			if st == keyOff && kind != keyPrimary {
+			if st == keyOff && kind != keyAccent {
 				continue
 			}
-			img := plate(kind, st, 0)
+			img := plate(kind, st)
 			for name, o := range seen {
+				// Under the pointer every kind takes the accent fill.
+				if st != keyRest && name[1] == byte('0'+st) && name[0] != byte('a'+kind) {
+					continue
+				}
 				if bytes.Equal(img.Pix, o.Pix) {
 					t.Errorf("kind %d state %d looks like %s", kind, st, name)
 				}
 			}
 			seen[string(rune('a'+kind))+string(rune('0'+st))] = img
 		}
-	}
-	if bytes.Equal(plate(keyPrimary, keyRest, 2).Pix, plate(keyPrimary, keyRest, 0).Pix) {
-		t.Error("the glint does not show on the plate")
-	}
-}
-
-func TestWithoutPicturesAnActionButtonIsThreeRowsOfCells(t *testing.T) {
-	keepTheme(t)
-	pal := newExpPalette()
-	g := actionGrid(actionSpec{kind: keyPrimary, label: "send", key: "Enter", sign: signTick})
-	b := kit.NewBuffer(80, 4)
-	p := kit.NewPainter(b)
-	paintExpeditionKit(p, g, image.Point{}, pal)
-	var k keyPresser
-	k.paint(p, g, image.Point{}, pal)
-	if len(b.Pics) != 0 {
-		t.Errorf("%d pictures without pictures", len(b.Pics))
-	}
-	r := g.keys[0].r
-	var row strings.Builder
-	for x := r.Min.X; x < r.Max.X; x++ {
-		row.WriteRune(b.At(x, r.Min.Y+1).R)
-	}
-	if !strings.Contains(row.String(), "send") || !strings.Contains(row.String(), " Enter ") {
-		t.Errorf("the middle row reads %q", row.String())
-	}
-	for y := r.Min.Y; y < r.Max.Y; y++ {
-		first, last := b.At(r.Min.X, y), b.At(r.Max.X-1, y)
-		if first.Bg != last.Bg || first.Bg == b.At(r.Max.X+3, y).Bg {
-			t.Errorf("row %d is not a block of the kind's colour", y)
-		}
-	}
-	// Pressed is the block reversed.
-	now := time.Unix(100, 0)
-	k = keyPresser{press: func(kit.Key) {}, feel: &keyFeel{now: func() time.Time { return now }}}
-	rest := b.At(r.Min.X, r.Min.Y).Bg
-	k.feel.typed(kit.Key{Code: kit.KeyEnter})
-	k.paint(p, g, image.Point{}, pal)
-	if b.At(r.Min.X, r.Min.Y).Bg == rest {
-		t.Error("a typed Enter did not reverse the button")
-	}
-}
-
-func TestTheGlintShowsOnlyWithMotionAndRestsBetweenCrossings(t *testing.T) {
-	now := time.Unix(1000, 0)
-	f := &keyFeel{now: func() time.Time { return now }}
-	if f.glint() != 0 {
-		t.Error("a glint with no motion setting")
-	}
-	on := true
-	f.motion = func() bool { return on }
-	poses := map[int]int{}
-	for i := 0; i < 2*(actGlintPoses+actGlintRest); i++ {
-		poses[f.glint()]++
-		now = now.Add(mapAnimStep)
-	}
-	for p := 1; p <= actGlintPoses; p++ {
-		if poses[p] != 2 {
-			t.Errorf("pose %d came %d times in two cycles", p, poses[p])
-		}
-	}
-	if poses[0] != 2*actGlintRest {
-		t.Errorf("the glint rested %d steps of %d", poses[0], 2*actGlintRest)
-	}
-	on = false
-	if f.glint() != 0 {
-		t.Error("the glint shows with motion off")
-	}
-}
-
-func TestTheAnimationTickerOnlyAsksForTheGlintWhenOneIsDue(t *testing.T) {
-	now := time.Unix(1000, 0)
-	f := &keyFeel{now: func() time.Time { return now }, motion: func() bool { return true }}
-	if f.glinting() {
-		t.Error("a redraw for a glint nobody painted")
-	}
-	for f.glint() != 0 { // into the rest
-		now = now.Add(mapAnimStep)
-	}
-	if f.glinting() {
-		t.Error("a redraw while the glint rests")
-	}
-	for i := 0; i < actGlintRest+1; i++ {
-		now = now.Add(mapAnimStep)
-	}
-	if !f.glinting() || f.glinting() {
-		t.Error("the due glint asks once for a redraw")
 	}
 }
 
@@ -263,31 +161,31 @@ func TestThePreviewShowsOnlyOnAnEmptyPromptAndLeavesTheTextAlone(t *testing.T) {
 }
 
 func TestAPreviewFollowsThePointerAndATypedKeyTakesItAway(t *testing.T) {
-	g := actionGrid(actionSpec{kind: keyPrimary, label: "send", key: "Enter", cmd: "expedition mist"},
-		actionSpec{kind: keyPlain, label: "back", key: "Esc"})
+	g := actionGrid(chipSpec{kind: keyAccent, label: "send", key: "Enter", cmd: "expedition mist"},
+		chipSpec{kind: keySteel, label: "back", key: "Esc"})
 	k := keyPresser{press: func(kit.Key) {}, run: func(string) {}}
 	move := func(x, y int, kind kit.MouseKind) {
 		k.mouse(g, image.Point{}, kit.Mouse{Kind: kind, X: x, Y: y})
 	}
-	move(3, 2, kit.MouseMove)
+	move(3, 1, kit.MouseMove)
 	if k.feel.preview != "expedition mist" {
 		t.Fatalf("resting on the button previews %q", k.feel.preview)
 	}
 	k.feel.typed(kit.Key{Code: kit.KeyRune, Rune: 'a'})
-	move(4, 2, kit.MouseMove)
+	move(4, 1, kit.MouseMove)
 	if k.feel.preview != "" {
 		t.Errorf("a typed key left %q", k.feel.preview)
 	}
 	move(40, 0, kit.MouseMove)
-	move(3, 2, kit.MouseMove)
+	move(3, 1, kit.MouseMove)
 	if k.feel.preview != "expedition mist" {
 		t.Errorf("coming back previews %q", k.feel.preview)
 	}
-	move(g.keys[1].r.Min.X+1, 2, kit.MouseMove)
+	move(g.keys[1].r.Min.X+1, 1, kit.MouseMove)
 	if k.feel.preview != "" {
 		t.Errorf("a button with no line previews %q", k.feel.preview)
 	}
-	move(3, 2, kit.MouseMove)
+	move(3, 1, kit.MouseMove)
 	move(0, 0, kit.MouseLeave)
 	if k.feel.preview != "" {
 		t.Errorf("the pointer left and %q stayed", k.feel.preview)
@@ -298,8 +196,8 @@ func TestAButtonsLineEntersTheHistoryAndTheBarLikeATypedOne(t *testing.T) {
 	d, _ := newTestDashboard(nil)
 	var k keyPresser
 	k.wire(d.app)
-	g := actionGrid(actionSpec{kind: keyPrimary, label: "go", key: "Enter", cmd: "help"})
-	click(&k, g, 3, 2)
+	g := actionGrid(chipSpec{kind: keyAccent, label: "go", key: "Enter", cmd: "help"})
+	click(&k, g, 3, 1)
 	if n := len(d.cmdHistory); n != 1 || d.cmdHistory[0] != "help" {
 		t.Errorf("history %q", d.cmdHistory)
 	}
@@ -348,11 +246,11 @@ func TestAClickOnAnOpenTechCardsStartStartsTheResearch(t *testing.T) {
 	p.request("close", start.key)
 	p.update(st)
 	renderLines(p)
-	if len(p.model.keys.keys) != 1 || p.model.keys.keys[0].off || p.model.keys.keys[0].kind != keyPrimary {
+	if len(p.model.keys.keys) != 1 || p.model.keys.keys[0].off || p.model.keys.keys[0].kind != keyAccent {
 		t.Fatalf("the card of a tech that can start has %+v, want one primary button", p.model.keys.keys)
 	}
 	b := p.model.keys.keys[0]
-	at := b.r.Min.Add(image.Pt(2, 1))
+	at := b.r.Min.Add(image.Pt(2, 0))
 	if p.PointerAt(at) != kit.PointerHand {
 		t.Error("no hand over the start button")
 	}

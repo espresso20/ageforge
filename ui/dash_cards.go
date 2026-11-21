@@ -87,7 +87,6 @@ func priceTip(price []costPart) kit.TipText {
 // buildCard is one building as the box lists it.
 type buildCard struct {
 	key, name string
-	kind      string // the sign's kind
 	owned     int
 	out       string // what one copy makes, per second
 	price     []costPart
@@ -143,7 +142,7 @@ func buildCards(state game.GameState, buy buyChoice) []buildCard {
 		if !ok {
 			continue
 		}
-		c := buildCard{key: key, name: bs.Name, kind: signKindOf(def), owned: bs.Count,
+		c := buildCard{key: key, name: bs.Name, owned: bs.Count,
 			out: cardOutput(buildingText(bs))}
 		queued := 0
 		for _, q := range state.BuildQueue {
@@ -205,11 +204,10 @@ func olderCards(state game.GameState) []buildCard {
 	var cards []buildCard
 	for _, key := range sortedKeysOf(state.Buildings) {
 		bs := state.Buildings[key]
-		def, ok := set.Building(key)
-		if !ok || !bs.IsLegacy || bs.Count == 0 || bs.Category == "wonder" {
+		if _, ok := set.Building(key); !ok || !bs.IsLegacy || bs.Count == 0 || bs.Category == "wonder" {
 			continue
 		}
-		cards = append(cards, buildCard{key: key, name: bs.Name, kind: signKindOf(def), owned: bs.Count,
+		cards = append(cards, buildCard{key: key, name: bs.Name, owned: bs.Count,
 			out: cardOutput(buildingText(bs)), older: true, group: groupBuild})
 	}
 	return cards

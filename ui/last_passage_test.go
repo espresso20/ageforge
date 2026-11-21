@@ -120,7 +120,7 @@ func TestLastPassageModalLayoutFitsWidth(t *testing.T) {
 					}
 				}
 			}
-			if want := rows + 3 + actionRows + 2; l.height != want {
+			if want := rows + 3 + chipRows + 2; l.height != want {
 				t.Errorf("brace %d legacy %v: height %d, want %d", brace, legacy, l.height, want)
 			}
 		}
