@@ -101,6 +101,9 @@ type deckLayout struct {
 	// the content's rows and viewH how many of them the panel shows.
 	cards        []image.Rectangle
 	total, viewH int
+	// top is the row the scrolling rows start on, 0 for the first under the
+	// frame's top edge.
+	top int
 }
 
 // card is the n-th card of the page, counting through its sections.

@@ -713,7 +713,7 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 	}
 	lay.cards = append(lay.cards, side.cards...)
 	if side.viewH > 0 {
-		lay.total, lay.viewH = side.total, side.viewH
+		lay.total, lay.viewH, lay.top = side.total, side.viewH, side.top
 	}
 
 	g.segsFit(2, h-3, w-4, said...)

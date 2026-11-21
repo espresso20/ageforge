@@ -125,7 +125,13 @@ func (p *deckPanel) Layout(r image.Rectangle) {
 }
 
 // Paint puts the panel on the kit's painter in theme colors.
-func (p *deckPanel) Paint(p2 *kit.Painter) { p.paintGrid(p2, p.grid, p.Bounds()) }
+func (p *deckPanel) Paint(p2 *kit.Painter) {
+	p.paintGrid(p2, p.grid, p.Bounds())
+	// The bar is in the column the cards leave free, as Stats draws it.
+	if l, r := p.lay, p.Bounds(); l.total > l.viewH {
+		p2.Bar(r.Max.X-2, r.Min.Y+max(l.top, 1), l.viewH, p.scroll, l.viewH, l.total)
+	}
+}
 
 // pick moves the pick to card n and scrolls it into view.
 func (p *deckPanel) pick(n int) {
