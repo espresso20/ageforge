@@ -902,8 +902,8 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 	d.notePanels(panelsReached(state), false)
-	d.stepLessons(state)
 	d.next = computeNext(state, d.panels)
+	d.stepLessons(state)
 	d.economyTab.buildBox.nextKey = d.next.card
 	d.nextBox.changed()
 

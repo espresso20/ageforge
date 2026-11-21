@@ -466,7 +466,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 	top := 3
 	if b.st.CanGatherByHand() && b.gatherAge() {
 		gx, gy := 2, top
-		for _, res := range []string{"food", "wood", "stone"} {
+		for _, res := range handRes {
 			rs, ok := b.st.Resources[res]
 			if !ok || !rs.Unlocked {
 				continue

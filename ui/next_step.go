@@ -32,8 +32,8 @@ const (
 	ruleChoice   = "choice"
 	ruleAdvance  = "advance"
 	ruleResearch = "research"
-	ruleScholars = "scholars"
 	ruleIdle     = "idle"
+	ruleScholars = "scholars"
 	ruleHomes    = "homes"
 	ruleGate     = "gate"
 	ruleDry      = "dry"
@@ -73,8 +73,8 @@ func computeNext(st game.GameState, v panelView) nextStep {
 	n := nextCtx{st: st, cards: buildCards(st, buyOne), set: st.Ruleset()}
 	var steps []nextStep
 	for _, rule := range []func(*nextCtx) (nextStep, bool){
-		(*nextCtx).choice, (*nextCtx).advance, (*nextCtx).research, (*nextCtx).scholars,
-		(*nextCtx).idle, (*nextCtx).homes, (*nextCtx).gate, (*nextCtx).dry,
+		(*nextCtx).choice, (*nextCtx).advance, (*nextCtx).research, (*nextCtx).idle,
+		(*nextCtx).scholars, (*nextCtx).homes, (*nextCtx).gate, (*nextCtx).dry,
 	} {
 		if s, ok := rule(&n); ok && (s.panel == "" || v.has(s.panel)) {
 			steps = append(steps, s)
@@ -129,8 +129,64 @@ func (n *nextCtx) pick(ok func(bs game.BuildingState, def config.BuildingDef) bo
 	return best, found
 }
 
+// going reports whether a building the test accepts is going up.
+func (n *nextCtx) going(ok func(bs game.BuildingState, def config.BuildingDef) bool) bool {
+	return slices.ContainsFunc(n.st.BuildQueue, func(q game.BuildQueueSnapshot) bool {
+		def, _ := n.set.Building(q.Key)
+		return ok(n.st.Buildings[q.Key], def)
+	})
+}
+
+// copies is how many of key are going up.
+func (n *nextCtx) copies(key string) int {
+	c := 0
+	for _, q := range n.st.BuildQueue {
+		if q.Key == key {
+			c++
+		}
+	}
+	return c
+}
+
+// want is pick for a rule that answers a need: nothing while a building the
+// test accepts is going up, since the need is being answered.
+func (n *nextCtx) want(ok func(bs game.BuildingState, def config.BuildingDef) bool) (buildCard, bool) {
+	if n.going(ok) {
+		return buildCard{}, false
+	}
+	return n.pick(ok)
+}
+
+// isHome accepts a building that houses people.
+func isHome(_ game.BuildingState, def config.BuildingDef) bool {
+	return slices.ContainsFunc(def.Effects, func(e config.Effect) bool {
+		return e.Type == "capacity" && e.Target == "population" && e.Value > 0
+	})
+}
+
+// gatherFor is the resource to gather by hand toward card c's price and how
+// much of it is missing: the part the town is furthest short of that hands
+// can gather and nothing brings in. "" when the card can be built, gathering
+// has ended or no part is one.
+func (n *nextCtx) gatherFor(c buildCard) (res string, short float64) {
+	if c.canBuild || !n.st.CanGatherByHand() {
+		return "", 0
+	}
+	worst := 0.0
+	for _, p := range c.price {
+		if p.ok || p.need <= 0 || !handGathered(p.res) || n.st.Resources[p.res].Rate > 0 {
+			continue
+		}
+		if f := (p.need - p.have) / p.need; f > worst {
+			res, short, worst = p.res, p.need-p.have, f
+		}
+	}
+	return res, short
+}
+
 // build is a step that builds card c: its price, and what the town holds of
-// it or what it is short of.
+// it or what it is short of. A price that only hands can fill makes the
+// step's command the gather that fills it.
 func (n *nextCtx) build(rule, title, detail string, why []string, c buildCard) nextStep {
 	s := nextStep{rule: rule, title: title, detail: detail, why: why, card: c.key, cmd: buildLine(c.key), enough: c.canBuild}
 	for i, p := range c.price {
@@ -147,6 +203,10 @@ func (n *nextCtx) build(rule, title, detail string, why []string, c buildCard) n
 		if c.wait != "" {
 			s.have += ", " + c.wait
 		}
+	}
+	if res, short := n.gatherFor(c); res != "" {
+		s.cmd = command("gather", res)
+		s.have = rowid.Sprintf("ui.next_step.build.02", "gather %s by hand", game.Amount(short, res))
 	}
 	return s
 }
@@ -174,12 +234,12 @@ func (n *nextCtx) advance() (nextStep, bool) {
 		panel:  "charter", cmd: "advance"}, true
 }
 
-// research: nothing is being researched and a tech can start. The keystone if
-// it can start, else the nearest tech on the way to it that can, else the
-// cheapest that can.
+// research: nothing is being researched, a tech can start and there are
+// scholars to work it. The keystone if it can start, else the nearest tech on
+// the way to it that can, else the cheapest that can.
 func (n *nextCtx) research() (nextStep, bool) {
 	rs := n.st.Research
-	if rs.CurrentTech != "" {
+	if rs.CurrentTech != "" || rs.PerTick <= 0 {
 		return nextStep{}, false
 	}
 	key, keystone := "", false
@@ -227,12 +287,18 @@ func nearestStartable(techs map[string]game.TechState, target string) string {
 	return ""
 }
 
-// scholars: research stands still for want of scholars.
+// scholars: research stands still for want of scholars, with a tech in work
+// or one that could start. A town with no home builds that first.
 func (n *nextCtx) scholars() (nextStep, bool) {
-	if !n.st.Research.NeedsScholars {
+	rs := n.st.Research
+	waiting := rs.CurrentTech != ""
+	for _, t := range rs.Techs {
+		waiting = waiting || t.Available
+	}
+	if rs.PerTick > 0 || !waiting || n.st.Workers.MaxPop == 0 && !n.going(isHome) {
 		return nextStep{}, false
 	}
-	c, ok := n.pick(func(bs game.BuildingState, _ config.BuildingDef) bool { return bs.Scholars > 0 })
+	c, ok := n.want(func(bs game.BuildingState, _ config.BuildingDef) bool { return bs.Scholars > 0 })
 	if !ok {
 		return nextStep{}, false
 	}
@@ -252,7 +318,7 @@ func (n *nextCtx) idle() (nextStep, bool) {
 			return nextStep{}, false
 		}
 	}
-	c, ok := n.pick(func(bs game.BuildingState, _ config.BuildingDef) bool { return bs.WorkerCapacity > 0 })
+	c, ok := n.want(func(bs game.BuildingState, _ config.BuildingDef) bool { return bs.WorkerCapacity > 0 })
 	if !ok {
 		return nextStep{}, false
 	}
@@ -268,13 +334,14 @@ func (n *nextCtx) homes() (nextStep, bool) {
 	if w.HeldBy != game.HeldHousing {
 		return nextStep{}, false
 	}
-	c, ok := n.pick(func(_ game.BuildingState, def config.BuildingDef) bool {
-		return slices.ContainsFunc(def.Effects, func(e config.Effect) bool {
-			return e.Type == "capacity" && e.Target == "population" && e.Value > 0
-		})
-	})
+	c, ok := n.want(isHome)
 	if !ok {
 		return nextStep{}, false
+	}
+	if w.MaxPop == 0 {
+		return n.build(ruleHomes, rowid.Sprintf("ui.next_step.homes.01", "Build a %s", c.name),
+			rowid.Line("ui.next_step.homes.04", "the town has no homes yet"),
+			[]string{rowid.Line("ui.next_step.homes.05", "People need a home before they come.")}, c), true
 	}
 	return n.build(ruleHomes, rowid.Sprintf("ui.next_step.homes.01", "Build a %s", c.name),
 		rowid.Sprintf("ui.next_step.homes.02", "homes are full: %d of %d", w.TotalPop, w.MaxPop),
@@ -286,7 +353,7 @@ func (n *nextCtx) gate() (nextStep, bool) {
 	v := n.st.AdvanceView()
 	for _, p := range v.Pillars {
 		for _, r := range p.Rows {
-			if r.Met {
+			if r.Met || r.Kind == game.GateRowCount && r.Have+n.copies(r.Key) >= r.Need {
 				continue
 			}
 			detail := rowid.Sprintf("ui.next_step.gate.01", "the %s asks for %d", v.NextName, r.Need)
@@ -326,7 +393,7 @@ func (n *nextCtx) dry() (nextStep, bool) {
 	if res == "" {
 		return nextStep{}, false
 	}
-	c, ok := n.pick(func(_ game.BuildingState, def config.BuildingDef) bool {
+	c, ok := n.want(func(_ game.BuildingState, def config.BuildingDef) bool {
 		return slices.ContainsFunc(def.Effects, func(e config.Effect) bool {
 			return e.Type == "production" && e.Target == res && e.Value > 0
 		})
@@ -348,8 +415,10 @@ func (n *nextCtx) passive() []nextItem {
 	st := n.st
 	var out []nextItem
 	if rs := st.Research; rs.CurrentTech != "" {
-		title := rs.CurrentTechName + " " + needsScholarsShort.String()
-		if !rs.NeedsScholars && rs.TicksLeft > 0 {
+		title := rs.CurrentTechName
+		if rs.PerTick <= 0 {
+			title += " " + needsScholarsShort.String()
+		} else if rs.TicksLeft > 0 {
 			left := textfmt.Duration(time.Duration(float64(rs.TicksLeft) * tickSeconds(st.TickIntervalMs) * float64(time.Second)))
 			title = rowid.Sprintf("ui.next_step.passive.01", "%s done in %s", rs.CurrentTechName, left)
 		}
