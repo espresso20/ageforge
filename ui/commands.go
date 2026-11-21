@@ -240,11 +240,12 @@ func registry() []*Command {
 		// Research, Expeditions & Army
 		{Name: "research", Run: cmdResearch, Aliases: []string{"res"}, Section: secResearch, Panel: rowid.Line("ui.help.panels.research", "The Research board: what can start, the queue, the ten lanes; T opens the tech tree"),
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
-			Help: []Usage{{"research <tech>", rowid.Line("ui.help.commands.research", "Research a tech")}},
+			Help: []Usage{{"research <tech>", rowid.Line("ui.help.commands.research", "Research a tech (it joins the queue when another is in work)")}},
 			Subs: []*Command{
 				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", rowid.Line("ui.help.commands.research.cancel", "Cancel current research (the work done on it is lost)")}}},
 				sub("list", "research list", rowid.Line("ui.help.commands.research.list", "List available techs")),
 				sub("tree", "research tree [close|far]", rowid.Line("ui.help.commands.research.tree", "Open the tech tree, zoomed in on big badges (close) or out on the whole tree (far)"), Arg{Kind: ArgWord, Words: []string{"close", "far"}, Optional: true}),
+				sub("drop", "research drop <tech>", rowid.Line("ui.help.commands.research.drop", "Take a tech out of the research queue"), Arg{Kind: ArgPlanTech}),
 				sub("card", "research card <tech>", rowid.Line("ui.help.commands.research.card", "Open the tech tree on a tech's card: what it does, how long it takes and what it needs"), Arg{Kind: ArgTech}),
 			}},
 		{Name: "scholars", Run: cmdScholars, Section: secResearch, BareOK: true,
