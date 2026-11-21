@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -74,11 +75,9 @@ const (
 const statsWide = 140
 
 // statsTile is one tile: its label (and a second line under it), the value
-// as numeral glyphs when the font has them, else as text, the sign it
-// carries and the cells it takes on the page.
+// as text, the sign it carries and the cells it takes on the page.
 type statsTile struct {
 	name, note, text string
-	toks             []numTok
 	kind             string
 	r                image.Rectangle
 	span             int          // slots wide; 0 is one
@@ -174,34 +173,24 @@ func commas(v float64) string {
 	return s
 }
 
-// timeToks spells a time as its two largest units, "4h 12m": digits at full
-// height, the units at half.
-func timeToks(d time.Duration) ([]numTok, string) {
+// timeText spells a time as its two largest units, "4h 12m".
+func timeText(d time.Duration) string {
 	secs := int(d / time.Second)
 	vals := []int{secs / 86400, secs % 86400 / 3600, secs % 3600 / 60, secs % 60}
 	i := 0
 	for i < 3 && vals[i] == 0 {
 		i++
 	}
-	var toks []numTok
 	var text []string
 	for j := i; j < min(i+2, 4); j++ {
-		num, _ := numToks(strconv.Itoa(vals[j]), false)
-		unit := []numTok{{rune("dhms"[j]), true}}
-		if len(toks) > 0 {
-			toks = append(toks, numTok{' ', false})
-		}
-		toks = append(toks, append(num, unit...)...)
 		text = append(text, strconv.Itoa(vals[j])+string("dhms"[j]))
 	}
-	return toks, strings.Join(text, " ")
+	return strings.Join(text, " ")
 }
 
 // countTile is a tile of a count.
 func countTile(name, kind string, n int) statsTile {
-	text := commas(float64(n))
-	toks, _ := numToks(text, false)
-	return statsTile{name: name, text: text, toks: toks, kind: kind}
+	return statsTile{name: name, text: commas(float64(n)), kind: kind}
 }
 
 // buildStats lays the page of a part out in w cells, a row at a time down
@@ -287,13 +276,14 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 		for j, s := range lines {
 			pg.labels = append(pg.labels, statsLabel{x + 1, ty + nr + 1 + j, fitText(s, tw-2), xText, ""})
 		}
-		if t.toks == nil {
-			pg.labels = append(pg.labels, statsLabel{x + 1, ty + (nr+1)/2, fitText(t.text, tw-2), xBright, ""})
+		if t.text != "" {
+			vx := x + tw - 1 - utf8.RuneCountInString(t.text)
+			pg.labels = append(pg.labels, statsLabel{max(vx, x+1), ty + (nr+1)/2, fitText(t.text, tw-2), xBright, ""})
 		}
-		toks, kind, hold := t.toks, t.kind, t.hold
+		kind, hold := t.kind, t.hold
 		pg.pics = append(pg.pics, statsPic{r: t.r, key: fmt.Sprint("tile", tw, th, nr, texts, i, kind, hold),
 			draw: func(cw, ch int, _ bool, in statsInk) *image.RGBA {
-				return statsTilePic(tw, th, nr+1, cw, ch, toks, kind, hold, tiles, in)
+				return statsTilePic(tw, th, nr+1, cw, ch, kind, hold, in)
 			}})
 	}
 	return y + (slot+n-1)/n*(th+1)
@@ -302,8 +292,7 @@ func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
 // run lays out "This run" and returns the page's rows.
 func (pg *statsPage) run(st game.GameState, w, view int, wide bool, grow int) int {
 	s := st.Stats
-	pt, ptext := timeToks(s.PlayTime.Truncate(config.Billion))
-	play := statsTile{name: txtPlayTime.String(), text: ptext, toks: pt, kind: "monument"}
+	play := statsTile{name: txtPlayTime.String(), text: timeText(s.PlayTime.Truncate(config.Billion)), kind: "monument"}
 	tiles := []statsTile{play,
 		countTile(txtBuilt.String(), "housing", s.TotalBuilt),
 		countTile(txtRecruited.String(), "culture", s.TotalRecruited),
