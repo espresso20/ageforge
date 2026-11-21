@@ -141,31 +141,6 @@ func TestHeaderRowAGivesWayInOrder(t *testing.T) {
 	}
 }
 
-// TestHeaderFoldsToASCII: every mark the header draws has a plain form.
-func TestHeaderFoldsToASCII(t *testing.T) {
-	v := headerFixture(t)
-	v.Notice = "★ Badge earned: Stonecutter"
-	ready := *v.Led
-	ready.v.AllStand, ready.v.Ready = true, true
-	ready.Pillars = append([]ledgerPillar(nil), ready.Pillars...)
-	for i := range ready.Pillars {
-		ready.Pillars[i].Met, ready.Pillars[i].Share = true, 1
-	}
-	for _, led := range []*ledgerData{v.Led, &ready} {
-		v.Led = led
-		g := renderHeader(v, 160, 3)
-		g.fold()
-		for y, line := range strings.Split(g.String(), "\n") {
-			for _, r := range line {
-				if r > 0x7e || r == '?' {
-					t.Errorf("row %d has %q after the fold: %q", y, string(r), line)
-					break
-				}
-			}
-		}
-	}
-}
-
 // headerStage draws the dashboard on the screen the clicks go to.
 func headerStage(t *testing.T, d *Dashboard, pages *nativePages, w, h int) *stage {
 	t.Helper()

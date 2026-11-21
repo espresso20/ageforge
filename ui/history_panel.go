@@ -340,9 +340,6 @@ func (p *historyPanel) Layout(r image.Rectangle) {
 		keys = append(keys, [2]string{"↑↓", txtKeyRun.String()}, [2]string{"Enter", txtKeyGhost.String()})
 	}
 	expKeyBar(g, expLayout{w: p.w, h: p.h, footY: p.v.geo.footY}, append(keys, escClose()), "")
-	if p.plain {
-		g.fold()
-	}
 	p.chrome = g
 }
 

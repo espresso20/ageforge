@@ -223,23 +223,6 @@ func (g *xgrid) segsFit(x, y, room int, parts ...xseg) int {
 	return x
 }
 
-// foldExpedition is the plain glyph tier's fold: the pins and the bars
-// keep a difference between them in ASCII, and the rest folds as the maps
-// fold.
-var foldExpedition = map[rune]rune{
-	'○': 'o', '◇': 'd', '▲': '^', '■': '#', '◈': '*', '◆': '+', '▣': 'T', '†': '+',
-	'▰': '#', '▱': '-', '█': '#', '░': '-', '·': '.', '•': '*', '≈': '~', '∩': 'n', '●': '*',
-	'←': '<', '→': '>', '↑': '^', '↓': 'v', '…': '~', '▸': '>', '×': 'x',
-	// the header's: a pillar that stands (the Ledger's choice), a catastrophe,
-	// a harbinger
-	'✓': '+', '☄': '!', '⚑': '^',
-}
-
-func (g *xgrid) fold() {
-	g.plain = true
-	g.foldWith(foldExpedition)
-}
-
 // expPalette is the active theme's colours for the panel.
 type expPalette struct {
 	styles [xCount]kit.Style

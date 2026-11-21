@@ -161,7 +161,7 @@ func TestStatsScrollStopsAtBothEnds(t *testing.T) {
 	}
 }
 
-func TestStatsPictureCountsAndPlainCells(t *testing.T) {
+func TestStatsPictureCounts(t *testing.T) {
 	st := statsFixture(t, 6, 12, 5*time.Hour)
 	p := laidStats(t, st, 160, 40, true)
 	if got, want := len(p.page.pics), 6+6+12; got != want {
@@ -187,11 +187,6 @@ func TestStatsPictureCountsAndPlainCells(t *testing.T) {
 		b := paintAlone(overBar(pl), 160, 40+barBigRows)
 		if len(b.Pics) != 0 {
 			t.Errorf("part %d: pictures in the plain tier", part)
-		}
-		for i, c := range b.Cells {
-			if c.R > 127 {
-				t.Fatalf("part %d: cell %d,%d holds %q", part, i%b.W, i/b.W, c.R)
-			}
 		}
 	}
 }

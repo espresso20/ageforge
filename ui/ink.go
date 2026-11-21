@@ -75,24 +75,3 @@ func inkValue(k ink, light bool) kit.Color {
 // atRest is the frame number of a badge that does not move: the motion
 // setting is off, or the badge is not one the case animates.
 const atRest = -1
-
-// badgeFold is what the plain tier draws for badge art. The map model's
-// own fold would turn two stops of a rim into the same mark and a rounded
-// corner into a plus, so badges fold by their own table: a rim reads # = :
-// from the outside in, a top edge _ and a bottom edge ', a round corner .
-// above and ' below.
-var badgeFold = map[rune]rune{
-	'█': '#', '▓': '#', '▒': '=', '░': ':', '▄': '_', '▀': '\'', '▐': '|', '▌': '|',
-	'╭': '.', '╮': '.', '╰': '\'', '╯': '\'', '─': '-', '│': '|', '▾': 'v',
-	'✦': '*', '·': '.', '✧': '+', '◆': '*', '╱': '/', '═': '=', '║': '|',
-	'◂': '<', '▸': '>', '←': '<', '→': '>', '↑': '^', '↓': 'v',
-	'┌': '+', '┐': '+', '└': '+', '┘': '+', '├': '+', '┤': '+', '┬': '|', '┴': '|',
-	'┄': '.', '┆': ':', '▗': '.', '▖': '.', '▝': '\'', '▘': '\'',
-	'▛': '#', '▜': '#', '▙': '#', '▟': '#', '╔': '.', '╗': '.', '╚': '\'', '╝': '\'',
-	'✶': '*', '◖': '(', '◗': ')', '…': '.', '✓': 'v', '★': '*', '☆': 'o', '▲': '^', '▼': 'v',
-	'●': 'o', '∞': '8', '▚': '#', '▞': '#', '╴': '-', '¿': '?', '§': 'S',
-	'▣': 'x', '╲': '\\', '×': 'x',
-}
-
-// foldBadges rewrites a grid of badge art for the plain glyph tier.
-func foldBadges(g *tGrid) { g.foldWith(badgeFold) }

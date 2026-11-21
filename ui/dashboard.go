@@ -280,7 +280,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.wonders.wire(d.overlayMgr, func() { d.overlayMgr.Refresh(d.engine.GetState()) })
 	// The People panel, which `workers` opens too, leaves the keyboard with
 	// the command bar as well.
-	d.statsPanel.settings = d.mapSettings
 	d.statsPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("stats", rowid.E("ui.dashboard.NewDashboard.09", "Statistics"), d.statsPanel.open, d.statsPanel.update)
 	d.peoplePanel.toPrompt = d.handToPrompt
