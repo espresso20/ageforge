@@ -84,7 +84,7 @@ The picker fills the window and **previews** each theme as you move to it. Theme
 | Key | Action |
 |---|---|
 | `↑` / `↓` | Preview a theme. The whole interface retints at once so you can judge it in place |
-| `Enter` | Keep the highlighted theme. On a locked theme it closes the picker and puts back the theme you had |
+| `Enter` | Keep the highlighted theme (from the game it runs `theme <name>` in the command bar). On a locked theme it closes the picker and puts back the theme you had |
 | `Esc` / `q` | Cancel and revert to whatever you had before |
 
 In the window, a click on a row previews that theme.
