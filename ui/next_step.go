@@ -268,7 +268,7 @@ func (n *nextCtx) advance() (nextStep, bool) {
 // the way to it that can, else the cheapest that can.
 func (n *nextCtx) research() (nextStep, bool) {
 	rs := n.st.Research
-	if rs.CurrentTech != "" || rs.PerTick <= 0 {
+	if rs.CurrentTech != "" || !hasScholars(rs) {
 		return nextStep{}, false
 	}
 	key, keystone := "", false
@@ -294,6 +294,20 @@ func (n *nextCtx) research() (nextStep, bool) {
 	}
 	return nextStep{rule: ruleResearch, title: rowid.Sprintf("ui.next_step.research.04", "Research %s", rs.Techs[key].Name),
 		detail: rowid.Line("ui.next_step.research.05", "nothing is being researched"), why: why, panel: "research", cmd: "research " + key}, true
+}
+
+// hasScholars reports whether scholars would work a tech: they do now, or a
+// tech started now would get time from them (with none in work they teach).
+func hasScholars(rs game.ResearchState) bool {
+	if rs.PerTick > 0 {
+		return true
+	}
+	for _, t := range rs.Techs {
+		if t.Available && t.TicksNeeded > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // nearestStartable is the tech to start for the target: the target itself if
@@ -324,7 +338,7 @@ func (n *nextCtx) scholars() (nextStep, bool) {
 	for _, t := range rs.Techs {
 		waiting = waiting || t.Available
 	}
-	if rs.PerTick > 0 || !waiting || n.st.Workers.MaxPop == 0 && !n.going(isHome) {
+	if hasScholars(rs) || !waiting || n.st.Workers.MaxPop == 0 && !n.going(isHome) {
 		return nextStep{}, false
 	}
 	c, ok := n.want(func(bs game.BuildingState, _ config.BuildingDef) bool { return bs.Scholars > 0 })
