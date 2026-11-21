@@ -22,6 +22,7 @@ const (
 func (s *Set) buildNames() {
 	for k := range s.names {
 		s.names[k] = map[string]string{}
+		s.named[k] = map[string]string{}
 	}
 	for _, d := range s.ages {
 		s.names[KindAge][d.Key] = d.Name
@@ -41,6 +42,35 @@ func (s *Set) buildNames() {
 	for _, d := range s.routes {
 		s.names[KindRoute][d.Key] = d.Name
 	}
+	for k, names := range s.names {
+		for key, name := range names {
+			n := plainName(strings.ToLower(name))
+			if other, taken := s.named[k][n]; taken && other != key {
+				key = "" // a name two things share finds neither
+			}
+			s.named[k][n] = key
+		}
+	}
+}
+
+// plainName is a name as a key would spell it: lower case, an underscore
+// for each space or hyphen, no other punctuation.
+var plainName = strings.NewReplacer(" ", "_", "-", "_", "'", "", "’", "", ".", "", ",", "").Replace
+
+// KeyNamed returns the key that name spells: a key itself, or a display
+// name, in any case and with spaces or hyphens between its words ("Lumber
+// Mill", "lumber-mill" and "lumber_mill" are all lumber_mill). A key wins
+// over another thing's name.
+func (s *Set) KeyNamed(kind Kind, name string) (string, bool) {
+	if kind >= numKinds {
+		return "", false
+	}
+	n := plainName(strings.ToLower(name))
+	if _, ok := s.names[kind][n]; ok {
+		return n, true
+	}
+	key := s.named[kind][n]
+	return key, key != ""
 }
 
 // Name returns the display name of key ("Industrial Age", "Lumber Mill").

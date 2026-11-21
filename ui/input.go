@@ -70,6 +70,9 @@ type CommandResult struct {
 	// is not logged, so it reaches no log panel, snapshot, save or dump. The
 	// dashboard shows it and drops it when the window closes.
 	Window string
+	// Fill is a line for the dashboard to write on the command line, not
+	// run: the command a mistyped one was probably meant to be.
+	Fill string
 }
 
 // HandleCommand parses a raw command string and runs the registry command
@@ -81,11 +84,13 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	if len(parts) == 0 {
 		return CommandResult{}
 	}
+	cmds := registry()
+	parts = plainNames(cmds, parts, engine.Rules())
 
 	cmd := strings.ToLower(parts[0])
 	args := parts[1:]
 
-	for _, c := range registry() {
+	for _, c := range cmds {
 		if c.Dashboard || c.Name != cmd && !slices.Contains(c.Aliases, cmd) {
 			continue
 		}
@@ -100,7 +105,15 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		}
 		return res
 	}
-	return errorReply(unknownCommandText(cmd))
+	near := closestCommand(cmd)
+	if near == "" {
+		return errorReply(unknownCommandText(cmd))
+	}
+	// The line as it was probably meant goes to the command line, where
+	// Enter runs it: a guess is shown before it is run.
+	res := errorReply(unknownStart(cmd, near) + rowid.Line("ui.input.unknownCommandText.04", " It is on the command line: Enter runs it."))
+	res.Fill = strings.Join(append([]string{near}, args...), " ")
+	return res
 }
 
 // runPanel is the Run of a command that only opens the panel of that name.
@@ -111,11 +124,17 @@ func runPanel(name string) func(args []string, engine *game.GameEngine) CommandR
 // unknownCommandText is the refusal for a first word that is no command:
 // "Unknown command 'biuld'. Did you mean 'build'? Type help for all commands."
 func unknownCommandText(cmd string) string {
+	return unknownStart(cmd, closestCommand(cmd)) + rowid.Line("ui.input.unknownCommandText.03", " Type help for all commands.")
+}
+
+// unknownStart is the refusal up to the command it suggests (near, "" for
+// none).
+func unknownStart(cmd, near string) string {
 	msg := rowid.Sprintf("ui.input.unknownCommandText.01", "Unknown command '%s'.", cmd)
-	if s := closestCommand(cmd); s != "" {
-		msg += rowid.Sprintf("ui.input.unknownCommandText.02", " Did you mean '%s'?", s)
+	if near != "" {
+		msg += rowid.Sprintf("ui.input.unknownCommandText.02", " Did you mean '%s'?", near)
 	}
-	return msg + rowid.Line("ui.input.unknownCommandText.03", " Type help for all commands.")
+	return msg
 }
 
 // usageFor is "Usage: " and the registry's help form for the command path
