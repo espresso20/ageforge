@@ -3,6 +3,7 @@ package ui
 import (
 	"image"
 	"image/color"
+	"image/draw"
 
 	"github.com/espresso20/ageforge/pkg/peopledash"
 	"github.com/espresso20/ageforge/theme"
@@ -79,14 +80,46 @@ func (s *pScene) txR(c, r int, t string, col color.RGBA, bold bool) {
 	s.tx(c-runeLen(t), r, t, col, bold)
 }
 
+// numType is the big type a numeral of the given scale is set in: bold ones
+// in full strokes, thin ones in lighter.
+func numType(bold bool, scale int) (n, wt int) {
+	switch {
+	case !bold:
+		return 3, 2
+	case scale >= 5:
+		return 5, 5
+	}
+	return 3, 3
+}
+
+// figure is t as a numeral's picture, cut to its ink.
+func figure(t string, col color.RGBA, bold bool, scale int) *image.RGBA {
+	n, wt := numType(bold, scale)
+	col.A = 255
+	return bigNum(t, n, wt, col)
+}
+
+// setNum sets t with the top left of its digits at pixel x, y and returns
+// the pixel after it.
+func (s *pScene) setNum(x, y int, t string, col color.RGBA, bold bool, scale int) int {
+	img := figure(t, col, bold, scale)
+	draw.Draw(s.cv.Img, img.Rect.Add(image.Pt(x, y)), img, image.Point{}, draw.Over)
+	return x + img.Rect.Dx()
+}
+
+// numW is the pixel width of a numeral.
+func (s *pScene) numW(t string, bold bool, scale int) int {
+	return figure(t, color.RGBA{}, bold, scale).Rect.Dx()
+}
+
 // num paints a numeral at a cell and returns the first free cell after it.
 func (s *pScene) num(c, r int, t string, col color.RGBA, bold bool, scale int) int {
-	return (s.cv.Num(s.px(c), s.py(r)+2, t, col, bold, scale)+s.cw+1)/s.cw + 1
+	return (s.setNum(s.px(c), s.py(r)+2, t, col, bold, scale)+s.cw+1)/s.cw + 2
 }
 
 // numH is the rows a numeral takes.
 func (s *pScene) numH(bold bool, scale int) int {
-	return (peopledash.NumH(bold, scale) + 2 + s.ch - 1) / s.ch
+	return (figure("0", color.RGBA{}, bold, scale).Rect.Dy() + 2 + s.ch - 1) / s.ch
 }
 
 // chipAt paints a one-row chip of word on col at a cell; the next free cell comes back.

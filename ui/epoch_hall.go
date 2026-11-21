@@ -40,6 +40,8 @@ type epochHall struct {
 	// own). Either may be nil, and then c does nothing.
 	state func() game.GameState
 	card  func(game.GameState) (epochCardResult, error)
+	// bigs is where the numbers of the page last given go, for over.
+	bigs []hallBig
 	// note is the line the last card left on the foot, until noteUntil.
 	note      string
 	noteUntil time.Time
@@ -120,6 +122,7 @@ func (h *epochHall) rows() int {
 
 // provider is the screen's text: the front page, or the details.
 func (h *epochHall) provider(state game.GameState, screenW int) string {
+	h.bigs = nil
 	if h.details {
 		return epochProvider(state, screenW)
 	}
@@ -131,7 +134,9 @@ func (h *epochHall) provider(state game.GameState, screenW int) string {
 		}
 		mo = hallMotion{on: true, t: float64(now().UnixMilli()) / 1000}
 	}
-	return hallFrontPage(state, screenW, h.rows(), mo, true)
+	page, bigs := hallFrontPage(state, screenW, h.rows(), mo, true)
+	h.bigs = bigs
+	return page
 }
 
 // ---- what the screen says ----
@@ -353,21 +358,11 @@ func fastestAge(state game.GameState) (name string, ticks int, ok bool) {
 
 // ---- the front page ----
 
-// hallFrontText is the front page for a screen screenW cells wide and rows
-// tall, as a still frame.
-func hallFrontText(state game.GameState, screenW, rows int) string {
-	return hallFront(state, screenW, rows, hallMotion{})
-}
-
-// hallFront is the front page at a moment of the clock. Every block is
-// centred as a unit on the width of the screen.
-func hallFront(state game.GameState, screenW, rows int, mo hallMotion) string {
-	return hallFrontPage(state, screenW, rows, mo, true)
-}
-
-// hallFrontPage is hallFront with or without the line that says which key
-// copies the picture (the picture itself leaves it out).
-func hallFrontPage(state game.GameState, screenW, rows int, mo hallMotion, hint bool) string {
+// hallFrontPage is the front page for a screen screenW cells wide and rows
+// tall at a moment of the clock, with the numbers drawn over it, and with or
+// without the line that says which key copies the picture (the picture itself
+// leaves it out). Every block is centred as a unit on the width of the screen.
+func hallFrontPage(state game.GameState, screenW, rows int, mo hallMotion, hint bool) (string, []hallBig) {
 	v := newHallView(state)
 	c := hallCompose(v, screenW, rows, mo, 1, hint)
 	// On a tall screen the page sits a little below the top, not hard
@@ -375,7 +370,7 @@ func hallFrontPage(state game.GameState, screenW, rows int, mo hallMotion, hint 
 	if spare := rows - 4 - c.end; spare > 3 {
 		c = hallCompose(v, screenW, rows, mo, 1+min(spare/3, 10), hint)
 	}
-	return c.render()
+	return c.render(), c.bigs
 }
 
 // hallCompose lays the page out with its banner starting at row top.

@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"math"
 	"regexp"
 	"strings"
@@ -43,6 +45,7 @@ type hallCtx struct {
 	duo      bool
 	gap      int // rows between two blocks
 	bg, text kit.Color
+	bigs     []hallBig // the numbers drawn over the text
 }
 
 func newHallCtx(w, rows int, mo hallMotion) *hallCtx {
@@ -265,37 +268,43 @@ func (c *hallCtx) banner(name string, order int, seed int64) {
 	c.y += band
 }
 
-// ---- numbers in blocks ----
+// ---- numbers in the big type ----
 
-// hallGlyphs is the big digits: three rows each, built from the block
-// glyphs, one cell wide for the point and comma and three for the rest.
-var hallGlyphs = map[rune][3]string{
-	'0': {"█▀█", "█ █", "▀▀▀"}, '1': {"▄█ ", " █ ", "▄█▄"}, '2': {"▀▀█", "▄▀▀", "▀▀▀"},
-	'3': {"▀▀█", " ▀█", "▀▀▀"}, '4': {"█ █", "▀▀█", "  ▀"}, '5': {"█▀▀", "▀▀█", "▀▀▀"},
-	'6': {"█▀▀", "█▀█", "▀▀▀"}, '7': {"▀▀█", "  █", "  ▀"}, '8': {"█▀█", "█▀█", "▀▀▀"},
-	'9': {"█▀█", "▀▀█", "▀▀▀"}, '.': {" ", " ", "▀"}, ',': {" ", "▄", "▀"},
-	'K': {"█ █", "█▀▄", "▀ ▀"}, 'M': {"█▄█", "█▀█", "▀ ▀"}, 'B': {"█▀▄", "█▀▄", "▀▀▀"},
-	'T': {"▀█▀", " █ ", " ▀ "}, 'Q': {"█▀█", "█▄█", " ▀▄"},
+// A tile's number is set in the shared big type, three rows tall in full
+// strokes. It is a picture over the text, so the page records where each one
+// goes (hallBig) and the screen paints them after the text.
+const (
+	hallBigN  = 4
+	hallBigWt = 4
+)
+
+// hallBig is a number in the big type with its top left at cell (x, y) of
+// the page.
+type hallBig struct {
+	x, y int
+	s    string
+	fg   color.RGBA
 }
 
-// bigNumber is s in the big digits, ok false for a text the font has no
-// glyph for.
-func bigNumber(s string, sx int) (rows [3]string, ok bool) {
-	for i, r := range s {
-		gl, found := hallGlyphs[r]
-		if !found {
-			return rows, false
-		}
-		for k := 0; k < 3; k++ {
-			if i > 0 {
-				rows[k] += strings.Repeat(" ", sx)
-			}
-			for _, cell := range gl[k] {
-				rows[k] += strings.Repeat(string(cell), sx)
+// hallBigW is the cells across a tile's number takes.
+func hallBigW(s string) int {
+	_, w, _ := bigNumCells(s, hallBigN, hallBigWt, color.RGBA{A: 255})
+	return w
+}
+
+// paintHallBigs paints the recorded numbers over the page text shown in
+// rect, whose first row in view is top. A number only part in view is left
+// out.
+func paintHallBigs(bigs []hallBig) func(p *kit.Painter, rect image.Rectangle, top int) {
+	return func(p *kit.Painter, rect image.Rectangle, top int) {
+		for _, b := range bigs {
+			img, w, h := bigNumCells(b.s, hallBigN, hallBigWt, b.fg)
+			at := image.Rect(0, 0, w, h).Add(image.Pt(rect.Min.X+b.x, rect.Min.Y+b.y-top))
+			if at.In(rect) {
+				p.Picture(at, img)
 			}
 		}
 	}
-	return rows, s != ""
 }
 
 // tileInks are the tiles' accents, one each, from the theme's roles and
@@ -323,29 +332,18 @@ func (c *hallCtx) tiles(stats []hallStat) {
 		gap = 3
 	}
 	big := c.rows >= 30
-	// Where the page is wide the digits are twice as wide, as long as all
-	// the tiles still fit in one row.
-	sx := 1
-	if c.rows >= 40 && c.cw >= 140 {
-		sx = 2
-	}
-	var bigs [][3]string
-	need := 12
-	for {
-		bigs = make([][3]string, len(stats))
-		allBig := big
-		for i, s := range stats {
-			r, ok := bigNumber(s.big, sx)
-			if !ok {
-				allBig = false
-			}
-			bigs[i] = r
+	for _, s := range stats {
+		if s.big == "" {
+			big = false
 		}
-		need = 12
-		for i, s := range stats {
+	}
+	// need is the width a tile takes, for numbers in the big type or in text.
+	needFor := func(big bool) int {
+		need := 12
+		for _, s := range stats {
 			n := runeLen(s.label) + 4
-			if allBig {
-				n = max(n, runeLen(bigs[i][0])+4)
+			if big {
+				n = max(n, hallBigW(s.big)+4)
 			} else {
 				n = max(n, runeLen(s.big)+4)
 			}
@@ -354,17 +352,13 @@ func (c *hallCtx) tiles(stats []hallStat) {
 			}
 			need = max(need, n)
 		}
-		fits := len(stats)*need+(len(stats)-1)*gap <= c.cw
-		if fits || (sx == 1 && !allBig) {
-			big = allBig
-			break
-		}
-		if sx == 1 {
-			// Even single-width digits do not fit in one row: small text does.
-			big = false
-			continue
-		}
-		sx--
+		return need
+	}
+	need := needFor(big)
+	if big && len(stats)*need+(len(stats)-1)*gap > c.cw {
+		// The big numbers do not fit in one row: small text does.
+		big = false
+		need = needFor(false)
 	}
 	tw := max(min((c.cw-(len(stats)-1)*gap)/len(stats), 30), need)
 	per := min(max((c.cw+gap)/(tw+gap), 1), len(stats))
@@ -390,9 +384,7 @@ func (c *hallCtx) tiles(stats []hallStat) {
 			}
 			barRow := 0
 			if big {
-				for k := 0; k < 3; k++ {
-					ctr(2+k, bigs[i][k], ink, true)
-				}
+				c.bigs = append(c.bigs, hallBig{x + (tw-hallBigW(s.big))/2, y + 2, s.big, pixelInk(ink)})
 				ctr(5, s.label, c.role(theme.RoleText), true)
 				if s.hasBar {
 					ctr(6, s.value, c.role(theme.RoleDim), false)

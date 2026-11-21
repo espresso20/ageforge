@@ -309,6 +309,9 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.epochHall.card = func(st game.GameState) (epochCardResult, error) { return makeEpochCard(st, copyImageToClipboard) }
 	d.overlayMgr.Register("epoch", rowid.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
 	d.overlayMgr.SetNotice("epoch", d.epochHall.notice)
+	d.overlayMgr.SetOver("epoch", func(p *kit.Painter, rect image.Rectangle, top int) {
+		paintHallBigs(d.epochHall.bigs)(p, rect, top)
+	})
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
 	d.overlayMgr.SetBackHandler("epoch", d.epochHall.back)
 	d.overlayMgr.SetFooter("epoch", d.epochHall.footer)
