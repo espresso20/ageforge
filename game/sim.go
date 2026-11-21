@@ -57,17 +57,6 @@ func (ge *GameEngine) ForceCatastropheForTest() error {
 	return ge.forceCatastrophe()
 }
 
-// SetGarrisonForTest moves the engine to age and gives it n soldiers at home
-// (whatever its military buildings post), so a garrison blunts raids. A test hook for other packages (the Army panel, catastrophe
-// modal and theme sweep tests); not reachable from play.
-func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.age = age
-	ge.currentEpoch = ge.rules.EraOf(age)
-	ge.garrisonForTest, ge.garrisonForTestSet = n, true
-}
-
 // SetStockForTest sets what the engine holds of res to v (res unlocked). A test hook for other packages (the smoke bot's
 // research order tests, which read one decision from one snapshot); not
 // reachable from play.

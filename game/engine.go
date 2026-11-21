@@ -176,16 +176,12 @@ type GameEngine struct {
 
 	// Soldiers (soldiers.go). soldiersSeen is the posted army the last rates
 	// pass saw (a load sets it to the army that stands, so that army is not
-	// counted as trained). garrisonForTest, when garrisonForTestSet, holds the
-	// soldiers at home instead of the posts: a hook for tests, not reachable
-	// from play.
-	soldiersSeen       int
-	soldiersPosted     map[string]int  // military building key: soldiers at its posts
-	soldierWaitLogged  map[string]bool // building keys whose waiting posts were said
-	soldiersVacant     map[string]int  // military building key: posts the fallen left, to train from the reserve
-	garrisonForTest    float64
-	garrisonForTestSet bool
-	researchPerTick    float64
+	// counted as trained).
+	soldiersSeen      int
+	soldiersPosted    map[string]int  // military building key: soldiers at its posts
+	soldierWaitLogged map[string]bool // building keys whose waiting posts were said
+	soldiersVacant    map[string]int  // military building key: posts the fallen left, to train from the reserve
+	researchPerTick   float64
 	// researchIfStarted is the work each tick a tech started now would get:
 	// the scholars the share setting puts on research, whether or not a tech
 	// is in progress (so the idle teaching does not zero it).
