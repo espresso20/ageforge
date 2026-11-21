@@ -58,7 +58,10 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		}
 		destroyed = append(destroyed, "  [red]"+lead+strings.TrimSpace(l)+"[-]")
 	}
-	endureLines := append(destroyed,
+	endureLines := append(destroyed[:1:1],
+		rowid.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.19", "  [white]Keep the town, lose %s of it and %s of stock.[-]", endurePct(eo.DestroyPct), endurePct(100-eo.KeepFrac*100)))
+	endureLines = append(endureLines, destroyed[1:]...)
+	endureLines = append(endureLines,
 		rowid.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.03", "  [red]• All resources reduced to %s[-]", endurePct(eo.KeepFrac*100)),
 		rowid.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.04", "  [red]• %.0f%% of workers lost; workers of destroyed buildings go idle[-]", game.EndureWorkerLoss*100),
 		rowid.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.05", "  [red]• All production %.0f%% for %s, morale %+.0f points[-]",
@@ -81,6 +84,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	}
 	succumbLines := []string{
 		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.12", "[white]── SUCCUMB: let civilization fall ──[-]"),
+		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.20", "  [white]Start again from the Primitive Age; the run's buildings and stock are gone.[-]"),
 		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.13", "  [red]• Full reset to the Primitive Age: buildings, resources, research[-]"),
 		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.14", "  [red]• No prestige points earned (level and upgrades are kept)[-]"),
 		rowid.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.15", "  [green]✓ Up to %d buildings become ruins (50%% output, max %d ruins)[-]", game.SuccumbRuinCount, game.MaxRuins),
@@ -123,6 +127,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 	keepLine := rowid.Sprintf("ui.catastrophe_modal.buildLastPassageModalLayout.02", "  [red]• You keep %d%% of this run's prestige points: %d of %d[-]", lp.KeepPct, lp.PointsIfEndured, lp.PointsNow)
 	endureLines := []string{
 		rowid.Line("ui.catastrophe_modal.buildLastPassageModalLayout.03", "[white]── ENDURE: pass through, diminished ──[-]"),
+		rowid.Sprintf("ui.catastrophe_modal.buildLastPassageModalLayout.12", "  [white]Keep %d%% of this run's points and pass on.[-]", lp.KeepPct),
 		keepLine,
 	}
 	if lp.BraceLevel > 0 {
@@ -138,7 +143,9 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 		succumbLines = append(succumbLines,
 			rowid.Line("ui.catastrophe_modal.buildLastPassageModalLayout.08", "  [gray]• You already carry the Cosmic Legacy. Succumb is closed to you.[-]"))
 	} else {
-		succumbLines = append(succumbLines,
+		succumbLines = append(succumbLines[:1:1],
+			rowid.Line("ui.catastrophe_modal.buildLastPassageModalLayout.13", "  [white]Give up this run's points and take the Cosmic Legacy.[-]"),
+			succumbLines[1],
 			rowid.Sprintf("ui.catastrophe_modal.buildLastPassageModalLayout.09", "  [gold]✓ Cosmic Legacy: production +%.0f%% after the caps, through every prestige[-]", game.CosmicLegacyProductionBonus*100),
 			rowid.Line("ui.catastrophe_modal.buildLastPassageModalLayout.10", "  [gold]✓ Earned once, kept forever[-]"))
 	}
