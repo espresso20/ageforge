@@ -102,6 +102,7 @@ type headerView struct {
 	Notice             string
 	// the first row
 	Age, Year, Prestige, Dev string
+	Charter                  bool // the charter panel is found: a door to it follows the age
 	People, PeopleShort      headFact
 	Morale, Delta            headFact
 	Festival                 string // a running festival's chip; "" when none
@@ -259,11 +260,18 @@ func renderHeader(v headerView, w, rows int) *xgrid {
 // headerLevels is the last level of shortening row A has.
 const headerLevels = 6
 
+var txtCharterDoor = rowid.E("ui.dash_header.headerNow.01", " charter ›")
+
 // headerNow draws row A at a level of shortening when draw is set, and
 // reports whether it fits.
 func headerNow(g *xgrid, v headerView, w, level int, draw bool) bool {
 	const y = 1
 	left := []xseg{{" " + v.Age + " ", xLabel}}
+	door := -1
+	if v.Charter && level < 2 {
+		door = len(left)
+		left = append(left, xseg{txtCharterDoor.String(), xFaint})
+	}
 	if v.Year != "" && level < 3 {
 		left = append(left, xseg{"  " + v.Year, xDim})
 	}
@@ -332,6 +340,9 @@ func headerNow(g *xgrid, v headerView, w, level int, draw bool) bool {
 	}
 	x := 2
 	for i, p := range left {
+		if i == door {
+			g.hit(hitHeader, headerCharter, x, y, runeLen(p.s), 1)
+		}
 		if i == people {
 			g.hit(hitHeader, headerPeople, x, y, min(lw-note-(x-2), max(cx-2-x, 0)), 1)
 		}

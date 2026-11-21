@@ -75,10 +75,10 @@ var txtResourcesTitle = rowid.E("ui.tab_economy.NewEconomyTab.01", " Resources "
 // retitle writes the titles on the borders of the tab's three boxes, in the
 // script now in force.
 func (t *EconomyTab) retitle() {
-	t.resourceTV.SetTitle(txtResourcesTitle.String())
+	t.resourceTV.SetTitle(doorTitle(txtResourcesTitle.String()))
 	t.buildBox.title = rowid.Line("ui.tab_economy.NewEconomyTab.02", " Buildings ")
 	t.buildBox.dirty = true
-	t.constructionTV.SetTitle(rowid.Line("ui.tab_economy.NewEconomyTab.03", " Under construction "))
+	t.constructionTV.SetTitle(doorTitle(rowid.Line("ui.tab_economy.NewEconomyTab.03", " Under construction ")))
 }
 
 // NewEconomyTab constructs the economy tab widget tree: the left column

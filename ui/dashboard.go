@@ -421,7 +421,7 @@ func (d *Dashboard) build() {
 		SetMaxLines(100)
 	d.logTV.SetBorder(true)
 	// A click on the Log opens the full record.
-	d.logTV.click = func() { d.pressLine("logs") }
+	d.door(d.logTV, "logs")
 	theme.Track(func() { d.logTV.SetTitleColor(theme.Of(theme.RoleDim)) })
 
 	// The header at the top: the account, the age, the people, the way to
@@ -621,8 +621,9 @@ func (d *Dashboard) build() {
 	})
 	// A click on the People box opens the People panel, and one on Under
 	// construction the build plan.
-	d.workerMiniTV.click = func() { d.pressLine("people") }
-	d.economyTab.constructionTV.click = func() { d.pressLine("plan") }
+	d.door(d.workerMiniTV.nativeText, "people")
+	d.door(d.economyTab.constructionTV.nativeText, "plan")
+	d.door(d.economyTab.resourceTV.nativeText, "stats")
 	d.workerMiniTV.SetBorder(true)
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Of(theme.RoleAccent)) })
 	d.economyTab.AddPeopleBox(d.workerMiniTV, d.richLayout, func() int {
@@ -881,9 +882,26 @@ func (d *Dashboard) titleNext() {
 // the headcount in it when there is room.
 func (d *Dashboard) retitle() {
 	d.titleNext()
-	d.logTV.SetTitle(rowid.Line("ui.dashboard.build.02", " Log "))
+	d.logTV.SetTitle(doorTitle(rowid.Line("ui.dashboard.build.02", " Log ")))
 	d.inputField.SetTitle(rowid.Line("ui.dashboard.build.13", " Command "))
 	d.workerMiniTV.SetTitle(rowid.Line("ui.dashboard.build.14", " People "))
+}
+
+// doorTitle is a box's title with a faint mark after it: a click on the box
+// opens the panel it is a summary of.
+func doorTitle(t string) string { return strings.TrimRight(t, " ") + " " + dimText("›") + " " }
+
+// door makes a click on the box t run line, and the pointer on it show the
+// line in the command bar, as a chip does.
+func (d *Dashboard) door(t *nativeText, line string) {
+	t.click = func() { d.pressLine(line) }
+	t.rest = func(on bool) {
+		if on {
+			d.app.feel.rest(line, "")
+		} else {
+			d.app.feel.rest("", line)
+		}
+	}
 }
 
 // refresh is the central UI update function, called every 500 ms from StartUpdates.
@@ -1047,7 +1065,7 @@ func (d *Dashboard) refreshWorkerMini(game.GameState) {
 			// economy tab sizes it), and its title carries the headcount
 			// only when the box is too short for the row that does.
 			d.workerDetail = true
-			d.workerMiniTV.SetTitle(peopleRichTitle(*d.lastState, richPeopleHeight(rootH)-2))
+			d.workerMiniTV.SetTitle(doorTitle(peopleRichTitle(*d.lastState, richPeopleHeight(rootH)-2)))
 		} else {
 			// The box is as tall as its lines. The food detail line is the
 			// one that goes first on a short terminal: at 24 rows the Panels
@@ -1208,6 +1226,7 @@ func (d *Dashboard) headerView(w int) headerView {
 		msg := kit.Strip(safeTags(d.shame.String()))
 		v.Alerts = append([]headerAlert{{text: msg, short: fitText(msg, 14), k: xBad}}, v.Alerts...)
 	}
+	v.Charter = d.panels.has("charter")
 	v.Notice = strings.TrimSpace(kit.Strip(safeTags(d.toastMgr.Current())))
 	if d.ledger.ready {
 		v.Led = &d.ledger.data
