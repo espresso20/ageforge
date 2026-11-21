@@ -47,6 +47,33 @@ func (g *xgrid) foot(keys [][2]string, hint string) {
 // typed, dropped first: a click on it writes it in the command bar, up to the
 // first part the player has to fill in.
 func (g *xgrid) keyRow(y int, keys [][2]string, hint string) {
+	x := g.keyButtons(y, keys)
+	if hint == "" {
+		return
+	}
+	lead := rowid.Line("ui.expedition_view.expKeyBar.01", " · or type ")
+	if x+runeLen(lead)+chipW(hint, "") <= g.w-2 {
+		line, _, _ := strings.Cut(hint, "<")
+		g.chip(g.put(x, y, lead, xFaint), y, chipSpec{kind: keySteel, label: hint, cmd: line, fill: true})
+	}
+}
+
+// footWords is foot for a panel that says only that a command may be typed,
+// with no command to offer: the words are plain text, not a button.
+func (g *xgrid) footWords(keys [][2]string, words string) {
+	if g.h < panelMinRows {
+		return
+	}
+	y := g.h - 2
+	x := g.keyButtons(y, keys)
+	lead := rowid.Line("ui.expedition_view.expKeyBar.01", " · or type ")
+	if words != "" && x+runeLen(lead)+runeLen(words) <= g.w-2 {
+		g.put(g.put(x, y, lead, xFaint), y, words, xText)
+	}
+}
+
+// keyButtons writes the keys along row y and returns the next free x.
+func (g *xgrid) keyButtons(y int, keys [][2]string) int {
 	x := 2
 	room := g.w - 2
 	last, closeW := len(keys)-1, 0
@@ -66,12 +93,5 @@ func (g *xgrid) keyRow(y int, keys [][2]string, hint string) {
 			x = g.keyButton(at, y, kv[0], kv[1])
 		}
 	}
-	if hint == "" {
-		return
-	}
-	lead := rowid.Line("ui.expedition_view.expKeyBar.01", " · or type ")
-	if x+runeLen(lead)+chipW(hint, "") <= room {
-		line, _, _ := strings.Cut(hint, "<")
-		g.chip(g.put(x, y, lead, xFaint), y, chipSpec{kind: keySteel, label: hint, cmd: line, fill: true})
-	}
+	return x
 }

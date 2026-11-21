@@ -68,7 +68,7 @@ func renderPanelFrame(w, h int, title string, keys [][2]string, hint, notice str
 	if h >= panelMinRows && notice != "" {
 		g.segsFit(2, h-2, w-4, xseg{notice, xGood})
 	} else if h >= panelMinRows {
-		g.foot(keys, hint)
+		g.footWords(keys, hint)
 	}
 	return g
 }
