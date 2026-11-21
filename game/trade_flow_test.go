@@ -144,7 +144,7 @@ func TestRouteFlow_PausedAndHeldMoveNothing(t *testing.T) {
 		t.Error("a paused route stopped twice")
 	}
 	raw, _ := json.Marshal(ge.Trade.activeRoutes[def.Key])
-	if string(raw) != `{"Key":"local_barter","Paused":true}` {
+	if string(raw) != `{"Key":"local_barter","Paused":true,"Level":0}` {
 		t.Errorf("a route is saved as %s", raw)
 	}
 	if err := ge.Trade.StartRoute(def.Key, ge.Buildings, ge.age, ge.progress.GetAgeOrder()); err != nil {

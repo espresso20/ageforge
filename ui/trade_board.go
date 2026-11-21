@@ -43,7 +43,10 @@ type tradeRoute struct {
 	shares                     map[string][]game.PayShare
 	base                       map[string]float64
 	size, minCount             int
-	run, scale                 float64
+	run, scale, mult           float64
+	lvl                        int
+	upGood                     string
+	upCost, upGain             float64 // the next level: its price and its share more flow
 	speed                      float64
 	shortOf                    string
 	share                      string
@@ -106,15 +109,17 @@ func tradeRoutes(st game.GameState) []tradeRoute {
 		}
 		idx[def.Key], _ = set.Index(def.MinAge)
 		r := tradeRoute{key: def.Key, name: def.Name, minCount: def.MinCount, shares: v.Shares,
-			run: 1, scale: 1, speed: st.Trade.Speed}
+			run: 1, scale: 1, mult: 1, speed: st.Trade.Speed}
 		out, in := v.Export, v.Import
 		if on {
 			out, in, r.shares, r.run, r.scale = a.Export, a.Import, a.Shares, a.Run, a.Scale
+			r.mult, r.lvl, r.upGood, r.upCost = max(a.Mult, 1), a.Level, a.UpGood, a.UpCost
+			r.upGain = a.UpMult/r.mult - 1
 		}
 		// A route held or paused shows what it would move.
-		k := max(r.scale, 1)
+		k := max(float64(r.scale*r.mult), 1)
 		if on && !a.Paused && !a.NoBuilding && !a.Disrupted {
-			k = float64(r.run * r.scale)
+			k = float64(r.run * r.scale * r.mult)
 		}
 		r.out, r.in, r.base = flows(out, k), flows(in, k), in
 		r.size = a.Owned
@@ -308,6 +313,9 @@ func tradeExtras(st game.GameState, r tradeRoute, lim int) (ex []tradeExtra) {
 	if r.size > 0 && r.state != "locked" {
 		ex = append(ex, tradeExtra{rowid.Line("ui.trade_board.tradeExtras.11", "size"), [][]xseg{{{rowid.Sprintf("ui.trade_board.tradeExtras.13", "%d of the %d needed: flow x%.1f", r.size, r.minCount, r.scale), xText}}}})
 	}
+	if r.upGood != "" && r.state != "paused" && r.state != "locked" {
+		ex = append(ex, tradeExtra{rowid.Line("ui.trade_board.tradeExtras.14", "upgrade"), [][]xseg{{{rowid.Sprintf("ui.trade_board.tradeExtras.15", "level %d, flow x%.2f; the next level costs %s for %+.0f%% flow", r.lvl, r.mult, game.Amount(r.upCost, r.upGood), r.upGain*100), xText}}}})
+	}
 	var cells [][]xseg
 	for i, fl := range [][]tradeFlow{r.out, r.in} {
 		for _, f := range fl {
@@ -363,7 +371,11 @@ func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex 
 	if r.state == "locked" {
 		nk = xDim
 	}
-	g.putFit(tcName, y, tcSends-tcName-1, r.name, nk)
+	name := r.name
+	if r.lvl > 0 {
+		name += rowid.Sprintf("ui.trade_board.drawTradeEntry.06", " Lv %d", r.lvl)
+	}
+	g.putFit(tcName, y, tcSends-tcName-1, name, nk)
 	g.putFit(tcSends, y, tcArrow-tcSends-1, tradeJoin(r.out, false, -1, st.TickIntervalMs), xText)
 	laneAt(g, tcArrow, y, r.moving(), r.inPerSec(st.TickIntervalMs), r.run, pg.clock, k)
 	g.putFit(tcBrings, y, tcShare-tcBrings-1, tradeJoin(r.in, false, 1, st.TickIntervalMs), xText)
@@ -381,6 +393,9 @@ func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex 
 		g.plate(bx, y, word, pk, r.cmd)
 		if picked {
 			g.put(bx-8, y, " Enter ", xKeycap)
+			if up := rowid.Line("ui.trade_board.drawTradeEntry.07", "upgrade"); r.upGood != "" && r.state != "paused" {
+				g.plate(bx-8-runeLen(up)-3, y, up, xChipCivic, "trade route upgrade "+r.key)
+			}
 		}
 	}
 	ms := st.TickIntervalMs

@@ -5425,6 +5425,19 @@ func (ge *GameEngine) StopTradeRoute(key string) error {
 	return nil
 }
 
+// UpgradeTradeRoute buys the route's next level.
+func (ge *GameEngine) UpgradeTradeRoute(key string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if err := ge.Trade.Upgrade(key, ge.Resources, ge.routeTerms(), ge.age); err != nil {
+		return err
+	}
+	ge.recalculateRates()
+	ge.addLog(OfficeTrade, LogRoutine, rowid.Sprintf("game.engine.UpgradeTradeRoute.01", "Trade route upgraded: %s is at level %d.", ge.rules.Name(rules.KindRoute, key), ge.Trade.activeRoutes[key].Level))
+	return nil
+}
+
 // SetDiplomaticStatus changes diplomatic status with a faction
 func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 	ge.mu.Lock()

@@ -1999,7 +1999,7 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 	}
 	subcmd := strings.ToLower(args[0])
 
-	const usage = "Usage: trade route start|stop <route>"
+	const usage = "Usage: trade route start|stop|upgrade <route>"
 	if len(args) < 2 {
 		return errorReply(usage)
 	}
@@ -2013,6 +2013,11 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 		return successReply() // the engine logs the route
 	case "stop", "pause":
 		if err := engine.StopTradeRoute(routeKey); err != nil {
+			return errorResult(err)
+		}
+		return successReply()
+	case "upgrade":
+		if err := engine.UpgradeTradeRoute(routeKey); err != nil {
 			return errorResult(err)
 		}
 		return successReply()
