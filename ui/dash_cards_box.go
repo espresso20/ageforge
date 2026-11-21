@@ -164,14 +164,6 @@ func newBuildBox(app *appLoop) *buildBox {
 	b := &buildBox{more: -1, olderRow: -1, hover: -1}
 	b.nativeHost = newNativeHost()
 	b.k.wire(app)
-	press := b.k.press
-	b.k.press = func(k kit.Key) {
-		if c, ok := buyOf(k); ok {
-			b.setBuy(c)
-			return
-		}
-		press(k)
-	}
 	return b
 }
 
@@ -460,7 +452,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 	for c := buyChoice(0); c < buyChoices; c++ {
 		r := image.Rect(x, 1, x+runeLen(words[c]), 2)
 		g.put(x, 1, words[c], xKeycap)
-		set.keys = append(set.keys, xkey{key: buyKey(c), r: r, cap: r, kind: keySteel, picked: c == b.buy})
+		set.keys = append(set.keys, xkey{cmd: "buy " + buyArgs[c], r: r, cap: r, kind: keySteel, picked: c == b.buy})
 		x = r.Max.X + 1
 	}
 	top := 3
@@ -475,7 +467,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 			if gx > 2 && gx+chipW(name, "") > w-1 {
 				gx, gy = 2, gy+1
 			}
-			gx = set.chip(gx, gy, chipSpec{kind: keySteel, label: name, cmd: command("gather", res, gatherClick)}, func(x, y int, text string) { g.put(x, y, text, xKeycap) }) + 1
+			gx = set.chip(gx, gy, chipSpec{kind: keySteel, label: name, cmd: command("gather", res)}, func(x, y int, text string) { g.put(x, y, text, xKeycap) }) + 1
 		}
 		if gx > 2 || gy > top {
 			top = gy + 2

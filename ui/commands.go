@@ -160,8 +160,7 @@ func registry() []*Command {
 		// Actions
 		{Name: "gather", Run: cmdGather, Aliases: []string{"g"}, Section: secActions,
 			Args: []Arg{{Kind: ArgGatherResource, Words: []string{"food", "wood", "stone"}}, optCount},
-			Help: []Usage{{"gather <food|wood|stone> [amount]", rowid.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (default ") + strconv.Itoa(int(gatherDefaultYield)) +
-				rowid.Line("ui.help.commands.gather.2", ", max ") + strconv.Itoa(int(gatherMaxYield)) + rowid.Line("ui.help.commands.gather.3", " per use; the early ages only)")}}},
+			Help: []Usage{{"gather <food|wood|stone> [amount]", rowid.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (") + strconv.Itoa(int(gatherMaxYield)) + rowid.Line("ui.help.commands.gather.3", " per use at most; the early ages only)")}}},
 		{Name: "build", Run: cmdBuild, Aliases: []string{"b"}, Section: secActions,
 			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
 			Help: []Usage{{"build <building> [count|max]", rowid.Line("ui.help.commands.build", "Build copies of a building (default 1)")}}},
@@ -241,11 +240,12 @@ func registry() []*Command {
 		// Research, Expeditions & Army
 		{Name: "research", Run: cmdResearch, Aliases: []string{"res"}, Section: secResearch, Panel: rowid.Line("ui.help.panels.research", "The Research board: what can start, the queue, the ten lanes; T opens the tech tree"),
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
-			Help: []Usage{{"research <tech>", rowid.Line("ui.help.commands.research", "Research a tech")}},
+			Help: []Usage{{"research <tech>", rowid.Line("ui.help.commands.research", "Research a tech (it joins the queue when another is in work)")}},
 			Subs: []*Command{
 				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", rowid.Line("ui.help.commands.research.cancel", "Cancel current research (the work done on it is lost)")}}},
 				sub("list", "research list", rowid.Line("ui.help.commands.research.list", "List available techs")),
 				sub("tree", "research tree [close|far]", rowid.Line("ui.help.commands.research.tree", "Open the tech tree, zoomed in on big badges (close) or out on the whole tree (far)"), Arg{Kind: ArgWord, Words: []string{"close", "far"}, Optional: true}),
+				sub("drop", "research drop <tech>", rowid.Line("ui.help.commands.research.drop", "Take a tech out of the research queue"), Arg{Kind: ArgPlanTech}),
 				sub("card", "research card <tech>", rowid.Line("ui.help.commands.research.card", "Open the tech tree on a tech's card: what it does, how long it takes and what it needs"), Arg{Kind: ArgTech}),
 			}},
 		{Name: "scholars", Run: cmdScholars, Section: secResearch, BareOK: true,
@@ -320,7 +320,18 @@ func registry() []*Command {
 			Help: []Usage{{"festival", rowid.Line("ui.help.commands.festival", "Spend culture for a temporary production boost")}},
 			Subs: []*Command{festivalConfirm}},
 		{Name: "catastrophe", Run: cmdCatastrophe, Aliases: []string{"cat"}, Section: secWonders,
-			Help: []Usage{{"catastrophe", rowid.Line("ui.help.commands.catastrophe", "Reopen a pending catastrophe or Last Passage (or show the outlook)")}}},
+			Help: []Usage{
+				{"catastrophe", rowid.Line("ui.help.commands.catastrophe", "Reopen a pending catastrophe or Last Passage (or show the outlook)")},
+				{"catastrophe endure", rowid.Line("ui.help.commands.catastrophe.endure", "Endure the pending catastrophe or Last Passage")},
+				{"catastrophe succumb", rowid.Line("ui.help.commands.catastrophe.succumb", "Succumb to the pending catastrophe or Last Passage")},
+			},
+			Subs: []*Command{{Name: "endure"}, {Name: "succumb", Dangerous: true}}},
+		{Name: "memory", Run: cmdMemory, Section: secWonders, BareOK: true,
+			Help: []Usage{
+				{"memory", rowid.Line("ui.help.commands.memory", "Show the ancient memory on offer")},
+				{"memory accept|decline", rowid.Line("ui.help.commands.memory.answer", "Accept the ancient memory offer, or leave the cache sealed")},
+			},
+			Subs: []*Command{{Name: "accept"}, {Name: "decline"}}},
 		{Name: "harbinger", Run: cmdHarbinger, Aliases: []string{"harb"}, Section: secWonders, BareOK: true,
 			Panel: rowid.Line("ui.help.panels.harbinger", "The harbinger's warning & your answers (alias: harb)"),
 			Help: []Usage{
@@ -371,6 +382,16 @@ func registry() []*Command {
 			Help: []Usage{{"dump", rowid.Line("ui.help.commands.dump", "Export logs to file for debugging")}}},
 		{Name: "help", Aliases: []string{"h", "?"}, Section: secGame, Panel: rowid.Line("ui.help.panels.help", "This Help panel"),
 			Help: []Usage{{"help", rowid.Line("ui.help.commands.help", "Open this Help panel")}}},
+		{Name: "buy", Section: secGame, Dashboard: true, Args: []Arg{{Kind: ArgWord, Words: buyArgs[:]}},
+			Help: []Usage{{"buy <1|10|max>", rowid.Line("ui.help.commands.buy", "Set how many copies the Build buttons build and price")}}},
+		{Name: "pause", Section: secGame, Dashboard: true,
+			Help: []Usage{{"pause", rowid.Line("ui.help.commands.pause", "Pause the game and open the pause card")}}},
+		{Name: "settings", Section: secGame, Dashboard: true,
+			Help: []Usage{{"settings", rowid.Line("ui.help.commands.settings", "Pause the game and open its settings")}}},
+		{Name: "menu", Section: secGame, Dashboard: true,
+			Help: []Usage{{"menu", rowid.Line("ui.help.commands.menu", "Save and go to the main menu")}}},
+		{Name: "new", Section: secGame, Dashboard: true,
+			Help: []Usage{{"new", rowid.Line("ui.help.commands.new", "Save and go to the main menu, where New game starts a run")}}},
 		{Name: "quit", Section: secGame, Dashboard: true, Dangerous: true,
 			Help: []Usage{{"quit", rowid.Line("ui.help.commands.quit", "Save and quit the game")}}},
 

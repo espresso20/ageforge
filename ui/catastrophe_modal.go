@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"strings"
-	"unicode"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -187,12 +186,10 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		return
 	}
 	st := d.engine.GetState()
-	endure, succumb := d.engine.Endure, d.engine.Succumb
 	succumbOpen := true
 	var l catastropheModalLayout
 	if key == config.LastPassageKey {
 		l = buildLastPassageModalLayout(st.LastPassage)
-		endure, succumb = d.engine.EndureLastPassage, d.engine.SuccumbLastPassage
 		succumbOpen = !st.LastPassage.CosmicLegacy
 	} else {
 		outcome := game.DefaultEndureOutcome()
@@ -202,8 +199,8 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchFactor, outcome, st)
 	}
 
-	endureKey, endureLabel := splitKeyed(kit.Escape(rowid.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE")))
-	succumbKey, succumbLabel := splitKeyed(kit.Escape(rowid.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
+	_, endureLabel := splitKeyed(kit.Escape(rowid.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE")))
+	_, succumbLabel := splitKeyed(kit.Escape(rowid.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
 	hints, hintRest := keyHints(l.hint)
 	var laterKey, laterLabel string
 	if len(hints) > 0 {
@@ -211,21 +208,17 @@ func (d *Dashboard) showCatastropheModal(key string) {
 	}
 	choices := []choice{
 		{label: laterLabel, key: laterKey, kind: keySteel, press: d.closeCatastropheModal},
-		{label: endureLabel, key: endureKey, kind: keyAlert, press: func() {
-			if err := endure(); err != nil {
-				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
-			}
+		{label: endureLabel, kind: keyAlert, press: func() {
+			d.pressLine("catastrophe endure")
 			d.closeCatastropheModal()
 		}},
-		{label: succumbLabel, key: succumbKey, kind: keyAlert, off: !succumbOpen, press: func() {
-			if err := succumb(); err != nil {
-				d.engine.AddLog(game.OfficeGame, game.LevelEverything, "error", rowid.Line("ui.catastrophe_modal.showCatastropheModal.04", "Succumb failed: ")+err.Error())
-			}
+		{label: succumbLabel, kind: keyAlert, off: !succumbOpen, press: func() {
+			d.pressLine("catastrophe succumb")
 			d.closeCatastropheModal()
 		}},
 	}
-	btnRow, btns := choiceRow(choices, 2, 1)
-	btnEndure, btnSuccumb := btns[1], btns[2]
+	btnRow, btns := choiceRow(choices, 2, 0)
+	btnLater, btnEndure, btnSuccumb := btns[0], btns[1], btns[2]
 
 	inner := newNativeFlex().SetDirection(flexRow).
 		AddItem(surfaceText(l.header, kit.AlignCenter), lineCount(l.header), 0, false).
@@ -241,9 +234,12 @@ func (d *Dashboard) showCatastropheModal(key string) {
 	modal := floatingModal(inner, catastropheModalWidth, l.height)
 
 	ring := newButtonRing(d.app, func(p Primitive) { d.catFocus = p })
-	ring.add(btnEndure, 'e')
+	// The keyboard starts on the way out, never on a button that changes the
+	// game; Enter or a click presses a button, a letter does nothing.
+	ring.add(btnLater)
+	ring.add(btnEndure)
 	if succumbOpen {
-		ring.add(btnSuccumb, 's')
+		ring.add(btnSuccumb)
 	}
 	modal.SetInputCapture(func(event *kit.Key) *kit.Key {
 		switch {
@@ -252,8 +248,6 @@ func (d *Dashboard) showCatastropheModal(key string) {
 			return nil
 		case ring.key(event):
 			return nil
-		case !succumbOpen && event.Code == kit.KeyRune && unicode.ToLower(event.Rune) == 's':
-			return nil // the closed button's key does nothing
 		}
 		return event
 	})

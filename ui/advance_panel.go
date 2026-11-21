@@ -171,9 +171,8 @@ func (p *advancePanel) say(text string, good bool) {
 	p.ui.flash, p.ui.flashGood, p.flashAt = text, good, p.now()
 }
 
-// advance asks for the advance when the four pillars stand, through the call
-// the advance command makes; the engine's own refusal (a doom in the way, a
-// catastrophe pending) is the panel's line when it says no.
+// advance runs the advance command when the four pillars stand; the
+// command's own output is the answer when the engine says no.
 func (p *advancePanel) advance() {
 	v := p.view
 	switch {
@@ -189,14 +188,8 @@ func (p *advancePanel) advance() {
 		}
 		p.say(rowid.Line("ui.advance_panel.advance.02", "Not yet: ")+textfmt.List(open)+rowid.Line("ui.advance_panel.advance.03", " still to stand."), false)
 		return
-	case p.engine == nil:
+	case p.buttons.run == nil:
 		return
 	}
-	err := p.engine.AdvanceAge()
-	p.update(p.engine.GetState())
-	if err != nil {
-		p.say(textfmt.Sentence(err.Error()), false)
-	} else {
-		p.say(rowid.Line("ui.advance_panel.advance.04", "Advanced to the ")+v.NextName+".", true)
-	}
+	p.buttons.run("advance")
 }

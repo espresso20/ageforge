@@ -68,42 +68,42 @@ func harbingerKeyAction(event *kit.Key) harbingerAction {
 	return harbingerNoAction
 }
 
-// handleKey runs the action for event against engine and updates the note.
-// Reports whether the key was consumed. Takes engine locks through the public
-// action methods only; must not be called under the engine lock.
+// handleKey runs the action for event as the command line that does it, and
+// reports whether the key was consumed. With no harbinger here the keys are
+// not the panel's. Takes engine locks through GetState only; must not be
+// called under the engine lock.
 func (p *harbingerPanel) handleKey(event *kit.Key, engine *game.GameEngine) bool {
 	act := harbingerKeyAction(event)
 	if act == harbingerNoAction {
 		return false
 	}
-	var err error
-	var ok string
+	st := engine.GetState()
+	if st.Harbinger == nil {
+		return false
+	}
 	switch act {
 	case harbingerAppease:
-		err, ok = engine.HarbingerAppease(), rowid.Line("ui.overlay_harbinger.handleKey.01", "Appeased. The real odds are lower now.")
+		p.view.pr.fire(xkey{cmd: harbingerCmd + "appease"})
 	case harbingerBrace:
-		err, ok = engine.HarbingerBrace(), rowid.Line("ui.overlay_harbinger.handleKey.02", "Braced. An Endure will cost you less.")
+		p.view.pr.fire(xkey{cmd: harbingerCmd + "brace"})
 	case harbingerInvite:
 		// Invite cannot be undone: the key asks the question the button asks.
-		st := engine.GetState()
-		if st.Harbinger == nil || st.Harbinger.InviteBlocked != "" {
-			err = harbingerInviteRefusal(st)
+		if st.Harbinger.InviteBlocked != "" {
+			p.note, p.noteGood = harbingerInviteRefusal(st).Error(), false
 			break
 		}
 		b := harbingerInviteBtn(st.Harbinger)[0]
 		p.view.pr.fire(xkey{cmd: b.cmd, ask: b.ask, yes: b.yes})
-		return true
-	}
-	if err != nil {
-		p.note, p.noteGood = err.Error(), false
-	} else {
-		p.note, p.noteGood = ok, true
 	}
 	return true
 }
 
-// harbingerFooter is the keys on the panel's foot.
-func harbingerFooter() [][2]string {
+// harbingerFooter is the keys on the panel's foot: the three answers only
+// while a harbinger is here to answer.
+func harbingerFooter(here bool) [][2]string {
+	if !here {
+		return [][2]string{{"↑↓", "scroll"}, {"Esc", "close"}}
+	}
 	return [][2]string{{"A", "appease"}, {"B", "brace"}, {"I", "invite"}, {"↑↓", "scroll"}, {"Esc", "close"}}
 }
 

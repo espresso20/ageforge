@@ -33,6 +33,8 @@ const (
 var (
 	buyWords  = [buyChoices]string{"x1", "x10", "max"}
 	buyCounts = [buyChoices]string{"", "10", "max"}
+	// buyArgs is what the buy command takes for each.
+	buyArgs = [buyChoices]string{"1", "10", "max"}
 )
 
 // The other words the box says.
@@ -233,6 +235,10 @@ func priceHeld(state game.GameState, cost map[string]float64) (frac, share float
 	return frac / float64(n), share / float64(n)
 }
 
+// maxWaitSeconds is the longest wait worth printing; a rate that gives a longer
+// one counts as no income.
+const maxWaitSeconds = 365 * 24 * 3600
+
 // shortOf is what stops a price being paid: the resource the player is
 // furthest from affording, as "short of 44.1K gold", and how long at the
 // current net rate until it is held ("in 1m 44s"), or "no income" when that
@@ -247,7 +253,11 @@ func shortOf(state game.GameState, cost map[string]float64) (reason, wait string
 		}
 		w := math.Inf(1)
 		if rate := state.Resources[res].Rate; rate > 0 {
-			w = deficit * tickSeconds(state.TickIntervalMs) / rate
+			// A rate that is all but zero is no income: a year is the
+			// longest wait worth printing.
+			if w = deficit * tickSeconds(state.TickIntervalMs) / rate; w > maxWaitSeconds {
+				w = math.Inf(1)
+			}
 		}
 		// The furthest: the longest wait, and among those with no income the
 		// biggest part of the price missing.

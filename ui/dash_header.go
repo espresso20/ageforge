@@ -383,7 +383,11 @@ type headerBox struct {
 	// written to fit).
 	view func(w int) headerView
 	// run runs a command line, as if it had been typed.
-	run    func(string)
+	run func(string)
+	// feel shows the command of the target under the pointer in the command
+	// bar; shows is the one last put there.
+	feel   *keyFeel
+	shows  string
 	grid   *xgrid
 	alerts []headerAlert // the alerts the grid drew, for their commands
 	sized  bool          // the box has had a size of its own
@@ -398,7 +402,7 @@ type headerBox struct {
 }
 
 func newHeaderBox(view func(w int) headerView, run func(string), app *appLoop) *headerBox {
-	b := &headerBox{view: view, run: run}
+	b := &headerBox{view: view, run: run, feel: &app.feel}
 	b.nativeHost = newNativeHost()
 	b.esc.wire(app)
 	return b
@@ -463,10 +467,15 @@ func (b *headerBox) Mouse(m kit.Mouse) bool {
 	}
 	was := b.lit
 	b.lit = image.Rectangle{}
+	shows := ""
 	if b.in {
 		if h, ok := b.target(b.over); ok {
-			b.lit = h.r
+			b.lit, shows = h.r, b.command(h)
 		}
+	}
+	if shows != b.shows {
+		b.feel.rest(shows, b.shows)
+		b.shows = shows
 	}
 	if b.esc.mouse(b.grid, org, m) {
 		return true

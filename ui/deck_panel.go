@@ -2,7 +2,6 @@ package ui
 
 import (
 	"image"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -91,12 +90,11 @@ func (p *deckPanel) update(state game.GameState) { p.state = state }
 // reply shows what a command run over the panel did: the command, then the
 // first line of its answer, in the bad colour when it failed.
 func (p *deckPanel) reply(cmd string, res CommandResult) {
-	msg, _, _ := strings.Cut(res.Message, "\n")
+	msg, bad := replyLine(res)
 	k := xGood
-	if res.Type == "error" || res.Type == "warning" {
+	if bad {
 		k = xBad
 	}
-	msg = strings.TrimSpace(barTags.ReplaceAllString(msg, ""))
 	if msg == "" {
 		msg = "✓" // the command's answer went to the log, behind the panel
 	}
