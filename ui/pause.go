@@ -290,7 +290,7 @@ func (p *pauseLayer) Paint(pt *kit.Painter) {
 	pt.Fill(p.box, bg)
 	pt.Box(p.box, kit.BorderLine, kit.Style{Fg: kit.Role(theme.RoleAccent)})
 	x0, y := p.box.Min.X+3, p.box.Min.Y
-	paintLightType(pt, x0, y+2, "PAUSED", kit.Style{Fg: kit.Role(theme.RoleAccent), Bg: bg})
+	paintBig(pt, x0, y+2, "PAUSED", 4, 2, pixelInk(kit.Role(theme.RoleAccent)))
 	sty := func(r theme.Role) kit.Style { return kit.Style{Fg: kit.Role(r), Bg: bg} }
 	dim, text := sty(theme.RoleDim), sty(theme.RoleText)
 	foot := rowid.Line("ui.pause.paint.01", "Leaving saves your game first.")
@@ -377,26 +377,3 @@ func (p *pauseLayer) Focus(delegate func(p Primitive)) {
 
 // HasFocus reports whether the card or one of its buttons has the keyboard.
 func (p *pauseLayer) HasFocus() bool { return p.focused() != nil || p.primBase.HasFocus() }
-
-// pauseGlyphs is the light 5 by 7 type of the heading, rows top to bottom,
-// one-unit strokes, pressed two rows to a cell with half blocks.
-var pauseGlyphs = map[rune]string{
-	'P': "####./#...#/#...#/####./#..../#..../#....", 'A': ".###./#...#/#...#/#####/#...#/#...#/#...#",
-	'U': "#...#/#...#/#...#/#...#/#...#/#...#/.###.", 'S': ".####/#..../#..../.###./....#/....#/####.",
-	'E': "#####/#..../#..../####./#..../#..../#####", 'D': "####./#...#/#...#/#...#/#...#/#...#/####.",
-}
-
-// paintLightType draws s in pauseGlyphs, four rows tall, from x, y.
-func paintLightType(p *kit.Painter, x, y int, s string, st kit.Style) {
-	for _, r := range s {
-		g := strings.Split(pauseGlyphs[r]+"/.....", "/") // an eighth, empty row
-		for row := 0; row < 4; row++ {
-			var out []rune
-			for c := 0; c < 5; c++ {
-				out = append(out, []rune(" ▄▀█")[b2i(g[2*row][c] == '#')*2+b2i(g[2*row+1][c] == '#')])
-			}
-			p.Print(x, y+row, 5, string(out), st)
-		}
-		x += 6
-	}
-}
