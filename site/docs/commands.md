@@ -416,8 +416,8 @@ While the prompt is empty, `-` zooms out and `=` and `+` zoom in, so a keyboard 
 
 | Command | Description |
 |---|---|
-| `prestige` | Show your prestige level, the points you have earned, your production multiplier (and the one a prestige would bring), Era Mastery, and the carry-overs: Plan Template, Roster and Old Friends. In the Cosmic Era it also shows the Last Passage outlook. |
-| `prestige confirm` | Explain the points and production multiplier a prestige would add, what resets, and what persists. In the Cosmic Era this includes the Last Passage outcome. |
+| `prestige` | Open the prestige card: your prestige level, the points you have earned, your production multiplier (and the one a prestige would bring), Era Mastery, and the carry-overs: Plan Template, Roster and Old Friends. In the Cosmic Era it also shows the Last Passage outlook. When a prestige is open the card has a Prestige now button, which runs `prestige confirm`. Esc closes the card, and typing closes it and carries on at the command line. |
+| `prestige confirm` | Open the warning card: the points and production multiplier a prestige would add, what resets, and what persists. In the Cosmic Era this includes the Last Passage outcome. Its Prestige button runs `prestige confirm yes`; the keyboard starts on Later. |
 | `prestige confirm yes` | Prestige. It requires the Medieval Age. Points stay earned, and the three carry-overs are active from the first prestige. After a prestige, the next one opens only once you pass the furthest age an earlier run reached. |
 | `stats` | Open the Stats panel, a page in two parts. **This run** has headline tiles for play time, buildings, workers, techs, expeditions and campaigns, and prestige level; a band with a block for each age reached and the time spent in it; a bar for each resource gathered on a log scale, with its total and rate per second; and tables of active multipliers, prestige and epoch (lasting multiplier, carry-overs, [Era Mastery](prestige.md#era-mastery), active events) and research bonuses. It also shows the prestige cue when a new run would pass the current age sooner. **Lifetime** is the account's record board: its name and title with a bar toward the next title, the counts of prestiges, civilizations started and badges earned, a ladder of the ages reached with the fastest time to each, the four best single-run counts, and a grid of the badge families. `Tab` or a click on the tabs switches the part; the wheel, `Up`/`Down` and `PgUp`/`PgDn` scroll; the pointer over an age or a bar reads out its time or exact total. On Lifetime, `Left`/`Right` or a click on a step of the ladder picks the age whose fastest time is read out. |
 
@@ -545,6 +545,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `saves` | List all save files. |
 | `save list` | Same as `saves`. |
 | `pause` | Pause the game and open the pause card. |
+| `report` | Show the Welcome back card again: how long you were away and what the town made, built and staffed in that time. The card opens by itself when you return after five minutes or more. |
 | `settings` | Pause the game and open the card on its settings. |
 | `menu` | Save to the active save, stop the game and go to the main menu. |
 | `new` | The same as `menu`; New game on the menu starts a run. |

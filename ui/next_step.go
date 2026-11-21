@@ -381,12 +381,13 @@ func (n *nextCtx) homes() (nextStep, bool) {
 	if !ok {
 		return nextStep{}, false
 	}
+	title := rowid.Sprintf("ui.next_step.homes.01", "Build a %s", c.name)
 	if w.MaxPop == 0 {
-		return n.build(ruleHomes, rowid.Sprintf("ui.next_step.homes.01", "Build a %s", c.name),
+		return n.build(ruleHomes, title,
 			rowid.Line("ui.next_step.homes.04", "the town has no homes yet"),
 			[]string{rowid.Line("ui.next_step.homes.05", "People need a home before they come.")}, c), true
 	}
-	return n.build(ruleHomes, rowid.Sprintf("ui.next_step.homes.01", "Build a %s", c.name),
+	return n.build(ruleHomes, title,
 		rowid.Sprintf("ui.next_step.homes.02", "homes are full: %d of %d", w.TotalPop, w.MaxPop),
 		[]string{rowid.Sprintf("ui.next_step.homes.03", "Homes are full: %d of %d.", w.TotalPop, w.MaxPop)}, c), true
 }

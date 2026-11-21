@@ -55,9 +55,10 @@ func headerHeight(w, h int) int {
 // The kinds of thing the header's clicks pick (xhit.id), and which.
 const (
 	hitHeader     = 40
-	headerPeople  = 0 // People and Morale: open People
-	headerCharter = 1 // the bar, the pillars and the lines under them: open the Advance panel
-	headerAlert0  = 2 // the first alert; the next is headerAlert0+1
+	headerPeople  = 0  // People and Morale: open People
+	headerCharter = 1  // the bar, the pillars and the lines under them: open the Advance panel
+	headerAlert0  = 2  // the first alert; the next is headerAlert0+1
+	headerNotice  = 30 // the notice on the top edge: open Logs
 )
 
 // The Esc button in the header's top edge: the key it presses, and what it
@@ -140,6 +141,7 @@ func renderHeader(v headerView, w, rows int) *xgrid {
 		g.keyButton(bx, 0, headerEsc, headerMenu.String())
 		if notice != "" {
 			g.put(bx-2-runeLen(notice), 0, notice, xLegend)
+			g.hit(hitHeader, headerNotice, bx-2-runeLen(notice), 0, runeLen(notice), 1)
 		}
 	}
 
@@ -509,6 +511,8 @@ func (b *headerBox) command(h xhit) string {
 		return "people"
 	case headerCharter:
 		return advancePanelName
+	case headerNotice:
+		return "logs"
 	}
 	if i := h.n - headerAlert0; i >= 0 && i < len(b.alerts) {
 		return b.alerts[i].cmd
