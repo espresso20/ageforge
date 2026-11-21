@@ -1351,7 +1351,7 @@ func (ge *GameEngine) WipeAccountByID(id string) (string, error) {
 // starts it. Returns the SaveGame error if any. The new run belongs to the account
 // held now (runAccountID), and its saves go to that account's slot.
 func (ge *GameEngine) StartNewNamedGame(name string) error {
-	ge.Reset()
+	ge.reset(rowid.Line("game.engine.StartNewNamedGame.01", "A new town begins."))
 	// Set names AFTER Reset so it can't clobber them (Reset leaves them alone, but
 	// the ordering keeps that guarantee local to this call).
 	ge.SetActiveSaveName(name)
@@ -4960,6 +4960,11 @@ func (ge *GameEngine) beginNextRunLocked(ruins map[string]int) {
 
 // Reset completely reinitializes the engine to a fresh state (including prestige)
 func (ge *GameEngine) Reset() {
+	ge.reset(rowid.Line("game.engine.Reset.01", "Game wiped. Starting fresh."))
+}
+
+// reset is Reset with the line the new log opens on.
+func (ge *GameEngine) reset(opening string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -4991,7 +4996,7 @@ func (ge *GameEngine) Reset() {
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
 
-	ge.addLog(OfficeGame, "event", rowid.Line("game.engine.Reset.01", "Game wiped. Starting fresh."))
+	ge.addLog(OfficeGame, "event", opening)
 	ge.addLog(OfficeGame, "info", rowid.Line("game.engine.Reset.02", "Type [cyan]help[-] for commands."))
 	// God mode is process-wide and outlives the run it was turned on in; left on, it
 	// makes this run free to build, so the run starts dev-touched.

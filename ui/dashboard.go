@@ -1313,9 +1313,13 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
 	// The town level of the log plus the game office's replies, folded, with
 	// a count after a line that happened more than once.
+	// In the first age the routine lines show too: a gather, a build and a
+	// research each leave a trace while the log is quiet.
+	i, ok := state.Ruleset().Index(state.Age)
+	firstAge := ok && i == 0
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
-		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame) {
+		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame || (firstAge && entry.Type == game.LogRoutine)) {
 			visible = append(visible, entry)
 		}
 	}
