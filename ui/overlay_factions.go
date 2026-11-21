@@ -56,9 +56,7 @@ func factionsProvider(state game.GameState, w int, rec *btnRec) string {
 	}
 
 	// ─── Header ───
-	writeHeadedLine(&sb, usable, "gold", rowid.Line("ui.overlay_factions.factionsProvider.01", "═══ Factions ═══"),
-		rowid.Sprintf("ui.overlay_factions.factionsProvider.02", "%d met · %d undiscovered", met, pending))
-	sb.WriteString("\n")
+	sb.WriteString(headLine(rowid.Sprintf("ui.overlay_factions.factionsProvider.02", "%d met · %d undiscovered", met, pending), usable) + "\n\n")
 	sb.WriteString(lockNotes(state, config.FeatureDiplomacy))
 
 	writeLiveFactionEffects(&sb, state, defs, usable, tally)
