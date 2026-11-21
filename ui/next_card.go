@@ -24,7 +24,8 @@ var (
 
 // The forms of the list, richest first.
 const (
-	formRich = iota
+	formStack = iota // one column a group, stacked
+	formRich         // two columns: Town and Progress, World and You
 	formGrouped
 	formWords
 )
@@ -83,6 +84,9 @@ func panelRows(form, T int, v panelView) []string {
 		if len(ps) > 0 {
 			groups, titles = append(groups, ps), append(titles, strings.ToUpper(g.title.String()))
 		}
+	}
+	if form == formStack && T >= richMinT {
+		return stackRows(groups, titles, v)
 	}
 	if form == formRich && T >= richMinT {
 		return richRows(groups, titles, T, v)
@@ -146,6 +150,30 @@ func panelRows(form, T int, v panelView) []string {
 		}
 	}
 	return flow(names, T, func(_ int, fresh bool) string { return strings.Repeat(" ", 1-b2i(fresh)) })
+}
+
+// stackRows is the list with one column a group, stacked in the order Town,
+// World, Progress, You, a blank between groups: 25 rows. The name and what it
+// is for sit on one row, as in richRows.
+func stackRows(groups [][]panelInfo, titles []string, v panelView) []string {
+	var out []string
+	for _, i := range []int{0, 2, 1, 3} {
+		if i >= len(groups) {
+			continue
+		}
+		if len(out) > 0 {
+			out = append(out, "")
+		}
+		out = append(out, " "+dimText(titles[i]))
+		for _, p := range groups[i] {
+			name, fresh := bodyText(p.name+strings.Repeat(" ", panelNameW-len(p.name)+1)), v.fresh(p.name)
+			if fresh {
+				name = newPlate(p.name) + strings.Repeat(" ", panelNameW-len(p.name))
+			}
+			out = append(out, strings.Repeat(" ", 1-b2i(fresh))+panelLink(p.name, name+dimText(p.job.String())))
+		}
+	}
+	return out
 }
 
 // richRows is the two-column form: Town then Progress down the left, World
@@ -262,8 +290,10 @@ func nextBoxText(s nextStep, w, h int, rich bool) string {
 		form int
 	}
 	var steps []step
-	for t := len(s.then); t >= 0; t-- {
-		steps = append(steps, step{cardCut{then: t, cost: true, whyRows: 2}, formRich})
+	for _, f := range []int{formStack, formRich} {
+		for t := len(s.then); t >= 0; t-- {
+			steps = append(steps, step{cardCut{then: t, cost: true, whyRows: 2}, f})
+		}
 	}
 	for _, f := range []int{formGrouped, formWords} {
 		steps = append(steps, step{cardCut{cost: true, whyRows: 2}, f})
@@ -273,8 +303,8 @@ func nextBoxText(s nextStep, w, h int, rich bool) string {
 		for _, st := range steps {
 			card, list := cardRows(s, T, st.cut), panelRows(st.form, T, s.view)
 			if used := len(card) + 1 + panelRuleRows + len(list); used <= h {
-				rows := append(card, make([]string, h-used+1)...)
-				return strings.Join(append(append(rows, rule), list...), "\n")
+				rows := append(append(append(card, ""), rule), list...)
+				return strings.Join(append(rows, make([]string, h-used)...), "\n")
 			}
 		}
 	}
