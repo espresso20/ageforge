@@ -33,7 +33,7 @@ func TestBoardListsOnlyWhatCanStart(t *testing.T) {
 		t.Fatalf("ready %d, coming %d: both lists should have techs", len(p.ready), len(p.coming))
 	}
 	for _, tt := range p.ready {
-		if !tt.ts.Available || tt.def.Key == st.Research.CurrentTech || p.model.queued[tt.def.Key] {
+		if !tt.ts.Available && tt.def.Key != st.Research.CurrentTech {
 			t.Errorf("%s is listed as ready but is not startable", tt.def.Key)
 		}
 	}
@@ -44,6 +44,14 @@ func TestBoardListsOnlyWhatCanStart(t *testing.T) {
 	}
 	if p.model.queued["road_building"] != true {
 		t.Errorf("the planned tech is not in the queue")
+	}
+	// Nothing leaves the board for being queued or in work.
+	listed := map[string]bool{}
+	for _, tt := range p.all() {
+		listed[tt.def.Key] = true
+	}
+	if !listed["road_building"] || !listed[st.Research.CurrentTech] {
+		t.Errorf("a queued tech or the one in work is missing from the table")
 	}
 }
 
@@ -90,7 +98,7 @@ func TestBoardEnterQueuesWhileOneIsInWork(t *testing.T) {
 	before := len(ge.GetState().Research.Queue)
 	p.routeKey(newKey(kit.KeyEnter, 0, 0), "")
 	after := ge.GetState().Research.Queue
-	if p.view.note != "" || len(after) != before+1 {
+	if p.view.bad || p.view.note == "" || len(after) != before+1 {
 		t.Fatalf("Enter queued %d -> %d techs, note %q", before, len(after), p.view.note)
 	}
 	if got := after[len(after)-1]; got != key {
@@ -103,7 +111,7 @@ func TestBoardEnterQueuesWhileOneIsInWork(t *testing.T) {
 
 func TestBoardMouse(t *testing.T) {
 	ge := classicalGame(t)
-	p := boardOn(ge, 279, 74)
+	p := boardOn(ge, 279, 110)
 	var row, lane *boardHit
 	for i := range p.hits {
 		h := &p.hits[i]
@@ -128,7 +136,7 @@ func TestBoardMouse(t *testing.T) {
 		t.Errorf("no hand over a row")
 	}
 	before := len(ge.GetState().Research.Queue)
-	paintAlone(p, 279, 74)
+	paintAlone(p, 279, 110)
 	p.buttons.press = func(k kit.Key) { p.routeKey(&k, "") }
 	queued := false
 	for _, k := range p.keys.keyset().keys {
@@ -144,7 +152,7 @@ func TestBoardMouse(t *testing.T) {
 	if n := len(ge.GetState().Research.Queue); n != before+1 {
 		t.Errorf("the Queue button left %d queued, want %d", n, before+1)
 	}
-	paintAlone(p, 279, 74)
+	paintAlone(p, 279, 110)
 	for _, h := range p.hits {
 		if h.kind == hitLane {
 			press(h.r, 1)
@@ -158,11 +166,14 @@ func TestBoardMouse(t *testing.T) {
 
 func TestBoardPaintsEverySection(t *testing.T) {
 	ge := classicalGame(t)
-	for _, size := range [][2]int{{279, 74}, {100, 30}} {
+	for _, size := range [][2]int{{279, 74}, {279, 110}, {100, 30}} {
 		all := strings.Join(paintAlone(boardOn(ge, size[0], size[1]), size[0], size[1]).Lines(), "\n")
 		want := []string{"NOW RESEARCHING", "READY NOW", "COMING UP", "TIME", "Esc"}
 		if size[0] >= 150 {
-			want = append(want, "UNLOCKS", "IN THE TREE", "Research", "Queue", "THE TEN LANES", "more techs wait in later ages")
+			want = append(want, "UNLOCKS", "IN THE TREE", "Research", "Queue", "QUEUE", "more techs wait in later ages")
+		}
+		if size[1] >= 100 {
+			want = append(want, "THE TEN LANES")
 		}
 		for _, w := range want {
 			if !strings.Contains(all, w) {
@@ -219,4 +230,51 @@ func shotGame(t *testing.T) *game.GameEngine {
 	must(t, ge.PlanAddResearch(avail[1]))
 	must(t, ge.PlanAddResearch(avail[2]))
 	return ge
+}
+
+func TestBoardQueueKeepsTechsOnTheBoard(t *testing.T) {
+	ge := classicalGame(t)
+	p := boardOn(ge, 279, 74)
+	cur := ge.GetState().Research.CurrentTech
+	out := strings.Join(paintAlone(p, 279, 74).Lines(), "\n")
+	for _, want := range []string{"in work", "#2", "starts in", "READY NOW"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("no %q on a board with a queue", want)
+		}
+	}
+	// A locked tech queues with what it needs, and the note says so.
+	var locked string
+	for _, tt := range p.coming {
+		if len(p.model.missing(tt, "")) > 0 && !p.model.queued[tt.def.Key] && tt.def.Key != cur {
+			locked = tt.def.Key
+			break
+		}
+	}
+	p.pick(locked)
+	p.act(false)
+	if p.view.bad || !strings.Contains(p.view.note, "queued") {
+		t.Fatalf("note %q after queueing %s", p.view.note, locked)
+	}
+	if !p.model.queued[locked] || p.model.pos[locked] == 0 {
+		t.Fatalf("%s is not marked queued", locked)
+	}
+	// Delete takes it out again; the tech stays on the board.
+	if !p.routeKey(newKey(kit.KeyDelete, 0, 0), "") || p.model.queued[locked] {
+		t.Errorf("Delete left %s queued", locked)
+	}
+	if p.routeKey(newKey(kit.KeyDelete, 0, 0), "typed") {
+		t.Errorf("Delete was taken with something typed")
+	}
+	if p.model.byKey[locked] == nil || p.index() < 0 {
+		t.Errorf("the pick left the board")
+	}
+}
+
+func TestBoardEmptyQueueSaysSo(t *testing.T) {
+	ge := classicalGame(t)
+	ge.PlanClear()
+	p := boardOn(ge, 279, 74)
+	if out := strings.Join(paintAlone(p, 279, 74).Lines(), "\n"); !strings.Contains(out, "Q queues it") {
+		t.Errorf("an empty queue says nothing")
+	}
 }

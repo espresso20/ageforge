@@ -496,7 +496,6 @@ func (s *siteStage) bronzeTown() {
 		s.wait(1)
 	}
 	s.say("research masonry")
-	s.say("trade route start local_barter")
 	s.wait(310)
 	s.level(map[string]float64{"food": 0.71, "wood": 0.34, "stone": 0.83, "gold": 0.37, "iron": 0.22, "faith": 0.41})
 	// Offers come off a board now; the first one on it goes out.
