@@ -324,3 +324,20 @@ func TestPlanItemsMissingPrerequisitesWait(t *testing.T) {
 		t.Errorf("with Quantum Mechanics: researching %q, plan %v", ge.Research.currentTech, planKeys(ge))
 	}
 }
+
+// TestDequeueTech: a queued tech leaves the queue alone, once.
+func TestDequeueTech(t *testing.T) {
+	ge := chainEngine(t)
+	if _, err := ge.PlanAddResearchChain("q_goal"); err != nil {
+		t.Fatal(err)
+	}
+	if !ge.DequeueTech("q_left") || ge.DequeueTech("q_left") {
+		t.Fatal("q_left should leave the queue once")
+	}
+	if want := []string{"q_a", "q_goal"}; !reflect.DeepEqual(researchKeys(ge), want) {
+		t.Errorf("queue %v, want %v", researchKeys(ge), want)
+	}
+	if ge.DequeueTech("q_deep") {
+		t.Error("a tech that was never queued left the queue")
+	}
+}

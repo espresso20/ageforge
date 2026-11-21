@@ -152,3 +152,18 @@ func (ge *GameEngine) PlanAddResearchChain(key string) ([]string, error) {
 	ge.notePlanSize()
 	return chain, nil
 }
+
+// DequeueTech takes tech key out of the research queue and reports whether it
+// was there. The techs it was queued for keep their place.
+func (ge *GameEngine) DequeueTech(key string) bool {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	for i, it := range ge.plan {
+		if it.Kind == PlanResearch && it.Key == key {
+			ge.plan = append(ge.plan[:i:i], ge.plan[i+1:]...)
+			ge.unlogPlanItemLocked(it)
+			return true
+		}
+	}
+	return false
+}
