@@ -175,12 +175,9 @@ jobs:
       - name: Install deadcode
         run: go install golang.org/x/tools/cmd/deadcode@v0.52.0
 
-      # Functions no main package reaches. With -test, test code counts as a
-      # root too, so what is left is not even used by a test.
+      # Functions no main package reaches.
       - name: deadcode
-        run: |
-          deadcode ./... > deadcode.txt
-          deadcode -test ./... > deadcode-test.txt
+        run: deadcode ./... > deadcode.txt
 
       - name: Job summary
         run: |
@@ -188,15 +185,8 @@ jobs:
             echo "### Dead code"
             echo
             echo "- Unreachable from any main package: **$(wc -l < deadcode.txt)** functions"
-            echo "- Also unreachable from tests: **$(wc -l < deadcode-test.txt)** functions"
             echo
-            echo "By package, the second list:"
-            echo
-            echo '```'
-            sed -E 's#/[^/]+:[0-9]+:[0-9]+:.*##; s#^[^:]+:[0-9]+:[0-9]+:.*#(root)#' deadcode-test.txt | sort | uniq -c | sort -rn | head -n 20
-            echo '```'
-            echo
-            echo "Both lists are in the deadcode artifact."
+            echo "The list is in the deadcode artifact."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -204,4 +194,3 @@ jobs:
           name: deadcode
           path: |
             deadcode.txt
-            deadcode-test.txt
