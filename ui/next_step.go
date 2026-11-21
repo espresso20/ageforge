@@ -348,8 +348,12 @@ func (n *nextCtx) passive() []nextItem {
 	st := n.st
 	var out []nextItem
 	if rs := st.Research; rs.CurrentTech != "" {
-		left := textfmt.Duration(time.Duration(float64(rs.TicksLeft) * tickSeconds(st.TickIntervalMs) * float64(time.Second)))
-		out = append(out, nextItem{title: rowid.Sprintf("ui.next_step.passive.01", "%s done in %s", rs.CurrentTechName, left),
+		title := rs.CurrentTechName + " " + needsScholarsShort.String()
+		if !rs.NeedsScholars && rs.TicksLeft > 0 {
+			left := textfmt.Duration(time.Duration(float64(rs.TicksLeft) * tickSeconds(st.TickIntervalMs) * float64(time.Second)))
+			title = rowid.Sprintf("ui.next_step.passive.01", "%s done in %s", rs.CurrentTechName, left)
+		}
+		out = append(out, nextItem{title: title,
 			detail: rowid.Line("ui.next_step.passive.02", "research goes on after that"), panel: "research"})
 	}
 	if v := st.AdvanceView(); !v.Final {
