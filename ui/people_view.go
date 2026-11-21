@@ -36,11 +36,10 @@ const (
 
 // peopleView is what the player has picked.
 type peopleView struct {
-	tab  int       // the tab
-	row  int       // the picked row on the tab (a card, an area, a building)
-	sub  int       // the picked building of the picked work area
-	buy  buyChoice // how many Recruit takes
-	shut bool      // the picked work area's detail is closed
+	tab  int  // the tab
+	row  int  // the picked row on the tab (a card, an area, a building)
+	sub  int  // the picked building of the picked work area
+	shut bool // the picked work area's detail is closed
 }
 
 // peopleKeys are the panel's keys as the Help panel lists them.
@@ -105,7 +104,7 @@ func knowledgeBuildings(st game.GameState) []peopleBuilding {
 
 // renderPeople draws the panel w by h. The Overview comes back with its
 // picture; the other tabs are cells alone.
-func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h int) (*xgrid, *pScene) {
+func renderPeople(st game.GameState, v peopleView, buy buyChoice, hist *game.RunHistory, w, h int) (*xgrid, *pScene) {
 	g := newXGrid(w, h)
 	g.shell(rowid.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, 0)
 	if w < peopleMinW || h < peopleMinH {
@@ -120,7 +119,7 @@ func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h i
 		g.foot([][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
 		return g, newOverview(g, st, hist, v.row, 3).s
 	}
-	c := peopleBody{g: g, st: st, v: v, hist: hist, s: newPScene(w, 2, h-2), x: 1, y: 2, w: w - 2, h: h - 4}
+	c := peopleBody{g: g, st: st, v: v, buy: buy, hist: hist, s: newPScene(w, 2, h-2), x: 1, y: 2, w: w - 2, h: h - 4}
 	switch v.tab {
 	case tabWork:
 		c.work()
@@ -165,6 +164,7 @@ type peopleBody struct {
 	g          *xgrid
 	st         game.GameState
 	v          peopleView
+	buy        buyChoice // the shared amount
 	hist       *game.RunHistory
 	s          *pScene // the tab's picture
 	x, y, w, h int
