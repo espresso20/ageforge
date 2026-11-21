@@ -791,23 +791,12 @@ func (p *statsPanel) Layout(r image.Rectangle) {
 	}
 	p.scroll = clamp(p.scroll, 0, max(0, p.page.used-view))
 	g := newXGrid(p.w, p.h)
-	g.box(0, 0, p.w, p.h, xBorder, txtStatsTitle.String(), xTitle, false)
-	g.closeButton(p.w)
-	x := 2
-	for i, name := range []string{txtThisRun.String(), txtLifetime.String()} {
-		k := xDim
-		if i == p.part {
-			k = xSel
-		}
-		end := g.put(x, 1, " "+name+" ", k)
-		g.tab(image.Rect(x, 1, end, 2), name, i, i == p.part)
-		x = end + 1
-	}
+	g.shell(txtStatsTitle.String(), p.part, txtThisRun.String(), txtLifetime.String())
 	keys := [][2]string{{"Up/Dn", "scroll"}, {"PgUp/PgDn", "page"}, {"Tab", txtSwitchPart.String()}, escClose()}
 	if p.part == partLifetime {
 		keys = slices.Insert(keys, 2, [2]string{"Left/Right", txtPickAge.String()})
 	}
-	expKeyBar(g, expLayout{w: p.w, h: p.h, footY: p.h - 2}, keys, "")
+	g.foot(keys, "")
 	p.chrome = g
 }
 

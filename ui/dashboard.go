@@ -528,6 +528,7 @@ func (d *Dashboard) build() {
 		return d.cardLine()
 	}
 	d.app.line, d.app.confirm = d.pressLine, d.askLine
+	d.app.stage = func(cmd string) { d.inputField.setText(cmd) }
 	d.app.feel.tip.Cell = d.tipCell
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
 	// The card's key hint reads Enter while the line holds the step.

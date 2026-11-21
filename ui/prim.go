@@ -130,6 +130,9 @@ type appLoop struct {
 	// line runs a command line as the command bar does (the dashboard sets
 	// it): what a button that carries one does when it is clicked.
 	line func(cmd string)
+	// stage writes a command line in the command bar without running it
+	// (the dashboard sets it).
+	stage func(cmd string)
 	// confirm asks a question, with yes as the word on the danger button, and
 	// runs the command line on a yes (the dashboard sets it).
 	confirm func(question, yes, cmd string)
@@ -272,6 +275,13 @@ func (a *appLoop) Resize(cols, rows int) {
 func (a *appLoop) runLine(cmd string) {
 	if a.line != nil {
 		a.line(cmd)
+	}
+}
+
+// stageLine writes a command line in the command bar, if the app has one.
+func (a *appLoop) stageLine(cmd string) {
+	if a.stage != nil {
+		a.stage(cmd)
 	}
 }
 

@@ -64,12 +64,11 @@ func newPanelFrame(title rowid.Entry, tv *nativeText) *panelFrame {
 // edge and the keys along the foot.
 func renderPanelFrame(w, h int, title string, keys [][2]string, hint, notice string) *xgrid {
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, title, xTitle, false)
-	g.closeButton(w)
+	g.shell(title, 0)
 	if h >= panelMinRows && notice != "" {
 		g.segsFit(2, h-2, w-4, xseg{notice, xGood})
 	} else if h >= panelMinRows {
-		expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, keys, hint)
+		g.foot(keys, hint)
 	}
 	return g
 }

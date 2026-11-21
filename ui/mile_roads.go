@@ -63,8 +63,7 @@ func renderMileRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 		return renderDeck(pg, sel, scroll, w, h, said...)
 	}
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, pg.Title, xTitle, false)
-	g.closeButton(w)
+	g.shell(pg.Title, 0)
 	g.segsFit(2, 1, w-4, pg.Head...)
 	inner := w - 4
 	trackW := inner - mileLabelW
@@ -167,7 +166,7 @@ func renderMileRoads(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 		drawMileStone(g, picked, pickedRoad, pickedK, 2, h-3-mileDetailH, inner)
 	}
 	g.segsFit(2, h-3, inner, said...)
-	expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, deckKeys(pg, sel, total > viewH), pg.Hint)
+	g.foot(deckKeys(pg, sel, total > viewH), pg.Hint)
 	return g, lay
 }
 

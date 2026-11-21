@@ -631,8 +631,7 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 	}
 
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, pg.Title, xTitle, false)
-	g.closeButton(w)
+	g.shell(pg.Title, 0)
 	lay := deckLayout{total: h - deckChrome, viewH: h - deckChrome}
 
 	// The count of each state.
@@ -718,7 +717,7 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 	}
 
 	g.segsFit(2, h-3, w-4, said...)
-	expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, deckKeys(pg, sel, side.scrolls), pickedHint(pg, sel))
+	g.foot(deckKeys(pg, sel, side.scrolls), pickedHint(pg, sel))
 	return g, lay
 }
 
