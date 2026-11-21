@@ -80,7 +80,7 @@ func resourceRowsFor(state game.GameState, hist *resHistory) []resRow {
 		if state.Age != "" && config.IsResourceEnded(key, state.Age) {
 			return false
 		}
-		return true
+		return key != "faith" || rs.Amount > 0 || makerBuilt(state, key)
 	})
 	rows := make([]resRow, 0, len(keys))
 	var held []float64 // the ordinary resources' amounts, for the bar's top
@@ -108,6 +108,17 @@ func resourceRowsFor(state game.GameState, hist *resHistory) []resRow {
 		rows[n].key = key
 	}
 	return rows
+}
+
+// makerBuilt reports whether a building that makes res stands.
+func makerBuilt(state game.GameState, res string) bool {
+	set := state.Ruleset()
+	for key, b := range state.Buildings {
+		if def, ok := set.Building(key); ok && b.Count > 0 && def.OutputResource == res {
+			return true
+		}
+	}
+	return false
 }
 
 // storeRow is an ordinary resource: what is held and which way it is going.

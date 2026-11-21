@@ -1304,7 +1304,7 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 	// reads its year, its bar and what it waits on, and is written from it at
 	// its next layout. (The notice is the toast on show, which a refresh
 	// also moves on.)
-	d.ledger.update(state, d.engine)
+	d.ledger.update(state, d.engine, d.next.card)
 	d.headerTV.changed()
 }
 
