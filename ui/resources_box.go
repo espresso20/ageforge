@@ -114,7 +114,7 @@ func resourceRowsFor(state game.GameState, hist *resHistory) []resRow {
 
 const (
 	// stockLowShare is the share of the age's stock scale at or under which a
-	// stock that is not rising counts as low; stockRunOutMinutes is how soon
+	// stock that is falling counts as low; stockRunOutMinutes is how soon
 	// a falling stock must be empty to count the same.
 	stockLowShare      = 0.10
 	stockRunOutMinutes = 5.0
@@ -124,7 +124,7 @@ const (
 // color for a low stock or one that runs out within stockRunOutMinutes, the
 // warning color for one that is falling, the dim color for the rest.
 func stockTone(state game.GameState, rs game.ResourceState) string {
-	low := rs.Amount <= stockLowShare*config.StockScale(state.Age) && rs.Rate <= 0
+	low := rs.Amount <= stockLowShare*config.StockScale(state.Age) && rs.Rate < 0
 	if rs.Rate < 0 && rs.Amount/-rs.Rate <= stockRunOutMinutes*config.TicksPerMinute {
 		low = true
 	}
