@@ -518,9 +518,12 @@ func (p *researchPanel) act(queue bool) {
 	if queue {
 		line = "plan research " + t.def.Key
 	}
-	p.view.note, p.view.bad = "", false
 	p.buttons.run(line)
-	p.update(p.engine.GetState())
+}
+
+// reply puts what a command run over the board did in its note.
+func (p *researchPanel) reply(_ string, res CommandResult) {
+	p.view.note, p.view.bad = replyLine(res)
 }
 
 // unqueue takes the picked tech out of the queue.
@@ -530,7 +533,6 @@ func (p *researchPanel) unqueue() {
 		return
 	}
 	p.buttons.run("research drop " + t.def.Key)
-	p.update(p.engine.GetState())
 }
 
 func (p *researchPanel) Mouse(m kit.Mouse) bool {

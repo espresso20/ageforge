@@ -150,6 +150,12 @@ func (p *planPanel) run(line string) {
 	}
 }
 
+// reply puts what a command run over the panel did in its note.
+func (p *planPanel) reply(_ string, res CommandResult) {
+	msg, bad := replyLine(res)
+	p.note, p.good = msg, !bad
+}
+
 // at is the 1-based number the plan commands give the selected item.
 func (p *planPanel) at() string { return strconv.Itoa(p.sel + 1) }
 

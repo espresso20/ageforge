@@ -335,6 +335,13 @@ func (p *expeditionPanel) say(text string, good bool) {
 	p.view.flash, p.view.flashGood, p.flashAt = text, good, p.now()
 }
 
+// reply flashes what a command run over the panel did.
+func (p *expeditionPanel) reply(_ string, res CommandResult) {
+	if msg, bad := replyLine(res); msg != "" {
+		p.say(msg, !bad)
+	}
+}
+
 // send sends the highlighted offer through the typed command, by its place
 // on the board.
 func (p *expeditionPanel) send() {

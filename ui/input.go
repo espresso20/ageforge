@@ -1621,11 +1621,8 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	// A tech that cannot start now, or one asked for while another is in
 	// work, goes in the queue, as Enter on the Research board does.
 	if st := engine.GetState(); st.Research.CurrentTech != "" || !st.Research.Techs[techKey].Available {
-		if ts, ok := st.Research.Techs[techKey]; ok {
-			if _, err := engine.PlanAddResearchChain(techKey); err != nil {
-				return errorResult(err)
-			}
-			return routineReply(rowid.Line("ui.input.cmdResearch.05", "Queued ") + ts.Name + ".")
+		if _, ok := st.Research.Techs[techKey]; ok {
+			return cmdPlan([]string{"research", techKey}, engine)
 		}
 	}
 	if err := engine.StartResearch(techKey); err != nil {
