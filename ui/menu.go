@@ -650,7 +650,7 @@ func (m *mainMenu) open(id string) {
 		m.buildView()
 	case miSetTheme:
 		m.leave()
-		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash")
+		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash", nil)
 		m.pages.AddPage(themePickerPage, page, true, true)
 		m.app.SetFocus(page)
 	case miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord, miSetFont, miSetSize, miSetFull:
