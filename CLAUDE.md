@@ -65,7 +65,7 @@ This project is large. Burning main context on file reads is wasteful. Follow th
 - Where those agent types do not exist (a remote session), use `subagent_type=general-purpose` with `model: "haiku"` or `model: "sonnet"`. Never run a subagent on Opus or Fable unless Adam asks
 - Every spec says what is already done, what is left, what done looks like and what to report. Long specs go in a file outside the repository
 - Subagents commit and push in small steps and stop at a clean checkpoint when cut off
-- There is no test bot; pacing is checked by the reference model and static checks in `smoke/`, and by Adam's play
+- There is no test bot; pacing is checked by the reference model in `config/pacing.go`, and by play
 
 **Never read these files in main context** (too large — always delegate):
 - `config/buildings_new*.go`, `config/ages.go`, `config/buildings.go`
