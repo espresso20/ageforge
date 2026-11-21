@@ -52,19 +52,7 @@ const (
 	// cells the picked card's Enter hint takes left of it.
 	compactKeyW = 7
 	chipKeyW    = 6
-	// buyKeyBase is the first of the private runes the buy keys press.
-	buyKeyBase = 0xE000
 )
-
-// buyKey is the key a click on a buy choice presses: a private rune, which
-// the box takes before it reaches the app.
-func buyKey(c buyChoice) kit.Key { return kit.Key{Code: kit.KeyRune, Rune: rune(buyKeyBase + int(c))} }
-
-// buyOf is the buy choice a key stands for.
-func buyOf(k kit.Key) (buyChoice, bool) {
-	c := buyChoice(k.Rune - buyKeyBase)
-	return c, k.Code == kit.KeyRune && c >= 0 && c < buyChoices
-}
 
 // placedCard is a card as laid out: where it is, how many rows it takes and
 // the lines of its price.

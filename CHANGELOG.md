@@ -8,6 +8,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - Releases are published to a separate public repository; the updater checks file checksums.
+- The People panel's x1, x10 and max choice is the Buildings column's: a click on either runs `buy 1`, `buy 10` or `buy max`, and both show the same one picked.
 - The Plan, Logs and Map panels have the `×` close button in their top right corner, like every other panel.
 - Section headings in the text panels (Help, Wonders, Buildings, Factions and the rest) share one look with Stats: the name in the title colour, then a faint rule. Factions, Harbinger and Epoch no longer repeat the panel's name as their first line.
 - Panels that scroll show a scroll bar down their right edge when there is more than fits, and the typing hint at a panel's foot is a button that puts the command in the prompt.
@@ -44,6 +45,8 @@ All notable changes to AgeForge are documented here.
 - The Plan panel's add box keeps what was typed when the add fails, and the reason shows beside it.
 
 ### Added
+- A click on a command in the Help panel writes its typed part on the command line and runs nothing; the click shows how the command is typed.
+- A Commands button in the main view's top row, left of Esc pause, opens Help.
 - `buy 1|10|max`, `pause`, `settings`, `menu` and `new` commands, and `research drop <tech>`. A typed `research <tech>` joins the queue when another tech is in work, as Enter on the Research board does.
 - `catastrophe endure`, `catastrophe succumb`, `memory accept` and `memory decline` answer the choice windows by typing; the buttons run the same lines.
 - Per-route upgrades. `trade route upgrade <route>` (or the upgrade button on the picked route in the Trade board) buys a route's next level, paid in the good it brings in: 10 minutes of its flow without upgrades, times 1.15 for each level bought. The flow is (1 + 0.25 x level), doubled at levels 10, 25 and 50, on both the import and the export, which still only goes out of a surplus. The level is saved and shown as `Lv N` on the route.

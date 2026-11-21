@@ -10,6 +10,10 @@ A building, tech, resource, civilization or trade route can be typed by its key 
 
 This page lists every command. Each section links to the page that explains the system behind it.
 
+In the Help panel a click on a command writes its typed part on the command line (`build ` for `build <building> [count]`) and runs nothing; add what it needs and press `Enter`.
+
+The Commands button in the main view's top row, left of Esc pause, opens the Help panel, as typing `help` does.
+
 <figure class="screen" data-screen="help"><figcaption>The Help panel lists the same commands and keys inside the game.</figcaption></figure>
 
 ## The prompt

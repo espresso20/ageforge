@@ -67,6 +67,9 @@ const headerEsc = "Esc"
 
 var headerMenu = rowid.E("ui.dash_header.headerMenu.01", "pause")
 
+// headerCommands is the chip left of the Esc button: a click opens Help.
+var headerCommands = rowid.E("ui.dash_header.headerCommands.01", "Commands")
+
 // headerAlert is a chip on the first row: a pending catastrophe or a
 // harbinger. Its words come in three lengths (text, short, and the mark
 // alone), and cmd, when there is one, is what a click on it runs.
@@ -130,18 +133,27 @@ func renderHeader(v headerView, w, rows int) *xgrid {
 	// The top edge, from the right: the menu button, then the notice; the
 	// name takes what is left.
 	bx := w - 2 - keyButtonW(headerEsc, headerMenu.String())
-	room := bx - 6
+	// The Commands chip takes the cells left of it when the edge has room.
+	edge := bx
+	cx := bx - 1 - chipW(headerCommands.String(), "")
+	if cx >= 24 {
+		edge = cx
+	}
+	room := edge - 6
 	notice := ""
 	if v.Notice != "" && bx >= 14 {
-		notice = " " + fitText(v.Notice, max(bx-18, 1)) + " "
+		notice = " " + fitText(v.Notice, max(edge-18, 1)) + " "
 		room -= runeLen(notice) + 2
 	}
 	g.box(0, 0, w, h, xBorder, fitText(title, max(room, 8)), xTitle, false)
 	if bx >= 4 {
 		g.keyButton(bx, 0, headerEsc, headerMenu.String())
+		if edge == cx {
+			g.chip(cx, 0, chipSpec{kind: keySteel, label: headerCommands.String(), cmd: "help"})
+		}
 		if notice != "" {
-			g.put(bx-2-runeLen(notice), 0, notice, xLegend)
-			g.hit(hitHeader, headerNotice, bx-2-runeLen(notice), 0, runeLen(notice), 1)
+			g.put(edge-2-runeLen(notice), 0, notice, xLegend)
+			g.hit(hitHeader, headerNotice, edge-2-runeLen(notice), 0, runeLen(notice), 1)
 		}
 	}
 

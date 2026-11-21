@@ -338,6 +338,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.planPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("plan", txtBuildPlan, d.planPanel.open, d.planPanel.update)
 	d.peoplePanel.hist = d.engine.History
+	d.peoplePanel.buy = func() buyChoice { return d.economyTab.buildBox.buy }
 	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
 		return d.engine.History(), d.engine.RunArchive(), d.engine.ActiveSaveName()
 	}
@@ -348,6 +349,12 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
 	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), func(st game.GameState, w int) string {
 		return helpProvider(d.lessonKeys(), st, w)
+	})
+	// A click on a command in Help writes its typed part in the command bar.
+	d.overlayMgr.SetRegion("help", func(region string) {
+		if line, ok := strings.CutPrefix(region, helpFillPrefix); ok {
+			d.app.stageLine(line)
+		}
 	})
 
 	// The Map panel: the map full screen (map, and its aliases citymap and
