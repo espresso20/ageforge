@@ -125,7 +125,7 @@ build shrine
 
 ## Step 7: Watch your rates
 
-The Resources box shows a rate beside each stock. Food and wood should both be positive.
+The Resources box shows a rate beside each stock. Its bar is dim while a stock is healthy, amber while the stock is falling, and red when the stock is low (a tenth of the age's usual store or less, and not rising) or will run out within five minutes. Food and wood should both be positive.
 - Each staffed gathering camp adds 1.0 food a tick, and each person eats 0.06. If food is negative, build another gathering camp; workers come to staff it.
 - Each staffed wood camp adds about 0.57 wood a tick.
 - Each story circle adds 2 scholars, so more circles (up to five at full rate) finish research sooner.

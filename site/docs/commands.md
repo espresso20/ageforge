@@ -398,7 +398,7 @@ minimap off
 worldmap
 ```
 
-`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows from 80 columns by 36 rows (37 rows from 100 columns wide; every window of 120 columns by 36 rows or more) the dashboard shows a mini map under the Panels list, shorter than square on a large window, where the Panels list needs its rows. On smaller windows it is not shown, and `minimap off` hides it anywhere.
+`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The mini map is on until you type `minimap off`. On windows from 80 columns by 36 rows (37 rows from 100 columns wide; every window of 120 columns by 36 rows or more) the dashboard shows a mini map under the Panels list, shorter than square on a large window (16 rows at most, border included), where the Panels list needs its rows. On smaller windows it is not shown, and `minimap off` hides it anywhere.
 
 The prompt keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing:
 

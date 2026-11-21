@@ -59,6 +59,7 @@ type resRow struct {
 	// and trend the line of where it has been; both are for an ordinary
 	// resource.
 	magnitude bool
+	barColor  string // the magnitude bar's color tag (stockTone)
 	trend     []float64
 	glyph     string // the marker after the bar: "▼" falling
 	glyphCol  string
@@ -102,12 +103,38 @@ func resourceRowsFor(state game.GameState, hist *resHistory) []resRow {
 			r := storeRow(rs, state.TickIntervalMs)
 			r.fill = magnitudeFill(rs.Amount, top)
 			r.magnitude = true
+			r.barColor = stockTone(state, rs)
 			r.trend = hist.points(key, rs.Amount)
 			rows = append(rows, r)
 		}
 		rows[n].key = key
 	}
 	return rows
+}
+
+const (
+	// stockLowShare is the share of the age's stock scale at or under which a
+	// stock that is falling counts as low; stockRunOutMinutes is how soon
+	// a falling stock must be empty to count the same.
+	stockLowShare      = 0.10
+	stockRunOutMinutes = 5.0
+)
+
+// stockTone is the color tag of an ordinary resource's bar: the negative
+// color for a low stock or one that runs out within stockRunOutMinutes, the
+// warning color for one that is falling, the dim color for the rest.
+func stockTone(state game.GameState, rs game.ResourceState) string {
+	low := rs.Amount <= stockLowShare*config.StockScale(state.Age) && rs.Rate < 0
+	if rs.Rate < 0 && rs.Amount/-rs.Rate <= stockRunOutMinutes*config.TicksPerMinute {
+		low = true
+	}
+	switch {
+	case low:
+		return theme.Tag(theme.RoleNegative)
+	case rs.Rate < 0:
+		return theme.Tag(theme.RoleWarning)
+	}
+	return BarEmptyColor()
 }
 
 // makerBuilt reports whether a building that makes res stands.
@@ -378,7 +405,7 @@ func (f resFormat) line(r resRow) string {
 		case r.progress:
 			b.WriteString(progressCells(r.fill, f.bar))
 		case r.magnitude:
-			b.WriteString(magnitudeCells(r.fill, f.bar))
+			b.WriteString(magnitudeCells(r.fill, f.bar, r.barColor))
 		default:
 			b.WriteString(strings.Repeat(" ", f.bar))
 		}
