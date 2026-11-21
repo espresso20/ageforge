@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"time"
+	"unicode/utf8"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -46,29 +47,37 @@ const (
 
 var txtBadgeEarned = rowid.E("ui.badge_note.earned", "BADGE EARNED")
 
-// paintCard is the picked badge on the right of a wide list: its shield, name,
-// tier and what it asks for.
-func (p *ranksPanel) paintCard(s rankPaint, x, h int) {
-	i := p.rowIndex(p.view.sel)
-	if i < 0 || h < 36 {
-		return
-	}
-	v := p.rows[i]
-	s.p.Picture(image.Rect(s.o.X+x, s.o.Y+6, s.o.X+x+badgeCardW, s.o.Y+6+badgeCardRows), badgeShield(v, badgeCardW, badgeCardRows))
-	y := 6 + badgeCardRows + 1
+// paintBadge draws a badge's shield in a block of cols by rows cells at (x,y)
+// and under it the name, tier and what it asks for, centred when mid is set.
+func paintBadge(s rankPaint, x, y, cols, rows int, v game.BadgeView, mid bool) {
+	s.p.Picture(image.Rect(s.o.X+x, s.o.Y+y, s.o.X+x+cols, s.o.Y+y+rows), badgeShield(v, cols, rows))
 	if v.Hidden {
 		return
 	}
-	s.text(x, y, v.Name, kit.Role(theme.RoleBright), true)
-	s.text(x, y+1, rowid.Sprintf("ui.badge_note.tier", "%s  +%d", v.Tier, v.Points), tierCol(v.Level), false)
-	for j, ln := range wrapCells(v.Desc, badgeCardW) {
-		if j < 4 {
-			s.text(x, y+3+j, ln, kit.Role(theme.RoleText), false)
+	put := func(dy int, str string, col kit.Color, bold bool) {
+		dx := 0
+		if mid {
+			dx = max(0, (cols-utf8.RuneCountInString(str))/2)
+		}
+		s.text(x+dx, y+rows+1+dy, str, col, bold)
+	}
+	put(0, v.Name, kit.Role(theme.RoleBright), true)
+	put(1, rowid.Sprintf("ui.badge_note.tier", "%s  +%d", v.Tier, v.Points), tierCol(v.Level), false)
+	for j, ln := range wrapCells(v.Desc, cols) {
+		if j < 3 {
+			put(3+j, ln, kit.Role(theme.RoleText), false)
 		}
 	}
 }
 
-// badgeNote is the earn notice: the shield, the name and the tier.
+// paintCard is the picked badge on the right of a wide list.
+func (p *ranksPanel) paintCard(s rankPaint, x, h int) {
+	if i := p.rowIndex(p.view.sel); i >= 0 && h >= 36 {
+		paintBadge(s, x, 6, badgeCardW, badgeCardRows, p.rows[i], false)
+	}
+}
+
+// badgeNote is the earn notice: a framed box with the shield, name and tier.
 type badgeNote struct {
 	*nativeBox
 	v     game.BadgeView
@@ -77,11 +86,11 @@ type badgeNote struct {
 
 func (n *badgeNote) Paint(p *kit.Painter) {
 	r := n.Bounds()
-	p.Fill(r, theme.Of(theme.RoleSurface))
-	p.Picture(image.Rect(r.Min.X+3, r.Min.Y+1, r.Min.X+45, r.Min.Y+16), badgeShield(n.v, 42, 15))
-	st := kit.Style{}.Foreground(kit.Role(theme.RoleBright)).Bold(true)
-	p.Print(r.Min.X+1, r.Min.Y+17, r.Dx()-2, txtBadgeEarned.String()+": "+n.v.Name, st)
-	p.Print(r.Min.X+1, r.Min.Y+18, r.Dx()-2, rowid.Sprintf("ui.badge_note.tier", "%s  +%d", n.v.Tier, n.v.Points), kit.Style{}.Foreground(tierCol(n.v.Level)))
+	p.Fill(r, kit.Role(theme.RoleSelection))
+	p.Fill(r.Inset(1), theme.Of(theme.RoleSurface))
+	p.Box(r, kit.BorderLine, kit.Style{Fg: kit.Role(theme.RoleBorder)})
+	p.Print(r.Min.X+2, r.Min.Y, r.Dx()-4, " "+txtBadgeEarned.String()+" ", kit.Style{}.Foreground(kit.Role(theme.RoleAccent)).Bold(true))
+	paintBadge(rankPaint{p, r.Min, r.Dx()}, 3, 1, 42, 15, n.v, true)
 }
 
 // Mouse: a click closes the notice.
@@ -104,7 +113,7 @@ func (d *Dashboard) pumpBadgeNote() {
 	}
 	n := &badgeNote{nativeBox: newNativeBox(), v: d.badgeQ[0], close: d.closeBadgeNote}
 	d.badgeQ, d.badgeNote, d.badgeUntil = d.badgeQ[1:], true, time.Now().Add(badgeNoteFor)
-	page := floatingModal(n, 48, 20)
+	page := floatingModal(n, 48, 25)
 	page.hold = false
 	d.pages.AddPage(badgeNotePage, page, true, true)
 }

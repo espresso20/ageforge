@@ -34,6 +34,8 @@ var (
 	shield = shape{true, [][]int{{0, 2, 11, 0, 20, 0, 20, 22, 16, 38, 0, 54}}}
 	crown  = shape{true, [][]int{{0, -14, 4, -8, 8, -13, 8, -7, 0, -7}}}
 	wings  = shape{true, [][]int{{21, 18, 29, 9, 38, 3}, {21, 28, 31, 21, 38, 15}}}
+	// sparks are small crosses at the shield's flanks.
+	sparks = shape{true, [][]int{{25, 38, 29, 38}, {27, 36, 27, 40}, {19, 51, 23, 51}, {21, 49, 21, 53}}}
 	rays   = shape{true, [][]int{{0, -22, 0, -34}, {17, -17, 24, -26}}}
 )
 
@@ -59,22 +61,12 @@ type pen struct {
 	c      color.RGBA
 }
 
-// line is Bresenham between two points.
+// line steps one pixel at a time between two points.
 func (p *pen) line(x0, y0, x1, y1 int) {
-	dx, dy := abs(x1-x0), -abs(y1-y0)
-	sx, sy := sign(x1-x0), sign(y1-y0)
-	for e := dx + dy; ; {
-		p.set(p.ox+x0, p.oy+y0, p.c)
-		if x0 == x1 && y0 == y1 {
-			return
-		}
-		e2 := 2 * e
-		if e2 >= dy {
-			e, x0 = e+dy, x0+sx
-		}
-		if e2 <= dx {
-			e, y0 = e+dx, y0+sy
-		}
+	n := max(x1-x0, x0-x1, y1-y0, y0-y1)
+	for i := 0; i <= n; i++ {
+		t := float64(i) / float64(max(n, 1))
+		p.set(p.ox+x0+int(math.Round(t*float64(x1-x0))), p.oy+y0+int(math.Round(t*float64(y1-y0))), p.c)
 	}
 }
 
@@ -100,11 +92,6 @@ func (p *pen) draw(sh shape, around int, thick bool) {
 			}
 		}
 	}
-}
-
-func (p *pen) spark(x, y int) {
-	p.line(x-2, y, x+2, y)
-	p.line(x, y-2, x, y+2)
 }
 
 // Mix blends a toward b.
@@ -145,10 +132,8 @@ func render(p *pen, t Tier, domain string, emblem bool) {
 	}
 	if t >= Gold {
 		p.draw(crown, 28, false)
-		for _, s := range [][2]int{{27, 38}, {-27, 38}, {21, 51}, {-21, 51}} {
-			if !small {
-				p.spark(s[0], s[1])
-			}
+		if !small {
+			p.draw(sparks, 28, false)
 		}
 	}
 	if t >= Platinum {
@@ -163,23 +148,6 @@ func render(p *pen, t Tier, domain string, emblem bool) {
 		p.draw(emblems[domain], 0, small)
 		p.s, p.oy = s, oy
 	}
-}
-
-func abs(a int) int {
-	if a < 0 {
-		return -a
-	}
-	return a
-}
-
-func sign(a int) int {
-	if a < 0 {
-		return -1
-	}
-	if a > 0 {
-		return 1
-	}
-	return 0
 }
 
 func b2i(b bool) int {
