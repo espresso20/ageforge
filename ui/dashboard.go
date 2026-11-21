@@ -96,6 +96,7 @@ type Dashboard struct {
 	toastMgr            *ToastManager
 	badgeQ              []game.BadgeView // earned, notice not shown yet
 	badgeNote           bool
+	nextHeld            bool // the command line holds the Next step
 	badgeUntil          time.Time
 	contentArea         Primitive
 
@@ -380,7 +381,12 @@ func (d *Dashboard) build() {
 	// column when the names fit that way, two when the screen is short.
 	d.bandBox = newFitView(func(w, _ int) string { return d.bandText(w) })
 	d.bandBox.body.OnRegion = func(name string, _ int) { d.bandClick(name) }
-	d.nextBox = newFitView(func(w, h int) string { return nextBoxText(d.next, w, h, d.richLayout()) })
+	d.nextBox = newFitView(func(w, h int) string {
+		s := d.next
+		s.onLine = d.inputField != nil && s.cmd != "" && d.inputField.GetText() == s.cmd
+		d.nextHeld = s.onLine
+		return nextBoxText(s, w, h, d.richLayout())
+	})
 	// A click on a panel's name opens it, as typing the name does.
 	d.nextBox.body.OnRegion = func(name string, _ int) {
 		switch {
@@ -526,6 +532,13 @@ func (d *Dashboard) build() {
 	d.app.line, d.app.confirm = d.pressLine, d.askLine
 	d.app.feel.tip.Cell = d.tipCell
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
+	// The card's key hint reads Enter while the line holds the step.
+	d.inputField.SetChangedFunc(func(text string) {
+		if held := text != "" && text == d.next.cmd; held != d.nextHeld {
+			d.nextHeld = held
+			d.nextBox.changed()
+		}
+	})
 	d.inputField.SetBorder(true)
 	theme.Track(func() {
 		d.inputField.SetFieldBackgroundColor(theme.Of(theme.RoleBackground)).
@@ -914,9 +927,13 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 	d.notePanels(panelsReached(state), false)
-	d.stepLessons(state)
 	d.next = computeNext(state, d.panels)
+	d.stepLessons(state)
+	if d.economyTab.buildBox.nextKey != d.next.card {
+		d.economyTab.buildBox.resort = true
+	}
 	d.economyTab.buildBox.nextKey = d.next.card
+	d.economyTab.buildBox.nextCmd = d.next.cmd
 	d.nextBox.changed()
 
 	// Badges earned since the last refresh: a card and a log line each, and a
@@ -1307,7 +1324,7 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 	// reads its year, its bar and what it waits on, and is written from it at
 	// its next layout. (The notice is the toast on show, which a refresh
 	// also moves on.)
-	d.ledger.update(state, d.engine)
+	d.ledger.update(state, d.engine, d.next.card)
 	d.headerTV.changed()
 }
 
@@ -1315,9 +1332,13 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
 	// The town level of the log plus the game office's replies, folded, with
 	// a count after a line that happened more than once.
+	// In the first age the routine lines show too: a gather, a build and a
+	// research each leave a trace while the log is quiet.
+	i, ok := state.Ruleset().Index(state.Age)
+	firstAge := ok && i == 0
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
-		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame) {
+		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame || (firstAge && entry.Type == game.LogRoutine)) {
 			visible = append(visible, entry)
 		}
 	}

@@ -752,12 +752,17 @@ var txtPerUse = rowid.E("ui.input.cmdGather.02", " per use)")
 // txtMaxPrefix is said the same way on several screens, so it has one id.
 var txtMaxPrefix = rowid.E("ui.input.cmdGather.01", " (max ")
 
+// handRes is what the gather command gathers by hand.
+var handRes = []string{"food", "wood", "stone"}
+
+func handGathered(res string) bool { return slices.Contains(handRes, res) }
+
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
 		return errorReply(usageFor("gather") + txtMaxPrefix.String() + textfmt.Number(gatherMaxYield) + txtPerUse.String())
 	}
 	resource := strings.ToLower(args[0])
-	if resource != "food" && resource != "wood" && resource != "stone" {
+	if !handGathered(resource) {
 		f := engine.Rules().ResourceLabel("food")
 		w := engine.Rules().ResourceLabel("wood")
 		s := engine.Rules().ResourceLabel("stone")

@@ -14,7 +14,11 @@ import (
 // start set is new until it is opened.
 
 // startPanels are found from the start and never marked new.
-var startPanels = []string{"people", "research", "charter", "milestones", "badges", "stats", "logs", "map", "help"}
+var startPanels = []string{"people", "research", "logs", "help"}
+
+// plainPanels are found once the town gives them something to show (see
+// panelsReached) and are never marked new.
+var plainPanels = []string{"charter", "milestones", "badges", "stats", "map"}
 
 // panelView is what the list shows: the panels found and the ones opened.
 // A view with no found map shows every panel, none new.
@@ -25,7 +29,7 @@ func (v panelView) has(name string) bool { return v.found == nil || v.found[name
 // fresh reports whether name is a found panel that is new: outside the start
 // set and not opened yet.
 func (v panelView) fresh(name string) bool {
-	return v.found != nil && v.found[name] && !v.opened[name] && !slices.Contains(startPanels, name)
+	return v.found != nil && v.found[name] && !v.opened[name] && !slices.Contains(startPanels, name) && !slices.Contains(plainPanels, name)
 }
 
 func (v panelView) newCount() int {
@@ -38,16 +42,27 @@ func (v panelView) newCount() int {
 	return n
 }
 
-// panelsReached is the panels the state has made findable. Expedition: the
-// board has a slot, or a party is out or has come home. Army: a post stands.
+// panelsReached is the panels the state has made findable. Charter and the
+// map and stats: a building stands. Milestones: one has progress. Badges: one
+// is earned. Expedition: the board has a slot and there are people to send,
+// or a party is out or has come home. Army: a post stands.
 // Harbinger: one is present or has been. Epoch: a catastrophe is possible,
 // pending or on record.
 func panelsReached(st game.GameState) []string {
 	out := slices.Clone(startPanels)
+	if anyBuilt(st) {
+		out = append(out, "charter", "stats", "map")
+	}
+	if anyMilestoneProgress(st) {
+		out = append(out, "milestones")
+	}
+	if st.AccountStats != nil && st.AccountStats.BadgeSummary.Earned > 0 {
+		out = append(out, "badges")
+	}
 	if i := slices.Index(st.Ruleset().AgeKeys(), st.Age); i >= 1 {
 		out = append(out, "plan", "history")
 	}
-	if currentWonder(st) != nil {
+	if anyBuilt(st) && currentWonder(st) != nil {
 		out = append(out, "wonders")
 	}
 	if _, locked := featureRefusal(st, config.FeatureTradeRoutes); !locked {
@@ -57,7 +72,7 @@ func panelsReached(st game.GameState) []string {
 		out = append(out, "factions")
 	}
 	m := st.Military
-	if len(m.Board) > 0 || len(m.Active) > 0 || m.CompletedCount > 0 {
+	if len(m.Board) > 0 && st.Workers.TotalPop > 0 || len(m.Active) > 0 || m.CompletedCount > 0 {
 		out = append(out, "expedition")
 	}
 	if m.SoldierCap > 0 || m.SoldiersAway > 0 {
@@ -70,6 +85,32 @@ func panelsReached(st game.GameState) []string {
 		out = append(out, "epoch")
 	}
 	return out
+}
+
+// anyBuilt reports whether any building stands.
+func anyBuilt(st game.GameState) bool {
+	for _, b := range st.Buildings {
+		if b.Count > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// anyMilestoneProgress reports whether a milestone is done or has a
+// condition under way.
+func anyMilestoneProgress(st game.GameState) bool {
+	for _, m := range st.Milestones.Milestones {
+		if m.Completed {
+			return true
+		}
+		for _, p := range m.Progress {
+			if p.Current > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // panelNamed is the panel a typed first word opens, or "" for none.
