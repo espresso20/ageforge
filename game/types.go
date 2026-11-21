@@ -44,6 +44,7 @@ type GameState struct {
 	ActiveEvents   []ActiveEventState
 	Prestige       PrestigeState
 	PrestigeCue    PrestigeCue
+	Return         ReturnReport
 	Mastery        MasteryState
 	Trade          TradeState
 	BlackMarket    BlackMarketStatus
@@ -160,6 +161,13 @@ type GameState struct {
 	// Distinct from Stats above, which is the per-save ge.Stats snapshot.
 	// Populated in GetState() from ge.account.LifetimeStats(); not in save JSON.
 	AccountStats *AccountStatsView `json:"-"`
+}
+
+// ReturnReport is what the last long time away did, in the lines the log got
+// for it. It is empty until the town has been left for ReturnCardAfter.
+type ReturnReport struct {
+	Lines []string
+	Seen  bool
 }
 
 // PrestigeCue is the engine's estimate of whether a prestige would reach the

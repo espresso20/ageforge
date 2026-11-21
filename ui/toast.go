@@ -17,6 +17,7 @@ type Toast struct {
 	Color    string
 	Duration time.Duration
 	Expiry   time.Time
+	queued   time.Time
 }
 
 // ToastManager manages toast notifications with a queue
@@ -40,12 +41,21 @@ func (tm *ToastManager) show(toast Toast) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	toast.Expiry = time.Now().Add(toast.Duration)
-	if tm.current == nil || time.Now().After(tm.current.Expiry) {
+	now := time.Now()
+	toast.Expiry = now.Add(toast.Duration)
+	toast.queued = now
+	if tm.current == nil || now.After(tm.current.Expiry) {
 		tm.current = &toast
-	} else {
-		tm.queue = append(tm.queue, toast)
+		return
 	}
+	// A newer toast of a kind (its colour) replaces the older one waiting.
+	kept := tm.queue[:0]
+	for _, q := range tm.queue {
+		if q.Color != toast.Color {
+			kept = append(kept, q)
+		}
+	}
+	tm.queue = append(kept, toast)
 }
 
 // Current is the toast on show as coloured text, or "" when none is showing
@@ -60,9 +70,12 @@ func (tm *ToastManager) Current() string {
 	for tm.current != nil && now.After(tm.current.Expiry) {
 		if len(tm.queue) > 0 {
 			next := tm.queue[0]
+			tm.queue = tm.queue[1:]
+			if now.Sub(next.queued) > next.Duration {
+				continue // waited longer than it would show: stale
+			}
 			next.Expiry = now.Add(next.Duration)
 			tm.current = &next
-			tm.queue = tm.queue[1:]
 		} else {
 			tm.current = nil
 		}

@@ -118,6 +118,8 @@ type Dashboard struct {
 	// memFocus is the Ancient Memory window's button that owns focus while
 	// it is open.
 	memFocus Primitive
+	// momentFocus is the moment card's button that owns focus while it is open.
+	momentFocus Primitive
 
 	// memoryModalShown guards the Ancient Memory offer modal the same way catModalShown
 	// guards the catastrophe modal: it holds the offered tech key once shown so a Defer
@@ -1007,6 +1009,7 @@ func (d *Dashboard) refresh() {
 
 	// Update overlay content
 	d.overlayMgr.Refresh(state)
+	d.maybeShowReturn(state)
 	d.maybeShowPrestigeCue(state)
 	d.refreshWorkerMini(state)
 }
@@ -1607,6 +1610,10 @@ func (d *Dashboard) runLine(text string) {
 		d.showWindow(result.Window)
 		return
 	}
+	if result.Card != nil {
+		d.showCard(result)
+		return
+	}
 	if result.OpenCatastrophe {
 		d.reopenCatastropheModal()
 	}
@@ -1702,6 +1709,9 @@ func (d *Dashboard) returnFocus() {
 	case d.memFocus != nil && d.pages.HasPage(ancientMemoryPage):
 		d.pages.SendToFront(ancientMemoryPage)
 		d.app.SetFocus(d.memFocus)
+	case d.momentFocus != nil && d.pages.HasPage(momentPage):
+		d.pages.SendToFront(momentPage)
+		d.app.SetFocus(d.momentFocus)
 	case d.overlayMgr != nil && d.overlayMgr.Focus():
 	default:
 		d.app.SetFocus(d.inputField)
