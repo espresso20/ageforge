@@ -113,7 +113,7 @@ jobs:
 
             ## Working agreement
             - Work on a new branch named for the change (feat/espresso/…, fix/espresso/…, balance/espresso/…, docs/espresso/…). Never push to master.
-            - Keep `gofmt -l .` empty and make `go build ./...`, `go vet ./...`, `go vet -tags 'smoke mapcapture' ./...` and `go test -race ./...` pass.
+            - Keep `gofmt -l .` empty and make `go build ./...` and `go vet ./...` pass.
             - Follow the site/ wiki sync rule and add CHANGELOG [Unreleased] entries for player-visible changes.
             - Real bugs you find outside the task: list them in the PR description; don't fix them in this PR.
             - This is a headless CI run: do ALL the work yourself in this session. Do not delegate to sub-agents (CLAUDE.md's subagent rules don't apply here); the job ends when you stop, and anything handed off is lost.

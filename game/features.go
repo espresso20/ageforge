@@ -22,7 +22,7 @@ import (
 // names, a game already trading or holding festivals keeps doing so for that
 // run, and meets the lock on its next one.
 
-// FeatureState is one feature lock as the panels and the smoke bot read it.
+// FeatureState is one feature lock as the panels read it.
 type FeatureState struct {
 	Name string
 	// Tech and TechName are the tech that opens the command.

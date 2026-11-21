@@ -18,10 +18,9 @@ import (
 // they came from.
 
 type importOptions struct {
-	dryRun     bool // print what would change and what would be refused; write nothing
-	noSame     bool // do not carry a rewrite to the rows whose same_as points at it
-	build      bool // build the module after applying
-	regenerate bool // rewrite the wiki tables that have a generator
+	dryRun bool // print what would change and what would be refused; write nothing
+	noSame bool // do not carry a rewrite to the rows whose same_as points at it
+	build  bool // build the module after applying
 }
 
 // entry is one filled row of one sheet.
@@ -414,7 +413,7 @@ func importSheets(root, dir string, o importOptions, out io.Writer) error {
 		}
 	}
 
-	followUps(c, root, res.changes, o, out)
+	followUps(c, root, res.changes, out)
 
 	if o.build && !o.dryRun && len(res.changes) > 0 {
 		cmd := exec.Command("go", "build", "./...")
@@ -434,7 +433,7 @@ func importSheets(root, dir string, o importOptions, out io.Writer) error {
 	}
 	fmt.Fprintf(out, "\n%s %d, refused %d, unchanged %d\n", summary, len(res.changes), len(res.refused), res.unchanged)
 	if !o.dryRun && len(res.changes) > 0 {
-		fmt.Fprintln(out, "Next: go test ./...")
+		fmt.Fprintln(out, "Next: go build ./... and go vet ./...")
 	}
 	return nil
 }

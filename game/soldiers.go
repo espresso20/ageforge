@@ -121,11 +121,7 @@ func (ge *GameEngine) soldiersAway() int { return ge.Military.SoldiersAway() }
 
 // soldiersHome is the army at home: the posted soldiers less those away.
 func (ge *GameEngine) soldiersHome() int {
-	posted := ge.soldierTotal()
-	if ge.garrisonForTestSet {
-		posted = int(ge.garrisonForTest)
-	}
-	return max(0, posted-ge.soldiersAway())
+	return max(0, ge.soldierTotal()-ge.soldiersAway())
 }
 
 // postKeys is the military buildings that stand, oldest first.
@@ -149,13 +145,6 @@ func (ge *GameEngine) postKeys() []string {
 func (ge *GameEngine) soldiersFall(n int) int {
 	if n <= 0 {
 		return 0
-	}
-	if ge.garrisonForTestSet {
-		// A garrison set by a test hook has no posts: the army itself shrinks.
-		n = min(n, int(ge.garrisonForTest))
-		ge.garrisonForTest -= float64(n)
-		ge.syncSoldiers()
-		return n
 	}
 	fell := 0
 	for _, key := range ge.postKeys() {

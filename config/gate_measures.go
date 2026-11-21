@@ -19,10 +19,9 @@ import (
 //   - Knowledge: the age's keystone tech and one more key tech of the age;
 //   - Monument: the wonder, banked and built, as before.
 //
-// The reference town is smoke/reference.go's ordinary player. package smoke
-// reads it and writes the numbers into gate_measures_table.go (go test ./smoke
-// -run TestGateMeasures -update-gates); a test holds the table to the model, so
-// nothing here is a number written by hand. This file holds the two rules that
+// The reference town is an ordinary player. Its measured numbers are typed
+// into gate_measures_table.go; nothing here is a number written by hand. This
+// file holds the two rules that
 // choose what is measured, and the table's type.
 
 // GatesEnv is the environment variable that picks the gate rule.

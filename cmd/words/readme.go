@@ -169,7 +169,7 @@ func readme(c *catalog) string {
 	p("")
 	p("## Renaming something")
 	p("")
-	p("A `name` row is the name of a building, tech, badge, age and so on. The game looks things up by key, never by name, so a rename is safe for saves. It does show up in other places, which the import lists for you after it applies the row: wiki pages under `site/docs`, the landing page, and tests that quote the old name. The wiki's tech tables are regenerated for you. For a line that is not a name, the import lists the wiki pages that still quote it word for word. The other pages are yours to edit, and the wiki's pictures of the game are redrawn with `go test -tags mapcapture -run TestWriteSiteScreens ./ui`.")
+	p("A `name` row is the name of a building, tech, badge, age and so on. The game looks things up by key, never by name, so a rename is safe for saves. It does show up in other places, which the import lists for you after it applies the row: wiki pages under `site/docs`, the landing page, and tests that quote the old name. For a line that is not a name, the import lists the wiki pages that still quote it word for word. The other pages are yours to edit.")
 	p("")
 	p("Three kinds of name have a second copy that must match, and `same_as` keeps them together: an expedition's name (the badge case has its own copy), a theme's name (the same), and a title a badge gives. A trade route's name and description also decide how the route travels on the map: the map looks for words such as rail, ship, port, air and warp.")
 	p("")
@@ -181,7 +181,7 @@ func readme(c *catalog) string {
 	p("- a slot in braces is filled in: `{subject}` with the name of the expedition, civilization or harbinger, `{res}` with a resource, `{amt_res}` with an amount and its resource;")
 	p("- a full stop is added, so a sentence is written without one.")
 	p("")
-	p("A sentence in an `any` pool can turn up in every age, so it must not name anything that belongs to one era. The other pools are held to their ages. Each catalog also has to keep its mix: about one sentence in five of 3 to 6 words, about one in ten over 33, and at least three in ten told flat with no joke. `go test ./flavor` checks the mix after an import, so a batch of rewrites that all get longer or all get shorter can fail it even when every row is fine.")
+	p("A sentence in an `any` pool can turn up in every age, so it must not name anything that belongs to one era. The other pools are held to their ages. Each catalog also has to keep its mix: about one sentence in five of 3 to 6 words, about one in ten over 33, and at least three in ten told flat with no joke. The mix is checked by hand after an import: a batch of rewrites that all get longer or all get shorter can upset it even when every row is fine.")
 	p("")
 	for _, mo := range moments {
 		var pools, ofAge []string
@@ -234,7 +234,7 @@ func readme(c *catalog) string {
 	p("go run ./cmd/words import             # apply every filled row, then build the game")
 	p("```")
 	p("")
-	p("The import prints each row it refuses and why, applies the rest, and builds the game. It does not run the tests: run `go test ./...` next. `go run ./cmd/words status` shows how much is rewritten and how much is left, and `go run ./cmd/words export` writes these files again from the source as it now stands, keeping what you have typed.")
+	p("The import prints each row it refuses and why, applies the rest, and builds the game. Next, run `go build ./...` and `go vet ./...`. `go run ./cmd/words status` shows how much is rewritten and how much is left, and `go run ./cmd/words export` writes these files again from the source as it now stands, keeping what you have typed.")
 	return b.String()
 }
 

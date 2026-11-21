@@ -13,7 +13,7 @@ import (
 //
 // All three clear the WCAG AA luminance floors AND the colorblind-distinguishability
 // guard (Positive vs Negative stay separated under both deuteranopia and protanopia
-// simulation), enforced by contrast_test.go.
+// simulation), enforced by the contrast check.
 
 // signedGlyphs are shared by the colorblind-safe themes: ▲ for gains, ▼ for losses.
 const (

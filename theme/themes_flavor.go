@@ -9,7 +9,7 @@ import (
 // themes, and a badge of its own for each of the rest. They are all
 // Accessible: false. Because they're not accessible, the
 // colorblind-distinguishability guard does not apply to them, but every WCAG AA
-// luminance floor in contrast_test.go DOES, and each theme below is tuned to clear
+// luminance floor the contrast check enforces DOES, and each theme below is tuned to clear
 // those with margin (Text/Label/Positive/Negative/Highlight vs Background >= 4.5,
 // Dim/Accent vs Background >= 3.0, Text-on-Selection >= 4.5).
 //

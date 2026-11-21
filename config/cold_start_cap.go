@@ -11,7 +11,7 @@ import (
 // CarriedSupplyTargets is how many targets of the new age the carried required
 // copies get to make a first copy's price in: one. A carried supply that
 // cannot make the price in that time is a trickle against it, and does not
-// count (the cold-start rule, smoke.coldStart.affords).
+// count (the cold-start rule).
 const CarriedSupplyTargets = 1.0
 
 // handGatherable mirrors the gather command: food, wood and stone, by hand, up

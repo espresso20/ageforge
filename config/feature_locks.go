@@ -11,9 +11,8 @@ import "fmt"
 // inert: the command is open, as it was before the locks. So the table lists
 // the locks the tree is designed around, and some of them may wait for
 // content: adding a tech with the key a lock names switches that lock on,
-// with nothing else to change (LiveFeatureLocks, in tech_effects_test.go,
-// tells the two apart, and the static research check lists the ones still
-// waiting).
+// with nothing else to change (LiveFeatureLocks tells the two apart, and the
+// static research check lists the ones still waiting).
 //
 // A game that already used a command keeps it for the rest of its run,
 // whatever it has researched (the game's GameSave.GrantedFeatures).

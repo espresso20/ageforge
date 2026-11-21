@@ -36,7 +36,7 @@ package game
 //   - A moderate town (devotion 1) reads 1/4.5 = 22%, the low band: the odds
 //     the game was tuned and measured at, when the bands read the fill of a
 //     store faith could never fill and every town sat in the low band
-//     (smoke's TestFaithNeverFilledTheGeneralStore keeps that arithmetic).
+//     (the faith arithmetic keeps that from happening).
 //   - The middle band starts at a devotion of 1.125 and the top band above
 //     3.375: twice the moderate set reads 44%, three times 67%, and three
 //     and a half times 78%.
@@ -104,7 +104,7 @@ type FaithSave struct {
 // run totals are m, in [0,1]: FaithDevotionOf × FaithKeptOf / FaithFullSets.
 // 0 until the town's faith buildings have made something and there is a
 // moderate set to measure them against. Pure: the rule itself, for the
-// engine and for the smoke suite's static check.
+// engine and for the static checks.
 func FaithStrengthOf(held float64, m FaithSave) float64 {
 	strength := float64(FaithDevotionOf(m)*FaithKeptOf(held, m)) / FaithFullSets
 	if strength > 1 {

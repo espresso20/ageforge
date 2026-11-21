@@ -175,7 +175,7 @@ func MilestoneTitles() []TitleDef {
 
 // Milestones returns all milestone definitions, across the settlement,
 // builder, scholar, military, trade, faith, epoch and ages categories.
-// smoke/static_milestones.go proves every one can be completed.
+// Every one must be completable.
 func Milestones() []MilestoneDef {
 	return []MilestoneDef{
 
@@ -197,7 +197,7 @@ func Milestones() []MilestoneDef {
 		// The population ladder (small_village to global_city) sits at most
 		// 40% of the housing ceiling of the age each rung is meant for
 		// (Primitive, Bronze, Classical, Renaissance, Industrial, Atomic,
-		// Digital). smoke/static_milestones.go proves every rung.
+		// Digital).
 		{
 			Name: "Small Village", Key: "small_village",
 			Description:   "Reach a population of 250.",
@@ -345,8 +345,7 @@ func Milestones() []MilestoneDef {
 		},
 		// The build-count ladder (early_builder, seasoned_builder,
 		// master_builder, grand_architect) is meant for the Bronze, Iron,
-		// Colonial and Modern Ages; smoke/static_milestones.go proves each
-		// fits a run.
+		// Colonial and Modern Ages, and each must fit a run.
 		{
 			Name: "Early Builder", Key: "early_builder",
 			Description:   "Build 250 structures total.",
@@ -417,7 +416,7 @@ func Milestones() []MilestoneDef {
 		},
 		// grand_architect: 1,365 structures (it was 2,000): half of the 2,731
 		// every building so far makes when each is built once to its walled
-		// store, the most a build-count milestone may ask (smoke.MilestoneBuildShare).
+		// store, the most a build-count milestone may ask.
 		{
 			Name: "Grand Architect", Key: "grand_architect",
 			Description: "Build 1,365 structures total.",
@@ -487,8 +486,7 @@ func Milestones() []MilestoneDef {
 		// Industrial Age, Renaissance Mind in the Electric Age, Tech Master
 		// in the Information Age): the techs every age before it holds, plus
 		// half of that age's own, rounded up. A content batch that adds techs
-		// to those ages or to any before them sets the five again
-		// (TestTechCountMilestonesKeepTheirAge says which have drifted).
+		// to those ages or to any before them sets the five again.
 		{
 			Name: "Tech Pioneer", Key: "tech_pioneer",
 			Description:  "Research 22 techs.",

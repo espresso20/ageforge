@@ -113,7 +113,7 @@ func read(root string) (*catalog, error) {
 	if err != nil {
 		return nil, err
 	}
-	rules, err := loadRules(root)
+	rules, err := loadRules()
 	if err != nil {
 		return nil, err
 	}

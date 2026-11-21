@@ -423,8 +423,6 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 		r := c.fromRule(fieldRule{id: "map.lineage.{k}", kind: kindLabel, area: areaMap, seen: seenRegular, age: "primitive_age",
 			where: "What the map calls a kind of building, in its legend and in the line about a district."}, u)
 		return r, "", true
-	case rel == "rules/names.go" && strings.HasPrefix(u.decl, "Count"):
-		return nil, "a name the tests count the wiki's numbers by", true
 	}
 	return nil, "", false
 }

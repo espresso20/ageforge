@@ -3,14 +3,12 @@ package config
 // The gate rule: what the gate out of an age asks for in buildings, besides
 // the keystone and the wonder. It is written in the tables (the gates in
 // Ages(), authored literals); the derivation (GateTown) is in
-// gate_rule_test.go, where a test recomputes what each gate must ask for from
-// it and fails when a gate asks for less. This file keeps what the cold start
-// and the smoke covenants read (GateTownHeldTechs).
+// this file. This file keeps what the cold start reads (GateTownHeldTechs).
 //
 // No gate asks for an amount of a resource. A gate asks for the town its age
 // is priced for: the reference town, which holds TownCopies copies of every
-// building that is not storage (the reference store's town, and smoke's
-// RefCopies; the town rule, town_rule.go, says why eight). For the
+// building that is not storage (the town rule, town_rule.go, says why eight).
+// For the
 // gate that leaves age A, on top of whatever the gate asks for today (a
 // count is never lowered):
 //
@@ -35,8 +33,8 @@ package config
 //  4. A knowledge building is not asked for TownCopies: it climbs at its own
 //     rate and the gate asks the spend it always did (knowledge_rule.go).
 //
-// The covenants on gates (smoke.StaticGates) hold the result: each building
-// asked for is buildable in A and sourced from a cold start.
+// Each building a gate asks for must be buildable in A and sourced from a cold
+// start.
 
 // GateTownHeldTechs is the techs a run cannot leave age A without: the
 // keystone of the wonder of every age up to and including A, and everything

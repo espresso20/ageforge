@@ -7,7 +7,7 @@ package config
 // on them:
 //
 //   - a gate asks for StorageRuleCopies copies of the storage building of the
-//     age it leaves (GateStorageCopies, in storage_rule_test.go), so a town
+//     age it leaves (GateStorageCopies), so a town
 //     that passes arrives with five of each;
 //   - a storage building climbs at StorageRate a copy (Kittens Game's barn),
 //     and its price is its only limit: it has no copy cap;

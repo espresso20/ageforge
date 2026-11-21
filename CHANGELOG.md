@@ -8,6 +8,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - Releases are published to a separate public repository; the updater checks file checksums.
+- Badge shields are drawn in single screen pixels instead of 3-pixel blocks: crisper outlines with a double inner edge, and finer emblems (gear teeth, scale pans on chains, sword with fuller and guard, feathered wings, tapered rays).
 - Badges are drawn as wire-frame pixel shields in a neon halo, one emblem per domain with strokes added per tier. The Badges screen shows the selected badge's shield beside the list (dim until earned), and earning a badge shows a short notice with its shield that closes after a few seconds or on any key or click.
 - The Research board shows the queue as a column on a wide window: the tech in work with a bar and its time left, then each queued tech with its place, its time and when it starts, and `+N more` when the list is long. The proportional timeline is gone. Queued techs and the one in work stay in the table with their place in the queue (`#2`) or `in work` instead of leaving it, so the board is never empty. Queueing a tech that cannot start says what was added ("queued Pottery and 2 techs it needs") under the bar across the top. `Backspace` or `Delete` takes the picked tech out of the queue. The ten lanes show only on a window tall enough to hold them beside the queue.
 - Every button is one quiet flat plate: muted at rest, a thin outline or accent text on the accent kinds, and an accent fill with bold type under the pointer or when picked. The three-row shaded action button is gone; gather, advance, army, expedition, faction, harbinger, wonder, prestige and dialog buttons are the same one-row plate, and the picked row of the Buildings box keeps its small Build plate with the Enter hint beside it.
@@ -202,6 +203,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 - The `icons` command, the Nerd Font installer and the `nerd` map glyph set are gone, and the Font Snob badge with them. The window draws with its own fonts, which have no such icons. Option+B and Option+F no longer act as Home and End on an empty prompt.
 - The badges drawn in characters (frames, rings and the eleven drawings) are gone, along with the one-line badge notice in the header.
+- Removed the automated test suite.
 
 ### Fixed
 - The detail under the Buildings list wraps its notice, description and flavour line at word boundaries beside the Sell and Upgrade buttons instead of cutting them with an ellipsis, and takes the free rows between the list and its frame; when rows run out the flavour line goes first, then the description is held to two rows.

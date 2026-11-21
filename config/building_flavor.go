@@ -9,7 +9,7 @@ package config
 // Voice: dry, occasionally absurdist, age-appropriate. Early ages read like
 // caveman field notes; late ages drift toward existential dread. The joke is
 // always on the game world, never on the player. Keep each line one sentence,
-// plain text — no color tags or format directives (a test enforces this).
+// plain text — no color tags or format directives.
 
 // buildingFlavor maps a building key to its flavor line. Keep entries grouped
 // by age for readability; coverage is broad but intentionally not exhaustive.

@@ -5,8 +5,8 @@ import "math"
 // TechEffectKind says what one effect of a tech changes. A tech's effect is a
 // kind, a target where the kind takes one, and a value: "output of gold,
 // +10%", "housing, +10%", "build cost, 3% less". The kind is one of the
-// constants below, never a free-form key, so a test can list every kind and
-// check that the engine delivers each one.
+// constants below, never a free-form key, so every kind can be listed and
+// checked against the engine.
 //
 // A tech's bonus has its own layer. The game's other bonuses (milestones,
 // wonders, events, festivals, boons) add up in pools, and a production pool
@@ -16,8 +16,8 @@ import "math"
 // Inside the layer, bonuses on the same thing add up (two +5% give +10%) and
 // nothing caps the sum. A bonus that cuts a time or a price multiplies with
 // the others of its kind instead (two 3% cuts leave 0.97 x 0.97) and has a
-// floor (TechEffectKey.Limits); TestTechHeadroom checks that every tech
-// taken together stays clear of each one.
+// floor (TechEffectKey.Limits). Every tech taken together must stay clear of
+// each one.
 //
 // The kinds are the ones the engine applies today. A kind is added here in
 // the same change that teaches the engine to apply it.

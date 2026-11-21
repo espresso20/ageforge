@@ -3,8 +3,7 @@ package config
 // badge_catalog.go is the badge catalog: the families made from the game's
 // tables, the ladders over the account's counters, and the hand-written
 // specials. badges.go has the types; rules/badges.go expands the families
-// when the ruleset is compiled; smoke/static_badges.go proves each badge
-// can be earned.
+// when the ruleset is compiled. Each badge must be earnable.
 //
 // A badge that cannot be shown to be earnable does not ship.
 
@@ -217,7 +216,7 @@ func BadgeFamilies() []BadgeFamilyDef {
 		// F6. A lineage's buildings across every run, each lineage on its
 		// own scale. The top rung is what a dedicated player builds of the
 		// lineage over the badge horizon (BadgeMaxRuns, 25 runs): the
-		// reference lingering player (smoke.RefLinger), who buys new copies
+		// reference lingering player, who buys new copies
 		// (an upgrade is not a built copy) and does not stop at a knowledge
 		// building's full-rate cap, playing the four-run plan (a run to the
 		// Renaissance Age, one to the Digital Age, one to the Fusion Age, then
@@ -228,9 +227,7 @@ func BadgeFamilies() []BadgeFamilyDef {
 		// below is 0.4 of the one above, so the first rung falls in the second
 		// run of the plan (the third for energy and hacker, which start late).
 		// After a balance change that moves the gates or prices, derive the
-		// ladders again: LINEAGE_DERIVE=1 go test ./smoke -run
-		// TestLineageDerivation -v prints them, and
-		// TestLineageLegendariesAreOnAnIdleScale fails until these match.
+		// ladders again by hand from the gates and prices above.
 		{
 			Family: "lineage", Source: BadgeSourceLineages,
 			Key: "lineage.{key}.{n}", Name: "{name} {rung}",

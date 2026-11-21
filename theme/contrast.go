@@ -17,7 +17,7 @@ import (
 //     blind to this; it's what catches an Accent ≈ Positive collision for a
 //     colorblind player.
 //
-// The contrast TEST (contrast_test.go) drives all of this against the shipped
+// The contrast TEST drives all of this against the shipped
 // themes; these are the reusable primitives.
 
 // srgbToLinear inverts the sRGB transfer function for one channel in [0,1].
@@ -57,7 +57,7 @@ func ContrastRatio(a, b Color) float64 {
 // Its distances therefore land ~1/100th of conventional ΔE numbers — e.g. a vivid
 // red vs green here is ~0.72, not ~72. Do not reach for a "ΔE ~ 1 = JND" intuition;
 // these are this library's units. The threshold below is calibrated empirically
-// against the shipped palettes (see contrast_test.go):
+// against the shipped palettes:
 //
 //	accessible blue/orange ± under deut/protan sim: ~0.63–0.78  (must PASS)
 //	red/green under deut/protan sim:                ~0.26–0.43  (must FAIL — collapses)

@@ -41,13 +41,12 @@ type AgeDef struct {
 // names a building you can build in the age you advance FROM (the age lock
 // forbids building an older age's buildings), and the last required copy costs
 // at most half the most storage buildable by then, with no discounts assumed.
-// smoke.StaticGates checks this and smoke/static_test.go fails the build if
-// a gate breaks it.
+// A gate that breaks this is a bug in the gate, not in the rule.
 //
 // The gate rule (gate_rule.go): the gate out of an age asks for the reference
 // town's copies of every building the age introduced that makes something and
 // that a run can build, on top of the counts it always asked (a count is never
-// lowered). TestGatesFollowTheTownRule holds this table to it.
+// lowered). This table must match the town rule.
 //
 // No gate asks for an amount of any resource (the owner's decision of
 // 2026-10-11). An age's research goes to its techs, and the one of them the

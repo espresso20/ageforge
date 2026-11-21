@@ -83,7 +83,7 @@ func run(args []string, wd string, out io.Writer) error {
 		}
 		return export(c, dir, out)
 	case "import":
-		return importSheets(root, dir, importOptions{dryRun: *dry, noSame: *noSame, build: true, regenerate: true}, out)
+		return importSheets(root, dir, importOptions{dryRun: *dry, noSame: *noSame, build: true}, out)
 	case "status":
 		return status(root, out)
 	case "left":

@@ -17,8 +17,7 @@ import (
 // building's first price, rate and output per copy (the buildings_*.go
 // files), a tech's price (research.go), a gate's amounts
 // and counts (ages.go), and how long each age is meant to last (AgeTargets,
-// below). Nothing rewrites them when the game loads; a golden record of all
-// of them (testdata/golden_tables.json) fails the build when one moves.
+// below). Nothing rewrites them when the game loads.
 //
 // What is still worked out, from those tables and never the other way round:
 //
@@ -304,14 +303,12 @@ const FlowCopies = float64(TownCopies)
 // techs: their all-production bonuses filled it from the Industrial Age on
 // and reached +200% in the Electric Age. Techs no longer join the pool.
 // Milestones and wonders fill it instead, later: the Industrial to Atomic
-// Ages are what the smoke suite's greedy bot held when it left each age on
-// a first run (the progression report's production_all_earned, the median
-// of its seeds), about two thirds of what a player with every milestone
+// Ages are what a greedy first-run player held when it left each age, about
+// two thirds of what a player with every milestone
 // can hold. Nothing run per PR goes past the Atomic Age: every age from the
 // Modern on is that share of what can be held there.
-// The static caps report (smoke.StaticCaps) lists, age by age, the pool of
-// a player with every milestone, wonder and monument, and a smoke test
-// fails if a number here is above it.
+// Each number here must stay at or below the pool of a player with every
+// milestone, wonder and monument, age by age.
 var ProductionAllHeld = map[string]float64{
 	"industrial_age":   0.85,
 	"victorian_age":    0.95,
