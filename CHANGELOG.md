@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- Large numbers and headings share one lettering on Pause, Epoch and People; People figures are a little lighter and shorter than before.
 - The Plan, Logs and Map panels have the `×` close button in their top right corner, like every other panel.
 - Section headings in the text panels (Help, Wonders, Buildings, Factions and the rest) share one look with Stats: the name in the title colour, then a faint rule. Factions, Harbinger and Epoch no longer repeat the panel's name as their first line.
 - Panels that scroll show a scroll bar down their right edge when there is more than fits, and the typing hint at a panel's foot is a button that puts the command in the prompt.
