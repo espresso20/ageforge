@@ -96,7 +96,6 @@ func ShowRunEnding(om *OverlayManager, end game.RunEnding) {
 
 // settings reads the display settings into the view.
 func (e *ending) settings() {
-	e.view.plain = e.set.Tier == mapmodel.TierASCII
 	e.view.motion = e.set.Motion
 }
 
@@ -259,7 +258,7 @@ func (e *ending) Paint(p *kit.Painter) {
 	} else {
 		e.stopClock()
 	}
-	e.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, e.pal, e.view.plain)
+	e.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, e.pal)
 	// The theme's own weather, at full, from the heavy blow to the film's
 	// end: twice over, in the cells the film leaves empty.
 	if s, f := e.sc.span(e.sc.frame); e.view.motion && e.view.prestige &&
@@ -272,8 +271,8 @@ func (e *ending) Paint(p *kit.Painter) {
 			n := e.sc.frame + 57 - dawn + 64
 			x, y, w, h := e.GetRect()
 			scr := cellsFor(p, e, r)
-			drawThemeEffect(scr, x, y, w, h, effect, n, e.view.plain)
-			drawThemeEffect(scr, x, y, w, h, effect, n+29, e.view.plain)
+			drawThemeEffect(scr, x, y, w, h, effect, n)
+			drawThemeEffect(scr, x, y, w, h, effect, n+29)
 		}
 	}
 }

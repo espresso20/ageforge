@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
@@ -84,8 +83,6 @@ type menuView struct {
 	// elite is the forge master's line: a mark, the words, a mark. Empty
 	// for everyone else.
 	elite [3]string
-	// plain: the plain glyph set, which has no blocks.
-	plain bool
 	// pix: the window shows pictures, so a switch is drawn as one.
 	pix bool
 }
@@ -335,7 +332,7 @@ func (sc *menuScene) render(pal *menuPalette, v *menuView, town *menuTown, mf ma
 	L := sc.L
 	g := newMGrid(L.w, L.h)
 	sc.hits, sc.switches = sc.hits[:0], sc.switches[:0]
-	sc.keys = keySet{plain: v.plain, glyph: func(x, y int) rune { return g.c[y*g.w+x].r }}
+	sc.keys = keySet{glyph: func(x, y int) rune { return g.c[y*g.w+x].r }}
 	switch {
 	case L.compact:
 		sc.renderCompact(g, pal, v)
@@ -356,7 +353,7 @@ func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *m
 	drawMenuStars(g, pal, sc.stars, sc.t)
 	town.draw(g, pal, 0, L.top, L.landW, L.h-L.top, mf, sc.strike > 0.45)
 	sc.sparks.draw(g, pal)
-	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, 0.5, v.plain)
+	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, 0.5)
 	if tag := fitOption([]string{menuTagline(v.ages)}, L.w); tag != "" {
 		g.textOn(centred(L.w, runeLen(tag)), L.tag, tag, pal.ink, pal.bg, false)
 	}
@@ -419,7 +416,7 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 		g.box(3, 1, L.w-6, L.h-2, false, pal.faint)
 	}
 	// The plate: the fire, with the anvil standing in front of it.
-	sc.forge.draw(g, pal, L.px+1, L.py+1, sc.strike, v.plain)
+	sc.forge.draw(g, pal, L.px+1, L.py+1, sc.strike)
 	g.box(L.px, L.py, L.pw, L.ph, true, pal.dim)
 	if plate := fitOption([]string{rowid.Line("ui.menu_page.renderForge.01", " Plate I. The forge "), rowid.Line("ui.menu_page.renderForge.02", " The forge ")}, L.pw-4); plate != "" {
 		g.textOn(L.px+centred(L.pw, runeLen(plate)), L.py+L.ph-1, plate, pal.dim, pal.bg, false)
@@ -432,7 +429,7 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 		g.text(centred(L.w, runeLen(line)), L.line1, line, pal.dim, false)
 	}
 	ax, _ := sc.anvilAt()
-	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, (ax-float64(L.wx))/float64(menuWordW*L.sx), v.plain)
+	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, (ax-float64(L.wx))/float64(menuWordW*L.sx))
 	tags := []string{rowid.Line("ui.menu_page.renderForge.07", "begun at a campfire")}
 	if v.edition != "" {
 		tags = []string{rowid.Line("ui.menu_page.renderForge.08", "begun at a campfire · the ") + v.edition + rowid.Line("ui.menu_page.renderForge.09", " edition, much enlarged"), rowid.Line("ui.menu_page.renderForge.10", "begun at a campfire")}
@@ -474,16 +471,7 @@ func (sc *menuScene) drawElite(g *mGrid, pal *menuPalette, v *menuView, x, y, w 
 	if v.elite[1] == "" {
 		return
 	}
-	// The plain glyph set has no hammers or cogs: a star stands in.
 	left, right := v.elite[0], v.elite[2]
-	if v.plain {
-		if mapmodel.Fold([]rune(left)[0], mapmodel.TierASCII) == '?' {
-			left = "*"
-		}
-		if mapmodel.Fold([]rune(right)[0], mapmodel.TierASCII) == '?' {
-			right = "*"
-		}
-	}
 	n := runeLen(left) + runeLen(v.elite[1]) + runeLen(right) + 4
 	if n > w {
 		return

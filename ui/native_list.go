@@ -39,7 +39,7 @@ func newNativeList() *nativeList {
 	l.list.Style = kit.Style{Fg: kit.Role(theme.RoleText), Bg: kit.Role(theme.RoleBackground)}
 	l.list.SelectedStyle = kit.Style{Fg: kit.Role(theme.RoleBackground), Bg: kit.Role(theme.RoleText)}
 	l.list.AfterRow = func(p *kit.Painter, row image.Rectangle, _ int, selected, hover bool) {
-		lightRow(p, row, selected, hover, row.Max.X-2, false)
+		lightRow(p, row, selected, hover, row.Max.X-2)
 	}
 	l.list.OnMove = func(i int) { l.fire(l.changed, i) }
 	l.list.OnChoose = l.choose

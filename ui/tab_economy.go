@@ -58,9 +58,8 @@ type EconomyTab struct {
 
 	state game.GameState
 	// trend is the amounts of the last few minutes, for the Resources box's
-	// trend lines; plain says whether to draw in ASCII; now is the clock.
+	// trend lines; now is the clock.
 	trend resHistory
-	plain func() bool
 	now   func() time.Time
 	// resPage is the page of the Resources box on show (Ctrl+R turns it),
 	// and resPages how many its rows took at the last draw.
@@ -103,12 +102,12 @@ func NewEconomyTab(app *appLoop) *EconomyTab {
 		t.resPages = pages
 		t.resPage = ((t.resPage % pages) + pages) % pages
 		return strings.Join(lines, "\n")
-	}, func() bool { return t.plain != nil && t.plain() })
+	})
 	t.resourceTV.SetBorder(true)
 	t.resourceTV.tip, t.resourceTV.tipFor = &app.feel.tip, t.rateTip
 
 	t.resourceTV.wheel = t.wheelResources
-	t.buildBox = newBuildBox(func() bool { return t.plain != nil && t.plain() }, app)
+	t.buildBox = newBuildBox(app)
 
 	t.constructionTV = newFitView(func(w, h int) string {
 		return strings.Join(layoutConstruction(t.state, w, h), "\n")
@@ -182,7 +181,7 @@ func (t *EconomyTab) Refresh(state game.GameState) {
 
 // rows is the Resources box's rows for the snapshot on show.
 func (t *EconomyTab) rows() []resRow {
-	return resourceRowsFor(t.state, &t.trend, t.plain != nil && t.plain())
+	return resourceRowsFor(t.state, &t.trend)
 }
 
 // ScrollUp and ScrollDown turn the build cards a page.

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
@@ -35,9 +34,6 @@ type advancePanel struct {
 	// flashAt is when the status row's line was set.
 	flashAt time.Time
 
-	// settings reads the glyph tier.
-	settings func() mapSettings
-
 	now func() time.Time
 }
 
@@ -57,7 +53,6 @@ const advancePanelName = "charter"
 // numbers of NewDashboard's text rows.)
 func (d *Dashboard) registerAdvancePanel() {
 	d.advancePanel.engine = d.engine
-	d.advancePanel.settings = d.mapSettings
 	d.advancePanel.prompt = d.researchPanel.prompt
 	d.advancePanel.toPrompt = d.handToPrompt
 	d.advancePanel.buttons.wire(d.app)
@@ -100,9 +95,6 @@ func (p *advancePanel) Layout(r image.Rectangle) {
 		p.ui.flash, u.flash = "", ""
 	}
 	p.grid = renderAdvance(p.view, u, r.Dx(), r.Dy())
-	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
-		p.grid.fold()
-	}
 }
 
 // Paint puts the panel on the kit's painter in theme colors.

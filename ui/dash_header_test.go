@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -344,13 +343,6 @@ func TestHeaderNotice(t *testing.T) {
 	v.Notice = strings.Repeat("long notice ", 20)
 	if top := renderHeader(v, 80, 2).Lines()[0]; runeLen(top) != 80 || !strings.Contains(top, "Esc") || !strings.Contains(top, "…") {
 		t.Errorf("a very long notice: %q", top)
-	}
-}
-
-// The plain tier folds the header the dashboard draws.
-func TestHeaderPlainTier(t *testing.T) {
-	if !headerPlain(mapSettings{Tier: mapmodel.TierASCII}) || headerPlain(mapSettings{Tier: mapmodel.TierUnicode}) {
-		t.Error("headerPlain does not follow the glyph tier")
 	}
 }
 

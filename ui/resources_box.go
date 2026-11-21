@@ -57,10 +57,9 @@ type resRow struct {
 	progress bool
 	// magnitude draws a bar of how big the stock is (fill, on a log scale),
 	// and trend the line of where it has been; both are for an ordinary
-	// resource. plain draws them in ASCII.
+	// resource.
 	magnitude bool
 	trend     []float64
-	plain     bool
 	glyph     string // the marker after the bar: "▼" falling
 	glyphCol  string
 	detail    string // a second line for a roomy box, tags and all
@@ -69,12 +68,11 @@ type resRow struct {
 // resourceRows is the box's rows for a snapshot: every unlocked resource, in
 // key order.
 func resourceRows(state game.GameState) []resRow {
-	return resourceRowsFor(state, nil, false)
+	return resourceRowsFor(state, nil)
 }
 
-// resourceRowsFor is resourceRows with the trend history to draw and the
-// glyph tier: plain for ASCII only.
-func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRow {
+// resourceRowsFor is resourceRows with the trend history to draw.
+func resourceRowsFor(state game.GameState, hist *resHistory) []resRow {
 	keys := keysWhere(state.Resources, func(key string, rs game.ResourceState) bool {
 		if !rs.Unlocked {
 			return false
@@ -103,7 +101,7 @@ func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRo
 		default:
 			r := storeRow(rs, state.TickIntervalMs)
 			r.fill = magnitudeFill(rs.Amount, top)
-			r.magnitude, r.plain = true, plain
+			r.magnitude = true
 			r.trend = hist.points(key, rs.Amount)
 			rows = append(rows, r)
 		}
@@ -369,7 +367,7 @@ func (f resFormat) line(r resRow) string {
 		case r.progress:
 			b.WriteString(progressCells(r.fill, f.bar))
 		case r.magnitude:
-			b.WriteString(magnitudeCells(r.fill, f.bar, r.plain))
+			b.WriteString(magnitudeCells(r.fill, f.bar))
 		default:
 			b.WriteString(strings.Repeat(" ", f.bar))
 		}
@@ -377,7 +375,7 @@ func (f resFormat) line(r resRow) string {
 	if f.trend > 0 {
 		b.WriteString(gap)
 		if r.magnitude {
-			b.WriteString(trendCells(r.trend, r.plain, r.amtColor, f.trend))
+			b.WriteString(trendCells(r.trend, r.amtColor, f.trend))
 		} else {
 			b.WriteString(strings.Repeat(" ", f.trend))
 		}

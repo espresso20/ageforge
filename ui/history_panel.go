@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
@@ -57,8 +56,6 @@ type historyPanel struct {
 
 	// src reads the engine: the run's recorder, the filed runs and the save's name.
 	src func() (*game.RunHistory, game.RunArchiveView, string)
-	// settings reads the glyph tier.
-	settings func() mapSettings
 
 	set            *rules.Set
 	hist           *game.RunHistory
@@ -306,7 +303,7 @@ func (p *historyPanel) Layout(r image.Rectangle) {
 		return
 	}
 	p.w, p.h = r.Dx(), r.Dy()
-	p.plain = pictureCell == nil || p.settings != nil && p.settings().Tier == mapmodel.TierASCII
+	p.plain = pictureCell == nil
 	p.build()
 	g := newXGrid(p.w, p.h)
 	g.box(0, 0, p.w, p.h, xBorder, txtHistoryTitle.String(), xTitle, false)

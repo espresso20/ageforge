@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -42,8 +41,6 @@ type treePanel struct {
 
 	// engine starts research and adds to the plan from the card.
 	engine *game.GameEngine
-	// tier reads the glyph tier (the map glyphs setting).
-	tier func() mapmodel.GlyphTier
 	// back returns to the Research board: Esc does it once the card is closed.
 	back func()
 }
@@ -99,7 +96,6 @@ func (p *treePanel) closeBack() bool {
 // update takes a new snapshot and lays the tree out again.
 func (p *treePanel) update(state game.GameState) {
 	p.state = state
-	p.view.ascii = p.tier != nil && p.tier() == mapmodel.TierASCII
 	p.layout()
 }
 
@@ -107,10 +103,10 @@ func (p *treePanel) update(state game.GameState) {
 // selection on a tech that is on the map, and scrolls it into view.
 func (p *treePanel) layout() {
 	geom := treeGeomFor(p.w, p.view.far)
-	p.model = buildTree(p.state, geom, p.view.ascii, p.view.sel)
+	p.model = buildTree(p.state, geom, p.view.sel)
 	if p.model.by[p.view.sel] == nil {
 		p.view.sel, p.view.card = p.model.home(), false
-		p.model = buildTree(p.state, geom, p.view.ascii, p.view.sel)
+		p.model = buildTree(p.state, geom, p.view.sel)
 	}
 	p.model.follow(&p.view, p.w, p.h)
 }
@@ -164,9 +160,6 @@ func (p *treePanel) Paint(p2 *kit.Painter) {
 	}
 	p.view.prompt = p.prompt != nil && p.prompt() != ""
 	grid := renderTree(p.state, p.model, p.view, r.Dx(), r.Dy())
-	if p.view.ascii {
-		foldPlain(grid)
-	}
 	lanes := p.model.lanes
 	paintGridKit(p2, grid, r.Min, newGridPalette(len(lanes), func(i int) string { return lanes[i].Hue }))
 	if p.view.card {

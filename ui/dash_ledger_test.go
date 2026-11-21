@@ -122,31 +122,6 @@ func TestLedgerAtThreeSizes(t *testing.T) {
 	}
 }
 
-// TestLedgerInPlainASCII: on the plain glyph tier the header is nothing but
-// ASCII at every size, its bars in plain marks.
-func TestLedgerInPlainASCII(t *testing.T) {
-	restoreForge(t)
-	for _, age := range []string{"bronze_age", "quantum_age"} {
-		d, pages, _ := stagedDashboard(t, age)
-		plainTier(d)
-		for _, sz := range ledgerSizes {
-			w, h := sz[0], sz[1]
-			rows := headerRowsOn(t, d, pages, w, h)
-			for i, row := range rows {
-				for _, r := range row {
-					if r > 0x7e {
-						t.Errorf("%s at %dx%d: row %d has %q: %q", age, w, h, i+1, string(r), row)
-						break
-					}
-				}
-			}
-			if !strings.Contains(strings.Join(rows, ""), "#") {
-				t.Errorf("%s at %dx%d: no bar in plain marks:\n%s", age, w, h, strings.Join(rows, "\n"))
-			}
-		}
-	}
-}
-
 // TestLedgerReadsTheAdvancePanel: the long bar, the pillars' counts and the
 // year are the Advance panel's own numbers, from the same view and the same
 // held calendar.

@@ -5,7 +5,6 @@ import (
 	"image"
 	"strings"
 
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -383,8 +382,6 @@ type headerBox struct {
 	// view reads the header's facts for a box w cells wide (the notice is
 	// written to fit).
 	view func(w int) headerView
-	// plain reads the glyph tier: the plain one folds the header to ASCII.
-	plain func() bool
 	// run runs a command line, as if it had been typed.
 	run    func(string)
 	grid   *xgrid
@@ -400,8 +397,8 @@ type headerBox struct {
 	lit  image.Rectangle
 }
 
-func newHeaderBox(view func(w int) headerView, plain func() bool, run func(string), app *appLoop) *headerBox {
-	b := &headerBox{view: view, plain: plain, run: run}
+func newHeaderBox(view func(w int) headerView, run func(string), app *appLoop) *headerBox {
+	b := &headerBox{view: view, run: run}
 	b.nativeHost = newNativeHost()
 	b.esc.wire(app)
 	return b
@@ -436,9 +433,6 @@ func (b *headerBox) Layout(r image.Rectangle) {
 func (b *headerBox) draw(w, h int) {
 	v := b.view(w)
 	b.grid, b.alerts = renderHeader(v, w, h-2), v.Alerts
-	if b.plain != nil && b.plain() {
-		b.grid.fold()
-	}
 	b.w, b.h = w, h
 }
 
@@ -542,6 +536,3 @@ func paintHot(p *kit.Painter, g *xgrid, org image.Point, pal *expPalette, r imag
 		}
 	}
 }
-
-// headerPlain says the glyph tier is the plain one.
-func headerPlain(s mapSettings) bool { return s.Tier == mapmodel.TierASCII }

@@ -340,7 +340,7 @@ func foldASCII(s string, plain bool) string {
 	if !plain {
 		return s
 	}
-	out := []rune(plainSafe(s))
+	out := []rune(s)
 	for i, c := range out {
 		out[i] = mapmodel.Fold(c, mapmodel.TierASCII)
 	}
@@ -355,7 +355,7 @@ func flushRows(t testing.TB, where string, sim *simScreen, g *mGrid, pal *menuPa
 	t.Helper()
 	sim.Clear()
 	w, h := sim.Size()
-	g.paint(kit.NewPainter(&sim.buf), image.Point{}, pal, plain)
+	g.paint(kit.NewPainter(&sim.buf), image.Point{}, pal)
 	rows := make([]string, h)
 	for y := range rows {
 		row := make([]rune, w)

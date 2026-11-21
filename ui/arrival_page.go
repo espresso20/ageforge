@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/window/kit"
@@ -119,13 +118,13 @@ type arrivalView struct {
 	desc string
 	quip string
 	// epoch: the advance entered a new epoch, named era with its icon.
-	epoch         bool
-	era, eraIcon  string
-	epochHeading  string // the old splash's "New epoch" line, without its rules
-	passed        string // "Ages passed: Stone Age, Bronze Age", "" for none
-	prompt        string
-	lines         []splashLine
-	plain, motion bool
+	epoch        bool
+	era, eraIcon string
+	epochHeading string // the old splash's "New epoch" line, without its rules
+	passed       string // "Ages passed: Stone Age, Bronze Age", "" for none
+	prompt       string
+	lines        []splashLine
+	motion       bool
 }
 
 // underLine is a line under the age's name; lead marks the first, which
@@ -185,12 +184,8 @@ func arrivalLayoutFor(w, h int, v *arrivalView) arrivalLayout {
 		L.under, L.top = L.age.y+2, h
 		return L
 	}
-	// The age: as wide as it goes on one line. The plain glyph set has no
-	// half cells.
-	modes := []ironMode{{sx: 2, sy: 1}, {sx: 1, sy: 1}}
-	if !v.plain {
-		modes = append(modes, ironMode{sy: 1, half: true})
-	}
+	// The age: as wide as it goes on one line.
+	modes := []ironMode{{sx: 2, sy: 1}, {sx: 1, sy: 1}, {sy: 1, half: true}}
 	L.age = placeIron(v.age, modes, room, menuWordH+2)
 	L.age.x, L.age.y = centred(w, L.age.w), 2
 	if h >= 36 {
@@ -201,10 +196,7 @@ func arrivalLayoutFor(w, h int, v *arrivalView) arrivalLayout {
 
 	// The era: twice the height where it fits, and never smaller than the
 	// age would be.
-	big := []ironMode{{sx: 2, sy: 2}, {sx: 1, sy: 2}}
-	if !v.plain {
-		big = append(big, ironMode{sy: 2, half: true})
-	}
+	big := []ironMode{{sx: 2, sy: 2}, {sx: 1, sy: 2}, {sy: 2, half: true}}
 	L.era = placeIron(v.era, append(big, modes...), room, h-8)
 	L.era.x, L.era.y = centred(w, L.era.w), max((h-L.era.h)/2-1, 3)
 	return L
@@ -373,10 +365,10 @@ func (sc *arrivalScene) heatOf(p *ironPlace) func(px, py int) float64 {
 
 // drawName draws a name in iron, or as a line of capitals where it does
 // not fit in iron.
-func (sc *arrivalScene) drawName(g *mGrid, pal *menuPalette, p *ironPlace, plain bool) {
+func (sc *arrivalScene) drawName(g *mGrid, pal *menuPalette, p *ironPlace) {
 	if p.ok {
 		heat := sc.heatOf(p)
-		drawIron(g, pal, p.rows, p.x, p.y, p.mode, heat, plain)
+		drawIron(g, pal, p.rows, p.x, p.y, p.mode, heat)
 		if p.tail != "" {
 			tail := spaced(strings.ToUpper(p.tail))
 			g.text(p.x+(p.w-runeLen(tail))/2, p.y+p.h-1, tail, rampAt(&pal.heat, heat(len(p.rows[0])/2, menuWordH/2)), true)
@@ -478,7 +470,7 @@ func (sc *arrivalScene) renderMoment(pal *menuPalette, v *arrivalView, old, cur 
 	L := sc.L
 	g := newMGrid(L.w, L.h)
 	if L.tiny {
-		sc.drawName(g, pal, sc.name(), v.plain)
+		sc.drawName(g, pal, sc.name())
 		if y := sc.name().y + 2; y < g.h && runeLen(v.prompt) <= g.w {
 			g.text(centred(g.w, runeLen(v.prompt)), y, v.prompt, pal.dim, false)
 		}
@@ -504,7 +496,7 @@ func (sc *arrivalScene) renderMoment(pal *menuPalette, v *arrivalView, old, cur 
 		}
 		light(g, pal, sc.flash)
 		sc.sparks.draw(g, pal)
-		sc.drawName(g, pal, p, v.plain)
+		sc.drawName(g, pal, p)
 		if head := v.epochHeading; head != "" && runeLen(head) <= L.w-4 && p.y >= 2 {
 			x := centred(L.w, runeLen(head))
 			readable(g, pal, x, p.y-2, g.text(x, p.y-2, head, pal.accent, true))
@@ -519,13 +511,10 @@ func (sc *arrivalScene) renderMoment(pal *menuPalette, v *arrivalView, old, cur 
 		sc.drawTowns(g, pal, old, cur, mf, flare)
 		sc.sparks.draw(g, pal)
 		p := &L.age
-		sc.drawName(g, pal, p, v.plain)
+		sc.drawName(g, pal, p)
 		if v.epoch {
 			// Which era this age opens, over its name.
 			era := strings.TrimSpace(v.eraIcon + " " + v.era)
-			if v.plain {
-				era = plainSafe(era)
-			}
 			if runeLen(era) <= L.w-4 {
 				g.text(centred(L.w, runeLen(era)), p.y-2, era, pal.accent, true)
 			}
@@ -663,27 +652,6 @@ func wrapInfo(l infoLine, w int) []infoLine {
 	return out
 }
 
-// plainSafe drops from s every glyph the plain glyph set has no shape for
-// (an era's icon, say), with the blank after it, so that it is left out
-// and not drawn as a question mark.
-func plainSafe(s string) string {
-	var sb strings.Builder
-	skip := false
-	for _, r := range s {
-		if skip && r == ' ' {
-			skip = false
-			continue
-		}
-		skip = false
-		if r > 0x7e && mapmodel.Fold(r, mapmodel.TierASCII) == '?' {
-			skip = true
-			continue
-		}
-		sb.WriteRune(r)
-	}
-	return sb.String()
-}
-
 // plainOf is a line's text without its inks.
 func plainOf(segs []infoSeg) string {
 	var sb strings.Builder
@@ -742,11 +710,6 @@ func infoLines(v *arrivalView, pal *menuPalette, cw int, head bool, tight int) [
 	passed := v.passed == ""
 	for _, l := range v.lines {
 		segs := parseSplashLine(l.text, pal, ground)
-		if v.plain {
-			for i := range segs {
-				segs[i].text = plainSafe(segs[i].text)
-			}
-		}
 		switch l.kind {
 		case skUpgradeRow:
 			upgrades = append(upgrades, plainOf(segs))
@@ -875,7 +838,7 @@ func (sc *arrivalScene) renderInfo(pal *menuPalette, v *arrivalView, info infoLa
 		cur.drawFoot(g, pal, 0, L.top, L.w, L.h-L.top, mf, false)
 		sc.sparks.draw(g, pal)
 		if info.named {
-			sc.drawName(g, pal, &L.age, v.plain)
+			sc.drawName(g, pal, &L.age)
 			L.drawUnder(g, pal, v, L.top-L.under-1)
 		}
 	}

@@ -29,9 +29,7 @@ import (
 // from the dashboard.
 type epochHall struct {
 	details bool
-	// tier is the glyph tier the player draws in (the badge marks and the
-	// plain set); height is the screen's rows. Either may be nil.
-	tier   func() mapmodel.GlyphTier
+	// height is the screen's rows; it may be nil.
 	height func() int
 	// motion says whether things move (the motion setting) and now is the
 	// clock. Either may be nil: still, and the wall clock.
@@ -113,13 +111,6 @@ func (h *epochHall) footer() [][2]string {
 	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", rowid.Line("ui.epoch_hall.footer.05", "page")}, {"Tab", turn}, {"Esc", "close"}}
 }
 
-func (h *epochHall) glyphTier() mapmodel.GlyphTier {
-	if h.tier == nil {
-		return mapmodel.TierUnicode
-	}
-	return h.tier()
-}
-
 func (h *epochHall) rows() int {
 	if h.height == nil {
 		return 40
@@ -140,7 +131,7 @@ func (h *epochHall) provider(state game.GameState, screenW int) string {
 		}
 		mo = hallMotion{on: true, t: float64(now().UnixMilli()) / 1000}
 	}
-	return hallFrontPage(state, screenW, h.rows(), h.glyphTier(), mo, true)
+	return hallFrontPage(state, screenW, h.rows(), mo, true)
 }
 
 // ---- what the screen says ----
@@ -362,43 +353,35 @@ func fastestAge(state game.GameState) (name string, ticks int, ok bool) {
 
 // ---- the front page ----
 
-// hallMark picks a mark for the Unicode set or the plain one.
-func hallMark(plain bool, uni, ascii string) string {
-	if plain {
-		return ascii
-	}
-	return uni
-}
-
 // hallFrontText is the front page for a screen screenW cells wide and rows
 // tall, as a still frame.
-func hallFrontText(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier) string {
-	return hallFront(state, screenW, rows, tier, hallMotion{})
+func hallFrontText(state game.GameState, screenW, rows int) string {
+	return hallFront(state, screenW, rows, hallMotion{})
 }
 
 // hallFront is the front page at a moment of the clock. Every block is
 // centred as a unit on the width of the screen.
-func hallFront(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion) string {
-	return hallFrontPage(state, screenW, rows, tier, mo, true)
+func hallFront(state game.GameState, screenW, rows int, mo hallMotion) string {
+	return hallFrontPage(state, screenW, rows, mo, true)
 }
 
 // hallFrontPage is hallFront with or without the line that says which key
 // copies the picture (the picture itself leaves it out).
-func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, hint bool) string {
+func hallFrontPage(state game.GameState, screenW, rows int, mo hallMotion, hint bool) string {
 	v := newHallView(state)
-	c := hallCompose(v, screenW, rows, tier, mo, 1, hint)
+	c := hallCompose(v, screenW, rows, mo, 1, hint)
 	// On a tall screen the page sits a little below the top, not hard
 	// against it, with the stars all round.
 	if spare := rows - 4 - c.end; spare > 3 {
-		c = hallCompose(v, screenW, rows, tier, mo, 1+min(spare/3, 10), hint)
+		c = hallCompose(v, screenW, rows, mo, 1+min(spare/3, 10), hint)
 	}
 	return c.render()
 }
 
 // hallCompose lays the page out with its banner starting at row top.
-func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, top int, hint bool) *hallCtx {
+func hallCompose(v hallView, screenW, rows int, mo hallMotion, top int, hint bool) *hallCtx {
 	w := overlayTextWidth(screenW)
-	c := newHallCtx(w, rows, tier, mo)
+	c := newHallCtx(w, rows, mo)
 	stops := c.epochInks(v.order)
 
 	// The banner and the lines under it.
@@ -408,10 +391,8 @@ func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hall
 	if v.year != "" {
 		under = append(under, v.year)
 	}
-	line := strings.Join(under, " "+c.mark("·", "-")+" ")
-	if !c.plain {
-		line = strings.TrimSpace(v.icon + " " + line)
-	}
+	line := strings.Join(under, " "+"·"+" ")
+	line = strings.TrimSpace(v.icon + " " + line)
 	c.paragraph(line, c.ink(stops[2]))
 	c.y += c.gap
 

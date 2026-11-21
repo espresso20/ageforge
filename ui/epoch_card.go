@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -46,7 +45,7 @@ func epochPicture(state game.GameState) *image.RGBA {
 func epochCardFrame(state game.GameState) (*panelFrame, *nativeText, int) {
 	// The page says how tall it is; the frame adds its edges (3 rows) and a
 	// blank row under the text.
-	page := hallFrontPage(state, epochPicCols, epochLayoutRows, mapmodel.TierUnicode, hallMotion{}, false)
+	page := hallFrontPage(state, epochPicCols, epochLayoutRows, hallMotion{}, false)
 	picRows := max(epochPicMinRows, strings.Count(page, "\n")+1+panelChromeRows+1)
 
 	tv := newNativeText().SetDynamicColors(true).SetWrap(true)

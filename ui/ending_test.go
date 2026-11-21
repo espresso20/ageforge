@@ -203,7 +203,7 @@ func TestEndingDump(t *testing.T) {
 					g := r.at(w, h, f)
 					name := fmt.Sprintf("%s_%s_%dx%d_f%03d", key, c.name, w, h, f)
 					must(t, os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644))
-					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.e.pal, r.e.view.plain))
+					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.e.pal, false))
 				}
 				r.e.close()
 			}
@@ -257,7 +257,7 @@ func checkEndingFrames(t *testing.T, where string, r *endingRig, w, h int) {
 	t.Helper()
 	e := r.e
 	v := &e.view
-	plain := v.plain
+	plain := false
 	frame := func(f int) *mGrid {
 		g := r.at(w, h, f)
 		if len(g.clipped) > 0 {
@@ -285,7 +285,7 @@ func checkEndingFrames(t *testing.T, where string, r *endingRig, w, h int) {
 			}
 		}
 	}
-	if g := frame(s.end() - 1); g.c[L.ey*w+L.ex].r != emberGlyph(plain) {
+	if g := frame(s.end() - 1); g.c[L.ey*w+L.ex].r != '•' {
 		t.Errorf("%s: the ending does not end on its ember", where)
 	}
 
@@ -310,7 +310,7 @@ func checkEndingFrames(t *testing.T, where string, r *endingRig, w, h int) {
 			t.Errorf("%s: line %d lands with the line before it", where, i+1)
 		}
 	}
-	if g := frame(s.end() - 1); g.c[L.ey*w+L.ex].r != emberGlyph(plain) {
+	if g := frame(s.end() - 1); g.c[L.ey*w+L.ex].r != '•' {
 		t.Errorf("%s: the reckoning lost its ember", where)
 	}
 	for _, row := range sc.reck.rows {
@@ -873,7 +873,7 @@ func TestEndingInEveryTheme(t *testing.T) {
 			r.restart(tier, true)
 			r.at(w, h, 0)
 			e := r.e
-			plain := e.view.plain
+			plain := false
 			for _, sp := range e.sc.spans {
 				f := sp.end() - 1
 				if sp.beat == beatStrike {

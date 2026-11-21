@@ -11,7 +11,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
@@ -240,8 +239,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
 		d.returnFocus()
 	})
-	// The text panels' frames fold to ASCII with the map glyphs.
-	d.overlayMgr.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
 	d.registerDeck("milestones", rowid.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesPage).draw = renderMileRoads
 	// The Research panel: the tech tree as a map. Like the Map it leaves
 	// the keyboard with the command bar.
@@ -252,7 +249,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.RegisterWidget("techs", rowid.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
 	d.researchPanel.toTree = func(key string) { d.switchOverlay("tree", func() { d.treePanel.show(key) }) }
 	d.treePanel.engine = d.engine
-	d.treePanel.tier = func() mapmodel.GlyphTier { return d.mapSettings().Tier }
 	d.treePanel.prompt = d.researchPanel.prompt
 	d.treePanel.toPrompt = d.handToPrompt
 	d.treePanel.back = func() { d.switchOverlay("techs", nil) }
@@ -287,7 +283,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.statsPanel.settings = d.mapSettings
 	d.statsPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("stats", rowid.E("ui.dashboard.NewDashboard.09", "Statistics"), d.statsPanel.open, d.statsPanel.update)
-	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.handToPrompt
 	d.peoplePanel.wire(d.app)
 	d.overlayMgr.RegisterWidget("people", rowid.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
@@ -298,7 +293,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.logsPanel.focus = func() { d.overlayMgr.FocusOn(d.logsPanel) }
 	d.overlayMgr.RegisterWidget("logs", txtLogsTitle, d.logsPanel.open, d.logsPanel.update)
 	d.epochHall = &epochHall{
-		tier: func() mapmodel.GlyphTier { return d.mapSettings().Tier },
 		height: func() int {
 			om := d.overlayMgr
 			return om.screenH - barRows(om.screenW, om.screenH) - d.bandRows(om.screenH)
@@ -337,7 +331,6 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.planPanel.toPrompt = d.handToPrompt
 	d.planPanel.buttons.wire(d.app)
 	d.overlayMgr.RegisterWidget("plan", txtBuildPlan, d.planPanel.open, d.planPanel.update)
-	d.historyPanel.settings = d.mapSettings
 	d.peoplePanel.hist = d.engine.History
 	d.historyPanel.src = func() (*game.RunHistory, game.RunArchiveView, string) {
 		return d.engine.History(), d.engine.RunArchive(), d.engine.ActiveSaveName()
@@ -377,7 +370,6 @@ func (d *Dashboard) build() {
 	// Create permanent economy tab
 	d.economyTab = NewEconomyTab(d.app)
 	d.economyTab.buildBox.offer = d.engine.UpgradeOffer
-	d.economyTab.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
 
 	// Sidebar — command panel hints, laid out for the room it has: one
 	// column when the names fit that way, two when the screen is short.
@@ -417,7 +409,7 @@ func (d *Dashboard) build() {
 	// The header at the top: the account, the age, the people, the way to
 	// the next age (headerView).
 	d.toastMgr = NewToastManager()
-	d.headerTV = newHeaderBox(d.headerView, func() bool { return headerPlain(d.mapSettings()) }, d.pressLine, d.app)
+	d.headerTV = newHeaderBox(d.headerView, d.pressLine, d.app)
 
 	// Subscribe to events for toasts
 	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
@@ -762,7 +754,7 @@ func (d *Dashboard) drawEffect(scr mapstyle.Cells, x, y, w, h int) {
 	}
 	// Not in the command bar: nothing moves where the player types.
 	h -= d.bar()
-	drawThemeEffect(scr, x, y, w, h, effect, int(now().Sub(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
+	drawThemeEffect(scr, x, y, w, h, effect, int(now().Sub(d.fxStart)/mapAnimStep))
 }
 
 // clock is the dashboard's time: time.Now, or the one a test pinned.
@@ -773,10 +765,10 @@ func (d *Dashboard) clock() func() time.Time {
 	return time.Now
 }
 
-// tipCell is the cell size the tooltip's picture is drawn at: none in the
-// plain glyph set, or with no window.
+// tipCell is the cell size the tooltip's picture is drawn at: none with no
+// window.
 func (d *Dashboard) tipCell() (int, int) {
-	if pictureCell == nil || d.mapSettings().Tier == mapmodel.TierASCII {
+	if pictureCell == nil {
 		return 0, 0
 	}
 	return pictureCell()

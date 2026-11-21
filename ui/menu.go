@@ -13,7 +13,6 @@ import (
 	"github.com/espresso20/ageforge/presence"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/rowid"
@@ -304,7 +303,6 @@ func (m *mainMenu) buildViewWith(badges []string) {
 		m.view.sel = min(max(m.settingsSel, 0), len(items)-1)
 	}
 	m.view.forge = !m.hasCur || m.town == nil || m.town.failed
-	m.view.plain = m.set.Tier == mapmodel.TierASCII
 	m.view.ages = len(m.engine.Rules().AgeKeys())
 	m.view.edition = menuEdition(m.version)
 	m.view.versions = []string{m.version}
@@ -455,7 +453,7 @@ func (m *mainMenu) Paint(p *kit.Painter) {
 		return
 	}
 	grid, pal := m.frameGrid(r.Dx(), r.Dy())
-	grid.paint(p, r.Min, pal, m.view.plain)
+	grid.paint(p, r.Min, pal)
 	m.paintEntries(p, r.Min)
 }
 
@@ -466,7 +464,7 @@ func (m *mainMenu) paintEntries(p *kit.Painter, org image.Point) {
 	for i, r := range sc.hits {
 		it := m.view.items[i]
 		hover := !it.off && m.buttons.in && m.buttons.press != nil && m.buttons.over.In(r)
-		lightRow(p, r.Add(org), i == m.view.sel, hover, r.Max.X-menuTail+1+org.X, m.view.plain)
+		lightRow(p, r.Add(org), i == m.view.sel, hover, r.Max.X-menuTail+1+org.X)
 	}
 	pal := newExpPalette()
 	m.buttons.paint(p, &sc.keys, org, pal)
@@ -484,7 +482,7 @@ func (m *mainMenu) frameGrid(w, h int) (*mGrid, *menuPalette) {
 		m.pal = newMenuPalette(th)
 	}
 	m.view.pix = false
-	if !m.view.plain && pictureCell != nil {
+	if pictureCell != nil {
 		cw, ch := pictureCell()
 		m.view.pix = cw > 0 && ch > 0
 	}
