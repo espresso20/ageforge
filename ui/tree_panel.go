@@ -332,27 +332,24 @@ func (p *treePanel) step(dir int) {
 	}
 }
 
-// act does what the open card says: it starts the tech, or adds it to the
-// build plan. Research spends knowledge for good, so this is the second
-// Enter, never the first. What the game answers goes on the card.
+// act does what the open card says, through the command that does it: it
+// starts the tech, or adds it to the build plan. Research spends knowledge for
+// good, so this is the second Enter, never the first. What the game answers
+// is the command's reply.
 func (p *treePanel) act() {
 	n := p.model.by[p.view.sel]
-	if n == nil || p.engine == nil {
+	if n == nil || p.engine == nil || p.buttons.run == nil {
 		return
 	}
-	var err error
 	switch cardActionFor(p.state, n) {
 	case actStart:
-		err = p.engine.StartResearch(n.key)
+		p.buttons.run("research " + n.key)
 	case actPlan:
-		err = p.engine.PlanAddResearch(n.key)
+		p.buttons.run("plan research " + n.key)
 	default:
 		return
 	}
 	p.view.note = ""
-	if err != nil {
-		p.view.note = err.Error()
-	}
 	p.state = p.engine.GetState()
 	p.layout()
 }

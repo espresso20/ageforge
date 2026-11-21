@@ -505,42 +505,34 @@ func (p *researchPanel) pick(key string) {
 	p.follow()
 }
 
-// act starts the picked tech, or queues it: Enter starts one that can start
-// while nothing is in work and queues any other; queue always queues. What
-// was done, or what the game refused, goes in the note.
+// act starts the picked tech, or queues it, through the research command:
+// Enter starts one that can start while nothing is in work and queues any
+// other; queue always queues. The command's reply says what was done or what
+// the game refused.
 func (p *researchPanel) act(queue bool) {
 	t := p.selected()
-	if t == nil || p.engine == nil {
+	if t == nil || p.engine == nil || p.buttons.run == nil {
 		return
 	}
-	var err error
-	p.view.note, p.view.bad = "", false
-	if queue || !t.ts.Available || p.model.state.Research.CurrentTech != "" {
-		var chain []string
-		if chain, err = p.engine.PlanAddResearchChain(t.def.Key); err == nil {
-			p.view.note = rowid.Sprintf("ui.research_board.act.01", "queued %s", t.def.Name)
-			if n := len(chain) - 1; n > 0 {
-				p.view.note += rowid.Sprintf("ui.research_board.act.02", " and %d %s it needs", n, map[bool]string{true: "tech", false: "techs"}[n == 1])
-			}
-		}
-	} else {
-		err = p.engine.StartResearch(t.def.Key)
+	line := "research " + t.def.Key
+	if queue {
+		line = "plan research " + t.def.Key
 	}
-	if err != nil {
-		p.view.note, p.view.bad = err.Error(), true
-	}
-	p.update(p.engine.GetState())
+	p.buttons.run(line)
+}
+
+// reply puts what a command run over the board did in its note.
+func (p *researchPanel) reply(_ string, res CommandResult) {
+	p.view.note, p.view.bad = replyLine(res)
 }
 
 // unqueue takes the picked tech out of the queue.
 func (p *researchPanel) unqueue() {
 	t := p.selected()
-	if t == nil || p.engine == nil || !p.model.queued[t.def.Key] {
+	if t == nil || p.engine == nil || p.buttons.run == nil || !p.model.queued[t.def.Key] {
 		return
 	}
-	p.engine.DequeueTech(t.def.Key)
-	p.update(p.engine.GetState())
-	p.view.note, p.view.bad = rowid.Sprintf("ui.research_board.unqueue.01", "took %s out of the queue", t.def.Name), false
+	p.buttons.run("research drop " + t.def.Key)
 }
 
 func (p *researchPanel) Mouse(m kit.Mouse) bool {

@@ -1609,9 +1609,27 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 		return successReply() // the engine logs the cancellation
 	}
 
+	if subcmd == "drop" {
+		key := strings.ToLower(strings.Join(args[1:], "_"))
+		if key == "" {
+			return errorReply(usageFor("research drop"))
+		}
+		if !engine.DequeueTech(key) {
+			return errorReply(rowid.Line("ui.input.cmdResearch.03", "That tech is not in the research queue."))
+		}
+		return routineReply(rowid.Line("ui.input.cmdResearch.04", "Took it out of the queue."))
+	}
+
 	// Support multi-word keys entered with spaces by joining all remaining args
 	// with underscores (e.g. "research bronze working" → "bronze_working").
 	techKey := strings.ToLower(strings.Join(args, "_"))
+	// A tech that cannot start now, or one asked for while another is in
+	// work, goes in the queue, as Enter on the Research board does.
+	if st := engine.GetState(); st.Research.CurrentTech != "" || !st.Research.Techs[techKey].Available {
+		if _, ok := st.Research.Techs[techKey]; ok {
+			return cmdPlan([]string{"research", techKey}, engine)
+		}
+	}
 	if err := engine.StartResearch(techKey); err != nil {
 		return errorResult(err)
 	}

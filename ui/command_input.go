@@ -9,7 +9,7 @@ import (
 
 // echoFor is how long the command bar shows a line a button ran, as if it
 // had been typed.
-const echoFor = 600 * time.Millisecond
+const echoFor = 2500 * time.Millisecond
 
 // commandInput is the dashboard's command prompt: an input line that shows
 // the best completion of what was typed as dim ghost text after the cursor,

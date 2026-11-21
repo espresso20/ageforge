@@ -33,6 +33,8 @@ const (
 var (
 	buyWords  = [buyChoices]string{"x1", "x10", "max"}
 	buyCounts = [buyChoices]string{"", "10", "max"}
+	// buyArgs is what the buy command takes for each.
+	buyArgs = [buyChoices]string{"1", "10", "max"}
 )
 
 // The other words the box says.

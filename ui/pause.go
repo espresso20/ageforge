@@ -56,13 +56,14 @@ type pauseLayer struct {
 }
 
 // openPause shows the card and holds the engine.
-func (d *Dashboard) openPause() {
+func (d *Dashboard) openPause() *pauseLayer {
 	p := &pauseLayer{d: d}
 	p.nativeHost = newNativeHost()
 	d.engine.Hold()
 	p.build()
 	d.pages.AddPage(pausePage, p, true, true)
 	d.app.SetFocus(p.btns[0])
+	return p
 }
 
 // closePause takes the card away and lets the engine go on.
@@ -93,7 +94,7 @@ func (p *pauseLayer) build() {
 			{rowid.Line("ui.pause.build.01", "Resume"), "Esc", keyAccent, p.d.closePause},
 			{rowid.Line("ui.pause.build.02", "Settings"), "S", keySteel, func() { p.go2(pauseDisplay) }},
 			{rowid.Line("ui.pause.build.03", "Save"), "V", keySteel, p.save},
-			{rowid.Line("ui.pause.build.04", "Main menu"), "M", keySteel, p.d.toMenu},
+			{rowid.Line("ui.pause.build.04", "Main menu"), "M", keySteel, func() { p.d.pressLine("menu") }},
 		} {
 			b := newNativeButton(a.label).SetSelectedFunc(a.do).asAction(a.kind, ground, a.key)
 			p.acts, p.btns = append(p.acts, b), append(p.btns, b)
