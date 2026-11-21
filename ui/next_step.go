@@ -60,6 +60,9 @@ type nextStep struct {
 	panel, card, cmd    string
 	then                []nextItem
 	view                panelView // the panels found and opened, which the list shows
+	// onLine is set by the view, not the rule: the command line holds cmd, so
+	// Enter runs the step.
+	onLine bool
 }
 
 // item is the step as an item that follows another.

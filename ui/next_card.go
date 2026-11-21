@@ -18,6 +18,7 @@ var (
 	txtThen      = rowid.E("ui.next_card.txtThen.01", "THEN")
 	txtShowMe    = rowid.E("ui.next_card.txtShowMe.01", " Show me ")
 	txtTabKey    = rowid.E("ui.next_card.txtTabKey.01", " Tab ")
+	txtEnterKey  = rowid.E("ui.next_card.txtEnterKey.01", " Enter ")
 	regionShow   = "nextshow"
 	regionThen   = "nextthen"
 )
@@ -251,7 +252,11 @@ func cardRows(s nextStep, T int, cut cardCut) []string {
 	if s.cmd != "" {
 		btn := clickRegion(regionShow, theme.TagFgBgAttr(theme.RoleText, theme.RoleChip, "b")+txtShowMe.String()+theme.Reset)
 		if T >= tabMinT {
-			btn += "   " + theme.TagFgBgAttr(theme.RoleOnAccent, theme.RoleAccent, "b") + txtTabKey.String() + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(txtTabKey.String())-4))
+			key := txtTabKey.String()
+			if s.onLine {
+				key = txtEnterKey.String()
+			}
+			btn += "   " + theme.TagFgBgAttr(theme.RoleOnAccent, theme.RoleAccent, "b") + key + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(key)-4))
 		}
 		rows = append(rows, "", x(btn))
 	}

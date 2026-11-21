@@ -96,6 +96,7 @@ type Dashboard struct {
 	toastMgr            *ToastManager
 	badgeQ              []game.BadgeView // earned, notice not shown yet
 	badgeNote           bool
+	nextHeld            bool // the command line holds the Next step
 	badgeUntil          time.Time
 	contentArea         Primitive
 
@@ -378,7 +379,12 @@ func (d *Dashboard) build() {
 	// column when the names fit that way, two when the screen is short.
 	d.bandBox = newFitView(func(w, _ int) string { return d.bandText(w) })
 	d.bandBox.body.OnRegion = func(name string, _ int) { d.bandClick(name) }
-	d.nextBox = newFitView(func(w, h int) string { return nextBoxText(d.next, w, h, d.richLayout()) })
+	d.nextBox = newFitView(func(w, h int) string {
+		s := d.next
+		s.onLine = d.inputField != nil && s.cmd != "" && d.inputField.GetText() == s.cmd
+		d.nextHeld = s.onLine
+		return nextBoxText(s, w, h, d.richLayout())
+	})
 	// A click on a panel's name opens it, as typing the name does.
 	d.nextBox.body.OnRegion = func(name string, _ int) {
 		switch {
@@ -524,6 +530,13 @@ func (d *Dashboard) build() {
 	d.app.line, d.app.confirm = d.pressLine, d.askLine
 	d.app.feel.tip.Cell = d.tipCell
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
+	// The card's key hint reads Enter while the line holds the step.
+	d.inputField.SetChangedFunc(func(text string) {
+		if held := text != "" && text == d.next.cmd; held != d.nextHeld {
+			d.nextHeld = held
+			d.nextBox.changed()
+		}
+	})
 	d.inputField.SetBorder(true)
 	theme.Track(func() {
 		d.inputField.SetFieldBackgroundColor(theme.Of(theme.RoleBackground)).
