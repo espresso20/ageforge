@@ -254,6 +254,13 @@ func (t *nativeText) GetInnerRect() (x, y, w, h int) {
 	return x, y, max(w, 0), max(h, 0)
 }
 
+// scrollSpan is where the view stands in its text: the first row in view, how
+// many rows show and how many the text has when it wraps to the view's width.
+func (t *nativeText) scrollSpan() (top, view, total int) {
+	r := t.view.Bounds()
+	return t.view.Top(), r.Dy(), t.body.Size(image.Pt(r.Dx(), 1<<20)).Y
+}
+
 // Paint draws the box.
 func (t *nativeText) Paint(p *kit.Painter) {
 	t.box.Paint(p)

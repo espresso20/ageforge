@@ -123,6 +123,10 @@ func (f *panelFrame) Paint(p *kit.Painter) {
 	f.buttons.paint(p, g, r.Min, pal)
 	f.grid = g
 	f.tv.Paint(p)
+	// The bar is in the column the text leaves free, as Stats draws it.
+	if top, view, total := f.tv.scrollSpan(); f.tv.scrollable && total > view {
+		p.Bar(r.Max.X-2, f.tv.view.Bounds().Min.Y, view, top, view, total)
+	}
 }
 
 // Mouse: a click on a key along the foot, or on the close button, presses
