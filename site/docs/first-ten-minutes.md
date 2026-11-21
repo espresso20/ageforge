@@ -27,7 +27,7 @@ gather wood 25
 gather food 25
 ```
 
-Each `gather` collects up to 25 of a resource (3 if you leave the amount out). `↑` recalls your last command, and `Tab` or `→` finishes a command you have started typing.
+Each `gather` collects up to 25 of a resource (25 if you leave the amount out). `↑` recalls your last command, and `Tab` or `→` finishes a command you have started typing.
 
 Hand-gathering works through the Medieval Age and is disabled from the Renaissance Age onward. By then your buildings and workers carry the economy.
 

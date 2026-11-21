@@ -475,7 +475,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 			if gx > 2 && gx+chipW(name, "") > w-1 {
 				gx, gy = 2, gy+1
 			}
-			gx = set.chip(gx, gy, chipSpec{kind: keySteel, label: name, cmd: command("gather", res, gatherClick)}, func(x, y int, text string) { g.put(x, y, text, xKeycap) }) + 1
+			gx = set.chip(gx, gy, chipSpec{kind: keySteel, label: name, cmd: command("gather", res)}, func(x, y int, text string) { g.put(x, y, text, xKeycap) }) + 1
 		}
 		if gx > 2 || gy > top {
 			top = gy + 2

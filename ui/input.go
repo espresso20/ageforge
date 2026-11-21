@@ -739,14 +739,9 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	return infoReply(rowid.Sprintf("ui.input.cmdDump.18", "Logs exported to %s (%d entries)", filename, len(logs)))
 }
 
-// gatherDefaultYield is what one bare `gather` brings in; gatherMaxYield is
-// the per-use cap.
-const (
-	gatherDefaultYield = 3.0
-	gatherMaxYield     = 25.0
-	// gatherClick is what a click on a Gather button asks for: the cap.
-	gatherClick = "25"
-)
+// gatherMaxYield is what one `gather` brings in, typed bare or clicked, and
+// the per-use cap on a typed amount.
+const gatherMaxYield = 25.0
 
 // txtPerUse is said the same way on several screens, so it has one id.
 var txtPerUse = rowid.E("ui.input.cmdGather.02", " per use)")
@@ -765,7 +760,7 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 		s := engine.Rules().ResourceLabel("stone")
 		return errorReply(rowid.Sprintf("ui.input.cmdGather.03", "You can only gather %s, %s or %s by hand.", f, w, s))
 	}
-	amount := gatherDefaultYield
+	amount := gatherMaxYield
 	if len(args) >= 2 {
 		n, err := parseAmount(args[1])
 		if err != nil {

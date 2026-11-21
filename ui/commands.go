@@ -160,8 +160,7 @@ func registry() []*Command {
 		// Actions
 		{Name: "gather", Run: cmdGather, Aliases: []string{"g"}, Section: secActions,
 			Args: []Arg{{Kind: ArgGatherResource, Words: []string{"food", "wood", "stone"}}, optCount},
-			Help: []Usage{{"gather <food|wood|stone> [amount]", rowid.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (default ") + strconv.Itoa(int(gatherDefaultYield)) +
-				rowid.Line("ui.help.commands.gather.2", ", max ") + strconv.Itoa(int(gatherMaxYield)) + rowid.Line("ui.help.commands.gather.3", " per use; the early ages only)")}}},
+			Help: []Usage{{"gather <food|wood|stone> [amount]", rowid.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (") + strconv.Itoa(int(gatherMaxYield)) + rowid.Line("ui.help.commands.gather.3", " per use at most; the early ages only)")}}},
 		{Name: "build", Run: cmdBuild, Aliases: []string{"b"}, Section: secActions,
 			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
 			Help: []Usage{{"build <building> [count|max]", rowid.Line("ui.help.commands.build", "Build copies of a building (default 1)")}}},
