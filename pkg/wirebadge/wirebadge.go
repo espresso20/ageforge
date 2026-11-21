@@ -66,55 +66,33 @@ type sil struct {
 }
 
 // silhouettes give each domain its own shape: heater, tower, gothic arch, kite,
-// roundel, octagon, chevron, screen, lozenge, notched joust, stepped anvil.
+// roundel, octagon, Spanish shield, screen, lozenge, swallowtail, house.
 var silhouettes = map[string]sil{
-	"food":        {shape{true, [][]int{append([]int{0, 0, 60, 0}, arc(0, 80, 60, 82, 0, 90, 7)...)}}, 0, 1.1},
-	"masonry":     {shape{true, [][]int{{0, 0, 13, 0, 13, 14, 26, 14, 26, 0, 39, 0, 39, 14, 52, 14, 52, 120, 36, 152, 0, 162}}}, 0, 1.05},
-	"faith":       {shape{true, [][]int{{0, 0, 12, 6, 26, 16, 40, 30, 52, 46, 58, 62, 60, 80, 60, 128, 44, 150, 0, 162}}}, 0, 1.05},
-	"military":    {shape{true, [][]int{{0, 6, 30, 0, 56, 10, 60, 32, 50, 84, 28, 130, 0, 162}}}, 0, .95},
-	"trade":       {shape{true, [][]int{arc(0, 84, 62, 62, -90, 90, 14)}}, 22, .95},
-	"engineering": {shape{true, [][]int{{0, 22, 26, 22, 62, 58, 62, 110, 26, 146, 0, 146}}}, 22, .95},
-	"energy":      {shape{true, [][]int{{0, 0, 24, 0, 60, 28, 60, 92, 0, 162}}}, 0, 1},
-	"hacker":      {shape{true, [][]int{{0, 16, 44, 16, 52, 18, 58, 24, 60, 32, 60, 136, 58, 144, 52, 150, 44, 152, 0, 152}}}, 16, 1},
-	"astronaut":   {shape{true, [][]int{{0, 0, 56, 81, 0, 162}}}, 0, .7},
-	"lumber":      {shape{false, [][]int{{-60, 0, 60, 0, 60, 26, 42, 34, 42, 56, 60, 64, 54, 106, 34, 140, 0, 162, -34, 140, -54, 106, -60, 64, -60, 0}}}, 0, 1.05},
-	"metallurgy":  {shape{true, [][]int{{0, 16, 62, 16, 62, 84, 48, 84, 48, 120, 34, 120, 34, 152, 0, 152}}}, 16, 1},
+	"food":        {shape{true, [][]int{append([]int{0, 0, 60, 0}, arc(-57, 60, 117, 117, 0, 61, 12)...)}}, 0, 1},
+	"masonry":     {shape{true, [][]int{{0, 0, 13, 0, 13, 14, 26, 14, 26, 0, 39, 0, 39, 14, 52, 14, 52, 162, 0, 162}}}, 0, 1},
+	"faith":       {shape{true, [][]int{append(arc(-47, 96, 107, 107, -64, 0, 12), arc(0, 120, 60, 42, 0, 90, 10)...)}}, 0, 1},
+	"military":    {shape{true, [][]int{{0, 0, 62, 56, 0, 162}}}, 0, .85},
+	"trade":       {shape{true, [][]int{arc(0, 84, 62, 62, -90, 90, 24)}}, 22, 1},
+	"engineering": {shape{true, [][]int{{0, 22, 26, 22, 62, 58, 62, 110, 26, 146, 0, 146}}}, 22, 1},
+	"energy":      {shape{true, [][]int{append([]int{0, 0, 60, 0}, arc(0, 80, 60, 82, 0, 90, 16)...)}}, 0, 1},
+	"hacker":      {shape{true, [][]int{append(append([]int{0, 16, 46, 16}, arc(46, 30, 14, 14, -90, 0, 5)...), append(arc(46, 138, 14, 14, 0, 90, 5), 0, 152)...)}}, 16, .95},
+	"astronaut":   {shape{true, [][]int{{0, 0, 46, 81, 0, 162}}}, 0, .8},
+	"lumber":      {shape{true, [][]int{{0, 0, 60, 0, 60, 162, 0, 120}}}, 0, 1},
+	"metallurgy":  {shape{true, [][]int{{0, 0, 60, 56, 60, 162, 0, 162}}}, 0, 1},
 }
 
-// WingStyle picks the platinum and legendary mark: 0 swept feathers, 1 laurel.
-// Temporary, until one is chosen.
-var WingStyle = 0
-
-// strip is a rounded feather or pointed leaf from b along unit d, length l,
-// half width hw: an open outline, the base left to the line it hangs from.
-func strip(bx, by, dx, dy, l, hw float64, leaf bool) (o []int) {
-	u, w := []float64{0, .5, .9, 1, .9, .5, 0}, []float64{1, 1, .7, 0, -.7, -1, -1}
-	if leaf {
-		u, w = []float64{0, .25, .6, 1, .6, .25, 0}, []float64{0, .8, .75, 0, -.75, -.8, 0}
-	}
+// leaf is a pointed leaf from b along unit d, length l, half width hw: an
+// open outline, the base left to the stem it hangs from.
+func leaf(bx, by, dx, dy, l, hw float64) (o []int) {
+	u, w := []float64{0, .25, .6, 1, .6, .25, 0}, []float64{0, .8, .75, 0, -.75, -.8, 0}
 	for i := range u {
 		o = append(o, int(math.Round(bx+dx*u[i]*l+dy*w[i]*hw)), int(math.Round(by+dy*u[i]*l-dx*w[i]*hw)))
 	}
 	return o
 }
 
-// wingW1: a smooth leading edge with five rounded primaries fanning down.
-func wingW1() [][]int {
-	e := [][2]float64{{66, 56}, {70, 44}, {77, 32}, {86, 22}, {97, 14}, {109, 9}, {120, 8}}
-	var edge []int
-	for _, c := range e {
-		edge = append(edge, int(c[0]), int(c[1]))
-	}
-	o := [][]int{edge}
-	for i := 1; i < 6; i++ {
-		a := float64(i)*.17 + .05
-		o = append(o, strip(e[i][0], e[i][1], math.Sin(a), math.Cos(a), 18+5*float64(i), 4.5, false))
-	}
-	return o
-}
-
-// laurelW2: a stem along the shield with five pairs of leaves pointing up.
-func laurelW2() (o [][]int) {
+// laurel is a stem along the shield with five pairs of leaves pointing up.
+func laurel() (o [][]int) {
 	st := [][2]float64{{83, 48}, {82, 72}, {76, 98}, {63, 124}, {44, 146}, {22, 162}, {6, 167}}
 	var f []int
 	for _, c := range st {
@@ -127,15 +105,15 @@ func laurelW2() (o [][]int) {
 		tx, ty = tx/h, ty/h
 		mx, my := (st[i][0]+st[i+1][0])/2, (st[i][1]+st[i+1][1])/2
 		for _, a := range []float64{.52, -.52} {
-			o = append(o, strip(mx, my, tx*math.Cos(a)-ty*math.Sin(a), tx*math.Sin(a)+ty*math.Cos(a), 20, 5, true))
+			o = append(o, leaf(mx, my, tx*math.Cos(a)-ty*math.Sin(a), tx*math.Sin(a)+ty*math.Cos(a), 20, 5))
 		}
 	}
 	return o
 }
 
 var (
-	crown = shape{true, [][]int{{0, -46, 9, -31, 18, -42, 25, -28, 27, -20, 0, -20}, {26, -26, 0, -26}, {0, -52, 3, -49, 0, -46}}}
-	wings = [...]shape{{true, wingW1()}, {true, laurelW2()}}
+	crown  = shape{true, [][]int{{0, -46, 9, -31, 18, -42, 25, -28, 27, -20, 0, -20}, {26, -26, 0, -26}, {0, -52, 3, -49, 0, -46}}}
+	wreath = shape{true, laurel()}
 	// sparks are small stars at the shield's flanks.
 	sparks = shape{true, [][]int{{66, 114, 84, 114}, {75, 105, 75, 123}, {70, 109, 80, 119}, {80, 109, 70, 119}, {44, 148, 56, 148}, {50, 142, 50, 154}}}
 	// rays taper to a point: a kite each, at three angles.
@@ -162,16 +140,12 @@ type pen struct {
 	ox, oy int
 	s      float64 // scale about the shield's centre (0,84)
 	c      color.RGBA
-	dash   bool
 }
 
 // line steps one pixel at a time between two points.
 func (p *pen) line(x0, y0, x1, y1 int) {
 	n := max(x1-x0, x0-x1, y1-y0, y0-y1)
 	for i := 0; i <= n; i++ {
-		if p.dash && i%4 > 1 {
-			continue
-		}
 		t := float64(i) / float64(max(n, 1))
 		p.set(p.ox+x0+int(math.Round(t*float64(x1-x0))), p.oy+y0+int(math.Round(t*float64(y1-y0))), p.c)
 	}
@@ -239,11 +213,7 @@ func render(p *pen, t Tier, domain string, emblem bool) {
 		p.draw(sl.shape, 84, .9)
 	}
 	if t >= Gold {
-		// rivets on the corners of the edge, a crown above
-		p.each(sl.shape, 84, 1, func(x, y, _, _ int) {
-			p.line(x-2, y, x+2, y)
-			p.line(x, y-2, x, y+2)
-		})
+		// a crown above, sparks at the flanks
 		oy := p.oy
 		p.oy += int(float64(sl.top) * p.s)
 		p.draw(crown, 84, 1)
@@ -251,27 +221,17 @@ func render(p *pen, t Tier, domain string, emblem bool) {
 			p.draw(rays, 84, 1)
 		}
 		p.oy = oy
-		if WingStyle == 0 || t < Platinum {
-			p.draw(sparks, 84, 1)
+		if t < Platinum {
+			p.draw(sparks, 84, 1) // the wreath takes this place
 		}
 	}
 	if t >= Platinum {
 		p.draw(sl.shape, 84, .8)
-		p.dash = true
-		p.draw(sl.shape, 84, .68)
-		p.dash = false
-		p.draw(wings[WingStyle], 84, 1)
-	}
-	if t == Legendary {
-		// spokes in from every corner, between the frame and the emblem
-		p.each(sl.shape, 84, .8, func(x, y, _, _ int) {
-			x1, y1 := x*7/10, 84+(y-84)*7/10
-			p.line(x, y, x1, y1)
-		})
+		p.draw(wreath, 84, 1)
 	}
 	if emblem {
 		oy, k := p.oy, p.s
-		p.oy, p.s = oy+84, k*1.25*sl.em
+		p.oy, p.s = oy+84, k*1.4*sl.em
 		p.draw(emblems[domain], 0, 1)
 		p.oy, p.s = oy, k
 	}
