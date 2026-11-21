@@ -23,9 +23,12 @@ const (
 	tradeSideW           = 89
 )
 
-// The route columns, from the board's left edge.
+// The converter columns, from the board's left edge: the name, the good a
+// route takes in with its rate, the pipe, the good it gives out with its
+// rate, the share of income and the run.
 const (
-	tcState, tcName, tcSends, tcArrow, tcBrings, tcShare, tcRun = 4, 15, 35, 53, 63, 91, 133
+	tcName, tcSends, tcPipe, tcBrings, tcShare, tcRun = 4, 29, 55, 82, 110, 133
+	tcGood, tcRate, tcPipeW                           = 14, 9, 24
 )
 
 // tradeFlow is one good a route moves, as the route runs now: per tick and
@@ -356,33 +359,136 @@ func tradeExtraRows(ex []tradeExtra) (n int) {
 	return n
 }
 
+// tradeSideFigure is the first good a side moves, its rate a second and how
+// many more goods follow it.
+func tradeSideFigure(fl []tradeFlow, tickMs int) (name, rate string, more int) {
+	pick := -1
+	for i, f := range fl {
+		if f.tick == 0 && f.key != config.ResearchTarget {
+			continue
+		}
+		if pick < 0 || fl[pick].key == config.ResearchTarget && f.key != config.ResearchTarget {
+			pick = i
+		}
+		more++
+	}
+	if pick < 0 {
+		if len(fl) == 0 {
+			return "", "", 0
+		}
+		return fl[0].good, "", len(fl) - 1
+	}
+	f := fl[pick]
+	if f.key == config.ResearchTarget {
+		return game.Amount(0, f.key), "", more - 1
+	}
+	num, unit := rateFigure(f.tick, tickMs)
+	return f.good, strings.TrimPrefix(num, "+") + unit, more - 1
+}
+
+// tradeSideAt draws one end of a converter: the good with "+N" for the rest,
+// and its rate at the right of the cell. dim greys a route that moves nothing.
+func tradeSideAt(g *xgrid, x, y int, fl []tradeFlow, tickMs int, k xk, dim bool) {
+	name, rate, more := tradeSideFigure(fl, tickMs)
+	if dim {
+		k = xDim
+	}
+	label := name
+	if more > 0 {
+		label += rowid.Sprintf("ui.trade_board.tradeSideAt.01", " +%d", more)
+	}
+	g.putFit(x, y, tcGood-1, label, k)
+	g.rput(x+tcGood+tcRate-1, y, rate, k)
+}
+
+// tradeMinuteAt draws the first good of a side as an amount a minute.
+func tradeMinuteAt(g *xgrid, x, y int, fl []tradeFlow, lim int) {
+	for _, f := range fl {
+		if f.tick > 0 || f.key == config.ResearchTarget {
+			g.putFit(x, y, lim-x, game.Amount(f.min, f.key), xDim)
+			return
+		}
+	}
+}
+
+// tradePipeAt draws a route's pipe, tcPipeW cells long: the share of it lit
+// equals the run, with goods moving along the lit part. A route that is held
+// is drawn dim and broken, a paused one dim and whole.
+func tradePipeAt(g *xgrid, x, y int, r tradeRoute, tickMs int, clock float64, k xk) {
+	last := tcPipeW - 1
+	switch {
+	case r.state == "suspended":
+		for i := 0; i < last; i++ {
+			c := '━'
+			if i >= last/2-1 && i <= last/2+1 {
+				c = ' '
+				if i == last/2 {
+					c = '×'
+				}
+			}
+			g.set(x+i, y, c, xDim)
+		}
+		g.set(x+last, y, '►', xDim)
+		return
+	case !r.moving():
+		for i := 0; i < last; i++ {
+			g.set(x+i, y, '━', xDim)
+		}
+		g.set(x+last, y, '►', xDim)
+		return
+	}
+	lit := int(math.Round(r.run * float64(tcPipeW)))
+	pk := xPulse
+	if k == xGold {
+		pk = xPulseLow
+	}
+	speed := laneSpeed(r.inPerSec(tickMs)) * math.Max(r.run, 0.1)
+	for i := 0; i < tcPipeW; i++ {
+		c, ck := '━', xk(xDim)
+		if i == last {
+			c = '►'
+		}
+		if i < lit {
+			ck = k
+			if i < last && laneCell(i, clock, speed, r.run) == '■' {
+				c, ck = '■', pk
+			}
+		}
+		g.set(x+i, y, c, ck)
+	}
+}
+
 // drawTradeEntry draws one route at row y, its extras if it is picked, and
 // returns the row after it.
 func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex []tradeExtra, y, end, n int, picked bool) int {
-	word, k, _ := tradeLook(r.state)
+	_, k, _ := tradeLook(r.state)
 	rows := 2 + tradeExtraRows(ex)
 	if picked {
 		g.band(2, y, end-2, rows)
 	}
 	g.hit(hitDeckCard, n, 2, y, end-2, rows)
 	g.put(2, y, "▌", k)
-	g.put(tcState, y, word, k)
 	nk := xBright
 	if r.state == "locked" {
 		nk = xDim
 	}
-	name := r.name
+	nx := g.putFit(tcName, y, tcSends-tcName-1, r.name, nk)
 	if r.lvl > 0 {
-		name += rowid.Sprintf("ui.trade_board.drawTradeEntry.06", " Lv %d", r.lvl)
+		g.put(nx, y, rowid.Sprintf("ui.trade_board.drawTradeEntry.06", " Lv %d", r.lvl), xDim)
 	}
-	g.putFit(tcName, y, tcSends-tcName-1, name, nk)
-	g.putFit(tcSends, y, tcArrow-tcSends-1, tradeJoin(r.out, false, -1, st.TickIntervalMs), xText)
-	laneAt(g, tcArrow, y, r.moving(), r.inPerSec(st.TickIntervalMs), r.run, pg.clock, k)
-	g.putFit(tcBrings, y, tcShare-tcBrings-1, tradeJoin(r.in, false, 1, st.TickIntervalMs), xText)
+	ms := st.TickIntervalMs
+	dim := !r.moving()
+	tradeSideAt(g, tcSends, y, r.out, ms, xBad, dim)
+	tradePipeAt(g, tcPipe, y, r, ms, pg.clock, k)
+	tradeSideAt(g, tcBrings, y, r.in, ms, xGood, dim)
 	if r.moving() {
 		g.putFit(tcShare, y, tcRun-tcShare-8, r.share, xText)
 		g.rput(tcRun, y, fmt.Sprintf("%.0f%%", r.run*100), k)
 		pg.animate = true
+	}
+	whyFits := r.state == "suspended" && runeLen(r.why) <= tcRun-tcShare+16
+	if whyFits {
+		g.put(tcShare, y, r.why, xBad)
 	}
 	if r.cmd != "" {
 		word, pk := rowid.Line("ui.trade_board.drawTradeEntry.01", "stop"), xKeyName
@@ -398,18 +504,19 @@ func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex 
 			}
 		}
 	}
-	ms := st.TickIntervalMs
 	switch r.state {
 	case "running":
 		g.put(tcName, y+1, rowid.Line("ui.trade_board.drawTradeEntry.03", "per minute"), xDim)
-		g.putFit(tcSends, y+1, tcBrings-tcSends-3, tradeJoin(r.out, true, -1, ms), xDim)
-		g.putFit(tcBrings, y+1, tcShare-tcBrings-1, tradeJoin(r.in, true, 1, ms), xDim)
+		tradeMinuteAt(g, tcSends, y+1, r.out, tcSends+tcGood+tcRate)
+		tradeMinuteAt(g, tcBrings, y+1, r.in, tcBrings+tcGood+tcRate)
 	case "short":
 		g.putFit(tcName, y+1, end-tcName-2, rowid.Sprintf("ui.trade_board.drawTradeEntry.04", "short of %s: the route runs at %.0f%% of its flow", r.shortOf, r.run*100), xGold)
 	case "paused":
 		g.putFit(tcName, y+1, end-tcName-2, rowid.Line("ui.trade_board.drawTradeEntry.05", "Paused: it moves nothing until started"), xDim)
 	default:
-		g.putFit(tcName, y+1, end-tcName-2, r.why, k)
+		if !whyFits {
+			g.putFit(tcName, y+1, end-tcName-2, r.why, k)
+		}
 	}
 	y += 2
 	for _, e := range ex {
@@ -554,15 +661,11 @@ func renderTradeBoard(pg *deckPage, st game.GameState, sel, scroll, w, h int, sa
 		}
 	}
 	g.put(2, 4, strings.Repeat("─", end-2), xDim)
-	for _, hd := range []struct {
-		x int
-		s string
-	}{{tcState, rowid.Line("ui.trade_board.renderTradeBoard.03", "STATE")}, {tcName, rowid.Line("ui.trade_board.renderTradeBoard.04", "ROUTE")},
-		{tcSends, rowid.Line("ui.trade_board.renderTradeBoard.05", "SENDS")}, {tcBrings, rowid.Line("ui.trade_board.renderTradeBoard.06", "BRINGS")},
-		{tcShare, rowid.Line("ui.trade_board.renderTradeBoard.07", "SHARE OF INCOME")}} {
-		g.put(hd.x, 3, hd.s, xAccent)
-	}
-	g.rput(tcRun, 3, rowid.Line("ui.trade_board.renderTradeBoard.09", "RUN"), xAccent)
+	g.put(tcName, 3, rowid.Line("ui.trade_board.renderTradeBoard.04", "ROUTE"), xDim)
+	g.put(tcSends, 3, rowid.Line("ui.trade_board.renderTradeBoard.05", "IN"), xDim)
+	g.put(tcPipe, 3, "━━►", xDim)
+	g.put(tcBrings, 3, rowid.Line("ui.trade_board.renderTradeBoard.06", "OUT"), xDim)
+	g.rput(tcRun, 3, rowid.Line("ui.trade_board.renderTradeBoard.09", "RUN"), xDim)
 	// The whole of trade a second: what the routes take and bring in all.
 	var takes, brings float64
 	for _, r := range routes {
