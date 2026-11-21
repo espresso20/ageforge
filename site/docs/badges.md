@@ -16,6 +16,8 @@ badges
 
 <figure class="screen" data-screen="badge-list"><figcaption>All badges, by domain.</figcaption></figure>
 
+Badges are drawn as wire-frame pixel shields: the emblem shows the domain and each tier adds strokes. The list tabs show the selected badge's shield beside the list, dim until earned, and earning a badge shows a short notice with its shield that closes after about three seconds or on any key or click.
+
 [Accounts & Recovery](account.md#ranks) describes the screen itself: the tabs and the keys. The Stats panel shows a one-line digest of your badges. `account badges` opens the screen on every badge.
 
 ## Ranks

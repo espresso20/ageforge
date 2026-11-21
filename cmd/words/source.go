@@ -52,6 +52,7 @@ var notScanned = map[string]string{
 	"world":                 "the space model for the map: catalogues and internal keys, no player text (the ui reads the game's own words)",
 	"rowid":                 "the row-id wrapper, no text of its own",
 	"detmath":               "arithmetic, no text",
+	"pkg/wirebadge":         "badge shield drawing: pixels only, no player text",
 	"mapgen":                "the map engine: art, hues and internal keys, no player text (the ui reads the game's own words)",
 	"mapmodel/fixture":      "test fixtures",
 	"pkg/planboard":         "pixel pictures for the Plan panel, no text of its own",

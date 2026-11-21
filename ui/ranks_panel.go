@@ -692,6 +692,10 @@ func (p *ranksPanel) paintDetail(s rankPaint, d *rankDom, g ranksGeo) {
 
 func (p *ranksPanel) paintList(s rankPaint, w, h int) {
 	m := p.model
+	card := w >= 150
+	if card {
+		w -= badgeCardW + 2
+	}
 	bg := theme.Of(theme.RoleBackground)
 	txt, dim, bright := kit.Role(theme.RoleText), kit.Role(theme.RoleDim), kit.Role(theme.RoleBright)
 	nameW := min(max(w-70, 24), 48)
@@ -750,6 +754,9 @@ func (p *ranksPanel) paintList(s rankPaint, w, h int) {
 		}
 		s.right(w-3, y, tail, dim, false)
 		p.hits = append(p.hits, rankHit{image.Rect(1, y, w-1, y+1), v.Key})
+	}
+	if card {
+		p.paintCard(s, w+2, h)
 	}
 }
 
