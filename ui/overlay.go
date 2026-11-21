@@ -188,6 +188,14 @@ func (om *OverlayManager) scrollKey(ev *kit.Key, prompt string) bool {
 	return false
 }
 
+// SetRegion gives the named text overlay what a click on one of its text's
+// regions does. Unknown names are ignored.
+func (om *OverlayManager) SetRegion(name string, fn func(region string)) {
+	if e, ok := om.entries[name]; ok {
+		e.tv.body.OnRegion = func(r string, _ int) { fn(r) }
+	}
+}
+
 // SetOver has the named text overlay paint on its text once the text has
 // painted (see nativeText.over). Unknown names are ignored.
 func (om *OverlayManager) SetOver(name string, over func(p *kit.Painter, text image.Rectangle, top int)) {

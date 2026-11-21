@@ -350,6 +350,12 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	d.overlayMgr.Register("help", rowid.E("ui.dashboard.NewDashboard.18", "Help"), func(st game.GameState, w int) string {
 		return helpProvider(d.lessonKeys(), st, w)
 	})
+	// A click on a command in Help writes its typed part in the command bar.
+	d.overlayMgr.SetRegion("help", func(region string) {
+		if line, ok := strings.CutPrefix(region, helpFillPrefix); ok {
+			d.app.stageLine(line)
+		}
+	})
 
 	// The Map panel: the map full screen (map, and its aliases citymap and
 	// worldmap). Its settings travel with the account.
