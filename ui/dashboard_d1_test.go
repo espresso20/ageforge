@@ -149,14 +149,14 @@ func TestRichColumns(t *testing.T) {
 			t.Errorf("%d cells: %d | %d | %d, want %d | %d | %d", c.w, left, mid, right, c.left, c.mid, c.right)
 		}
 	}
-	if got := richMapRows(64, 63); got != 30 {
-		t.Errorf("map at 64 wide and 63 rows is %d rows, want 30", got)
+	if got := richMapRows(64, 63); got != 20 {
+		t.Errorf("map at 64 wide and 63 rows is %d rows, want 20", got)
 	}
-	if got := richMapRows(64, 36); got != 18 {
-		t.Errorf("map at 64 wide and 36 rows is %d rows, want 18", got)
+	if got := richMapRows(64, 36); got != 10 {
+		t.Errorf("map at 64 wide and 36 rows is %d rows, want 10", got)
 	}
-	if got := richMapRows(33, 40); got != 16 {
-		t.Errorf("map at 33 wide and 40 rows is %d rows, want 16", got)
+	if got := richMapRows(33, 40); got != 11 {
+		t.Errorf("map at 33 wide and 40 rows is %d rows, want 11", got)
 	}
 }
 

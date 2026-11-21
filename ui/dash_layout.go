@@ -68,10 +68,25 @@ func richCols(w int) (left, mid, right int) {
 
 // richMapRows is the mini map's height, border included, in the rich layout's
 // Right column on a terminal h rows tall: about 47% of the column's width,
-// at most h-18 (so the Panels list keeps 18 rows), at least 10.
+// at most what the Next box leaves out (richNextRows, so the stacked Panels
+// list fits; richNextCompactRows when the terminal is too short for that),
+// at least 10.
 func richMapRows(right, h int) int {
-	return max(10, min((47*right+50)/100, h-18))
+	room := h - richNextRows
+	if room < 10 {
+		room = h - richNextCompactRows
+	}
+	return max(10, min((47*right+50)/100, room))
 }
+
+// richNextRows is the Next box's height, border included, when the Panels
+// list is stacked (one column a group, 25 rows): 2 borders, the card (13
+// rows), a blank, the rule, the list and a blank. richNextCompactRows is the
+// box with the two-column list (12 rows) instead.
+const (
+	richNextRows        = 43
+	richNextCompactRows = 29
+)
 
 // richPeopleHeight is the People box's height, border included, in the rich
 // layout on a terminal h rows tall.
