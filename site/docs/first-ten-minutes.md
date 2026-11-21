@@ -20,7 +20,7 @@ Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your tow
 
 <figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: almost nothing in stock, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 
-You have 25 food, 50 wood, no workers and no housing. Workers come on their own once you have housing and buildings for them to work in. Start by gathering:
+You have 25 food, 50 wood, no workers and no housing. Workers come on their own once you have housing and buildings for them to work in. The Next card walks the first minutes in this order: a Hut, then a Gathering Camp, then a Wood Camp, then a Story Circle, then research once its scholars stand. When a building's price is more than the wood you hold and nothing makes wood yet, the card's step is to gather it by hand. You can also gather whenever you like:
 
 ```
 gather wood 25
@@ -33,7 +33,7 @@ The Gather buttons in the Buildings box stay for as long as hand-gathering works
 
 ---
 
-## Step 1: Build a gathering camp and a wood camp
+## Step 1: Build a gathering camp and a wood camp (after the first hut)
 
 Food runs short before anything else, so get production going first. Both camps cost 22 wood, and you start with 50 (75 after the gathering above).
 
