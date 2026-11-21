@@ -3,98 +3,10 @@ package ui
 import (
 	"image"
 	"image/color"
-	"strings"
 )
 
 // stats_pix.go draws the Stats page's pictures in art pixels, in the manner
-// of the coins: flat tones, a pale lip, a dark foot, no blur. A numeral is
-// the 5 by 7 font below, one font pixel being several real ones.
-
-// statsFont is the numeral glyphs, rows top to bottom, '#' lit.
-var statsFont = map[rune]string{
-	'0': ".###./#...#/#..##/#.#.#/##..#/#...#/.###.", '1': "..#../.##../..#../..#../..#../..#../.###.",
-	'2': ".###./#...#/....#/...#./..#../.#.../#####", '3': "####./....#/....#/.###./....#/....#/####.",
-	'4': "...#./..##./.#.#./#..#./#####/...#./...#.", '5': "#####/#..../####./....#/....#/#...#/.###.",
-	'6': "..##./.#.../#..../####./#...#/#...#/.###.", '7': "#####/....#/...#./..#../.#.../.#.../.#...",
-	'8': ".###./#...#/#...#/.###./#...#/#...#/.###.", '9': ".###./#...#/#...#/.####/....#/...#./.##..",
-	'K': "#...#/#..#./#.#../##.../#.#../#..#./#...#", 'M': "#...#/##.##/#.#.#/#.#.#/#...#/#...#/#...#",
-	'B': "####./#...#/#...#/####./#...#/#...#/####.", 'T': "#####/..#../..#../..#../..#../..#../..#..",
-	'h': "#..../#..../#.##./##..#/#...#/#...#/#...#", 'm': "...../...../##.#./#.#.#/#.#.#/#.#.#/#.#.#",
-	's': "...../...../.####/#..../.###./....#/####.", 'd': "....#/....#/.##.#/#..##/#...#/#..##/.##.#",
-	'.': "./././././././#", '/': "....#/....#/...#./..#../.#.../#..../#....", ',': "../../../../../.#/#.", ' ': "..././.../.../.../.../.../...",
-}
-
-// numTok is one glyph of a numeral; half is a unit (h, m, s, d), drawn at
-// half height.
-type numTok struct {
-	r    rune
-	half bool
-}
-
-// numToks spells a count as glyphs, with a comma between thousands, or
-// reports false when a letter it needs has no glyph.
-func numToks(s string, half bool) ([]numTok, bool) {
-	t := make([]numTok, 0, len(s))
-	for _, r := range s {
-		if _, ok := statsFont[r]; !ok {
-			return nil, false
-		}
-		t = append(t, numTok{r, half})
-	}
-	return t, true
-}
-
-func (n numTok) cols() int { return strings.IndexByte(statsFont[n.r], '/') }
-
-func (n numTok) scale(s int) int {
-	if n.half {
-		return max(1, s/2)
-	}
-	return s
-}
-
-// numWidth is the numeral's width in pixels at s pixels per font pixel: a
-// font pixel of air between glyphs and half a glyph's height before a unit.
-func numWidth(t []numTok, s int) int {
-	w := 0
-	for i, n := range t {
-		sc := n.scale(s)
-		w += n.cols() * sc
-		if i < len(t)-1 {
-			w += sc
-		}
-		if i+1 < len(t) && t[i+1].half && !n.half {
-			w += s / 2
-		}
-	}
-	return w
-}
-
-// drawNumeral draws the glyphs with their baseline at base and the left edge
-// at x0, in face over a shadow a step down and to the right.
-func drawNumeral(img *image.RGBA, x0, base, s int, t []numTok, face, shadow color.RGBA) {
-	for pass := 0; pass < 2; pass++ {
-		off, c := max(1, s/4), shadow
-		if pass == 1 {
-			off, c = 0, face
-		}
-		x := x0
-		for i, n := range t {
-			sc := n.scale(s)
-			for r, row := range strings.Split(statsFont[n.r], "/") {
-				for q, ch := range row {
-					if ch == '#' {
-						fillPx(img, image.Rect(x+q*sc+off, base-(7-r)*sc+off, x+(q+1)*sc+off, base-(6-r)*sc+off), c)
-					}
-				}
-			}
-			x += n.cols()*sc + sc
-			if i+1 < len(t) && t[i+1].half && !n.half {
-				x += s / 2
-			}
-		}
-	}
-}
+// of the coins: flat tones, a pale lip, a dark foot, no blur.
 
 // fillPx fills a rectangle of real pixels.
 func fillPx(img *image.RGBA, r image.Rectangle, c color.RGBA) {
@@ -128,10 +40,10 @@ func newStatsInk(pal *expPalette) statsInk {
 }
 
 // statsTilePic is a headline tile: a plate with a well, a sign at the left
-// of the well when kind is not empty, the numeral at its right, and the
+// of the well when kind is not empty and the
 // label rows left below the well. tw, th and wr (the well's rows) are cells.
 // A tile that holds is framed in the accent tone.
-func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, hold bool, all []statsTile, in statsInk) *image.RGBA {
+func statsTilePic(tw, th, wr, cw, ch int, kind string, hold bool, in statsInk) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, tw*cw, th*ch))
 	k := max(1, ch/21)
 	a := art{img, k}
@@ -155,25 +67,6 @@ func statsTilePic(tw, th, wr, cw, ch int, toks []numTok, kind string, hold bool,
 	if kind != "" {
 		drawSign(a, well.Min.X+2, well.Min.Y+(well.Dy()-36)/2, kind, signTints[kind], .1, in.well)
 	}
-	// one scale for every tile: the largest at which the widest numeral fits
-	// its well with a clear cell between the sign and the numeral
-	s := (well.Dy() - 4) * k / 7
-	for _, t := range all {
-		if t.toks == nil {
-			continue
-		}
-		room := (well.Dx() - 4) * k
-		if t.kind != "" {
-			room = (well.Dx()-40)*k - cw
-		}
-		for s > 1 && numWidth(t.toks, s)+s/2 > room {
-			s--
-		}
-	}
-	w := numWidth(toks, s)
-	x0 := (well.Max.X-2)*k - w - s/2
-	base := (well.Min.Y+well.Max.Y)*k/2 + 7*s/2
-	drawNumeral(img, x0, base, s, toks, in.face, in.shadow)
 	return img
 }
 
