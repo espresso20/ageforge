@@ -201,6 +201,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 - The `icons` command, the Nerd Font installer and the `nerd` map glyph set are gone, and the Font Snob badge with them. The window draws with its own fonts, which have no such icons. Option+B and Option+F no longer act as Home and End on an empty prompt.
 - The badges drawn in characters (frames, rings and the eleven drawings) are gone, along with the one-line badge notice in the header.
+- Removed the automated test suite.
 
 ### Fixed
 - The detail under the Buildings list wraps its notice, description and flavour line at word boundaries beside the Sell and Upgrade buttons instead of cutting them with an ellipsis, and takes the free rows between the list and its frame; when rows run out the flavour line goes first, then the description is held to two rows.
