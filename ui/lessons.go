@@ -504,7 +504,7 @@ func (d *Dashboard) lessonKeys() []string {
 // as a count.
 func lessonsHelp(learned []string, width int) string {
 	var sb strings.Builder
-	sb.WriteString("[gold]═══ " + txtLessonsHead.String() + " ═══[-]\n")
+	sb.WriteString(headLine(txtLessonsHead.String(), width) + "\n")
 	left := len(lessonTable)
 	for _, k := range learned {
 		if l, ok := lessonOf(k); ok {

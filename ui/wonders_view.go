@@ -86,7 +86,7 @@ func (wv *wondersView) footer() [][2]string {
 // it belongs to and its description.
 func (wv *wondersView) galleryText(state game.GameState) string {
 	var sb strings.Builder
-	sb.WriteString(rowid.Line("ui.wonders_view.galleryText.01", "[gold]═══ Wonder gallery ═══[-]"))
+	sb.WriteString(headLine(rowid.Line("ui.wonders_view.galleryText.01", "Wonder gallery"), 0))
 	sb.WriteString("\n\n")
 	set := state.Ruleset()
 	for _, w := range builtWonders(state) {

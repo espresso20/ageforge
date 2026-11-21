@@ -101,6 +101,9 @@ type deckLayout struct {
 	// the content's rows and viewH how many of them the panel shows.
 	cards        []image.Rectangle
 	total, viewH int
+	// top is the row the scrolling rows start on, 0 for the first under the
+	// frame's top edge.
+	top int
 }
 
 // card is the n-th card of the page, counting through its sections.
@@ -255,8 +258,7 @@ func layoutDeck(pg *deckPage, inner, sel int) (cards []image.Rectangle, total in
 // came of it.
 func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout) {
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, pg.Title, xTitle, false)
-	g.closeButton(w)
+	g.shell(pg.Title, 0)
 	inner, viewH := w-4, h-deckChrome
 	if inner < 12 || viewH < 3 {
 		return g, deckLayout{}
@@ -337,7 +339,7 @@ func renderDeck(pg *deckPage, sel, scroll, w, h int, said ...xseg) (*xgrid, deck
 		}
 	}
 	g.segsFit(2, h-3, inner, said...)
-	expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, deckKeys(pg, sel, total > viewH), pg.Hint)
+	g.foot(deckKeys(pg, sel, total > viewH), pg.Hint)
 	return g, lay
 }
 

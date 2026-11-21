@@ -650,9 +650,14 @@ func (p *logsPanel) PointerAt(at image.Point) kit.Pointer {
 	return handIf(acts)
 }
 
-// keysOrigin is where the header buttons' grid starts on the screen.
+// keysOrigin is where the header buttons' grid starts on the screen: the top
+// row, from the first key to the right edge (the whole panel when it is too
+// small for the roll).
 func (p *logsPanel) keysOrigin() image.Point {
-	return p.Bounds().Min.Add(image.Pt(p.lay.Keys.X, p.lay.Keys.Y))
+	if p.lay.Mode == logroll.Placeholder {
+		return p.Bounds().Min
+	}
+	return p.Bounds().Min.Add(image.Pt(p.lay.Keys.X, 0))
 }
 
 // kept is how many lines the log holds, seams not counted.

@@ -64,12 +64,11 @@ func newPanelFrame(title rowid.Entry, tv *nativeText) *panelFrame {
 // edge and the keys along the foot.
 func renderPanelFrame(w, h int, title string, keys [][2]string, hint, notice string) *xgrid {
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, title, xTitle, false)
-	g.closeButton(w)
+	g.shell(title, 0)
 	if h >= panelMinRows && notice != "" {
 		g.segsFit(2, h-2, w-4, xseg{notice, xGood})
 	} else if h >= panelMinRows {
-		expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, keys, hint)
+		g.footWords(keys, hint)
 	}
 	return g
 }
@@ -124,6 +123,10 @@ func (f *panelFrame) Paint(p *kit.Painter) {
 	f.buttons.paint(p, g, r.Min, pal)
 	f.grid = g
 	f.tv.Paint(p)
+	// The bar is in the column the text leaves free, as Stats draws it.
+	if top, view, total := f.tv.scrollSpan(); f.tv.scrollable && total > view {
+		p.Bar(r.Max.X-2, f.tv.view.Bounds().Min.Y, view, top, view, total)
+	}
 }
 
 // Mouse: a click on a key along the foot, or on the close button, presses

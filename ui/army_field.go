@@ -53,8 +53,7 @@ func renderArmyField(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 	mil := st.Military
 	over := pg.Sections[0].Cards
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, pg.Title, xTitle, false)
-	g.closeButton(w)
+	g.shell(pg.Title, 0)
 	inner := w - 4
 	lay := deckLayout{cards: make([]image.Rectangle, pg.count()), total: h - deckChrome, viewH: h - deckChrome}
 
@@ -163,7 +162,7 @@ func renderArmyField(pg *deckPage, st game.GameState, sel, scroll, w, h int, sai
 		return renderDeck(pg, sel, scroll, w, h, said...) // the orders do not fit the field
 	}
 	g.segsFit(2, h-3, inner, said...)
-	expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, deckKeys(pg, sel, false), pg.Hint)
+	g.foot(deckKeys(pg, sel, false), pg.Hint)
 	return g, lay
 }
 

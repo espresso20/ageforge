@@ -360,8 +360,7 @@ func renderExpedition(state game.GameState, v expView, w, h int) *xgrid {
 		l = reportLayoutFor(w, h)
 	}
 	v.frame = max(v.frame, 0)
-	g.box(0, 0, w, h, xBorder, rowid.Line("ui.expedition_view.renderExpedition.01", "Expeditions · ")+state.AgeName, xTitle, false)
-	g.closeButton(w)
+	g.shell(rowid.Line("ui.expedition_view.renderExpedition.01", "Expeditions · ")+state.AgeName, 0)
 	if l.small {
 		g.put(2, 2, fitText(rowid.Line("ui.expedition_view.renderExpedition.02", "The window is too small for the expeditions panel. Esc closes it."), w-4), xBad)
 		return g
@@ -582,39 +581,6 @@ func boolRank(b bool) int {
 	return 0
 }
 
-// expKeyBar writes the keys along the foot as buttons. Each is a key and
-// what it does. The last one (how to close the panel) is there whenever it
-// fits; the others are those that fit before it, in order; hint is a last
-// note, dropped first.
-func expKeyBar(g *xgrid, l expLayout, keys [][2]string, hint string) {
-	x := 2
-	room := l.w - 2
-	last, closeW := len(keys)-1, 0
-	if last >= 0 {
-		closeW = keyButtonW(keys[last][0], keys[last][1])
-	}
-	for i, kv := range keys {
-		at := x
-		if x > 2 {
-			at++
-		}
-		end := at + keyButtonW(kv[0], kv[1])
-		if i < last {
-			end += 1 + closeW
-		}
-		if end <= room {
-			x = g.keyButton(at, l.footY, kv[0], kv[1])
-		}
-	}
-	if hint != "" {
-		lead := rowid.Line("ui.expedition_view.expKeyBar.01", " · or type ")
-		if x+len([]rune(lead))+len([]rune(hint)) <= room {
-			x = g.put(x, l.footY, lead, xFaint)
-			g.put(x, l.footY, hint, xText)
-		}
-	}
-}
-
 // drawOut draws the Out now box (or line): each mission under way, where to
 // and how long it has left.
 func drawOut(g *xgrid, state game.GameState, l expLayout, sc *expScene, title string, lines []xline) {
@@ -688,7 +654,7 @@ func drawReady(g *xgrid, state game.GameState, v expView, l expLayout, sc *expSc
 	if l.legendY >= 0 {
 		expLegend(g, state, l)
 	}
-	expKeyBar(g, l, [][2]string{{"←↑↓→", rowid.Line("ui.expedition_view.drawReady.05", "hop between pins")}, {"Enter", "send"}, {"Tab", "report"}, {"Esc", "close"}}, "expedition <name>")
+	g.keyRow(l.footY, [][2]string{{"←↑↓→", rowid.Line("ui.expedition_view.drawReady.05", "hop between pins")}, {"Enter", "send"}, {"Tab", "report"}, {"Esc", "close"}}, "expedition <name>")
 }
 
 // expLegend is the key to the pins, in the age's own names for the missions.
@@ -1118,5 +1084,5 @@ func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expS
 		g.putFit(2, l.legendY, l.w-4, soc, socKind)
 	}
 	keys := [][2]string{{"↑↓", rowid.Line("ui.expedition_view.drawReport.06", "choose a party")}, {"Tab", rowid.Line("ui.expedition_view.drawReport.08", "ready room")}, {"Esc", "close"}}
-	expKeyBar(g, l, keys, "")
+	g.keyRow(l.footY, keys, "")
 }

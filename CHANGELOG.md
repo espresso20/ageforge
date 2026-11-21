@@ -7,6 +7,9 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- The Plan, Logs and Map panels have the `×` close button in their top right corner, like every other panel.
+- Section headings in the text panels (Help, Wonders, Buildings, Factions and the rest) share one look with Stats: the name in the title colour, then a faint rule. Factions, Harbinger and Epoch no longer repeat the panel's name as their first line.
+- Panels that scroll show a scroll bar down their right edge when there is more than fits, and the typing hint at a panel's foot is a button that puts the command in the prompt.
 - A building, tech, resource, civilization or trade route can be typed by the name the screen shows as well as by its key: `build Lumber Mill 2` is `build lumber_mill 2`.
 - A mistyped command that is close to a real one puts the corrected line on the command line for Enter to run (`biuld hut 2` leaves `build hut 2`). Nothing runs until Enter.
 - The Buildings column is at most 90 cells wide, so a card's name, price and Build button read as one line; the width it gives up goes to Resources, the Log and the right column. The mini map is at most 16 rows tall.

@@ -19,6 +19,7 @@ import (
 type tradeSide struct {
 	cards        []image.Rectangle
 	total, viewH int
+	top          int // the list's first row
 	scrolls      bool
 	small        bool // the list has no room: the panel draws the deck
 }
@@ -278,7 +279,7 @@ func drawTradeOffers(g *xgrid, st game.GameState, routes []tradeRoute, side trad
 	}
 	N := len(rows)
 	side.scrolls = N > H
-	side.total, side.viewH = N, H
+	side.total, side.viewH, side.top = N, H, top
 	lo, hi := 0, N
 	if side.scrolls {
 		scroll = max(0, min(scroll, N-H))

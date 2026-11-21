@@ -135,7 +135,7 @@ func (pg *statsPage) ladder(st game.GameState, as *game.AccountStatsView, y, w, 
 	}
 	pg.top = hi
 	pg.heads[0] = image.Rect(0, y, w, y+1)
-	pg.heading(0, y, w, txtHighestAge.String())
+	pg.g.head(0, y, w, txtHighestAge.String())
 	y++
 	sw := max(1, w/n)
 	x0 := (w - sw*n) / 2
@@ -189,7 +189,7 @@ func (pg *statsPage) ladder(st game.GameState, as *game.AccountStatsView, y, w, 
 // records lays the four best-run tiles out and returns the row after them
 // and the tiles.
 func (pg *statsPage) records(st game.GameState, as *game.AccountStatsView, y, w, grow int) (int, []statsTile) {
-	pg.heading(0, y, w, txtBestRun.String())
+	pg.g.head(0, y, w, txtBestRun.String())
 	y++
 	now := []int{st.Stats.TotalBuilt, st.Stats.TotalRecruited, st.Research.TotalResearched, st.Military.CompletedCount}
 	names := []string{txtBuilt.String(), txtRecruited.String(), txtTechs.String(), txtMissions.String()}
@@ -215,7 +215,7 @@ func (pg *statsPage) records(st game.GameState, as *game.AccountStatsView, y, w,
 // families lays the worker domains' badges out in a grid: each domain's best
 // tier earned (a blank mark where none is), its name and its count.
 func (pg *statsPage) families(st game.GameState, as *game.AccountStatsView, y, w int) int {
-	pg.heading(0, y, w, txtFamilies.String())
+	pg.g.head(0, y, w, txtFamilies.String())
 	y++
 	doms := buildRanks(st.Ruleset(), as.Badges).doms
 	cols := clamp(w/26, 2, 6)

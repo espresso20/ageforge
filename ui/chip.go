@@ -30,8 +30,10 @@ type chipSpec struct {
 	kind       keyKind
 	label, key string
 	cmd        string
-	ask, yes   string
-	off        bool
+	// fill: the click writes cmd in the command bar and does not run it.
+	fill     bool
+	ask, yes string
+	off      bool
 	// why is the line that says why it is off (xkey.why).
 	why string
 }
@@ -53,7 +55,7 @@ func (s *keySet) chip(x, y int, a chipSpec, put func(x, y int, text string)) int
 	text := chipText(a.label, a.key)
 	r := image.Rect(x, y, x+runeLen(text), y+1)
 	put(x, y, text)
-	b := xkey{r: r, cap: r, kind: a.kind, cmd: a.cmd, ask: a.ask, yes: a.yes, off: a.off, why: a.why}
+	b := xkey{r: r, cap: r, kind: a.kind, cmd: a.cmd, fill: a.fill, ask: a.ask, yes: a.yes, off: a.off, why: a.why}
 	if a.key != "" {
 		if parts := capParts(a.key); len(parts) > 0 {
 			b.key = parts[0].key
