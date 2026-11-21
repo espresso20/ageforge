@@ -468,8 +468,18 @@ The chart shows up to three measures at once (keys 1 to 0 for the core ten), wit
 | Command | Description |
 |---|---|
 | `catastrophe` (or `cat`) | Reopen the Endure or Succumb choice for a pending catastrophe or Last Passage. With nothing pending, show the outlook as you can know it: the doom a harbinger present foretells, or that no harbinger has come and the era is quiet, for now (in the Cosmic Era, the odds of the Last Passage at your next prestige take that line's place). |
+| `catastrophe endure` | Endure the pending catastrophe or Last Passage without opening the window. |
+| `catastrophe succumb` | Succumb to it. The choice is final, so Enter on a completion guess only fills the line and waits for a second Enter. |
 
-A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `E` endures, `S` succumbs and `Esc` closes it without choosing. The header shows a pending chip until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
+A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, `Tab` and the arrows move between the buttons, `Enter` or a click presses the one picked (the keyboard starts on the way out) and `Esc` closes it without choosing; a letter key does nothing. A click runs the same `catastrophe endure` or `catastrophe succumb` line. The window waits to open while the Command line has text. The header shows a pending chip until you decide. The harbinger's Invite (below) is the only way to choose a catastrophe yourself. See [Catastrophe](catastrophe.md).
+
+Early in a new run an old cache may offer an Ancient Memory: one tech researched free of prerequisites at half speed. It opens as a window; the buttons run the same lines as these commands.
+
+| Command | Description |
+|---|---|
+| `memory` | Show the ancient memory on offer, if any. |
+| `memory accept` | Accept it and start researching the tech. |
+| `memory decline` | Leave the cache sealed; the offer is gone. |
 
 ---
 

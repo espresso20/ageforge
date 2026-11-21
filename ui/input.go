@@ -2188,16 +2188,75 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) > 0 {
-		return infoReply(rowid.Line("ui.input.cmdCatastrophe.01", "Usage: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the outlook)"))
+	if len(args) > 1 {
+		return infoReply(txtCatastropheUsage.String())
+	}
+	state := engine.GetState()
+	if len(args) == 1 {
+		if pendingChoiceKey(state) == "" {
+			return errorReply(rowid.Line("ui.input.cmdCatastrophe.02", "No catastrophe or Last Passage is waiting for a choice."))
+		}
+		// The pending catastrophe comes first, as in the choice window.
+		endure, succumb := engine.Endure, engine.Succumb
+		if state.PendingCatastrophe == "" {
+			endure, succumb = engine.EndureLastPassage, engine.SuccumbLastPassage
+		}
+		var err error
+		switch strings.ToLower(args[0]) {
+		case "endure":
+			err = endure()
+		case "succumb":
+			err = succumb()
+		default:
+			return infoReply(txtCatastropheUsage.String())
+		}
+		if err != nil {
+			return errorResult(err)
+		}
+		return successReply() // the engine logs the outcome
 	}
 	// Bare `catastrophe`: reopen the pending choice, or report the outlook.
-	state := engine.GetState()
 	if pendingChoiceKey(state) != "" {
 		return CommandResult{Type: "success", OpenCatastrophe: true}
 	}
 	return infoReply(catastropheOutlookText(state))
 }
+
+var txtCatastropheUsage = rowid.E("ui.input.cmdCatastrophe.01", "Usage: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the outlook), or catastrophe endure|succumb (answers it directly)")
+
+// cmdMemory shows or answers the Ancient Memory offer.
+func cmdMemory(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		st := engine.GetState()
+		if st.PendingMemoryTech == "" {
+			return infoReply(rowid.Line("ui.input.cmdMemory.01", "No ancient memory is on offer."))
+		}
+		name := st.PendingMemoryTechName
+		if name == "" {
+			name = config.TechByKey()[st.PendingMemoryTech].Name
+		}
+		return infoReply(rowid.Sprintf("ui.input.cmdMemory.02", "An ancient cache holds the memory of %s. Type memory accept or memory decline.", name))
+	}
+	if len(args) > 1 {
+		return infoReply(txtMemoryUsage.String())
+	}
+	switch strings.ToLower(args[0]) {
+	case "accept":
+		if err := engine.AcceptAncientMemory(); err != nil {
+			return errorResult(err)
+		}
+	case "decline":
+		if engine.GetState().PendingMemoryTech == "" {
+			return errorReply(rowid.Line("ui.input.cmdMemory.03", "There is no ancient memory to decline."))
+		}
+		engine.DeclineAncientMemory()
+	default:
+		return infoReply(txtMemoryUsage.String())
+	}
+	return successReply() // the engine logs the answer
+}
+
+var txtMemoryUsage = rowid.E("ui.input.cmdMemory.04", "Usage: memory (shows the offer), or memory accept|decline (answers it)")
 
 // lastPassageStatusLines is the Last Passage risk line for `prestige`, empty
 // before the Cosmic Era. The odds follow the harbinger's precision (numeric by

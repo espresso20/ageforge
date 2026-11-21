@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"unicode"
-
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -107,11 +105,11 @@ func showButtonModal(app *appLoop, pages *nativePages, page, text string, button
 }
 
 // buttonRing is the buttons of a window and the one the keyboard is on.
-// Tab and the arrows move it; a button's letter presses that button.
+// Tab and the arrows move it; only Enter or a click presses a button, never a
+// bare letter, so a command being typed cannot reach one.
 type buttonRing struct {
 	app     *appLoop
 	buttons []Primitive
-	letters []rune // lower case, one to a button; 0 for none
 	at      int
 	// moved is told which button has the keyboard, so the window can hand it
 	// back there after another window closes.
@@ -122,16 +120,8 @@ func newButtonRing(app *appLoop, moved func(Primitive)) *buttonRing {
 	return &buttonRing{app: app, moved: moved}
 }
 
-// add puts a button on the ring; letter presses it (0: no letter).
-func (r *buttonRing) add(b Primitive, letter rune) {
-	r.buttons = append(r.buttons, b)
-	r.letters = append(r.letters, unicode.ToLower(letter))
-}
-
-// clear empties the ring, for a window whose buttons change.
-func (r *buttonRing) clear() {
-	r.buttons, r.letters = r.buttons[:0], r.letters[:0]
-}
+// add puts a button on the ring.
+func (r *buttonRing) add(b Primitive) { r.buttons = append(r.buttons, b) }
 
 // focus puts the keyboard on button i, counting round the ring.
 func (r *buttonRing) focus(i int) {
@@ -147,27 +137,14 @@ func (r *buttonRing) focus(i int) {
 	r.app.SetFocus(b)
 }
 
-// press does what the button with that letter does.
-func (r *buttonRing) press(letter rune) bool {
-	for i, l := range r.letters {
-		if l != 0 && l == unicode.ToLower(letter) {
-			keyTo(r.buttons[i], kit.Key{Code: kit.KeyEnter})
-			return true
-		}
-	}
-	return false
-}
-
-// key takes Tab and Shift-Tab, Right and Left, and the buttons' letters, and
-// reports whether the key was one of them.
+// key takes Tab and Shift-Tab, Right and Left, and reports whether the key
+// was one of them.
 func (r *buttonRing) key(ev *kit.Key) bool {
 	switch ev.Code {
 	case kit.KeyTab, kit.KeyRight:
 		r.focus(r.at + 1)
 	case kit.KeyBacktab, kit.KeyLeft:
 		r.focus(r.at - 1)
-	case kit.KeyRune:
-		return r.press(ev.Rune)
 	default:
 		return false
 	}
