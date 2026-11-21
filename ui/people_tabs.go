@@ -167,7 +167,7 @@ func (c peopleBody) work() {
 	rx, ri := c.x+lw+2, rw-4
 	y = c.y + 1
 	bs := c.areaList(r.Domain)
-	recruitY := c.y + c.h - 1 - c.recruitRows()
+	recruitY := c.y + c.h - 1 - chipRows
 	y = c.workList(rx, y, ri, recruitY-6, bs)
 	if len(bs) == 0 {
 		g.putFit(rx, y, ri, rowid.Line("ui.people_tabs.work.10", "No buildings here yet."), xFaint)

@@ -17,29 +17,6 @@ func picRoom(right, gap, cw int) int {
 	return (right + gap + cw - 1) / cw
 }
 
-const (
-	// actionSignArtW is a sign on an action button, with the pixel its shadow
-	// takes.
-	actionSignArtW = 14
-)
-
-// actionSignCols is the cells at the left of an action button its sign takes
-// where there are no pictures, and the least with them.
-const actionSignCols = 4
-
-// actionSignX is where a sign starts in an action button, in art pixels.
-func actionSignX(cw, ch int) int { return cw * 7 / 5 / artUnit(ch) }
-
-// actionSignRoom is the cells at the left of an action button that its sign
-// takes, for cells of cw by ch pixels; actionSignCols without pictures.
-func actionSignRoom(cw, ch int) int {
-	if cw <= 0 || ch <= 0 {
-		return actionSignCols
-	}
-	u := artUnit(ch)
-	return max(actionSignCols, picRoom((actionSignX(cw, ch)+actionSignArtW)*u, u, cw))
-}
-
 // pictureCells is the cell size pictures are drawn at, zero where there are
 // none (no window).
 func pictureCells() (cw, ch int) {

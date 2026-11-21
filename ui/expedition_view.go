@@ -864,7 +864,7 @@ func drawBriefing(g *xgrid, state game.GameState, v expView, l expLayout, sc *ex
 	body, foot := briefing(state, o, cw)
 	rows := h - 2
 	if o.CanLaunch {
-		rows -= actionRows
+		rows -= chipRows
 	}
 	body, foot = fitCard(body, foot, rows)
 	row := y + 1
@@ -875,7 +875,7 @@ func drawBriefing(g *xgrid, state game.GameState, v expView, l expLayout, sc *ex
 	row = y + h - 1 - len(foot)
 	if o.CanLaunch {
 		// The button that asks to send the party stands over the card's foot.
-		g.actionButton(x+1, row-actionRows, actionSpec{kind: keyPrimary, label: strings.TrimSpace(txtSend.String()), key: "Enter", sign: signPlay})
+		g.chip(x+1, row-chipRows, chipSpec{kind: keyAccent, label: strings.TrimSpace(txtSend.String()), key: "Enter"})
 	}
 	for _, c := range foot {
 		drawCardLine(g, x+1, row, cw, c)
@@ -905,7 +905,7 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 	}
 	o := *sc.offers[sc.selected(v.sel)].offer
 	w := min(58, g.w-4)
-	h := 10 + actionRows - 1
+	h := 10 + chipRows - 1
 	x, y := (g.w-w)/2, max(1, (g.h-h)/2)
 	g.fill(x, y, w, h)
 	g.hit(hitConfirm, 0, x, y, w, h)
@@ -951,8 +951,8 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 	g.segs(x+2, row, xseg{padRight(rowid.Line("ui.expedition_view.drawConfirm.07", "Odds"), 6), xDim}, xseg{fmt.Sprintf("%.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)},
 		xseg{rowid.Line("ui.expedition_view.drawConfirm.08", "   Back in  "), xDim}, xseg{expDur(o.DurationMin, state), xText},
 		xseg{rowid.Line("ui.expedition_view.drawConfirm.09", "   Haul  "), xDim}, xseg{rowid.Sprintf("ui.expedition_view.drawConfirm.10", "about %.0f min", o.HaulMinutes), xGood})
-	bx := g.actionButton(x+2, y+h-1-actionRows, actionSpec{kind: keyPrimary, label: strings.TrimSpace(txtSend.String()), key: "Enter", sign: signTick})
-	g.actionButton(bx+2, y+h-1-actionRows, actionSpec{kind: keyPlain, label: strings.TrimSpace(txtBack.String()), key: "Esc", sign: signCross})
+	bx := g.chip(x+2, y+h-1-chipRows, chipSpec{kind: keyAccent, label: strings.TrimSpace(txtSend.String()), key: "Enter"})
+	g.chip(bx+2, y+h-1-chipRows, chipSpec{kind: keySteel, label: strings.TrimSpace(txtBack.String()), key: "Esc"})
 }
 
 // returnLine is how a mission that came home is told.

@@ -112,7 +112,7 @@ func TestFactionVerbsRunTheirCommandOnceByClick(t *testing.T) {
 
 func TestFactionGiftLeadsAndTributeTakesOverAtWar(t *testing.T) {
 	s := stageFactions(t, 0, nil)
-	if k := s.button(t, diplomacyCmd+"gift "+s.key); k.kind != keyPrimary {
+	if k := s.button(t, diplomacyCmd+"gift "+s.key); k.kind != keyAccent {
 		t.Errorf("Gift is %v, want primary", k.kind)
 	}
 	if k := s.button(t, diplomacyCmd+"tribute "+s.key); !k.off {
@@ -121,10 +121,10 @@ func TestFactionGiftLeadsAndTributeTakesOverAtWar(t *testing.T) {
 	w := stageFactions(t, 0, func(st *game.GameState, key string) {
 		setFaction(st, key, func(f *game.FactionInfo) { f.AtWar = true })
 	})
-	if k := w.button(t, diplomacyCmd+"tribute "+w.key); k.kind != keyPrimary || k.off {
+	if k := w.button(t, diplomacyCmd+"tribute "+w.key); k.kind != keyAccent || k.off {
 		t.Errorf("Tribute at war is %v off=%v, want primary and on", k.kind, k.off)
 	}
-	if k := w.button(t, diplomacyCmd+"gift "+w.key); k.kind != keyPlain {
+	if k := w.button(t, diplomacyCmd+"gift "+w.key); k.kind != keySteel {
 		t.Errorf("Gift at war is %v, want plain", k.kind)
 	}
 }
@@ -172,7 +172,7 @@ func TestFactionRaidAsksFirstNamingTheCivAndRunsOnlyOnYes(t *testing.T) {
 	s := stageFactions(t, 0, nil)
 	cmd := diplomacyCmd + "raid " + s.key
 	k := s.button(t, cmd)
-	if k.kind != keyDanger || k.off {
+	if k.kind != keyAlert || k.off {
 		t.Fatalf("Raid is %v off=%v, want a danger button that is on", k.kind, k.off)
 	}
 	s.click(k)

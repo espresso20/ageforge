@@ -73,7 +73,7 @@ func wonderSummary(state game.GameState) wonderBlock {
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", wonderCollectHint())
 		}
 		blk.build = sb.Len()
-		sb.WriteString(strings.Repeat("\n", actionRows))
+		sb.WriteString(strings.Repeat("\n", chipRows))
 		blk.buildCmd = buildLine(current.key)
 		blk.buildOff = !bs.CanBuild || wonderQueued(state, current.key)
 		blk.collectCmd = wonderCollectCmd

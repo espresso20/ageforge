@@ -25,8 +25,6 @@ const (
 	goKeyBase = 0xE100
 	// splitStep is how many percent a click on the split's chips moves it.
 	splitStep = 10
-	// recruitTall is the panel height from which Recruit is a three-row button.
-	recruitTall = 26
 )
 
 // goKey is the key a click on a link to tab presses.
@@ -49,17 +47,6 @@ var (
 // dismissAsk is the question before a worker is dismissed from a building.
 func dismissAsk(name string) string {
 	return rowid.Sprintf("ui.people_verbs.dismissAsk.01", "Dismiss a worker from %s?\n\nThey leave your population.", name)
-}
-
-// chip draws a one-row key of kind at (x, y) holding word, records that a click
-// runs cmd (after ask, when it has one) and returns the next x.
-func (g *xgrid) chip(x, y int, word string, kind keyKind, cmd, ask, yes string, off bool) int {
-	word = " " + word + " "
-	r := image.Rect(x, y, x+runeLen(word), y+1)
-	g.put(x, y, word, xKeycap)
-	set := g.keyset()
-	set.keys = append(set.keys, xkey{r: r, cap: r, kind: kind, cmd: cmd, ask: ask, yes: yes, off: off})
-	return r.Max.X
 }
 
 // pickedBuilding is the building the Work tab has picked, if there is one: the
@@ -100,7 +87,7 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 		if i == sub {
 			word := txtDismiss.String()
 			nameEnd = sx - 2 - (runeLen(word) + 2)
-			g.chip(nameEnd+1, y, word, keyAlert, command(verbDismiss, b.key), dismissAsk(b.Name), word, b.WorkersAssigned == 0)
+			g.chip(nameEnd+1, y, chipSpec{kind: keyAlert, label: word, cmd: command(verbDismiss, b.key), ask: dismissAsk(b.Name), yes: word, off: b.WorkersAssigned == 0})
 		}
 		pickName(g, rx, y, nameEnd-rx-1, fmt.Sprintf("%s x%d", b.Name, b.Count), i == sub)
 		g.hit(hitSub, i, rx, y, nameEnd-rx, 1)
@@ -111,17 +98,8 @@ func (c peopleBody) workList(rx, y, ri, end int, bs []peopleBuilding) int {
 	return y
 }
 
-// recruitRows is the rows the Recruit block takes.
-func (c peopleBody) recruitRows() int {
-	if c.h >= recruitTall {
-		return actionRows
-	}
-	return 1
-}
-
-// recruitBlock draws Recruit and its count choice at (x, y): a primary button
-// with the choices beside it when there is room, else a chip row. Recruit is
-// off when the homes have no room for the count.
+// recruitBlock draws Recruit and its count choice at (x, y): a button with the
+// choices beside it. Recruit is off when the homes have no room for the count.
 func (c peopleBody) recruitBlock(x, y, w int) {
 	g := c.g
 	free := max(0, c.st.Workers.MaxPop-c.st.Workers.TotalPop)
@@ -132,22 +110,12 @@ func (c peopleBody) recruitBlock(x, y, w int) {
 	cmd := strings.TrimSpace(command(verbRecruit, buyCounts[c.v.buy]))
 	off := free < need
 	label := txtRecruit.String()
-	cx, cy := x, y
-	if c.recruitRows() == actionRows {
-		cx = g.actionButton(x, y, actionSpec{kind: keyPrimary, label: label, cmd: cmd, off: off}) + 1
-		cy = y + 1
-	} else {
-		cx = g.chip(x, y, label, keyAccent, cmd, "", "", off) + 1
-	}
+	cx, cy := g.chip(x, y, chipSpec{kind: keyAccent, label: label, cmd: cmd, off: off})+1, y
 	for ch := buyChoice(0); ch < buyChoices; ch++ {
 		word := " " + buyWords[ch] + " "
 		r := image.Rect(cx, cy, cx+runeLen(word), cy+1)
 		g.put(cx, cy, word, xKeycap)
-		kind := keySteel
-		if ch == c.v.buy {
-			kind = keyAccent
-		}
-		g.keyset().keys = append(g.keyset().keys, xkey{key: buyKey(ch), r: r, cap: r, kind: kind})
+		g.keyset().keys = append(g.keyset().keys, xkey{key: buyKey(ch), r: r, cap: r, kind: keySteel, picked: ch == c.v.buy})
 		cx = r.Max.X + 1
 	}
 	if room := x + w - cx; room > 8 {
@@ -192,7 +160,7 @@ func (c peopleBody) shareRow(x, y, w int, r game.ShareRow) {
 	if !r.Set {
 		kind = keyAccent
 	}
-	nx = g.chip(nx, y, txtAuto.String(), kind, command(verbRoster, r.Domain, "auto"), "", "", false) + 1
+	nx = g.chip(nx, y, chipSpec{kind: kind, label: txtAuto.String(), cmd: command(verbRoster, r.Domain, "auto")}) + 1
 	text := rowid.Line("ui.people_verbs.shareRow.02", "auto, by its buildings' slots")
 	if r.Set {
 		text = rowid.Line("ui.people_verbs.shareRow.03", "set to ") + game.SharePercent(float64(base))

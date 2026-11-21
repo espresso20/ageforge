@@ -157,7 +157,7 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 	if note := festivalChip(st); note != "" {
 		word, off = note, true
 	}
-	g.chip(g.w-3-runeLen(word)-2, 1, word, keyPrimary, festivalCmd, festivalAsk(st), txtFestivalHold.String(), off)
+	g.chip(g.w-3-runeLen(word)-2, 1, chipSpec{kind: keyAccent, label: word, cmd: festivalCmd, ask: festivalAsk(st), yes: txtFestivalHold.String(), off: off})
 }
 
 // peopleBody is the part of the panel under the tabs: the rectangle the tab

@@ -165,7 +165,7 @@ func (b *buildBox) detailNote(hot xkey, isHot bool) (text string, bad bool) {
 // the width of its text where the buttons stand beside it.
 func detailWidths(w int) (iwid, tw int) {
 	iwid = w - 6
-	sellW, upW := actionW(txtSell.String(), "", signNone), actionW(txtUpgrade.String(), "", signNone)
+	sellW, upW := chipW(txtSell.String(), ""), chipW(txtUpgrade.String(), "")
 	return iwid, iwid - upW - 1 - sellW - 1
 }
 
@@ -195,7 +195,7 @@ type detailPlan struct {
 
 // widthAt is the cells free on the detail's text row i.
 func (p detailPlan) widthAt(i int) int {
-	if i >= 1 && i <= actionRows {
+	if i >= 1 && i <= chipRows {
 		return p.tw
 	}
 	return p.iwid
@@ -289,7 +289,7 @@ func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h, d int) {
 	ix, iy := 3, fy+1
 	p := b.planDetail(w).fit(d - 2)
 	iwid, tw := p.iwid, p.tw
-	sellW, upW := actionW(txtSell.String(), "", signNone), actionW(txtUpgrade.String(), "", signNone)
+	sellW, upW := chipW(txtSell.String(), ""), chipW(txtUpgrade.String(), "")
 	ux := ix + iwid - upW
 	sx := ux - 1 - sellW
 	for _, a := range []struct {
@@ -300,8 +300,7 @@ func (b *buildBox) drawDetail(g *xgrid, set *keySet, w, h, d int) {
 		yes string
 		off bool
 	}{{sx, txtSell.String(), det.sellCmd, det.sellAsk, txtSell.String(), det.sellOff}, {ux, txtUpgrade.String(), det.upCmd, "", "", det.upOff}} {
-		g.fill(a.x, iy+1, actionW(a.txt, "", signNone), actionRows)
-		set.action(a.x, iy+1, actionSpec{kind: keyPlain, label: a.txt, cmd: a.cmd, ask: a.ask, yes: a.yes, off: a.off}, func(x, y int, text string) { g.put(x, y, text, xText) })
+		set.chip(a.x, iy+1, chipSpec{kind: keySteel, label: a.txt, cmd: a.cmd, ask: a.ask, yes: a.yes, off: a.off}, func(x, y int, text string) { g.put(x, y, text, xKeycap) })
 	}
 	x := g.put(ix, iy, fitText(det.bs.Name, max(tw-6, 1)), xTitle)
 	g.put(x, iy, " x"+strconv.Itoa(det.bs.Count), xDim)
@@ -336,7 +335,7 @@ func (b *buildBox) stateOf(key, hot xkey, isHot bool) keyState {
 		return keyOff
 	case b.k.press != nil && b.k.sunkButton(key):
 		return keyPressed
-	case b.k.press != nil && isHot && hot.r == key.r:
+	case b.k.press != nil && isHot && hot.r == key.r, key.picked:
 		return keyHover
 	}
 	return keyRest
@@ -350,11 +349,7 @@ func (b *buildBox) paintDetail(p *kit.Painter, pal *expPalette, org image.Point,
 	hot, isHot := b.k.lit(b.det)
 	for _, key := range b.det.keys {
 		st := b.stateOf(key, hot, isHot)
-		if key.r.Dy() == actionRows {
-			b.k.paintAction(p, b.det, org, pal, key, st, pix)
-		} else {
-			b.k.paintKey(p, b.det, org, pal, key, st, pix)
-		}
+		b.k.paintKey(p, b.det, org, pal, key, st, pix)
 	}
 	text, bad := b.detailNote(hot, isHot)
 	if text == "" {

@@ -207,21 +207,21 @@ func TestThePickedCardIsThePromptsPreview(t *testing.T) {
 	if len(d.cmdHistory) != runs+1 || d.cmdHistory[runs] != "build gathering_camp" || ownedAndQueued(eng, "gathering_camp") != before+1 {
 		t.Errorf("Enter on the empty prompt ran %v and built %d, want one build of the picked card", d.cmdHistory[runs:], ownedAndQueued(eng, "gathering_camp")-before)
 	}
-	// Only the picked card's button carries a key.
+	// Only the picked card's button is drawn picked.
 	d.refresh()
 	st.paint()
 	keys := 0
 	for _, pc := range box.placed {
-		if k := box.cardKeys.keys[pc.build]; k.key != (kit.Key{}) {
+		if k := box.cardKeys.keys[pc.build]; k.picked {
 			keys++
 			// The build moved the pick to the card now in its place.
 			if pc.card.key != box.picked {
-				t.Errorf("the button of %s carries a key", pc.card.key)
+				t.Errorf("the button of %s is drawn picked", pc.card.key)
 			}
 		}
 	}
 	if keys != 1 {
-		t.Errorf("%d Build buttons carry a key, want the picked card's alone", keys)
+		t.Errorf("%d Build buttons are drawn picked, want the picked card's alone", keys)
 	}
 	// A panel over the dashboard takes the preview away.
 	d.inputField.echo = ""
@@ -242,16 +242,16 @@ func TestGatherButtonsInTheAgesThatGather(t *testing.T) {
 			cmds = append(cmds, k.cmd)
 		}
 	}
-	if len(cmds) < 2 || cmds[0] != "gather food" || cmds[1] != "gather wood" {
+	if len(cmds) < 2 || cmds[0] != "gather food 25" || cmds[1] != "gather wood 25" {
 		t.Fatalf("the first age's strip has the gather commands %v", cmds)
 	}
 	before := eng.GetState().Resources["food"].Amount
 	for _, k := range box.strip.keys {
-		if k.cmd == "gather food" {
+		if k.cmd == "gather food 25" {
 			p := centre(d, k.r)
 			runs := len(d.cmdHistory)
 			st.click(p.X, p.Y)
-			if len(d.cmdHistory) != runs+1 || d.cmdHistory[runs] != "gather food" {
+			if len(d.cmdHistory) != runs+1 || d.cmdHistory[runs] != "gather food 25" {
 				t.Errorf("a click on Gather ran %v", d.cmdHistory[runs:])
 			}
 		}
@@ -674,18 +674,17 @@ func TestPickedCardKeepsItsButtonAtNarrowWidths(t *testing.T) {
 		bx, by, bw, bh := box.GetRect()
 		_, _ = bx, by
 		inner := image.Rect(0, 0, bw, bh)
-		tall := 0
+		picked := 0
 		for _, k := range box.cardKeys.keys {
-			if k.r.Dy() >= actionRows {
-				tall++
+			if k.r.Dy() != chipRows {
+				t.Errorf("%dx%d: a Build button is %d rows", c.w, c.h, k.r.Dy())
+			}
+			if k.picked {
+				picked++
 			}
 		}
-		want := 1
-		if box.placed[0].compact {
-			want = 0 // a stacked card keeps its one-row key
-		}
-		if tall != want {
-			t.Errorf("%dx%d: %d three-row buttons among the cards, want %d", c.w, c.h, tall, want)
+		if picked != 1 {
+			t.Errorf("%dx%d: %d Build buttons drawn picked, want 1", c.w, c.h, picked)
 		}
 		end := 0
 		for i, pc := range box.placed {
