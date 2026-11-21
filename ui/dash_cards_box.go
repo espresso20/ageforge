@@ -45,8 +45,6 @@ const (
 	// buildColNarrow without it: the key goes where the box has no room.
 	buildColWide, buildColNarrow = 16, 9
 	buildKeyFrom                 = 64 // inner width from which the picked card's button shows its key
-	// gatherAges is how many of the first ages show the Gather buttons.
-	gatherAges = 2
 	// compactBelow is the inner width under which a card is stacked: its Build
 	// button is a one-row key in the name row, so the words have the width.
 	compactBelow = 40
@@ -117,6 +115,9 @@ type buildBox struct {
 	reveal bool
 	// nextKey is the card of the next step, which carries a plate.
 	nextKey string
+	// nextCmd is the Next step's command; the Gather button that runs it is
+	// drawn as the main button.
+	nextCmd string
 	// older says the box lists the older buildings the town holds in place of
 	// the ones to build, and olderN is how many kinds there are.
 	older  bool
@@ -456,7 +457,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 		x = r.Max.X + 1
 	}
 	top := 3
-	if b.st.CanGatherByHand() && b.gatherAge() {
+	if b.st.CanGatherByHand() {
 		gx, gy := 2, top
 		for _, res := range handRes {
 			rs, ok := b.st.Resources[res]
@@ -467,7 +468,11 @@ func (b *buildBox) drawAt(w, h, d int) {
 			if gx > 2 && gx+chipW(name, "") > w-1 {
 				gx, gy = 2, gy+1
 			}
-			gx = set.chip(gx, gy, chipSpec{kind: keySteel, label: name, cmd: command("gather", res)}, func(x, y int, text string) { g.put(x, y, text, xKeycap) }) + 1
+			cmd, kind := command("gather", res), keySteel
+			if cmd == b.nextCmd {
+				kind = keyAccent
+			}
+			gx = set.chip(gx, gy, chipSpec{kind: kind, label: name, cmd: cmd}, func(x, y int, text string) { g.put(x, y, text, xKeycap) }) + 1
 		}
 		if gx > 2 || gy > top {
 			top = gy + 2
@@ -1023,11 +1028,4 @@ func (b *buildBox) paintCells(p *kit.Painter, pal *expPalette, rect image.Rectan
 // lightGround reports whether a ground colour is a light one.
 func lightGround(c color.RGBA) bool {
 	return 0.299*float64(c.R)+0.587*float64(c.G)+0.114*float64(c.B) > 140
-}
-
-// gatherAge says whether the age is one of the first that show the Gather
-// buttons.
-func (b *buildBox) gatherAge() bool {
-	i, ok := b.st.Ruleset().Index(b.st.Age)
-	return ok && i < gatherAges
 }

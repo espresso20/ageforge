@@ -915,6 +915,7 @@ func (d *Dashboard) refresh() {
 	d.next = computeNext(state, d.panels)
 	d.stepLessons(state)
 	d.economyTab.buildBox.nextKey = d.next.card
+	d.economyTab.buildBox.nextCmd = d.next.cmd
 	d.nextBox.changed()
 
 	// Badges earned since the last refresh: a card and a log line each, and a
