@@ -71,12 +71,17 @@ func drawNoMap(cv *Canvas) {
 	cv.Text(1, 0, 0, rowid.Line("ui.mapstyle.roguelike.chrome.Draw.01", "No map yet."), dim)
 }
 
+// headerCloseCols is the room the header leaves at its right end for the
+// panel's close button.
+const headerCloseCols = 5
+
 // drawHeader is the top row: settlement, age, epoch, weather, people, idle,
 // civs met and the zoom's name.
 func (v *view) drawHeader(cv *Canvas, width int, m *mapmodel.Model, zoom string) {
 	ink := v.ink.Chrome
 	_, background, _ := ink.Decompose()
 	cv.Fill(0, 0, width, 1, ' ', ink)
+	width = max(0, width-headerCloseCols)
 	town := "◆ " + m.TownName
 	if m.TownTitle != "" {
 		town += ", " + m.TownTitle

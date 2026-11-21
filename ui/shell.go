@@ -52,11 +52,20 @@ func (g *xgrid) keyRow(y int, keys [][2]string, hint string) {
 	if hint == "" {
 		return
 	}
-	lead := rowid.Line("ui.expedition_view.expKeyBar.01", " · or type ")
+	lead := typeLead()
 	if x+runeLen(lead)+chipW(hint, "") <= g.w-2 {
-		line, _, _ := strings.Cut(hint, "<")
-		g.chip(g.put(x, y, lead, xFaint), y, chipSpec{kind: keySteel, label: hint, cmd: line, fill: true})
+		g.chip(g.put(x, y, lead, xFaint), y, chipSpec{kind: keySteel, label: hint, cmd: typedPart(hint), fill: true})
 	}
+}
+
+// typedPart is the start of a hint that is typed as it stands: the words
+// before the first one that names a choice or a value ("a/b", "<key>").
+func typedPart(hint string) string {
+	i := strings.IndexAny(hint, "<|/")
+	if i < 0 {
+		return hint
+	}
+	return hint[:strings.LastIndex(hint[:i], " ")+1]
 }
 
 // footWords is foot for a panel that says only that a command may be typed,
@@ -67,11 +76,14 @@ func (g *xgrid) footWords(keys [][2]string, words string) {
 	}
 	y := g.h - 2
 	x := g.keyButtons(y, keys)
-	lead := rowid.Line("ui.expedition_view.expKeyBar.01", " · or type ")
+	lead := typeLead()
 	if words != "" && x+runeLen(lead)+runeLen(words) <= g.w-2 {
 		g.put(g.put(x, y, lead, xFaint), y, words, xText)
 	}
 }
+
+// typeLead is the words before what a key row says may be typed.
+func typeLead() string { return rowid.Line("ui.expedition_view.expKeyBar.01", " · or type ") }
 
 // keyButtons writes the keys along row y and returns the next free x.
 func (g *xgrid) keyButtons(y int, keys [][2]string) int {
