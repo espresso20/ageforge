@@ -107,8 +107,7 @@ func knowledgeBuildings(st game.GameState) []peopleBuilding {
 // picture; the other tabs are cells alone.
 func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h int) (*xgrid, *pScene) {
 	g := newXGrid(w, h)
-	g.box(0, 0, w, h, xBorder, rowid.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, xTitle, false)
-	g.closeButton(w)
+	g.shell(rowid.Line("ui.people_view.renderPeople.01", "People · ")+st.AgeName, 0)
 	if w < peopleMinW || h < peopleMinH {
 		msg := fitText(rowid.Line("ui.people_view.renderPeople.02", "The window is too small for the People panel. Esc closes it."), w-4)
 		g.put((w-runeLen(msg))/2, h/2, msg, xBad)
@@ -118,7 +117,7 @@ func renderPeople(st game.GameState, v peopleView, hist *game.RunHistory, w, h i
 	v.row = clamp(v.row, 0, peopleRows(st, v.tab)-1)
 	peopleHeader(g, st, v)
 	if v.tab == tabOverview {
-		expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, [][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
+		g.foot([][2]string{{"↑↓", "pick"}, {"Esc", "close"}}, "people")
 		return g, newOverview(g, st, hist, v.row, 3).s
 	}
 	c := peopleBody{g: g, st: st, v: v, hist: hist, s: newPScene(w, 2, h-2), x: 1, y: 2, w: w - 2, h: h - 4}
@@ -173,7 +172,7 @@ type peopleBody struct {
 
 // footer writes the key bar on the panel's last row.
 func (c peopleBody) footer(keys [][2]string, hint string) {
-	expKeyBar(c.g, expLayout{w: c.g.w, h: c.g.h, footY: c.g.h - 2}, keys, hint)
+	c.g.foot(keys, hint)
 }
 
 // A log line is picked for a panel by what it is about (LogEntry.About): by

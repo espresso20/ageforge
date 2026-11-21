@@ -261,6 +261,11 @@ func (p *planPanel) add(e planEntry) {
 	}
 	before := len(p.st.Plan)
 	p.run(line)
+	if p.note != "" && !p.good {
+		// The add failed: the typed name stays in its box beside the reason.
+		p.relayout()
+		return
+	}
 	// New items land at the end; take them up to just below the selection.
 	after := len(p.engine.GetState().Plan)
 	at := p.sel + 2

@@ -306,20 +306,9 @@ func (p *historyPanel) Layout(r image.Rectangle) {
 	p.plain = pictureCell == nil
 	p.build()
 	g := newXGrid(p.w, p.h)
-	g.box(0, 0, p.w, p.h, xBorder, txtHistoryTitle.String(), xTitle, false)
-	g.closeButton(p.w)
-	x := 2
-	for i, name := range []string{txtThisAge.String(), txtThisRun.String(), txtAllRuns.String()} {
-		k := xDim
-		if histRange(i) == p.rng {
-			k = xSel
-		}
-		end := g.put(x, 1, " "+name+" ", k)
-		g.tab(image.Rect(x, 1, end, 2), name, i, histRange(i) == p.rng)
-		x = end + 1
-	}
+	g.shell(txtHistoryTitle.String(), int(p.rng), txtThisAge.String(), txtThisRun.String(), txtAllRuns.String())
 	lin, lg := " "+txtLinear.String()+" ", " "+txtLog.String()+" "
-	x = p.w - 2 - runeLen(lin) - 1 - runeLen(lg)
+	x := p.w - 2 - runeLen(lin) - 1 - runeLen(lg)
 	for i, name := range []string{lin, lg} {
 		k := xDim
 		if p.logs[p.rng] == (i == 1) {
@@ -339,7 +328,7 @@ func (p *historyPanel) Layout(r image.Rectangle) {
 	if p.rng == rangeAll {
 		keys = append(keys, [2]string{"↑↓", txtKeyRun.String()}, [2]string{"Enter", txtKeyGhost.String()})
 	}
-	expKeyBar(g, expLayout{w: p.w, h: p.h, footY: p.v.geo.footY}, append(keys, escClose()), "")
+	g.keyRow(p.v.geo.footY, append(keys, escClose()), "")
 	p.chrome = g
 }
 

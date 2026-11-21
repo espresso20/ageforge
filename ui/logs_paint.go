@@ -47,13 +47,18 @@ func (p *logsPanel) Layout(r image.Rectangle) {
 		g := newXGrid(r.Dx(), r.Dy())
 		s := txtLogsSmall.String()
 		g.put(max(0, (r.Dx()-runeLen(s))/2), r.Dy()/2, s, xDim)
+		g.closeButton(r.Dx())
 		p.chrome = g
 		return
 	}
-	g := newXGrid(p.lay.Keys.W, 1)
-	x := g.keyButton(0, 0, "F", txtLogsFindKey.String())
-	x = g.keyButton(x+1, 0, "N", txtLogsNewKey.String())
-	g.keyButton(x+1, 0, "Esc", txtLogsEscKey.String())
+	// The keys' grid runs from the Find keys to the right edge, two rows, so
+	// the close button sits in the panel's top right corner.
+	ky := p.lay.Keys.Y
+	g := newXGrid(r.Dx()-p.lay.Keys.X, ky+1)
+	x := g.keyButton(0, ky, "F", txtLogsFindKey.String())
+	x = g.keyButton(x+1, ky, "N", txtLogsNewKey.String())
+	g.keyButton(x+1, ky, "Esc", txtLogsEscKey.String())
+	g.closeButton(g.w)
 	p.chrome = g
 	p.clamp()
 }
@@ -114,6 +119,7 @@ func (p *logsPanel) Paint(p2 *kit.Painter) {
 	pal, org, l := newExpPalette(), r.Min, p.lay
 	if l.Mode == logroll.Placeholder {
 		paintExpeditionKit(p2, p.chrome, org, pal)
+		p.buttons.paint(p2, p.chrome, org, pal)
 		return
 	}
 	cw, ch := cellPixels()
@@ -201,8 +207,14 @@ func (p *logsPanel) Paint(p2 *kit.Painter) {
 		say(q.X+1, q.Y, fit(rowid.Sprintf("ui.logs_panel.words.02", "%d new lines", n), q.W-2), logroll.Light, true)
 	}
 	p.paintSlate(p2, org, cw, ch)
-	paintExpeditionKit(p2, p.chrome, p.keysOrigin(), pal)
-	p.buttons.paint(p2, p.chrome, p.keysOrigin(), pal)
+	// Only the keys' own strip is painted from the grid: the rest of it lies
+	// over the frame, where just the close button shows.
+	at := p.keysOrigin()
+	for x := 0; x < min(l.Keys.W, p.chrome.w); x++ {
+		c := p.chrome.c[l.Keys.Y*p.chrome.w+x]
+		p2.Put(at.X+x, at.Y+l.Keys.Y, c.r, pal.style(c))
+	}
+	p.buttons.paint(p2, p.chrome, at, pal)
 }
 
 // paintRail draws the whole kept roll with its headlines, troubles and seams

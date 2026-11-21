@@ -33,6 +33,9 @@ type xkey struct {
 	// cmd is the command line a click runs, through the path a typed line
 	// takes, in place of pressing key. Empty for a key that only presses.
 	cmd string
+	// fill marks a command line a click writes in the command bar for the
+	// player to finish or run, in place of running it.
+	fill bool
 	// ask is what a click asks first, when the command is one that needs a
 	// yes; the command runs only on the answer. Empty to run at once.
 	ask string
@@ -257,6 +260,9 @@ type keyPresser struct {
 	// run runs a command line as the command bar runs a typed one: a button
 	// that carries a line (xkey.cmd) is clicked through it.
 	run func(cmd string)
+	// stage writes a command line in the command bar without running it: a
+	// button whose line is to be filled in (xkey.fill) is clicked through it.
+	stage func(cmd string)
 	// confirm asks the player a question and runs a command line if the
 	// answer is yes: a button that carries a question (xkey.ask) is clicked
 	// through it, and names the word on the danger button (xkey.yes).
@@ -281,7 +287,7 @@ type keyPresser struct {
 // the buttons.
 func (k *keyPresser) wire(a *appLoop) {
 	k.press, k.feel = a.Key, &a.feel
-	k.run, k.confirm = a.runLine, a.askLine
+	k.run, k.stage, k.confirm = a.runLine, a.stageLine, a.askLine
 }
 
 // sense is the presser's feel, made when it has none.
@@ -305,12 +311,16 @@ func (k *keyPresser) lit(s *keySet) (xkey, bool) {
 // table marks Dangerous is never run without a question: a button that gives
 // none is asked about with the line itself.
 func (k *keyPresser) fire(b xkey) {
-	if b.cmd != "" && b.ask == "" && lineDangerous(b.cmd) {
+	if b.cmd != "" && !b.fill && b.ask == "" && lineDangerous(b.cmd) {
 		b.ask, b.yes = dangerAsk(b.cmd), txtDangerYes.String()
 	}
 	switch {
 	case b.cmd == "":
 		k.press(b.key)
+	case b.fill:
+		if k.stage != nil {
+			k.stage(b.cmd)
+		}
 	case b.ask != "":
 		if k.confirm != nil {
 			k.confirm(b.ask, b.yes, b.cmd)

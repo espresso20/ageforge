@@ -48,8 +48,7 @@ func renderAdvance(v game.AdvanceView, u advanceUI, w, h int) *xgrid {
 	if !v.Final {
 		title += rowid.Line("ui.advance_view.renderAdvance.02", " to ") + v.NextName
 	}
-	g.box(0, 0, w, h, xBorder, title, xTitle, false)
-	g.closeButton(w)
+	g.shell(title, 0)
 	if w < advMinW || h < advMinH {
 		g.put(2, 2, fitText(rowid.Line("ui.advance_view.renderAdvance.03", "The window is too small for the Advance panel. Esc closes it."), w-4), xBad)
 		return g
@@ -585,7 +584,7 @@ func advFoot(g *xgrid, v game.AdvanceView, u advanceUI, w, h int) {
 	if v.Final {
 		hint = ""
 	}
-	expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, short, hint)
+	g.foot(short, hint)
 }
 
 // shortKeyName and shortKeyUse are the key bar's wording for the panel's

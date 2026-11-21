@@ -265,6 +265,7 @@ func (p *planPanel) relayout() {
 	cw, ch := cellPixels()
 	p.l, p.ok = planboard.NewLayout(r.Dx(), r.Dy(), cw, ch)
 	p.keys = newXGrid(r.Dx(), r.Dy())
+	p.keys.closeButton(r.Dx())
 	if !p.ok {
 		p.say(2, 1, txtPlanSmall.String(), planboard.Ink, false)
 		return

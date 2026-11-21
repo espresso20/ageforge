@@ -119,8 +119,6 @@ func harbingerInviteRefusal(st game.GameState) error {
 // the lines that can run long (the prices) are broken to fit the box.
 func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGood bool, rec *btnRec) string {
 	var sb strings.Builder
-	sb.WriteString(theme.Paint(theme.RoleAccent, rowid.Line("ui.overlay_harbinger.harbingerPanelTextAt.01", "═══ Harbinger ═══")) + "\n\n")
-
 	h := state.Harbinger
 	if h == nil {
 		harbingerAbsentText(&sb, state)

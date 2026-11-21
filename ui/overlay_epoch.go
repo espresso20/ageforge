@@ -16,8 +16,6 @@ import (
 func epochProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
-	sb.WriteString(rowid.Line("ui.overlay_epoch.epochProvider.01", "[gold]═══ Epoch ═══[-]\n\n"))
-
 	epochProviderCurrentEpoch(&sb, state)
 	sb.WriteString("\n")
 	epochProviderHistory(&sb, state)

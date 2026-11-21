@@ -33,7 +33,7 @@ func wonderSummary(state game.GameState) wonderBlock {
 	bs, hasBs := state.Buildings[current.key]
 	built := hasBs && bs.Count > 0
 
-	sb.WriteString(rowid.Line("ui.overlay_wonders.renderCurrentWonderSummary.01", "[gold]═══ This age's wonder ═══[-]\n"))
+	sb.WriteString(headLine(rowid.Line("ui.overlay_wonders.renderCurrentWonderSummary.01", "This age's wonder"), 0) + "\n")
 	if built {
 		fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.02", " %s [gold]★ %s[-]  [green]Built[-]  [gray]%s[-]\n", WonderSpriteIcon(current.key), current.name, current.ageName))
 	} else {
@@ -130,7 +130,7 @@ func wondersProvider(state game.GameState, _ int) string {
 	}
 
 	// Header
-	fmt.Fprint(&sb, rowid.Sprintf("ui.overlay_wonders.wondersProvider.01", "[gold]═══ Wonders: %d / %d ═══[-]\n", builtCount, totalCount))
+	sb.WriteString(headLine(rowid.Sprintf("ui.overlay_wonders.wondersProvider.01", "Wonders: %d / %d", builtCount, totalCount), 0) + "\n")
 	if builtCount > 0 {
 		sb.WriteString(rowid.Line("ui.overlay_wonders.wondersProvider.15", "[gray]Press G for a gallery of the wonders you have built.[-]\n"))
 	}
