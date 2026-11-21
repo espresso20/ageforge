@@ -18,6 +18,7 @@ var (
 	txtThen      = rowid.E("ui.next_card.txtThen.01", "THEN")
 	txtShowMe    = rowid.E("ui.next_card.txtShowMe.01", " Show me ")
 	txtTabKey    = rowid.E("ui.next_card.txtTabKey.01", " Tab ")
+	txtEnterKey  = rowid.E("ui.next_card.txtEnterKey.01", " Enter ")
 	regionShow   = "nextshow"
 	regionThen   = "nextthen"
 )
@@ -240,18 +241,36 @@ func cardRows(s nextStep, T int, cut cardCut) []string {
 		}
 	}
 	if cut.cost && s.cost != "" {
-		have := fitText(s.have, (T-2)/2)
-		cost := fitText(s.cost, max(T-4-runeLen(have), 1))
 		role := theme.RoleWarning
 		if s.enough {
 			role = theme.RolePositive
 		}
-		rows = append(rows, x("  ", bodyText(cost), "  ", theme.Paint(role, have)))
+		room := max(T-4, 1)
+		lines := wrapItems(strings.Split(s.cost, ", "), room)
+		var have []string
+		if s.have != "" {
+			have = wrapItems(strings.Split(s.have, ", "), room)
+		}
+		for i, l := range lines {
+			row := x("  ", bodyText(l))
+			if i == len(lines)-1 && len(have) == 1 && runeLen(l)+2+runeLen(have[0]) <= room {
+				row += "  " + theme.Paint(role, have[0])
+				have = nil
+			}
+			rows = append(rows, row)
+		}
+		for _, l := range have {
+			rows = append(rows, x("  ", theme.Paint(role, l)))
+		}
 	}
 	if s.cmd != "" {
 		btn := clickRegion(regionShow, theme.TagFgBgAttr(theme.RoleText, theme.RoleChip, "b")+txtShowMe.String()+theme.Reset)
 		if T >= tabMinT {
-			btn += "   " + theme.TagFgBgAttr(theme.RoleOnAccent, theme.RoleAccent, "b") + txtTabKey.String() + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(txtTabKey.String())-4))
+			key := txtTabKey.String()
+			if s.onLine {
+				key = txtEnterKey.String()
+			}
+			btn += "   " + theme.TagFgBgAttr(theme.RoleOnAccent, theme.RoleAccent, "b") + key + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(key)-4))
 		}
 		rows = append(rows, "", x(btn))
 	}

@@ -99,6 +99,9 @@ func peopleRichHeld(ws game.WorkerState, tickMs, w int) (first, second string) {
 	}
 	switch ws.HeldBy {
 	case game.HeldHousing:
+		if ws.MaxPop == 0 {
+			return held("housing"), gray(fitText(rowid.Line("ui.people_rich.peopleRichHeld.10", "no homes yet"), w))
+		}
 		return held("housing"), gray(fitText(rowid.Line("ui.people_rich.peopleRichHeld.02", "every home is full"), w))
 	case game.HeldWork:
 		return held("work"), gray(fitText(rowid.Line("ui.people_rich.peopleRichHeld.09", "no work for more people"), w))

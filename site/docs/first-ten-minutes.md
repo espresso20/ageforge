@@ -20,7 +20,7 @@ Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your tow
 
 <figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: almost nothing in stock, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 
-You have 25 food, 50 wood, no workers and no housing. Workers come on their own once you have housing and buildings for them to work in. Start by gathering:
+You have 25 food, 50 wood, no workers and no housing. Workers come on their own once you have housing and buildings for them to work in. The Next card walks the first minutes in this order: a Hut, then a Gathering Camp, then a Wood Camp, then a Story Circle, then research once its scholars stand. When a building's price is more than the wood you hold and nothing makes wood yet, the card's step is to gather it by hand. You can also gather whenever you like:
 
 ```
 gather wood 25
@@ -29,11 +29,11 @@ gather food 25
 
 Each `gather` collects up to 25 of a resource (25 if you leave the amount out). `↑` recalls your last command, and `Tab` or `→` finishes a command you have started typing.
 
-Hand-gathering works through the Medieval Age and is disabled from the Renaissance Age onward. By then your buildings and workers carry the economy.
+The Gather buttons in the Buildings box stay for as long as hand-gathering works: through the Medieval Age. The button for the resource the Next card asks for is the gold one. From the Renaissance Age onward gathering by hand is off, the log says so when you advance, and your buildings and workers carry the economy.
 
 ---
 
-## Step 1: Build a gathering camp and a wood camp
+## Step 1: Build a gathering camp and a wood camp (after the first hut)
 
 Food runs short before anything else, so get production going first. Both camps cost 22 wood, and you start with 50 (75 after the gathering above).
 
@@ -125,7 +125,7 @@ build shrine
 
 ## Step 7: Watch your rates
 
-The Resources box shows a rate beside each stock. Food and wood should both be positive.
+The Resources box shows a rate beside each stock. Its bar is dim while a stock is healthy, amber while the stock is falling, and red when the stock is low (a tenth of the age's usual store or less, and not rising) or will run out within five minutes. Food and wood should both be positive.
 - Each staffed gathering camp adds 1.0 food a tick, and each person eats 0.06. If food is negative, build another gathering camp; workers come to staff it.
 - Each staffed wood camp adds about 0.57 wood a tick.
 - Each story circle adds 2 scholars, so more circles (up to five at full rate) finish research sooner.

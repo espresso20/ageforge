@@ -37,6 +37,9 @@ type nativeText struct {
 	// click, when set, is what a click on the box does when nothing in
 	// its text took the click.
 	click func()
+	// rest, when set, is told whether the pointer is on the box, so a box a
+	// click acts on can show the line it runs.
+	rest func(on bool)
 	// over, when set, paints on the text once the box has: pictures that go
 	// over the cells. It is given the rectangle the text shows in and the
 	// text's first row in view.
@@ -271,6 +274,9 @@ func (t *nativeText) Paint(p *kit.Painter) {
 // Mouse gives the wheel to the box's own rule and a click to its own
 // action, where it has them and nothing in its text took them.
 func (t *nativeText) Mouse(m kit.Mouse) bool {
+	if t.rest != nil && (m.Kind == kit.MouseMove || m.Kind == kit.MouseLeave) {
+		t.rest(m.Kind == kit.MouseMove)
+	}
 	if t.pick != nil && t.pick(m) {
 		return true
 	}

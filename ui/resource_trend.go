@@ -86,14 +86,14 @@ var (
 	trendRamp = []rune("▁▂▃▄▅▆▇█")
 )
 
-// magnitudeCells is a bar of width cells, ratio of it filled. The Unicode
-// bar has eighth-block partial cells.
-func magnitudeCells(ratio float64, width int) string {
+// magnitudeCells is a bar of width cells, ratio of it filled, in the color
+// tag fill. The Unicode bar has eighth-block partial cells.
+func magnitudeCells(ratio float64, width int, fill string) string {
 	ratio = min(1, max(0, ratio))
 	eight := int(ratio * float64(width) * 8)
 	whole, part := eight/8, eight%8
 	var b strings.Builder
-	b.WriteString(BarFillColor() + strings.Repeat("█", whole))
+	b.WriteString(fill + strings.Repeat("█", whole))
 	used := whole
 	if part > 0 {
 		b.WriteRune(eighths[part-1])

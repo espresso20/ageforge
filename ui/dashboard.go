@@ -96,6 +96,7 @@ type Dashboard struct {
 	toastMgr            *ToastManager
 	badgeQ              []game.BadgeView // earned, notice not shown yet
 	badgeNote           bool
+	nextHeld            bool // the command line holds the Next step
 	badgeUntil          time.Time
 	contentArea         Primitive
 
@@ -117,6 +118,8 @@ type Dashboard struct {
 	// memFocus is the Ancient Memory window's button that owns focus while
 	// it is open.
 	memFocus Primitive
+	// momentFocus is the moment card's button that owns focus while it is open.
+	momentFocus Primitive
 
 	// memoryModalShown guards the Ancient Memory offer modal the same way catModalShown
 	// guards the catastrophe modal: it holds the offered tech key once shown so a Defer
@@ -378,7 +381,12 @@ func (d *Dashboard) build() {
 	// column when the names fit that way, two when the screen is short.
 	d.bandBox = newFitView(func(w, _ int) string { return d.bandText(w) })
 	d.bandBox.body.OnRegion = func(name string, _ int) { d.bandClick(name) }
-	d.nextBox = newFitView(func(w, h int) string { return nextBoxText(d.next, w, h, d.richLayout()) })
+	d.nextBox = newFitView(func(w, h int) string {
+		s := d.next
+		s.onLine = d.inputField != nil && s.cmd != "" && d.inputField.GetText() == s.cmd
+		d.nextHeld = s.onLine
+		return nextBoxText(s, w, h, d.richLayout())
+	})
 	// A click on a panel's name opens it, as typing the name does.
 	d.nextBox.body.OnRegion = func(name string, _ int) {
 		switch {
@@ -415,7 +423,7 @@ func (d *Dashboard) build() {
 		SetMaxLines(100)
 	d.logTV.SetBorder(true)
 	// A click on the Log opens the full record.
-	d.logTV.click = func() { d.pressLine("logs") }
+	d.door(d.logTV, "logs")
 	theme.Track(func() { d.logTV.SetTitleColor(theme.Of(theme.RoleDim)) })
 
 	// The header at the top: the account, the age, the people, the way to
@@ -524,6 +532,13 @@ func (d *Dashboard) build() {
 	d.app.line, d.app.confirm = d.pressLine, d.askLine
 	d.app.feel.tip.Cell = d.tipCell
 	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
+	// The card's key hint reads Enter while the line holds the step.
+	d.inputField.SetChangedFunc(func(text string) {
+		if held := text != "" && text == d.next.cmd; held != d.nextHeld {
+			d.nextHeld = held
+			d.nextBox.changed()
+		}
+	})
 	d.inputField.SetBorder(true)
 	theme.Track(func() {
 		d.inputField.SetFieldBackgroundColor(theme.Of(theme.RoleBackground)).
@@ -608,8 +623,9 @@ func (d *Dashboard) build() {
 	})
 	// A click on the People box opens the People panel, and one on Under
 	// construction the build plan.
-	d.workerMiniTV.click = func() { d.pressLine("people") }
-	d.economyTab.constructionTV.click = func() { d.pressLine("plan") }
+	d.door(d.workerMiniTV.nativeText, "people")
+	d.door(d.economyTab.constructionTV.nativeText, "plan")
+	d.door(d.economyTab.resourceTV.nativeText, "stats")
 	d.workerMiniTV.SetBorder(true)
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Of(theme.RoleAccent)) })
 	d.economyTab.AddPeopleBox(d.workerMiniTV, d.richLayout, func() int {
@@ -868,9 +884,26 @@ func (d *Dashboard) titleNext() {
 // the headcount in it when there is room.
 func (d *Dashboard) retitle() {
 	d.titleNext()
-	d.logTV.SetTitle(rowid.Line("ui.dashboard.build.02", " Log "))
+	d.logTV.SetTitle(doorTitle(rowid.Line("ui.dashboard.build.02", " Log ")))
 	d.inputField.SetTitle(rowid.Line("ui.dashboard.build.13", " Command "))
 	d.workerMiniTV.SetTitle(rowid.Line("ui.dashboard.build.14", " People "))
+}
+
+// doorTitle is a box's title with a faint mark after it: a click on the box
+// opens the panel it is a summary of.
+func doorTitle(t string) string { return strings.TrimRight(t, " ") + " " + dimText("›") + " " }
+
+// door makes a click on the box t run line, and the pointer on it show the
+// line in the command bar, as a chip does.
+func (d *Dashboard) door(t *nativeText, line string) {
+	t.click = func() { d.pressLine(line) }
+	t.rest = func(on bool) {
+		if on {
+			d.app.feel.rest(line, "")
+		} else {
+			d.app.feel.rest("", line)
+		}
+	}
 }
 
 // refresh is the central UI update function, called every 500 ms from StartUpdates.
@@ -912,9 +945,13 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 	d.notePanels(panelsReached(state), false)
-	d.stepLessons(state)
 	d.next = computeNext(state, d.panels)
+	d.stepLessons(state)
+	if d.economyTab.buildBox.nextKey != d.next.card {
+		d.economyTab.buildBox.resort = true
+	}
 	d.economyTab.buildBox.nextKey = d.next.card
+	d.economyTab.buildBox.nextCmd = d.next.cmd
 	d.nextBox.changed()
 
 	// Badges earned since the last refresh: a card and a log line each, and a
@@ -989,6 +1026,7 @@ func (d *Dashboard) refresh() {
 
 	// Update overlay content
 	d.overlayMgr.Refresh(state)
+	d.maybeShowReturn(state)
 	d.maybeShowPrestigeCue(state)
 	d.refreshWorkerMini(state)
 }
@@ -1030,7 +1068,7 @@ func (d *Dashboard) refreshWorkerMini(game.GameState) {
 			// economy tab sizes it), and its title carries the headcount
 			// only when the box is too short for the row that does.
 			d.workerDetail = true
-			d.workerMiniTV.SetTitle(peopleRichTitle(*d.lastState, richPeopleHeight(rootH)-2))
+			d.workerMiniTV.SetTitle(doorTitle(peopleRichTitle(*d.lastState, richPeopleHeight(rootH)-2)))
 		} else {
 			// The box is as tall as its lines. The food detail line is the
 			// one that goes first on a short terminal: at 24 rows the Panels
@@ -1191,6 +1229,7 @@ func (d *Dashboard) headerView(w int) headerView {
 		msg := kit.Strip(safeTags(d.shame.String()))
 		v.Alerts = append([]headerAlert{{text: msg, short: fitText(msg, 14), k: xBad}}, v.Alerts...)
 	}
+	v.Charter = d.panels.has("charter")
 	v.Notice = strings.TrimSpace(kit.Strip(safeTags(d.toastMgr.Current())))
 	if d.ledger.ready {
 		v.Led = &d.ledger.data
@@ -1304,7 +1343,7 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 	// reads its year, its bar and what it waits on, and is written from it at
 	// its next layout. (The notice is the toast on show, which a refresh
 	// also moves on.)
-	d.ledger.update(state, d.engine)
+	d.ledger.update(state, d.engine, d.next.card)
 	d.headerTV.changed()
 }
 
@@ -1312,9 +1351,13 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
 	// The town level of the log plus the game office's replies, folded, with
 	// a count after a line that happened more than once.
+	// In the first age the routine lines show too: a gather, a build and a
+	// research each leave a trace while the log is quiet.
+	i, ok := state.Ruleset().Index(state.Age)
+	firstAge := ok && i == 0
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
-		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame) {
+		if !entry.Seam && entry.Type != "debug" && (entry.Level <= game.LevelTown || entry.Office == game.OfficeGame || (firstAge && entry.Type == game.LogRoutine)) {
 			visible = append(visible, entry)
 		}
 	}
@@ -1585,6 +1628,10 @@ func (d *Dashboard) runLine(text string) {
 		d.showWindow(result.Window)
 		return
 	}
+	if result.Card != nil {
+		d.showCard(result)
+		return
+	}
 	if result.OpenCatastrophe {
 		d.reopenCatastropheModal()
 	}
@@ -1680,6 +1727,9 @@ func (d *Dashboard) returnFocus() {
 	case d.memFocus != nil && d.pages.HasPage(ancientMemoryPage):
 		d.pages.SendToFront(ancientMemoryPage)
 		d.app.SetFocus(d.memFocus)
+	case d.momentFocus != nil && d.pages.HasPage(momentPage):
+		d.pages.SendToFront(momentPage)
+		d.app.SetFocus(d.momentFocus)
 	case d.overlayMgr != nil && d.overlayMgr.Focus():
 	default:
 		d.app.SetFocus(d.inputField)
