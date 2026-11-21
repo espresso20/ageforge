@@ -20,9 +20,7 @@ go build -o ageforge .
 ## Dev Scripts
 
 ```bash
-make check        # build + vet + config validation
-make test         # build + vet + full test suite (formatted output)
-make test-raw     # build + vet + tests (raw go test -v, for CI/piping)
+make check        # build + vet
 make run          # build + run the game
 make banner       # redraw docs/banner.png from the menu's wordmark
 make clean        # remove binary
@@ -233,80 +231,30 @@ The test suite covers all game systems with **86 tests** across 11 files:
 
 The **config validation tests** are the primary safety net. They cross-reference every string key in every config file against the canonical key lists. A typo like `"foods"` or `"woodcutter_camps"` anywhere will fail the test.
 
-```bash
-make test                                              # full suite, formatted
-make test-raw                                          # raw go test -v
-go test ./game/ -run TestEngine_BuildMultiple -v       # single test
-go test ./game/ -v -count=1                            # one package
-```
 
-CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, a cross-compile of the release targets and `go test -race` on every PR and every push to `master`. Run `gofmt -w .` before pushing.
+CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, a cross-compile of the release targets on every PR and every push to `master`. Run `gofmt -w .` before pushing.
 
 ### The economy's numbers
 
 The numbers of the economy are written where they are used. A building's first price (`BaseCost`), the rate each further copy climbs at (`CostScale`), what a copy makes or holds (`Effects`) and how long it takes to build (`BuildTicks`) are in the `config/buildings*.go` files; a tech's price and research time are in `config/research.go`; a gate's amounts and counts are in `config/ages.go`; how long each age is meant to last is `AgeTargets` in `config/pacing.go`. Nothing rewrites them when the game loads. To change a number, change it there.
 
-```bash
-go test ./config -run TestGoldenTables                  # every number against the record, to the unit
-go test ./config -run TestGoldenTables -update-golden   # record a change you meant; commit the diff
-go test ./smoke -run TestProperties -v                  # the properties table, as below
-AGEFORGE_LONG_TESTS=1 go test ./smoke -run TestOrdinaryPath   # the engine walk on the frontier, time away from every age
-go test ./smoke -run '^$' -fuzz=FuzzCommand -fuzztime=1m      # fuzz the command handler from its kept corpus
-```
 
 - **The golden record** (`config/testdata/golden_tables.json`) holds every building, tech, gate and age target, and the price levels and typical incomes worked out from them. `TestGoldenTables` names each entry that differs. A pull request that changes a number shows it twice: in the table and in the record's diff.
 - **The reference players** (`smoke/reference.go`) are three ways of playing written as rules: an ordinary player who builds the reference town, pays the wonder and advances; a lingering one who buys everything and stays three times as long; a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. Their path through the 22 ages is arithmetic on the tables. No bot plays it.
 - **The properties** (`smoke/properties.go`) are what must be true for the game to be in proportion for all three: how long income takes to double against the length of the age, what a trade route pays against what buildings make, and so on. The ones that do not hold today are listed in `KnownPropertyFailures` with today's reading. `go test ./smoke` fails when a listed property starts to hold (delete its line), when an unlisted one stops holding, or when a listed reading changes (write the new reading down). A change to the economy should make that list shorter.
 - **The ordinary path** (`smoke/ordinary_path_test.go`) drives the real engine along the ordinary player's purchases with the resources granted: every purchase accepted, every wonder built, every gate opened, a save from every age loading back to the same game.
 
-### Smoke testing
-
-The unit tests prove pieces work. The smoke package (`smoke/`) reads the whole economy at once: it checks the tables against the rules the design rests on, and drives the real engine, with no UI, along the paths a player takes. `go test ./smoke` runs it, `make smoke` is the same command, and the `smoke` shard of the test job in `.github/workflows/go.yml` runs it on every pull request.
-
-There is no test bot. The economy's numbers are derived by calculation and held by the static checks, the golden record and the reference players, not by a bot's play. The bot that played whole runs was switched off on 2026-10-10 ("math, not bot") and deleted with its runner and reports.
-
-```bash
-make smoke                                                       # go test ./smoke -count=1
-go test ./smoke -run TestStaticScenarioReport -v                 # the static checks alone
-go test ./smoke -run TestDocsMatchTheGame -v                     # the docs check alone
-go test -tags smoke -run 'TestSmokeUISweep|TestSmokeUISmallTerminals' ./ui   # the UI sweep, by hand
-```
-
-#### What it checks
-
-| check | what it checks |
-|---|---|
-| `static` | The Gate Covenant from config alone: every building an age gate asks for can be built in the age it leaves, and every resource it needs has a source from a cold start, for a player who skipped every building no gate required, a town that arrives in an age with empty stores and only the buildings the gates asked for can buy the first copy of every building of that age (stock has no cap, so no price is held against a store); and the storage check (`smoke/static_storage.go`): each age's storage building climbs at 1.75 a copy with no copy limit, boosts all production by 1% a copy and does nothing else, each gate asks for five copies of the storage building of the age it leaves, and those five copies are payable from the age's income inside one pacing target; and the Milestone Covenant: every milestone, chain and title can be completed by the end of the last age a full run plays (the Atomic Age, before a Modern Age prestige, `game.PrestigeRunAge`), or of the milestone's own age when that is later, with each milestone's earliest age and tightest requirement in the report; and every level-1 Appease price is one a moderate economy (`config.FlowIncome`) makes inside the thread's shortest warning, a fifth of the arrival age for a doom and two thirds of it for the Last Passage, whose price must also stay above a doom's foretold in the same age; and every level-1 Brace that is priced on its warning (the final era's two: the Last Passage's and its fated doom's) takes a moderate economy (`config.TypicalIncome`) at least ten hours of income (`WarningBraceMinHours`), with every resource it asks for made inside that same warning; and the faith strength (`smoke/static_faith.go`): towns that never spend their faith are walked through the whole run at the pacing targets, hoards carried from age to age, and read by the rule the rolls read (`game.FaithStrengthOf`) on entering each age, a fifth in, halfway and on leaving, with the age's wonder up from its first tick and with it up only at the end; a moderate town (and one with no faith buildings) must stay in the bottom faith band, one with twice the faith buildings in the middle band, and one with three and a half times (`FaithTopSets`) in the top band, so it fails in either direction; and the depth points: every age weighs 3^epoch, the points table the wiki quotes (Medieval 9, Modern 120, Information 201, Cyberpunk 363, Interstellar 1,092), a second Medieval Age taste right after a Modern Age run adds under 10% (`DepthTasteMax`; 9 of 120), and a taste pays for the first kit item; and the Research Covenant (`smoke/static_research.go`): each wonder's keystone tech can be researched in the wonder's age, its knowledge has a source there from a cold start, and the keystone is affordable well inside the age: its knowledge (with the techs of its own age it stands on) as a share of what the age makes in its target time (`config.AgeKnowledge`), its research time and the wonder's build time fit in the target together; what a run that researched nothing an earlier wonder did not ask for carries in on top is reported, not failed. |
-| `docsync` | Every "N ages / buildings / technologies / ..." claim in `site/index.html` (hero stats included), `README.md`, `site/docs/README.md` and the opening lines of each wiki page matches the config count (the shop's count, in "N prestige upgrades" or "N kit items", is its active items: the 3 of the legacy kit); `buildings.md`'s lineage heading and table match the lineage count; `commands.md` documents every command and subcommand in the command registry (`ui/commands.go`), and documents nothing the registry doesn't list. Fix the docs, not the check. |
-| `accounts` | In a temp data dir: create two accounts with a save each, switch, export and import (the export must round-trip; tampered or garbage exports are refused), back up, recover from a recovery code (garbage and typo'd codes refused), wipe one account (the other's files stay byte-identical, a backup is written), wipe the active one and restore it from its export. |
-| `ui` (by hand) | Runs `TestSmokeUISweep` (every theme at 180x56: splash pages, a new game, every overlay and read-only command) and `TestSmokeUISmallTerminals` (the dashboard and every overlay at small sizes, then live resizes) from `ui/smoke_sweep_test.go` (build tag `smoke`; `go test -tags smoke -run 'TestSmokeUISweep|TestSmokeUISmallTerminals' ./ui`). A panic, a frozen event loop or a blank screen fails it. |
-
-Beside these, `go test ./smoke` runs the reference players and their gate measures, the properties and the ordinary path (see "The economy's numbers" above), the lineage derivation, the soldier housing check, and a kept corpus for the command fuzzer.
-
-#### Pacing targets
+### Pacing targets
 
 `config.AgeTargets` (`config/pacing.go`) holds the time a player should spend in each age at 1x game time (15 minutes in the Primitive Age up to 31h 12m in the Atomic and Modern Ages, about a week to the Modern Age and a first run's prestige, then 36 to 62 hours per age). The game derives its economy from the same table (payback times, build and research caps; the rules are in the comment at the top of `config/pacing.go`), so the targets live in the game: to change them, edit `baseAgeTargets` in `config/pacing.go` (`config.AgeTargets` is that table times `config.PacingStretch` from the Bronze Age on, and every clock counted in ticks stretches by the same factor through `config.StretchTicks`). Changing a target changes the game: every producer's rate follows it, and `TestGoldenTables` names each number that moved.
-
-**Common test patterns:**
-- Tests create isolated managers, with no shared state between tests
-- Resource tests must respect `BaseStorage` caps: use `AddStorage()` before `Add()` for large amounts
-- Milestone tests use `NewProgressManager().GetAgeOrder()` for the full age map
-- Engine tests access internals via `ge.mu.Lock()` for setup, then public API for assertions
-- Save/load tests defer `os.Remove(...)` for cleanup and verify full round-trip
 
 ### Wiki screens
 
 The wiki's pictures of the game (`site/docs/screens/*.json`, drawn as text by `site/docs/screens.js`) are real screens: a generator plays one seeded game and draws each panel with the game's own UI code. Re-run it after a change to a panel's look and commit what it writes. It takes under a minute and is safe to re-run: the same code writes the same bytes.
 
-```bash
-go test -tags mapcapture -run TestWriteSiteScreens ./ui
-```
 
 The landing page's map plate (`site/frames.js`, and the first frame inside `site/index.html`) is written the same way, from the map itself:
 
-```bash
-go test -tags mapcapture -run TestWriteSiteFrames ./ui/mapstyle
-```
 
 To add a screen, add a shot to `TestWriteSiteScreens` (`ui/site_screens_test.go`) and a one-line `<figure class="screen" data-screen="name">` with a one-sentence `<figcaption>` to the wiki page that explains it. `TestDocScreens` (`go test ./ui`) fails on a figure with no file and on a file no page shows.
 
@@ -612,7 +560,7 @@ Commit types map 1:1 to board lanes: if your change is a `fix`, it came from the
 
 ## Claude agent (GitHub Actions)
 
-`.github/workflows/claude-agent.yml` runs a Claude Code agent on a GitHub runner. It works a task end to end (code, `go test -race`), pushes a branch and opens a PR. It never merges.
+`.github/workflows/claude-agent.yml` runs a Claude Code agent on a GitHub runner. It works a task end to end (code, `go build`, `go vet`), pushes a branch and opens a PR. It never merges.
 
 - **Start one:** label an issue `agent` (the issue author and the labeller both need write access), or run the workflow manually with a brief (Actions → Claude agent → Run workflow). Manual runs can pick the model and effort.
 - **Defaults:** `claude-opus-5-5` at `high` effort (pick `xhigh` on a manual run for balance work or big features), 400 turns max, 5-hour job timeout. One agent runs at a time; further runs queue.
