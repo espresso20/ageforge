@@ -129,6 +129,8 @@ type Set struct {
 	olderIn map[string]map[string]string
 
 	names [numKinds]map[string]string
+	// named is, by kind, the key each display name spells (plainName).
+	named [numKinds]map[string]string
 
 	// gatesV2 says the gates are measured (GateMeasure); measures are the
 	// numbers, by the age left.
