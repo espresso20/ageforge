@@ -8,6 +8,8 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - Releases are published to a separate public repository; the updater checks file checksums.
+- A building, tech, resource, civilization or trade route can be typed by the name the screen shows as well as by its key: `build Lumber Mill 2` is `build lumber_mill 2`.
+- A mistyped command that is close to a real one puts the corrected line on the command line for Enter to run (`biuld hut 2` leaves `build hut 2`). Nothing runs until Enter.
 - The Buildings column is at most 90 cells wide, so a card's name, price and Build button read as one line; the width it gives up goes to Resources, the Log and the right column. The mini map is at most 16 rows tall.
 - The Resources bars are dim while a stock is healthy, amber while it is falling and red when it is low or about to run out. The Next card wraps a long price at a comma instead of cutting it.
 - The Resources, People, Log and Under construction titles end in a faint `›` and a click opens Stats, People, Logs and Plan; the header shows `charter ›` once the charter is found. The People box says "no homes yet" before the first home.
