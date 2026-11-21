@@ -31,12 +31,14 @@ var tierNames = [numTiers]string{"Bronze", "Silver", "Gold", "Platinum", "Legend
 
 func (t Tier) String() string { return tierNames[t] }
 
-// Size is which of the two shields to draw.
+// Size is which shield to draw: the large one, the small one for list rows,
+// or the large one at twice the scale for the earn card.
 type Size int
 
 const (
 	Large Size = iota
 	Small
+	Huge
 )
 
 // The window's cell, in pixels, which a picture is sized to.
@@ -54,17 +56,28 @@ func Frames(t Tier) int {
 	return 1
 }
 
-// CellSize is the cells a shield takes.
-func CellSize(s Size) (cols, rows int) {
+// haloPad is the room a legendary shield's rays take on each side, in pixels.
+const haloPadX, haloPadY = 14, 15
+
+// Cells is the cells a shield takes; a legendary large one is wider and taller
+// to leave room for its rays.
+func Cells(t Tier, s Size) (cols, rows int) {
 	if s == Small {
 		return smallW / cellW, smallH / cellH
 	}
-	return largeW / cellW, largeH / cellH
+	cols, rows = largeW/cellW, largeH/cellH
+	if t == Legendary {
+		cols, rows = cols+2*haloPadX/cellW, rows+2*haloPadY/cellH
+	}
+	if s == Huge {
+		cols, rows = cols*2, rows*2
+	}
+	return
 }
 
 // Draw paints the shield with its top left at cell (x, y).
 func Draw(p *kit.Painter, x, y int, t Tier, d Domain, frame int, s Size) {
-	cols, rows := CellSize(s)
+	cols, rows := Cells(t, s)
 	p.Picture(image.Rect(x, y, x+cols, y+rows), Image(t, d, frame, s))
 }
 
@@ -84,6 +97,10 @@ var cache struct {
 func Image(t Tier, d Domain, frame int, s Size) *image.RGBA {
 	frame = ((frame % Frames(t)) + Frames(t)) % Frames(t)
 	k := key{t, d, frame, s}
+	var big *image.RGBA
+	if s == Huge {
+		big = Image(t, d, frame, Large)
+	}
 	cache.Lock()
 	defer cache.Unlock()
 	if img, ok := cache.m[k]; ok {
@@ -93,13 +110,27 @@ func Image(t Tier, d Domain, frame int, s Size) *image.RGBA {
 		cache.m = map[key]*image.RGBA{}
 	}
 	var img *image.RGBA
-	if s == Small {
+	switch s {
+	case Small:
 		img = drawSmall(t, d, frame)
-	} else {
+	case Huge:
+		img = scale2(big)
+	default:
 		img = drawLarge(t, d, frame)
 	}
 	cache.m[k] = img
 	return img
+}
+
+func scale2(a *image.RGBA) *image.RGBA {
+	b := a.Bounds()
+	out := image.NewRGBA(image.Rect(0, 0, 2*b.Dx(), 2*b.Dy()))
+	for y := 0; y < out.Rect.Dy(); y++ {
+		for x := 0; x < out.Rect.Dx(); x++ {
+			out.SetRGBA(x, y, a.RGBAAt(x/2, y/2))
+		}
+	}
+	return out
 }
 
 func put(img *image.RGBA, x, y int, c color.RGBA) {
@@ -342,30 +373,34 @@ func sparkle(img *image.RGBA, x, y, n int, c color.RGBA) {
 	}
 }
 
-// halo is the rays behind a legendary shield, and a ring of dots.
+// halo is the rays behind a legendary shield: eight long wedges, each with a
+// one pixel outline and a bright core, a pair of them lit at a time.
 func halo(img *image.RGBA, p *pal, frame int) {
-	const cx, cy = 35.0, 38.0
-	for i := 0; i < 20; i++ {
-		a := float64(i) * math.Pi / 10
-		long := 35.0
-		if i%2 == 1 {
-			long = 29
-		}
-		c := mix(p.ray, p.outline, .25)
-		if (i/2+frame)%3 == 0 {
-			c = mix(p.ray, color.RGBA{255, 255, 255, 255}, .25)
-		}
-		for r := 24.0; r <= long; r += .5 {
-			put(img, int(math.Floor(cx+r*math.Cos(a))), int(math.Floor(cy+r*math.Sin(a))), c)
-		}
-		if i%2 == 0 {
-			put(img, int(math.Floor(cx+(long+2)*math.Cos(a))), int(math.Floor(cy+(long+2)*math.Sin(a))), mix(p.ray, p.outline, .2))
-		}
-	}
-	for i := 0; i < 56; i += 1 {
-		if i%2 == 0 {
-			a := float64(i) * 2 * math.Pi / 56
-			put(img, int(math.Floor(cx+21*math.Cos(a))), int(math.Floor(cy+21*math.Sin(a))), mix(p.ray, p.outline, .55))
+	const cx, cy, from, to = 35.0 + haloPadX, 38.0 + haloPadY, 22.0, 52.0
+	hot := mix(p.ray, color.RGBA{255, 255, 255, 255}, .7)
+	for i := 0; i < 8; i++ {
+		a := (22.5 + 45*float64(i)) * math.Pi / 180
+		ca, sa := math.Cos(a), math.Sin(a)
+		lit := (i+frame)%4 == 0
+		for y := 0; y < largeH+2*haloPadY; y++ {
+			for x := 0; x < largeW+2*haloPadX; x++ {
+				dx, dy := float64(x)+.5-cx, float64(y)+.5-cy
+				r, d := dx*ca+dy*sa, math.Abs(-dx*sa+dy*ca)
+				w := 5.2 - 4.2*(r-from)/(to-from)
+				if r < from || r > to || d > w {
+					continue
+				}
+				c := mix(p.ray, p.outline, .1)
+				switch {
+				case d > w-1:
+					c = p.outline
+				case d < w-2.4 && lit:
+					c = hot
+				case d < w-2.4:
+					c = mix(p.ray, hot, .45)
+				}
+				img.SetRGBA(x, y, c)
+			}
 		}
 	}
 }
@@ -384,7 +419,7 @@ func drawLarge(t Tier, d Domain, frame int) *image.RGBA {
 	em := newMask(emW, emH)
 	bigEmblems[d](em)
 	em.bevel()
-	blit(shield, em, midX-emW/2, 27, p.emTone, p.outline, false)
+	blit(shield, em, midX-emW/2, 28, p.emTone, p.outline, false)
 	if t >= Silver {
 		for _, r := range [][2]int{{19, 21}, {51, 21}, {14, 37}, {56, 37}, {21, 52}, {49, 52}} {
 			x, y := b.snap(r[0], r[1], 4)
@@ -404,10 +439,10 @@ func drawLarge(t Tier, d Domain, frame int) *image.RGBA {
 			put(shield, x, y+1, p.metal[1])
 			put(shield, x+1, y+1, p.deep)
 		}
-		blit(shield, banner(), 4, 50, metal, p.outline, false)
+		blit(shield, banner(), 4, 58, metal, p.outline, false)
 	}
 	if t >= Gold {
-		blit(shield, crown(t), midX-12, 2, metal, p.outline, false)
+		blit(shield, crown(t), midX-12, 1, metal, p.outline, false)
 	}
 	if t == Gold || t == Platinum {
 		for _, s := range [][2]int{{8, 11}, {63, 47}, {60, 8}} {
@@ -441,11 +476,13 @@ func drawLarge(t Tier, d Domain, frame int) *image.RGBA {
 				}
 			}
 		}
-		img := image.NewRGBA(shield.Rect)
+		img := image.NewRGBA(image.Rect(0, 0, largeW+2*haloPadX, largeH+2*haloPadY))
 		halo(img, p, frame)
-		for i := 0; i < len(shield.Pix); i += 4 {
-			if shield.Pix[i+3] != 0 {
-				copy(img.Pix[i:i+4], shield.Pix[i:i+4])
+		for y := 0; y < largeH; y++ {
+			for x := 0; x < largeW; x++ {
+				if c := shield.RGBAAt(x, y); c.A != 0 {
+					img.SetRGBA(x+haloPadX, y+haloPadY, c)
+				}
 			}
 		}
 		return img
