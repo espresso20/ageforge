@@ -1,4 +1,3 @@
-
 package config
 
 // gateMeasureTable is the measured gate's numbers, read off the reference
