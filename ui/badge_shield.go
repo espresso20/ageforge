@@ -98,7 +98,8 @@ func (d *Dashboard) pumpBadgeNote() {
 	if d.badgeNote && time.Now().After(d.badgeUntil) {
 		d.closeBadgeNote()
 	}
-	if d.badgeNote || len(d.badgeQ) == 0 {
+	// Wait while any dialog, splash or card is up: the notice never covers one.
+	if d.badgeNote || len(d.badgeQ) == 0 || len(d.pages.GetPageNames(false)) > 1 {
 		return
 	}
 	n := &badgeNote{nativeBox: newNativeBox(), v: d.badgeQ[0], close: d.closeBadgeNote}
