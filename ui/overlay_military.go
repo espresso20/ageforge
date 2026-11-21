@@ -23,7 +23,7 @@ func armyPage(state game.GameState) deckPage {
 	}
 	pg := deckPage{
 		Title: rowid.Line("ui.overlay_military.armyPage.01", "Army"),
-		Hint:  "army",
+		Hint:  "campaign <name>",
 	}
 	pg.Notes = append(garrisonNotes(state), deckLine{Value: rowid.Line("ui.overlay_military.armyPage.02", "Commands: expedition opens the Expeditions panel; expedition <name> sends an offer")})
 
