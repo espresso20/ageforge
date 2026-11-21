@@ -77,6 +77,14 @@ type keyFeel struct {
 	tip kit.Tip
 }
 
+// rest shows line as the command under the pointer: "" takes away the line
+// was, if it is still the one shown.
+func (f *keyFeel) rest(line, was string) {
+	if line != "" || f.preview == was {
+		f.preview = line
+	}
+}
+
 func (f *keyFeel) clock() time.Time {
 	if f.now != nil {
 		return f.now()

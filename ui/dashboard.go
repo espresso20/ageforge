@@ -389,11 +389,20 @@ func (d *Dashboard) build() {
 			}
 		default:
 			d.lessonListed++
-			d.runLine(name)
+			d.pressLine(name)
 		}
 	}
+	// The pointer on a panel's name shows the line a click runs.
+	shown := ""
+	d.nextBox.body.OnHover = func(name string) {
+		if name == regionShow || strings.HasPrefix(name, regionThen) {
+			name = ""
+		}
+		d.app.feel.rest(name, shown)
+		shown = name
+	}
 	// A click on the mini map opens the Map panel.
-	d.miniMap.onClick = func() { d.runLine("map") }
+	d.miniMap.onClick = func() { d.pressLine("map") }
 	d.nextBox.SetBorder(true)
 	theme.Track(func() { d.nextBox.SetTitleColor(theme.Of(theme.RoleAccent)) })
 
@@ -405,7 +414,7 @@ func (d *Dashboard) build() {
 		SetMaxLines(100)
 	d.logTV.SetBorder(true)
 	// A click on the Log opens the full record.
-	d.logTV.click = func() { d.runLine("logs") }
+	d.logTV.click = func() { d.pressLine("logs") }
 	theme.Track(func() { d.logTV.SetTitleColor(theme.Of(theme.RoleDim)) })
 
 	// The header at the top: the account, the age, the people, the way to
@@ -598,8 +607,8 @@ func (d *Dashboard) build() {
 	})
 	// A click on the People box opens the People panel, and one on Under
 	// construction the build plan.
-	d.workerMiniTV.click = func() { d.runLine("people") }
-	d.economyTab.constructionTV.click = func() { d.runLine("plan") }
+	d.workerMiniTV.click = func() { d.pressLine("people") }
+	d.economyTab.constructionTV.click = func() { d.pressLine("plan") }
 	d.workerMiniTV.SetBorder(true)
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Of(theme.RoleAccent)) })
 	d.economyTab.AddPeopleBox(d.workerMiniTV, d.richLayout, func() int {
@@ -1474,6 +1483,9 @@ func (d *Dashboard) cardLine() string {
 // remember records a non-empty trimmed command in history (cap at 50).
 func (d *Dashboard) remember(text string) {
 	if cmd := strings.TrimSpace(text); cmd != "" {
+		if n := len(d.cmdHistory); n > 0 && d.cmdHistory[n-1] == cmd {
+			return // a line run again is one place in the history
+		}
 		if len(d.cmdHistory) >= 50 {
 			d.cmdHistory = d.cmdHistory[1:] // drop oldest
 		}
@@ -1657,6 +1669,6 @@ func (d *Dashboard) showMe(card, panel string) {
 		return
 	}
 	if panel != "" {
-		d.runLine(panel)
+		d.pressLine(panel)
 	}
 }
