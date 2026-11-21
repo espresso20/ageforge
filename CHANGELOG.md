@@ -7,6 +7,9 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- The Buildings column is at most 90 cells wide, so a card's name, price and Build button read as one line; the width it gives up goes to Resources, the Log and the right column. The mini map is at most 16 rows tall.
+- The Resources bars are dim while a stock is healthy, amber while it is falling and red when it is low or about to run out. The Next card wraps a long price at a comma instead of cutting it.
+- The Resources, People, Log and Under construction titles end in a faint `›` and a click opens Stats, People, Logs and Plan; the header shows `charter ›` once the charter is found. The People box says "no homes yet" before the first home.
 - The notice on the header's top edge drops a toast that waited longer than its own time, replaces a waiting one with a newer one of the same kind, and opens the log when clicked. The log keeps every line.
 - Each option of the catastrophe and Last Passage windows opens with one line saying the outcome, above the detail.
 - Coming back after five minutes or more away opens a Welcome back card with the time away and what it brought; `report` shows it again. The same lines still go to the log.
