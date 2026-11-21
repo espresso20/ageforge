@@ -27,7 +27,7 @@ func badgeShield(v game.BadgeView, cols, rows int) *image.RGBA {
 	col := wirebadge.Color(t, int(time.Now().UnixMilli()/150))
 	halo := wirebadge.Mix(col, bg, .72)
 	if !v.Earned {
-		col, halo = wirebadge.Mix(col, bg, .62), color.RGBA{}
+		col, halo = wirebadge.Mix(col, bg, .55), color.RGBA{}
 	}
 	s := min(1, float64(w)/104, float64(h)/92)
 	wirebadge.Draw(func(x, y int, c color.RGBA) {
@@ -39,7 +39,7 @@ func badgeShield(v game.BadgeView, cols, rows int) *image.RGBA {
 }
 
 const (
-	badgeCardW, badgeCardRows = 45, 20
+	badgeCardW, badgeCardRows = 42, 20
 	badgeNotePage             = "badge_note"
 	badgeNoteFor              = 3 * time.Second
 )
@@ -78,10 +78,10 @@ type badgeNote struct {
 func (n *badgeNote) Paint(p *kit.Painter) {
 	r := n.Bounds()
 	p.Fill(r, theme.Of(theme.RoleSurface))
-	p.Picture(image.Rect(r.Min.X+3, r.Min.Y+1, r.Min.X+33, r.Min.Y+12), badgeShield(n.v, 30, 11))
+	p.Picture(image.Rect(r.Min.X+3, r.Min.Y+1, r.Min.X+45, r.Min.Y+16), badgeShield(n.v, 42, 15))
 	st := kit.Style{}.Foreground(kit.Role(theme.RoleBright)).Bold(true)
-	p.Print(r.Min.X+1, r.Min.Y+13, r.Dx()-2, txtBadgeEarned.String()+": "+n.v.Name, st)
-	p.Print(r.Min.X+1, r.Min.Y+14, r.Dx()-2, rowid.Sprintf("ui.badge_note.tier", "%s  +%d", n.v.Tier, n.v.Points), kit.Style{}.Foreground(tierCol(n.v.Level)))
+	p.Print(r.Min.X+1, r.Min.Y+17, r.Dx()-2, txtBadgeEarned.String()+": "+n.v.Name, st)
+	p.Print(r.Min.X+1, r.Min.Y+18, r.Dx()-2, rowid.Sprintf("ui.badge_note.tier", "%s  +%d", n.v.Tier, n.v.Points), kit.Style{}.Foreground(tierCol(n.v.Level)))
 }
 
 // Mouse: a click closes the notice.
@@ -103,7 +103,7 @@ func (d *Dashboard) pumpBadgeNote() {
 	}
 	n := &badgeNote{nativeBox: newNativeBox(), v: d.badgeQ[0], close: d.closeBadgeNote}
 	d.badgeQ, d.badgeNote, d.badgeUntil = d.badgeQ[1:], true, time.Now().Add(badgeNoteFor)
-	page := floatingModal(n, 36, 16)
+	page := floatingModal(n, 48, 20)
 	page.hold = false
 	d.pages.AddPage(badgeNotePage, page, true, true)
 }
