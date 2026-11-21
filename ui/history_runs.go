@@ -206,12 +206,7 @@ func (p *historyPanel) runs(p2 *kit.Painter, org image.Point) {
 			p.runLine(p2, org, rows[1+first+i], rows[1+first+i], g.listTop+2+i, longest)
 		}
 	}
-	if n := len(p.arch.Runs); n > g.listRows {
-		h := max(1, g.listRows*g.listRows/n)
-		top := (g.listRows - h) * first / (n - g.listRows)
-		histFill(p2, org, image.Rect(g.w-3, g.listTop+2, g.w-2, g.listTop+2+g.listRows), toward(c.ground, c.dim, .22))
-		histFill(p2, org, image.Rect(g.w-3, g.listTop+2+top, g.w-2, g.listTop+2+top+h), c.dim)
-	}
+	p2.Bar(org.X+g.w-2, org.Y+g.listTop+2, g.listRows, first, g.listRows, len(p.arch.Runs))
 }
 
 // runLine paints one row of the list.
