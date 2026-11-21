@@ -62,7 +62,7 @@ func panelsReached(st game.GameState) []string {
 	if i := slices.Index(st.Ruleset().AgeKeys(), st.Age); i >= 1 {
 		out = append(out, "plan", "history")
 	}
-	if currentWonder(st) != nil {
+	if anyBuilt(st) && currentWonder(st) != nil {
 		out = append(out, "wonders")
 	}
 	if _, locked := featureRefusal(st, config.FeatureTradeRoutes); !locked {
