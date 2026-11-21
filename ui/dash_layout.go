@@ -28,6 +28,10 @@ const (
 	richLeftMin  = 46
 	richMidMin   = 44
 	richRightMin = 33
+	// richMidMax is the widest the Middle column is drawn: a building card's
+	// name, price and Build button read as one line at this width, and wider
+	// only puts empty cells between them.
+	richMidMax = 90
 	// richPeopleRows is the People box's height, border included, in the rich
 	// layout: the headcount, the bar, the four kinds and one line on what
 	// holds the population back. richPeopleDetailRows adds the second line of
@@ -54,7 +58,7 @@ func dashRich(w, h int) bool { return w >= richMinCols && h >= richMinRows }
 // richCols is the rich layout's column widths on a w-cell terminal: Left about
 // 30% and Right about 23% of the width (each at least its minimum), Middle the
 // rest. When Middle would come out under richMidMin, Left gives up the
-// difference.
+// difference; over richMidMax, Left and Right share what is over.
 func richCols(w int) (left, mid, right int) {
 	left = max(richLeftMin, (30*w+50)/100)
 	right = max(richRightMin, (23*w+50)/100)
@@ -63,6 +67,11 @@ func richCols(w int) (left, mid, right int) {
 		left -= richMidMin - mid
 		mid = richMidMin
 	}
+	if over := mid - richMidMax; over > 0 {
+		mid = richMidMax
+		left += (over + 1) / 2
+		right += over / 2
+	}
 	return left, mid, right
 }
 
@@ -70,14 +79,18 @@ func richCols(w int) (left, mid, right int) {
 // Right column on a terminal h rows tall: about 47% of the column's width,
 // at most what the Next box leaves out (richNextRows, so the stacked Panels
 // list fits; richNextCompactRows when the terminal is too short for that),
+// at most richMapMaxRows so the Panels list and the Next card keep the room,
 // at least 10.
 func richMapRows(right, h int) int {
 	room := h - richNextRows
 	if room < 10 {
 		room = h - richNextCompactRows
 	}
-	return max(10, min((47*right+50)/100, room))
+	return max(10, min((47*right+50)/100, room, richMapMaxRows))
 }
+
+// richMapMaxRows is the tallest the mini map is drawn in the rich layout.
+const richMapMaxRows = 16
 
 // richNextRows is the Next box's height, border included, when the Panels
 // list is stacked (one column a group, 25 rows): 2 borders, the card (13
