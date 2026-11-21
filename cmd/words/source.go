@@ -185,7 +185,7 @@ func goFiles(dir string) ([]string, error) {
 	var out []string
 	for _, e := range entries {
 		n := e.Name()
-		if e.IsDir() || !strings.HasSuffix(n, ".go") || strings.HasSuffix(n, "_test.go") {
+		if e.IsDir() || !strings.HasSuffix(n, ".go") {
 			continue
 		}
 		out = append(out, n)

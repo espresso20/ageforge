@@ -55,8 +55,6 @@ func loadQuoters(root string) []quoter {
 			add(rel, "generated")
 		case strings.HasPrefix(rel, "site/") && (strings.HasSuffix(rel, ".md") || strings.HasSuffix(rel, ".html") || strings.HasSuffix(rel, ".js")):
 			add(rel, "wiki")
-		case strings.HasSuffix(rel, "_test.go"):
-			add(rel, "test")
 		}
 		return nil
 	})
@@ -100,8 +98,7 @@ func followUps(c *catalog, root string, changes []change, out io.Writer) {
 				fmt.Fprintf(out, "      and %d more files\n", found-12)
 			}
 		}
-		fmt.Fprintln(out, "  wiki: a page under site/, to edit by hand. generated: a picture of the game, from a generator that went with the test suite.")
-		fmt.Fprintln(out, "  test: a test that quotes the name.")
+		fmt.Fprintln(out, "  wiki: a page under site/, to edit by hand. generated: a picture of the game.")
 	}
 	// Any other rewritten line that the wiki quotes word for word.
 	if stale := wikiQuotes(root, changes); len(stale) > 0 {
