@@ -136,6 +136,20 @@ func (d *Dashboard) pumpBadgeNote() {
 	d.badgeQ, d.badgeNote, d.badgeUntil = d.badgeQ[1:], true, time.Now().Add(badgeNoteFor)
 	page := floatingModal(n, 48, 25)
 	page.hold = false
+	// The card holds the keyboard while it shows: Esc or Enter close it, and a
+	// typed character closes it and lands in the command line.
+	page.SetInputCapture(func(ev *kit.Key) *kit.Key {
+		switch {
+		case ev.Code == kit.KeyEsc || ev.Code == kit.KeyEnter:
+			d.closeBadgeNote()
+		case ev.Code == kit.KeyRune:
+			d.closeBadgeNote()
+			d.inputField.SetText(d.inputField.GetText() + string(ev.Rune))
+		default:
+			return ev
+		}
+		return nil
+	})
 	d.pages.AddPage(badgeNotePage, page, true, true)
 }
 
@@ -143,5 +157,6 @@ func (d *Dashboard) closeBadgeNote() {
 	if d.badgeNote {
 		d.pages.RemovePage(badgeNotePage)
 		d.badgeNote = false
+		d.returnFocus()
 	}
 }
