@@ -30,6 +30,7 @@ type lessonCtx struct {
 	seen    bool
 	base    float64
 	nx      *nextCtx
+	step    nextStep // the next step the card names
 }
 
 // lesson is one row of the table.
@@ -132,7 +133,7 @@ var lessonTable = []lesson{
 		name:   rowid.E("ui.lessons.gather.01", "Gather"),
 		text:   rowid.E("ui.lessons.gather.02", "Gather by hand to start the town."),
 		clause: rowid.E("ui.lessons.gather.03", "learned when you gather"),
-		when:   func(c *lessonCtx) bool { return c.st.CanGatherByHand() && c.built() == 0 },
+		when:   func(c *lessonCtx) bool { return strings.HasPrefix(c.step.cmd, "gather ") },
 		done: func(c *lessonCtx) bool {
 			for _, n := range c.st.Stats.TotalGathered {
 				if n > 0 {
@@ -448,7 +449,7 @@ func (d *Dashboard) stepLessons(st game.GameState) {
 			}
 		}
 	}
-	c := &lessonCtx{st: st, typed: d.lessonTyped, listed: d.lessonListed, fresh: d.panels.newCount()}
+	c := &lessonCtx{st: st, typed: d.lessonTyped, listed: d.lessonListed, fresh: d.panels.newCount(), step: d.next}
 	if d.overlayMgr != nil {
 		c.open = d.overlayMgr.ActiveName()
 	}

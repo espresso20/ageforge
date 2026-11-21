@@ -67,7 +67,7 @@ type ledger struct {
 
 // update works the Ledger out from a snapshot. eng holds the calendar (the
 // year never runs back within an age); it may be nil.
-func (l *ledger) update(state game.GameState, eng *game.GameEngine) {
+func (l *ledger) update(state game.GameState, eng *game.GameEngine, focus string) {
 	v := state.AdvanceView()
 	if eng != nil {
 		v = eng.HoldCalendar(v)
@@ -80,7 +80,7 @@ func (l *ledger) update(state game.GameState, eng *game.GameEngine) {
 		status, _ := pillarStatus(p)
 		d.Pillars = append(d.Pillars, ledgerPillar{Name: p.Name, Share: p.Progress, Pct: sharePercent(p.Progress, false), Met: p.Met, Count: pillarCount(p), Status: status})
 	}
-	l.blockers(state)
+	l.blockers(state, focus)
 	l.ready = true
 }
 
@@ -115,7 +115,11 @@ func (l *ledger) resourceOrder(state game.GameState) []string {
 // blockers lists what the gate is waiting on and which resources a blocker is
 // short of: for a building, the price of its next copy against the stock; for
 // the wonder's bank, what is left to bank against the stock.
-func (l *ledger) blockers(state game.GameState) {
+//
+// A resource is named as short only when the building the Next step names
+// (focus) or a wonder with something banked needs it and the stock falls
+// short: a building going up is paid for.
+func (l *ledger) blockers(state game.GameState, focus string) {
 	d := &l.data
 	d.Waits, d.Then, d.Short = d.Waits[:0], "", d.Short[:0]
 	if d.Need == nil {
@@ -131,6 +135,9 @@ func (l *ledger) blockers(state game.GameState) {
 		}
 	}
 
+	if _, ok := state.Ruleset().Building(focus); ok {
+		short(buildingPrice(&state, focus, state.Buildings[focus]), nil)
+	}
 	var build *game.GateRow
 	bankOpen := false
 	for _, p := range d.v.Pillars {
@@ -142,13 +149,12 @@ func (l *ledger) blockers(state game.GameState) {
 			switch r.Kind {
 			case game.GateRowCount:
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d/%d", r.Label, r.Have, r.Need))
-				short(buildingPrice(&state, r.Key, state.Buildings[r.Key]), nil)
 			case game.GateRowAmount:
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %s/%s", r.Label, textfmt.Number(r.Value), textfmt.Number(r.Target)))
 			case game.GateRowShare:
 				bankOpen = true
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d%%", r.Label, r.Have))
-				if def, ok := state.Ruleset().Building(r.Key); ok {
+				if def, ok := state.Ruleset().Building(r.Key); ok && (r.Key == focus || len(state.Buildings[r.Key].WonderBank) > 0) {
 					short(def.BaseCost, state.Buildings[r.Key].WonderBank)
 				}
 			default:
@@ -232,8 +238,12 @@ func (m *ledgerData) waitText(room int) []xseg {
 
 // waitMore says how many requirements a line leaves out after the first i.
 func (m *ledgerData) waitMore(i int) string {
-	return rowid.Sprintf("ui.dash_ledger.waitText.04", "+%d more", len(m.Waits)-i)
+	return rowid.Sprintf("ui.dash_ledger.waitText.04", "+%d", len(m.Waits)-i)
 }
+
+// waitNames is the most requirements the waiting line names; the rest are
+// counted.
+const waitNames = 4
 
 // waitParts is the waiting line after lead in room cells, and how many
 // requirements it lists whole.
@@ -246,6 +256,9 @@ func (m *ledgerData) waitParts(lead string, room int) (parts []xseg, shown int) 
 	x := runeLen(lead)
 	for i, it := range m.Waits {
 		more := m.waitMore(i)
+		if i == waitNames {
+			return append(parts, xseg{sep, xFaint}, xseg{more, xDim}), i
+		}
 		need := runeLen(it)
 		if i > 0 {
 			need += sepW
