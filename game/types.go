@@ -853,17 +853,23 @@ func (t TradeState) Share(res string, perTick float64) float64 {
 // the count of its building line over the gate, Run the share of the flow it
 // moves now, so what it really moves is Import x Scale x Run.
 type ActiveRouteInfo struct {
-	Name        string
-	Key         string
-	Export      map[string]float64
-	Import      map[string]float64
-	Scale, Run  float64
-	Owned       int
-	Paused      bool   // stopped by the player; it keeps its place on the list
-	NoBuilding  bool   // held at 0 for want of its building line
-	NoIncome    string // held at 0: the town makes none of this export
-	Disrupted   bool   // true when blockaded by war/embargo (flow held at 0)
-	DisruptedBy string // the imported resource that is blockaded (if Disrupted)
+	Name       string
+	Key        string
+	Export     map[string]float64
+	Import     map[string]float64
+	Scale, Run float64
+	Owned      int
+	// Level is the route's upgrades; Mult the flow's multiple for it, UpMult
+	// the multiple one level up, and UpCost of UpGood what that level costs.
+	Level        int
+	Mult, UpMult float64
+	UpGood       string
+	UpCost       float64
+	Paused       bool   // stopped by the player; it keeps its place on the list
+	NoBuilding   bool   // held at 0 for want of its building line
+	NoIncome     string // held at 0: the town makes none of this export
+	Disrupted    bool   // true when blockaded by war/embargo (flow held at 0)
+	DisruptedBy  string // the imported resource that is blockaded (if Disrupted)
 	// Shares is what each import's flow is made of (the techs, harbor
 	// buildings, allies), each a share of the listed amount.
 	Shares map[string][]PayShare

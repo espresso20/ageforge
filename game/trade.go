@@ -59,6 +59,8 @@ type ActiveRoute struct {
 	// Paused: stopped by the player. Only StopRoute sets it and StartRoute
 	// clears it, so a start on its own never touches it.
 	Paused bool
+	// Level is the upgrades bought for this route (saved): see routeMult.
+	Level int
 	// The rest is recomputed by Flows every time the rates are, not saved.
 	// Run is the share of its flow the route moves now (0 to 1): 0 when
 	// paused, blockaded or short of its building, less than 1 when the
@@ -296,6 +298,57 @@ func (tm *TradeManager) flows(def config.TradeRouteDef, terms RouteTerms, age st
 	return out, in, shares
 }
 
+// routeDoublings are the levels at which a route's flow doubles again.
+var routeDoublings = [...]int{10, 25, 50}
+
+// routeMult is the multiple of a route's flow that its level gives: a quarter
+// more for each level, doubled at levels 10, 25 and 50.
+func routeMult(level int) float64 {
+	m := float64(1 + float64(0.25*float64(level)))
+	for _, at := range routeDoublings {
+		if level >= at {
+			m = float64(m * 2)
+		}
+	}
+	return m
+}
+
+// upgradeCost is the good a route's next level is paid in (the first import it
+// brings) and the price: config.RouteUpgradeMinutes of its level-0 flow, grown
+// by config.RouteUpgradeGrowth for each level bought. in is flows' import at
+// the gate. "" when the route brings no stock good.
+func (tm *TradeManager) upgradeCost(route *ActiveRoute, def config.TradeRouteDef, in map[string]float64) (string, float64) {
+	for _, res := range def.Import {
+		if a := in[res]; a > 0 && res != config.ResearchTarget {
+			base := float64(float64(a*route.Scale) * float64(minutesToTicks(config.RouteUpgradeMinutes)))
+			return res, float64(base * detmath.Pow(config.RouteUpgradeGrowth, float64(route.Level)))
+		}
+	}
+	return "", 0
+}
+
+// Upgrade buys the route's next level in the good it brings in.
+func (tm *TradeManager) Upgrade(key string, rm *ResourceManager, terms RouteTerms, age string) error {
+	def, ok := tm.routeDefs[key]
+	if !ok {
+		return unknownKeyError(rowid.Line("game.trade.Upgrade.01", "trade route"), key, tm.routeDefs, rowid.Line("game.trade.Upgrade.02", "Type trade route list to see the routes."))
+	}
+	route, active := tm.activeRoutes[key]
+	if !active || route.Paused || route.NoBuilding || route.Disrupted || route.NoIncome != "" {
+		return rowid.Errorf("game.trade.Upgrade.03", "%s is not running, so it cannot be upgraded.", def.Name)
+	}
+	_, in, _ := tm.flows(def, terms, age)
+	good, cost := tm.upgradeCost(route, def, in)
+	if good == "" {
+		return rowid.Errorf("game.trade.Upgrade.04", "%s brings in nothing to pay an upgrade with.", def.Name)
+	}
+	if !rm.Remove(good, cost) {
+		return rowid.Errorf("game.trade.Upgrade.05", "The next level of %s costs %s; you have %s.", def.Name, Amount(cost, good), Amount(rm.Get(good), good))
+	}
+	route.Level++
+	return nil
+}
+
 // StartRoute activates a trade route
 func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age string, ageOrder map[string]int) error {
 	routes := tm.routeDefs
@@ -457,14 +510,15 @@ func (tm *TradeManager) Flows(rm *ResourceManager, buildings *BuildingManager, d
 // worked out again only when the age, the techs, the bonuses, the town's
 // income of a good or the route's scale changes.
 func (tm *TradeManager) sized(route *ActiveRoute, def config.TradeRouteDef, terms RouteTerms, age string) (out, in map[string]float64) {
-	k := flowKey{age: age, speed: tm.timeFactor(), pay: tm.RoutePay(1), harbor: terms.Harbor, scale: route.Scale}
+	scale := float64(route.Scale * routeMult(route.Level))
+	k := flowKey{age: age, speed: tm.timeFactor(), pay: tm.RoutePay(1), harbor: terms.Harbor, scale: scale}
 	if len(def.Export) > 2 || len(def.Import) > 2 || !terms.Lean {
 		out, in, _ = tm.flows(def, terms, age)
 		for res, a := range out {
-			out[res] = float64(a * route.Scale)
+			out[res] = float64(a * scale)
 		}
 		for res, a := range in {
-			in[res] = float64(a * route.Scale)
+			in[res] = float64(a * scale)
 		}
 		return out, in
 	}
@@ -487,10 +541,10 @@ func (tm *TradeManager) sized(route *ActiveRoute, def config.TradeRouteDef, term
 	}
 	out, in, _ = tm.flows(def, terms, age)
 	for res, a := range out {
-		out[res] = float64(a * route.Scale)
+		out[res] = float64(a * scale)
 	}
 	for res, a := range in {
-		in[res] = float64(a * route.Scale)
+		in[res] = float64(a * scale)
 	}
 	route.sized = sizedFlow{key: k, ok: true, out: out, in: in}
 	return out, in
@@ -572,6 +626,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		def := allRoutes[key]
 		blockedBy := tm.routeDisruptedBy(def, disrupted)
 		out, in, shares := tm.flows(def, terms, age)
+		upGood, upCost := tm.upgradeCost(route, def, in)
 		activeRoutes = append(activeRoutes, ActiveRouteInfo{
 			Name:        def.Name,
 			Key:         key,
@@ -585,6 +640,11 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			Run:         route.Run,
 			Scale:       route.Scale,
 			Owned:       route.Owned,
+			Level:       route.Level,
+			Mult:        routeMult(route.Level),
+			UpGood:      upGood,
+			UpCost:      upCost,
+			UpMult:      routeMult(route.Level + 1),
 			Shares:      shares,
 		})
 		if blockedBy != "" && !seenDisrupt[blockedBy] {

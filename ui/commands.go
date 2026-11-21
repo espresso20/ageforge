@@ -277,6 +277,7 @@ func registry() []*Command {
 					sub("list", "trade route list", rowid.Line("ui.help.commands.trade.route.list", "List trade routes")),
 					sub("start", "trade route start <route>", rowid.Line("ui.help.commands.trade.route.start", "Start a trade route"), Arg{Kind: ArgRouteAvailable}),
 					&Command{Name: "stop", Aliases: []string{"pause"}, Args: []Arg{{Kind: ArgRouteActive}}, Help: []Usage{{"trade route stop <route>", rowid.Line("ui.help.commands.trade.route.stop", "Pause a trade route (also: pause)")}}},
+					sub("upgrade", "trade route upgrade <route>", rowid.Line("ui.help.commands.trade.route.upgrade", "Buy a route's next level: more flow, paid in what it brings in"), Arg{Kind: ArgRouteActive}),
 				}},
 				sub("black", "trade black [resource]", rowid.Line("ui.help.commands.trade.black", "Same as blackmarket"), Arg{Kind: ArgResource, Optional: true}),
 			}},

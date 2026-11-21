@@ -308,3 +308,11 @@ func BaseFactions() []FactionDef {
 func FactionByKey() map[string]FactionDef {
 	return indexBy(BaseFactions(), func(def FactionDef) string { return def.Key })
 }
+
+// A route's upgrades (game.routeMult): a level costs RouteUpgradeMinutes of the
+// route's level-0 import, times RouteUpgradeGrowth for each level bought, and
+// the flow doubles again at each of the levels game.routeDoublings lists.
+const (
+	RouteUpgradeMinutes = 10
+	RouteUpgradeGrowth  = 1.15
+)
