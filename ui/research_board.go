@@ -965,11 +965,11 @@ func (p *researchPanel) paintDetail(s rankPaint, g boardGeo, t *boardTech, sc ki
 
 	// The buttons keep their place above the lanes.
 	off, why := t.ts.Researched, rowid.Line("ui.research_board.paintDetail.researched", "Already researched")
-	b1 := actionSpec{kind: keyPrimary, label: "Research", key: "Enter", sign: signPlay, off: off, why: why}
-	b2 := actionSpec{kind: keyPlain, label: "Queue", key: "Q", off: off, why: why}
+	b1 := chipSpec{kind: keyAccent, label: "Research", key: "Enter", off: off, why: why}
+	b2 := chipSpec{kind: keySteel, label: "Queue", key: "Q", off: off, why: why}
 	by := g.by
-	bx := p.keys.actionButton(rx, by-1, b1) + 2
-	p.keys.actionButton(bx, by-1, b2)
+	bx := p.keys.chip(rx, by, b1) + 2
+	p.keys.chip(bx, by, b2)
 	capitals(p.keys)
 	if p.view.note != "" {
 		s.text(rx, by+3, fitText(p.view.note, rw), kit.Role(theme.RoleWarning), false)

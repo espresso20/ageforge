@@ -68,12 +68,12 @@ func (wv *wondersView) layer(text image.Rectangle, top int) *xgrid {
 	g := newXGrid(text.Dx(), text.Dy())
 	if row := textRow(b.text, b.bank, text.Dx()) - top; row >= 0 && row < text.Dy() {
 		if x := b.bankCol; x+runeLen(txtWonderCollect.String())+2 <= text.Dx() {
-			g.chip(x, row, txtWonderCollect.String(), keySteel, b.collectCmd, "", "", b.collectOff)
+			g.chip(x, row, chipSpec{kind: keySteel, label: txtWonderCollect.String(), cmd: b.collectCmd, off: b.collectOff})
 			g.keyset().keys[len(g.keyset().keys)-1].key = kit.Key{Code: kit.KeyRune, Rune: wonderCollectKey}
 		}
 	}
-	if row := textRow(b.text, b.build, text.Dx()) - top; row >= 0 && row+actionRows <= text.Dy() {
-		g.actionButton(wonderPad, row, actionSpec{kind: keyPrimary, label: txtWonderBuild.String(), key: "B", cmd: b.buildCmd, off: b.buildOff})
+	if row := textRow(b.text, b.build, text.Dx()) - top; row >= 0 && row+chipRows <= text.Dy() {
+		g.chip(wonderPad, row, chipSpec{kind: keyAccent, label: txtWonderBuild.String(), key: "B", cmd: b.buildCmd, off: b.buildOff})
 		g.keyset().keys[len(g.keyset().keys)-1].key = kit.Key{Code: kit.KeyRune, Rune: wonderBuildKey}
 	}
 	return g

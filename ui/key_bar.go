@@ -38,8 +38,9 @@ type xkey struct {
 	ask string
 	// yes is the word on the danger button of that question.
 	yes string
-	// sign is the picture at the left of an action button.
-	sign signKind
+	// picked marks a key drawn as under the pointer: the choice made, the
+	// card picked.
+	picked bool
 }
 
 // tipKey is the target of the tooltip of one key of one panel.

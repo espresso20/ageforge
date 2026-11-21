@@ -192,16 +192,6 @@ func tradeLook(state string) (word string, k, plate xk) {
 	return rowid.Line("ui.overlay_trade.tradePage.22", "locked"), xDim, xKeyName
 }
 
-// plate draws a word as a one-row button that runs cmd; it returns the next x.
-func (g *xgrid) plate(x, y int, word string, k xk, cmd string) int {
-	end := g.put(x, y, " "+word+" ", k)
-	if cmd != "" {
-		set := g.keyset()
-		set.keys = append(set.keys, xkey{r: image.Rect(x, y, end, y+1), cmd: cmd, kind: keyPlain})
-	}
-	return end
-}
-
 // tradeNetCell says what trade does to a good against what the town makes.
 func tradeNetCell(make_, takes, brings float64) (string, xk) {
 	net, k := brings-takes, xDim
@@ -491,16 +481,16 @@ func drawTradeEntry(g *xgrid, pg *deckPage, st game.GameState, r tradeRoute, ex 
 		g.put(tcShare, y, r.why, xBad)
 	}
 	if r.cmd != "" {
-		word, pk := rowid.Line("ui.trade_board.drawTradeEntry.01", "stop"), xKeyName
+		word, kind := rowid.Line("ui.trade_board.drawTradeEntry.01", "stop"), keySteel
 		if r.state == "paused" {
-			word, pk = rowid.Line("ui.trade_board.drawTradeEntry.02", "start"), xChipCivic
+			word, kind = rowid.Line("ui.trade_board.drawTradeEntry.02", "start"), keyAccent
 		}
 		bx := end - 1 - runeLen(word) - 2
-		g.plate(bx, y, word, pk, r.cmd)
+		g.chip(bx, y, chipSpec{kind: kind, label: word, cmd: r.cmd})
 		if picked {
-			g.put(bx-8, y, " Enter ", xKeycap)
+			g.put(bx-6, y, "Enter", xDim)
 			if up := rowid.Line("ui.trade_board.drawTradeEntry.07", "upgrade"); r.upGood != "" && r.state != "paused" {
-				g.plate(bx-8-runeLen(up)-3, y, up, xChipCivic, "trade route upgrade "+r.key)
+				g.chip(bx-6-runeLen(up)-3, y, chipSpec{kind: keyAccent, label: up, cmd: "trade route upgrade " + r.key})
 			}
 		}
 	}

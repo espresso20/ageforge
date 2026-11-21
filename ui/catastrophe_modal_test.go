@@ -26,7 +26,7 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 				}
 			}
 			// header + endure + succumb + hint + 3 gaps + buttons (3 rows) + 2 border
-			if want := rows + 3 + actionRows + 2; l.height != want {
+			if want := rows + 3 + chipRows + 2; l.height != want {
 				t.Errorf("%s: height %d, want %d", ep.Key, l.height, want)
 			}
 		}

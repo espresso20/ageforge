@@ -34,7 +34,7 @@ func festivalStage(t *testing.T, mut func(*game.GameState)) *peopleStage {
 func TestFestivalButtonAsksFirstAndRunsOnlyOnTheYes(t *testing.T) {
 	s := festivalStage(t, nil)
 	k := s.key(t, festivalCmd)
-	if k.off || k.ask == "" || k.yes == "" || k.kind != keyPrimary {
+	if k.off || k.ask == "" || k.yes == "" || k.kind != keyAccent {
 		t.Fatalf("the festival button: off %v, asks %q, yes %q, kind %v", k.off, k.ask, k.yes, k.kind)
 	}
 	if !strings.Contains(k.ask, "5K") {
@@ -169,13 +169,13 @@ func TestQuestionIsDangerOnlyForADangerousLine(t *testing.T) {
 	held := func() bool { _, on := festivalRunning(eng.GetState()); return on }
 
 	dlg := ask("Sell", "sell hut")
-	if kinds, keys := look(dlg); !reflect.DeepEqual(kinds, []keyKind{keyPlain, keyDanger}) || !reflect.DeepEqual(keys, []string{"Esc", ""}) {
+	if kinds, keys := look(dlg); !reflect.DeepEqual(kinds, []keyKind{keySteel, keyAlert}) || !reflect.DeepEqual(keys, []string{"Esc", ""}) {
 		t.Errorf("a Dangerous line: kinds %v keys %v", kinds, keys)
 	}
 	keyTo(dlg, tk(kit.KeyEsc, 0, 0))
 
 	dlg = ask("Hold", festivalCmd)
-	if kinds, keys := look(dlg); !reflect.DeepEqual(kinds, []keyKind{keyPrimary, keyPlain}) || !reflect.DeepEqual(keys, []string{"Enter", "Esc"}) {
+	if kinds, keys := look(dlg); !reflect.DeepEqual(kinds, []keyKind{keyAccent, keySteel}) || !reflect.DeepEqual(keys, []string{"Enter", "Esc"}) {
 		t.Errorf("the festival: kinds %v keys %v", kinds, keys)
 	}
 	keyTo(dlg, tk(kit.KeyEsc, 0, 0))

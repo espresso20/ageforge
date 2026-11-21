@@ -84,12 +84,12 @@ func (d *nativeDialog) asActions(danger bool) *nativeDialog {
 		out = n - 1
 	}
 	for i, b := range d.buttons {
-		kind, key, sign := keyPlain, "", signCross
+		kind, key := keySteel, ""
 		switch {
 		case danger && i == n-1:
-			kind, sign = keyDanger, signNone
+			kind = keyAlert
 		case !danger && i == 0:
-			kind, sign = keyPrimary, signTick
+			kind = keyAccent
 		}
 		switch {
 		case i == out:
@@ -97,7 +97,7 @@ func (d *nativeDialog) asActions(danger bool) *nativeDialog {
 		case i == 0:
 			key = "Enter"
 		}
-		b.asAction(kind, d.ground, key, sign)
+		b.asAction(kind, d.ground, key)
 	}
 	return d
 }
@@ -141,7 +141,7 @@ func (d *nativeDialog) Layout(r image.Rectangle) {
 	d.lines = kit.WordWrap(d.text, width)
 	w, h, rows := width+4, len(d.lines)+6, 1
 	if d.actions {
-		h, rows = h+2, actionRows
+		h, rows = h+2, chipRows
 	}
 	x, y := r.Min.X+(r.Dx()-w)/2, r.Min.Y+(r.Dy()-h)/2
 	d.box = image.Rect(x, y, x+w, y+h)

@@ -91,10 +91,10 @@ func TestTradeOffers_BoardAndDeck(t *testing.T) {
 			t.Errorf("the board lacks %q", want)
 		}
 	}
-	var plates []xk
+	var plates []keyKind
 	for _, k := range g.keyset().keys {
 		if k.cmd == "diplomacy accept "+st.Ruleset().Factions()[0].Key+" 1" || k.cmd == "diplomacy accept "+st.Ruleset().Factions()[0].Key+" 2" {
-			plates = append(plates, g.at(k.r.Min.X+1, k.r.Min.Y).k)
+			plates = append(plates, k.kind)
 		}
 	}
 	if len(plates) != 2 || plates[0] == plates[1] {

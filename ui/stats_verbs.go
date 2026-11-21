@@ -24,8 +24,8 @@ var (
 // returns the next y.
 func (pg *statsPage) prestigeButton(st game.GameState, x, y int) int {
 	word := txtPrestigeVerb.String()
-	pg.g.actionButton(x, y, actionSpec{kind: keyDanger, label: word, cmd: prestigeCmd, ask: txtPrestigeAsk.String(), yes: word, off: !st.Prestige.CanPrestige})
-	return y + actionRows
+	pg.g.chip(x, y, chipSpec{kind: keyAlert, label: word, cmd: prestigeCmd, ask: txtPrestigeAsk.String(), yes: word, off: !st.Prestige.CanPrestige})
+	return y + chipRows
 }
 
 // pageOrg is where the page's first cell sits on the screen.

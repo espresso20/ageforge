@@ -89,10 +89,10 @@ func TestDeckShowsWhatACardDoes(t *testing.T) {
 	for _, k := range g.keys {
 		cmds[k.cmd] = k
 	}
-	if k := cmds["trade route start alpha"]; k.kind != keyPrimary || k.r.Dy() != actionRows || k.key.Code != kit.KeyEnter {
+	if k := cmds["trade route start alpha"]; k.kind != keyAccent || k.r.Dy() != chipRows || k.key.Code != kit.KeyEnter {
 		t.Errorf("the picked card's button is %+v, want the primary action button on Enter", k)
 	}
-	if k := cmds["trade route start bravo"]; k.kind != keyPlain || k.r.Dy() != 1 {
+	if k := cmds["trade route start bravo"]; k.kind != keySteel || k.r.Dy() != 1 {
 		t.Errorf("another card's button is %+v, want its chip", k)
 	}
 	if strings.Contains(text, "trade route start alpha") || strings.Contains(text, "trade route start bravo") {

@@ -345,7 +345,7 @@ func TestDangerDialogButtonsAreActionButtons(t *testing.T) {
 	if d == nil || len(d.buttons) != 2 || !d.actions {
 		t.Fatal("the delete question is not a dialog with action buttons")
 	}
-	if d.buttons[0].act != keyPlain || d.buttons[1].act != keyDanger {
+	if d.buttons[0].act != keySteel || d.buttons[1].act != keyAlert {
 		t.Errorf("kinds: way out %d, confirm %d", d.buttons[0].act, d.buttons[1].act)
 	}
 	if d.at != 0 {
@@ -356,12 +356,12 @@ func TestDangerDialogButtonsAreActionButtons(t *testing.T) {
 	buf := kit.NewBuffer(120, 40)
 	root.Paint(buf)
 	for _, btn := range d.buttons {
-		if btn.Bounds().Dy() != actionRows {
-			t.Errorf("a button is %d rows, want %d", btn.Bounds().Dy(), actionRows)
+		if btn.Bounds().Dy() != chipRows {
+			t.Errorf("a button is %d rows, want %d", btn.Bounds().Dy(), chipRows)
 		}
 	}
 	n := len(b.saves)
-	c := d.buttons[1].Bounds().Min.Add(image.Pt(2, 1))
+	c := d.buttons[1].Bounds().Min.Add(image.Pt(2, 0))
 	root.Mouse(kit.Mouse{Kind: kit.MouseMove, X: c.X, Y: c.Y})
 	root.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: c.X, Y: c.Y})
 	root.Mouse(kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonLeft, X: c.X, Y: c.Y})

@@ -260,7 +260,7 @@ func TestExpeditionPanelShowsAnOfferThatCannotBeSentItsRefusal(t *testing.T) {
 		t.Errorf("the card does not say why: want %q in\n%s", refusalText(o), text)
 	}
 	for _, k := range g.keys {
-		if k.kind.action() {
+		if isChip(k) {
 			t.Errorf("the card offers a button for an offer that cannot be sent:\n%s", text)
 		}
 	}
@@ -724,13 +724,13 @@ func TestExpeditionCanBeSentWithTheMouseAlone(t *testing.T) {
 	press := func(label string) {
 		t.Helper()
 		for _, k := range p.grid.keys {
-			if k.kind.action() && !k.off && p.grid.String() != "" {
+			if isChip(k) && !k.off {
 				var got []rune
-				for x := k.word.Min.X; x < k.word.Max.X; x++ {
-					got = append(got, p.grid.c[k.word.Min.Y*p.grid.w+x].r)
+				for x := k.r.Min.X; x < k.r.Max.X; x++ {
+					got = append(got, p.grid.c[k.r.Min.Y*p.grid.w+x].r)
 				}
-				if string(got) == label {
-					at := k.r.Min.Add(image.Pt(2, 1))
+				if f := strings.Fields(string(got)); len(f) > 0 && f[0] == label {
+					at := k.r.Min.Add(image.Pt(2, 0))
 					p.Mouse(kit.Mouse{Kind: kit.MousePress, Button: kit.ButtonLeft, X: at.X, Y: at.Y})
 					p.Mouse(kit.Mouse{Kind: kit.MouseRelease, Button: kit.ButtonLeft, X: at.X, Y: at.Y})
 					p.Layout(r)
@@ -745,7 +745,7 @@ func TestExpeditionCanBeSentWithTheMouseAlone(t *testing.T) {
 		t.Fatal("a click on the briefing's send did not ask")
 	}
 	for _, k := range p.grid.keys {
-		if !k.kind.action() && !k.off {
+		if !isChip(k) && !k.off {
 			t.Errorf("a foot key %+v stays live under the question", k)
 		}
 	}
@@ -759,3 +759,6 @@ func TestExpeditionCanBeSentWithTheMouseAlone(t *testing.T) {
 		t.Errorf("the box's send left confirm %v with %d out, want one party sent", p.view.confirm, len(engine.GetState().Military.Active))
 	}
 }
+
+// isChip is a key drawn as a button: its cap is the whole key.
+func isChip(k xkey) bool { return k.cap == k.r }

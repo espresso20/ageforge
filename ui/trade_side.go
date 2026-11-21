@@ -245,7 +245,7 @@ func drawTradeOffers(g *xgrid, st game.GameState, routes []tradeRoute, side trad
 	word := rowid.Line("ui.trade_side.drawTradeOffers.03", "open Factions")
 	px := end - 2 - runeLen(word) - 2
 	g.put(x, y, strings.Repeat("─", max(0, px-x-1)), xDim)
-	g.plate(px, y, word, xKeyName, "factions")
+	g.chip(px, y, chipSpec{kind: keySteel, label: word, cmd: "factions"})
 	giveX, getX := sx+2, sx+36
 	for _, hd := range []struct {
 		x int
@@ -363,7 +363,7 @@ func tradeDrawMore(g *xgrid, sx, y, end, n, pay int, above bool) {
 	if pay > 0 {
 		g.put(x, y, rowid.Sprintf("ui.trade_side.tradeDrawMore.07", " · %d you can pay", pay), xAccent)
 	}
-	g.plate(end-2-runeLen(key)-2, y, key, xKeyName, "")
+	g.chip(end-2-runeLen(key)-2, y, chipSpec{kind: keySteel, label: key})
 }
 
 // tradeDrawCiv draws a civilization's line: its standing, what it will not do
@@ -392,16 +392,16 @@ func tradeDrawOffer(g *xgrid, st game.GameState, c tradeCiv, d game.DealInfo, ok
 	if picked {
 		g.band(sx-1, y, tradeSideW+1, 1)
 	}
-	k, plate := xBad, xKeyName
+	k, kind := xBad, keySteel
 	if ok {
-		k, plate = xText, xChipCivic
+		k, kind = xText, keyAccent
 	}
 	x := g.put(cols[0], y, tradeOfferGive(d), k)
 	g.put(max(x+1, cols[1]-3), y, "►", xDim)
 	g.put(cols[1], y, tradeOfferGet(st, d), xText)
 	g.rput(sx+68, y, textfmt.Number(st.Resources[d.Give].Amount), k)
 	if picked {
-		g.plate(sx+71-1, y, rowid.Line("ui.trade_side.tradeDrawOffer.01", "Enter"), xKeycap, "")
+		g.put(sx+71, y, rowid.Line("ui.trade_side.tradeDrawOffer.01", "Enter"), xDim)
 	}
-	g.plate(sx+79, y, rowid.Line("ui.trade_side.tradeDrawOffer.02", "accept"), plate, tradeOfferCmd(c.key, d))
+	g.chip(sx+79, y, chipSpec{kind: kind, label: rowid.Line("ui.trade_side.tradeDrawOffer.02", "accept"), cmd: tradeOfferCmd(c.key, d)})
 }

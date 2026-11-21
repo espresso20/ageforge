@@ -40,14 +40,14 @@ func harbingerBuyable(state game.GameState, cost map[string]float64) bool {
 }
 
 // harbingerPayBtn is the button for Appease or Brace, with its key.
-func harbingerPayBtn(state game.GameState, label, key, sub, blocked string, cost map[string]float64) []actionSpec {
-	return []actionSpec{{label: label, key: key, kind: keyPlain, cmd: harbingerCmd + sub,
+func harbingerPayBtn(state game.GameState, label, key, sub, blocked string, cost map[string]float64) []chipSpec {
+	return []chipSpec{{label: label, key: key, kind: keySteel, cmd: harbingerCmd + sub,
 		off: blocked != "" || !harbingerBuyable(state, cost)}}
 }
 
 // harbingerInviteBtn is the button for Invite, which asks first.
-func harbingerInviteBtn(h *game.HarbingerView) []actionSpec {
-	return []actionSpec{{label: txtVerbInvite.String(), key: "I", kind: keyDanger, cmd: harbingerCmd + "invite",
+func harbingerInviteBtn(h *game.HarbingerView) []chipSpec {
+	return []chipSpec{{label: txtVerbInvite.String(), key: "I", kind: keyAlert, cmd: harbingerCmd + "invite",
 		ask: rowid.Sprintf("ui.harbinger_verbs.inviteAsk.01", "Invite %s?\n\nThis cannot be undone.", h.Name),
 		yes: txtVerbInvite.String(), off: h.InviteBlocked != ""}}
 }

@@ -84,11 +84,11 @@ func renderAdvance(v game.AdvanceView, u advanceUI, w, h int) *xgrid {
 		advCharter(g, v, u, 1, y0, lw, bh)
 		// The button that advances stands under what the next age brings; it
 		// is off until all four pillars stand.
-		if boxH := bh - actionRows; boxH >= 3 {
+		if boxH := bh - chipRows; boxH >= 3 {
 			advRight(g, v, lw+2, y0, rw, boxH)
 		}
 		label := shortKeyUse("Enter")
-		g.actionButton(lw+2+rw-actionW(label, "Enter", signPlay), y0+bh-actionRows, actionSpec{kind: keyPrimary, label: label, key: "Enter", sign: signPlay, off: !v.AllStand})
+		g.chip(lw+2+rw-chipW(label, "Enter"), y0+bh-chipRows, chipSpec{kind: keyAccent, label: label, key: "Enter", off: !v.AllStand})
 	}
 	advFoot(g, v, u, w, h)
 	return g

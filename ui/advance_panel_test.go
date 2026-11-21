@@ -557,7 +557,7 @@ func TestAdvancePanelMouse(t *testing.T) {
 // advanceButton is the panel's advance button.
 func advanceButton(g *xgrid) (xkey, bool) {
 	for _, k := range g.keys {
-		if k.kind == keyPrimary {
+		if k.kind == keyAccent {
 			return k, true
 		}
 	}
@@ -573,7 +573,7 @@ func TestTheAdvanceButtonIsOffUntilAllFourStandAndAClickAdvances(t *testing.T) {
 	for _, sz := range advanceSizes {
 		g := renderAdvance(p.view, p.ui, sz[0], sz[1])
 		b, ok := advanceButton(g)
-		if !ok || !b.off || b.r.Dy() != actionRows || !b.r.In(image.Rect(0, 0, sz[0], sz[1])) {
+		if !ok || !b.off || b.r.Dy() != chipRows || !b.r.In(image.Rect(0, 0, sz[0], sz[1])) {
 			t.Errorf("%dx%d: advance button %+v (found %v), want it off with the pillars short", sz[0], sz[1], b, ok)
 		}
 	}
@@ -585,7 +585,7 @@ func TestTheAdvanceButtonIsOffUntilAllFourStandAndAClickAdvances(t *testing.T) {
 	if !ok || b.off {
 		t.Fatalf("with the gate met the button is %+v (found %v)", b, ok)
 	}
-	at := b.r.Min.Add(image.Pt(2, 1))
+	at := b.r.Min.Add(image.Pt(2, 0))
 	if p.PointerAt(at) != kit.PointerHand {
 		t.Error("no hand over the advance button")
 	}

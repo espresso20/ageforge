@@ -546,7 +546,7 @@ func writeFactionOffers(sb *strings.Builder, f game.FactionInfo, usable int, rec
 	if f.DealsBlocked != "" || n == 0 {
 		return
 	}
-	btn := actionSpec{label: rowid.Line("ui.overlay_factions.writeFactionOffers.02", "Trade"), kind: keyPlain, cmd: "trade"}
+	btn := chipSpec{label: rowid.Line("ui.overlay_factions.writeFactionOffers.02", "Trade"), kind: keySteel, cmd: "trade"}
 	rec.mark(sb, usable-runeLen(btn.label)-2, btn)
 	fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleDim, rowid.Sprintf("ui.overlay_factions.writeFactionOffers.01", "%s open", textfmt.Count(n, rowid.Line("ui.overlay_factions.writeFactionOffers.03", "offer"), rowid.Line("ui.overlay_factions.writeFactionOffers.04", "offers")))))
 }
