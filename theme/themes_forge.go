@@ -7,7 +7,7 @@ import (
 // Forge is the default theme: AgeForge's current dark + gold look, formalized as
 // roles (the theming design §4). Accessible is false — it relies on green/red for ± — but
 // it is the shipped default and still clears the WCAG AA luminance floors against
-// its dark background (enforced by contrast_test.go).
+// its dark background (enforced by the contrast check).
 //
 // Role → color rationale:
 //   - Accent  gold (#FFD700)  — titles, borders, brand

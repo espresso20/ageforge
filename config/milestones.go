@@ -486,8 +486,7 @@ func Milestones() []MilestoneDef {
 		// Industrial Age, Renaissance Mind in the Electric Age, Tech Master
 		// in the Information Age): the techs every age before it holds, plus
 		// half of that age's own, rounded up. A content batch that adds techs
-		// to those ages or to any before them sets the five again
-		// (TestTechCountMilestonesKeepTheirAge says which have drifted).
+		// to those ages or to any before them sets the five again.
 		{
 			Name: "Tech Pioneer", Key: "tech_pioneer",
 			Description:  "Research 22 techs.",

@@ -2,11 +2,8 @@ package main
 
 import "regexp"
 
-// The game's copy rules, as the import applies them. They were read from the
-// lint tests that the test suite held (ui/copy_guard_test.go, ui/stale_copy_test.go,
-// ui/docs_lint_test.go, config/effect_text_test.go, config/event_flavor_test.go)
-// before those tests were removed. A term retired here is refused by the
-// import the same day; add a rule here when the copy needs one.
+// The game's copy rules, as the import applies them. A term retired here is
+// refused by the import the same day; add a rule here when the copy needs one.
 
 // copyExemptFiles are skipped by the wording rules over ui, game and boon.
 // The value says why.

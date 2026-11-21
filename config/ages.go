@@ -46,7 +46,7 @@ type AgeDef struct {
 // The gate rule (gate_rule.go): the gate out of an age asks for the reference
 // town's copies of every building the age introduced that makes something and
 // that a run can build, on top of the counts it always asked (a count is never
-// lowered). TestGatesFollowTheTownRule holds this table to it.
+// lowered). This table must match the town rule.
 //
 // No gate asks for an amount of any resource (the owner's decision of
 // 2026-10-11). An age's research goes to its techs, and the one of them the

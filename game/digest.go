@@ -10,8 +10,8 @@ import (
 // StateJSON is the engine's full save snapshot as JSON with the wall-clock
 // fields zeroed, so two engines that played the same run produce the same
 // bytes. JSON writes each float64 as its shortest round-trip decimal, so equal
-// bytes mean equal bits. It is for determinism checks (StateDigest, the smoke
-// harness's cross-architecture fingerprint), not for saving.
+// bytes mean equal bits. It is for determinism checks (StateDigest, the
+// cross-architecture fingerprint), not for saving.
 func (ge *GameEngine) StateJSON() ([]byte, error) {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()

@@ -29,7 +29,7 @@ import (
 //     (launchExpeditionLocked). An unaffordable cycle is skipped, not discounted.
 //   - It is DELIBERATELY SLOWER THAN HANDS-ON PLAY. See the interval constants
 //     below; the engagement gradient this preserves is measured in
-//     boon_tuning_test.go and is the whole reason the floor exists.
+//     the boon tuning and is the whole reason the floor exists.
 //
 // Everything here runs inside doTick under the engine write lock (called from
 // processExpeditions), so it may touch ge.Buildings / ge.Workers / ge.Military /
@@ -52,7 +52,7 @@ const (
 	// wanders past every so often; investment buys cadence, and the floor stops
 	// investment from buying back-to-back play.
 	//
-	// CALIBRATION (measured by game/boon_tuning_test.go, scenarios B, D and F).
+	// CALIBRATION (measured by the boon tuning, scenarios B, D and F).
 	// A resolved mission rolls an encounter (doubled, capped at 0.6), so the
 	// encounter rate follows the resolutions per 10k ticks. The era scout is
 	// out for 150 to 900 ticks, and a dispatch cycle is max(interval, that
@@ -177,7 +177,7 @@ func autoExpeditionIntervalFor(count int, fill float64) int {
 // formula, typed for the base curve, stretched like the age
 // (set.StretchTicks). Expeditions stretch the same way, so the society
 // still sends as many parties per age, and the engagement gradient measured
-// in boon_tuning_test.go holds.
+// in the boon tuning holds.
 func autoExpeditionInterval(set *rules.Set, age string, count int, fill float64) int {
 	return set.StretchTicks(age, autoExpeditionIntervalFor(count, fill))
 }

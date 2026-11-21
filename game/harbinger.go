@@ -638,7 +638,7 @@ func (ge *GameEngine) summonHarbinger() error {
 }
 
 // SummonHarbingerForTest is a test hook for other packages (the UI's panel
-// and theme-sweep tests, the smoke report's price table): it places the
+// and the price report): it places the
 // engine in age, with that age's epoch and unlocks, and brings a harbinger
 // there the way the dev console's /harbinger does (a fated doom, a false
 // prophet in the Stone Era, the Last Passage thread in the final epoch, over
@@ -966,8 +966,8 @@ func threadBraceCostIn(set *rules.Set, h *HarbingerSave, level int) map[string]f
 	return doomBraceCostIn(set, h.EpochKey, h.startAge(), level)
 }
 
-// HarbingerPrice is the prices of one thread a run can meet, for the smoke
-// suite's price table and its storage and pricing checks.
+// HarbingerPrice is the prices of one thread a run can meet, for the price
+// report and the storage and pricing checks.
 type HarbingerPrice struct {
 	Epoch string
 	// Age is the age the harbinger arrives in: any age of the era, for a

@@ -35,7 +35,7 @@ type tagName struct {
 // legacyAliases are the pre-role color names the UI was written with (~900
 // inline tags). They are remapped onto roles so every existing [gold]/[green]
 // tag retints with no edit. They are part of the theme-owned vocabulary: the
-// raw-color guard (ui/theme_guard_test.go) accepts them and rejects every other
+// raw-color guard accepts them and rejects every other
 // name or hex literal outside theme/.
 //
 // The kit's tag parser asks TagRole for a name first, so one of these always

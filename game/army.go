@@ -40,7 +40,7 @@ func (mm *MilitaryManager) gainExperience(delta float64) (change float64, before
 
 // OpenTiersForTest keeps n tiers of the mission board open (1 short, 2 plus
 // long, 3 plus grand) whatever the era and the army's rank say, and makes the
-// board to match. For tests and the smoke suite: never reachable from play.
+// board to match. For tests and dev tools: never reachable from play.
 func (ge *GameEngine) OpenTiersForTest(n int) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()

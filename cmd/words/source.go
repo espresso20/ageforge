@@ -121,7 +121,7 @@ func loadModule(root string) (*module, error) {
 	for _, sp := range scanned {
 		names, err := goFiles(filepath.Join(root, filepath.FromSlash(sp.dir)))
 		if os.IsNotExist(err) {
-			continue // a partial tree, as the tests use
+			continue // a partial tree
 		}
 		if err != nil {
 			return nil, err

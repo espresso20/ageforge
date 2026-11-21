@@ -1,5 +1,5 @@
 // The front page: the light and dark switch, the install box and the plate. No
-// libraries. The map frames come from frames.js, written by TestWriteSiteFrames.
+// libraries. The map frames come from frames.js.
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);

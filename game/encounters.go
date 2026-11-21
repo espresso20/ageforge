@@ -32,7 +32,7 @@ const (
 	// empire, so it meets far more than a war party does; success beats failure but
 	// even a botched run turns up SOMEONE now and then.
 	//
-	// CALIBRATION (measured pass, see game/boon_tuning_test.go). These are rolled
+	// CALIBRATION (measured pass, see the boon tuning). These are rolled
 	// per RESOLVED expedition, so the cadence they produce depends entirely on how
 	// long an expedition actually takes. The first tuning pass cut them ~4x from
 	// 0.35/0.12/0.16/0.04 on the belief that the cheapest scouting run resolves in
