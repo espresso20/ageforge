@@ -84,7 +84,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	}
 	succumbLines := []string{
 		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.12", "[white]── SUCCUMB: let civilization fall ──[-]"),
-		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.20", "  [white]Start again from the Primitive Age; the run's buildings and stock are gone.[-]"),
+		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.20", "  [white]Start again from the Primitive Age with nothing built.[-]"),
 		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.13", "  [red]• Full reset to the Primitive Age: buildings, resources, research[-]"),
 		rowid.Line("ui.catastrophe_modal.buildCatastropheModalLayout.14", "  [red]• No prestige points earned (level and upgrades are kept)[-]"),
 		rowid.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.15", "  [green]✓ Up to %d buildings become ruins (50%% output, max %d ruins)[-]", game.SuccumbRuinCount, game.MaxRuins),
