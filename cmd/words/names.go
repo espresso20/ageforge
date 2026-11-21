@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -16,12 +14,7 @@ import (
 // This file holds what the import does after a name is rewritten. The game
 // looks things up by key, so the rename itself is complete. The old name can
 // still be written where the import does not edit: the wiki, the landing page
-// and tests. followUps lists those places. It also regenerates the one set of
-// wiki tables that has a generator (the tech tables).
-
-// wikiGenerator is the command that rewrites the wiki's tech tables from
-// config (config/tech_wiki_test.go).
-var wikiGenerator = []string{"go", "test", "./config", "-run", "TestTechWikiTables", "-count=1"}
+// and tests. followUps lists those places.
 
 // quoter is a file outside the game's source where a name can be written.
 type quoter struct {
@@ -72,17 +65,12 @@ func loadQuoters(root string) []quoter {
 }
 
 // followUps reports, for each name the import changed, where the old name
-// is still written, and regenerates the wiki's tech tables.
-func followUps(c *catalog, root string, changes []change, o importOptions, out io.Writer) {
+// is still written.
+func followUps(c *catalog, root string, changes []change, out io.Writer) {
 	var renamed []change
-	tables := false
 	for _, ch := range changes {
 		if ch.r.kind == kindName {
 			renamed = append(renamed, ch)
-		}
-		switch strings.SplitN(ch.r.id, ".", 2)[0] {
-		case "tech", "building", "age":
-			tables = true
 		}
 	}
 	if len(renamed) > 0 {
@@ -121,24 +109,6 @@ func followUps(c *catalog, root string, changes []change, o importOptions, out i
 		for _, line := range stale {
 			fmt.Fprintln(out, "  "+line)
 		}
-	}
-	if !tables {
-		return
-	}
-	switch {
-	case o.dryRun:
-		fmt.Fprintln(out, "\nThe wiki's tech tables (site/docs/technologies.md) would be regenerated.")
-	case o.regenerate:
-		cmd := exec.Command(wikiGenerator[0], wikiGenerator[1:]...)
-		cmd.Dir = root
-		cmd.Env = append(os.Environ(), "UPDATE_WIKI=1")
-		var buf bytes.Buffer
-		cmd.Stdout, cmd.Stderr = &buf, &buf
-		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(out, "\nThe wiki's tech tables could not be regenerated (UPDATE_WIKI=1 %s):\n%s\n", strings.Join(wikiGenerator, " "), buf.String())
-			return
-		}
-		fmt.Fprintln(out, "\nRegenerated the wiki's tech tables (site/docs/technologies.md).")
 	}
 }
 
