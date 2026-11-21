@@ -40,6 +40,7 @@ Baseline on 2026-10-23, so you can tell old findings from new ones:
 | `docs.yml` | typos | pull requests, weekly | Spelling in code and docs. |
 | `docs.yml` | lychee | weekly, by hand | Dead links in `site/docs/` and the README. |
 | `licenses.yml` | go-licenses | `go.mod` changes, weekly | License of every built-in module against a permissive allowlist. |
+| `release.yml` | gh CLI | version tags | Builds the binaries, writes `SHA256SUMS.txt`, and creates the release in the public `espresso20/ageforge-releases` repository. Needs the `RELEASES_TOKEN` secret (fine-grained, Contents read/write on that repository only); the job fails at its first step without it. The updater reads that repository and refuses a download whose hash is not in the checksums file. |
 | `release-snapshot.yml` | GoReleaser | by hand | Builds the release binaries and uploads them as an artifact. Publishes nothing. |
 
 Every workflow sets `permissions: contents: read` at the top and asks for more only on the job that needs it. The workflows that run on pull requests cancel a superseded run of the same pull request. Every action is pinned to a commit SHA with its version in a comment, and Dependabot proposes the bumps (one grouped pull request a week).

@@ -1,6 +1,6 @@
 const REPO      = "espresso20/ageforge";
 const RAW_URL   = `https://raw.githubusercontent.com/${REPO}/master/CHANGELOG.md`;
-const GH_RELEASES = `https://github.com/${REPO}/releases`;
+const GH_RELEASES = "https://github.com/espresso20/ageforge-releases/releases";
 
 function escHtml(s) {
     return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");

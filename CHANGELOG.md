@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- Releases are published to a separate public repository; the updater checks file checksums.
 - The People panel's x1, x10 and max choice is the Buildings column's: a click on either runs `buy 1`, `buy 10` or `buy max`, and both show the same one picked.
 - The Plan, Logs and Map panels have the `×` close button in their top right corner, like every other panel.
 - Section headings in the text panels (Help, Wonders, Buildings, Factions and the rest) share one look with Stats: the name in the title colour, then a faint rule. Factions, Harbinger and Epoch no longer repeat the panel's name as their first line.
