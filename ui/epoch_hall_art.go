@@ -270,12 +270,12 @@ func (c *hallCtx) banner(name string, order int, seed int64) {
 
 // ---- numbers in the big type ----
 
-// A tile's number is set in the shared big type, hallBigN rows tall with
-// one-pixel strokes. It is a picture over the text, so the page records
-// where each one goes (hallBig) and the screen paints them after the text.
+// A tile's number is set in the shared big type, three rows tall in full
+// strokes. It is a picture over the text, so the page records where each one
+// goes (hallBig) and the screen paints them after the text.
 const (
-	hallBigN  = 3
-	hallBigWt = 1
+	hallBigN  = 4
+	hallBigWt = 4
 )
 
 // hallBig is a number in the big type with its top left at cell (x, y) of
@@ -286,16 +286,22 @@ type hallBig struct {
 	fg   color.RGBA
 }
 
+// hallBigW is the cells across a tile's number takes.
+func hallBigW(s string) int {
+	_, w, _ := bigNumCells(s, hallBigN, hallBigWt, color.RGBA{A: 255})
+	return w
+}
+
 // paintHallBigs paints the recorded numbers over the page text shown in
 // rect, whose first row in view is top. A number only part in view is left
-// for the scroll to bring in.
+// out.
 func paintHallBigs(bigs []hallBig) func(p *kit.Painter, rect image.Rectangle, top int) {
 	return func(p *kit.Painter, rect image.Rectangle, top int) {
 		for _, b := range bigs {
-			min := image.Pt(rect.Min.X+b.x, rect.Min.Y+b.y-top)
-			at := image.Rectangle{Min: min, Max: min.Add(image.Pt(hallBigN*runeLen(b.s), hallBigN))}
+			img, w, h := bigNumCells(b.s, hallBigN, hallBigWt, b.fg)
+			at := image.Rect(0, 0, w, h).Add(image.Pt(rect.Min.X+b.x, rect.Min.Y+b.y-top))
 			if at.In(rect) {
-				paintBig(p, at.Min.X, at.Min.Y, b.s, hallBigN, hallBigWt, b.fg)
+				p.Picture(at, img)
 			}
 		}
 	}
@@ -337,7 +343,7 @@ func (c *hallCtx) tiles(stats []hallStat) {
 		for _, s := range stats {
 			n := runeLen(s.label) + 4
 			if big {
-				n = max(n, hallBigN*runeLen(s.big)+4)
+				n = max(n, hallBigW(s.big)+4)
 			} else {
 				n = max(n, runeLen(s.big)+4)
 			}
@@ -378,7 +384,7 @@ func (c *hallCtx) tiles(stats []hallStat) {
 			}
 			barRow := 0
 			if big {
-				c.bigs = append(c.bigs, hallBig{x + (tw-hallBigN*runeLen(s.big))/2, y + 2, s.big, pixelInk(ink)})
+				c.bigs = append(c.bigs, hallBig{x + (tw-hallBigW(s.big))/2, y + 2, s.big, pixelInk(ink)})
 				ctr(5, s.label, c.role(theme.RoleText), true)
 				if s.hasBar {
 					ctr(6, s.value, c.role(theme.RoleDim), false)

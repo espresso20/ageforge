@@ -290,7 +290,7 @@ func (p *pauseLayer) Paint(pt *kit.Painter) {
 	pt.Fill(p.box, bg)
 	pt.Box(p.box, kit.BorderLine, kit.Style{Fg: kit.Role(theme.RoleAccent)})
 	x0, y := p.box.Min.X+3, p.box.Min.Y
-	paintBig(pt, x0, y+2, "PAUSED", 4, 2, pixelInk(kit.Role(theme.RoleAccent)))
+	paintBig(pt, x0, y+2, "PAUSED", 6, 4, pixelInk(kit.Role(theme.RoleAccent)))
 	sty := func(r theme.Role) kit.Style { return kit.Style{Fg: kit.Role(r), Bg: bg} }
 	dim, text := sty(theme.RoleDim), sty(theme.RoleText)
 	foot := rowid.Line("ui.pause.paint.01", "Leaving saves your game first.")

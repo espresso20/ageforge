@@ -3,6 +3,7 @@ package ui
 import (
 	"image"
 	"image/color"
+	"image/draw"
 	"sync"
 
 	"golang.org/x/image/font"
@@ -151,6 +152,63 @@ func inkBounds(img *image.RGBA) (r image.Rectangle) {
 		return image.Rectangle{}
 	}
 	return r
+}
+
+// bigNum is a figure in big type cut to its ink: every digit as wide as a
+// nought, so a figure that changes keeps its width, any other sign as wide
+// as itself, and the font's own gap (2n pixels) between. It is as tall as a
+// digit's ink. fg must be opaque.
+func bigNum(s string, n, wt int, fg color.RGBA) *image.RGBA {
+	k := headKey{"\x00" + s, n, wt, fg}
+	headCache.Lock()
+	img, ok := headCache.set[k]
+	headCache.Unlock()
+	if ok {
+		return img
+	}
+	digit := inkBounds(bigImage("0", n, wt, fg))
+	var glyphs []*image.RGBA
+	var inks []image.Rectangle
+	w := 0
+	for _, r := range s {
+		g, ink := bigImage(string(r), n, wt, fg), digit
+		if r < '0' || r > '9' {
+			ink = inkBounds(g)
+			ink.Min.Y, ink.Max.Y = digit.Min.Y, digit.Max.Y
+		}
+		glyphs, inks = append(glyphs, g), append(inks, ink)
+		w += ink.Dx() + 2*n
+	}
+	img = image.NewRGBA(image.Rect(0, 0, max(w-2*n, 0), digit.Dy()))
+	x := 0
+	for i, ink := range inks {
+		draw.Draw(img, image.Rect(x, 0, x+ink.Dx(), digit.Dy()), glyphs[i], ink.Min, draw.Src)
+		x += ink.Dx() + 2*n
+	}
+	headCache.Lock()
+	headCache.set[k] = img
+	headCache.Unlock()
+	return img
+}
+
+// bigNumCells is a figure in the middle of the fewest whole cells that hold
+// it, with the cells it takes: a picture for a cell grid.
+func bigNumCells(s string, n, wt int, fg color.RGBA) (img *image.RGBA, w, h int) {
+	num := bigNum(s, n, wt, fg)
+	w, h = (num.Rect.Dx()+headCW-1)/headCW, (num.Rect.Dy()+headCH-1)/headCH
+	k := headKey{"\x01" + s, n, wt, fg}
+	headCache.Lock()
+	img, ok := headCache.set[k]
+	headCache.Unlock()
+	if !ok {
+		img = image.NewRGBA(image.Rect(0, 0, w*headCW, h*headCH))
+		at := image.Pt((img.Rect.Dx()-num.Rect.Dx())/2, (img.Rect.Dy()-num.Rect.Dy())/2)
+		draw.Draw(img, num.Rect.Add(at), num, image.Point{}, draw.Src)
+		headCache.Lock()
+		headCache.set[k] = img
+		headCache.Unlock()
+	}
+	return img, w, h
 }
 
 // paintBig sets s in big type n rows tall, strokes wt thick, with its top

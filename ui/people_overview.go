@@ -356,7 +356,7 @@ func (o *peopleOverview) morale(x, y, w, h int) {
 	cx, cy := s.px(x+2)+r+12, s.py(y+2)+r+14
 	s.cv.Dial(cx, cy, r, st.Morale, floor, top)
 	lv := fmt.Sprintf("%d%%", max(int(math.Round(st.Morale*100)), 0))
-	s.setNum(cx-s.numW(lv, true, 5)/2, cy+18, lv, s.pal.Text, true, 5, true)
+	s.setNum(cx-s.numW(lv, true, 5)/2, cy+18, lv, s.pal.Text, true, 5)
 	rc := x + 2 + (2*r+30)/s.cw + 2
 	rw := x + w - 2 - rc
 	if rw < 14 {
