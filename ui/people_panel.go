@@ -27,9 +27,11 @@ type peoplePanel struct {
 
 	// hist reads the run's recorder.
 	hist func() *game.RunHistory
+	// buy is the amount the Build buttons use, which Recruit takes as well.
+	buy func() buyChoice
 }
 
-// wire makes the panel's keys press: its own (a count for Recruit, a link to a
+// wire makes the panel's keys press: its own (a link to a
 // tab) are taken by the panel, the rest go to the app.
 func (p *peoplePanel) wire(app *appLoop) {
 	p.buttons.wire(app)
@@ -45,10 +47,6 @@ func (p *peoplePanel) wire(app *appLoop) {
 // take does what a private key of the panel stands for and reports whether k
 // was one.
 func (p *peoplePanel) take(k kit.Key) bool {
-	if c, ok := buyOf(k); ok {
-		p.view.buy = c
-		return true
-	}
 	if t, ok := goOf(k); ok {
 		p.setTab(t)
 		return true
@@ -87,7 +85,7 @@ func (p *peoplePanel) Layout(r image.Rectangle) {
 	if p.hist != nil {
 		hist = p.hist()
 	}
-	p.grid, p.scene = renderPeople(p.state, p.view, hist, p.w, p.h)
+	p.grid, p.scene = renderPeople(p.state, p.view, p.buy(), hist, p.w, p.h)
 }
 
 // Paint puts the panel on the kit's painter in theme colors.

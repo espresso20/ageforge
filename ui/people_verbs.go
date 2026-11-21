@@ -104,10 +104,10 @@ func (c peopleBody) recruitBlock(x, y, w int) {
 	g := c.g
 	free := max(0, c.st.Workers.MaxPop-c.st.Workers.TotalPop)
 	need := 1
-	if c.v.buy == buyTen {
+	if c.buy == buyTen {
 		need = 10
 	}
-	cmd := strings.TrimSpace(command(verbRecruit, buyCounts[c.v.buy]))
+	cmd := strings.TrimSpace(command(verbRecruit, buyCounts[c.buy]))
 	off := free < need
 	label := txtRecruit.String()
 	cx, cy := g.chip(x, y, chipSpec{kind: keyAccent, label: label, cmd: cmd, off: off})+1, y
@@ -115,7 +115,7 @@ func (c peopleBody) recruitBlock(x, y, w int) {
 		word := " " + buyWords[ch] + " "
 		r := image.Rect(cx, cy, cx+runeLen(word), cy+1)
 		g.put(cx, cy, word, xKeycap)
-		g.keyset().keys = append(g.keyset().keys, xkey{key: buyKey(ch), r: r, cap: r, kind: keySteel, picked: ch == c.v.buy})
+		g.keyset().keys = append(g.keyset().keys, xkey{cmd: "buy " + buyArgs[ch], r: r, cap: r, kind: keySteel, picked: ch == c.buy})
 		cx = r.Max.X + 1
 	}
 	if room := x + w - cx; room > 8 {
