@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -19,6 +21,25 @@ import (
 // colour with a halo; the rest a dim outline. An integrity badge has no tier
 // and gets nothing. It writes nothing outside the picture it returns.
 func badgeShield(v game.BadgeView, cols, rows int) *image.RGBA {
+	if v.Level == config.BadgeLegendary {
+		return drawShield(v, cols, rows)
+	}
+	k := fmt.Sprint(v.Level, v.Domain, v.Earned, cols, rows, pixelInk(theme.Of(theme.RoleBackground)))
+	shieldMu.Lock()
+	defer shieldMu.Unlock()
+	if img := shieldMemo[k]; img != nil {
+		return img
+	}
+	shieldMemo[k] = drawShield(v, cols, rows)
+	return shieldMemo[k]
+}
+
+var (
+	shieldMu   sync.Mutex
+	shieldMemo = map[string]*image.RGBA{} // still shields; the keys are few
+)
+
+func drawShield(v game.BadgeView, cols, rows int) *image.RGBA {
 	w, h := cols*7, rows*15
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	if v.Level < config.BadgeBronze {
