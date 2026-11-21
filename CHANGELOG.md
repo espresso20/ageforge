@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- The Research board shows the queue as a column on a wide window: the tech in work with a bar and its time left, then each queued tech with its place, its time and when it starts, and `+N more` when the list is long. The proportional timeline is gone. Queued techs and the one in work stay in the table with their place in the queue (`#2`) or `in work` instead of leaving it, so the board is never empty. Queueing a tech that cannot start says what was added ("queued Pottery and 2 techs it needs") under the bar across the top. `Backspace` or `Delete` takes the picked tech out of the queue. The ten lanes show only on a window tall enough to hold them beside the queue.
 - Trade routes start on their own. A route whose age is reached and whose buildings are owned starts at once, with a "Route started" line in the log, and one that was ready while the game was away starts when it is back. A route you stop stays stopped, saved as stopped, until `trade route start <route>`; a route held for want of its building still resumes by itself. The "ready" state, the start all button and `trade route start all` are gone.
 
 ### Added

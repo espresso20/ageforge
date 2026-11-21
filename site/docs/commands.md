@@ -204,7 +204,7 @@ See [People](workers-and-domains.md) for the domain table and the efficiency for
 
 | Command | Description |
 |---|---|
-| `research` | Open the Research board: the tech in work, the queue, the techs you can start, what comes up and the ten lanes (see [Technologies](technologies.md#how-research-works)). |
+| `research` | Open the Research board: the tech in work, the queue, the techs you can start and what comes up (see [Technologies](technologies.md#how-research-works)). |
 | `research tree [close\|far]` | Open the tech tree as a map (see [Reading the Tech Tree](technologies.md#reading-the-tech-tree)), zoomed in on big badges (`close`) or out on the whole tree (`far`). |
 | `research card <tech>` | Open the tree on a tech's card: what it does, how long it takes and what it needs. It opens only on a tech you can already see. |
 | `techs` | Opens the Research board. |
@@ -227,6 +227,7 @@ The Research board (`research`) leaves the prompt working and takes only the key
 | `Up` / `Down` | Pick the previous or next tech |
 | `Enter` | Start the picked tech; while another is in work, add it to the queue |
 | `Q` | Queue the picked tech, with the techs it still needs |
+| `Backspace` / `Delete` | Take the picked tech out of the queue |
 | `L` | Show only the picked tech's lane; `Esc` shows every lane again |
 | `T` | Open the whole tech tree on the picked tech |
 | `Esc` | Close the lane filter, then the board |
