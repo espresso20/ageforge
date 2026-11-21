@@ -93,6 +93,9 @@ type Dashboard struct {
 	pendingEnding       atomic.Pointer[game.RunEnding]
 	pendingEpochChanged bool // whether the pending age advance also crossed an epoch boundary
 	toastMgr            *ToastManager
+	badgeQ              []game.BadgeView // earned, notice not shown yet
+	badgeNote           bool
+	badgeUntil          time.Time
 	contentArea         Primitive
 
 	// Shame badge — set once on first load when CheaterBadge is true; the
@@ -644,6 +647,7 @@ func (d *Dashboard) build() {
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *kit.Key) *kit.Key {
+		d.closeBadgeNote()
 		// Ctrl+K — open passphrase modal (dev unlock)
 		if event.Ctrl('k') {
 			d.showDevUnlockModal()
@@ -997,10 +1001,12 @@ func (d *Dashboard) announceBadges() {
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
 		d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", game.BadgeLogLine(v))
+		d.badgeQ = append(d.badgeQ, v)
 		if t, ok := theme.ByKey(v.RewardTheme); ok {
 			d.engine.AddLog(game.OfficeWorld, game.LevelHeadline, "success", themeUnlockToast(t.Name.String()))
 		}
 	}
+	d.pumpBadgeNote()
 }
 
 func (d *Dashboard) refreshWorkerMini(game.GameState) {
