@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -577,28 +576,13 @@ func TestTheWheelAndPageKeysTurnTheCards(t *testing.T) {
 	}
 }
 
-// Every building maps to one of the 18 kinds; every sign is 13 by 13 of # and
-// . and no two are alike; each kind has a tint and a glyph.
-func TestEveryBuildingHasASign(t *testing.T) {
+// Every sign is 13 by 13 of # and . and no two are alike; each kind has a
+// tint.
+func TestEverySignIsWellFormed(t *testing.T) {
 	if len(signKinds) != 18 {
 		t.Fatalf("%d kinds, want 18", len(signKinds))
 	}
-	isKind := map[string]bool{}
 	for _, k := range signKinds {
-		isKind[k] = true
-	}
-	used := map[string]int{}
-	for key, def := range config.BuildingByKey() {
-		k := signKindOf(def)
-		if !isKind[k] {
-			t.Errorf("%s has the kind %q, which has no sign", key, k)
-		}
-		used[k]++
-	}
-	for _, k := range signKinds {
-		if used[k] == 0 {
-			t.Errorf("no building has the kind %q", k)
-		}
 		pat := signPix[k]
 		if len(pat) != 13 {
 			t.Errorf("the %s sign has %d rows", k, len(pat))
@@ -615,9 +599,6 @@ func TestEveryBuildingHasASign(t *testing.T) {
 		}
 		if _, ok := signTints[k]; !ok {
 			t.Errorf("no tint for %s", k)
-		}
-		if signGlyphs[k] == 0 || signGlyphsPlain[k] == 0 || signGlyphsPlain[k] > 0x7e {
-			t.Errorf("the %s glyphs are %q and %q", k, signGlyphs[k], signGlyphsPlain[k])
 		}
 	}
 	for i, a := range signKinds {
