@@ -18,15 +18,15 @@ import (
 //	┌─ Buildings ─────────────────────────────────────────────────────┐
 //	│ Medieval Age                                  Buy  x1  x10  max │
 //	│ [ Gather Food ] [ Gather Wood ]                                 │  (the ages that gather)
-//	│▏▣ Cathedral x1               short of 44K gold · in 1m 44s      │
-//	│▏▣ +0.034 faith/s                                      [ Build ] │
-//	│▏▣ 444K gold · 1.33M stone                                       │
+//	│▏ Cathedral x1              short of 44K gold · in 1m 44s        │
+//	│▏ +0.034 faith/s                                       [ Build ] │
+//	│▏ 444K gold · 1.33M stone                                        │
 //	│    · · ·  6 more later                                          │
 //	└─────────────────────────────────────────────────────────────────┘
 //
 // Each building is a card of three rows: its name and count, what a copy
 // makes in a second, its price. At the left a gauge says how much of the
-// price is in hand and a sign stands for the kind of building; at the right
+// price is in hand; at the right
 // is the Build button, the same column on every card. A price that does not
 // fit the row goes on a row more. A card that cannot be built has its button
 // off and says what stops it. The box lists the cards that can be built,
@@ -38,9 +38,9 @@ const (
 	hitMore  = 61 // the quiet row
 	hitOlder = 62 // the row that counts the older buildings
 
-	// cardGlyphCols is the cells at the left of a card the gauge and the kind's
-	// glyph take where there are no pictures; with them cardSignRoom says.
-	cardGlyphCols = 6
+	// cardWords is where a card's words start: after the gauge and the mark
+	// of the picked card.
+	cardWords = 2
 	// buildColWide is the Build button's cells with its Enter key, and
 	// buildColNarrow without it: the key goes where the box has no room.
 	buildColWide, buildColNarrow = 16, 9
@@ -48,13 +48,10 @@ const (
 	// gatherAges is how many of the first ages show the Gather buttons.
 	gatherAges = 2
 	// compactBelow is the inner width under which a card is stacked: its Build
-	// button is a one-row key in the name row and the sign gives way to the
-	// card's glyph, so the words have the width.
+	// button is a one-row key in the name row, so the words have the width.
 	compactBelow = 40
-	// compactWords is where a stacked card's words start.
-	compactWords = 3
-	// compactKeyW is the cells of a card's Build key, and chipKeyW the cells
-	// the picked card's Enter hint takes left of it.
+	// compactKeyW is the cells of a stacked card's Build key, and chipKeyW the
+	// cells the picked card's Enter hint takes left of it.
 	compactKeyW = 7
 	chipKeyW    = 6
 	// buyKeyBase is the first of the private runes the buy keys press.
@@ -504,12 +501,10 @@ func (b *buildBox) drawAt(w, h, d int) {
 	}
 	bw := buildCol(iw)
 	compact := iw < compactBelow
-	scols := cardSignRoom(b.picCells())
-	tx := 1 + scols
+	tx := 1 + cardWords
 	room := (1 + iw) - bw - 2 - tx // the words' cells
 	if compact {
-		tx = 1 + compactWords
-		room = iw - compactWords - 1
+		room = iw - cardWords - 1
 	}
 	cardFrom := len(set.keys)
 	y := top
@@ -802,13 +797,10 @@ func cardLookOf(pal *expPalette, picked, hover, afford bool) cardLook {
 // cardPic is what a card's picture was drawn for.
 type cardPic struct {
 	w, rows, cw, ch      int
-	kind                 string
 	look                 cardLook
 	ground, accent, good color.RGBA
 	gauge                int // the filled part of the gauge, in units
 	picked, hover, can   bool
-	light                bool
-	compact              bool // stacked: no sign
 }
 
 const cardPicMax = 8 << 20
@@ -834,7 +826,7 @@ func (b *buildBox) picture(k cardPic) *image.RGBA {
 
 // drawCard draws a card's picture in units of a pixel of a 10 by 21 cell: a
 // raised slab lit from the upper left, an accent ring when picked and a bar at
-// the left when the pointer is on it, the gauge, and the sign.
+// the left when the pointer is on it, and the gauge.
 func drawCard(k cardPic) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, k.w*k.cw, k.rows*k.ch))
 	u := max(1, k.ch/21)
@@ -869,20 +861,6 @@ func drawCard(k cardPic) *image.RGBA {
 		fill = k.good
 	}
 	a.fill(image.Rect(5, track.Max.Y-k.gauge, 7, track.Max.Y), 0, fill)
-	dull := 0.0
-	if !k.can {
-		dull = .5
-	}
-	tint, ok := signTints[k.kind]
-	if !ok {
-		tint = color.RGBA{0xa0, 0xa6, 0xb0, 255}
-	}
-	if k.light {
-		tint = toward(tint, keyBlack, .28)
-	}
-	if !k.compact {
-		drawSign(a, cardSignArtLeft, (H-cardSignArtW)/2, k.kind, tint, dull, k.ground)
-	}
 	return img
 }
 
@@ -932,21 +910,20 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 	if pix {
 		units := max(1, ch/21)
 		track := (pc.rows*ch+units-1)/units - 16
-		p.Picture(rect, b.picture(cardPic{w: iw, rows: pc.rows, cw: cw, ch: ch, kind: c.kind, look: look, ground: ground,
+		p.Picture(rect, b.picture(cardPic{w: iw, rows: pc.rows, cw: cw, ch: ch, look: look, ground: ground,
 			accent: pal.tone(xAccent, false), good: pal.tone(xGood, false), gauge: int(float64(track)*c.frac + .5),
-			picked: picked, hover: b.hover == i, can: c.canBuild, light: lightGround(ground), compact: pc.compact}))
+			picked: picked, hover: b.hover == i, can: c.canBuild}))
 	}
-	if !pix || pc.compact {
-		b.paintCells(p, pal, rect, look, c, picked, pc.compact, pix)
+	if !pix {
+		b.paintCells(p, pal, rect, look, c, picked, pc.compact)
 	}
 	lab := func(x, y int, s string, st kit.Style) int {
 		return p.Label(rect.Min.X+x, rect.Min.Y+y, kit.Escape(s), st)
 	}
 	bw := buildCol(iw)
-	scols := cardSignRoom(cw, ch)
-	tx, room := scols, iw-bw-2-scols
+	tx, room := cardWords, iw-bw-2-cardWords
 	if pc.compact {
-		tx, room = compactWords, iw-compactWords-1
+		room = iw - cardWords - 1
 	}
 	count := " x" + textfmt.Int(c.owned)
 	n := lab(tx, 0, fitText(c.name, max(room-runeLen(count), 1)), inkOf(look.text, true))
@@ -1030,35 +1007,21 @@ func (b *buildBox) paintReason(lab func(x, y int, s string, st kit.Style) int, p
 	}
 }
 
-// paintCells draws a card's left edge in cells: for a window with no pictures
-// the gauge in the first column, the kind's glyph and the picked mark; for a
-// stacked card, which has no room for its sign, the glyph.
-func (b *buildBox) paintCells(p *kit.Painter, pal *expPalette, rect image.Rectangle, look cardLook, c buildCard, picked, compact, pix bool) {
+// paintCells draws a card's left edge in cells, for a window with no
+// pictures: the gauge in the first column and the picked mark.
+func (b *buildBox) paintCells(p *kit.Painter, pal *expPalette, rect image.Rectangle, look cardLook, c buildCard, picked, compact bool) {
 	acc := pal.tone(xAccent, false)
 	fill := theme.RGB(look.fill.R, look.fill.G, look.fill.B)
-	if !pix {
-		lit := int(c.frac*float64(rect.Dy()) + .5)
-		for row := 0; row < rect.Dy(); row++ {
-			g, col := '│', look.dim
-			if rect.Dy()-row <= lit {
-				g, col = '┃', acc
-				if c.canBuild {
-					col = pal.tone(xGood, false)
-				}
+	lit := int(c.frac*float64(rect.Dy()) + .5)
+	for row := 0; row < rect.Dy(); row++ {
+		g, col := '│', look.dim
+		if rect.Dy()-row <= lit {
+			g, col = '┃', acc
+			if c.canBuild {
+				col = pal.tone(xGood, false)
 			}
-			p.Put(rect.Min.X, rect.Min.Y+row, g, inkOf(col, false))
 		}
-	}
-	gx := rect.Min.X + 2
-	if compact {
-		gx = rect.Min.X + 1
-	}
-	if gl, ok := signGlyphs[c.kind]; ok {
-		tint := signTints[c.kind]
-		if lightGround(pal.tone(xText, true)) {
-			tint = toward(tint, keyBlack, .28)
-		}
-		p.Put(gx, rect.Min.Y+rect.Dy()/2, gl, inkOf(tint, true).Background(fill))
+		p.Put(rect.Min.X, rect.Min.Y+row, g, inkOf(col, false))
 	}
 	if picked && !compact {
 		p.Put(rect.Min.X+1, rect.Min.Y+rect.Dy()/2, '▸', inkOf(acc, true).Background(fill))

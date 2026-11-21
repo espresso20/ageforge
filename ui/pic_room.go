@@ -17,23 +17,6 @@ func picRoom(right, gap, cw int) int {
 	return (right + gap + cw - 1) / cw
 }
 
-const (
-	// cardSignArtRight is the right edge of a build card's sign in art pixels:
-	// the slab's left (drawCard puts it at cardSignArtLeft) and its width.
-	cardSignArtLeft, cardSignArtW = 11, 36
-)
-
-// cardSignRoom is the cells at the left of a card that its gauge and sign
-// take, for a window whose cells are cw by ch pixels; the cells' own glyph
-// stands in (cardGlyphCols) where there are no pictures.
-func cardSignRoom(cw, ch int) int {
-	if cw <= 0 || ch <= 0 {
-		return cardGlyphCols
-	}
-	u := artUnit(ch)
-	return max(cardGlyphCols, picRoom((cardSignArtLeft+cardSignArtW)*u, u, cw))
-}
-
 // pictureCells is the cell size pictures are drawn at, zero where there are
 // none (no window).
 func pictureCells() (cw, ch int) {
