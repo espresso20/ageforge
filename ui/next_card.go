@@ -228,6 +228,26 @@ func richRows(groups [][]panelInfo, titles []string, T int, v panelView) []strin
 type cardCut struct {
 	then, whyRows int
 	cost          bool
+	cmdRow        bool // a command too long for the chip row goes on a row of its own
+}
+
+// fitWords cuts s to room cells at a word boundary (a space or an
+// underscore), with an ellipsis, and never inside a word.
+func fitWords(s string, room int) string {
+	r := []rune(s)
+	if len(r) <= room || room < 2 {
+		return fitText(s, room)
+	}
+	cut := room - 1
+	if r[cut] != ' ' && r[cut] != '_' {
+		for cut > 0 && r[cut-1] != ' ' && r[cut-1] != '_' {
+			cut--
+		}
+		if cut == 0 {
+			cut = room - 1
+		}
+	}
+	return strings.TrimRight(string(r[:cut]), " ") + "…"
 }
 
 // cardRows is the card as rows, T cells wide, with a pad cell at the left.
@@ -264,15 +284,24 @@ func cardRows(s nextStep, T int, cut cardCut) []string {
 		}
 	}
 	if s.cmd != "" {
+		var below string
 		btn := clickRegion(regionShow, theme.TagFgBgAttr(theme.RoleText, theme.RoleChip, "b")+txtShowMe.String()+theme.Reset)
 		if T >= tabMinT {
 			key := txtTabKey.String()
 			if s.onLine {
 				key = txtEnterKey.String()
 			}
-			btn += "   " + theme.TagFgBgAttr(theme.RoleOnAccent, theme.RoleAccent, "b") + key + theme.Reset + " " + dimText(fitText(s.cmd, T-runeLen(txtShowMe.String())-runeLen(key)-4))
+			btn += "   " + theme.TagFgBgAttr(theme.RoleOnAccent, theme.RoleAccent, "b") + key + theme.Reset + " "
+			if room := T - runeLen(txtShowMe.String()) - runeLen(key) - 4; runeLen(s.cmd) > room && cut.cmdRow {
+				below = x("  ", dimText(fitWords(s.cmd, T-2)))
+			} else {
+				btn += dimText(fitWords(s.cmd, room))
+			}
 		}
 		rows = append(rows, "", x(btn))
+		if below != "" {
+			rows = append(rows, below)
+		}
 	}
 	if cut.then > 0 {
 		rows = append(rows, "", x(dimText(txtThen.String())))
@@ -311,7 +340,7 @@ func nextBoxText(s nextStep, w, h int, rich bool) string {
 	var steps []step
 	for _, f := range []int{formStack, formRich} {
 		for t := len(s.then); t >= 0; t-- {
-			steps = append(steps, step{cardCut{then: t, cost: true, whyRows: 2}, f})
+			steps = append(steps, step{cardCut{then: t, cost: true, whyRows: 2, cmdRow: true}, f}, step{cardCut{then: t, cost: true, whyRows: 2}, f})
 		}
 	}
 	for _, f := range []int{formGrouped, formWords} {

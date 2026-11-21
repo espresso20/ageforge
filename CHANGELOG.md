@@ -38,6 +38,9 @@ All notable changes to AgeForge are documented here.
 - A letter key no longer presses a button in the catastrophe, Last Passage or Ancient Memory windows; only Enter or a click does. The keyboard starts on the way out, and the windows wait while the Command line has text.
 - A wait of more than a year, or on a resource with no income, reads `no income` on building cards instead of a huge time. The Next card no longer says a tech is done in 0s when no scholar is researching.
 - The Army panel's footer names `campaign <name>`.
+- A long command on the Next card's key row moves to a row of its own, or is cut at a word with an ellipsis instead of in the middle of one.
+- Enter on a theme in the picker, opened from the game, shows `theme <name>` in the command bar and the history.
+- The Plan panel's add box keeps what was typed when the add fails, and the reason shows beside it.
 
 ### Added
 - `buy 1|10|max`, `pause`, `settings`, `menu` and `new` commands, and `research drop <tech>`. A typed `research <tech>` joins the queue when another tech is in work, as Enter on the Research board does.

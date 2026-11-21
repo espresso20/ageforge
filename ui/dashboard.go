@@ -1607,7 +1607,7 @@ func (d *Dashboard) runLine(text string) {
 		return
 	}
 	if strings.ToLower(cmd) == "theme" { // bare theme — open the live picker (theme list / theme <key> fall through)
-		page := CreateThemePickerPage(d.app, d.pages, d.engine, "dashboard")
+		page := CreateThemePickerPage(d.app, d.pages, d.engine, "dashboard", d.pressLine)
 		d.pages.AddPage(themePickerPage, page, true, true)
 		d.app.SetFocus(page)
 		return
