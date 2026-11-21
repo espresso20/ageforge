@@ -9,7 +9,7 @@ import (
 )
 
 // helpFillPrefix starts the name of a Help command row's click region; the
-// rest of the name is the row's usage form.
+// rest of the name is the typed part of the row's usage form.
 const helpFillPrefix = "helpfill:"
 
 // helpProvider renders the Help overlay from the command registry
@@ -27,10 +27,11 @@ func helpProvider(learned []string, _ game.GameState, screenW int) string {
 		width = 1 << 20 // no screen to fit: nothing wraps
 	}
 	row := func(lead, text string) { sb.WriteString(hangingRow(lead, text, width)) }
-	// cmdRow is a command's row: its form is a click region that writes the
-	// typed part of the form in the command bar (helpFillPrefix).
+	// cmdRow is a command's row: its form is a click region named for the
+	// part of the form that is typed (helpFillPrefix), which a click writes
+	// in the command bar.
 	cmdRow := func(form, shown, pad, text string) {
-		row("  "+clickRegion(helpFillPrefix+form, shown)+pad+" - ", text)
+		row("  "+clickRegion(helpFillPrefix+typedPart(form), shown)+pad+" - ", text)
 	}
 	// head is a section's name, with a rule when the text has a width.
 	head := func(name string) string { return headLine(name, width) + "\n" }
@@ -53,8 +54,8 @@ func helpProvider(learned []string, _ game.GameState, screenW int) string {
 		}
 	}
 
-	sb.WriteString(lessonsHelp(learned, width))
 	note(rowid.Line("ui.overlay_help.helpProvider.70", "Click a command to write it at the bottom of the screen; add what it needs and press Enter."))
+	sb.WriteString(lessonsHelp(learned, width))
 	sb.WriteString(head(rowid.Line("ui.overlay_help.helpProvider.01", "Getting around")))
 	note(rowid.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open over the whole screen, and the prompt keeps working in most of them. The Wonders, Harbinger and Build Plan panels use letter keys, so press Esc before you type a command there."))
 	keys([2]string{"PgUp/PgDn", rowid.Line("ui.overlay_help.helpProvider.04", "Scroll a panel that is longer than the screen, like this one")},

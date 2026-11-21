@@ -351,8 +351,8 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	// A click on a command in Help writes its typed part in the command bar.
 	d.overlayMgr.SetRegion("help", func(region string) {
-		if form, ok := strings.CutPrefix(region, helpFillPrefix); ok {
-			d.app.stageLine(typedPart(form))
+		if line, ok := strings.CutPrefix(region, helpFillPrefix); ok {
+			d.app.stageLine(line)
 		}
 	})
 

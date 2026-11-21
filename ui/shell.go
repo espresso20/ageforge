@@ -59,10 +59,11 @@ func (g *xgrid) keyRow(y int, keys [][2]string, hint string) {
 }
 
 // typedPart is the start of a hint that is typed as it stands: the words
-// before the first one that names a choice or a value ("a/b", "<key>").
+// before the first one that names a choice or a value ("a/b", "<key>",
+// "[name]").
 func typedPart(hint string) string {
 	// A leading "/" marks a developer command, not a choice.
-	i := strings.IndexAny(hint[min(1, len(hint)):], "<|/")
+	i := strings.IndexAny(hint[min(1, len(hint)):], "<[|/")
 	if i < 0 {
 		return hint
 	}
