@@ -67,6 +67,11 @@ type themePicker struct {
 	// menu, "dashboard" when opened mid-game).
 	returnPage string
 
+	// run sends a command line through the dashboard's command bar. It is nil
+	// where there is no dashboard (the main menu), and confirm then keeps and
+	// saves the previewed theme itself.
+	run func(line string)
+
 	// originalKey is the theme that was active when the picker opened. Esc reverts
 	// to it; Enter keeps whatever is currently previewed (it's already applied).
 	originalKey string
@@ -114,13 +119,14 @@ func pickerRows(all []theme.Theme) []pickerRow {
 // engine bridges to the account layer for persistence + unlock gating (the theming design
 // §6); it may be nil for accountless play/tests, in which case confirm simply
 // doesn't persist and only the always-available themes are selectable.
-func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string) Primitive {
+func CreateThemePickerPage(app *appLoop, pages *nativePages, engine *game.GameEngine, returnPage string, run func(line string)) Primitive {
 	all := theme.All()
 	p := &themePicker{
 		app:         app,
 		pages:       pages,
 		engine:      engine,
 		returnPage:  returnPage,
+		run:         run,
 		themes:      all,
 		rows:        pickerRows(all),
 		originalKey: theme.Active().Key,
@@ -332,6 +338,13 @@ func (p *themePicker) confirm() {
 	if th, ok := p.themeAt(p.list.GetCurrentItem()); ok {
 		if !themeAvailable(p.account(), th) {
 			p.cancel()
+			return
+		}
+		if p.run != nil {
+			// The same line a typed command runs, so the command bar shows it
+			// and it enters the history.
+			p.close()
+			p.run("theme " + th.Key)
 			return
 		}
 		// Persist the chosen theme account-wide. Nil-guarded for accountless play;
