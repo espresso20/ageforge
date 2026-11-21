@@ -21,6 +21,7 @@ trade
 trade route list
 trade route start <route>
 trade route stop <route>
+trade route upgrade <route>
 ```
 
 `trade` on its own opens the Trade panel, a board that fills the screen. Your open routes stand in a column at the left, each with its state, what it trades, what it takes and brings each second, its share of your own income of the import (about 10% at the gate, more with more of the building and the bonuses), and a percentage when it is held back for want of stock. A running route is bright, a suspended one red, a route you stopped plain and a locked one faint. A short route says what it still needs. A line at the top gives the total trade in and out each second. Beside the routes a goods table lists what the running routes take out and bring in each minute, anything that bears on trade (a lock, a blockade, an ally's bonus) and the way to the Factions panel. Below the table is the list of every open offer from the civilizations you have met, grouped under each one with an Accept button on the offer. A civilization that won't trade says why instead. A long list scrolls with `PgUp` and `PgDn`, with a line at each end counting the offers out of sight and one saying how many you can pay now. `↑` and `↓` move from route to route and on through the offers. `Enter` runs the picked entry's command: `stop` (pause) or `start` (resume) on a route, accept on an offer. A picked offer says what the town holds and makes of the good it costs. An Active gifts block under the list shows each running boost with its time left, and the know-how earned. A click picks an entry, and a click on its button runs the command. What the command did shows on the panel. A window too small for the board shows the routes and the offers as a list of cards. `t` works in place of `trade`.
@@ -28,6 +29,14 @@ trade route stop <route>
 A route starts on its own the moment it is ready: its age is reached, you own the buildings it asks for and, for the first routes, the tech that opens routes is researched. The log says "Route started" once for each. Nothing needs pressing, and a route that is ready is never left waiting. A route you stop stays stopped: it is never started on its own again, even after a save and a load, until you start it yourself. Routes that became ready while you were away start when you are back.
 
 `trade route list` shows your active routes (running at what share of their flow, or paused) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route you stopped, or one that has not started on its own yet. It fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` (or `trade route pause <route>`) pauses a route: it stays on the list at no flow until you start it again, and a paused route is saved as paused. There's no limit on how many routes can run at once.
+
+### Route upgrades
+
+Each running route has its own level, starting at 0 and saved with the game. `trade route upgrade <route>` buys the next level, paid in the first good the route brings in. On the Trade board the picked route has an upgrade button and a line giving its level, the price and the flow the next level adds. A route at a level shows `Lv N` by its name. A paused, held or blockaded route cannot be upgraded.
+
+- Price of the next level: 10 minutes of the route's flow of that good with no upgrade (at the current building count and techs) times 1.15 for each level already bought.
+- Flow: (1 + 0.25 x level) times 2 for each of levels 10, 25 and 50 reached. At level 10 that is 3.5 x 2 = 7. It applies to both what the route sends and what it brings.
+- The surplus rule is unchanged: an upgraded route still sends only what the town can spare, and runs at a smaller share when it cannot. There is no level cap.
 
 A route whose building count falls below its gate while it runs is held: it stays on the list and moves nothing, and the log says so. Rebuild the building and it runs again by itself.
 

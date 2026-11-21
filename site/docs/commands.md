@@ -24,7 +24,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 - `roster` offers the worker domains, the ones you have worker buildings in first, and `auto`.
 - `sell` offers the buildings you have that it takes (not wonders, storage or knowledge buildings, and nothing in the Primitive Age).
 - `wonder collect` offers the resources the wonder still needs.
-- `trade route start` and `trade route stop` offer the routes you can start and the routes running.
+- `trade route start`, `trade route stop` and `trade route upgrade` offer the routes you can start and the routes running.
 - `diplomacy` offers the civilizations you have met. `diplomacy accept` offers the open offer numbers of the civilization you typed.
 - `theme` offers the themes you have unlocked.
 - `load` offers your saves, and `account switch` your local accounts.
@@ -292,6 +292,7 @@ In the window a click on an offer's pin highlights it, a double click asks to se
 | `trade route` (or `trade route list`) | List your active trade routes (running at what share of their flow, or paused) and the routes you can start. |
 | `trade route start <route>` | Start a trade route you stopped. A route that is ready starts on its own, and one you stopped does not start again until you do this. Routes wait for The Wheel, a Bronze Age tech. The Rail Freight route also waits for Railroads, and the Warp Commerce route for Interstellar Trade. |
 | `trade route stop <route>` (or `trade route pause <route>`) | Pause an active trade route: it stays listed at no flow until you start it again. |
+| `trade route upgrade <route>` | Buy a running route's next level: more flow on both legs, paid in the first good the route brings in. See [Route upgrades](trade.md#route-upgrades). |
 | `blackmarket` (or `bm`) | Show the black market's status: its culture cost, the odds and the wait between runs. It opens in the Colonial Age. |
 | `blackmarket <resource>` | Make a smuggling run: spend culture for the same worth in the chosen resource. Five runs in six go through. The sixth time the smugglers vanish with the culture. It waits for the Mercantilism tech. |
 | `trade black [resource]` | Same as `blackmarket`. |
