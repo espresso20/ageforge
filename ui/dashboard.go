@@ -318,7 +318,7 @@ func NewDashboard(app *appLoop, engine *game.GameEngine, pages *nativePages) *Da
 	})
 	d.overlayMgr.Register("harbinger", rowid.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
 	d.harbPanel.view.attach(d.overlayMgr, "harbinger", d.harbPanel.view.layer)
-	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
+	d.overlayMgr.SetFooter("harbinger", func() [][2]string { return harbingerFooter(d.engine.GetState().Harbinger != nil) })
 	d.overlayMgr.SetKeyHandler("harbinger", func(event *kit.Key) *kit.Key {
 		// UI goroutine, no engine lock held: the engine's action methods and
 		// GetState take their own locks.
