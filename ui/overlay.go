@@ -65,9 +65,6 @@ type OverlayManager struct {
 	onClose func() // called after hide to restore focus to the command input field
 	screenW int    // updated every frame via SetBeforeDrawFunc
 	screenH int
-	// plain, when set, reports the ASCII glyph tier, which the text panels'
-	// frames fold to.
-	plain func() bool
 
 	// seen is the last snapshot Refresh was given: for the arrival screen
 	// it is the game as it stood before the advance (arrival.go). arrival is
@@ -114,7 +111,6 @@ func (om *OverlayManager) Register(name string, title rowid.Entry, provide Overl
 		tv.SetBackgroundColor(theme.Of(theme.RoleBackground))
 	})
 	frame := newPanelFrame(title, tv)
-	frame.plain = func() bool { return om.plain != nil && om.plain() }
 	entry := &overlayEntry{title: title, tv: tv, frame: frame, provide: provide}
 	frame.buttons.wire(om.app)
 	frame.keys = func() [][2]string { return om.footerKeys(entry) }

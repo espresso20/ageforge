@@ -357,7 +357,7 @@ func (k *keyPresser) paint(p *kit.Painter, h keyHolder, org image.Point, pal *ex
 		return
 	}
 	hot, isHot := k.lit(s)
-	pix := pictureCell != nil && !s.plain
+	pix := pictureCell != nil
 	for i, key := range s.keys {
 		if key.kind.action() {
 			if !key.word.Empty() {

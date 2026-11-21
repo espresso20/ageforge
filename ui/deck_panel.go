@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -30,7 +29,7 @@ type deckPanel struct {
 	// draw draws the page; nil draws it as a deck of cards. A panel with a
 	// scene of its own (the Trade panel's map of roads) sets it.
 	draw func(pg *deckPage, st game.GameState, sel, scroll, w, h int, said ...xseg) (*xgrid, deckLayout)
-	// settings reads the glyph tier.
+	// settings reads the motion setting.
 	settings func() mapSettings
 	// held says the game is held; the lanes stop with it. now is the frame
 	// clock, clock the seconds run, moving whether a draw has something moving.
@@ -125,9 +124,6 @@ func (p *deckPanel) Layout(r image.Rectangle) {
 	}
 	p.scroll = clamp(p.scroll, 0, max(0, p.lay.total-p.lay.viewH))
 	p.moving.Store(p.pg.animate && motion && (p.held == nil || !p.held()))
-	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
-		p.grid.fold()
-	}
 }
 
 // Paint puts the panel on the kit's painter in theme colors.

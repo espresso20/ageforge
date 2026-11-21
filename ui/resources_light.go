@@ -12,10 +12,9 @@ import (
 type resourceView struct {
 	*fitView
 	// at is the cell the pointer is on, in screen cells; in is false when it
-	// is outside the box. plain says whether to draw in ASCII.
-	at    image.Point
-	in    bool
-	plain func() bool
+	// is outside the box.
+	at image.Point
+	in bool
 	// tipFor says what the tooltip on text line i is; ok is false for a line
 	// with none. The box and the first line it showed at the last draw are
 	// kept so a pointer move can be traced to a line.
@@ -25,8 +24,8 @@ type resourceView struct {
 	firstLine int
 }
 
-func newResourceView(render func(w, h int) string, plain func() bool) *resourceView {
-	v := &resourceView{fitView: newFitView(render), plain: plain}
+func newResourceView(render func(w, h int) string) *resourceView {
+	v := &resourceView{fitView: newFitView(render)}
 	v.over = v.light
 	return v
 }
@@ -57,7 +56,7 @@ func (v *resourceView) light(p *kit.Painter, r image.Rectangle, top int) {
 		return
 	}
 	row := image.Rect(r.Min.X, v.at.Y, r.Max.X, v.at.Y+1)
-	lightRow(p, row, false, true, r.Max.X-1, v.plain != nil && v.plain())
+	lightRow(p, row, false, true, r.Max.X-1)
 }
 
 // Children: the box takes the pointer itself, so that it is told when the

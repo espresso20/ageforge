@@ -33,7 +33,7 @@ In the window the mouse works on the menu too. The entry under the pointer is th
 
 **Which game Continue opens.** Your account remembers the game you played last, and that is your current game. If you keep several games and want one of them on the menu whatever you played last, mark it as your **main game** with `m` in the Load Game browser. See [Continue and your main game](saving-and-loading.md#continue-and-your-main-game).
 
-**Motion and size.** `motion off` holds the menu to one still picture, like the maps (see [Motion](themes.md#motion)). The menu fits any window size from 80 columns by 24 rows up. With `map glyphs ascii` it is drawn without block characters. On a light theme the fire and the hot iron are ink on paper: hotter is darker.
+**Motion and size.** `motion off` holds the menu to one still picture, like the maps (see [Motion](themes.md#motion)). The menu fits any window size from 80 columns by 24 rows up. With `map glyphs ascii` the town behind the menu is drawn in plain characters; the menu itself is not. On a light theme the fire and the hot iron are ink on paper: hotter is darker.
 
 ---
 
@@ -88,7 +88,7 @@ The top of the screen is the **header**, one framed box that says the same thing
 - **The long bar** runs to the next age, with its percent. On a window of 100 columns by 30 rows or more the four pillars (Knowledge, People, Industry and Monument) sit beside it, each as a small meter with how many of its requirements stand (`2/3`), or a check once it stands. The bar's percent and the year are the same ones the [Advance panel](advance.md) shows, and `charter` opens it.
 - **What it waits on.** A **Waiting on** line names what is still missing: each building the gate asks for with your count beside it, the keystone tech and the wonder's bank, and then the wonder itself. When the list is longer than the room, the line counts the rest (`+4 more`). When every pillar stands it says so and tells you to type `advance`. On a window under 100 columns by 30 rows the line shares the bar's row; from there up it has its own row, with a **Short of** list at its right. That list names the resources that a waiting building, or the wonder's bank, costs more of than you hold. The Resources box below lists every resource with its amount and its rate.
 
-The header is four rows on a window under 100 columns by 30 rows and five from there up. On the plain glyph tier (`map glyphs ascii`) the bars and marks are drawn in plain characters. The [Advance](advance.md) page also covers the experimental gate (the environment variable `AGEFORGE_GATES=v2`), which asks for population, income and a key tech in place of building counts.
+The header is four rows on a window under 100 columns by 30 rows and five from there up. The [Advance](advance.md) page also covers the experimental gate (the environment variable `AGEFORGE_GATES=v2`), which asks for population, income and a key tech in place of building counts.
 
 Every part of the header takes a click: People and Morale open People, the bar, the pillars and the waiting line open the Advance panel, an alert chip opens its panel (`catastrophe` or `harbinger`), and the `Esc` `menu` button presses `Esc`. The pointer is a hand over each, and the part under it lights up.
 

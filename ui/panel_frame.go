@@ -46,8 +46,6 @@ type panelFrame struct {
 	// notice, when set and not empty, takes the key line's place for a while
 	// (a confirmation, drawn in the good colour).
 	notice func() string
-	// plain reports the ASCII glyph tier, when the frame folds to it.
-	plain func() bool
 	// iw and ih are the text area's size as last drawn (0 before the first).
 	iw, ih int
 	// buttons makes the foot's keys and the close button pressable, on the
@@ -121,9 +119,6 @@ func (f *panelFrame) Paint(p *kit.Painter) {
 		notice = f.notice()
 	}
 	g := renderPanelFrame(r.Dx(), r.Dy(), f.title.String(), keys, hint, notice)
-	if f.plain != nil && f.plain() {
-		g.fold()
-	}
 	pal := newExpPalette()
 	paintExpeditionKit(p, g, r.Min, pal)
 	f.buttons.paint(p, g, r.Min, pal)

@@ -174,7 +174,6 @@ func (a *arrival) say(cur *game.GameState) {
 
 // settings reads the display settings into the view.
 func (a *arrival) settings() {
-	a.view.plain = a.set.Tier == mapmodel.TierASCII
 	a.view.motion = a.set.Motion
 }
 
@@ -472,13 +471,13 @@ func (a *arrival) Paint(p *kit.Painter) {
 	if r.Empty() {
 		return
 	}
-	a.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, a.pal, a.view.plain)
+	a.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, a.pal)
 	// An epoch's own weather: the theme's ambient effect, in the cells the
 	// screen leaves empty, once the heavy blow has landed.
 	if x, y, w, h := a.GetRect(); w > 0 && h > 0 &&
 		a.view.motion && a.view.epoch && a.stage == arrCelebrating && a.sc.frame >= arrEraStrike {
 		if effect := theme.Active().Effect; effect != "" {
-			drawThemeEffect(cellsFor(p, a, r), x, y, w, h, effect, a.sc.frame+arrivalFxLead, a.view.plain)
+			drawThemeEffect(cellsFor(p, a, r), x, y, w, h, effect, a.sc.frame+arrivalFxLead)
 		}
 	}
 }

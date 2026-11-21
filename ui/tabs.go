@@ -107,7 +107,7 @@ func drawTab(pk tabKey) *image.RGBA {
 
 // paintTabs paints the tabs of s over the grid already painted at org.
 func (k *keyPresser) paintTabs(p *kit.Painter, s *keySet, org image.Point, pal *expPalette) {
-	if pictureCell == nil || s.plain || len(s.tabs) == 0 {
+	if pictureCell == nil || len(s.tabs) == 0 {
 		return
 	}
 	cw, ch := pictureCell()

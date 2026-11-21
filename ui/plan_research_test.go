@@ -79,7 +79,7 @@ func TestPlannedTechsShowTheirPlaceOnTheMap(t *testing.T) {
 	if got := strings.Join(planKeys(st), ","); got != "road_building,military_tactics,siege_warfare,imperial_legions" {
 		t.Fatalf("the plan holds %s", got)
 	}
-	m := buildTree(st, treeGeomFor(120, false), false, "imperial_legions")
+	m := buildTree(st, treeGeomFor(120, false), "imperial_legions")
 	g := m.canvas(st, "imperial_legions")
 	for key, place := range map[string]string{"road_building": "▸1", "military_tactics": "▸2", "siege_warfare": "▸3", "imperial_legions": "▸4"} {
 		n := m.by[key]
@@ -96,7 +96,7 @@ func TestPlannedTechsShowTheirPlaceOnTheMap(t *testing.T) {
 	}
 	// Zoomed out, the plan's arrow leads the emblem, and a tech that still
 	// waits keeps its closing mark.
-	far := buildTree(st, treeGeomFor(120, true), false, "imperial_legions")
+	far := buildTree(st, treeGeomFor(120, true), "imperial_legions")
 	fg := far.canvas(st, "imperial_legions")
 	for key, closing := range map[string]rune{"road_building": ' ', "military_tactics": ' ', "siege_warfare": '┆', "imperial_legions": '┆'} {
 		n := far.by[key]

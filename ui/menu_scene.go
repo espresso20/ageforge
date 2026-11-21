@@ -123,10 +123,8 @@ func (g *mGrid) box(x, y, w, h int, heavy bool, fg kit.Color) {
 	g.put(x+w-1, y+h-1, c[3], fg)
 }
 
-// paint puts the grid on a kit painter with its top left corner at at. In
-// the plain glyph set every glyph that is not ASCII is folded to one that is
-// (the wordmark and the fire were already drawn without blocks).
-func (g *mGrid) paint(p *kit.Painter, at image.Point, pal *menuPalette, plain bool) {
+// paint puts the grid on a kit painter with its top left corner at at.
+func (g *mGrid) paint(p *kit.Painter, at image.Point, pal *menuPalette) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			c := g.c[y*g.w+x]
@@ -137,11 +135,7 @@ func (g *mGrid) paint(p *kit.Painter, at image.Point, pal *menuPalette, plain bo
 			if c.bold {
 				st.Attr = kit.Bold
 			}
-			r := c.r
-			if plain {
-				r = mapmodel.Fold(r, mapmodel.TierASCII)
-			}
-			p.Put(at.X+x, at.Y+y, r, st)
+			p.Put(at.X+x, at.Y+y, c.r, st)
 		}
 	}
 }
@@ -163,9 +157,8 @@ type menuPalette struct {
 	ground, groundInk, groundDim kit.Color
 	// label is the second colour of the elite line.
 	label kit.Color
-	// anvil is the anvil's body, and anvilInk its ink where a glyph draws
-	// it (the plain glyph set).
-	anvil, anvilInk kit.Color
+	// anvil is the anvil's body.
+	anvil kit.Color
 	// heat is the wordmark's ramp from cold iron to white heat; fire the
 	// forge's, from the page to its brightest.
 	heat, fire [menuLUT]kit.Color
@@ -305,7 +298,6 @@ func newMenuPalette(th theme.Theme) *menuPalette {
 	p.groundDim = theme.Legible(th.Color(theme.RoleDim), p.ground, 3)
 	p.label = theme.Legible(th.Color(theme.RoleLabel), bg, 3)
 	p.anvil = theme.Mix(bg, text, 0.10)
-	p.anvilInk = theme.Mix(bg, text, 0.42)
 	p.heatStops, p.fireStops = menuRampStops(th)
 	p.heat, p.fire = menuRamp(p.heatStops), menuRamp(p.fireStops)
 	return p
@@ -416,10 +408,8 @@ func ironHeat(px, py, w int, t, strike, uc float64) float64 {
 }
 
 // drawIron draws a word set by pixelWord with its top left corner at
-// (x0, y0), each pixel as hot as heat says. In the plain glyph set a pixel
-// is a # on a ground of nearly its own colour, in place of a block, and
-// there are no half cells: the caller picks a whole-cell mode.
-func drawIron(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0 int, mode ironMode, heat func(px, py int) float64, plain bool) {
+// (x0, y0), each pixel as hot as heat says.
+func drawIron(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0 int, mode ironMode, heat func(px, py int) float64) {
 	w := len(rows[0])
 	lit := func(px, py int) bool { return px < w && rows[py][px] == '#' }
 	for py := 0; py < menuWordH; py++ {
@@ -451,14 +441,7 @@ func drawIron(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0 int, mo
 			for dy := 0; dy < mode.sy; dy++ {
 				for dx := 0; dx < mode.sx; dx++ {
 					x, y := x0+px*mode.sx+dx, y0+py*mode.sy+dy
-					if plain {
-						// A ground of the letter's ink, a little back from
-						// it so the mark shows, and never too far back to
-						// read as a block on the page.
-						g.set(x, y, '#', col, theme.Legible(theme.Mix(col, pal.bg, 0.3), pal.bg, 3), true)
-					} else {
-						g.put(x, y, '█', col)
-					}
+					g.put(x, y, '█', col)
 				}
 			}
 		}
@@ -495,9 +478,8 @@ func wordHeat(px, py int, t, strike, uc float64) float64 {
 }
 
 // drawWordmark draws the wordmark with its top left corner at (x0, y0),
-// each pixel sx cells wide. In the plain glyph set a pixel is a # on a
-// ground of nearly its own colour, in place of a block.
-func drawWordmark(g *mGrid, pal *menuPalette, x0, y0, sx int, t, strike, uc float64, plain bool) {
+// each pixel sx cells wide.
+func drawWordmark(g *mGrid, pal *menuPalette, x0, y0, sx int, t, strike, uc float64) {
 	for py := 0; py < menuWordH; py++ {
 		for px := 0; px < menuWordW; px++ {
 			if menuWord[py][px] != '#' {
@@ -505,11 +487,7 @@ func drawWordmark(g *mGrid, pal *menuPalette, x0, y0, sx int, t, strike, uc floa
 			}
 			col := rampAt(&pal.heat, wordHeat(px, py, t, strike, uc))
 			for d := 0; d < sx; d++ {
-				if plain {
-					g.set(x0+px*sx+d, y0+py, '#', col, theme.Mix(col, pal.bg, 0.3), true)
-				} else {
-					g.put(x0+px*sx+d, y0+py, '█', col)
-				}
+				g.put(x0+px*sx+d, y0+py, '█', col)
 			}
 		}
 	}
@@ -642,42 +620,23 @@ func (f *menuForge) step(rnd *menuRand, strike float64) {
 	}
 }
 
-// plainFire is the fire's glyphs in the plain glyph set, from embers up.
-var plainFire = []rune(" .:-=+*%#")
-
 // draw paints the plate's inside with its top left corner at (x0, y0).
-// Two half cells make a cell; in the plain glyph set a cell is one glyph
-// whose weight is the fire's heat there.
-func (f *menuForge) draw(g *mGrid, pal *menuPalette, x0, y0 int, strike float64, plain bool) {
-	half := func(i int) (kit.Color, bool) {
+// Two half cells make a cell.
+func (f *menuForge) draw(g *mGrid, pal *menuPalette, x0, y0 int, strike float64) {
+	half := func(i int) kit.Color {
 		switch {
 		case f.mask[i] == 2 && strike > 0.06:
-			return rampAt(&pal.heat, 0.3+strike*0.7), true
+			return rampAt(&pal.heat, 0.3+strike*0.7)
 		case f.mask[i] != 0:
-			return pal.anvil, true
+			return pal.anvil
 		}
-		return rampAt(&pal.fire, f.fire[i]), false
+		return rampAt(&pal.fire, f.fire[i])
 	}
 	for cy := 0; cy < f.fh/2; cy++ {
 		for cx := 0; cx < f.fw; cx++ {
 			a := cy*2*f.fw + cx
 			b := a + f.fw
-			top, topIron := half(a)
-			bot, botIron := half(b)
-			if !plain {
-				g.set(x0+cx, y0+cy, '▀', top, bot, false)
-				continue
-			}
-			switch {
-			case topIron && f.mask[a] == 2 && strike > 0.06:
-				g.set(x0+cx, y0+cy, '#', top, pal.anvil, true)
-			case topIron || botIron:
-				g.set(x0+cx, y0+cy, '#', pal.anvilInk, pal.anvil, false)
-			default:
-				v := max(f.fire[a], f.fire[b])
-				r := plainFire[min(int(v*float64(len(plainFire))), len(plainFire)-1)]
-				g.set(x0+cx, y0+cy, r, rampAt(&pal.fire, min(1, v+0.2)), rampAt(&pal.fire, v*0.45), false)
-			}
+			g.set(x0+cx, y0+cy, '▀', half(a), half(b), false)
 		}
 	}
 }

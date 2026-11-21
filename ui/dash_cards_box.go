@@ -93,8 +93,6 @@ type buildBox struct {
 	*nativeHost
 	kit.Base
 	title string
-	// plain reads the glyph tier: the plain one folds the box to ASCII.
-	plain func() bool
 	// k presses the box's keys: the buy choices, the Gather buttons and the
 	// Build buttons.
 	k keyPresser
@@ -166,8 +164,8 @@ type buildBox struct {
 	laidCell [2]int
 }
 
-func newBuildBox(plain func() bool, app *appLoop) *buildBox {
-	b := &buildBox{plain: plain, more: -1, olderRow: -1, hover: -1}
+func newBuildBox(app *appLoop) *buildBox {
+	b := &buildBox{more: -1, olderRow: -1, hover: -1}
 	b.nativeHost = newNativeHost()
 	b.k.wire(app)
 	press := b.k.press
@@ -327,9 +325,6 @@ func (b *buildBox) inner() (w, h int) { return b.w - 2, b.h - 2 }
 
 // picCells is the cell size the cards' pictures are drawn at, zero for none.
 func (b *buildBox) picCells() (cw, ch int) {
-	if b.plain != nil && b.plain() {
-		return 0, 0
-	}
 	return pictureCells()
 }
 
@@ -512,7 +507,7 @@ func (b *buildBox) drawAt(w, h, d int) {
 			top = gy + rowH + 1
 		}
 	}
-	b.strip = &keySet{keys: append([]xkey(nil), set.keys[stripFrom:]...), plain: g.plain, glyph: set.glyph}
+	b.strip = &keySet{keys: append([]xkey(nil), set.keys[stripFrom:]...), glyph: set.glyph}
 
 	// The cards: the ones before the quiet row, and once it has been opened
 	// the rest. The quiet row goes under the last card on show and counts the
@@ -648,18 +643,11 @@ func (b *buildBox) drawAt(w, h, d int) {
 		g.put(tx+6, y, textfmt.Int(b.olderN)+" "+txtOlder.String(), look)
 		g.hit(hitOlder, 0, 1, y, iw, 1)
 	}
-	b.cardKeys = &keySet{keys: append([]xkey(nil), set.keys[cardFrom:]...), plain: g.plain, glyph: set.glyph}
+	b.cardKeys = &keySet{keys: append([]xkey(nil), set.keys[cardFrom:]...), glyph: set.glyph}
 	if d > 0 {
 		detFrom := len(set.keys)
 		b.drawDetail(g, set, w, h, d)
-		b.det = &keySet{keys: append([]xkey(nil), set.keys[detFrom:]...), plain: g.plain, glyph: set.glyph}
-	}
-	if b.plain != nil && b.plain() {
-		g.fold()
-		b.strip.plain, b.cardKeys.plain = true, true
-		if b.det != nil {
-			b.det.plain = true
-		}
+		b.det = &keySet{keys: append([]xkey(nil), set.keys[detFrom:]...), glyph: set.glyph}
 	}
 }
 
@@ -929,9 +917,8 @@ func (b *buildBox) Paint(p *kit.Painter) {
 	p = p.Clip(r)
 	pal := newExpPalette()
 	paintExpeditionKit(p, b.grid, r.Min, pal)
-	plain := b.plain != nil && b.plain()
 	cw, ch := 0, 0
-	if pictureCell != nil && !plain {
+	if pictureCell != nil {
 		cw, ch = pictureCell()
 	}
 	if b.pickTip {
@@ -940,15 +927,15 @@ func (b *buildBox) Paint(p *kit.Painter) {
 	}
 	hot, isHot := b.k.lit(b.cardKeys)
 	for i := range b.placed {
-		b.paintCard(p, pal, r.Min, i, cw, ch, plain, hot, isHot)
+		b.paintCard(p, pal, r.Min, i, cw, ch, hot, isHot)
 	}
 	b.k.paint(p, b.strip, r.Min, pal)
-	b.paintDetail(p, pal, r.Min, cw > 0 && ch > 0, plain)
+	b.paintDetail(p, pal, r.Min, cw > 0 && ch > 0)
 }
 
 // paintCard paints card i: its ground, its picture, its words and its Build
 // button.
-func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i, cw, ch int, plain bool, hot xkey, isHot bool) {
+func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i, cw, ch int, hot xkey, isHot bool) {
 	pc := b.placed[i]
 	c := pc.card
 	iw, _ := b.inner()
@@ -970,9 +957,6 @@ func (b *buildBox) paintCard(p *kit.Painter, pal *expPalette, org image.Point, i
 		b.paintCells(p, pal, rect, look, c, picked, pc.compact)
 	}
 	lab := func(x, y int, s string, st kit.Style) int {
-		if plain {
-			s = foldToASCII(s)
-		}
 		return p.Label(rect.Min.X+x, rect.Min.Y+y, kit.Escape(s), st)
 	}
 	bw := buildCol(iw)
@@ -1067,7 +1051,6 @@ func (b *buildBox) paintReason(lab func(x, y int, s string, st kit.Style) int, p
 // pictures: the gauge in the first column and the picked mark.
 func (b *buildBox) paintCells(p *kit.Painter, pal *expPalette, rect image.Rectangle, look cardLook, c buildCard, picked, compact bool) {
 	acc := pal.tone(xAccent, false)
-	plain := b.plain != nil && b.plain()
 	fill := theme.RGB(look.fill.R, look.fill.G, look.fill.B)
 	lit := int(c.frac*float64(rect.Dy()) + .5)
 	for row := 0; row < rect.Dy(); row++ {
@@ -1078,36 +1061,16 @@ func (b *buildBox) paintCells(p *kit.Painter, pal *expPalette, rect image.Rectan
 				col = pal.tone(xGood, false)
 			}
 		}
-		if plain {
-			g = '|'
-			if col != look.dim {
-				g = '#'
-			}
-		}
 		p.Put(rect.Min.X, rect.Min.Y+row, g, inkOf(col, false))
 	}
 	if picked && !compact {
-		mark := '▸'
-		if plain {
-			mark = '>'
-		}
-		p.Put(rect.Min.X+1, rect.Min.Y+rect.Dy()/2, mark, inkOf(acc, true).Background(fill))
+		p.Put(rect.Min.X+1, rect.Min.Y+rect.Dy()/2, '▸', inkOf(acc, true).Background(fill))
 	}
 }
 
 // lightGround reports whether a ground colour is a light one.
 func lightGround(c color.RGBA) bool {
 	return 0.299*float64(c.R)+0.587*float64(c.G)+0.114*float64(c.B) > 140
-}
-
-// foldToASCII is s in ASCII, for the plain glyph tier.
-func foldToASCII(s string) string {
-	return strings.Map(func(r rune) rune {
-		if f, ok := foldExpedition[r]; ok {
-			return f
-		}
-		return r
-	}, s)
 }
 
 // gatherAge says whether the age is one of the first that show the Gather

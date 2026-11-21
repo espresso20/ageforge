@@ -312,9 +312,6 @@ func checkMenuPage(t *testing.T, where string, sc *menuScene, v *menuView, town 
 		lit += strings.Count(menuWord[py], "#") * L.sx
 	}
 	block := "█"
-	if v.plain {
-		block = "#"
-	}
 	drawn := 0
 	for y := L.wy; y < L.wy+menuWordH; y++ {
 		drawn += strings.Count(string([]rune(g.row(y))[max(L.wx, 0):min(L.wx+menuWordW*L.sx, g.w)]), block)
@@ -528,9 +525,6 @@ func TestMenuRampsInEveryTheme(t *testing.T) {
 		if theme.ContrastRatio(p.anvil, p.fireStops[4]) < 3 {
 			t.Errorf("%s: the anvil (%06x) is lost in the flames (%06x)", th.Key, p.anvil.Hex(), p.fireStops[4].Hex())
 		}
-		if theme.ContrastRatio(p.anvilInk, p.anvil) < 1.5 {
-			t.Errorf("%s: the anvil's glyphs do not show on its body", th.Key)
-		}
 		for what, pair := range map[string][3]any{
 			"dim text on the page":        {p.dim, p.bg, 3.0},
 			"the accent on the page":      {p.accent, p.bg, 3.0},
@@ -573,7 +567,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 					sim := newSim()
 					must(t, sim.Init())
 					sim.SetSize(w, h)
-					rows := flushRows(t, where, sim, g, pal, v.plain)
+					rows := flushRows(t, where, sim, g, pal, false)
 					_, _, corner, _ := sim.GetContent(0, 0)
 					if _, bg, _ := decompose(corner); bg != pal.bg || bg != th.Color(theme.RoleBackground) {
 						t.Errorf("%s: the page's corner is not on the theme's ground", where)
@@ -597,8 +591,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 
 // TestMenuGlyphsAreOneColumnWide: every glyph the menu itself puts on the
 // page takes one column on a terminal (a wide one would push the rest of
-// its row along), and in the plain glyph set the forge master's marks are
-// glyphs it has, never a question mark.
+// its row along).
 func TestMenuGlyphsAreOneColumnWide(t *testing.T) {
 	check := func(where string, g *mGrid) {
 		for i, c := range g.c {
@@ -626,13 +619,6 @@ func TestMenuGlyphsAreOneColumnWide(t *testing.T) {
 				text := g.row(row)
 				if !strings.Contains(text, line.words.String()) {
 					t.Errorf("%s: the line is not on row %d: %q", where, row, strings.TrimSpace(text))
-				}
-				if tier == mapmodel.TierASCII {
-					for _, r := range text {
-						if mapmodel.Fold(r, mapmodel.TierASCII) == '?' {
-							t.Errorf("%s: row %d holds %q, which the plain glyph set cannot show", where, row, r)
-						}
-					}
 				}
 			}
 		}

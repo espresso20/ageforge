@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/theme"
@@ -39,7 +38,6 @@ type hallCtx struct {
 	w, cw    int // the canvas, and the width the blocks may spread over
 	rows     int // the screen's rows
 	y        int // the next free row
-	plain    bool
 	mo       hallMotion
 	pal      *menuPalette
 	duo      bool
@@ -47,10 +45,10 @@ type hallCtx struct {
 	bg, text kit.Color
 }
 
-func newHallCtx(w, rows int, tier mapmodel.GlyphTier, mo hallMotion) *hallCtx {
+func newHallCtx(w, rows int, mo hallMotion) *hallCtx {
 	th := theme.Active()
 	c := &hallCtx{
-		g: newMGrid(w, 600), w: w, rows: rows, plain: tier == mapmodel.TierASCII, mo: mo,
+		g: newMGrid(w, 600), w: w, rows: rows, mo: mo,
 		pal: newMenuPalette(th), duo: th.Duotone,
 		bg: th.Color(theme.RoleBackground), text: th.Color(theme.RoleText),
 	}
@@ -83,9 +81,6 @@ func (c *hallCtx) hue(hex string) kit.Color {
 	return c.ink(theme.Hue(hex, c.bg))
 }
 
-// mark picks a glyph for the Unicode set or the plain one.
-func (c *hallCtx) mark(uni, ascii string) string { return hallMark(c.plain, uni, ascii) }
-
 // left is the column that centres something n cells wide.
 func (c *hallCtx) left(n int) int { return max((c.w-n)/2, 0) }
 
@@ -98,7 +93,7 @@ func (c *hallCtx) centre(y int, s string, fg kit.Color, bold bool) int {
 
 // heading is a section's title between two rules, centred.
 func (c *hallCtx) heading(title string) {
-	rule := strings.Repeat(c.mark("─", "-"), 6)
+	rule := strings.Repeat("─", 6)
 	n := runeLen(title) + 2*len(rule) + 4
 	x := c.left(n)
 	c.g.text(x, c.y, rule, c.role(theme.RoleDim), false)
@@ -200,10 +195,7 @@ func (c *hallCtx) banner(name string, order int, seed int64) {
 	}
 	room := c.cw
 	big := []ironMode{{sx: 2, sy: 2}, {sx: 1, sy: 2}}
-	modes := []ironMode{{sx: 2, sy: 1}, {sx: 1, sy: 1}}
-	if !c.plain {
-		modes = append(modes, ironMode{sy: 1, half: true})
-	}
+	modes := []ironMode{{sx: 2, sy: 1}, {sx: 1, sy: 1}, {sy: 1, half: true}}
 	p := placeIron(name, append(big, modes...), room, limit)
 	h := p.h
 	if !p.ok {
@@ -246,7 +238,7 @@ func (c *hallCtx) banner(name string, order int, seed int64) {
 		return
 	}
 	art := newMGrid(p.w, p.h)
-	drawIron(art, c.pal, p.rows, 0, 0, p.mode, func(int, int) float64 { return 0.7 }, c.plain)
+	drawIron(art, c.pal, p.rows, 0, 0, p.mode, func(int, int) float64 { return 0.7 })
 	if p.tail != "" {
 		tl := spaced(strings.ToUpper(p.tail))
 		art.text(max((p.w-runeLen(tl))/2, 0), p.h-1, tl, c.text, true)
@@ -476,8 +468,8 @@ func (c *hallCtx) track(v hallView) {
 	hot := c.ink(theme.Mix(curStops[2], curStops[3], pulse))
 	curInk := c.ink(curStops[1])
 	segs = append(segs, seg{w: bw, isCur: true, draw: func(x, y int) {
-		c.g.put(x+bw/2-1, y, []rune(c.mark("▼", "v"))[0], curInk)
-		c.g.put(x+bw/2, y, []rune(c.mark("▼", "v"))[0], curInk)
+		c.g.put(x+bw/2-1, y, '▼', curInk)
+		c.g.put(x+bw/2, y, '▼', curInk)
 		filled(hot)(x, y)
 	}})
 	dim := c.role(theme.RoleDim)
@@ -541,7 +533,7 @@ func (c *hallCtx) track(v hallView) {
 		after = append(after, rowid.Sprintf("ui.epoch_hall.hallFrontText.03", "%d more to come", v.unseen))
 	}
 	if len(after) > 0 {
-		c.paragraph(strings.Join(after, " "+c.mark("·", "-")+" "), dim)
+		c.paragraph(strings.Join(after, " "+"·"+" "), dim)
 	}
 }
 
@@ -630,7 +622,7 @@ func (c *hallCtx) feats(v hallView) {
 		c.paragraph(rowid.Line("ui.epoch_hall.hallFrontText.07", "No feats yet. They come with the ages."), c.role(theme.RoleDim))
 		return
 	}
-	icons := [4]string{c.mark("✸", "*"), c.mark("◈", "@"), c.mark("★", "*"), c.mark("»", ">")}
+	icons := [4]string{"✸", "◈", "★", "»"}
 	inks := [4]kit.Color{c.role(theme.RoleNegative), c.role(theme.RoleWarning), c.role(theme.RoleHighlight), c.role(theme.RolePositive)}
 	lines := make([]string, len(v.feats))
 	width := 0
@@ -687,15 +679,6 @@ func (c *hallCtx) sky(seed int64) {
 	c.y = max(c.y, h)
 }
 
-// hallFold is a glyph on the plain tier: the badges' table first, then the
-// map's.
-func hallFold(r rune) rune {
-	if f, ok := badgeFold[r]; ok {
-		return f
-	}
-	return mapmodel.Fold(r, mapmodel.TierASCII)
-}
-
 // render turns the canvas into tagged text, one line to a row, the unused
 // rows at the foot dropped.
 func (c *hallCtx) render() string {
@@ -733,11 +716,7 @@ func (c *hallCtx) render() string {
 				cp := cell
 				cur, styled = &cp, true
 			}
-			r := cell.r
-			if c.plain {
-				r = hallFold(r)
-			}
-			sb.WriteRune(r)
+			sb.WriteRune(cell.r)
 		}
 		if styled {
 			sb.WriteString("[-:-:-]")

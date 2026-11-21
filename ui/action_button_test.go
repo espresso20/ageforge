@@ -327,7 +327,7 @@ func TestAClickOnAnOpenTechCardsStartStartsTheResearch(t *testing.T) {
 	p.wireButtons(newAppLoop())
 	var start, wait *treeNode
 	st := ge.GetState()
-	m := buildTree(st, treeGeomFor(120, false), false, "")
+	m := buildTree(st, treeGeomFor(120, false), "")
 	for _, n := range m.nodes {
 		switch {
 		case start == nil && cardActionFor(st, n) == actStart:

@@ -179,7 +179,7 @@ func TestArrivalDump(t *testing.T) {
 						name += "_plain"
 					}
 					must(t, os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644))
-					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.a.pal, r.a.view.plain))
+					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.a.pal, false))
 				}
 				r.a.close()
 			}
@@ -390,18 +390,17 @@ func checkArrivalInfo(t *testing.T, where string, r *arrivalRig, w, h int) {
 			screen += " " + strings.TrimSpace(g.row(y))
 		}
 		if p := a.sc.L.age; p.ok {
-			if short := ironShort(g, p, a.view.plain); short != 0 {
+			if short := ironShort(g, p, false); short != 0 {
 				t.Errorf("%s: the name over the box is %d cells short", where, short)
 			}
 		} else if caps := strings.ToUpper(a.view.age); !pageHas(g, caps) && !pageHas(g, spaced(caps)) {
-			// A name too long for iron at this size is a line of capitals
-			// (checkArrivalPlainNarrow holds the same rule).
+			// A name too long for iron at this size is a line of capitals.
 			t.Errorf("%s: the name over the box is not on the screen in capitals", where)
 		}
 	}
 	screen = strings.Join(strings.Fields(screen), " ")
-	fold := func(s string) string { return strings.Join(strings.Fields(foldASCII(s, a.view.plain)), " ") }
-	if a.view.plain {
+	fold := func(s string) string { return strings.Join(strings.Fields(foldASCII(s, false)), " ") }
+	if false {
 		out := []rune(screen)
 		for i, r := range out {
 			out[i] = mapmodel.Fold(r, mapmodel.TierASCII)
@@ -443,7 +442,7 @@ func checkArrivalMoment(t *testing.T, where string, r *arrivalRig, w, h, frame i
 	if a.sc.inEra() {
 		p = L.era
 	}
-	if short := ironShort(g, p, a.view.plain); short != 0 {
+	if short := ironShort(g, p, false); short != 0 {
 		t.Errorf("%s: the name is not whole in iron (%d)", where, short)
 	}
 	if p.tail != "" && !strings.Contains(g.row(p.y+p.h-1), spaced(strings.ToUpper(p.tail))) {
@@ -473,18 +472,14 @@ func checkArrivalMoment(t *testing.T, where string, r *arrivalRig, w, h, frame i
 	}
 }
 
-// arrivalSweep is which terminals an age's arrival is checked at in a
-// glyph set: every age at the five sizes the game is checked at (the plain
-// set at its three smallest), and the ages that stretch the layout (the
-// shortest name, the longest, and the advances that open an era) at all
-// eight, the odd shapes among them.
-func arrivalSweep(age string, tier mapmodel.GlyphTier) [][2]int {
+// arrivalSweep is which terminals an age's arrival is checked at: every age
+// at the five sizes the game is checked at, and the ages that stretch the
+// layout (the shortest name, the longest, and the advances that open an
+// era) at all eight, the odd shapes among them.
+func arrivalSweep(age string) [][2]int {
 	switch age {
 	case "iron_age", "bronze_age", "renaissance_age", "interstellar_age", "transcendent_age":
 		return arrivalSizes
-	}
-	if tier == mapmodel.TierASCII {
-		return arrivalSizes[:3]
 	}
 	return arrivalSizes[:5]
 }
@@ -498,39 +493,25 @@ func arrivalSweep(age string, tier mapmodel.GlyphTier) [][2]int {
 // them, and they are most of what a frame costs.
 func TestArrivalFitsEverySize(t *testing.T) {
 	set := (&game.GameState{}).Ruleset()
-	capitals := 0
 	for _, age := range set.AgeKeys()[1:] {
 		r := bareArrival(t, age, mapmodel.TierUnicode, true)
-		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
-			for _, size := range arrivalSweep(age, tier) {
-				w, h := size[0], size[1]
-				r.restart(tier, true)
-				where := fmt.Sprintf("into the %s at %dx%d, %s glyphs", r.a.view.age, w, h, tier)
-				if tier == mapmodel.TierASCII && w < 100 {
-					// The plain set has no half cells: its narrow screens
-					// have their own rules.
-					if !checkArrivalPlainNarrow(t, where, r, w, h) && w == 80 {
-						capitals++
-					}
-				} else {
-					frames := []int{arrAgeStrike, arrAgeStrike + 6, arrAgeFrames - 1}
-					if r.a.view.epoch {
-						frames = []int{arrEraStrike, arrEraFrames + arrAgeStrike + 6}
-					}
-					for _, f := range frames {
-						checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
-					}
-				}
-				checkArrivalInfo(t, where+", the information", r, w, h)
-				if t.Failed() {
-					return
-				}
+		for _, size := range arrivalSweep(age) {
+			w, h := size[0], size[1]
+			r.restart(mapmodel.TierUnicode, true)
+			where := fmt.Sprintf("into the %s at %dx%d", r.a.view.age, w, h)
+			frames := []int{arrAgeStrike, arrAgeStrike + 6, arrAgeFrames - 1}
+			if r.a.view.epoch {
+				frames = []int{arrEraStrike, arrEraFrames + arrAgeStrike + 6}
+			}
+			for _, f := range frames {
+				checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
+			}
+			checkArrivalInfo(t, where+", the information", r, w, h)
+			if t.Failed() {
+				return
 			}
 		}
 		r.a.close()
-	}
-	if capitals != 2 {
-		t.Errorf("%d ages are a line of capitals at 80x24 in the plain set, want the two longest", capitals)
 	}
 }
 
@@ -567,14 +548,7 @@ func TestArrivalWithItsTowns(t *testing.T) {
 					frames = []int{0, arrEraStrike, arrEraFrames + arrAgeStrike + 6, arrEraFrames + arrAgeFrames - 1}
 				}
 				for _, f := range frames {
-					if tier == mapmodel.TierASCII && w < 100 {
-						if f != frames[len(frames)-1] {
-							continue
-						}
-						checkArrivalPlainNarrow(t, where, r, w, h)
-					} else {
-						checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
-					}
+					checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
 					// The town is there, under the name and clear of it:
 					// two rows' worth of it at the least, a cell counting when
 					// it has a glyph or a ground colour (stars and sparks
@@ -601,44 +575,6 @@ func TestArrivalWithItsTowns(t *testing.T) {
 		}
 		r.a.close()
 	}
-}
-
-// checkArrivalPlainNarrow: the plain glyph set has no half cells, so on a
-// narrow screen a name too long for whole cells is set without its last
-// word, which stands under it in capitals; the names too long even for
-// that (Interstellar, Transcendent) are a line of capitals, and it reports
-// false for those. The rest of the screen is as it is anywhere.
-func checkArrivalPlainNarrow(t *testing.T, where string, r *arrivalRig, w, h int) (iron bool) {
-	t.Helper()
-	g := r.at(w, h, r.a.frames()-1)
-	if len(g.clipped) > 0 {
-		t.Errorf("%s: text cut off at the edge: %q", where, g.clipped)
-	}
-	p := r.a.sc.L.age
-	switch {
-	case p.ok && p.mode.half:
-		t.Errorf("%s: the name is set in half cells", where)
-	case p.ok:
-		if short := ironShort(g, p, true); short != 0 {
-			t.Errorf("%s: the name is %d cells short", where, short)
-		}
-		if p.tail != "" && !strings.Contains(g.row(p.y+p.h-1), spaced(strings.ToUpper(p.tail))) {
-			t.Errorf("%s: the name's last word is not under it", where)
-		}
-	default:
-		caps := strings.ToUpper(r.a.view.age)
-		if !pageHas(g, caps) && !pageHas(g, spaced(caps)) {
-			t.Errorf("%s: the name is not on the screen in capitals", where)
-		}
-	}
-	for y := 0; y < g.h; y++ {
-		for _, c := range g.row(y) {
-			if c == '▌' || c == '▐' || c == '█' || c == '▀' {
-				t.Fatalf("%s: row %d holds a block: %q", where, y, g.row(y))
-			}
-		}
-	}
-	return p.ok
 }
 
 // TestArrivalOnATerminalTooSmall: under 80x24 the screen is the name and
@@ -1373,7 +1309,7 @@ func TestArrivalInEveryTheme(t *testing.T) {
 					g = r.at(w, h, shot.frame)
 				}
 				a := r.a
-				rows := flushRows(t, where, sim, g, a.pal, a.view.plain)
+				rows := flushRows(t, where, sim, g, a.pal, false)
 				if a.pal.bg.Hex() != th.Color(theme.RoleBackground).Hex() {
 					t.Errorf("%s: the page is not on the theme's ground", where)
 				}
@@ -1381,7 +1317,7 @@ func TestArrivalInEveryTheme(t *testing.T) {
 				if shot.info {
 					for _, l := range a.info.pages[0] {
 						if l.kind != skBlank && l.kind != skRule {
-							read(foldASCII(l.plain(), a.view.plain))
+							read(foldASCII(l.plain(), false))
 						}
 					}
 				} else {
@@ -1400,7 +1336,7 @@ func TestArrivalInEveryTheme(t *testing.T) {
 					x, y := p.x+firstLit(p), p.y
 					_, _, st, _ := sim.GetContent(x, y)
 					block, ground, _ := decompose(st)
-					if a.view.plain {
+					if false {
 						block = ground
 					}
 					if k := theme.ContrastRatio(block, a.pal.bg); k < 3-0.02 && shot.frame != arrEraStrike {
