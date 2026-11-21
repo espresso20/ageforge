@@ -1,6 +1,6 @@
 # CI checks
 
-What the repository checks on every pull request and on a schedule, how to run each check on your own machine, and how to quiet a false positive. The tests, `gofmt`, `go vet` and the build live in `go.yml` and are described in [CONTRIBUTING.md](../CONTRIBUTING.md). This page covers the checks added around them.
+What the repository checks on every pull request and on a schedule, how to run each check on your own machine, and how to quiet a false positive. `gofmt`, `go vet` and the build live in `go.yml` and are described in [CONTRIBUTING.md](../CONTRIBUTING.md). This page covers the checks added around them.
 
 ## Report-only for now
 
@@ -22,7 +22,6 @@ Baseline on 2026-10-23, so you can tell old findings from new ones:
 | typos | 7 |
 | lychee | 0 broken links |
 | go-licenses | 8 modules, all on the allowlist |
-| benchmarks | none (same code on both sides) |
 
 ## What runs, and when
 
@@ -41,8 +40,6 @@ Baseline on 2026-10-23, so you can tell old findings from new ones:
 | `docs.yml` | typos | pull requests, weekly | Spelling in code and docs. |
 | `docs.yml` | lychee | weekly, by hand | Dead links in `site/docs/` and the README. |
 | `licenses.yml` | go-licenses | `go.mod` changes, weekly | License of every built-in module against a permissive allowlist. |
-| `bench.yml` | benchstat | Go changes, master | The hot-path benchmarks, base against the change. |
-| `nightly.yml` | ordinary path | nightly, by hand | `TestOrdinaryPath` (`smoke/ordinary_path_test.go`) walks the ordinary player through all 22 ages on the frontier with `AGEFORGE_LONG_TESTS=1`. The test skips on pull requests without that variable. |
 | `release-snapshot.yml` | GoReleaser | by hand | Builds the release binaries and uploads them as an artifact. Publishes nothing. |
 
 Every workflow sets `permissions: contents: read` at the top and asks for more only on the job that needs it. The workflows that run on pull requests cancel a superseded run of the same pull request. Every action is pinned to a commit SHA with its version in a comment, and Dependabot proposes the bumps (one grouped pull request a week).
@@ -73,10 +70,6 @@ npx markdownlint-cli2@0.23.2 README.md CONTRIBUTING.md CHANGELOG.md "docs/**/*.m
 # dependency licenses
 go install github.com/google/go-licenses/v2@v2.0.1
 go-licenses report ./... --ignore github.com/espresso20/ageforge
-
-# benchmarks: your working tree against master (needs benchstat)
-go install golang.org/x/perf/cmd/benchstat@be2c69fb417e05de5fec05c732911f4c5f172606
-scripts/ci-bench.sh compare origin/master /tmp/bench
 
 # release binaries, nothing published (needs goreleaser v2)
 goreleaser release --snapshot --clean
@@ -133,7 +126,6 @@ Checked on 2026-10-23: the upstream repository is public and open source, has no
 | golangci-lint | v2.15.0 (action v9.3.0) | GPL-3.0 (action MIT) | 2026-10-16 | Run as a separate program, nothing is linked into the game. |
 | deadcode (golang.org/x/tools) | v0.52.0 | BSD-3-Clause | 2026-10-10 | The Go team's. |
 | actionlint | v1.7.12 | MIT | 2026-03-30 | The standard workflow linter. Quiet for six months: last commit 2026-04-19, a mature tool. |
-| benchstat (golang.org/x/perf) | commit be2c69fb | BSD-3-Clause | 2026-10-09 | The Go team's. No tagged releases, so a commit is pinned. |
 | markdownlint-cli2 (DavidAnson) | action v24.2.0, bundles CLI 0.23.2 | MIT | 2026-08-02 | Maintained by the author of markdownlint. |
 | Vale | v3.24.0 (release binary, SHA-256 checked in the workflow) | MIT | 2026-10-01 | The project moved from errata-ai to vale-cli. |
 | typos (crate-ci) | v1.51.1 (release binary, SHA-256 checked in the workflow) | Apache-2.0 or MIT | 2026-10-06 | Widely used. |
