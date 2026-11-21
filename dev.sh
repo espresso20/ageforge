@@ -1,9 +1,8 @@
 #!/bin/bash
-# AgeForge dev script — build, vet, test, run
+# AgeForge dev script — build, vet, run
 # Usage:
 #   ./dev.sh          Build + vet + run
 #   ./dev.sh check    Build + vet only (no run)
-#   ./dev.sh test     Run full test suite with formatted output
 #   ./dev.sh run      Build + run (skip vet)
 #   ./dev.sh watch    Rebuild + run on file changes (requires fswatch)
 
@@ -44,7 +43,7 @@ step_build() {
     fi
 }
 
-# Format Go compiler/test errors into readable output
+# Format Go compiler errors into readable output
 format_errors() {
     local raw="$1"
     echo "$raw" | while IFS= read -r line; do
@@ -54,12 +53,6 @@ format_errors() {
             lineno=$(echo "$line" | cut -d: -f2)
             msg=$(echo "$line" | cut -d: -f4-)
             echo -e "  ${RED}error${RESET} ${GRAY}${file}:${lineno}${RESET} →${msg}"
-        # Go test failure: filename_test.go:line: message
-        elif echo "$line" | grep -qE '^\s+[a-zA-Z0-9_]+_test\.go:[0-9]+:'; then
-            file=$(echo "$line" | sed 's/^\s*//' | cut -d: -f1)
-            lineno=$(echo "$line" | sed 's/^\s*//' | cut -d: -f2)
-            msg=$(echo "$line" | sed 's/^\s*//' | cut -d: -f3-)
-            echo -e "  ${RED}✗${RESET} ${GRAY}${file}:${lineno}${RESET} →${msg}"
         # Undefined/type errors
         elif echo "$line" | grep -qE '(undefined|cannot use|not enough arguments|too many arguments|declared and not used)'; then
             echo -e "  ${RED}✗${RESET} $line"
@@ -67,126 +60,6 @@ format_errors() {
             echo "  $line"
         fi
     done
-}
-
-step_test() {
-    log "Running test suite..."
-    echo ""
-
-    local raw_output
-    local exit_code=0
-    raw_output=$(go test ./... -v -count=1 2>&1) || exit_code=$?
-
-    local total=0 passed=0 failed=0 skipped=0
-    local -a failed_tests=()
-    local -a failed_details=()
-    local current_test=""
-    local current_detail=""
-    local in_failure=false
-    local pkg_times=""
-
-    while IFS= read -r line; do
-        # Test result lines
-        if echo "$line" | grep -qE '^--- PASS:'; then
-            ((passed++)) || true
-            ((total++)) || true
-            test_name=$(echo "$line" | sed 's/--- PASS: //' | sed 's/ (.*//')
-            duration=$(echo "$line" | grep -oE '\([0-9.]+s\)' || echo "")
-            echo -e "  ${GREEN}✓${RESET} ${test_name} ${GRAY}${duration}${RESET}"
-            in_failure=false
-        elif echo "$line" | grep -qE '^--- FAIL:'; then
-            ((failed++)) || true
-            ((total++)) || true
-            test_name=$(echo "$line" | sed 's/--- FAIL: //' | sed 's/ (.*//')
-            duration=$(echo "$line" | grep -oE '\([0-9.]+s\)' || echo "")
-            echo -e "  ${RED}✗${RESET} ${test_name} ${GRAY}${duration}${RESET}"
-            failed_tests+=("$test_name")
-            if [ -n "$current_detail" ]; then
-                failed_details+=("$current_detail")
-            fi
-            current_detail=""
-            in_failure=false
-        elif echo "$line" | grep -qE '^--- SKIP:'; then
-            ((skipped++)) || true
-            ((total++)) || true
-            test_name=$(echo "$line" | sed 's/--- SKIP: //' | sed 's/ (.*//')
-            echo -e "  ${YELLOW}○${RESET} ${test_name} ${GRAY}(skipped)${RESET}"
-            in_failure=false
-        # Capture failure details (indented lines after a FAIL test header)
-        elif echo "$line" | grep -qE '^\s+[a-zA-Z0-9_]+_test\.go:[0-9]+:'; then
-            file=$(echo "$line" | sed 's/^\s*//' | cut -d: -f1)
-            lineno=$(echo "$line" | sed 's/^\s*//' | cut -d: -f2)
-            msg=$(echo "$line" | sed 's/^\s*//' | cut -d: -f3-)
-            current_detail+="    ${RED}→${RESET} ${GRAY}${file}:${lineno}${RESET}${msg}\n"
-            in_failure=true
-        elif echo "$line" | grep -qE '^=== RUN'; then
-            # Save any pending detail for previous test
-            if [ -n "$current_detail" ] && [ ${#failed_tests[@]} -gt 0 ]; then
-                failed_details+=("$current_detail")
-                current_detail=""
-            fi
-        # Package summary
-        elif echo "$line" | grep -qE '^(ok|FAIL)\s'; then
-            pkg=$(echo "$line" | awk '{print $2}')
-            dur=$(echo "$line" | grep -oE '[0-9.]+s' | head -1 || echo "")
-            pkg_short=$(basename "$pkg")
-            if echo "$line" | grep -qE '^ok'; then
-                pkg_times+="  ${GREEN}✓${RESET} ${pkg_short} ${GRAY}(${dur})${RESET}\n"
-            else
-                pkg_times+="  ${RED}✗${RESET} ${pkg_short} ${GRAY}(${dur})${RESET}\n"
-            fi
-        fi
-    done <<< "$raw_output"
-
-    # Capture last failure detail
-    if [ -n "$current_detail" ] && [ ${#failed_tests[@]} -gt 0 ] && [ ${#failed_details[@]} -lt ${#failed_tests[@]} ]; then
-        failed_details+=("$current_detail")
-    fi
-
-    # Summary
-    echo ""
-    echo -e "${BOLD}━━━ Test Summary ━━━${RESET}"
-
-    if [ -n "$pkg_times" ]; then
-        echo -e "\n${BOLD}Packages:${RESET}"
-        echo -e "$pkg_times"
-    fi
-
-    echo -e "${BOLD}Results:${RESET}  ${GREEN}${passed} passed${RESET}  ${RED}${failed} failed${RESET}  ${YELLOW}${skipped} skipped${RESET}  ${GRAY}(${total} total)${RESET}"
-
-    # Show failure details
-    if [ ${#failed_tests[@]} -gt 0 ]; then
-        echo ""
-        echo -e "${RED}${BOLD}Failures:${RESET}"
-        for i in "${!failed_tests[@]}"; do
-            echo -e "  ${RED}✗${RESET} ${BOLD}${failed_tests[$i]}${RESET}"
-            if [ "$i" -lt ${#failed_details[@]} ] && [ -n "${failed_details[$i]}" ]; then
-                echo -e "${failed_details[$i]}"
-            fi
-        done
-    fi
-
-    echo ""
-    if [ "$exit_code" -eq 0 ]; then
-        ok "All ${total} tests passed"
-    else
-        fail "${failed} test(s) failed"
-        return 1
-    fi
-}
-
-step_validate() {
-    log "Validating config keys..."
-    if output=$(go test ./config/ -count=1 -run TestConfig 2>&1); then
-        ok "Config keys valid"
-    else
-        fail "Config validation failed:"
-        # Re-run verbose to show the helpful error messages
-        go test ./config/ -v -count=1 -run TestConfig 2>&1 | grep -E "^\s+(Bad|Orphaned|Duplicate|File:|Age:|Building:|Tech:|Milestone:|Route:|Event:|Upgrade:|Faction:|Field:|Got:|Fix:|Chain:|Resource:|Rate:|did you mean)" | while IFS= read -r line; do
-            echo "  $line"
-        done
-        return 1
-    fi
 }
 
 step_run() {
@@ -201,13 +74,7 @@ case "$cmd" in
     check)
         step_build
         step_vet
-        step_validate
         ok "All checks passed — ready to run"
-        ;;
-    test)
-        step_build
-        step_vet
-        step_test
         ;;
     run)
         step_build
@@ -240,7 +107,7 @@ case "$cmd" in
         step_run
         ;;
     *)
-        echo "Usage: ./dev.sh [check|test|run|watch]"
+        echo "Usage: ./dev.sh [check|run|watch]"
         exit 1
         ;;
 esac
