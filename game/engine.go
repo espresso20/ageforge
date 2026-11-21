@@ -115,6 +115,7 @@ type GameEngine struct {
 	age                string
 	prestigeCue        PrestigeCue
 	prestigeCueSeenAge string
+	returnReport       ReturnReport
 
 	Resources  *ResourceManager
 	Buildings  *BuildingManager
@@ -4898,6 +4899,7 @@ func (ge *GameEngine) resetRunLocked(morale float64, outcome string, level int) 
 	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
+	ge.returnReport = ReturnReport{}
 	ge.Stats.AgeLog[0].Tick = ge.tick
 	ge.Stats.AgeLog[0].Age = ge.age
 	ge.permanentBonuses = make(map[string]float64)
@@ -5136,6 +5138,7 @@ func (ge *GameEngine) GetState() GameState {
 		Milestones:            ge.Milestones.Snapshot(milestoneParams),
 		ActiveEvents:          ge.Events.GetActive(),
 		Prestige:              prestigeSnap,
+		Return:                ge.returnReport,
 		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
 		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources(), ge.routeTerms()),
@@ -5227,6 +5230,9 @@ func buildDoneLog(def config.BuildingDef) string {
 const (
 	MaxOfflineTime    = 24 * time.Hour
 	OfflineEfficiency = 0.5
+	// ReturnCardAfter is the time away from which the return is kept as a
+	// report (GameState.Return) as well as logged.
+	ReturnCardAfter = 5 * time.Minute
 	// OfflineStepTicks is the step the offline catch-up advances by: each
 	// step credits that many ticks of production (at OfflineEfficiency),
 	// moves construction and research on, and lets the build plan start what
@@ -5257,7 +5263,13 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		return
 	}
 
-	ge.addLog(OfficeStores, "event", rowid.Sprintf("game.engine.applyOfflineProgress.01", "Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
+	// Each line of the return goes to the log and into the report.
+	var lines []string
+	say := func(kind, line string) {
+		ge.addLog(OfficeStores, kind, line)
+		lines = append(lines, line)
+	}
+	say("event", rowid.Sprintf("game.engine.applyOfflineProgress.01", "Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
 	// The time credited, for the records; the return itself is reported
 	// once the time away has been played through, with what it did.
 	ge.report(Event{Kind: config.BadgeEvAwayTicks, N: float64(offlineTicks)})
@@ -5354,17 +5366,27 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}})
 
 	if len(gains) > 0 {
-		ge.addLog(OfficeStores, "info", rowid.Sprintf("game.engine.applyOfflineProgress.02", "Offline progress (at %s efficiency):", textfmt.Percent(OfflineEfficiency)))
+		say("info", rowid.Sprintf("game.engine.applyOfflineProgress.02", "Offline progress (at %s efficiency):", textfmt.Percent(OfflineEfficiency)))
 		for _, res := range sortedKeys(gains) {
-			ge.addLog(OfficeStores, "info", "  +"+Amount(gains[res], res))
+			say("info", "  +"+Amount(gains[res], res))
 		}
 	}
 	if !starts.empty() {
-		ge.addLog(OfficeStores, "info", rowid.Line("game.engine.applyOfflineProgress.03", "While you were away, your plan ")+starts.describe(ge.rules)+".")
+		say("info", rowid.Line("game.engine.applyOfflineProgress.03", "While you were away, your plan ")+starts.describe(ge.rules)+".")
 	}
 	if staffed.any() {
-		ge.addLog(OfficeStores, "info", rowid.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
+		say("info", rowid.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
 	}
+	if elapsed >= ReturnCardAfter {
+		ge.returnReport = ReturnReport{Lines: lines}
+	}
+}
+
+// MarkReturnSeen records that the return report was shown.
+func (ge *GameEngine) MarkReturnSeen() {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.returnReport.Seen = true
 }
 
 // startReadyRoutes starts each ready route the player has not stopped (write

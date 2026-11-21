@@ -316,6 +316,8 @@ func registry() []*Command {
 			Subs: []*Command{
 				prestigeConfirm,
 			}},
+		{Name: "report", Run: cmdReport, Section: secGame, BareOK: true,
+			Help: []Usage{{"report", rowid.Line("ui.help.commands.report", "Show again what the last time away brought")}}},
 		{Name: "festival", Run: cmdFestival, Section: secWonders, BareOK: true,
 			Help: []Usage{{"festival", rowid.Line("ui.help.commands.festival", "Spend culture for a temporary production boost")}},
 			Subs: []*Command{festivalConfirm}},

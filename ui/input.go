@@ -37,6 +37,9 @@ type CommandResult struct {
 	EpochCard bool
 	// OpenCatastrophe asks the dashboard to (re)open the pending catastrophe modal.
 	OpenCatastrophe bool
+	// Card asks the dashboard to show Message on a card with these buttons
+	// instead of in the log.
+	Card *momentCard
 	// MapWorld opens the Map panel (OverlayName "map") on the known world.
 	MapWorld bool
 	// ResearchZoom ("close" or "far") and ResearchCard (a tech key) say how
@@ -1938,24 +1941,53 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		}
 		// Show warning
 		state := engine.GetState()
-		p := state.Prestige
-		var lines []string
-		lines = append(lines, rowid.Line("ui.input.cmdPrestige.02", "[yellow]⚠ Prestige warning[-]"))
-		lines = append(lines, rowid.Sprintf("ui.input.cmdPrestige.03", "  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
-		lines = append(lines, rowid.Sprintf("ui.input.cmdPrestige.04", "  Prestige: [green]x%.2f[-] production now, [green]x%.2f[-] after this prestige.", p.ProductionMultiplier, p.NextProductionMultiplier))
-		// An early prestige pays little: say so before the player confirms.
-		if early := game.EarlyPrestigeLine(game.SightOf(&state), state.Age, p.PendingPoints, false); early != "" {
-			lines = append(lines, "  "+early)
-		}
-		lines = append(lines, rowid.Line("ui.input.cmdPrestige.05", "  [red]All progress is reset:[-] resources, buildings, workers, research and military."))
-		lines = append(lines, rowid.Line("ui.input.cmdPrestige.06", "  Kept: prestige points, Plan Template, Roster, Old Friends and Era Mastery."))
+		lines := prestigeTradeLines(state)
 		lines = append(lines, lastPassageWarningLines(state)...)
 		lines = append(lines, "")
 		lines = append(lines, rowid.Line("ui.input.cmdPrestige.07", "  Type [cyan]prestige confirm yes[-] to proceed."))
-		return warningReply(strings.Join(lines, "\n"))
+		// The keyboard starts on Later: Enter alone never ends a run.
+		return cardReply(warningReply(strings.Join(lines, "\n")), rowid.Line("ui.input.cmdPrestige.02", "Prestige warning"),
+			momentBtn{label: rowid.Line("ui.input.cmdPrestige.08", "Later"), kind: keySteel},
+			momentBtn{label: rowid.Line("ui.input.cmdPrestige.09", "Prestige"), line: "prestige confirm yes", kind: keyAccent})
 	default:
 		return errorReply(subUsage("prestige"))
 	}
+}
+
+// prestigeTradeLines is what a prestige now gives, takes and keeps.
+func prestigeTradeLines(state game.GameState) []string {
+	p := state.Prestige
+	lines := []string{
+		rowid.Sprintf("ui.input.cmdPrestige.03", "  You will earn [cyan]%d[-] prestige points.", p.PendingPoints),
+		rowid.Sprintf("ui.input.cmdPrestige.04", "  Prestige: [green]x%.2f[-] production now, [green]x%.2f[-] after this prestige.", p.ProductionMultiplier, p.NextProductionMultiplier),
+	}
+	// An early prestige pays little: say so before the player confirms.
+	if early := game.EarlyPrestigeLine(game.SightOf(&state), state.Age, p.PendingPoints, false); early != "" {
+		lines = append(lines, "  "+early)
+	}
+	return append(lines,
+		rowid.Line("ui.input.cmdPrestige.05", "  [red]All progress is reset:[-] resources, buildings, workers, research and military."),
+		rowid.Line("ui.input.cmdPrestige.06", "  Kept: prestige points, Plan Template, Roster, Old Friends and Era Mastery."))
+}
+
+// cardReply makes res a reply shown on a card with these buttons.
+func cardReply(res CommandResult, title string, btns ...momentBtn) CommandResult {
+	res.Card = &momentCard{title: title, btns: btns}
+	return res
+}
+
+// cmdReport shows again what the last long time away did.
+func cmdReport(_ []string, engine *game.GameEngine) CommandResult {
+	return returnReply(engine.GetState())
+}
+
+// returnReply is the report of the last long time away, as a card.
+func returnReply(state game.GameState) CommandResult {
+	if len(state.Return.Lines) == 0 {
+		return infoReply(rowid.Line("ui.input.returnReply.01", "No time away to report."))
+	}
+	return cardReply(infoReply(strings.Join(state.Return.Lines, "\n")), rowid.Line("ui.input.returnReply.02", "Welcome back"),
+		momentBtn{label: rowid.Line("ui.input.returnReply.03", "OK"), kind: keyAccent})
 }
 
 func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
@@ -1963,7 +1995,6 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 	p := state.Prestige
 	var lines []string
 
-	lines = append(lines, rowid.Line("ui.input.cmdPrestigeStatus.01", "[gold]Prestige Status[-]"))
 	lines = append(lines, rowid.Sprintf("ui.input.cmdPrestigeStatus.02", "  Level: [cyan]%d[-]", p.Level))
 	lines = append(lines, rowid.Sprintf("ui.input.cmdPrestigeStatus.03", "  Points earned: [cyan]%d[-] total", p.TotalEarned))
 	lines = append(lines, rowid.Sprintf("ui.input.cmdPrestigeStatus.04", "  Prestige: [green]x%.2f[-] production", p.ProductionMultiplier))
@@ -1979,16 +2010,19 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 
 	lines = append(lines, carryoverStatusLines(state)...)
 	lines = append(lines, prestigePointsLines(state)...)
+	btns := []momentBtn{{label: rowid.Line("ui.input.cmdPrestigeStatus.10", "Close"), kind: keySteel}}
 	switch {
 	case state.LastPassage.Pending:
 		lines = append(lines, rowid.Line("ui.input.cmdPrestigeStatus.07", "\n  [red]☄ The Last Passage has come. Prestige waits for your answer.[-]"))
 		lines = append(lines, rowid.Line("ui.input.cmdPrestigeStatus.08", "  Type [cyan]catastrophe[-] to choose Endure or Succumb."))
+		btns = append([]momentBtn{{label: rowid.Line("ui.input.cmdPrestigeStatus.11", "Choose"), line: "catastrophe", kind: keyAccent}}, btns...)
 	case p.CanPrestige:
 		lines = append(lines, lastPassageStatusLines(state)...)
 		lines = append(lines, rowid.Line("ui.input.cmdPrestigeStatus.09", "  Type [cyan]prestige confirm[-] to reset with bonuses."))
+		btns = append([]momentBtn{{label: rowid.Line("ui.input.cmdPrestigeStatus.12", "Prestige now"), line: "prestige confirm", kind: keyAccent}}, btns...)
 	}
 
-	return infoReply(strings.Join(lines, "\n"))
+	return cardReply(infoReply(strings.Join(lines, "\n")), rowid.Line("ui.input.cmdPrestigeStatus.01", "Prestige"), btns...)
 }
 
 func cmdTrade(args []string, engine *game.GameEngine) CommandResult {

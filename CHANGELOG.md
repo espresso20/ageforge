@@ -7,6 +7,8 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- Coming back after five minutes or more away opens a Welcome back card with the time away and what it brought; `report` shows it again. The same lines still go to the log.
+- The prestige cue is a card with what a prestige gives, takes and keeps, and Show me and Later buttons. `prestige` and `prestige confirm` answer on cards with buttons (Prestige now, then Prestige or Later) instead of printing to the log. Typing while a card is open closes it and goes to the command line.
 - Clicks and keys on the Advance, Plan, Research, tech tree, Expeditions and Harbinger panels run the same command lines as typing (`advance`, `plan ...`, `research ...`, `expedition ...`, `harbinger ...`), so the command bar shows the line and it enters the history. The Harbinger panel offers its keys only while a harbinger is here.
 - Badge shields are drawn in single screen pixels instead of 3-pixel blocks: crisper outlines with a double inner edge, and finer emblems (gear teeth, scale pans on chains, sword with fuller and guard, feathered wings, tapered rays).
 - Badges are drawn as wire-frame pixel shields in a neon halo, one emblem per domain with strokes added per tier. The Badges screen shows the selected badge's shield beside the list (dim until earned), and earning a badge shows a short notice with its shield that closes after a few seconds or on any key or click.
