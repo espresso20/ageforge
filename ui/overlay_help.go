@@ -8,6 +8,10 @@ import (
 	"github.com/espresso20/ageforge/window/kit"
 )
 
+// helpFillPrefix starts the name of a Help command row's click region; the
+// rest of the name is the typed part of the row's usage form.
+const helpFillPrefix = "helpfill:"
+
 // helpProvider renders the Help overlay from the command registry
 // (commands.go): each section's usage rows, the panels the player can open,
 // the prompt's keys and the shortcuts. It is intentionally static (it does
@@ -23,6 +27,12 @@ func helpProvider(learned []string, _ game.GameState, screenW int) string {
 		width = 1 << 20 // no screen to fit: nothing wraps
 	}
 	row := func(lead, text string) { sb.WriteString(hangingRow(lead, text, width)) }
+	// cmdRow is a command's row: its form is a click region named for the
+	// part of the form that is typed (helpFillPrefix), which a click writes
+	// in the command bar.
+	cmdRow := func(form, shown, pad, text string) {
+		row("  "+clickRegion(helpFillPrefix+typedPart(form), shown)+pad+" - ", text)
+	}
 	// head is a section's name, with a rule when the text has a width.
 	head := func(name string) string { return headLine(name, width) + "\n" }
 	// note writes a line of prose in gray, broken at its spaces.
@@ -44,6 +54,7 @@ func helpProvider(learned []string, _ game.GameState, screenW int) string {
 		}
 	}
 
+	note(rowid.Line("ui.overlay_help.helpProvider.70", "Click a command to write it at the bottom of the screen; add what it needs and press Enter."))
 	sb.WriteString(lessonsHelp(learned, width))
 	sb.WriteString(head(rowid.Line("ui.overlay_help.helpProvider.01", "Getting around")))
 	note(rowid.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open over the whole screen, and the prompt keeps working in most of them. The Wonders, Harbinger and Build Plan panels use letter keys, so press Esc before you type a command there."))
@@ -87,7 +98,7 @@ func helpProvider(learned []string, _ game.GameState, screenW int) string {
 			}
 		}
 		for _, r := range rows {
-			row("  "+helpForm(r.Form)+strings.Repeat(" ", formW-len([]rune(r.Form)))+" - ", r.Text)
+			cmdRow(r.Form, helpForm(r.Form), strings.Repeat(" ", formW-len([]rune(r.Form))), r.Text)
 		}
 	}
 
@@ -154,7 +165,7 @@ func helpProvider(learned []string, _ game.GameState, screenW int) string {
 		sb.WriteString("\n" + head(rowid.Line("ui.overlay_help.helpProvider.64", "Developer console")))
 		sb.WriteString(rowid.Line("ui.overlay_help.helpProvider.65", "[gray]Dev mode is on. Type these in the [-][cyan]>[-][gray] prompt:[-]\n"))
 		for _, d := range devCommands {
-			row("  [cyan]"+padRight(d.form, 28)+"[-] - ", d.text)
+			cmdRow(d.form, "[cyan]"+kit.Escape(d.form)+"[-]", strings.Repeat(" ", max(28-runeLen(d.form), 0)), d.text)
 		}
 	}
 
