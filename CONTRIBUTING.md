@@ -321,7 +321,7 @@ mapgen/         The procedural map engine: seed, model and frame in, a grid of
 ui/             tview TUI. Reads GameState snapshots. Never writes to engine.
 ui/mapstyle/    The map screen: the engine's cells in the theme's colours, the
                 header, news and inspector round them (procmap), and the canvas.
-scripts/        release.sh, commit.sh, ci-bench.sh (dev tooling)
+scripts/        release.sh, commit.sh (dev tooling)
 main.go         Entry point; wires engine + UI.
 ```
 
