@@ -4,16 +4,24 @@ on:
   push:
     tags: ["v*"]
 
-# The release job asks for contents: write itself; everything else is read-only.
+# The release is created in espresso20/ageforge-releases with RELEASES_TOKEN,
+# so the workflow itself only reads this repository.
 permissions:
   contents: read
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
+      - name: Require the releases token
+        env:
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          if [ -z "$RELEASES_TOKEN" ]; then
+            echo "::error::RELEASES_TOKEN secret is not set"
+            exit 1
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -45,15 +53,14 @@ jobs:
             > /tmp/release_notes.md
           [ -s /tmp/release_notes.md ] || echo "See CHANGELOG.md for details." > /tmp/release_notes.md
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
-        with:
-          body_path: /tmp/release_notes.md
-          files: dist/*
-          draft: false
-          prerelease: false
+      - name: Create release in the public releases repository
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --repo espresso20/ageforge-releases \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file /tmp/release_notes.md
 
       - name: Notify Discord
         if: success()
@@ -61,7 +68,7 @@ jobs:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
         run: |
           VERSION="${{ github.ref_name }}"
-          URL="https://github.com/espresso20/ageforge/releases/tag/${VERSION}"
+          URL="https://github.com/espresso20/ageforge-releases/releases/tag/${VERSION}"
           THUMB="https://github.com/espresso20.png"
 
           # Pull bullet lines from each changelog section (max 8 per section)
@@ -105,7 +112,7 @@ jobs:
                 description: "A new version is live. Build your civilization from the **Primitive Age** to the **Transcendent**.",
                 fields:      $fields,
                 thumbnail:   {url: $thumb},
-                footer:      {text: "github.com/espresso20/ageforge/releases"},
+                footer:      {text: "github.com/espresso20/ageforge-releases/releases"},
                 timestamp:   $ts
               }]
             }')

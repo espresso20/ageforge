@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/espresso20/ageforge/releases/latest">
-    <img src="https://img.shields.io/github/v/release/espresso20/ageforge?style=for-the-badge&color=f0a500&labelColor=1a1a1a&logo=github&logoColor=white" alt="Latest Release">
+  <a href="https://github.com/espresso20/ageforge-releases/releases/latest">
+    <img src="https://img.shields.io/github/v/release/espresso20/ageforge-releases?style=for-the-badge&color=f0a500&labelColor=1a1a1a&logo=github&logoColor=white" alt="Latest Release">
   </a>
   &nbsp;
   <a href="https://golang.org">

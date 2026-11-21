@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	updaterAPIURL     = "https://api.github.com/repos/espresso20/ageforge/releases/latest"
-	updaterReleaseURL = "https://github.com/espresso20/ageforge/releases/latest/download"
+	updaterAPIURL     = "https://api.github.com/repos/espresso20/ageforge-releases/releases/latest"
+	updaterReleaseURL = "https://github.com/espresso20/ageforge-releases/releases/latest/download"
 )
 
 // UpdateResult holds the outcome of a version check.
@@ -106,7 +106,7 @@ func DownloadAndInstall(result UpdateResult) (string, error) {
 	// Verify SHA256 against published checksums
 	if err := updaterVerifyChecksum(tmpPath, checksumURL, result.BinaryName); err != nil {
 		os.Remove(tmpPath)
-		return "", fmt.Errorf("checksum mismatch: %w", err)
+		return "", fmt.Errorf("checksum check failed: %w", err)
 	}
 
 	if err := os.Chmod(tmpPath, 0755); err != nil {
@@ -177,16 +177,23 @@ func semverGreater(a, b string) bool {
 }
 
 // updaterVerifyChecksum fetches SHA256SUMS.txt and verifies filePath against it.
-// Silently passes if the checksum file is unavailable or the binary isn't listed.
+// It refuses the file when the checksum file is unavailable, the binary is not
+// listed, or the hash differs.
 func updaterVerifyChecksum(filePath, checksumURL, binaryName string) error {
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Get(checksumURL)
 	if err != nil {
-		return nil // non-fatal: skip if unavailable
+		return fmt.Errorf("checksums unavailable: %w", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return rowid.Errorf("game.updater.updaterVerifyChecksum.02", "checksums unavailable: HTTP %d", resp.StatusCode)
+	}
 
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("checksums unreadable: %w", err)
+	}
 	expected := ""
 	for _, line := range strings.Split(string(body), "\n") {
 		parts := strings.Fields(line)
@@ -196,7 +203,7 @@ func updaterVerifyChecksum(filePath, checksumURL, binaryName string) error {
 		}
 	}
 	if expected == "" {
-		return nil // no entry for this binary, skip
+		return rowid.Errorf("game.updater.updaterVerifyChecksum.03", "no checksum listed for %s", binaryName)
 	}
 
 	f, err := os.Open(filePath)

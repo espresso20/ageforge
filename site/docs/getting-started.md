@@ -10,10 +10,10 @@ AgeForge is a single binary with no runtime dependencies. It opens in its own wi
 
 ```bash
 # Apple Silicon (M1/M2/M3)
-curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64 -o ageforge
+curl -L https://github.com/espresso20/ageforge-releases/releases/latest/download/ageforge-macos-arm64 -o ageforge
 
 # Intel Mac
-curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-amd64 -o ageforge
+curl -L https://github.com/espresso20/ageforge-releases/releases/latest/download/ageforge-macos-amd64 -o ageforge
 
 chmod +x ageforge
 ./ageforge
@@ -27,10 +27,10 @@ If you downloaded the binary in a browser and macOS blocks it, right-click it in
 
 ```bash
 # x86_64
-curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64 -o ageforge
+curl -L https://github.com/espresso20/ageforge-releases/releases/latest/download/ageforge-linux-amd64 -o ageforge
 
 # ARM64
-curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-arm64 -o ageforge
+curl -L https://github.com/espresso20/ageforge-releases/releases/latest/download/ageforge-linux-arm64 -o ageforge
 
 chmod +x ageforge
 ./ageforge
@@ -40,10 +40,10 @@ chmod +x ageforge
 
 ## Windows
 
-Download `ageforge-windows-amd64.exe` from the [GitHub Releases](https://github.com/espresso20/ageforge/releases/latest) page and run it. In PowerShell, one line does both:
+Download `ageforge-windows-amd64.exe` from the [GitHub Releases](https://github.com/espresso20/ageforge-releases/releases/latest) page and run it. In PowerShell, one line does both:
 
 ```powershell
-iwr https://github.com/espresso20/ageforge/releases/latest/download/ageforge-windows-amd64.exe -OutFile ageforge.exe; .\ageforge.exe
+iwr https://github.com/espresso20/ageforge-releases/releases/latest/download/ageforge-windows-amd64.exe -OutFile ageforge.exe; .\ageforge.exe
 ```
 
 ---

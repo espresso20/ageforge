@@ -31,7 +31,7 @@ if (dark && dark.addEventListener) dark.addEventListener("change", syncTheme);
 syncTheme();
 
 // ---- the install box ---------------------------------------------------------
-const BASE = "https://github.com/espresso20/ageforge/releases/latest/download/";
+const BASE = "https://github.com/espresso20/ageforge-releases/releases/latest/download/";
 const OS = {
   mac: ["curl -fLo ageforge " + BASE + "ageforge-macos-arm64 && chmod +x ageforge && ./ageforge", "For Apple Silicon. On an Intel Mac, use ageforge-macos-amd64 instead."],
   linux: ["curl -fLo ageforge " + BASE + "ageforge-linux-amd64 && chmod +x ageforge && ./ageforge", "For x86_64. On ARM, use ageforge-linux-arm64 instead."],
