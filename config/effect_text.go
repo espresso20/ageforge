@@ -16,8 +16,7 @@ import (
 // every call to BaseBuildings), so the mechanical half of a building
 // description is built here from the building's runtime Effects. The lineage
 // files hold only the flavor sentence. Event, epoch-event and awakening text is
-// still written by hand, and the guard tests in effect_text_test.go check it
-// against the same helpers.
+// still written by hand and must go through the same helpers.
 
 // ResourceLabel is a resource's display name in running text: "iron ore",
 // "dark matter". Unknown keys fall back to the key with spaces.

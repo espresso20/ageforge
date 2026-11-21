@@ -44,7 +44,7 @@ const MilitaryDomain = "military"
 func IsMilitaryBuilding(d BuildingDef) bool { return d.LineageKey == "military" }
 
 // refCopiesOf is the copies of d the reference town holds: the same count
-// smoke's reference players build (smoke.refTables.refCount). A knowledge
+// the reference players build. A knowledge
 // building is the gate's count alone; storage is the gate's five copies and
 // everything else TownCopies, or the gate's count where the gate asks for
 // more. gate is the buildings the gate out of d's age asks for.
@@ -83,7 +83,6 @@ func runningSum(each []float64) []float64 {
 // the age's place in ages: the sum of the population capacity of every
 // building the town holds, each at its reference count, over this age and all
 // before it (wonders and monuments aside, as in the reference players).
-// smoke.refTables.state works out the same sum.
 func RefHousing(defs []BuildingDef, ages []AgeDef) []float64 {
 	idx := AgePositions(ageKeys(ages))
 	perAge := make([]float64, len(ages))
@@ -123,8 +122,8 @@ func GateMilitaryCopies(defs []BuildingDef, ages []AgeDef) []int {
 
 // RefSoldiers is the soldiers the reference town has at its posts at the end
 // of each age, by the age's place in ages: every military building of the age
-// and before at its reference count, with its soldiers a copy. (smoke's
-// reference town posts these as far as its food margin allows.)
+// and before at its reference count, with its soldiers a copy. (The reference
+// town posts these as far as its food margin allows.)
 func RefSoldiers(defs []BuildingDef, ages []AgeDef) []float64 {
 	idx := AgePositions(ageKeys(ages))
 	perAge := make([]float64, len(ages))

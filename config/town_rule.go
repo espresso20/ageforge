@@ -23,7 +23,7 @@ package config
 const (
 	// ProducerRate is the rate a building that makes something climbs at for
 	// each copy owned: the factor on every producer, research and military
-	// building in the tables (a test holds them to it).
+	// building in the tables.
 	ProducerRate = 1.15
 	// TownCopies is the copies of every building that is not storage in the
 	// town an age is priced for.
@@ -34,8 +34,8 @@ const (
 // for earns, so it grows with the town. Eight price units of its age for each
 // copy of the town (forty for a town of five, which the wonders were priced
 // for before the town was eight; the wait stays the same as the town grows).
-// The tables are authored; a test holds every wonder's price to this, and the
-// reference player's wonder (smoke.RefWonderUnits) reads it.
+// The tables are authored; every wonder's price must match this, and the
+// reference player's wonder reads it.
 const (
 	// WonderUnitsPerTownCopy is the price units of its age a wonder costs for
 	// each copy in the town.

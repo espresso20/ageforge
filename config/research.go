@@ -49,7 +49,7 @@ func Technologies() []TechDef {
 	}
 	// The wonders alone decide the kinds, and they are all in the raw table:
 	// reading it instead of BaseBuildings keeps this off the building
-	// normalizers (TestTechKindsNeedOnlyTheRawWonders).
+	// normalizers.
 	return fillTechArt(techs)
 }
 

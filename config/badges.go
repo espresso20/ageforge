@@ -13,8 +13,8 @@ package config
 // already reports the events and keeps the counters a row can name.
 //
 // Every badge states how it can be earned (Proof). The reachability guard
-// (smoke/static_badges.go) checks each proof against the game's own numbers,
-// so a badge that cannot be earned fails the build.
+// Each proof is checked against the game's own numbers when the badge is
+// added, so a badge that cannot be earned is a bug.
 
 // BadgeTier is a badge's metal: its art and its points.
 type BadgeTier uint8

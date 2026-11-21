@@ -14,7 +14,7 @@ import (
 //     building climbed at ProducerRate: the count whose total price at
 //     KnowledgeRate is nearest the total KnowledgeGateWas copies cost at
 //     ProducerRate, a tie going to the lower count (KnowledgeGateCount). The
-//     tables are literals; a test holds them to this.
+//     tables are literals and must match this.
 //  3. A knowledge building researches at full rate up to the count its gate
 //     asks for (KnowledgeCap): an age's research has a soft ceiling, and the
 //     tech prices are set against it. Copies past it still build, at the
@@ -29,7 +29,7 @@ const KnowledgePastCapShare = 0.5
 // Research simmers. It is an idle game: a player should be able to get every
 // tech, but it takes some time. The work an age's techs ask is a share of the
 // work the ordinary reference player's scholars do during that age's stay
-// (the knowledge ladder, smoke.KnowledgeLadders, and property 10 hold it).
+// (the knowledge ladder holds it).
 // ResearchBaseShare is that share for the first age. From the Stone Age on the
 // share is ResearchBaseShare times ResearchSimmer, so an age's research takes
 // one and a half stays and the unfinished part carries into the next age.

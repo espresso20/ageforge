@@ -42,10 +42,10 @@ const (
 	// garrison they never chose: the age gates ask for military buildings (15
 	// Hunting Lodges, 15 Military Academies, 15 Bunker Complexes, ...), the
 	// lineage carries them into every later age, and they train soldiers
-	// unstaffed. The greedy smoke bot, which does nothing else for its army,
+	// unstaffed. A player who does nothing else for the army
 	// holds about 60K × 2^order defense, so this base leaves that incidental
 	// garrison blunting 8-19% of a raid (0.2-0.8x the threat). A deliberate
-	// army is what reaches for the cap: the -army=on bot's four extra
+	// army is what reaches for the cap: an army-first player's four extra
 	// buildings per age reach 25-30% from the Industrial Age and 40% by the
 	// Atomic. (At 160, the first guess, the incidental garrison sat at 200-700x
 	// the threat and every player was pinned at the 45% cap for free.)
