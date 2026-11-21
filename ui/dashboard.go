@@ -1617,6 +1617,9 @@ func (d *Dashboard) runLine(text string) {
 		}
 	}
 	result := HandleCommand(text, d.engine)
+	if result.Fill != "" {
+		d.inputField.setText(result.Fill)
+	}
 	if result.EpochCard {
 		result = epochCardReply(d.epochHall.card(d.engine.GetState()))
 	}

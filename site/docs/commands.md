@@ -2,9 +2,11 @@
 
 You run the game by typing commands at the prompt at the bottom of the screen. `↑` and `↓` step through your last 50 commands.
 
-Counts (`recruit 5`, `build farm 3`, `sell hut 2`) are whole numbers from 1 to 1,000,000. Amounts (`gather`, `wonder collect`) are positive numbers. Anything else is refused with the command's usage line. The game does not guess. A command it does not know gets a "Did you mean" suggestion when a known command is close.
+Counts (`recruit 5`, `build farm 3`, `sell hut 2`) are whole numbers from 1 to 1,000,000. Amounts (`gather`, `wonder collect`) are positive numbers. Anything else is refused with the command's usage line. The game does not guess. A command it does not know gets a "Did you mean" suggestion when a known command is close, and the corrected line is written on the command line: `biuld hut 2` leaves `build hut 2` there, and Enter runs it. Nothing runs until then.
 
 Command names and the game keys they take (buildings, techs, resources, civilizations, themes, expeditions and trade routes) are not case-sensitive: `sell Hut` is `sell hut`, and `research Tool Making` is `research tool_making`.
+
+A building, tech, resource, civilization or trade route can be typed by its key or by the name the screen shows, with spaces or hyphens between the words: `build Lumber Mill 2`, `build lumber-mill 2` and `build lumber_mill 2` are the same command. Where a name and another thing's key are the same words, the key wins.
 
 This page lists every command. Each section links to the page that explains the system behind it.
 
