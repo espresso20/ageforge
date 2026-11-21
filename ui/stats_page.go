@@ -14,7 +14,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rowid"
 	"github.com/espresso20/ageforge/rules"
@@ -752,8 +751,6 @@ type statsPanel struct {
 	// pick is the step of the ladder the pointer rests on; -1 is the highest.
 	pick int
 
-	// settings reads the glyph tier.
-	settings func() mapSettings
 	// pageBtn presses the buttons on the page, as buttons does the frame's.
 	pageBtn keyPresser
 }
@@ -783,8 +780,7 @@ func (p *statsPanel) Layout(r image.Rectangle) {
 		return
 	}
 	p.w, p.h = r.Dx(), r.Dy()
-	plain := pictureCell == nil || p.settings != nil && p.settings().Tier == mapmodel.TierASCII
-	p.pic = !plain
+	p.pic = pictureCell != nil
 	p.wide = p.w >= statsWide
 	bw, view := p.w-4, p.viewRows()
 	for grow := 0; ; grow++ {
@@ -812,10 +808,6 @@ func (p *statsPanel) Layout(r image.Rectangle) {
 		keys = slices.Insert(keys, 2, [2]string{"Left/Right", txtPickAge.String()})
 	}
 	expKeyBar(g, expLayout{w: p.w, h: p.h, footY: p.h - 2}, keys, "")
-	if plain {
-		g.fold()
-		p.page.g.fold()
-	}
 	p.chrome = g
 }
 

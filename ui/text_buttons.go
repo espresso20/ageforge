@@ -15,9 +15,8 @@ import (
 type textButtons struct {
 	grid *xgrid
 	org  image.Point
-	// pr makes the buttons pressable; plain reports the ASCII glyph tier.
-	pr    keyPresser
-	plain func() bool
+	// pr makes the buttons pressable.
+	pr keyPresser
 }
 
 // over returns the painter of the overlay named name: it lays the buttons
@@ -27,9 +26,6 @@ func (tb *textButtons) over(layer func(text image.Rectangle, top int) *xgrid) fu
 		tb.grid, tb.org = layer(text, top), text.Min
 		if tb.grid == nil {
 			return
-		}
-		if tb.plain != nil && tb.plain() {
-			tb.grid.fold()
 		}
 		pal := newExpPalette()
 		// Only the cells a button covers: the rest is the text underneath.
@@ -65,7 +61,6 @@ func (tb *textButtons) pointer(at image.Point) kit.Pointer {
 // mouse and run their commands through the app.
 func (tb *textButtons) attach(om *OverlayManager, name string, layer func(text image.Rectangle, top int) *xgrid) {
 	tb.pr.wire(om.app)
-	tb.plain = func() bool { return om.plain != nil && om.plain() }
 	om.SetOver(name, tb.over(layer))
 	om.SetButtons(name, tb.mouse, tb.pointer)
 }

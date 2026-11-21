@@ -129,7 +129,7 @@ func TestTechTimeIsComputedFromTheScholarsResearching(t *testing.T) {
 		if list := cmdResearchList(ge).Message; !strings.Contains(list, "Ritual ("+want+")") {
 			t.Errorf("the list should give %s:\n%s", want, list)
 		}
-		m := buildTree(st, treeGeomFor(120, false), false, "ritual")
+		m := buildTree(st, treeGeomFor(120, false), "ritual")
 		if line := m.statusLine(st, treeView{sel: "ritual"}); !strings.Contains(line, want) {
 			t.Errorf("the status line should give %s: %q", want, line)
 		}
@@ -408,7 +408,7 @@ func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 			return sb.String()
 		}(),
 	}
-	m := buildTree(st, treeGeomFor(120, false), false, "ritual")
+	m := buildTree(st, treeGeomFor(120, false), "ritual")
 	for _, n := range m.nodes {
 		screens["card "+n.key] = cardOf(st, n.key)
 		screens["status "+n.key] = m.statusLine(st, treeView{sel: n.key})

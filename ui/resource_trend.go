@@ -82,20 +82,14 @@ func magnitudeFill(amount, top float64) float64 {
 }
 
 var (
-	eighths    = []rune("▏▎▍▌▋▊▉")
-	trendRamp  = []rune("▁▂▃▄▅▆▇█")
-	trendASCII = []rune("_.-~^")
+	eighths   = []rune("▏▎▍▌▋▊▉")
+	trendRamp = []rune("▁▂▃▄▅▆▇█")
 )
 
 // magnitudeCells is a bar of width cells, ratio of it filled. The Unicode
-// bar has eighth-block partial cells; the plain one has whole cells of # and
-// . only.
-func magnitudeCells(ratio float64, width int, plain bool) string {
+// bar has eighth-block partial cells.
+func magnitudeCells(ratio float64, width int) string {
 	ratio = min(1, max(0, ratio))
-	if plain {
-		n := int(math.Round(ratio * float64(width)))
-		return BarFillColor() + strings.Repeat("#", n) + BarEmptyColor() + strings.Repeat(".", width-n) + "[-]"
-	}
 	eight := int(ratio * float64(width) * 8)
 	whole, part := eight/8, eight%8
 	var b strings.Builder
@@ -112,7 +106,7 @@ func magnitudeCells(ratio float64, width int, plain bool) string {
 // trendCells is the line of vals in resTrendCells cells, the newest at the
 // right, scaled between its own lowest and highest. Fewer than two points
 // leave it blank; a flat run sits at the middle.
-func trendCells(vals []float64, plain bool, color string, cells int) string {
+func trendCells(vals []float64, color string, cells int) string {
 	if len(vals) > cells {
 		vals = vals[len(vals)-cells:]
 	}
@@ -120,9 +114,6 @@ func trendCells(vals []float64, plain bool, color string, cells int) string {
 		return strings.Repeat(" ", cells)
 	}
 	ramp := trendRamp
-	if plain {
-		ramp = trendASCII
-	}
 	lo, hi := vals[0], vals[0]
 	for _, v := range vals {
 		lo, hi = min(lo, v), max(hi, v)

@@ -4,7 +4,6 @@ import (
 	"image"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -26,9 +25,8 @@ type peoplePanel struct {
 	view  peopleView
 	w, h  int // the last size drawn at
 
-	// settings reads the glyph tier; hist reads the run's recorder.
-	settings func() mapSettings
-	hist     func() *game.RunHistory
+	// hist reads the run's recorder.
+	hist func() *game.RunHistory
 }
 
 // wire makes the panel's keys press: its own (a count for Recruit, a link to a
@@ -90,9 +88,6 @@ func (p *peoplePanel) Layout(r image.Rectangle) {
 		hist = p.hist()
 	}
 	p.grid, p.scene = renderPeople(p.state, p.view, hist, p.w, p.h)
-	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
-		p.grid.fold()
-	}
 }
 
 // Paint puts the panel on the kit's painter in theme colors.
@@ -104,7 +99,7 @@ func (p *peoplePanel) Paint(p2 *kit.Painter) {
 	}
 	pal := newExpPalette()
 	paintExpeditionKit(p2, p.grid, r.Min, pal)
-	plain := pictureCell == nil || p.settings != nil && p.settings().Tier == mapmodel.TierASCII
+	plain := pictureCell == nil
 	p.scene.paint(p2, r.Min, plain)
 	if p.view.tab != tabOverview && !plain {
 		p.scene.lift(p2, p.grid, r.Min, pal)

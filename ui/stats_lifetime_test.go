@@ -271,22 +271,6 @@ func TestLifetimePaintsAreStable(t *testing.T) {
 	}
 }
 
-func TestLifetimePlainTierIsASCII(t *testing.T) {
-	p, _ := lifeStats(t, 12, 160, 50, false, lifeSome, nil)
-	b := paintAlone(overBar(p), 160, 50)
-	if len(b.Pics) != 0 {
-		t.Fatalf("%d pictures in the plain tier", len(b.Pics))
-	}
-	for i, c := range b.Cells {
-		if c.R > 127 {
-			t.Fatalf("cell %d,%d holds %q", i%b.W, i/b.W, c.R)
-		}
-	}
-	if txt := statsPageText(p.state, partLifetime, 160); !strings.Contains(txt, "[") {
-		t.Error("plain families carry no marks")
-	}
-}
-
 func TestLifetimeNothingOverlaps(t *testing.T) {
 	for _, w := range []int{100, 160} {
 		for _, n := range []int{1, 8, len(config.Ages())} {

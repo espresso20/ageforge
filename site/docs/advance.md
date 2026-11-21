@@ -61,7 +61,7 @@ When all four pillars stand and nothing else is in the way, the foot of the pane
 | `Enter` | Advance, when all four pillars stand |
 | `Esc` | Close the panel |
 
-Like the other panels, it reads in every theme and on the plain glyph set, and it fits an 80 by 24 window.
+Like the other panels, it reads in every theme, and it fits an 80 by 24 window.
 
 ---
 

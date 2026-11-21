@@ -143,44 +143,28 @@ func frameLooks(t *testing.T, where string, cells []simCell, w, h int, title str
 }
 
 // TestTextPanelsShareOneFrame: each text panel is drawn in the same frame
-// at the three sizes, in every glyph tier and in every theme, with the text
+// at the three sizes, and in every theme, with the text
 // inside it and nothing beyond its edges.
 func TestTextPanelsShareOneFrame(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "medieval_age")
 	st := eng.GetState()
-	tiers := []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode}
-	var cur mapmodel.GlyphTier
 	// a dashboard whose pages hold only the panel: the frame is judged on its own
 	pages := newNativePages()
 	d := NewDashboard(newAppLoop(), eng, pages)
-	d.overlayMgr.plain = func() bool { return cur == mapmodel.TierASCII }
 	for _, th := range theme.All() {
 		if err := theme.SetActive(th.Key); err != nil {
 			t.Fatal(err)
 		}
 		for _, sz := range fullSizes {
 			w, h := sz[0], sz[1]
-			// every theme at every size is a lot of draws: the other tiers
-			// at the middle size are enough
-			for _, tier := range tiers {
-				if tier != mapmodel.TierUnicode && sz != fullSizes[1] {
-					continue
-				}
-				cur = tier
-				for name, e := range d.overlayMgr.entries {
-					where := fmt.Sprintf("%s at %dx%d, %s, %v", name, w, h, th.Key, tier)
-					d.overlayMgr.screenW, d.overlayMgr.screenH = w, h
-					d.overlayMgr.Show(name, st)
-					cells := drawnPages(t, pages, w, h)
-					frameLooks(t, where, cells, w, h, e.title.String(), tier == mapmodel.TierASCII)
-					for _, c := range cells {
-						if tier == mapmodel.TierASCII && len(c.Runes) > 0 && c.Runes[0] == poisonRune {
-							t.Fatalf("%s: stray poison", where)
-						}
-					}
-					d.overlayMgr.Hide()
-				}
+			for name, e := range d.overlayMgr.entries {
+				where := fmt.Sprintf("%s at %dx%d, %s", name, w, h, th.Key)
+				d.overlayMgr.screenW, d.overlayMgr.screenH = w, h
+				d.overlayMgr.Show(name, st)
+				cells := drawnPages(t, pages, w, h)
+				frameLooks(t, where, cells, w, h, e.title.String(), false)
+				d.overlayMgr.Hide()
 			}
 		}
 	}

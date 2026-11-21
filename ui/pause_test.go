@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
@@ -120,5 +121,43 @@ func TestPauseHoldsBackTheRefresh(t *testing.T) {
 	d.refresh()
 	if d.pendingAgeSplash == "" || !isPaused(d) {
 		t.Errorf("refresh ran while paused: pending %q paused=%v", d.pendingAgeSplash, isPaused(d))
+	}
+}
+
+// TestMapGlyphsLeavesTheBuildingsBoxAlone: the Map glyphs setting changes
+// the map and the mini map only. With the pause card open the Buildings
+// box draws the same cells, dimmed the same, in either mode.
+func TestMapGlyphsLeavesTheBuildingsBoxAlone(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	keepTheme(t)
+	const w, h = 279, 74
+	draw := func(mode string) ([]simCell, [4]int) {
+		_, _, eng := stagedDashboard(t, "medieval_age")
+		acct, err := game.CreateAccount("Glyph Tester " + mode)
+		must(t, err)
+		eng.SetAccount(acct)
+		must(t, acct.SetMapGlyphs(mode))
+		d, pages := newTestDashboard(eng)
+		drawnDashboard(t, d, pages, w, h) // refresh: a paused dashboard does not
+		d.openPause()
+		cells := drawnDashboard(t, d, pages, w, h)
+		if !strings.Contains(strings.Join(rectText(cells, w, 0, 0, w, h), "\n"), "x10") {
+			t.Fatalf("%s: no buy chips on the screen", mode)
+		}
+		x, y, bw, bh := d.economyTab.buildBox.GetRect()
+		return cells, [4]int{x, y, bw, bh}
+	}
+	uni, r1 := draw("unicode")
+	asc, r2 := draw("ascii")
+	if r1 != r2 || r1[2] < 20 || r1[3] < 10 {
+		t.Fatalf("the Buildings box is %v in unicode and %v in ascii", r1, r2)
+	}
+	for y := r1[1]; y < r1[1]+r1[3]; y++ {
+		for x := r1[0]; x < r1[0]+r1[2]; x++ {
+			a, b := uni[y*w+x], asc[y*w+x]
+			if string(a.Runes) != string(b.Runes) || a.Style != b.Style {
+				t.Fatalf("cell %d,%d of the Buildings box differs: %q %v in unicode, %q %v in ascii", x, y, string(a.Runes), a.Style, string(b.Runes), b.Style)
+			}
+		}
 	}
 }

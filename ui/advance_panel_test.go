@@ -12,7 +12,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -439,30 +438,6 @@ func TestAdvancePanelWording(t *testing.T) {
 	for _, s := range []string{advanceKeys[0].what.String(), advanceKeys[1].what.String(), advanceKeys[2].what.String()} {
 		if strings.ContainsAny(s, "—!") {
 			t.Errorf("wording %q", s)
-		}
-	}
-}
-
-// The plain glyph tier folds every cell to ASCII, drawn through the panel.
-func TestAdvancePanelFoldsToASCII(t *testing.T) {
-	for name, v := range advanceStates(t) {
-		g := renderAdvance(v, advanceUI{sel: 1}, 100, 27)
-		g.fold()
-		for y, line := range g.Lines() {
-			for _, r := range line {
-				if r > 0x7e {
-					t.Fatalf("%s: row %d keeps %q on the plain glyph tier: %q", name, y, r, line)
-				}
-			}
-		}
-	}
-	_, _, p := advanceFixture(t, "bronze_age")
-	p.settings = func() mapSettings { return mapSettings{Tier: mapmodel.TierASCII} }
-	for _, c := range drawPanel(t, p, 100, 27).Cells() {
-		for _, r := range c.Runes {
-			if r > 0x7e {
-				t.Fatalf("the drawn panel keeps %q on the plain glyph tier", r)
-			}
 		}
 	}
 }

@@ -73,8 +73,8 @@ func fxEmpty(scr mapstyle.Cells, x, y, x0, x1 int, bg kit.Color) bool {
 }
 
 // drawThemeEffect draws effect into the empty cells of the box at (x, y),
-// w by h, at frame n. plain draws it with the plain tier's glyphs.
-func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, plain bool) {
+// w by h, at frame n.
+func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int) {
 	if w <= 0 || h <= 0 {
 		return // a window with no room: nothing to draw into
 	}
@@ -93,7 +93,7 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 	light := theme.IsLight()
 	switch effect {
 	case theme.EffectRain:
-		set := rainSet(plain)
+		set := rainGlyphs
 		period := h + 14
 		for c := 0; c < w; c++ {
 			if artHash(c, 7, 7) >= 0.4 {
@@ -116,9 +116,6 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 			return
 		}
 		noise := []rune("▚▞▀▄░▒")
-		if plain {
-			noise = []rune("#%=:-")
-		}
 		for r := 0; r < h; r++ {
 			if artHash(n/2, r, 61) >= 0.10*b+0.02 {
 				continue
@@ -138,9 +135,6 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 		// Sparks rise up some of the columns, a row every three frames,
 		// bright and low at first, then small and dim.
 		low, high := '·', '˙'
-		if plain {
-			low, high = '.', '\''
-		}
 		period := h + 6
 		for c := 0; c < w; c++ {
 			seed := artHash(c, 77, 3)
@@ -167,9 +161,6 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 		// Green-bar paper: every other row of the empty space is tinted. The
 		// tint is drawn as ink, so it lies under nothing.
 		bar := '█'
-		if plain {
-			bar = '.'
-		}
 		tint := kit.Style{}.Background(bg).Foreground(theme.Of(theme.RoleSelection))
 		for r := 1; r < h; r += 2 {
 			for c := 0; c < w; c++ {
@@ -189,9 +180,6 @@ func drawThemeEffect(scr mapstyle.Cells, x, y, w, h int, effect string, n int, p
 				}
 				at := n/3 + int(seed*4000)
 				glyph := glintRunes[at%4]
-				if plain {
-					glyph = badgeFold[glyph]
-				}
 				hue := float64((n*6 + int(seed*36000)) % 360)
 				stop := stopPale
 				if glyph == '·' || glyph == '.' {

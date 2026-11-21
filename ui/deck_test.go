@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/window/kit"
 )
 
@@ -241,18 +240,5 @@ func TestDeckScrolls(t *testing.T) {
 	p.routeKey(&kit.Key{Code: kit.KeyPgDn}, "")
 	if want := p.lay.total - p.lay.viewH; p.scroll != want {
 		t.Errorf("PgDn past the end left the deck at %d, want %d", p.scroll, want)
-	}
-}
-
-// TestDeckInPlainASCII: in the ASCII glyph tier the marks fold.
-func TestDeckInPlainASCII(t *testing.T) {
-	p, _ := deckOnStage(t, 153, 40)
-	p.settings = func() mapSettings { return mapSettings{Tier: mapmodel.TierASCII} }
-	p.Layout(p.Bounds())
-	text := p.grid.String()
-	for _, r := range "▸█░×" {
-		if strings.ContainsRune(text, r) {
-			t.Errorf("the plain tier still draws %q:\n%s", r, text)
-		}
 	}
 }

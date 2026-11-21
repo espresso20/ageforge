@@ -282,7 +282,7 @@ func (p *mapPanel) drawBar(scr mapstyle.Cells, r mapstyle.Rect, st mapstyle.Styl
 	}
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, base)
 	p.row = make([]rune, r.W)
-	p.keys = keySet{plain: f.Tier == mapmodel.TierASCII, glyph: func(x, _ int) rune { return p.row[x] }}
+	p.keys = keySet{glyph: func(x, _ int) rune { return p.row[x] }}
 	// The key prompts are recorded on the bar's row, which is the panel's last.
 	_, _, _, ph := p.GetRect()
 	// put writes text at x on the bar and keeps it in row, where the key

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -449,21 +448,6 @@ func TestExpeditionPanelNeverNumbersAnOffer(t *testing.T) {
 	if list := cmdExpedition([]string{"list"}, engine).Message; offerNumber.MatchString(list) {
 		t.Errorf("expedition list numbers an offer:\n%s", list)
 	}
-}
-
-func TestExpeditionPanelFoldsToASCII(t *testing.T) {
-	engine, p := expFixture(t)
-	p.open(engine.GetState())
-	g := renderExpedition(p.state, p.view, 100, 27)
-	g.fold()
-	for y, line := range g.Lines() {
-		for _, r := range line {
-			if r > 0x7e {
-				t.Fatalf("row %d keeps %q on the plain glyph tier: %q", y, r, line)
-			}
-		}
-	}
-	_ = mapmodel.TierASCII
 }
 
 func TestExpeditionPanelKeysBelongToThePromptWhenItHasText(t *testing.T) {

@@ -696,26 +696,18 @@ func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 }
 
 // TestMenuTownFollowsTheSettings: the town is drawn in the account's glyph
-// set, and the plain glyph set puts no block on the page.
+// set; the page around it does not change.
 func TestMenuTownFollowsTheSettings(t *testing.T) {
 	r := newMenuRig(t, "ashford")
 	m := r.m
 	must(t, r.acct.SetMapGlyphs("ascii"))
 	m.Focus(func(Primitive) {})
-	if m.set.Tier != mapmodel.TierASCII || !m.view.plain {
-		t.Errorf("after map glyphs ascii: tier %v, plain %v", m.set.Tier, m.view.plain)
+	if m.set.Tier != mapmodel.TierASCII {
+		t.Errorf("after map glyphs ascii: tier %v", m.set.Tier)
 	}
 	for _, size := range [][2]int{{80, 24}, {120, 40}} {
-		scr := r.draw(size[0], size[1])
-		for y, row := range scr.rows {
-			for x, ch := range []rune(row) {
-				if ch > 0x7e {
-					t.Fatalf("at %dx%d with plain glyphs cell (%d,%d) holds %q", size[0], size[1], x, y, ch)
-				}
-			}
-		}
-		if !scr.has("Continue") || !scr.has("#") {
-			t.Errorf("at %dx%d the plain page is missing its menu or its wordmark", size[0], size[1])
+		if scr := r.draw(size[0], size[1]); !scr.has("Continue") {
+			t.Errorf("at %dx%d the page is missing its menu", size[0], size[1])
 		}
 	}
 }
