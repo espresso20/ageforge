@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/rowid"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // shell.go is the frame every full panel is drawn in: a box with the panel's
@@ -94,4 +95,23 @@ func (g *xgrid) keyButtons(y int, keys [][2]string) int {
 		}
 	}
 	return x
+}
+
+// head is a section's name in the title style with a faint rule across the
+// rest of the w cells of its row.
+func (g *xgrid) head(x, y, w int, s string) {
+	for end := g.put(x, y, s, xTitle); end < x+w; end++ {
+		g.set(end, y, '─', xFaint)
+	}
+}
+
+// headLine is head for a text panel: the section's name as a markup line (no
+// newline), in the title colour and bold, then a faint rule out to width
+// cells. A width of 0 (the text's width is not known) draws no rule.
+func headLine(s string, width int) string {
+	out := "[" + theme.TagName(theme.RoleHighlight) + "::b]" + s + theme.Reset
+	if n := width - runeLen(s) - 1; n > 0 {
+		out += " " + theme.Paint(theme.RoleDim, strings.Repeat("─", n))
+	}
+	return out
 }

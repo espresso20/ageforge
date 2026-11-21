@@ -210,15 +210,6 @@ func buildStats(st game.GameState, part, w, view int, wide, pic bool, grow int) 
 	return pg
 }
 
-// heading is a section's name with a rule across the rest of the row.
-func (pg *statsPage) heading(x, y, w int, s string) {
-	end := pg.g.put(x, y, s, xTitle)
-	for ; end < x+w; end++ {
-		pg.g.set(end, y, '─', xFaint)
-	}
-	_ = end
-}
-
 // tiles lays the tiles out n across from row y and returns the row after. A
 // tile may span several of the n slots.
 func (pg *statsPage) layTiles(tiles []statsTile, y, w, n, nr int) int {
@@ -388,7 +379,7 @@ func (pg *statsPage) band(st game.GameState, y, w, grow int) int {
 		br, gap = 2, 1
 	}
 	pg.heads[0] = image.Rect(0, y, w, y+1)
-	pg.heading(0, y, w, txtAgesRun.String())
+	pg.g.head(0, y, w, txtAgesRun.String())
 	y++
 	for i0 := 0; i0 < n; i0 += per {
 		group := blocks[i0:min(i0+per, n)]
@@ -454,7 +445,7 @@ func (pg *statsPage) layBlock(b *statsBlock, i int) {
 // row, or one and no blank row.
 func (pg *statsPage) gathered(st game.GameState, y, w, view int) int {
 	pg.heads[1] = image.Rect(0, y, w, y+1)
-	pg.heading(0, y, w, txtGatheredHd.String())
+	pg.g.head(0, y, w, txtGatheredHd.String())
 	y++
 	var keys []string
 	for k, v := range st.Stats.TotalGathered {
@@ -571,7 +562,7 @@ func isTick(x, w int, ticks []float64) bool {
 // multsTable lays the Active multipliers table out: a line of target, total
 // and note, then the sources wrapped under it.
 func (pg *statsPage) multsTable(x, y, w int) int {
-	pg.heading(x, y, w, txtMultsHd.String())
+	pg.g.head(x, y, w, txtMultsHd.String())
 	y++
 	if len(pg.mults) == 0 {
 		pg.g.put(x, y, txtNoMults.String(), xDim)
@@ -611,7 +602,7 @@ func (pg *statsPage) multsTable(x, y, w int) int {
 
 // rowsTable lays a table of label and value rows out under a heading.
 func (pg *statsPage) rowsTable(head string, rows []statsRow, x, y, w int) int {
-	pg.heading(x, y, w, head)
+	pg.g.head(x, y, w, head)
 	y++
 	lw := min(22, w/2)
 	for _, r := range rows {
